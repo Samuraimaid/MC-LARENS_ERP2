@@ -1,0 +1,11 @@
+{
+  "venvPath": ".",
+  "venv": ".venv-win",
+  "include": [
+    "backend"
+  ],
+  "extraPaths": [
+    "."
+  ],
+  "reportMissingImports": true
+}

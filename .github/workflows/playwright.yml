@@ -1,0 +1,36 @@
+name: Playwright E2E
+
+on:
+  pull_request:
+    branches: [ main, publish/roles-changes-20260210 ]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm run build
+      - name: Serve build
+        working-directory: ./frontend
+        run: |
+          npx serve -s build -l 3000 &
+          sleep 3
+      - name: Run Playwright tests
+        working-directory: ./frontend
+        env:
+          BASE_URL: http://localhost:3000
+        run: |
+          npx playwright test --reporter=list

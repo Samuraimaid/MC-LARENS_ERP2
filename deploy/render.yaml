@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mundo-accesorios-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    instanceType: starter
+    envVars:
+      - key: MONGO_URL
+        scope: RUN
+      - key: DB_NAME
+        value: mundo_accesorios_erp
+      - key: DEFAULT_PIN_USER_PIN
+        value: 010190

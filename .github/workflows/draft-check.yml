@@ -1,0 +1,48 @@
+name: Automated Draft Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  draft-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Start backend and dependencies with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+
+      - name: Wait for backend readiness
+        run: |
+          echo "Waiting for backend to respond at http://127.0.0.1:8001/api/test/create-session"
+          for i in {1..30}; do
+            if curl -sS -X POST http://127.0.0.1:8001/api/test/create-session -o /dev/null; then
+              echo "backend ready"; exit 0
+            fi
+            echo "waiting... ($i)"; sleep 2
+          done
+          echo "backend did not start in time"; exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install chromium
+
+      - name: Run automated draft check
+        working-directory: frontend
+        run: yarn test:draft-check
+
+      - name: Teardown Docker Compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml down

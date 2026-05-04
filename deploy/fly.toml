@@ -1,0 +1,11 @@
+app = "mundo-accesorios-erp"
+
+[build]
+  image = ""
+
+[env]
+  MONGO_URL = ""
+  DB_NAME = "mundo_accesorios_erp"
+
+[experimental]
+  allowed_public_ports = [8001, 3000]
