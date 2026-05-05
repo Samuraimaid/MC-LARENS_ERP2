@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { cn, formatCurrency } from "@/lib/utils";
 import { API_BASE as API } from "@/lib/api";
@@ -17,15 +16,22 @@ import {
   Car,
   CarFront,
   FileText,
+  FlaskConical,
+  Hand,
+  Hash,
   MapPin,
+  Palette,
   Package,
   Phone,
   PlusCircle,
   RefreshCcw,
   ShieldCheck,
   ShoppingCart,
+  Trash2,
   User,
   UserPlus,
+  Warehouse,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +42,7 @@ import {
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
+import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -97,6 +104,7 @@ export default function SaleForm({
   customers = [],
   products = [],
   warehouses = [],
+  inventory = [],
   vehicles = [],
   initialData = {},
   onSubmit,
@@ -109,8 +117,12 @@ export default function SaleForm({
   onDraftPersist = null,
   onDraftSaveStateChange = null,
   onDraftClear = null,
+  onDataRefresh = null,
   flowType = "sale",
   step4Label = "Paso 4: Carrito del Cliente",
+  currencyValue = null,
+  onCurrencyChange = null,
+  hideCurrencyField = false,
 }) {
   const { user } = useAuth();
   const [selectedCustomer, setSelectedCustomer] = useState(initialData.selectedCustomer || null);
@@ -134,6 +146,7 @@ export default function SaleForm({
   const [useVinDecoder, setUseVinDecoder] = useState(false);
   const [isDecodingVin, setIsDecodingVin] = useState(false);
   const [vehicleFlowOption, setVehicleFlowOption] = useState("carryout");
+  const [isVehiclePickerVisible, setIsVehiclePickerVisible] = useState(true);
   const [useVehicleVinDecoder, setUseVehicleVinDecoder] = useState(false);
   const [isDecodingVehicleVin, setIsDecodingVehicleVin] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -143,6 +156,11 @@ export default function SaleForm({
   const productSearchRef = useRef(null);
   const customerListRef = useRef(null);
   const productListRef = useRef(null);
+  const leftPaneRef = useRef(null);
+  const didSmoothScrollRef = useRef(false);
+  const longPressTimerRef = useRef(null);
+  const longPressHideTimerRef = useRef(null);
+  const [activeStockBreakdownKey, setActiveStockBreakdownKey] = useState(null);
   const [customerHighlightIndex, setCustomerHighlightIndex] = useState(0);
   const [productHighlightIndex, setProductHighlightIndex] = useState(0);
   const [newCustomer, setNewCustomer] = useState({
@@ -177,6 +195,45 @@ export default function SaleForm({
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
   const isNewCustomerCompany = newCustomer.customer_type === "empresa";
   const isQuotationFlow = flowType === "quotation";
+  const isCurrencyControlled = typeof currencyValue === "string" && currencyValue.length > 0;
+  const isTouchDevice = typeof window !== "undefined" && navigator.maxTouchPoints > 0;
+
+  const clearBreakdownTimers = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (longPressHideTimerRef.current) {
+      clearTimeout(longPressHideTimerRef.current);
+      longPressHideTimerRef.current = null;
+    }
+  }, []);
+
+  const startBreakdownLongPress = useCallback((key, canShow) => {
+    if (!isTouchDevice || !canShow) return;
+    clearBreakdownTimers();
+    longPressTimerRef.current = setTimeout(() => {
+      setActiveStockBreakdownKey(key);
+      longPressTimerRef.current = null;
+    }, 450);
+  }, [clearBreakdownTimers, isTouchDevice]);
+
+  const endBreakdownLongPress = useCallback((key) => {
+    clearBreakdownTimers();
+    if (!isTouchDevice || activeStockBreakdownKey !== key) return;
+    longPressHideTimerRef.current = setTimeout(() => {
+      setActiveStockBreakdownKey((prev) => (prev === key ? null : prev));
+      longPressHideTimerRef.current = null;
+    }, 2200);
+  }, [activeStockBreakdownKey, clearBreakdownTimers, isTouchDevice]);
+
+  function applyCurrencyChange(nextCurrency) {
+    if (isCurrencyControlled && typeof onCurrencyChange === "function") {
+      onCurrencyChange(nextCurrency);
+    }
+    setCurrency(nextCurrency);
+    persistDraftSnapshot({ currency: nextCurrency });
+  }
 
   useEffect(() => {
     setLocalCustomers(customers);
@@ -190,6 +247,13 @@ export default function SaleForm({
       return vehicles;
     });
   }, [vehicles]);
+
+  useEffect(() => {
+    if (!isCurrencyControlled) return;
+    if (!currencyValue) return;
+    if (currency === currencyValue) return;
+    setCurrency(currencyValue);
+  }, [currency, currencyValue, isCurrencyControlled]);
 
   const normalizeCustomerId = useCallback((value) => {
     if (value === null || value === undefined || value === "") return "";
@@ -235,7 +299,7 @@ export default function SaleForm({
     return type === "empresa" || type === "company" || type === "juridica" || type === "juridico";
   }, []);
 
-  const isCompanyQuotation = isQuotationFlow && Boolean(selectedCustomer) && isCompanyCustomer(selectedCustomer);
+  const isCompanyCustomerFlow = Boolean(selectedCustomer) && isCompanyCustomer(selectedCustomer);
 
   const newCustomerTone = isNewCustomerCompany
     ? {
@@ -325,22 +389,22 @@ export default function SaleForm({
   }, [vehicleFlowOption]);
 
   useEffect(() => {
-    if (!isQuotationFlow || !selectedCustomer) return;
+    if (!selectedCustomer) return;
 
     if (isCompanyCustomer(selectedCustomer)) {
       if (!applyIVA) {
         setApplyIVA(true);
       }
-      if (ivaRate !== defaultIvaRate) {
-        setIvaRate(defaultIvaRate);
+      if (ivaRate !== 15) {
+        setIvaRate(15);
       }
       return;
     }
 
-    if (applyIVA) {
+    if (isQuotationFlow && applyIVA) {
       setApplyIVA(false);
     }
-    if (ivaRate !== defaultIvaRate) {
+    if (isQuotationFlow && ivaRate !== defaultIvaRate) {
       setIvaRate(defaultIvaRate);
     }
   }, [isQuotationFlow, selectedCustomer, isCompanyCustomer, applyIVA, ivaRate, defaultIvaRate]);
@@ -377,11 +441,14 @@ export default function SaleForm({
       setNotes(draft?.notes || "");
       setApplyIVA(draft?.applyIVA ?? true);
       setIvaRate(defaultIvaRate);
-      setCurrency(draft?.currency || "NIO");
+      applyCurrencyChange(draft?.currency || "NIO");
       setCustomerSearch(draft?.customerSearch || "");
       setProductSearch(draft?.productSearch || "");
       setAppliedDiscounts(draft?.appliedDiscounts || []);
       setVehicleFlowOption(draft?.vehicleFlowOption || "carryout");
+      if (draft?.vehicleFlowOption) {
+        setIsVehiclePickerVisible(false);
+      }
       setShowNewCustomer(Boolean(draft?.showNewCustomer));
       setShowNewVehicleDialog(Boolean(draft?.showNewVehicleDialog));
       setNewCustomerTab(draft?.newCustomerTab || "customer");
@@ -635,6 +702,9 @@ export default function SaleForm({
 
       resetNewCustomerForm();
       setShowNewCustomer(false);
+      if (typeof onDataRefresh === "function") {
+        onDataRefresh();
+      }
       persistDraftSnapshot({
         selectedCustomerId: customerId,
         showNewCustomer: false,
@@ -732,6 +802,9 @@ export default function SaleForm({
 
       const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
       setLocalVehicles(vehiclesRes.data);
+      if (typeof onDataRefresh === "function") {
+        onDataRefresh();
+      }
 
       setVehicleFlowOption("registered");
       if (createdVehicleId) {
@@ -954,6 +1027,7 @@ export default function SaleForm({
     setCustomerSearch("");
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
+    setIsVehiclePickerVisible(true);
     persistDraftSnapshot({
       selectedCustomerId: customer?.customer_id || null,
       customerSearch: "",
@@ -967,6 +1041,7 @@ export default function SaleForm({
     setPendingCustomerId(null);
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
+    setIsVehiclePickerVisible(true);
     setCustomerSearch("");
     persistDraftSnapshot({
       selectedCustomerId: null,
@@ -1075,6 +1150,129 @@ export default function SaleForm({
       p.sku?.toLowerCase().includes(searchLower)
     );
   }, [products, productSearch]);
+
+  const warehouseById = useMemo(
+    () => new Map((warehouses || []).map((warehouse) => [String(warehouse.warehouse_id), warehouse])),
+    [warehouses]
+  );
+
+  const getProductStockThreshold = useCallback((product) => {
+    const thresholdCandidates = [
+      product?.min_stock,
+      product?.minimum_stock,
+      product?.stock_min,
+      product?.reorder_point,
+      product?.low_stock_threshold,
+    ];
+    return thresholdCandidates
+      .map((value) => Number(value))
+      .find((value) => Number.isFinite(value)) ?? 5;
+  }, []);
+
+  const getFallbackProductStock = useCallback((product) => {
+    const stockCandidates = [
+      product?.available_stock,
+      product?.stock,
+      product?.quantity,
+      product?.qty,
+      product?.inventory_quantity,
+      product?.stock_quantity,
+    ];
+    return stockCandidates
+      .map((value) => Number(value))
+      .find((value) => Number.isFinite(value));
+  }, []);
+
+  const getLocalStoreStockValue = useCallback((product) => {
+    const normalizedProductId = String(product?.product_id || "");
+    if (!normalizedProductId) return getFallbackProductStock(product);
+
+    const productRows = Array.isArray(inventory)
+      ? inventory.filter((row) => String(row?.product_id || "") === normalizedProductId)
+      : [];
+
+    if (productRows.length === 0) {
+      return getFallbackProductStock(product);
+    }
+
+    const userBranchId = String(user?.branch_id || "");
+    if (userBranchId) {
+      return productRows.reduce((total, row) => {
+        const warehouse = warehouseById.get(String(row?.warehouse_id || ""));
+        const branchId = String(warehouse?.branch_id || "");
+        if (branchId !== userBranchId) return total;
+        return total + Number(row?.quantity || 0);
+      }, 0);
+    }
+
+    if (selectedWarehouse) {
+      return productRows.reduce((total, row) => {
+        if (String(row?.warehouse_id || "") !== String(selectedWarehouse)) return total;
+        return total + Number(row?.quantity || 0);
+      }, 0);
+    }
+
+    return getFallbackProductStock(product);
+  }, [getFallbackProductStock, inventory, selectedWarehouse, user?.branch_id, warehouseById]);
+
+  const getProductStockStatus = useCallback((product, isServiceProduct) => {
+    if (isServiceProduct) return "service";
+
+    const stockValue = getLocalStoreStockValue(product);
+    const lowStockThreshold = getProductStockThreshold(product);
+
+    if (!Number.isFinite(stockValue)) return "in_stock";
+    if (stockValue <= 0) return "out_of_stock";
+    if (stockValue <= lowStockThreshold) return "low_stock";
+    return "in_stock";
+  }, [getLocalStoreStockValue, getProductStockThreshold]);
+
+  const getProductTone = useCallback((stockStatus, isServiceProduct) => {
+    if (isServiceProduct) {
+      return {
+        base: "border-blue-200 bg-blue-50/70",
+        hover: "hover:border-blue-300 hover:bg-blue-100/80",
+        selected: "border-blue-500 bg-blue-100/90 ring-2 ring-blue-200",
+        title: "text-blue-950",
+        sku: "text-blue-800/75",
+        emphasisPrice: "text-blue-950",
+      };
+    }
+
+    const toneByStatus = {
+      in_stock: {
+        base: "border-emerald-200 bg-emerald-50/70",
+        hover: "hover:border-emerald-300 hover:bg-emerald-100/80",
+        selected: "border-emerald-500 bg-emerald-100/90 ring-2 ring-emerald-200",
+        title: "text-emerald-950",
+        sku: "text-emerald-800/75",
+        emphasisPrice: "text-emerald-950",
+      },
+      low_stock: {
+        base: "border-amber-200 bg-amber-50/70",
+        hover: "hover:border-amber-300 hover:bg-amber-100/80",
+        selected: "border-amber-500 bg-amber-100/90 ring-2 ring-amber-200",
+        title: "text-amber-950",
+        sku: "text-amber-800/75",
+        emphasisPrice: "text-amber-950",
+      },
+      out_of_stock: {
+        base: "border-rose-200 bg-rose-50/70",
+        hover: "hover:border-rose-300 hover:bg-rose-100/80",
+        selected: "border-rose-500 bg-rose-100/90 ring-2 ring-rose-200",
+        title: "text-rose-950",
+        sku: "text-rose-800/75",
+        emphasisPrice: "text-rose-950",
+      },
+    };
+
+    return toneByStatus[stockStatus] || toneByStatus.in_stock;
+  }, []);
+
+  const productsById = useMemo(
+    () => new Map((products || []).map((product) => [String(product.product_id), product])),
+    [products]
+  );
 
   const scrollProductList = (delta) => {
     const list = productListRef.current;
@@ -1194,9 +1392,31 @@ export default function SaleForm({
     return () => window.removeEventListener("keydown", handleShortcut);
   }, [draftKey, persistDraftSnapshot]);
 
+  useEffect(() => {
+    const stepOneDone = Boolean(selectedCustomer?.customer_id);
+    const stepTwoDone = Boolean(vehicleFlowOption);
+    if (!stepOneDone || !stepTwoDone) {
+      didSmoothScrollRef.current = false;
+      return;
+    }
+    if (didSmoothScrollRef.current) return;
+
+    const leftPane = leftPaneRef.current;
+    if (!leftPane) return;
+    didSmoothScrollRef.current = true;
+
+    if (typeof leftPane.scrollTo === "function") {
+      leftPane.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [selectedCustomer?.customer_id, vehicleFlowOption]);
+
+  useEffect(() => {
+    return () => clearBreakdownTimers();
+  }, [clearBreakdownTimers]);
+
   return (
-    <div className="grid grid-cols-2 gap-6">
-      <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
+      <div ref={leftPaneRef} className="space-y-4">
         <div>
           <Label className="inline-flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -1235,9 +1455,6 @@ export default function SaleForm({
                   <Badge variant="outline" className="shrink-0 text-[10px] uppercase tracking-wide">
                     {isCompanyCustomer(selectedCustomer) ? "Empresa" : "Cliente"}
                   </Badge>
-                  <Badge variant="outline" className="shrink-0 border-sky-300 bg-white/70 text-[10px] uppercase tracking-wide text-sky-900">
-                    Vehiculo
-                  </Badge>
                 </p>
                 <Button
                   type="button"
@@ -1250,7 +1467,7 @@ export default function SaleForm({
                 </Button>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-emerald-900/90">
+              <div className="mt-2 grid gap-x-6 gap-y-1 text-xs text-emerald-900/90 sm:grid-cols-2">
                 <p className="inline-flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-emerald-700" />
                   {selectedCustomer.phone || "Sin teléfono"}
@@ -1302,7 +1519,7 @@ export default function SaleForm({
                             {c.name}
                             <span className="text-[10px] uppercase tracking-wide text-muted-foreground">({typeLabel})</span>
                           </p>
-                          <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-700">
+                          <div className="mt-1.5 grid gap-x-3 gap-y-1 text-[11px] text-slate-700 sm:grid-cols-2">
                             <p className="inline-flex items-center gap-1.5">
                               <Phone className="h-3 w-3" />
                               <span className="truncate">{c.phone || "Sin teléfono"}</span>
@@ -1337,12 +1554,15 @@ export default function SaleForm({
             <CarFront className="h-4 w-4" />
             <span>Paso 2: Seleccionar opción de vehículo</span>
           </Label>
-          {!(vehicleFlowOption === "registered" && selectedVehicleData) ? (
+          {isVehiclePickerVisible ? (
             <div className={`grid gap-2 ui-fade-in-stagger ${selectedCustomer ? "sm:grid-cols-2" : ""}`}>
               <button
                 type="button"
                 disabled={!selectedCustomer}
-                onClick={() => handleSelectVehicleFlow("carryout", "")}
+                onClick={() => {
+                  setIsVehiclePickerVisible(false);
+                  handleSelectVehicleFlow("carryout", "");
+                }}
                 className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${selectedVehicleOption === "carryout"
                   ? "border-emerald-500 bg-emerald-100/80"
                   : "border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100/80"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
@@ -1365,7 +1585,10 @@ export default function SaleForm({
                     key={v.vehicle_id ?? v.id}
                     type="button"
                     disabled={!selectedCustomer}
-                    onClick={() => handleSelectVehicleFlow("registered", vehicleOptionId)}
+                    onClick={() => {
+                      setIsVehiclePickerVisible(false);
+                      handleSelectVehicleFlow("registered", vehicleOptionId);
+                    }}
                     className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${isActiveVehicle
                       ? "border-sky-500 bg-sky-100/80"
                       : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
@@ -1384,6 +1607,7 @@ export default function SaleForm({
                 type="button"
                 disabled={!selectedCustomer}
                 onClick={() => {
+                  setIsVehiclePickerVisible(false);
                   setShowNewVehicleDialog(true);
                   handleSelectVehicleFlow("new", "");
                 }}
@@ -1410,18 +1634,45 @@ export default function SaleForm({
             </p>
           )}
 
-          {vehicleFlowOption === "registered" && selectedVehicleData ? (
-            <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-3.5 py-2.5 shadow-sm ui-panel animate-fade-up-soft">
+          {!isVehiclePickerVisible && vehicleFlowOption === "carryout" && selectedCustomer ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 shadow-sm ui-panel animate-fade-up-soft">
               <div className="grid grid-cols-[1fr_auto] items-center gap-2.5">
-                <p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-sky-900">
-                  <CarFront className="h-4 w-4 shrink-0 text-sky-700" />
-                  {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo seleccionado"}
+                <p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-emerald-900">
+                  <Package className="h-4 w-4 shrink-0 text-emerald-700" />
+                  Producto para llevar
                 </p>
                 <Button
                   type="button"
                   variant="ghost"
                   className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                  onClick={() => handleSelectVehicleFlow("carryout", "")}
+                  onClick={() => setIsVehiclePickerVisible(true)}
+                >
+                  <RefreshCcw className="h-4 w-4 mr-1.5" />
+                  Cambiar
+                </Button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-emerald-900/90">Venta sin instalación ni vehículo registrado</p>
+            </div>
+          ) : null}
+
+          {!isVehiclePickerVisible && vehicleFlowOption === "registered" && selectedVehicleData ? (
+            <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-3.5 py-2.5 shadow-sm ui-panel animate-fade-up-soft">
+              <div className="grid grid-cols-[1fr_auto] items-center gap-2.5">
+                <p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-sky-900">
+                  <CarFront className="h-4 w-4 shrink-0 text-sky-700" />
+                  {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo seleccionado"}
+                  <Badge variant="outline" className="shrink-0 border-sky-300 bg-white/70 text-[10px] uppercase tracking-wide text-sky-900">
+                    Vehículo
+                  </Badge>
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                  onClick={() => {
+                    setIsVehiclePickerVisible(true);
+                    handleSelectVehicleFlow("carryout", "");
+                  }}
                 >
                   <RefreshCcw className="h-4 w-4 mr-1.5" />
                   Cambiar
@@ -1429,13 +1680,13 @@ export default function SaleForm({
               </div>
 
               <div className="mt-1.5 space-y-1 text-[11px] text-sky-900/90">
-                <div className="grid grid-cols-2 gap-x-5 gap-y-0.5">
+                <div className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
                   <p className="inline-flex items-center gap-1.5">
                     <FileText className="h-3.5 w-3.5 text-sky-700" />
                     {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
                   </p>
                   <p className="inline-flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-sky-700" />
+                    <Palette className="h-3.5 w-3.5 text-sky-700" />
                     {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
                   </p>
                 </div>
@@ -1482,37 +1733,180 @@ export default function SaleForm({
           {productSearch.trim() ? (
             <div ref={productListRef} className="max-h-72 space-y-2 overflow-y-auto pr-1 animate-fade-up-soft">
               {filteredProducts.map((p, index) => (
+                (() => {
+                  const normalizedSku = String(p.sku || "").toUpperCase();
+                  const normalizedName = String(p.name || "").toLowerCase();
+                  const normalizedCategory = String(p.category || "").toLowerCase();
+                  const isServiceProduct =
+                    normalizedSku.startsWith("SRV") ||
+                    normalizedName.includes("servicio") ||
+                    normalizedCategory.includes("servicio");
+                  const stockStatus = getProductStockStatus(p, isServiceProduct);
+                  const tone = getProductTone(stockStatus, isServiceProduct);
+
+                  return (
                 <button
                   key={p.product_id}
                   data-index={index}
                   type="button"
                   className={cn(
-                    "grid w-full grid-cols-[88px_1fr_auto] items-center gap-3 rounded-xl border border-sky-200 bg-sky-50/70 p-2.5 text-left shadow-sm transition-colors ui-interactive ui-panel",
-                    "hover:border-sky-300 hover:bg-sky-100/80",
-                    index === productHighlightIndex ? "border-sky-500 bg-sky-100/90 ring-2 ring-sky-200" : ""
+                    "grid w-full grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 text-left shadow-sm transition-colors ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5",
+                    tone.base,
+                    tone.hover,
+                    index === productHighlightIndex ? tone.selected : ""
                   )}
                   onClick={() => addToCart(p)}
                   onMouseEnter={() => setProductHighlightIndex(index)}
                 >
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-20 w-20 rounded-lg object-cover bg-muted/30" /> : <div className="h-20 w-20 rounded-lg bg-muted/50" />}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-sky-950">{p.name}</p>
-                    <p className="mt-0.5 text-xs text-sky-800/75">{p.sku}</p>
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
+                  <div className="min-w-0 self-start">
+                    <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{p.name}</p>
+                    <p className={cn("mt-0.5 text-[11px]", tone.sku)}>{p.sku}</p>
                     {p.installation_type === "not_available" && (
                       <Badge variant="secondary" className="mt-2 text-[10px]">Solo para llevar</Badge>
                     )}
-                  </div>
-                  <div className="text-right">
-                    <p className={hasSelectedVehicle ? "font-mono text-xs text-muted-foreground" : "font-mono text-sm font-semibold text-sky-950"}>
-                      Sin instalación {formatCurrency(convertPrice(p.price), currency)}
-                    </p>
-                    {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
-                      <p className={hasSelectedVehicle ? "font-mono text-sm font-semibold text-sky-950" : "font-mono text-xs text-muted-foreground"}>
-                        Con instalación {formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}
-                      </p>
-                    )}
+
+                    <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3">
+                      {(() => {
+                        const userBranchId = String(user?.branch_id || "");
+                        const stockRows = Array.isArray(inventory)
+                          ? inventory.filter((row) => String(row?.product_id || "") === String(p.product_id || "") && Number(row?.quantity || 0) > 0)
+                          : [];
+
+                        if (stockRows.length === 0) return <div className="min-h-[3.25rem]" />;
+
+                        const warehouseById = new Map((warehouses || []).map((wh) => [String(wh.warehouse_id), wh]));
+
+                        const sellerStoreRows = [];
+                        const otherStoreRows = [];
+                        const otherWarehouseRows = [];
+
+                        stockRows.forEach((row) => {
+                          const wh = warehouseById.get(String(row.warehouse_id));
+                          const branchId = String(wh?.branch_id || "");
+                          if (!branchId) {
+                            otherWarehouseRows.push({
+                              name: String(wh?.name || row.warehouse_id || "Bodega"),
+                              qty: Number(row.quantity || 0),
+                            });
+                            return;
+                          }
+
+                          if (userBranchId && branchId === userBranchId) {
+                            sellerStoreRows.push({
+                              name: String(wh?.name || row.warehouse_id || "Tienda"),
+                              qty: Number(row.quantity || 0),
+                            });
+                            return;
+                          }
+
+                          otherStoreRows.push({
+                            name: String(wh?.name || row.warehouse_id || "Tienda"),
+                            qty: Number(row.quantity || 0),
+                          });
+                        });
+
+                        const sumQty = (rows) => rows.reduce((acc, row) => acc + Number(row.qty || 0), 0);
+
+                        const renderRow = (label, qty, rows, icon, qtyClassName, options = {}) => {
+                          const { showBreakdown = true, breakdownKey = "", interactiveBreakdown = false } = options;
+                          const breakdownText = rows.map((row) => `${row.name}: ${row.qty}`).join(", ");
+                          const canShowInteractiveBreakdown = interactiveBreakdown && rows.length > 0;
+                          const isBreakdownVisible = canShowInteractiveBreakdown && isTouchDevice && activeStockBreakdownKey === breakdownKey;
+
+                          return (
+                            <div
+                              className="relative flex items-center gap-1.5 whitespace-nowrap text-[11px] leading-tight"
+                              title={!isTouchDevice && canShowInteractiveBreakdown ? breakdownText : undefined}
+                              onPointerDown={() => startBreakdownLongPress(breakdownKey, canShowInteractiveBreakdown)}
+                              onPointerUp={() => endBreakdownLongPress(breakdownKey)}
+                              onPointerCancel={() => endBreakdownLongPress(breakdownKey)}
+                              onPointerLeave={() => endBreakdownLongPress(breakdownKey)}
+                            >
+                              {icon}
+                              <span className="font-semibold">{label}:</span>
+                              <span className={cn("font-mono", qtyClassName)}>{qty}</span>
+                              {showBreakdown && rows.length > 0 && (
+                                <span className="truncate text-muted-foreground" title={rows.map((row) => `${row.name}: ${row.qty}`).join(" | ")}>
+                                  ({rows.map((row) => `${row.name}: ${row.qty}`).join(", ")})
+                                </span>
+                              )}
+                              {isBreakdownVisible ? (
+                                <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 max-w-[22rem] rounded-md border bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-md">
+                                  {breakdownText}
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        };
+
+                        return (
+                          <div className="space-y-1 text-xs">
+                            {renderRow(
+                              "Esta Tienda",
+                              sumQty(sellerStoreRows),
+                              sellerStoreRows,
+                              <Building2 className="h-3.5 w-3.5 text-blue-700" aria-hidden="true" />,
+                              "text-blue-900",
+                              {
+                                showBreakdown: false,
+                              }
+                            )}
+                            {renderRow(
+                              "Otras tiendas",
+                              sumQty(otherStoreRows),
+                              otherStoreRows,
+                              <Building2 className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />,
+                              "text-emerald-900",
+                              {
+                                showBreakdown: false,
+                                breakdownKey: `${p.product_id}-other-stores`,
+                                interactiveBreakdown: true,
+                              }
+                            )}
+                            {renderRow(
+                              "Otras bodegas",
+                              sumQty(otherWarehouseRows),
+                              otherWarehouseRows,
+                              <Warehouse className="h-3.5 w-3.5 text-amber-700" aria-hidden="true" />,
+                              "text-amber-900",
+                              {
+                                showBreakdown: false,
+                                breakdownKey: `${p.product_id}-other-warehouses`,
+                                interactiveBreakdown: true,
+                              }
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex h-full min-h-[3.25rem] flex-col items-end justify-end gap-0.5 whitespace-nowrap text-right">
+                        <p className={cn(
+                          "inline-flex items-center gap-1 font-mono text-[11px]",
+                          hasSelectedVehicle ? "text-muted-foreground" : cn("font-semibold", tone.emphasisPrice)
+                        )}>
+                          {isServiceProduct ? (
+                            <Hand className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          ) : (
+                            <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          )}
+                          <span>{formatCurrency(convertPrice(p.price), currency)}</span>
+                        </p>
+                        {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
+                          <p className={cn(
+                            "inline-flex items-center gap-1 font-mono text-[13px]",
+                            hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
+                          )}>
+                            <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </button>
+                  );
+                })()
               ))}
             </div>
           ) : (
@@ -1532,109 +1926,125 @@ export default function SaleForm({
             ? "rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-muted-foreground"
             : "max-h-72 space-y-2 overflow-y-auto pr-1"
         )}>
-          {normalizedCartItems.length === 0 ? "Sin productos" : normalizedCartItems.map(item => (
-            <div key={item.product_id} className="grid grid-cols-[88px_1fr_auto] items-center gap-3 rounded-xl border border-sky-200 bg-sky-50/70 p-2.5 shadow-sm ui-interactive ui-panel">
-              {item.image ? <img src={item.image} alt={item.product_name} className="h-20 w-20 rounded-lg object-cover bg-muted/30" /> : <div className="h-20 w-20 rounded-lg bg-muted/50" />}
+          {normalizedCartItems.length === 0 ? "Sin productos" : normalizedCartItems.map(item => {
+            const itemNormalizedSku = String(item.sku || "").toUpperCase();
+            const itemNormalizedName = String(item.product_name || "").toLowerCase();
+            const isItemService = itemNormalizedSku.startsWith("SRV") || itemNormalizedName.includes("servicio");
+            const sourceProduct = productsById.get(String(item.product_id)) || item;
+            const stockStatus = getProductStockStatus(sourceProduct, isItemService);
+            const tone = getProductTone(stockStatus, isItemService);
+            return (
+            <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
+              {item.image ? <img src={item.image} alt={item.product_name} className="row-span-2 h-24 w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-24 w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-sky-950">{item.product_name}</p>
-                <p className="text-xs text-muted-foreground">Código: {item.sku || "N/A"}</p>
-                <p className="text-xs text-sky-800/75">
-                  {hasSelectedVehicle && (item.installation_type === "required" || item.with_installation) ? "Precio instalado" : "Precio para llevar"}
-                </p>
+                <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{item.product_name}</p>
+                <p className={cn("text-[11px]", tone.sku)}>Código: {item.sku || "N/A"}</p>
                 {item.sample_status === "requested" && (
-                  <p className="text-xs font-medium text-blue-600">Muestra solicitada</p>
+                  <p className="text-[11px] font-medium text-blue-600">Muestra solicitada</p>
                 )}
-                <div className="mt-1.5 flex gap-2">
-                  <Input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={item.quantity}
-                    onChange={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01))}
-                    onBlur={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01), { persist: true })}
-                    className="h-7 w-20 text-xs"
-                  />
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={item.discount}
-                    onChange={(e) => updateCartItem(item.product_id, "discount", parseFloat(e.target.value) || 0)}
-                    onBlur={(e) => updateCartItem(item.product_id, "discount", parseFloat(e.target.value) || 0, { persist: true })}
-                    className="h-7 w-20 text-xs"
-                    placeholder="Desc %"
-                  />
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Hash className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={item.quantity}
+                      onChange={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01))}
+                      onBlur={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01), { persist: true })}
+                      className="h-7 w-24 text-[11px]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      title="Solicitar muestra"
+                      onClick={() => requestSampleForItem(item)}
+                      className="h-9 w-9 bg-white/70 ui-interactive"
+                    >
+                      <FlaskConical className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Eliminar del carrito"
+                      onClick={() => removeFromCart(item.product_id)}
+                      className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive ui-interactive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-2">
                 {(() => {
-                  const baseTotal = convertPrice(item.unit_price) * item.quantity * (1 - (item.discount || 0) / 100);
-                  const installType = item.installation_type || "optional";
-                  const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
-                  const installTotal = installType !== "not_available" && wantsInstall
-                    ? convertPrice(item.installation_price || 0) * item.quantity
-                    : 0;
+                  const cartItemProductId = String(item.product_id || "");
+                  const cartStockRows = Array.isArray(inventory)
+                    ? inventory.filter((row) => String(row?.product_id || "") === cartItemProductId && Number(row?.quantity || 0) > 0)
+                    : [];
+                  if (cartStockRows.length === 0) return null;
+                  const userBranchId = String(user?.branch_id || "");
+                  const sellerRows = [];
+                  const otherWHRows = [];
+                  cartStockRows.forEach((row) => {
+                    const wh = warehouseById.get(String(row.warehouse_id));
+                    const branchId = String(wh?.branch_id || "");
+                    const entry = { name: String(wh?.name || row.warehouse_id || ""), qty: Number(row.quantity || 0) };
+                    if (!branchId) { otherWHRows.push(entry); return; }
+                    if (userBranchId && branchId === userBranchId) { sellerRows.push(entry); return; }
+                    return;
+                  });
+                  const sumQty = (rows) => rows.reduce((acc, r) => acc + r.qty, 0);
                   return (
-                    <p className="font-mono text-sm font-semibold text-sky-950">{formatCurrency(baseTotal + installTotal, currency)}</p>
+                    <div className="mt-1.5 space-y-0.5 text-[11px]">
+                      {sellerRows.length > 0 && (
+                        <div className="flex items-center gap-1.5 whitespace-nowrap leading-tight">
+                          <Building2 className="h-3 w-3 text-blue-700" aria-hidden="true" />
+                          <span className="text-muted-foreground">Esta Tienda:</span>
+                          <span className="font-mono text-blue-900 font-semibold">{sumQty(sellerRows)}</span>
+                        </div>
+                      )}
+                      {otherWHRows.length > 0 && (
+                        <div
+                          className="relative flex items-center gap-1.5 whitespace-nowrap leading-tight"
+                          title={otherWHRows.map(r => `${r.name}: ${r.qty}`).join(", ")}
+                          onPointerDown={() => startBreakdownLongPress(`cart-${item.product_id}-wh`, true)}
+                          onPointerUp={() => endBreakdownLongPress(`cart-${item.product_id}-wh`)}
+                          onPointerCancel={() => endBreakdownLongPress(`cart-${item.product_id}-wh`)}
+                          onPointerLeave={() => endBreakdownLongPress(`cart-${item.product_id}-wh`)}
+                        >
+                          <Warehouse className="h-3 w-3 text-amber-700" aria-hidden="true" />
+                          <span className="text-muted-foreground">Otras bodegas:</span>
+                          <span className="font-mono text-amber-900 font-semibold">{sumQty(otherWHRows)}</span>
+                          {isTouchDevice && activeStockBreakdownKey === `cart-${item.product_id}-wh` && (
+                            <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 max-w-[22rem] rounded-md border bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-md">
+                              {otherWHRows.map(r => `${r.name}: ${r.qty}`).join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })()}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => requestSampleForItem(item)}
-                    className="bg-white/70 ui-interactive"
-                  >
-                    Solicitar muestra
-                  </Button>
-                  <Button variant="ghost" size="sm" className="ui-interactive" onClick={() => removeFromCart(item.product_id)}>×</Button>
+                <div className="mt-1 flex justify-end">
+                  {(() => {
+                    const baseTotal = convertPrice(item.unit_price) * item.quantity * (1 - (item.discount || 0) / 100);
+                    const installType = item.installation_type || "optional";
+                    const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
+                    const installTotal = installType !== "not_available" && wantsInstall
+                      ? convertPrice(item.installation_price || 0) * item.quantity
+                      : 0;
+                    return (
+                      <p className={cn("font-mono text-[13px] font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(baseTotal + installTotal, currency)}</p>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
-        {normalizedCartItems.length > 0 && (
-          <div className="space-y-2">
-            {normalizedCartItems.map(item => {
-              if (item.installation_type === "optional") {
-                return (
-                  <div key={`${item.product_id}-install`} className="flex items-center justify-between text-xs">
-                    <span>{item.product_name}</span>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={hasSelectedVehicle && Boolean(item.with_installation)}
-                        onCheckedChange={(checked) => updateCartItem(item.product_id, "with_installation", Boolean(checked), { persist: true })}
-                        disabled={!hasSelectedVehicle}
-                      />
-                      <span className={!hasSelectedVehicle ? "text-muted-foreground" : ""}>
-                        Instalar (+{formatCurrency(convertPrice(item.installation_price || 0), currency)})
-                      </span>
-                    </div>
-                  </div>
-                );
-              }
 
-              if (item.installation_type === "required") {
-                return (
-                  <div key={`${item.product_id}-install`} className="flex items-center justify-between text-xs">
-                    <span>{item.product_name}</span>
-                    <Badge>Instalación requerida</Badge>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={`${item.product_id}-install`} className="flex items-center justify-between text-xs">
-                  <span>{item.product_name}</span>
-                  <Badge variant="secondary">Solo para llevar</Badge>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
             <Label>Código de Descuento</Label>
             <div className="flex gap-2">
@@ -1656,14 +2066,14 @@ export default function SaleForm({
             <Checkbox
               checked={applyIVA}
               onCheckedChange={(v) => {
-                if (isCompanyQuotation) return;
+                if (isCompanyCustomerFlow) return;
                 const nextValue = Boolean(v);
                 setApplyIVA(nextValue);
                 persistDraftSnapshot({ applyIVA: nextValue });
               }}
-              disabled={isCompanyQuotation}
+              disabled={isCompanyCustomerFlow}
             />
-            <Label>{isCompanyQuotation ? "Aplicar IVA (obligatorio empresa)" : "Aplicar IVA"}</Label>
+            <Label>{isCompanyCustomerFlow ? "Aplicar IVA (obligatorio empresa 15%)" : "Aplicar IVA"}</Label>
             <Input
               type="number"
               min="0"
@@ -1672,18 +2082,18 @@ export default function SaleForm({
               onChange={(e) => setIvaRate(parseFloat(e.target.value) || 0)}
               onBlur={(e) => persistDraftSnapshot({ ivaRate: parseFloat(e.target.value) || 0 })}
               className="w-20"
-              disabled={isCompanyQuotation}
+              disabled={isCompanyCustomerFlow}
             />
           </div>
         </div>
 
-        {isQuotationFlow && selectedCustomer && !isCompanyQuotation ? (
+        {isQuotationFlow && selectedCustomer && !isCompanyCustomerFlow ? (
           <p className="text-xs text-muted-foreground">
             Para cliente persona natural, el IVA inicia desactivado y puedes aplicarlo manualmente si lo necesitas.
           </p>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
             <Label>Descuento Global (%)</Label>
             <Input
@@ -1714,13 +2124,13 @@ export default function SaleForm({
           </div>
         </div>
 
+        {!hideCurrencyField ? (
         <div>
           <Label>Moneda</Label>
           <Select
             value={currency}
             onValueChange={(value) => {
-              setCurrency(value);
-              persistDraftSnapshot({ currency: value });
+              applyCurrencyChange(value);
             }}
           >
             <SelectTrigger>
@@ -1732,6 +2142,7 @@ export default function SaleForm({
             </SelectContent>
           </Select>
         </div>
+        ) : null}
 
         {extraFields}
 
@@ -1998,342 +2409,45 @@ export default function SaleForm({
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs
-            value={newCustomerTab}
-            onValueChange={(value) => {
+          <CustomerVehicleFormTabs
+            formData={newCustomer}
+            onFormDataChange={(nextCustomer) => {
+              setNewCustomer(nextCustomer);
+              persistDraftSnapshot({ newCustomer: nextCustomer });
+            }}
+            activeTab={newCustomerTab}
+            onActiveTabChange={(value) => {
               setNewCustomerTab(value);
               persistDraftSnapshot({ newCustomerTab: value });
             }}
-            className="space-y-2"
-          >
-            <TabsList className={`grid w-full grid-cols-2 ${newCustomerTone.tabsList}`}>
-              <TabsTrigger value="customer">
-                <User className="h-4 w-4 mr-2" />
-                Datos del Cliente
-              </TabsTrigger>
-              <TabsTrigger value="vehicle" disabled={!newCustomer.add_vehicle}>
-                <Car className="h-4 w-4 mr-2" />
-                Vehículo
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="customer" className={`space-y-3 mt-3 ${newCustomerTone.panel}`}>
-              <div>
-                <Label>Tipo de Cliente *</Label>
-                <Select
-                  value={newCustomer.customer_type}
-                  onValueChange={(v) => {
-                    const nextCustomer = { ...newCustomer, customer_type: v, tax_id: "" };
-                    setNewCustomer(nextCustomer);
-                    persistDraftSnapshot({ newCustomer: nextCustomer });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="natural">
-                      <span className="flex items-center gap-2">
-                        <User className="h-4 w-4" /> Persona Natural
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="empresa">
-                      <span className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" /> Empresa
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Nombres *</Label>
-                  <Input
-                    value={newCustomer.first_name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
-                    onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, first_name: e.target.value } })}
-                    placeholder="Juan Carlos"
-                  />
-                </div>
-                <div>
-                  <Label>Apellidos *</Label>
-                  <Input
-                    value={newCustomer.last_name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
-                    onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, last_name: e.target.value } })}
-                    placeholder="Pérez López"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>{newCustomer.customer_type === "natural" ? "Cédula" : "RUC *"}</Label>
-                <Input
-                  value={newCustomer.tax_id}
-                  onChange={(e) => setNewCustomer({
-                    ...newCustomer,
-                    tax_id: newCustomer.customer_type === "natural"
-                      ? formatCedula(e.target.value)
-                      : formatRUC(e.target.value),
-                  })}
-                  onBlur={(e) => persistDraftSnapshot({
-                    newCustomer: {
-                      ...newCustomer,
-                      tax_id: newCustomer.customer_type === "natural"
-                        ? formatCedula(e.target.value)
-                        : formatRUC(e.target.value),
-                    },
-                  })}
-                  placeholder={newCustomer.customer_type === "natural" ? "001-000000-0000A" : "J0000000000000"}
-                  required={isNewCustomerCompany}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {newCustomer.customer_type === "natural"
-                    ? "Formato: 001-000000-0000A"
-                    : "Formato: J0000000000000"}
-                </p>
-              </div>
-
-              <div>
-                <Label>Teléfono *</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={newCustomer.phone_prefix}
-                    onValueChange={(v) => {
-                      const nextCustomer = { ...newCustomer, phone_prefix: v };
-                      setNewCustomer(nextCustomer);
-                      persistDraftSnapshot({ newCustomer: nextCustomer });
-                    }}
-                  >
-                    <SelectTrigger className="w-28">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="+505">+505</SelectItem>
-                      <SelectItem value="+1">+1</SelectItem>
-                      <SelectItem value="+52">+52</SelectItem>
-                      <SelectItem value="+57">+57</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: formatPhone(e.target.value) })}
-                    onBlur={(e) => persistDraftSnapshot({
-                      newCustomer: { ...newCustomer, phone: formatPhone(e.target.value) },
-                    })}
-                    placeholder="0000-0000"
-                    className="flex-1"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Formato: +505-0000-0000</p>
-              </div>
-
-              <div>
-                <Label>Email <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                <Input
-                  type="email"
-                  value={newCustomer.email}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                  onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, email: e.target.value } })}
-                  placeholder="cliente@email.com"
-                />
-              </div>
-
-              <div>
-                <Label>Dirección <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                <Input
-                  value={newCustomer.address}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                  onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, address: e.target.value } })}
-                  placeholder="Dirección del cliente"
-                />
-              </div>
-
-              {canManageCreditLimit ? (
-                <div>
-                  <Label>Límite de Crédito (C$)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newCustomer.credit_limit}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, credit_limit: e.target.value })}
-                    onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, credit_limit: e.target.value } })}
-                    placeholder="0.00"
-                  />
-                </div>
-              ) : null}
-
-              <div className="flex items-center space-x-2 pt-2 border-t">
-                <Checkbox
-                  id="add-vehicle"
-                  checked={newCustomer.add_vehicle}
-                  onCheckedChange={(checked) => {
-                    const nextChecked = Boolean(checked);
-                    const nextTab = nextChecked ? "vehicle" : "customer";
-                    const nextCustomer = { ...newCustomer, add_vehicle: nextChecked };
-                    setNewCustomer(nextCustomer);
-                    if (nextChecked) {
-                      setNewCustomerTab("vehicle");
-                    }
-                    persistDraftSnapshot({ newCustomer: nextCustomer, newCustomerTab: nextTab });
-                  }}
-                />
-                <Label htmlFor="add-vehicle" className="cursor-pointer">
-                  {isNewCustomerCompany ? "Registrar vehículo de la empresa" : "Registrar vehículo del cliente"}
-                </Label>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="vehicle" className={`space-y-3 mt-3 ${newCustomerTone.panel}`}>
-              <div>
-                <Label>Placa *</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={newCustomer.plate_prefix}
-                    onValueChange={(v) => {
-                      const nextCustomer = { ...newCustomer, plate_prefix: v, plate_number: "" };
-                      setNewCustomer(nextCustomer);
-                      persistDraftSnapshot({ newCustomer: nextCustomer });
-                    }}
-                  >
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PLATE_PREFIXES.map(prefix => (
-                        <SelectItem key={prefix} value={prefix}>{prefix}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={newCustomer.plate_number}
-                    onChange={(e) => setNewCustomer({
-                      ...newCustomer,
-                      plate_number: formatPlateNumber(newCustomer.plate_prefix, e.target.value),
-                    })}
-                    onBlur={(e) => persistDraftSnapshot({
-                      newCustomer: {
-                        ...newCustomer,
-                        plate_number: formatPlateNumber(newCustomer.plate_prefix, e.target.value),
-                      },
-                    })}
-                    placeholder={newCustomer.plate_prefix === "M" ? "123 456" : "12345"}
-                    className="flex-1 font-mono"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {newCustomer.plate_prefix === "M"
-                    ? "Formato: M 123 456 (6 dígitos)"
-                    : `Formato: ${newCustomer.plate_prefix} 12345 (4-5 dígitos)`}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="saleform-use-vin-decoder"
-                  checked={useVinDecoder}
-                  onCheckedChange={(checked) => {
-                    const nextValue = Boolean(checked);
-                    setUseVinDecoder(nextValue);
-                    persistDraftSnapshot({ useVinDecoder: nextValue });
-                  }}
-                />
-                <Label htmlFor="saleform-use-vin-decoder">Usar decodificador VIN</Label>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_0.8fr_1.9fr] gap-4">
-                <div>
-                  <Label>Marca *</Label>
-                  <SearchableSelect
-                    value={newCustomer.brand}
-                    onChange={(v) => {
-                      const nextCustomer = { ...newCustomer, brand: v, year: "", model: "" };
-                      setNewCustomer(nextCustomer);
-                      persistDraftSnapshot({ newCustomer: nextCustomer });
-                    }}
-                    options={VEHICLE_CATALOG_BRANDS}
-                    placeholder="Seleccionar marca"
-                    searchPlaceholder="Buscar marca..."
-                  />
-                </div>
-                <div>
-                  <Label>Año *</Label>
-                  <SearchableSelect
-                    value={String(newCustomer.year || "")}
-                    onChange={(v) => {
-                      const nextCustomer = { ...newCustomer, year: v, model: "" };
-                      setNewCustomer(nextCustomer);
-                      persistDraftSnapshot({ newCustomer: nextCustomer });
-                    }}
-                    options={newCustomerYearOptions}
-                    placeholder="Seleccionar año"
-                    searchPlaceholder="Buscar año..."
-                    disabled={!newCustomer.brand}
-                  />
-                </div>
-                <div>
-                  <Label>Modelo *</Label>
-                  <SearchableSelect
-                    value={newCustomer.model}
-                    onChange={(v) => {
-                      const nextCustomer = { ...newCustomer, model: v };
-                      setNewCustomer(nextCustomer);
-                      persistDraftSnapshot({ newCustomer: nextCustomer });
-                    }}
-                    options={newCustomerModelOptions}
-                    placeholder="Seleccionar modelo"
-                    searchPlaceholder="Buscar modelo..."
-                    disabled={!newCustomer.brand || !newCustomer.year}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Color</Label>
-                <Input
-                  list="saleform-color-options"
-                  value={newCustomer.color}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, color: e.target.value })}
-                  onBlur={(e) => persistDraftSnapshot({ newCustomer: { ...newCustomer, color: e.target.value } })}
-                  placeholder="Escribe para sugerencias de color"
-                />
-                <datalist id="saleform-color-options">
-                  {VEHICLE_COLOR_SUGGESTIONS.map((color) => (
-                    <option key={color} value={color} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div>
-                <Label>CHASIS (VIN)</Label>
-                <Input
-                  value={newCustomer.chasis}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, chasis: formatChasis(e.target.value) })}
-                  onBlur={(e) => persistDraftSnapshot({
-                    newCustomer: { ...newCustomer, chasis: formatChasis(e.target.value) },
-                  })}
-                  placeholder="1HGBH41JXMN109186"
-                  className="font-mono"
-                  maxLength={17}
-                />
-                {useVinDecoder && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={decodeNewCustomerVin}
-                    disabled={isDecodingVin || newCustomer.chasis.length !== 17}
-                  >
-                    {isDecodingVin ? "Decodificando VIN..." : "Decodificar VIN"}
-                  </Button>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  17 caracteres alfanuméricos (sin I, O, Q, Ñ). {newCustomer.chasis.length}/17
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
+            canManageCreditLimit={canManageCreditLimit}
+            addVehicleLabel={isNewCustomerCompany ? "Registrar vehículo de la empresa" : "Registrar vehículo del cliente"}
+            useVinDecoder={useVinDecoder}
+            onUseVinDecoderChange={(value) => {
+              setUseVinDecoder(value);
+              persistDraftSnapshot({ useVinDecoder: value });
+            }}
+            isDecodingVin={isDecodingVin}
+            onDecodeVin={decodeNewCustomerVin}
+            yearOptions={newCustomerYearOptions}
+            modelOptions={newCustomerModelOptions}
+            platePrefixes={PLATE_PREFIXES}
+            vehicleBrands={VEHICLE_CATALOG_BRANDS}
+            colorSuggestions={VEHICLE_COLOR_SUGGESTIONS}
+            formatPhone={formatPhone}
+            formatCedula={formatCedula}
+            formatRUC={formatRUC}
+            formatChasis={formatChasis}
+            formatPlateNumber={formatPlateNumber}
+            rootClassName="space-y-2"
+            tabsListClassName={`grid w-full grid-cols-2 ${newCustomerTone.tabsList}`}
+            customerContentClassName={`space-y-3 mt-3 ${newCustomerTone.panel}`}
+            vehicleContentClassName={`space-y-3 mt-3 ${newCustomerTone.panel}`}
+            colorDatalistId="saleform-color-options"
+            useVinCheckboxId="saleform-use-vin-decoder"
+            persistOnChange
+            onFormDataBlur={(nextCustomer) => persistDraftSnapshot({ newCustomer: nextCustomer })}
+          />
 
           <Button onClick={createNewCustomer} className="w-full mt-3">
             {newCustomer.add_vehicle ? "Crear Cliente y Vehículo" : "Crear Cliente"}

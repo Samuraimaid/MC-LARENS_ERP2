@@ -12,10 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import SearchableSelect from "@/components/ui/searchable-select";
+import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
-import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import {
   getVehicleOptionsByBrandYear,
@@ -124,6 +124,7 @@ export function CustomersPage() {
   const [showDeleteVehicle, setShowDeleteVehicle] = useState(false);
   const [showVehiclesModal, setShowVehiclesModal] = useState(false);
   const [modalVehicles, setModalVehicles] = useState([]);
+  const [modalCustomer, setModalCustomer] = useState(null);
   const [showVehicleActionModal, setShowVehicleActionModal] = useState(false);
   const [actionVehicle, setActionVehicle] = useState(null);
   const [actionCustomer, setActionCustomer] = useState(null);
@@ -332,6 +333,23 @@ export function CustomersPage() {
     // open preview modal
     setWaPreviewMessage(text);
     setWaPreviewCustomer(customer);
+    setShowWaPreview(true);
+  };
+
+  const sendVehicleFollowup = (customer, vehicle) => {
+    const tplId = getTemplateForCustomer(customer.customer_id);
+    const tpl = waTemplates.find(t => t.id === tplId) || waTemplates[0];
+    const vehicleLabel = [vehicle.plate, vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' • ');
+    const vehicleContext = vehicle.vin ? `${vehicleLabel}\nVIN/Chasis: ${vehicle.vin}` : vehicleLabel;
+    let text = '';
+    if (tpl.id === 'custom') {
+      text = waCustomByCustomer[customer.customer_id] || `Hola ${customer.name || ''}, le escribo desde McLarenS Autoparts para dar seguimiento a su vehículo.`;
+    } else {
+      text = tpl.text.replace('{name}', customer.name || '').replace('{items}', '');
+    }
+    setWaPreviewMessage(`${text}\n\nVehículo relacionado:\n${vehicleContext}`.trim());
+    setWaPreviewCustomer(customer);
+    setShowVehiclesModal(false);
     setShowWaPreview(true);
   };
 
@@ -791,6 +809,13 @@ export function CustomersPage() {
     setShowVehicleActionModal(true);
   };
 
+  const openCustomerVehiclesModal = (customer) => {
+    const list = vehiclesByCustomer[customer.customer_id] || [];
+    setModalCustomer(customer);
+    setModalVehicles(list);
+    setShowVehiclesModal(true);
+  };
+
   const createSaleFromVehicle = (customer, vehicle) => {
     if (!canCreateSales) {
       toast.error("No tienes permiso para crear ventas");
@@ -894,296 +919,38 @@ export function CustomersPage() {
                 </DialogDescription>
               </DialogHeader>
               
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="customer">
-                    <User className="h-4 w-4 mr-2" />
-                    Datos del Cliente
-                  </TabsTrigger>
-                  <TabsTrigger value="vehicle" disabled={!formData.add_vehicle}>
-                    <Car className="h-4 w-4 mr-2" />
-                    Vehículo
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="customer" className="space-y-4 mt-4">
-                  {/* Customer Type */}
-                  <div>
-                    <Label>Tipo de Cliente *</Label>
-                    <Select 
-                      value={formData.customer_type} 
-                      onValueChange={(v) => setFormData({ ...formData, customer_type: v, tax_id: "" })}
-                    >
-                      <SelectTrigger data-testid="customer-type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="natural">
-                          <span className="flex items-center gap-2">
-                            <User className="h-4 w-4" /> Persona Natural
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="empresa">
-                          <span className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4" /> Empresa
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Names */}
-                  <div className="grid grid-cols-2 gap-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <Label>Nombres *</Label>
-                      <Input
-                        value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        placeholder="Juan Carlos"
-                        data-testid="first-name"
-                      />
-                    </div>
-                    <div>
-                      <Label>Apellidos *</Label>
-                      <Input
-                        value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        placeholder="Pérez López"
-                        data-testid="last-name"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tax ID */}
-                  <div>
-                    <Label>{formData.customer_type === "natural" ? "Cédula" : "RUC *"}</Label>
-                    <Input
-                      value={formData.tax_id}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        tax_id: formData.customer_type === "natural" 
-                          ? formatCedula(e.target.value) 
-                          : formatRUC(e.target.value)
-                      })}
-                      placeholder={formData.customer_type === "natural" ? "001-000000-0000A" : "J0000000000000"}
-                      data-testid="tax-id"
-                      required={formData.customer_type === "empresa"}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formData.customer_type === "natural" 
-                        ? "Formato: 001-000000-0000A" 
-                        : "Formato: J0000000000000"}
-                    </p>
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <Label>Teléfono *</Label>
-                    <div className="flex gap-2">
-                      <Select 
-                        value={formData.phone_prefix} 
-                        onValueChange={(v) => setFormData({ ...formData, phone_prefix: v })}
-                      >
-                        <SelectTrigger className="w-28">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+505">+505</SelectItem>
-                          <SelectItem value="+1">+1</SelectItem>
-                          <SelectItem value="+52">+52</SelectItem>
-                          <SelectItem value="+57">+57</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                        placeholder="0000-0000"
-                        className="flex-1"
-                        data-testid="phone"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Formato: +505-0000-0000</p>
-                  </div>
-
-                  {/* Email (optional) */}
-                  <div>
-                    <Label>Email <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="cliente@email.com"
-                    />
-                  </div>
-
-                  {/* Address (optional) */}
-                  <div>
-                    <Label>Dirección <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                    <Input
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="Dirección del cliente"
-                    />
-                  </div>
-
-                  {/* Credit Limit */}
-                  {canManageCreditLimit ? (
-                    <div>
-                      <Label>Límite de Crédito (C$)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.credit_limit}
-                        onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
-                        placeholder="0.00"
-                        data-testid="credit-limit"
-                      />
-                    </div>
-                  ) : null}
-
-                  {/* Add Vehicle Checkbox */}
-                  <div className="flex items-center space-x-2 pt-2 border-t">
-                    <Checkbox
-                      id="add-vehicle"
-                      checked={formData.add_vehicle}
-                      disabled={isEditing}
-                      onCheckedChange={(checked) => {
-                        if (isEditing) return;
-                        setFormData({ ...formData, add_vehicle: checked });
-                        if (checked) setActiveTab("vehicle");
-                      }}
-                    />
-                    <Label htmlFor="add-vehicle" className="cursor-pointer">
-                      Registrar vehículo del cliente
-                    </Label>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="vehicle" className="space-y-4 mt-4">
-                  {/* Plate */}
-                  <div>
-                    <Label>Placa *</Label>
-                    <div className="flex gap-2">
-                      <Select 
-                        value={formData.plate_prefix} 
-                        onValueChange={(v) => setFormData({ ...formData, plate_prefix: v, plate_number: "" })}
-                      >
-                        <SelectTrigger className="w-24" data-testid="plate-prefix">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PLATE_PREFIXES.map(prefix => (
-                            <SelectItem key={prefix} value={prefix}>{prefix}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={formData.plate_number}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          plate_number: formatPlateNumber(formData.plate_prefix, e.target.value)
-                        })}
-                        placeholder={formData.plate_prefix === "M" ? "123 456" : "12345"}
-                        className="flex-1 font-mono"
-                        data-testid="plate-number"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formData.plate_prefix === "M" 
-                        ? "Formato: M 123 456 (6 dígitos)" 
-                        : `Formato: ${formData.plate_prefix} 12345 (4-5 dígitos)`}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="use-vin-decoder-new-vehicle"
-                      checked={useVinDecoderNewVehicle}
-                      onCheckedChange={(checked) => setUseVinDecoderNewVehicle(Boolean(checked))}
-                    />
-                    <Label htmlFor="use-vin-decoder-new-vehicle">Usar decodificador VIN</Label>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_0.8fr_1.9fr] gap-4">
-                    <div>
-                      <Label>Marca *</Label>
-                      <SearchableSelect
-                        value={formData.brand}
-                        onChange={(v) => setFormData({ ...formData, brand: v, year: "", model: "" })}
-                        options={VEHICLE_CATALOG_BRANDS}
-                        placeholder="Seleccionar marca"
-                        searchPlaceholder="Buscar marca..."
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Año *</Label>
-                      <SearchableSelect
-                        value={String(formData.year || "")}
-                        onChange={(v) => setFormData({ ...formData, year: v, model: "" })}
-                        options={formYearOptions}
-                        placeholder="Seleccionar año"
-                        searchPlaceholder="Buscar año..."
-                        disabled={!formData.brand}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Modelo *</Label>
-                      <SearchableSelect
-                        value={formData.model}
-                        onChange={(v) => setFormData({ ...formData, model: v })}
-                        options={formBrandModelOptions}
-                        placeholder="Seleccionar modelo"
-                        searchPlaceholder="Buscar modelo..."
-                        disabled={!formData.brand || !formData.year}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Color</Label>
-                    <Input
-                      list="customers-color-options"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      placeholder="Escribe para sugerencias de color"
-                    />
-                    <datalist id="customers-color-options">
-                      {VEHICLE_COLOR_SUGGESTIONS.map((color) => (
-                        <option key={color} value={color} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  {/* Chasis */}
-                  <div>
-                    <Label>CHASIS (VIN)</Label>
-                    <Input
-                      value={formData.chasis}
-                      onChange={(e) => setFormData({ ...formData, chasis: formatChasis(e.target.value) })}
-                      placeholder="1HGBH41JXMN109186"
-                      className="font-mono"
-                      maxLength={17}
-                      data-testid="vehicle-chasis"
-                    />
-                    {useVinDecoderNewVehicle && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={decodeNewVehicleVin}
-                        disabled={isDecodingVinNewVehicle || formData.chasis.length !== 17}
-                      >
-                        {isDecodingVinNewVehicle ? "Decodificando VIN..." : "Decodificar VIN"}
-                      </Button>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      17 caracteres alfanuméricos (sin I, O, Q, Ñ). {formData.chasis.length}/17
-                    </p>
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <CustomerVehicleFormTabs
+                formData={formData}
+                onFormDataChange={setFormData}
+                activeTab={activeTab}
+                onActiveTabChange={setActiveTab}
+                canManageCreditLimit={canManageCreditLimit}
+                disableAddVehicle={isEditing}
+                addVehicleLabel="Registrar vehículo del cliente"
+                useVinDecoder={useVinDecoderNewVehicle}
+                onUseVinDecoderChange={setUseVinDecoderNewVehicle}
+                isDecodingVin={isDecodingVinNewVehicle}
+                onDecodeVin={decodeNewVehicleVin}
+                yearOptions={formYearOptions}
+                modelOptions={formBrandModelOptions}
+                platePrefixes={PLATE_PREFIXES}
+                vehicleBrands={VEHICLE_CATALOG_BRANDS}
+                colorSuggestions={VEHICLE_COLOR_SUGGESTIONS}
+                formatPhone={formatPhone}
+                formatCedula={formatCedula}
+                formatRUC={formatRUC}
+                formatChasis={formatChasis}
+                formatPlateNumber={formatPlateNumber}
+                customerTypeTestId="customer-type"
+                phoneTestId="phone"
+                creditLimitTestId="credit-limit"
+                platePrefixTestId="plate-prefix"
+                plateNumberTestId="plate-number"
+                vehicleChasisTestId="vehicle-chasis"
+                colorDatalistId="customers-color-options"
+                addVehicleCheckboxId="add-vehicle"
+                useVinCheckboxId="use-vin-decoder-new-vehicle"
+              />
 
               {isEditing && (
                 <div className="mt-4 space-y-4 border-t pt-4">
@@ -1512,92 +1279,114 @@ export function CustomersPage() {
         ) : filteredCustomers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">No se encontraron clientes</div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {filteredCustomers.map(customer => (
-              <Card key={customer.customer_id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div>
-                      <div className="text-lg font-semibold">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground">{customer.phone || '-'}</div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">{customer.tax_id || '-'}</div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-2 text-sm">{customer.email || '-'}</div>
-                  <div className="mb-2 text-sm text-muted-foreground">Última compra: {formatShortDate(customer.last_purchase_date)}</div>
-                  <div className="flex gap-2 flex-wrap mb-3">
-                    {(() => {
-                      const list = vehiclesByCustomer[customer.customer_id] || [];
-                      if (!list.length) return <div className="text-xs text-muted-foreground">Sin vehículos</div>;
-                      const maxShow = 4;
-                      return (
-                        <>
-                          {list.slice(0, maxShow).map(v => (
-                            <button key={v.vehicle_id} onClick={() => openVehicleActions(v, customer)} className="p-0 m-0">
-                              <Badge variant="outline" className="font-mono cursor-pointer text-lg py-1 px-2">{v.plate} • {v.brand} {v.model} {v.year ? `• ${v.year}` : ''}{v.color ? ` • ${v.color}` : ''}{v.vin ? ` • ${v.vin}` : ''}</Badge>
-                            </button>
-                          ))}
-                          {list.length > maxShow && (
-                            <Button variant="ghost" size="sm" onClick={() => { setModalVehicles(list); setShowVehiclesModal(true); }}>
-                              +{list.length - maxShow} más
-                            </Button>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Badge variant={customer.customer_type === "empresa" ? "default" : "secondary"}>
-                        {customer.customer_type === "empresa" ? (
-                          <><Building2 className="h-3 w-3 mr-1" /> Empresa</>
+          <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger xl:grid-cols-2">
+            {filteredCustomers.map(customer => {
+              const isCompany = customer.customer_type === "empresa";
+              const customerVehiclesCount = (vehiclesByCustomer[customer.customer_id] || []).length;
+              const cardTone = isCompany
+                ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
+                : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
+              const badgeTone = isCompany
+                ? "border-sky-200 bg-sky-100 text-sky-800"
+                : "border-emerald-200 bg-emerald-100 text-emerald-800";
+              const vehiclesCountTone = customerVehiclesCount === 0
+                ? "bg-slate-100 text-slate-700"
+                : isCompany
+                  ? "bg-sky-100 text-sky-800"
+                  : "bg-emerald-100 text-emerald-800";
+
+              return (
+              <Card key={customer.customer_id} className={`group h-full shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
+                <CardHeader className="gap-4 pb-4">
+                  <CardTitle className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="inline-flex items-center gap-2 text-lg font-semibold">
+                        {isCompany ? (
+                          <Building2 className="h-5 w-5 shrink-0 text-sky-700 icon-spring" />
                         ) : (
-                          <><User className="h-3 w-3 mr-1" /> Natural</>
+                          <User className="h-5 w-5 shrink-0 text-emerald-700 icon-spring" />
+                        )}
+                        <span className="truncate">{customer.name}</span>
+                      </div>
+                      <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-4 w-4 shrink-0 text-slate-500 icon-spring" />
+                        <span>{customer.phone || '-'}</span>
+                      </div>
+                      <div className="inline-flex items-start gap-2 text-sm text-muted-foreground">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 icon-spring" />
+                        <span className="break-words">{customer.address || '-'}</span>
+                      </div>
+                      <Badge variant="outline" className={`w-fit ${badgeTone}`}>
+                        {isCompany ? (
+                          <><Building2 className="mr-1 h-3 w-3 icon-spring" /> Empresa</>
+                        ) : (
+                          <><User className="mr-1 h-3 w-3 icon-spring" /> Persona natural</>
                         )}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-1">
-                                      <Select value={getTemplateForCustomer(customer.customer_id)} onValueChange={(v) => setTemplateForCustomer(customer.customer_id, v)}>
-                                        <SelectTrigger className="w-48 h-8 text-xs">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {waTemplates.map(t => (
-                                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <Button variant="outline" size="icon" title="Editar mensaje" onClick={() => editCustomMessageForCustomer(customer.customer_id)}>
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                    {user?.role !== "bodegas" && (
-                                      <Button variant="outline" size="icon" title="Contactar por WhatsApp" onClick={() => sendWhatsAppWithTemplate(customer)}>
-                                        <Phone className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                    <Button variant="ghost" size="icon" title="Editar cliente" onClick={() => openEditCustomer(customer)} disabled={!canEditCustomers}>
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="destructive" size="icon" title="Eliminar cliente" disabled={!canDeleteCustomers} onClick={async () => {
-                                      const motivo = prompt('Motivo para eliminar el cliente (obligatorio):', 'Cliente inactivo');
-                                      if (motivo === null) return;
-                                      if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
-                                      try {
-                                        await axios.post(`${API}/approvals`, { type: 'delete_customer', payload: { customer_id: customer.customer_id }, reason: motivo.trim() }, { withCredentials: true });
-                                        toast.success('Solicitud de eliminación enviada');
-                                      } catch (e) { toast.error(e.response?.data?.detail || 'Error al solicitar eliminación'); }
-                                    }}>
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
+                    <div className="pt-1 text-right text-xs text-muted-foreground">{customer.tax_id || '-'}</div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex h-full flex-col gap-3">
+                  <div className="inline-flex items-start gap-2 text-sm break-words">
+                    <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 icon-spring" />
+                    <span>{customer.email || '-'}</span>
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <CalendarDays className="h-4 w-4 shrink-0 text-slate-500 icon-spring" />
+                    <span>Última compra: {formatShortDate(customer.last_purchase_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-3">
+                    <button type="button" className="inline-flex items-center gap-2 text-left text-sm font-medium text-slate-700 ui-interactive" onClick={() => openCustomerVehiclesModal(customer)}>
+                      <CarFront className={`h-4 w-4 shrink-0 icon-spring ${isCompany ? 'text-sky-700' : 'text-emerald-700'}`} />
+                      <span className="underline decoration-dotted underline-offset-4">Vehículos registrados</span>
+                    </button>
+                    <div className={`rounded-full px-3 py-1 text-sm font-semibold ${vehiclesCountTone}`}>
+                      {customerVehiclesCount}
+                    </div>
+                  </div>
+                  <div className="mt-auto flex flex-col gap-3 pt-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
+                        <Select value={getTemplateForCustomer(customer.customer_id)} onValueChange={(v) => setTemplateForCustomer(customer.customer_id, v)}>
+                          <SelectTrigger className="h-8 min-w-[180px] flex-1 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {waTemplates.map(t => (
+                              <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="icon" title="Editar mensaje" className="ui-interactive" onClick={() => editCustomMessageForCustomer(customer.customer_id)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {user?.role !== "bodegas" && (
+                        <Button variant="outline" size="icon" title="Contactar por WhatsApp" className="ui-interactive" onClick={() => sendWhatsAppWithTemplate(customer)}>
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" title="Editar cliente" className="ui-interactive" onClick={() => openEditCustomer(customer)} disabled={!canEditCustomers}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="destructive" size="icon" title="Eliminar cliente" className="ui-interactive" disabled={!canDeleteCustomers} onClick={async () => {
+                        const motivo = prompt('Motivo para eliminar el cliente (obligatorio):', 'Cliente inactivo');
+                        if (motivo === null) return;
+                        if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
+                        try {
+                          await axios.post(`${API}/approvals`, { type: 'delete_customer', payload: { customer_id: customer.customer_id }, reason: motivo.trim() }, { withCredentials: true });
+                          toast.success('Solicitud de eliminación enviada');
+                        } catch (e) { toast.error(e.response?.data?.detail || 'Error al solicitar eliminación'); }
+                      }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1606,15 +1395,41 @@ export function CustomersPage() {
       <Dialog open={showVehiclesModal} onOpenChange={setShowVehiclesModal}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Vehículos del cliente</DialogTitle>
+            <DialogTitle>Vehículos registrados de {modalCustomer?.name || 'este cliente'}</DialogTitle>
+            <DialogDescription>
+              Revisa el detalle del vehículo y lanza acciones rápidas con este cliente y vehículo.
+            </DialogDescription>
           </DialogHeader>
+          <div className="grid gap-2 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 text-xs text-slate-700 md:grid-cols-2">
+            <div>
+              <span className="font-medium">Última compra:</span> {formatShortDate(modalCustomer?.last_purchase_date)}
+            </div>
+            <div>
+              <span className="font-medium">Notas:</span> {String(modalCustomer?.notes || modalCustomer?.note || '-').trim() || '-'}
+            </div>
+          </div>
           <div className="space-y-2">
-            {modalVehicles.map(v => (
-              <Card key={v.vehicle_id}>
-                <CardContent className="flex items-center justify-between">
+            {modalVehicles.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-sm text-muted-foreground">
+                Este cliente no tiene vehículos registrados.
+              </div>
+            ) : modalVehicles.map(v => (
+              <Card key={v.vehicle_id} className="border-slate-200/80 bg-white/90 shadow-sm">
+                <CardContent className="space-y-3 py-4">
                   <div>
                     <div className="font-medium">{v.plate} — {v.brand} {v.model}</div>
-                    <div className="text-xs text-muted-foreground">{v.year} • {v.color || '-'} • {v.vin || '-'}</div>
+                    <div className="text-xs text-muted-foreground">{v.year || '-'} • {v.color || '-'} • {v.vin || '-'}</div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="bg-green-600 text-white hover:bg-green-700 ui-interactive" onClick={() => createSaleFromVehicle(modalCustomer, v)} disabled={!canCreateSales}>
+                      Facturar con este vehículo
+                    </Button>
+                    <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700 ui-interactive" onClick={() => createQuotationFromVehicle(modalCustomer, v)} disabled={!canCreateQuotations}>
+                      Crear cotización
+                    </Button>
+                    <Button size="sm" variant="outline" className="ui-interactive" onClick={() => sendVehicleFollowup(modalCustomer, v)}>
+                      Mensaje de seguimiento
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -422,7 +422,13 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
 
     @router.post("/inventory")
     async def update_inventory(inv_data: InventoryUpdate, request: Request):
-        user = await require_roles(request, ["gerencia", "supervisor", "bodegas"])
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+
+        if user.role == "bodegas":
+            raise HTTPException(
+                status_code=403,
+                detail="Usuarios de bodega solo pueden agregar stock mediante el flujo de ingreso",
+            )
 
         existing = await db.inventory.find_one(
             {"product_id": inv_data.product_id, "warehouse_id": inv_data.warehouse_id}
@@ -470,6 +476,77 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
 
         return doc
 
+    @router.post("/inventory/add-stock")
+    async def add_inventory_stock(
+        request: Request,
+        product_id: str,
+        warehouse_id: str,
+        quantity: int,
+        min_stock: Optional[int] = None,
+    ):
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+
+        try:
+            qty_to_add = int(quantity)
+        except Exception:
+            qty_to_add = 0
+        if qty_to_add <= 0:
+            raise HTTPException(status_code=400, detail="La cantidad a agregar debe ser mayor a cero")
+
+        if user.role == "bodegas":
+            if not user.warehouse_id:
+                raise HTTPException(status_code=400, detail="Usuario de bodega sin bodega asignada")
+            if warehouse_id != user.warehouse_id:
+                raise HTTPException(status_code=403, detail="Solo puedes agregar stock a tu bodega asignada")
+
+        inventory_filter = {"product_id": product_id, "warehouse_id": warehouse_id}
+        existing = await db.inventory.find_one(inventory_filter)
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        if existing:
+            update_doc: Dict[str, Any] = {
+                "$inc": {"quantity": qty_to_add},
+                "$set": {"last_updated": now_iso},
+            }
+            if min_stock is not None:
+                update_doc["$set"]["min_stock"] = max(1, int(min_stock))
+            await db.inventory.update_one(inventory_filter, update_doc)
+            inventory_id = existing.get("inventory_id")
+            updated_quantity = int(existing.get("quantity") or 0) + qty_to_add
+        else:
+            inventory_id = f"inv_{uuid.uuid4().hex[:8]}"
+            initial_min_stock = max(1, int(min_stock or 5))
+            updated_quantity = qty_to_add
+            await db.inventory.insert_one(
+                {
+                    "inventory_id": inventory_id,
+                    "product_id": product_id,
+                    "warehouse_id": warehouse_id,
+                    "quantity": updated_quantity,
+                    "min_stock": initial_min_stock,
+                    "last_updated": now_iso,
+                }
+            )
+
+        await audit_service.log_inventory_movement(
+            product_id=product_id,
+            warehouse_id=warehouse_id,
+            quantity_change=qty_to_add,
+            reason="manual_add_stock",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=inventory_id,
+            metadata={"min_stock": min_stock},
+        )
+
+        return {
+            "inventory_id": inventory_id,
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "quantity": updated_quantity,
+            "added": qty_to_add,
+        }
+
     @router.post("/inventory/transfer")
     async def transfer_inventory(
         request: Request,
@@ -478,7 +555,7 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
         to_warehouse: str,
         quantity: int,
     ):
-        user = await require_roles(request, ["gerencia", "supervisor", "bodegas"])
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
 
         if user.role == "bodegas":
             if not user.warehouse_id:

@@ -1,5 +1,22 @@
 # Frontend Modernization Status
 
+Actualizado: 2026-05-05
+
+## Actualizacion 2026-05-05
+
+- Se implemento navegacion movil fija para workbench con `BottomNav` y deteccion de dispositivo/orientacion mediante `useDevice`.
+- Se modernizo el header principal para mostrar usuario, rol y sucursal en una sola linea de contexto operativo.
+- Se unifico y reutilizo formulario cliente/vehiculo en un componente dedicado (`CustomerVehicleFormTabs`) para reducir duplicacion.
+- Se ajusto visual de tarjetas de Paso 3 y Paso 4 en ventas para alinear stock y precios segun referencia visual.
+- En Paso 4 se elimino la fila de "otras tiendas" y tambien su logica interna asociada para mantener el bloque limpio.
+- Se introdujo script de carga de datos Managua (`scripts/seed_managua_customers_vehicles.py`) para poblar clientes y vehiculos de prueba.
+- Se reforzo consistencia de navegacion y layout en vistas de ventas, inventario, clientes, login, cotizaciones, vehiculos, notificaciones y workbench.
+
+Validacion aplicada hoy:
+
+- Diagnosticos limpios para `frontend/src/components/sales/SaleForm.jsx`.
+- Rebuild de frontend ejecutado con `docker compose up -d --build frontend`.
+
 Actualizado: 2026-05-04
 
 ## Completado

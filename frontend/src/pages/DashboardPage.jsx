@@ -111,8 +111,11 @@ export function DashboardPage() {
   const seedData = async () => {
     setSeeding(true);
     try {
-      await axios.post(`${API}/seed`, {}, { withCredentials: true });
-      toast.success("Datos de prueba creados exitosamente");
+      const response = await axios.post(`${API}/seed`, {}, { withCredentials: true });
+      const seeded = response?.data?.seeded || {};
+      const customers = seeded.customers || 0;
+      const vehicles = seeded.vehicles || 0;
+      toast.success(`Datos de prueba creados: ${customers} clientes y ${vehicles} vehiculos`);
       fetchStats();
     } catch {
       toast.error("Error al crear datos de prueba");

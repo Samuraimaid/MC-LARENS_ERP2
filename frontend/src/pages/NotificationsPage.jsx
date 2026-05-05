@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { FollowupsPage } from "./FollowupsPage";
+import { ApprovalsPage } from "./ApprovalsPage";
 
 export function NotificationsPage() {
   const [notes, setNotes] = useState([]);
   const [processingAction, setProcessingAction] = useState("");
+  const [sectionTab, setSectionTab] = useState("notifications");
   const navigate = useNavigate();
 
   useEffect(() => { fetchNotes(); }, []);
@@ -89,14 +93,14 @@ export function NotificationsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Notificaciones</h1>
-          <p className="text-muted-foreground">Centro de notificaciones</p>
-        </div>
-      </div>
+      <Tabs value={sectionTab} onValueChange={setSectionTab} className="space-y-3">
+        <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+          <TabsTrigger value="notifications" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Notificaciones</TabsTrigger>
+          <TabsTrigger value="followups" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Seguimientos</TabsTrigger>
+          <TabsTrigger value="approvals" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Aprobaciones</TabsTrigger>
+        </TabsList>
 
-      <div className="space-y-3">
+        <TabsContent value="notifications" className="space-y-3">
         {notes.length === 0 ? (
           <div className="text-muted-foreground">No hay notificaciones</div>
         ) : notes.map(n => {
@@ -148,7 +152,20 @@ export function NotificationsPage() {
           </Card>
           );
         })}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="followups" className="mt-0">
+          <div className="rounded-md border bg-background p-1">
+            <FollowupsPage />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="approvals" className="mt-0">
+          <div className="rounded-md border bg-background p-1">
+            <ApprovalsPage />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

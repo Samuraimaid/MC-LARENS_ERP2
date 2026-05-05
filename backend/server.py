@@ -390,6 +390,8 @@ ROLES = {
     "supervisor": {"label": "Supervisor", "color": "blue"},
     "cajero": {"label": "Cajero", "color": "emerald"},
     "ventas": {"label": "Ventas", "color": "green"},
+    "jefe_vendedores": {"label": "Jefe de Vendedores", "color": "teal"},
+    "jefe_tienda": {"label": "Jefe de Tienda", "color": "cyan"},
     "electrico": {"label": "Eléctrico", "color": "indigo"},
     "polarizador": {"label": "Polarizador", "color": "pink"},
     "transporte": {"label": "Transporte", "color": "orange"},
@@ -421,6 +423,8 @@ BRANCH_SERVICE_POLICY_DEFAULTS: Dict[str, Dict[str, Any]] = {
 
 ROLE_EQUIVALENCE: Dict[str, str] = {
     "recursos_humanos": "gerencia",
+    "jefe_vendedores": "supervisor",
+    "jefe_tienda": "supervisor",
 }
 
 ROLE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{2,39}$")
@@ -533,22 +537,22 @@ PERMISSIONS_CATALOG: Dict[str, Dict[str, Any]] = {
 
 FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "dashboard": ["all"],
-    "notifications": ["gerencia", "supervisor", "ventas", "cajero"],
+    "notifications": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "tutorials": ["all"],
-    "sales": ["gerencia", "supervisor", "ventas", "cajero"],
-    "quotations": ["gerencia", "supervisor", "ventas", "cajero"],
-    "credits": ["gerencia", "supervisor", "ventas", "cajero"],
-    "returns": ["gerencia", "supervisor", "ventas", "cajero"],
+    "sales": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "quotations": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "credits": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "returns": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "approvals": ["gerencia", "supervisor"],
-    "customers": ["gerencia", "supervisor", "ventas", "cajero"],
-    "vehicles": ["gerencia", "supervisor", "ventas", "cajero", "instalaciones"],
-    "followups": ["gerencia", "supervisor", "ventas", "cajero"],
-    "catalog": ["gerencia", "supervisor", "ventas"],
-    "samples": ["gerencia", "supervisor", "ventas"],
-    "inventory": ["gerencia", "supervisor", "bodegas"],
-    "dispatch": ["gerencia", "supervisor", "bodegas"],
-    "warehouses": ["gerencia", "supervisor"],
-    "promotions": ["gerencia", "supervisor"],
+    "customers": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "vehicles": ["gerencia", "supervisor", "ventas", "cajero", "instalaciones", "jefe_vendedores", "jefe_tienda"],
+    "followups": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "catalog": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
+    "samples": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
+    "inventory": ["gerencia", "supervisor", "bodegas", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
+    "dispatch": ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
+    "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
+    "promotions": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
     "work_orders": ["gerencia", "supervisor", "instalaciones"],
     "quality_control": ["gerencia", "supervisor"],
     "kds": ["all"],
@@ -556,7 +560,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "calendar": ["gerencia", "supervisor", "instalaciones"],
     "tint_orders": ["gerencia", "supervisor", "instalaciones"],
     "warranties": ["gerencia", "supervisor", "instalaciones"],
-    "reports": ["gerencia", "supervisor"],
+    "reports": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
     "branches": ["gerencia"],
     "human_resources": ["gerencia", "recursos_humanos", "supervisor"],
     "users": ["gerencia"],
@@ -565,7 +569,10 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
 }
 
 ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
+    "ventas": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
     "cajero": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
+    "jefe_vendedores": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "catalog", "samples"},
+    "jefe_tienda": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "inventory", "dispatch", "catalog", "samples", "promotions"},
     "bodegas": {"inventory", "dispatch"},
 }
 
@@ -2191,6 +2198,105 @@ async def seed_default_pin_user() -> None:
             logger.info(
                 f"Seeded test PIN user for role {role_key} ({test_email}) with attendance PIN {attendance_pin} and login PIN {login_pin}"
             )
+
+        # Seed one humanized leader per branch for each requested role.
+        branch_docs = await db.branches.find({}, {"_id": 0, "branch_id": 1, "name": 1}).to_list(100)
+        if not branch_docs:
+            branch_docs = [
+                {"branch_id": "branch_main", "name": "Mundo de Accesorios"},
+                {"branch_id": "branch_north", "name": "TopCar El Calvario"},
+                {"branch_id": "branch_south", "name": "TopCar La Tigre"},
+            ]
+
+        leader_templates = {
+            "jefe_vendedores": [
+                "Carlos Mena",
+                "Andrea Ruiz",
+                "Mauricio Pineda",
+                "Laura Brenes",
+            ],
+            "jefe_tienda": [
+                "Patricia Rivas",
+                "Miguel Larios",
+                "Daniela Solis",
+                "Roberto Palma",
+            ],
+        }
+
+        for role_key, names in leader_templates.items():
+            for idx, branch in enumerate(branch_docs):
+                branch_id = str(branch.get("branch_id") or "").strip()
+                if not branch_id:
+                    continue
+                branch_slug = re.sub(r"[^a-z0-9]+", "_", branch_id.lower()).strip("_") or "branch"
+                display_name = names[idx % len(names)]
+                attendance_pin = f"{(8400 + idx + (100 if role_key == 'jefe_tienda' else 0)) % 10000:04d}"
+                login_pin = f"{(84000000 + idx + (1000000 if role_key == 'jefe_tienda' else 0)) % 100000000:08d}"
+                email = f"{role_key}_{branch_slug}@local"
+
+                existing = await db.users.find_one(
+                    {
+                        "$or": [
+                            {"email": email},
+                            {"role": role_key, "branch_id": branch_id},
+                        ]
+                    },
+                    {"_id": 0},
+                )
+
+                leader_doc: Dict[str, Any] = {
+                    "name": display_name,
+                    "role": role_key,
+                    "branch_id": branch_id,
+                    "email": email,
+                    "is_active": True,
+                    "is_pin_user": True,
+                    "failed_pin_attempts": 0,
+                    "pin_lockout_until": None,
+                }
+
+                if existing:
+                    updates = dict(leader_doc)
+                    if not verify_pin_hash(attendance_pin, get_attendance_pin_hash(existing)):
+                        updates["attendance_pin_hash"] = hash_pin(attendance_pin)
+                        updates["attendance_pin_index"] = compute_pin_index(attendance_pin)
+                        updates["attendance_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
+                        updates["kiosk_pin_plain"] = attendance_pin
+                        updates["pin_hash"] = updates["attendance_pin_hash"]
+                        updates["pin_index"] = updates["attendance_pin_index"]
+                        updates["pin_last_set_at"] = updates["attendance_pin_last_set_at"]
+                    if not verify_pin_hash(login_pin, get_login_pin_hash(existing)):
+                        updates["login_pin_hash"] = hash_pin(login_pin)
+                        updates["login_pin_index"] = compute_pin_index(login_pin)
+                        updates["login_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
+
+                    await db.users.update_one({"user_id": existing.get("user_id")}, {"$set": updates})
+                    continue
+
+                now_iso = datetime.now(timezone.utc).isoformat()
+                await db.users.insert_one(
+                    {
+                        "user_id": f"user_{uuid.uuid4().hex[:10]}",
+                        **leader_doc,
+                        "created_at": now_iso,
+                        "attendance_pin_hash": hash_pin(attendance_pin),
+                        "attendance_pin_index": compute_pin_index(attendance_pin),
+                        "attendance_pin_last_set_at": now_iso,
+                        "kiosk_pin_plain": attendance_pin,
+                        "login_pin_hash": hash_pin(login_pin),
+                        "login_pin_index": compute_pin_index(login_pin),
+                        "login_pin_last_set_at": now_iso,
+                        "pin_hash": hash_pin(attendance_pin),
+                        "pin_index": compute_pin_index(attendance_pin),
+                        "pin_last_set_at": now_iso,
+                    }
+                )
+                logger.info(
+                    "Seeded branch leader user role=%s branch=%s email=%s",
+                    role_key,
+                    branch_id,
+                    email,
+                )
     except Exception:
         logger.exception("Failed to seed test PIN users for roles")
 
@@ -3621,14 +3727,28 @@ async def get_products(
         # Keep `price` field pointing to precio1 for UI compatibility (catalog shows precio1)
         product["price"] = product.get("precio1", base_price)
 
+        raw_low_stock_threshold = product.get("low_stock_threshold", 5)
+        try:
+            normalized_low_stock_threshold = int(float(raw_low_stock_threshold))
+        except Exception:
+            normalized_low_stock_threshold = 5
+        product["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
+
     return products
 
 
 @api_router.post("/products")
 async def create_product(product_data: ProductCreate, request: Request):
-    await require_roles(request, ["gerencia", "supervisor", "bodegas"])
+    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
     product = Product(**product_data.model_dump())
     doc = product.model_dump()
+
+    raw_initial_stock = doc.pop("initial_stock", 0)
+    raw_initial_warehouse_id = doc.pop("initial_warehouse_id", None)
+    try:
+        initial_stock = max(0, int(float(raw_initial_stock or 0)))
+    except Exception:
+        initial_stock = 0
     # Ensure created_at exists and is ISO string
     created_at_val = doc.get("created_at")
     if not created_at_val:
@@ -3675,7 +3795,57 @@ async def create_product(product_data: ProductCreate, request: Request):
     doc["precio_vip"] = round(base_price_new * 0.9, 2)
     doc["price"] = doc["precio1"]
 
+    raw_low_stock_threshold = doc.get("low_stock_threshold", 5)
+    try:
+        normalized_low_stock_threshold = int(float(raw_low_stock_threshold))
+    except Exception:
+        normalized_low_stock_threshold = 5
+    doc["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
+
     await db.products.insert_one(doc)
+
+    if initial_stock > 0:
+        warehouse_id = str(raw_initial_warehouse_id or user.warehouse_id or "").strip()
+        if not warehouse_id:
+            fallback = await db.warehouses.find_one({}, {"_id": 0, "warehouse_id": 1})
+            warehouse_id = str((fallback or {}).get("warehouse_id") or "")
+
+        if warehouse_id:
+            inv_filter = {"product_id": doc["product_id"], "warehouse_id": warehouse_id}
+            existing_inventory = await db.inventory.find_one(inv_filter, {"_id": 0, "inventory_id": 1})
+            if existing_inventory:
+                await db.inventory.update_one(
+                    inv_filter,
+                    {
+                        "$inc": {"quantity": int(initial_stock)},
+                        "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
+                    },
+                )
+                inventory_id = existing_inventory.get("inventory_id")
+            else:
+                inventory_id = f"inv_{uuid.uuid4().hex[:8]}"
+                await db.inventory.insert_one(
+                    {
+                        "inventory_id": inventory_id,
+                        "product_id": doc["product_id"],
+                        "warehouse_id": warehouse_id,
+                        "quantity": int(initial_stock),
+                        "min_stock": int(doc.get("low_stock_threshold") or 5),
+                        "last_updated": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+
+            await audit_service.log_inventory_movement(
+                product_id=doc["product_id"],
+                warehouse_id=warehouse_id,
+                quantity_change=int(initial_stock),
+                reason="initial_stock_product_create",
+                actor=user,
+                branch_id=user.branch_id,
+                reference_id=inventory_id,
+                metadata={"sku": doc.get("sku")},
+            )
+
     # Return authoritative stored document when possible
     stored = await db.products.find_one({"product_id": doc["product_id"]}, {"_id": 0})
     if not stored:
@@ -3714,6 +3884,13 @@ async def get_product(product_id: str, request: Request):
 
     product["price"] = product.get("precio1", base_price)
 
+    raw_low_stock_threshold = product.get("low_stock_threshold", 5)
+    try:
+        normalized_low_stock_threshold = int(float(raw_low_stock_threshold))
+    except Exception:
+        normalized_low_stock_threshold = 5
+    product["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
+
     return product
 
 
@@ -3728,6 +3905,12 @@ async def update_product(product_id: str, updates: Dict[str, Any], request: Requ
         updates["price"] = updates["precio1"]
     if "price" in updates and "precio1" not in updates:
         updates["precio1"] = updates["price"]
+
+    if "low_stock_threshold" in updates:
+        try:
+            updates["low_stock_threshold"] = max(1, int(float(updates.get("low_stock_threshold", 5))))
+        except Exception:
+            updates["low_stock_threshold"] = 5
 
     before = await db.products.find_one({"product_id": product_id}, {"_id": 0})
     result = await db.products.update_one({"product_id": product_id}, {"$set": updates})
@@ -5002,10 +5185,11 @@ async def generate_quotation_id():
 @api_router.get("/quotations")
 async def get_quotations(request: Request, status: Optional[str] = None):
     user = await require_auth(request)
+    effective_role = resolve_effective_role(user.role)
     query: dict[str, Any] = {}
     if status:
         query["status"] = status
-    if user.role in {"ventas", "cajero"}:
+    if effective_role in {"ventas", "cajero"}:
         query["salesperson_id"] = user.user_id
     quotations = await db.quotations.find(query).sort("created_at", -1).to_list(500)
     for quotation in quotations:
@@ -5157,15 +5341,17 @@ def build_sales_visibility_query(user: User) -> Dict[str, Any]:
     - supervisor: only sales from their branch
     - gerencia: all branches
     """
-    if user.role == "gerencia":
+    effective_role = resolve_effective_role(user.role)
+
+    if effective_role == "gerencia":
         return {}
 
-    if user.role == "supervisor":
+    if effective_role == "supervisor":
         if user.branch_id:
             return {"branch_id": user.branch_id}
         return {"branch_id": "__no_branch__"}
 
-    if user.role in {"ventas", "cajero"}:
+    if effective_role in {"ventas", "cajero"}:
         return {
             "$or": [
                 {"salesperson_id": user.user_id},
@@ -5188,15 +5374,17 @@ def merge_queries(base: Dict[str, Any], extra: Dict[str, Any]) -> Dict[str, Any]
 
 
 def can_access_sale_for_user(user: User, sale: Dict[str, Any]) -> bool:
-    if user.role == "gerencia":
+    effective_role = resolve_effective_role(user.role)
+
+    if effective_role == "gerencia":
         return True
 
-    if user.role == "supervisor":
+    if effective_role == "supervisor":
         if not user.branch_id:
             return False
         return sale.get("branch_id") == user.branch_id
 
-    if user.role in {"ventas", "cajero"}:
+    if effective_role in {"ventas", "cajero"}:
         owner_ids = {
             sale.get("salesperson_id"),
             sale.get("seller_id"),
@@ -5216,15 +5404,17 @@ async def get_visible_sale_ids_for_user(user: User, limit: int = 5000) -> List[s
 
 
 async def build_work_order_visibility_query(user: User) -> Dict[str, Any]:
-    if user.role == "gerencia":
+    effective_role = resolve_effective_role(user.role)
+
+    if effective_role == "gerencia":
         return {}
 
-    if user.role == "supervisor":
+    if effective_role == "supervisor":
         if user.branch_id:
             return {"branch_id": user.branch_id}
         return {"branch_id": "__no_branch__"}
 
-    if user.role in {"ventas", "cajero"}:
+    if effective_role in {"ventas", "cajero"}:
         visible_sale_ids = await get_visible_sale_ids_for_user(user)
         seller_filters: List[Dict[str, Any]] = [{"created_by": user.user_id}]
         if visible_sale_ids:
@@ -6441,7 +6631,8 @@ async def list_cashier_invoices(
     branch_id: Optional[str] = None,
     limit: int = 200,
 ):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_roles(request, ["gerencia", "supervisor", "cajero", "ventas", "jefe_vendedores", "jefe_tienda"])
+    effective_role = resolve_effective_role(user.role)
 
     tab_value = str(tab or "abiertas").strip().lower()
     tab_aliases = {
@@ -6459,8 +6650,14 @@ async def list_cashier_invoices(
     safe_limit = max(1, min(int(limit or 200), 500))
 
     query: Dict[str, Any] = {}
-    if user.role in {"supervisor", "cajero"}:
+    if effective_role == "supervisor":
         query["branch_id"] = str(user.branch_id or "")
+    elif effective_role in {"ventas", "cajero"}:
+        query["$or"] = [
+            {"salesperson_id": user.user_id},
+            {"seller_id": user.user_id},
+            {"created_by": user.user_id},
+        ]
     elif branch_id:
         query["branch_id"] = str(branch_id)
     else:
@@ -6477,11 +6674,17 @@ async def list_cashier_invoices(
 
     search_value = str(search or "").strip()
     if search_value:
-        query["$or"] = [
-            {"invoice_number": {"$regex": search_value, "$options": "i"}},
-            {"customer_name": {"$regex": search_value, "$options": "i"}},
-            {"sale_id": {"$regex": search_value, "$options": "i"}},
-        ]
+        search_filter = {
+            "$or": [
+                {"invoice_number": {"$regex": search_value, "$options": "i"}},
+                {"customer_name": {"$regex": search_value, "$options": "i"}},
+                {"sale_id": {"$regex": search_value, "$options": "i"}},
+            ]
+        }
+        if "$or" in query:
+            query = {"$and": [query, search_filter]}
+        else:
+            query["$or"] = search_filter["$or"]
 
     projection = {
         "_id": 0,
@@ -10792,114 +10995,207 @@ async def seed_data(request: Request):
                     upsert=True,
                 )
 
-    # Customers
-    customers = [
-        {
-            "customer_id": "cust_001",
-            "name": "Juan Pérez",
-            "email": "juan@email.com",
-            "phone": "555-1111",
-            "tax_id": "12345678",
-            "address": "Calle 1 #123",
-            "credit_limit": 5000,
-            "credit_balance": 0,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "customer_id": "cust_002",
-            "name": "María García",
-            "email": "maria@email.com",
-            "phone": "555-2222",
-            "tax_id": "87654321",
-            "address": "Av. 2 #456",
-            "credit_limit": 3000,
-            "credit_balance": 0,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "customer_id": "cust_003",
-            "name": "Taller Mecánico ABC",
-            "email": "taller@abc.com",
-            "phone": "555-3333",
-            "tax_id": "11223344",
-            "address": "Zona Industrial",
-            "credit_limit": 10000,
-            "credit_balance": 0,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
+    # Customers & Vehicles test dataset for Dashboard "Cargar Datos Prueba"
+    # Requested behavior: clean previous customers/vehicles and rebuild complete sample set.
+    deleted_vehicles = await db.vehicles.delete_many({})
+    deleted_customers = await db.customers.delete_many({})
+
+    def _phone(prefix: str, idx: int) -> str:
+        return f"{prefix}{(idx % 90) + 10:02d}-{((idx * 137) % 10000):04d}"
+
+    def _plate(seed: int) -> str:
+        left = 100 + (seed % 900)
+        right = 100 + ((seed * 7) % 900)
+        return f"M {left:03d} {right:03d}"
+
+    def _chasis(seed: str) -> str:
+        # 17-character VIN-safe string (avoids I/O/Q by using UUID hex)
+        return uuid.uuid5(uuid.NAMESPACE_DNS, seed).hex.upper()[:17]
+
+    natural_rows = [
+        ("Juan Carlos", "Perez", "juan.perez88@example.com", "Barrio Altagracia, Managua"),
+        ("Maria Fernanda", "Lopez", "maria.lopez88@example.com", "Colonia Centroamerica, Managua"),
+        ("Luis Alberto", "Gonzalez", "luis.gonzalez88@example.com", "Villa Fontana, Managua"),
+        ("Ana Lucia", "Martinez", "ana.martinez88@example.com", "Bello Horizonte, Managua"),
+        ("Carlos Enrique", "Ruiz", "carlos.ruiz88@example.com", "Carretera a Masaya, km 8, Managua"),
+        ("Sofia Elena", "Castillo", "sofia.castillo88@example.com", "Reparto San Juan, Managua"),
+        ("Pedro Jose", "Torres", "pedro.torres88@example.com", "Altamira, Managua"),
+        ("Adriana Maria", "Mora", "adriana.mora88@example.com", "Las Colinas, Managua"),
+        ("Miguel Angel", "Rios", "miguel.rios88@example.com", "Ciudad Jardin, Managua"),
+        ("Rosa Maria", "Zelaya", "rosa.zelaya88@example.com", "Bolonia, Managua"),
+        ("Jorge Luis", "Ortega", "jorge.ortega88@example.com", "Reparto Las Palmas, Managua"),
+        ("Teresa Isabel", "Blandon", "teresa.blandon88@example.com", "Linda Vista, Managua"),
+        ("Roberto Antonio", "Navarro", "roberto.navarro88@example.com", "Monsenor Lezcano, Managua"),
+        ("Carmen Julia", "Luna", "carmen.luna88@example.com", "Batahola Norte, Managua"),
+        ("Francisco Javier", "Hernandez", "francisco.hernandez88@example.com", "Colonia Miguel Bonilla, Managua"),
+        ("Daniela Sofia", "Vargas", "daniela.vargas88@example.com", "Reparto Schick, Managua"),
+        ("Ricardo Andres", "Mejia", "ricardo.mejia88@example.com", "Bello Horizonte Oeste, Managua"),
+        ("Lucia Alejandra", "Gaitan", "lucia.gaitan88@example.com", "Las Brisas, Managua"),
+        ("Mario Augusto", "Flores", "mario.flores88@example.com", "Larreynaga, Managua"),
+        ("Patricia Elena", "Silva", "patricia.silva88@example.com", "Mercado Oriental sector sur, Managua"),
     ]
-    for c in customers:
-        await db.customers.update_one(
-            {"customer_id": c["customer_id"]}, {"$set": c}, upsert=True
+
+    company_rows = [
+        ("Claro Nicaragua", "contacto@claro.com.ni", "Pista Juan Pablo II, Managua"),
+        ("Tigo Nicaragua", "contacto@tigo.com.ni", "Carretera a Masaya, Managua"),
+        ("Banco Lafise", "contacto@lafise.com", "Edificio Corporativo Lafise, Managua"),
+        ("BAC Credomatic Nicaragua", "contacto@baccredomatic.com", "Galerias Santo Domingo, Managua"),
+        ("Banpro Grupo Promerica", "contacto@banpro.com.ni", "Edificio Banpro, Managua"),
+        ("Casa Pellas", "contacto@casapellas.com", "Carretera Norte, Managua"),
+        ("Grupo Q Nicaragua", "contacto@grupoq.com", "Carretera a Masaya, Managua"),
+        ("DHL Nicaragua", "contacto@dhl.com", "Carretera Norte, Managua"),
+        ("PriceSmart Nicaragua", "contacto@pricesmart.com", "Carretera a Masaya, Managua"),
+        ("Walmart Nicaragua", "contacto@walmart.com", "Metrocentro, Managua"),
+        ("Supermercados La Colonia", "contacto@lacolonia.com.ni", "Oficinas Centrales, Managua"),
+        ("Disnorte Dissur", "contacto@disnorte-dissur.com", "Carretera Norte, Managua"),
+        ("ENACAL", "contacto@enacal.com.ni", "Bolonia, Managua"),
+        ("EPN Nicaragua", "contacto@epn.gob.ni", "Avenida Bolivar, Managua"),
+        ("Cargill Nicaragua", "contacto@cargill.com", "Las Mercedes, Managua"),
+        ("NESTLE Nicaragua", "contacto@ni.nestle.com", "Carretera a Masaya, Managua"),
+        ("Grupo Lala Nicaragua", "contacto@lala.com", "Carretera Norte, Managua"),
+        ("Comtech Nicaragua", "contacto@comtech.com.ni", "Villa Fontana, Managua"),
+        ("SINSA", "contacto@sinsa.com.ni", "Pista Suburbana, Managua"),
+        ("Farmacias Kielsa Nicaragua", "contacto@kielsa.com", "Carretera a Masaya, Managua"),
+    ]
+
+    colors = ["BLANCO", "NEGRO", "GRIS", "AZUL", "ROJO", "PLATA"]
+    natural_brands = ["NISSAN", "HONDA", "SUZUKI"]
+    company_brands = ["KIA", "HYUNDAI", "TOYOTA"]
+    models = {
+        "NISSAN": ["SENTRA", "VERSA", "X-TRAIL"],
+        "HONDA": ["CIVIC", "CR-V", "FIT"],
+        "SUZUKI": ["SWIFT", "VITARA", "JIMNY"],
+        "KIA": ["RIO", "SPORTAGE", "SORENTO"],
+        "HYUNDAI": ["ACCENT", "TUCSON", "SANTA FE"],
+        "TOYOTA": ["COROLLA", "YARIS", "HILUX"],
+    }
+
+    customers: list[dict[str, Any]] = []
+    vehicles: list[dict[str, Any]] = []
+
+    vehicle_seed = 1
+    seed_tag = "dashboard_seed_managua_v2"
+
+    for idx, (first_name, last_name, email, address) in enumerate(natural_rows, start=1):
+        customer_id = f"seed_nat_{idx:03d}"
+        customers.append(
+            {
+                "customer_id": customer_id,
+                "name": f"{first_name} {last_name}",
+                "first_name": first_name,
+                "last_name": last_name,
+                "customer_type": "natural",
+                "tax_id": "",
+                "phone_prefix": "+505",
+                "phone": _phone("88", idx),
+                "email": email,
+                "address": address,
+                "credit_limit": 5000,
+                "credit_balance": 0,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "source_seed": seed_tag,
+            }
         )
 
-    # Vehicles with types
-    vehicles = [
-        {
-            "vehicle_id": "veh_001",
-            "customer_id": "cust_001",
-            "plate": "ABC-123",
-            "vin": "1HGBH41JXMN109186",
-            "brand": "Toyota",
-            "model": "Corolla",
-            "year": 2020,
-            "vehicle_type": "Sedán",
-            "color": "Blanco",
-            "doors": 4,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "vehicle_id": "veh_002",
-            "customer_id": "cust_001",
-            "plate": "DEF-456",
-            "vin": "2HGBH41JXMN109187",
-            "brand": "Toyota",
-            "model": "Hilux",
-            "year": 2022,
-            "vehicle_type": "Camioneta Doble Cabina",
-            "color": "Negro",
-            "doors": 4,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "vehicle_id": "veh_003",
-            "customer_id": "cust_002",
-            "plate": "GHI-789",
-            "vin": "3HGBH41JXMN109188",
-            "brand": "Honda",
-            "model": "CR-V",
-            "year": 2021,
-            "vehicle_type": "SUV",
-            "color": "Azul",
-            "doors": 4,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "vehicle_id": "veh_004",
-            "customer_id": "cust_003",
-            "plate": "JKL-012",
-            "vin": "4HGBH41JXMN109189",
-            "brand": "Ford",
-            "model": "Focus",
-            "year": 2019,
-            "vehicle_type": "Hatchback",
-            "color": "Rojo",
-            "doors": 4,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-    ]
-    for v in vehicles:
-        await db.vehicles.update_one(
-            {"vehicle_id": v["vehicle_id"]}, {"$set": v}, upsert=True
+        for brand_idx, brand in enumerate(natural_brands):
+            model = models[brand][idx % len(models[brand])]
+            vehicles.append(
+                {
+                    "vehicle_id": f"seed_vehicle_{vehicle_seed:04d}",
+                    "customer_id": customer_id,
+                    "plate": _plate(vehicle_seed),
+                    "chasis": _chasis(f"nat-{idx}-{brand}-{brand_idx}"),
+                    "vin": _chasis(f"nat-{idx}-{brand}-{brand_idx}"),
+                    "brand": brand,
+                    "model": model,
+                    "year": 2015 + ((idx + brand_idx) % 10),
+                    "vehicle_type": "sedan" if brand_idx == 0 else ("suv" if brand_idx == 1 else "pickup"),
+                    "color": colors[(idx + brand_idx) % len(colors)],
+                    "doors": 4,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "source_seed": seed_tag,
+                }
+            )
+            vehicle_seed += 1
+
+    for idx, (company_name, email, address) in enumerate(company_rows, start=1):
+        customer_id = f"seed_emp_{idx:03d}"
+        customers.append(
+            {
+                "customer_id": customer_id,
+                "name": company_name,
+                "first_name": company_name,
+                "last_name": "",
+                "customer_type": "empresa",
+                "tax_id": f"J{5000 + idx:013d}",
+                "phone_prefix": "+505",
+                "phone": _phone("78", idx),
+                "email": email,
+                "address": address,
+                "credit_limit": 20000,
+                "credit_balance": 0,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "source_seed": seed_tag,
+            }
         )
+
+        for brand_idx, brand in enumerate(company_brands):
+            model = models[brand][idx % len(models[brand])]
+            vehicles.append(
+                {
+                    "vehicle_id": f"seed_vehicle_{vehicle_seed:04d}",
+                    "customer_id": customer_id,
+                    "plate": _plate(vehicle_seed),
+                    "chasis": _chasis(f"emp-{idx}-{brand}-{brand_idx}"),
+                    "vin": _chasis(f"emp-{idx}-{brand}-{brand_idx}"),
+                    "brand": brand,
+                    "model": model,
+                    "year": 2018 + ((idx + brand_idx) % 7),
+                    "vehicle_type": "sedan" if brand != "HYUNDAI" else "suv",
+                    "color": colors[(idx + brand_idx + 2) % len(colors)],
+                    "doors": 4,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "source_seed": seed_tag,
+                }
+            )
+            vehicle_seed += 1
+
+    if customers:
+        await db.customers.insert_many(customers)
+    if vehicles:
+        await db.vehicles.insert_many(vehicles)
 
     return {
         "message": "Data seeded successfully",
         "products": len(products),
         "categories": list(PRODUCT_CATEGORIES.keys()),
+        "deleted": {
+            "customers": deleted_customers.deleted_count,
+            "vehicles": deleted_vehicles.deleted_count,
+        },
+        "seeded": {
+            "customers": len(customers),
+            "vehicles": len(vehicles),
+            "natural_customers": len(natural_rows),
+            "company_customers": len(company_rows),
+        },
+        "seed_preview": {
+            "customer_natural": {k: v for k, v in customers[0].items() if k != "_id"}
+            if customers
+            else None,
+            "customer_company": {
+                k: v
+                for k, v in customers[len(natural_rows)].items()
+                if k != "_id"
+            }
+            if len(customers) > len(natural_rows)
+            else None,
+            "vehicle": {k: v for k, v in vehicles[0].items() if k != "_id"}
+            if vehicles
+            else None,
+        },
         "core_seed": core_seed_report,
     }
 

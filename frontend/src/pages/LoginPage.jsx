@@ -6,9 +6,10 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Calculator, ArrowLeftRight } from "lucide-react";
+import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
+import { useDevice } from "../hooks/useDevice";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -20,6 +21,7 @@ const ATTENDANCE_KIOSK_SHORTCUT_PIN = (typeof window !== 'undefined' && window._
 export function LoginPage() {
   const { checkAuth } = useAuth();
   const { resolvedMode, toggleMode, setMode, setSkin } = useTheme();
+  const device = useDevice();
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [backendStatus, setBackendStatus] = useState("unknown"); // unknown, ok, down
@@ -32,6 +34,7 @@ export function LoginPage() {
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const [lockoutSeconds, setLockoutSeconds] = useState(null);
   const [pinUsers, setPinUsers] = useState([]);
+  const [showLoginInfo, setShowLoginInfo] = useState(false);
   const buildVersion = APP_ENV.buildVersion;
   const buildTimeRaw = APP_ENV.buildTime;
   const buildTime = buildTimeRaw ? new Date(buildTimeRaw) : null;
@@ -200,6 +203,17 @@ export function LoginPage() {
   // Seleccionar mensaje solo al montar el componente
   const [dailyMessage] = useState(() => messages[Math.floor(Math.random() * messages.length)]);
 
+  const deviceTypeLabel = device.isPhone
+    ? "Movil"
+    : device.isTablet
+      ? "Tablet"
+      : "PC";
+  const deviceRuleLabel = device.isPhone
+    ? "< 640px"
+    : device.isTablet
+      ? "640-1023px"
+      : ">= 1024px";
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search || "");
     const isFreshLogin = ["1", "true", "yes"].includes((params.get("fresh") || "").toLowerCase());
@@ -302,9 +316,63 @@ export function LoginPage() {
     }
   }, [activeTool, handleConvertCurrency]);
 
+  const playTone = useCallback((kind) => {
+    try {
+      const AudioContextCls = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCls) return;
+      const ctx = new AudioContextCls();
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      let frequency = 780;
+      let peakGain = 0.2;
+      let duration = 0.18;
+      let oscillatorType = "sine";
+
+      if (kind === "key") {
+        frequency = 1320;
+        peakGain = 0.22;
+        duration = 0.1;
+        oscillatorType = "square";
+      }
+      if (kind === "success") {
+        frequency = 820;
+        peakGain = 0.24;
+        duration = 0.18;
+        oscillatorType = "triangle";
+      }
+      if (kind === "warning") {
+        frequency = 520;
+        peakGain = 0.24;
+        duration = 0.22;
+        oscillatorType = "sawtooth";
+      }
+      if (kind === "error") {
+        frequency = 180;
+        peakGain = 0.28;
+        duration = 0.3;
+        oscillatorType = "square";
+      }
+
+      oscillator.type = oscillatorType;
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(peakGain, ctx.currentTime + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + duration + 0.01);
+      oscillator.onended = () => ctx.close();
+    } catch (_) {
+      // Ignore Web Audio failures on browsers that block sound playback.
+    }
+  }, []);
+
   const handlePinLogin = useCallback(async (pinOverride = null) => {
     const pinToUse = pinOverride ?? pin;
     if (pinToUse === ATTENDANCE_KIOSK_SHORTCUT_PIN) {
+      playTone("success");
       toast.success("Abriendo reloj marcador...");
       setPin("");
       window.location.href = "/attendance-clock";
@@ -312,6 +380,7 @@ export function LoginPage() {
     }
 
     if (pinToUse.length !== PIN_LENGTH) {
+      playTone("warning");
       toast.error("Ingresa tu PIN de 8 dígitos");
       return;
     }
@@ -349,6 +418,7 @@ export function LoginPage() {
         // ignore
       }
       toast.success(`Bienvenido, ${response.data.name}`);
+      playTone("success");
       
       // Attempt auth check but don't block widely if it delays
       Promise.race([
@@ -394,12 +464,13 @@ export function LoginPage() {
       }
 
       toast.error(message);
+      playTone("error");
       setPin("");
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [checkAuth, pin, pinUsers, setMode, setSkin, sha256]);
+  }, [checkAuth, pin, pinUsers, playTone, setMode, setSkin, sha256]);
 
   const handlePinKeyPress = useCallback((digit) => {
     if (authStatus === 'error') setAuthStatus('idle');
@@ -408,6 +479,7 @@ export function LoginPage() {
     // If pin is full, don't add more digits unless it's a fresh start logic (optional)
     // But here we rely on the user clearing or just typing if length < 6
     if (pin.length < PIN_LENGTH) {
+      playTone("key");
       const newPin = pin + digit;
       setPin(newPin);
       if (newPin.length === PIN_LENGTH) {
@@ -416,11 +488,13 @@ export function LoginPage() {
         setTimeout(() => handlePinLogin(newPin), 50);
       }
     }
-  }, [handlePinLogin, pin, authStatus, showResetWarning]);
+  }, [authStatus, handlePinLogin, pin, playTone, showResetWarning]);
 
   const handlePinBackspace = useCallback(() => {
+    if (pin.length === 0) return;
+    playTone("key");
     setPin((prevPin) => prevPin.slice(0, -1));
-  }, []);
+  }, [pin.length, playTone]);
 
   const handlePinInputChange = useCallback((event) => {
     const digits = event.target.value.replace(/\D/g, "").slice(0, PIN_LENGTH);
@@ -541,7 +615,6 @@ export function LoginPage() {
   return (
     <div 
       className="min-h-screen bg-background flex"
-      onClick={() => pinInputRef.current?.focus()}
     >
       {/* DEBUG BANNER: shows remaining attempts and lockout state for quick visibility */}
       {(remainingAttempts !== null || lockoutUntil) && (
@@ -818,32 +891,6 @@ export function LoginPage() {
                 Ingresa tu PIN de 8 dígitos para acceder
               </p>
 
-              {/* Backend connectivity status */}
-              <div className="mb-4 flex items-center justify-center gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className={`inline-block w-3 h-3 rounded-full ${
-                    backendStatus === 'ok' ? 'bg-emerald-500' : backendStatus === 'down' ? 'bg-destructive' : 'bg-yellow-400 animate-pulse'
-                  }`} />
-                  <span>
-                    {backendStatus === 'ok' && "Conexión con servidor: OK"}
-                    {backendStatus === 'down' && "Sin conexión con el servidor"}
-                    {backendStatus === 'unknown' && (checkingBackend ? "Comprobando conexión..." : "Verificando servidor...")}
-                  </span>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => { const c = new AbortController(); checkBackend(c.signal); }} disabled={checkingBackend}>
-                  {checkingBackend ? "Comprobando..." : "Volver a intentar"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleFreshSessionReset}
-                  disabled={loading}
-                  title="Cierra sesión, limpia estado local y recarga login limpio"
-                >
-                  Reiniciar sesión
-                </Button>
-              </div>
-
               <Label className="text-center block mb-3">PIN</Label>
 
               {/* PIN Display (always masked) */}
@@ -914,8 +961,61 @@ export function LoginPage() {
               </div>
 
             </div>
-            <div className="mt-6 text-center text-xs text-muted-foreground">
-              Version: {buildVersion} · Build: {buildTimeLabel}
+            <div
+              className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs"
+              data-testid="login-device-validator"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setShowLoginInfo((prev) => !prev)}
+                  data-testid="login-info-toggle"
+                >
+                  <Info className="mr-1.5 h-3.5 w-3.5" />
+                  {showLoginInfo ? "Ocultar información" : "Información"}
+                </Button>
+                <span className="text-muted-foreground">
+                  {showLoginInfo ? "Estado expandido" : "Estado resumido"}
+                </span>
+              </div>
+
+              {showLoginInfo ? (
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-md border bg-background/80 px-2 py-1">
+                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        backendStatus === 'ok' ? 'bg-emerald-500' : backendStatus === 'down' ? 'bg-destructive' : 'bg-yellow-400 animate-pulse'
+                      }`} />
+                      <span className="text-muted-foreground">
+                        {backendStatus === 'ok' && "Servidor OK"}
+                        {backendStatus === 'down' && "Servidor sin conexión"}
+                        {backendStatus === 'unknown' && (checkingBackend ? "Comprobando servidor..." : "Verificando servidor...")}
+                      </span>
+                    </div>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      Pantalla: <span className="font-semibold text-foreground">{deviceTypeLabel}</span>
+                    </span>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      Regla: <span className="font-semibold text-foreground">{deviceRuleLabel}</span>
+                    </span>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      {device.viewportWidth}x{device.viewportHeight} · {device.isPortrait ? "Vertical" : "Horizontal"} · {device.isTouchDevice ? "Táctil" : "No táctil"}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="ml-auto text-muted-foreground">
+                      Version: {buildVersion} · Build: {buildTimeLabel}
+                    </span>
+                  </div>
+                </>
+              ) : null}
             </div>
           </CardContent>
         </Card>

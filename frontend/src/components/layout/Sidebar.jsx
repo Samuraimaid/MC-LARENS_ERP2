@@ -52,24 +52,22 @@ import { APP_ENV } from "../../lib/env";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["gerencia", "recursos_humanos"] },
-  { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas"] },
-  { name: "Seguimientos", href: "/followups", icon: Calendar, roles: ["gerencia", "supervisor", "ventas"] },
-  { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "cajero"] },
-  { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas"] },
-  { name: "Despacho", href: "/dispatch", icon: PackageCheck, roles: ["gerencia", "supervisor", "bodegas"] },
+  { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda", "cajero"] },
+  { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "cajero", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
+  { name: "Despacho", href: "/dispatch", icon: PackageCheck, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
   { name: "Traslados de Productos", href: "/product-transfers", icon: ArrowRightLeft, roles: ["gerencia", "supervisor", "bodegas"] },
-  { name: "Aprobaciones", href: "/approvals", icon: ClipboardCheck, roles: ["gerencia", "supervisor"] },
   { name: "Órdenes de Trabajo", href: "/work-orders", icon: Wrench, roles: ["gerencia", "supervisor", "instalaciones"] },
   { name: "Polarizados", href: "/tint-orders", icon: Palette, roles: ["gerencia", "supervisor", "instalaciones"] },
   { name: "Calendario", href: "/calendar", icon: Calendar, roles: ["gerencia", "supervisor", "instalaciones"] },
   { name: "Control de Calidad", href: "/quality-control", icon: ClipboardCheck, roles: ["gerencia", "supervisor"] },
   { name: "KDS", href: "/kds", icon: Monitor, roles: ["all"] },
   { name: "Entregas", href: "/deliveries", icon: Truck, roles: ["gerencia", "supervisor", "transporte"] },
-  { name: "Créditos", href: "/credits", icon: CreditCard, roles: ["gerencia", "supervisor", "ventas"] },
-  { name: "Devoluciones", href: "/returns", icon: RotateCcw, roles: ["gerencia", "supervisor", "ventas"] },
+  { name: "Créditos", href: "/credits", icon: CreditCard, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Devoluciones", href: "/returns", icon: RotateCcw, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Garantías", href: "/warranties", icon: Shield, roles: ["gerencia", "supervisor", "instalaciones"] },
-  { name: "Promociones", href: "/promotions", icon: Tag, roles: ["gerencia", "supervisor"] },
-  { name: "Reportes", href: "/reports", icon: TrendingUp, roles: ["gerencia", "supervisor"] },
+  { name: "Promociones", href: "/promotions", icon: Tag, roles: ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Reportes", href: "/reports", icon: TrendingUp, roles: ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"] },
   { name: "Recursos Humanos", href: "/human-resources", icon: Briefcase, roles: ["gerencia", "supervisor", "recursos_humanos"] },
   { name: "HyiperVisor", href: "/hypervisor", icon: Eye, roles: ["gerencia", "programador", "recursos_humanos"] },
   { name: "Sucursales", href: "/branches", icon: Building2, roles: ["gerencia"] },
@@ -93,11 +91,6 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
   const { resolvedMode, toggleMode } = useTheme();
   const location = useLocation();
   const buildVersion = APP_ENV.buildVersion;
-  const buildTimeRaw = APP_ENV.buildTime;
-  const buildTime = buildTimeRaw ? new Date(buildTimeRaw) : null;
-  const buildTimeLabel = buildTime
-    ? buildTime.toLocaleString("es-NI", { dateStyle: "medium", timeStyle: "short" })
-    : "desconocida";
   const branding = getBrandingForBranch(user?.branch_id);
   const isIconOnly = mode === "icon";
   const logoSrc = `${branding.logo}${String(branding.logo).includes("?") ? "&" : "?"}v=${encodeURIComponent(buildVersion)}`;
@@ -234,103 +227,9 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
 
       <Separator />
 
-      {/* User section */}
-      <div className={cn("space-y-4", isIconOnly ? "p-2" : "p-4")}>
-        <div className={cn("flex items-center gap-2", isIconOnly ? "flex-col justify-center" : "justify-start")}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 haptic-feedback touch-action-manipulation"
-                onClick={onToggleCalculator}
-                aria-label="Abrir calculadora"
-              >
-                <Calculator className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Abrir calculadora de divisas</TooltipContent>
-          </Tooltip>
+      {!isIconOnly ? <div className="border-t border-border px-3 py-1" /> : null}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 haptic-feedback touch-action-manipulation"
-                onClick={toggleMode}
-                aria-label="Cambiar tema"
-              >
-                {resolvedMode === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Cambiar tema claro/oscuro</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 haptic-feedback touch-action-manipulation"
-                onClick={onToggleSessionLock}
-                aria-label="Bloquear sesión"
-                data-testid="lock-session-btn"
-              >
-                <Lock className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Bloquear sesión</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 text-destructive hover:text-destructive hover:bg-destructive/10 haptic-feedback touch-action-manipulation"
-                onClick={handleLogout}
-                aria-label="Cerrar sesión"
-                data-testid="logout-btn"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Cerrar sesión</TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* User info */}
-        {user && (
-          <div className={cn("rounded-sm bg-muted", isIconOnly ? "flex items-center justify-center p-2" : "flex items-center gap-3 p-3")}>
-            <Avatar className={cn(isIconOnly ? "h-9 w-9" : "h-10 w-10")}>
-              <AvatarImage src={user.picture} alt={user.name} />
-              <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            {!isIconOnly ? (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{(rolesMap && rolesMap[user?.role]?.label) || user?.role}</p>
-                <p className="text-xs text-muted-foreground truncate inline-flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  <span>{branchLabel}</span>
-                </p>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {!isIconOnly ? (
-          <div className="rounded-sm bg-muted px-3 py-2 text-xs text-muted-foreground">
-            <div>Version: {buildVersion}</div>
-            <div>Build: {buildTimeLabel}</div>
-          </div>
-        ) : null}
-      </div>
+      {/* User section eliminada, ahora en el header superior */}
     </div>
     </TooltipProvider>
   );

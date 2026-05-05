@@ -4,26 +4,49 @@ import { Sidebar } from "./Sidebar";
 import { Toaster } from "../ui/sonner";
 import { FloatingTools } from "../FloatingTools";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getBrandingForBranch } from "../../lib/branding";
 import { APP_ENV } from "../../lib/env";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../../lib/utils";
 import { toast } from "sonner";
-import { Lock, Menu, RefreshCw, Unlock, X } from "lucide-react";
+import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, ClipboardList, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, RefreshCw, Unlock, X } from "lucide-react";
+import { useDevice } from "../../hooks/useDevice";
+import { BottomNav } from "./BottomNav";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
 
+const BRANCH_LABELS = {
+  branch_main: "Mundo de Accesorios",
+  branch_north: "TopCar El Calvario",
+  branch_south: "TopCar La Tigre",
+};
+
+const WORKBENCH_TAB_ITEMS = [
+  { key: "notifications", label: "Notificaciones", icon: Bell },
+  { key: "sales", label: "Ventas", icon: ShoppingCart },
+  { key: "quotations", label: "Cotizaciones", icon: ClipboardList },
+  { key: "catalog", label: "Catalogo", icon: BookOpen },
+  { key: "samples", label: "Muestras", icon: FlaskConical },
+  { key: "customers", label: "Clientes", icon: Users },
+  { key: "vehicles", label: "Vehiculos", icon: Car },
+];
+
 export function MainLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { resolvedMode, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1440
   );
+  const device = useDevice();
+  const isPhone = device.isPhone;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 1366 : false
@@ -53,8 +76,24 @@ export function MainLayout() {
   const [lockOverlayTone, setLockOverlayTone] = useState("warning");
   const lastBackWarningRef = useRef(0);
   const branding = getBrandingForBranch(user?.branch_id);
+  const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
+  const roleLabel = String(user?.role || "sin_rol").replace(/_/g, " ").toUpperCase();
   const buildVersion = APP_ENV.buildVersion;
+  const buildTime = APP_ENV.buildTime;
+  const buildTimeLabel = buildTime
+    ? new Date(buildTime).toLocaleString("es-NI", { dateStyle: "short", timeStyle: "short" })
+    : "hora desconocida";
   const isMobile = viewportWidth < 1024;
+  const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
+  const isWorkbenchRoute = location.pathname === "/workbench";
+  const workbenchTabSet = new Set(WORKBENCH_TAB_ITEMS.map((tab) => tab.key));
+  const requestedWorkbenchTab = String(new URLSearchParams(location.search).get("tab") || "sales");
+  const activeWorkbenchTab = workbenchTabSet.has(requestedWorkbenchTab) ? requestedWorkbenchTab : "sales";
+
+  const handleWorkbenchTabChange = (nextTab) => {
+    const safeTab = workbenchTabSet.has(nextTab) ? nextTab : "sales";
+    navigate(`/workbench?tab=${encodeURIComponent(safeTab)}`, { replace: true });
+  };
 
   useEffect(() => {
     if (viewportWidth < 1024) {
@@ -381,7 +420,7 @@ export function MainLayout() {
   return (
     <div className="relative h-screen overflow-hidden bg-background">
       <div className={cn("flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
-        {!isMobile ? (
+        {!isMobile && !isSellerRole ? (
           <Sidebar
             mode={isSidebarCollapsed ? "icon" : "full"}
             onToggleCalculator={() => handleSelectTool("calculator")}
@@ -390,32 +429,130 @@ export function MainLayout() {
         ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="sticky top-0 z-30 border-b bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  if (isMobile) {
-                    setMobileNavOpen((prev) => !prev);
-                  } else {
-                    setIsSidebarCollapsed((prev) => !prev);
-                  }
-                }}
-                aria-label="Abrir menú"
-              >
-                {isMobile && mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-              <div className="text-sm font-semibold truncate">{branding.brandName}</div>
+          <div
+            className={cn(
+              "sticky top-0 z-30 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80",
+              isPhone ? "min-h-[52px] py-1.5" : !isMobile && isSidebarCollapsed ? "h-20 min-h-0 py-0" : "min-h-[72px] py-3"
+            )}
+          >
+            <div className="flex h-full items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {!isSellerRole ? (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="ui-interactive haptic-feedback touch-action-manipulation"
+                    onClick={() => {
+                      if (isMobile) {
+                        setMobileNavOpen((prev) => !prev);
+                      } else {
+                        setIsSidebarCollapsed((prev) => !prev);
+                      }
+                    }}
+                    aria-label="Abrir menú"
+                  >
+                    {isMobile && mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  </Button>
+                ) : null}
+                <div className="min-w-0 max-w-[48vw] sm:max-w-[360px] md:max-w-[440px]">
+                  <div className="text-sm font-semibold leading-tight truncate" title={user?.name || branding.brandName}>
+                    {user?.name || branding.brandName}
+                  </div>
+                  <div className="mt-0.5 flex max-w-full items-center gap-2 text-[10px] text-muted-foreground leading-tight" title={`${roleLabel} ${branchLabel}`}>
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <Briefcase className="h-3 w-3 shrink-0 icon-spring" />
+                      <span className="truncate">{roleLabel}</span>
+                    </span>
+                    <span className="shrink-0 text-muted-foreground/70">•</span>
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <Building2 className="h-3 w-3 shrink-0 icon-spring" />
+                      <span className="truncate">{branchLabel}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {!isMobile && isWorkbenchRoute ? (
+                <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+                  <Tabs value={activeWorkbenchTab} onValueChange={handleWorkbenchTabChange} className="w-full max-w-[980px]">
+                    <TabsList className="grid h-12 w-full grid-cols-7 rounded-full border bg-card/95 p-1">
+                      {WORKBENCH_TAB_ITEMS.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <TabsTrigger
+                            key={tab.key}
+                            value={tab.key}
+                            title={tab.label}
+                            className="inline-flex h-full items-center justify-center rounded-full px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                          >
+                            <Icon className="h-5 w-5" />
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </Tabs>
+                </div>
+              ) : null}
+              {/* Botones y usuario a la derecha */}
+              <div className="flex items-center gap-1">
+                {!isPhone && (
+                  <span
+                    className="inline-flex min-w-[138px] flex-col rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold tracking-normal text-primary leading-tight"
+                    title={`Build ${buildVersion} ${buildTimeLabel}`}
+                  >
+                    <span className="truncate">BUILD {buildVersion}</span>
+                    <span className="font-normal tracking-normal text-[8px] text-primary/80 truncate">{buildTimeLabel}</span>
+                  </span>
+                )}
+                {!isPhone && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 ui-interactive haptic-feedback touch-action-manipulation"
+                    onClick={() => handleSelectTool("calculator")}
+                    aria-label="Abrir calculadora"
+                  >
+                    <Calculator className="h-5 w-5 icon-spring" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("ui-interactive haptic-feedback touch-action-manipulation", isPhone ? "h-8 w-8" : "h-10 w-10")}
+                  onClick={toggleMode}
+                  aria-label="Cambiar tema"
+                >
+                  {resolvedMode === "dark" ? <Sun className="h-4 w-4 icon-spring" /> : <Moon className="h-4 w-4 icon-spring" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("ui-interactive haptic-feedback touch-action-manipulation", isPhone ? "h-8 w-8" : "h-10 w-10")}
+                  onClick={handleLockSession}
+                  aria-label="Bloquear sesión"
+                  data-testid="lock-session-btn"
+                >
+                  <Lock className={cn("icon-spring", isPhone ? "h-4 w-4" : "h-5 w-5")} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("text-destructive hover:text-destructive hover:bg-destructive/10 ui-interactive haptic-feedback touch-action-manipulation", isPhone ? "h-8 w-8" : "h-10 w-10")}
+                  onClick={async () => { await logout(); navigate("/login", { replace: true }); }}
+                  aria-label="Cerrar sesión"
+                  data-testid="logout-btn"
+                >
+                  <LogOut className={cn("icon-spring", isPhone ? "h-4 w-4" : "h-5 w-5")} />
+                </Button>
+              </div>
             </div>
           </div>
 
-          <main className="flex-1 overflow-auto">
+          <main className={cn("flex-1 overflow-auto", isPhone && isWorkbenchRoute ? "pb-16" : "")}>
             <Outlet />
           </main>
         </div>
 
-        {isMobile ? (
+        {isMobile && !isSellerRole ? (
           <div
             className={`fixed inset-0 z-40 ${mobileNavOpen ? "pointer-events-auto" : "pointer-events-none"}`}
             aria-hidden={!mobileNavOpen}
@@ -444,6 +581,8 @@ export function MainLayout() {
           onSelectTool={setActiveTool}
         />
       </div>
+
+      {isPhone && isWorkbenchRoute ? <BottomNav /> : null}
 
       {isSessionLocked ? (
         <div

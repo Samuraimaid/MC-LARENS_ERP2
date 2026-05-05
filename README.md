@@ -1,5 +1,14 @@
 # Here are your Instructions
 
+Actualizacion 2026-05-05 - Resumen de avances del dia
+------------------------------------------------------
+
+- Backend: ampliacion de permisos para roles comerciales en inventario/bodegas donde aplica, nuevos roles `jefe_vendedores` y `jefe_tienda`, y endpoint `POST /inventory/add-stock` para ingreso controlado de stock.
+- Frontend: rediseño operativo del layout principal, navegacion inferior movil en workbench, y refinamiento visual de tarjetas de venta (Paso 3/Paso 4) con alineacion de precios en esquina inferior derecha.
+- Flujo ventas: removida fila "otras tiendas" en carrito (Paso 4) junto con su logica asociada.
+- Datos de prueba: agregado script `scripts/seed_managua_customers_vehicles.py` para sembrado idempotente de clientes/vehiculos Managua.
+- Validacion rapida: diagnostico limpio en `frontend/src/components/sales/SaleForm.jsx` y rebuild frontend ejecutado en Docker Compose.
+
 Actualizacion 2026-04-01 - Frontend
 -----------------------------------
 

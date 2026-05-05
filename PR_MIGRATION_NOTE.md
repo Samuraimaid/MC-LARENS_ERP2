@@ -2,6 +2,29 @@ Resumen de cambios y pasos para migración/validación de `customers`
 
 ---
 
+Actualizacion 2026-05-05 - Ajustes integrados backend/frontend
+
+- Backend:
+	- Se ampliaron permisos de lectura/operacion para inventario y bodegas a roles comerciales adicionales (`ventas`, `cajero`, `jefe_vendedores`, `jefe_tienda`) donde aplica.
+	- Se incorporo endpoint de ingreso directo de stock (`POST /inventory/add-stock`) con validaciones por rol/sucursal.
+	- Se restringio la actualizacion general de inventario para rol `bodegas` al flujo de ingreso de stock.
+	- Se agregaron roles `jefe_vendedores` y `jefe_tienda` al catalogo/equivalencias y permisos funcionales.
+
+- Frontend:
+	- Se modernizo el `MainLayout` con contexto de usuario (nombre + rol + sucursal) y acciones rapidas (tema, bloqueo, cierre de sesion).
+	- Se agrego navegacion inferior movil (`BottomNav`) para workbench y soporte de deteccion de dispositivo/orientacion (`useDevice`).
+	- Se refactorizo formulario combinado cliente/vehiculo a `frontend/src/components/customers/CustomerVehicleFormTabs.jsx`.
+	- Se ajusto `SaleForm` para paridad visual de tarjetas (Paso 3 y Paso 4), con precios alineados inferior-derecha.
+	- Se elimino de Paso 4 la fila de "otras tiendas" junto con su logica asociada.
+
+- Datos de prueba:
+	- Se agrego `scripts/seed_managua_customers_vehicles.py` para sembrar 40 clientes y 120 vehiculos con datos consistentes de Managua.
+
+Validacion/documentacion:
+
+- Sin errores de diagnostico en `frontend/src/components/sales/SaleForm.jsx`.
+- Rebuild frontend ejecutado en Docker Compose para reflejar cambios UI.
+
 Actualizacion 2026-04-01 - Modernizacion del frontend
 
 - Se completo la migracion del frontend desde CRA/CRACO a Vite.

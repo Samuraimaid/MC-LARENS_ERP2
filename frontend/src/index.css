@@ -1137,6 +1137,26 @@
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Phone-specific compact layouts */
+@media (max-width: 639px) {
+    /* Tighter page padding on phone */
+    .p-4, .p-6 {
+        padding: 0.5rem !important;
+    }
+    .space-y-4 > * + * {
+        margin-top: 0.5rem !important;
+    }
+    /* Tables scroll horizontally instead of overflowing */
+    .overflow-x-auto, table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Cards with less rounding/shadow on phone */
+    .rounded-xl {
+        border-radius: 0.5rem;
+    }
+}
+
 /* Touch-friendly tap highlights */
 @media (hover: none) {
     button, a, [role="button"] {

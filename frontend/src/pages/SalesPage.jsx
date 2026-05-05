@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 import { Separator } from "../components/ui/separator";
+import { Switch } from "../components/ui/switch";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import SearchableSelect from "@/components/ui/searchable-select";
@@ -220,6 +221,7 @@ export function SalesPage() {
   const [sellers, setSellers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showPrintPrompt, setShowPrintPrompt] = useState(false);
+  const [showClearSaleConfirm, setShowClearSaleConfirm] = useState(false);
   const [printSaleData, setPrintSaleData] = useState(null);
   const [boardTab, setBoardTab] = useState("drafts");
   const draftTabsRef = useRef([]);
@@ -434,16 +436,16 @@ export function SalesPage() {
     window.localStorage.setItem(formVisibilityStorageKey, showNewSale ? "1" : "0");
   }, [formVisibilityStorageKey, showNewSale, user]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, usersRes, branchesRes] = await Promise.all([
         axios.get(`${API}/sales`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }),
         axios.get(`${API}/products`, { withCredentials: true }),
-        axios.get(`${API}/warehouses`, { withCredentials: true }),
+        axios.get(`${API}/warehouses`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/vehicles`, { withCredentials: true }),
-        axios.get(`${API}/inventory`, { withCredentials: true }),
+        axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/users`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/branches`, { withCredentials: true }).catch(() => ({ data: [] })),
       ]);
@@ -463,7 +465,21 @@ export function SalesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const refreshData = () => {
+      fetchData();
+    };
+
+    const intervalId = window.setInterval(refreshData, 30000);
+    window.addEventListener("focus", refreshData);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshData);
+    };
+  }, [fetchData]);
 
   const readDraft = (draftId) => {
     if (typeof window === "undefined") return null;
@@ -678,9 +694,23 @@ export function SalesPage() {
     if (typeof window === "undefined") return;
 
     const nowIso = new Date().toISOString();
+    const selectedVehicleRecord = vehicles.find((v) => v.vehicle_id === snapshot?.selectedVehicle) || null;
     const safeSnapshot = {
       selectedCustomerId: snapshot?.selectedCustomerId || null,
       selectedVehicle: snapshot?.selectedVehicle || "",
+      vehicleFlowOption: snapshot?.vehicleFlowOption || (snapshot?.selectedVehicle ? "registered" : "carryout"),
+      selectedVehicleData: snapshot?.selectedVehicleData || (selectedVehicleRecord
+        ? {
+            vehicle_id: selectedVehicleRecord.vehicle_id,
+            brand: selectedVehicleRecord.brand,
+            model: selectedVehicleRecord.model,
+            year: selectedVehicleRecord.year,
+            plate: selectedVehicleRecord.plate || selectedVehicleRecord.plate_number || selectedVehicleRecord.number_plate || null,
+            vehicle_type: selectedVehicleRecord.vehicle_type || null,
+            color: selectedVehicleRecord.color || selectedVehicleRecord.vehicle_color || selectedVehicleRecord.colour || null,
+            vin: selectedVehicleRecord.vin || selectedVehicleRecord.chasis || selectedVehicleRecord.chassis || null,
+          }
+        : null),
       selectedWarehouse: snapshot?.selectedWarehouse || selectedWarehouse || "",
       cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
       globalDiscount: snapshot?.globalDiscount || 0,
@@ -715,7 +745,6 @@ export function SalesPage() {
     }
 
     const selectedCustomerRecord = customers.find((c) => c.customer_id === safeSnapshot.selectedCustomerId) || null;
-    const selectedVehicleRecord = vehicles.find((v) => v.vehicle_id === safeSnapshot.selectedVehicle) || null;
 
     const draftKey = getDraftKey(draftId);
     const draftName = nextTabs.find((tab) => tab.id === draftId)?.name;
@@ -1313,6 +1342,7 @@ export function SalesPage() {
       window.localStorage.setItem(`draft_sale_v1_${id}`, JSON.stringify({
         selectedCustomerId: selectedCustomer?.customer_id || null,
         selectedVehicle,
+        vehicleFlowOption: selectedVehicle ? "registered" : "carryout",
         selectedWarehouse,
         cartItems,
         globalDiscount,
@@ -1772,14 +1802,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         </Card>
       ) : (
       <>
-      {/* Header */}
-      <div className="animate-fade-up-soft">
-        <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Ventas</h1>
-          <p className="text-muted-foreground">Gestión de ventas y facturación</p>
-        </div>
-      </div>
-
       {showNewSale && canCreateSales ? (
         <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
@@ -1801,33 +1823,34 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   onClick={createDraftTab}
                   disabled={!canCreateSales}
                   className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  title="Nueva Venta"
                 >
-                  <Plus className="mr-2 h-3.5 w-3.5" />
-                  Nueva Venta
+                  <Plus className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Nueva Venta</span>
                 </Button>
-                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground" title="Estado de autoguardado">
                   {draftSaveState === "saving" ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Guardando...</span>
+                      <span className="hidden sm:inline">Guardando...</span>
                     </>
                   ) : null}
                   {draftSaveState === "saved" ? (
                     <>
                       <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>Todos los cambios guardados</span>
+                      <span className="hidden sm:inline">Todos los cambios guardados</span>
                     </>
                   ) : null}
                   {draftSaveState === "error" ? (
                     <>
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                      <span>Error al guardar, reintentando...</span>
+                      <span className="hidden sm:inline">Error al guardar, reintentando...</span>
                     </>
                   ) : null}
                   {draftSaveState === "idle" ? (
                     <>
                       <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Listo para autoguardar</span>
+                      <span className="hidden sm:inline">Listo para autoguardar</span>
                     </>
                   ) : null}
                 </div>
@@ -1837,25 +1860,53 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   onClick={saveActiveDraftNow}
                   disabled={!canCreateSales}
                   className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
+                  title="Guardar Borrador"
                 >
-                  <Save className="mr-2 h-3.5 w-3.5" />
-                  Guardar Borrador
+                  <Save className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Guardar Borrador</span>
                 </Button>
               </div>
+              <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+                <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
+                <Switch
+                  checked={currency === "USD"}
+                  onCheckedChange={(checked) => setCurrency(checked ? "USD" : "NIO")}
+                  className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
+                  aria-label="Cambiar moneda entre córdobas y dólares"
+                />
+                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
+              </div>
               <Button
-                size="sm"
+                size="icon"
                 variant="outline"
-                onClick={clearEmbeddedSaleForm}
+                onClick={() => setShowClearSaleConfirm(true)}
                 disabled={!canCreateSales}
-                className="ui-interactive ml-auto border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                className="h-8 w-8 ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                title="Limpiar Formulario"
               >
-                <Eraser className="mr-2 h-3.5 w-3.5" />
-                Limpiar Formulario
+                <Eraser className="h-3.5 w-3.5" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Flujo embebido para crear ventas sin salir de la vista principal.
-            </p>
+            <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>¿Limpiar formulario?</DialogTitle>
+                  <DialogDescription>
+                    Se borrarán todos los datos ingresados en la venta actual. Esta acción no se puede deshacer.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex gap-2 sm:justify-end">
+                  <Button variant="outline" onClick={() => setShowClearSaleConfirm(false)}>Cancelar</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => { setShowClearSaleConfirm(false); clearEmbeddedSaleForm(); }}
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Sí, limpiar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
             <SaleForm
@@ -1863,6 +1914,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               customers={customers}
               products={products}
               warehouses={warehouses}
+              inventory={inventory}
               vehicles={vehicles}
               initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, globalDiscount, notes, applyIVA, ivaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
@@ -1898,6 +1950,10 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   // keep local clear behavior if remote cleanup fails
                 });
               }}
+              onDataRefresh={fetchData}
+              currencyValue={currency}
+              onCurrencyChange={setCurrency}
+              hideCurrencyField={true}
               submitLabel="Crear Venta"
               onSubmit={async (payload) => {
                 try {
@@ -1978,10 +2034,16 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       {/* Drafts + 3-column invoice board */}
       <div className="xl:hidden">
         <Tabs value={boardTab} onValueChange={setBoardTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="drafts">Borradores</TabsTrigger>
-            <TabsTrigger value="open">Abiertas</TabsTrigger>
-            <TabsTrigger value="closed">Cerradas</TabsTrigger>
+          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+            <TabsTrigger value="drafts" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Borradores
+            </TabsTrigger>
+            <TabsTrigger value="open" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Abiertas
+            </TabsTrigger>
+            <TabsTrigger value="closed" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Cerradas
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

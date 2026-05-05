@@ -22,10 +22,11 @@ import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 
 export function InventoryPage() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const canViewInventory = hasPermission("inventory", "view");
   const canCreateInventory = hasPermission("inventory", "create");
   const canEditInventory = hasPermission("inventory", "edit");
+  const isWarehouseRole = ["bodega", "bodegas"].includes(String(user?.role || "").toLowerCase());
   const [inventory, setInventory] = useState([]);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -38,6 +39,7 @@ export function InventoryPage() {
   const [showLowStock, setShowLowStock] = useState(false);
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
+  const [showAddStock, setShowAddStock] = useState(false);
   const [showProductDetail, setShowProductDetail] = useState(null);
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [waProduct, setWaProduct] = useState(null);
@@ -105,6 +107,7 @@ export function InventoryPage() {
     window_options: [],
     hourly_rate: "",
     warranty_months: 12,
+    low_stock_threshold: 5,
   });
 
   // Transfer form
@@ -112,6 +115,12 @@ export function InventoryPage() {
     product_id: "",
     from_warehouse: "",
     to_warehouse: "",
+    quantity: 1,
+  });
+
+  const [addStock, setAddStock] = useState({
+    product_id: "",
+    warehouse_id: "",
     quantity: 1,
   });
 
@@ -386,6 +395,9 @@ export function InventoryPage() {
       window_options: [],
       hourly_rate: "",
       warranty_months: 12,
+      low_stock_threshold: 5,
+      initial_stock: 0,
+      initial_warehouse_id: "",
     });
     setNewImageUrl("");
     setNewBrand("");
@@ -416,6 +428,9 @@ export function InventoryPage() {
         warranty_months: parseInt(newProduct.warranty_months) || 12,
         installation_price: parseFloat(newProduct.installation_price) || 0,
         installation_time_minutes: parseInt(newProduct.installation_time_minutes) || 0,
+        low_stock_threshold: Math.max(1, parseInt(newProduct.low_stock_threshold, 10) || 5),
+        initial_stock: Math.max(0, parseInt(newProduct.initial_stock, 10) || 0),
+        initial_warehouse_id: newProduct.initial_warehouse_id || "",
         installation_type: newProduct.installation_type || "optional",
         hourly_rate: newProduct.hourly_rate ? parseFloat(newProduct.hourly_rate) : null,
         compatibility: newProduct.compatibility.brands.length > 0 || 
@@ -468,6 +483,7 @@ export function InventoryPage() {
         installation_type: editingProduct.installation_type || "optional",
         installation_price: parseFloat(editingProduct.installation_price) || 0,
         installation_time_minutes: parseInt(editingProduct.installation_time_minutes) || 0,
+        low_stock_threshold: Math.max(1, parseInt(editingProduct.low_stock_threshold, 10) || 5),
         warranty_months: parseInt(editingProduct.warranty_months) || 12,
         hourly_rate: editingProduct.hourly_rate ? parseFloat(editingProduct.hourly_rate) : null,
       };
@@ -505,6 +521,36 @@ export function InventoryPage() {
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error en transferencia");
+    }
+  };
+
+  const executeAddStock = async () => {
+    if (!canEditInventory) {
+      toast.error("No tienes permiso para agregar inventario");
+      return;
+    }
+    if (!addStock.product_id || !addStock.warehouse_id) {
+      toast.error("Selecciona producto y bodega");
+      return;
+    }
+    const qty = Math.max(1, parseInt(addStock.quantity, 10) || 0);
+
+    try {
+      await axios.post(`${API}/inventory/add-stock`, null, {
+        withCredentials: true,
+        params: {
+          product_id: addStock.product_id,
+          warehouse_id: addStock.warehouse_id,
+          quantity: qty,
+        },
+      });
+      toast.success("Inventario agregado");
+      setShowAddStock(false);
+      setAddStock({ product_id: "", warehouse_id: "", quantity: 1 });
+      fetchData();
+      fetchKardex();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al agregar inventario");
     }
   };
 
@@ -762,6 +808,7 @@ export function InventoryPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {/* Import CSV Dialog */}
+          {!isWarehouseRole ? (
           <Dialog open={showImportCSV} onOpenChange={setShowImportCSV}>
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="import-csv-btn" disabled={!canCreateInventory}>
@@ -838,7 +885,9 @@ export function InventoryPage() {
               </div>
             </DialogContent>
           </Dialog>
+          ) : null}
 
+          {!isWarehouseRole ? (
           <Dialog open={showTransfer} onOpenChange={setShowTransfer}>
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="transfer-btn" disabled={!canEditInventory}>
@@ -907,9 +956,72 @@ export function InventoryPage() {
                   Ejecutar Transferencia
                 </Button>
               </div>
+              </DialogContent>
+          </Dialog>
+          ) : null}
+
+          <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
+            <DialogTrigger asChild>
+              <Button variant="outline" data-testid="add-stock-btn" disabled={!canEditInventory}>
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar Inventario
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ingreso de Inventario</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Producto</Label>
+                  <Select value={addStock.product_id} onValueChange={(v) => setAddStock({ ...addStock, product_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar producto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.product_id} value={p.product_id}>
+                          {p.name} ({p.sku || "sin-sku"})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Bodega destino</Label>
+                  <Select value={addStock.warehouse_id} onValueChange={(v) => setAddStock({ ...addStock, warehouse_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar bodega" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {warehouses.map((w) => (
+                        <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
+                          {w.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Cantidad a agregar</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={addStock.quantity}
+                    onChange={(e) => setAddStock({ ...addStock, quantity: parseInt(e.target.value, 10) || 1 })}
+                  />
+                </div>
+
+                <Button onClick={executeAddStock} className="w-full" disabled={!canEditInventory}>
+                  Confirmar Ingreso
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
           
+          {!isWarehouseRole ? (
           <Dialog open={showNewProduct} onOpenChange={(open) => { setShowNewProduct(open); if (!open) resetProductForm(); }}>
             <DialogTrigger asChild>
               <Button data-testid="new-product-btn" disabled={!canCreateInventory}>
@@ -1022,7 +1134,7 @@ export function InventoryPage() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <div>
                         <Label>Marca</Label>
                         <Input
@@ -1039,6 +1151,45 @@ export function InventoryPage() {
                           onChange={(e) => setNewProduct({ ...newProduct, warranty_months: e.target.value })}
                         />
                       </div>
+                      <div>
+                        <Label>Umbral stock bajo</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={newProduct.low_stock_threshold}
+                          onChange={(e) => setNewProduct({ ...newProduct, low_stock_threshold: e.target.value })}
+                          placeholder="5"
+                        />
+                      </div>
+                      <div>
+                        <Label>Alta inicial</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={newProduct.initial_stock}
+                          onChange={(e) => setNewProduct({ ...newProduct, initial_stock: e.target.value })}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Bodega para alta inicial</Label>
+                      <Select
+                        value={newProduct.initial_warehouse_id}
+                        onValueChange={(v) => setNewProduct({ ...newProduct, initial_warehouse_id: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar bodega (opcional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {warehouses.map((w) => (
+                            <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
+                              {w.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     {newProduct.category === "polarizados" && (
@@ -1379,6 +1530,7 @@ export function InventoryPage() {
               </ScrollArea>
             </DialogContent>
           </Dialog>
+          ) : null}
         </div>
       </div>
 
@@ -1794,6 +1946,7 @@ export function InventoryPage() {
                 </div>
               </DialogContent>
             </Dialog>
+          ) : null}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -2084,7 +2237,7 @@ export function InventoryPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Precio</Label>
                   <Input
@@ -2101,6 +2254,15 @@ export function InventoryPage() {
                     step="0.01"
                     value={editingProduct.cost}
                     onChange={(e) => setEditingProduct({ ...editingProduct, cost: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Umbral stock bajo</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={editingProduct.low_stock_threshold ?? 5}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, low_stock_threshold: e.target.value })}
                   />
                 </div>
               </div>

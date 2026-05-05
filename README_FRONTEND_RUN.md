@@ -3,6 +3,15 @@ MUNDO DE ACCESORIOS - Frontend run notes
 
 Este archivo resume como ejecutar y validar el frontend despues de la migracion a Vite.
 
+Actualizacion 2026-05-05
+------------------------
+
+- Workbench ya incluye navegacion inferior movil en telefonos (`frontend/src/components/layout/BottomNav.jsx`).
+- `MainLayout` ahora muestra nombre de usuario, rol y sucursal en el encabezado operativo.
+- Se movio formulario cliente/vehiculo a componente reutilizable (`frontend/src/components/customers/CustomerVehicleFormTabs.jsx`).
+- Se ajusto `SaleForm` en Paso 3 y Paso 4 para paridad visual (stock a la izquierda, precio alineado abajo a la derecha).
+- Se retiro la fila de "otras tiendas" del carrito (Paso 4) y su logica asociada.
+
 Estado actual
 -------------
 

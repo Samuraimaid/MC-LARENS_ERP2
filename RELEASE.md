@@ -2,6 +2,34 @@
 
 Build documental actual: 2026-02-26
 
+## Control de cambios - 2026-05-05 (Permisos, ventas y experiencia movil)
+
+Estado de cierre
+- Se consolidaron cambios funcionales en backend y frontend para mejorar operacion comercial, visual de ventas y navegacion movil.
+
+Alcance funcional entregado
+- Backend:
+	- Nuevos roles operativos: `jefe_vendedores`, `jefe_tienda`.
+	- Expansion de permisos funcionales para modulos comerciales e inventario segun rol.
+	- `POST /inventory/add-stock` agregado para ingreso controlado de stock.
+	- Restriccion aplicada: rol `bodegas` no usa actualizacion general de inventario, solo flujo de ingreso.
+
+- Frontend:
+	- Header operativo en `MainLayout` con nombre, rol y sucursal visibles.
+	- Navegacion inferior movil para workbench (`BottomNav`) y hook `useDevice` para comportamiento responsive.
+	- Refactor de formulario cliente/vehiculo a componente reutilizable.
+	- Ajustes de UI en `SaleForm`:
+		- tarjetas de productos (Paso 3) y carrito (Paso 4) alineadas a referencia visual,
+		- precios con alineacion inferior derecha,
+		- eliminada fila "otras tiendas" y su logica asociada en Paso 4.
+
+Datos de apoyo
+- Script agregado: `scripts/seed_managua_customers_vehicles.py` para carga idempotente de clientes/vehiculos de prueba.
+
+Verificaciones aplicadas
+- Diagnostico limpio en `frontend/src/components/sales/SaleForm.jsx`.
+- Rebuild frontend por Docker Compose ejecutado para validar despliegue local.
+
 ## Control de cambios — 2026-03-28 (Login PIN y sesión)
 
 Estado de cierre

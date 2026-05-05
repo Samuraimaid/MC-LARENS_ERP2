@@ -1,15 +1,18 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
-import { formatCurrency, formatDate, getStatusColor, PAYMENT_TYPES } from "../lib/utils";
+import { cn, formatCurrency, formatDate, getStatusColor, PAYMENT_TYPES } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Loader2, AlertTriangle, Save, Eraser } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
@@ -69,10 +72,26 @@ export function QuotationsPage() {
   const [draftsLoaded, setDraftsLoaded] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [showArchivedQuotes, setShowArchivedQuotes] = useState(false);
+  const [showClearQuoteConfirm, setShowClearQuoteConfirm] = useState(false);
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
   const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
+  const [draftSaveState, setDraftSaveState] = useState("idle");
+  const [boardTab, setBoardTab] = useState("drafts");
+  const [currency, setCurrency] = useState("NIO");
   const draftTabsRef = useRef([]);
   const draftSyncTimersRef = useRef(new Map());
+    const markDraftSaving = useCallback(() => {
+      setDraftSaveState("saving");
+    }, []);
+
+    const markDraftSaved = useCallback(() => {
+      setDraftSaveState("saved");
+    }, []);
+
+    const markDraftSaveError = useCallback(() => {
+      setDraftSaveState("error");
+    }, []);
+
   const formVisibilityStorageKey = useMemo(() => {
     const userToken = user?.user_id || user?.pin_user_id || "anon";
     return `${EMBEDDED_FORM_VISIBILITY_KEY_PREFIX}_${userToken}`;
@@ -109,24 +128,51 @@ export function QuotationsPage() {
     setLoading(true);
     try {
       const params = filterStatus !== "all" ? `?status=${filterStatus}` : "";
-      const [quotesRes, customersRes, productsRes, warehousesRes, vehiclesRes] = await Promise.all([
+      const [quotesRes, customersRes, productsRes, warehousesRes, vehiclesRes] = await Promise.allSettled([
         axios.get(`${API}/quotations${params}`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }),
         axios.get(`${API}/products`, { withCredentials: true }),
         axios.get(`${API}/warehouses`, { withCredentials: true }),
         axios.get(`${API}/vehicles`, { withCredentials: true }),
       ]);
-      setQuotations(quotesRes.data);
-      setCustomers(customersRes.data);
-      setProducts(productsRes.data);
-      setWarehouses(warehousesRes.data);
-      setVehicles(vehiclesRes.data);
+
+      const hasCriticalFailures =
+        quotesRes.status === "rejected" ||
+        customersRes.status === "rejected" ||
+        productsRes.status === "rejected" ||
+        vehiclesRes.status === "rejected";
+
+      if (quotesRes.status === "fulfilled") setQuotations(quotesRes.value.data);
+      if (customersRes.status === "fulfilled") setCustomers(customersRes.value.data);
+      if (productsRes.status === "fulfilled") setProducts(productsRes.value.data);
+      if (vehiclesRes.status === "fulfilled") setVehicles(vehiclesRes.value.data);
+
+      // Bodegas puede estar restringido por permisos; no debe romper Cotizaciones.
+      setWarehouses(warehousesRes.status === "fulfilled" ? warehousesRes.value.data : []);
+
+      if (hasCriticalFailures) {
+        toast.error("Error al cargar datos");
+      }
     } catch (error) {
       toast.error("Error al cargar datos");
     } finally {
       setLoading(false);
     }
   }, [filterStatus]);
+
+  useEffect(() => {
+    const refreshData = () => {
+      fetchData();
+    };
+
+    const intervalId = window.setInterval(refreshData, 30000);
+    window.addEventListener("focus", refreshData);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshData);
+    };
+  }, [fetchData]);
 
   const readDraft = (draftId) => {
     if (typeof window === "undefined") return null;
@@ -851,14 +897,6 @@ export function QuotationsPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="quotations-page">
-      {/* Header */}
-      <div className="animate-fade-up-soft">
-        <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Cotizaciones</h1>
-          <p className="text-muted-foreground">Gestión de cotizaciones para clientes</p>
-        </div>
-      </div>
-
       {showNewQuote ? (
         <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
@@ -879,34 +917,88 @@ export function QuotationsPage() {
                   data-testid="new-quotation-btn"
                   onClick={createDraftTab}
                   className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  title="Nueva Cotización"
                 >
-                  <Plus className="mr-2 h-3.5 w-3.5" />
-                  Nueva Cotización
+                  <Plus className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Nueva Cotización</span>
                 </Button>
-                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Autoguardado en servidor activo</span>
+                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground" title="Estado de autoguardado">
+                  {draftSaveState === "saving" ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span className="hidden sm:inline">Guardando...</span>
+                    </>
+                  ) : null}
+                  {draftSaveState === "saved" ? (
+                    <>
+                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="hidden sm:inline">Todos los cambios guardados</span>
+                    </>
+                  ) : null}
+                  {draftSaveState === "error" ? (
+                    <>
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                      <span className="hidden sm:inline">Error al guardar, reintentando...</span>
+                    </>
+                  ) : null}
+                  {draftSaveState === "idle" ? (
+                    <>
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Listo para autoguardar</span>
+                    </>
+                  ) : null}
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={saveActiveDraftNow}
                   className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
+                  title="Guardar Borrador"
                 >
-                  <CheckCircle className="mr-2 h-3.5 w-3.5" />
-                  Guardar Borrador
+                  <Save className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Guardar Borrador</span>
                 </Button>
               </div>
+              <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+                <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
+                <Switch
+                  checked={currency === "USD"}
+                  onCheckedChange={(checked) => setCurrency(checked ? "USD" : "NIO")}
+                  className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
+                  aria-label="Cambiar moneda entre córdobas y dólares"
+                />
+                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
+              </div>
               <Button
-                size="sm"
+                size="icon"
                 variant="outline"
-                onClick={clearEmbeddedQuoteForm}
-                className="ui-interactive ml-auto border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                onClick={() => setShowClearQuoteConfirm(true)}
+                className="h-8 w-8 ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                title="Limpiar Formulario"
               >
-                <XCircle className="mr-2 h-3.5 w-3.5" />
-                Limpiar Formulario
+                <Eraser className="h-3.5 w-3.5" />
               </Button>
             </div>
+            <Dialog open={showClearQuoteConfirm} onOpenChange={setShowClearQuoteConfirm}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>¿Limpiar formulario?</DialogTitle>
+                  <DialogDescription>
+                    Se borrarán todos los datos ingresados en la cotización actual. Esta acción no se puede deshacer.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex gap-2 sm:justify-end">
+                  <Button variant="outline" onClick={() => setShowClearQuoteConfirm(false)}>Cancelar</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => { setShowClearQuoteConfirm(false); clearEmbeddedQuoteForm(); }}
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Sí, limpiar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
             <SaleForm
@@ -917,15 +1009,30 @@ export function QuotationsPage() {
               vehicles={vehicles}
               flowType="quotation"
               step4Label="Paso 4: Productos en esta Cotizacion"
-              initialData={{ selectedCustomer, cartItems, globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency: "NIO" }}
+              initialData={{ selectedCustomer, cartItems, globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
+                markDraftSaving();
                 updateDraftTabMeta(activeDraftId, {
                   ...snapshot,
                   validDays,
                 });
+              }}
+              onDraftSaveStateChange={(payload) => {
+                const state = payload?.state;
+                if (state === "saving") {
+                  markDraftSaving();
+                  return;
+                }
+                if (state === "saved") {
+                  markDraftSaved();
+                  return;
+                }
+                if (state === "error") {
+                  markDraftSaveError();
+                }
               }}
               onDraftClear={() => {
                 if (!activeDraftId) return;
@@ -937,6 +1044,10 @@ export function QuotationsPage() {
                   // keep local clear behavior if remote cleanup fails
                 });
               }}
+              onDataRefresh={fetchData}
+              currencyValue={currency}
+              onCurrencyChange={setCurrency}
+              hideCurrencyField={true}
               extraFields={
                 <div>
                   <Label>Validez (días)</Label>
@@ -997,8 +1108,21 @@ export function QuotationsPage() {
       </div>
 
       {/* Drafts + Quotations */}
+      <div className="lg:hidden">
+        <Tabs value={boardTab} onValueChange={setBoardTab}>
+          <TabsList className="grid h-11 w-full grid-cols-2 rounded-full border bg-card/95 p-1">
+            <TabsTrigger value="drafts" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Borradores
+            </TabsTrigger>
+            <TabsTrigger value="created" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Creadas
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[440px,1fr]">
-        <Card className="h-fit">
+        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden lg:block" : "") }>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE COTIZACION</CardTitle>
           </CardHeader>
@@ -1093,7 +1217,7 @@ export function QuotationsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={cn(boardTab !== "created" ? "hidden lg:block" : "") }>
           <CardContent className="p-4">
             {loading ? (
               <div className="py-10 text-center text-muted-foreground">

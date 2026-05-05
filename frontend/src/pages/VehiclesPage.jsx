@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { toast } from "sonner";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import {
@@ -105,6 +105,8 @@ export function VehiclesPage() {
     const customer = customers.find(c => c.customer_id === customerId);
     return customer?.name || "Desconocido";
   };
+
+  const getCustomer = (customerId) => customers.find(c => c.customer_id === customerId) || null;
 
   const normSearch = normalize(search);
   const filteredVehicles = vehicles.filter(v => {
@@ -337,38 +339,80 @@ export function VehiclesPage() {
         ) : filteredVehicles.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">No hay vehículos registrados</div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {filteredVehicles.map(vehicle => (
-              <Card key={vehicle.vehicle_id}>
-                <CardHeader>
+          <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger xl:grid-cols-2">
+            {filteredVehicles.map(vehicle => {
+              const customer = getCustomer(vehicle.customer_id);
+              const isCompany = customer?.customer_type === "empresa";
+              const cardTone = isCompany
+                ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
+                : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
+              const plateTone = isCompany
+                ? "border-sky-200 bg-sky-100 text-sky-800"
+                : "border-emerald-200 bg-emerald-100 text-emerald-800";
+
+              return (
+              <Card key={vehicle.vehicle_id} className={`group h-full overflow-hidden shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
+                <CardHeader className="gap-4 pb-4">
                   <img
                     src={getVehicleThumbnail(vehicle)}
                     alt={`${vehicle.brand || "Vehículo"} ${vehicle.model || ""}`.trim()}
-                    className="w-full h-32 rounded-md object-cover bg-muted/30 mb-3"
+                    className="mb-1 h-32 w-full rounded-md bg-muted/30 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                   />
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="font-mono font-bold text-lg py-1 px-2">{vehicle.plate}</Badge>
-                      <div>
-                        <div className="font-medium text-base">{vehicle.brand} {vehicle.model}</div>
-                        <div className="text-xs text-muted-foreground">{vehicle.year} • {vehicle.color || '-'}{vehicle.vin ? ` • ${vehicle.vin}` : ''}</div>
+                  <CardTitle className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <Badge variant="outline" className={`font-mono font-bold text-lg py-1 px-2 ${plateTone}`}>{vehicle.plate}</Badge>
+                      <div className="min-w-0 space-y-2">
+                        <div className="inline-flex items-center gap-2 font-medium text-base">
+                          <CarFront className={`h-4 w-4 shrink-0 icon-spring ${isCompany ? 'text-sky-700' : 'text-emerald-700'}`} />
+                          <span className="truncate">{vehicle.brand} {vehicle.model}</span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-500 icon-spring" />
+                            {vehicle.year || '-'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Palette className="h-3.5 w-3.5 text-slate-500 icon-spring" />
+                            {vehicle.color || '-'}
+                          </span>
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500 icon-spring" />
+                            <span className="truncate">{vehicle.vin || 'Sin VIN/chasis'}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm font-medium text-muted-foreground">{getCustomerName(vehicle.customer_id)}</div>
+                    <div className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-muted-foreground">
+                      {isCompany ? (
+                        <Building2 className="h-4 w-4 shrink-0 text-sky-600 icon-spring" />
+                      ) : (
+                        <User className="h-4 w-4 shrink-0 text-emerald-600 icon-spring" />
+                      )}
+                      <span className="max-w-[180px] truncate">{getCustomerName(vehicle.customer_id)}</span>
+                    </div>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-2">
-                      <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => {
+                <CardContent className="flex h-full flex-col gap-4">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-3 text-sm font-medium text-slate-700">
+                    <ClipboardList className={`h-4 w-4 icon-spring ${isCompany ? 'text-sky-700' : 'text-emerald-700'}`} />
+                    <span>Acciones rápidas</span>
+                  </div>
+                  <div className="mt-auto flex flex-wrap items-center gap-2">
+                      <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700 ui-interactive" onClick={() => {
                         const customer = customers.find(c => c.customer_id === vehicle.customer_id) || { name: getCustomerName(vehicle.customer_id), customer_id: vehicle.customer_id };
                         createQuotationFromVehicle(customer, vehicle);
-                      }}>Crear Cotización</Button>
-                      <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => {
+                      }}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Crear Cotización
+                      </Button>
+                      <Button size="sm" className="bg-green-600 text-white hover:bg-green-700 ui-interactive" onClick={() => {
                         const customer = customers.find(c => c.customer_id === vehicle.customer_id) || { name: getCustomerName(vehicle.customer_id), customer_id: vehicle.customer_id };
                         createSaleFromVehicle(customer, vehicle);
-                      }}>Crear Venta</Button>
-                      <Button size="sm" className="bg-yellow-400 text-black hover:bg-yellow-500" onClick={async () => {
+                      }}>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Crear Venta
+                      </Button>
+                      <Button size="sm" className="bg-yellow-400 text-black hover:bg-yellow-500 ui-interactive" onClick={async () => {
                         // pedir motivo obligatorio antes de la edición
                         const motivo = prompt('Motivo de la solicitud (obligatorio):', 'Actualizar color');
                         if (motivo === null) return;
@@ -380,8 +424,11 @@ export function VehiclesPage() {
                           await axios.post(`${API}/approvals`, { type: 'edit_vehicle', payload: { vehicle_id: vehicle.vehicle_id, changes }, reason: motivo.trim() }, { withCredentials: true });
                           toast.success('Solicitud de edición enviada');
                         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
-                      }}>Editar</Button>
-                      <Button size="sm" variant="destructive" onClick={async () => {
+                      }}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="destructive" className="ui-interactive" onClick={async () => {
                         // pedir motivo obligatorio antes de solicitar eliminación
                         const motivo = prompt('Motivo para eliminar (obligatorio):', 'Vehículo duplicado');
                         if (motivo === null) return;
@@ -391,12 +438,15 @@ export function VehiclesPage() {
                           await axios.post(`${API}/approvals`, { type: 'delete_vehicle', payload: { vehicle_id: vehicle.vehicle_id }, reason: motivo.trim() }, { withCredentials: true });
                           toast.success('Solicitud de eliminación enviada');
                         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
-                      }}>Eliminar</Button>
-                    </div>
+                      }}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </Button>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
