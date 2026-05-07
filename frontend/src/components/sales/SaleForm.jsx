@@ -896,7 +896,7 @@ export default function SaleForm({
     const totalDiscounts = discountFromCodes + discountAmount;
     const subtotalAfterDiscounts = subtotal - totalDiscounts;
     const tax = applyIVA ? subtotalAfterDiscounts * (ivaRate / 100) : 0;
-    const retention = applyRetention ? subtotalAfterDiscounts * (retentionRate / 100) : 0;
+    const retention = applyRetention ? subtotal * (retentionRate / 100) : 0;
     const total = subtotalAfterDiscounts + tax - retention;
     return { subtotal, tax, discountAmount, discountFromCodes, totalDiscounts, retention, total };
   })();
@@ -2281,12 +2281,16 @@ export default function SaleForm({
 
         <div className="border-t pt-4 space-y-1">
           <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotal, currency)}</span></div>
-          <div className={`flex justify-between text-sm ${totals.discountFromCodes > 0 ? "text-green-600" : "text-muted-foreground"}`}><span>Descuento Códigos:</span><span className="font-mono">{totals.discountFromCodes > 0 ? `-${formatCurrency(totals.discountFromCodes, currency)}` : formatCurrency(0, currency)}</span></div>
-          <div className={`flex justify-between text-sm ${totals.discountAmount > 0 ? "text-green-600" : "text-muted-foreground"}`}><span>Descuento Global:</span><span className="font-mono">{totals.discountAmount > 0 ? `-${formatCurrency(totals.discountAmount, currency)}` : formatCurrency(0, currency)}</span></div>
           {applyRetention && totals.retention > 0 && (
             <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><span className="font-mono">-{formatCurrency(totals.retention, currency)}</span></div>
           )}
-            <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
+          {totals.discountFromCodes > 0 && (
+            <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><span className="font-mono">-{formatCurrency(totals.discountFromCodes, currency)}</span></div>
+          )}
+          {totals.discountAmount > 0 && (
+            <div className="flex justify-between text-sm text-green-600"><span>Descuento Global:</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
+          )}
+          <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
           <div className="flex justify-between text-lg font-bold"><span>Total:</span><span className="font-mono">{formatCurrency(totals.total, currency)}</span></div>
         </div>
 

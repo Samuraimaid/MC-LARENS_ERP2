@@ -591,7 +591,7 @@ export function SalesPage() {
     const globalDiscountAmount = subtotal * ((draft.globalDiscount || 0) / 100);
     const totalDiscounts = discountFromCodes + globalDiscountAmount;
     const subtotalAfterDiscounts = subtotal - totalDiscounts;
-    const retention = draft.applyRetention ? subtotalAfterDiscounts * ((draft.retentionRate || 0) / 100) : 0;
+    const retention = draft.applyRetention ? subtotal * ((draft.retentionRate || 0) / 100) : 0;
     const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
     return {
       totalDiscounts,
