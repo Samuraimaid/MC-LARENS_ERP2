@@ -22,11 +22,12 @@ import SearchableSelect from "@/components/ui/searchable-select";
 import { toast } from "sonner";
 import { 
   Plus, Search, CreditCard, Printer, Download, RefreshCw, 
-  Wrench, Package, ShieldCheck, AlertTriangle, Car, XCircle, CheckCircle, Loader2,
-  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Save, Eraser
+  Wrench, Package, ShieldCheck, Car, XCircle,
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
+import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
@@ -125,6 +126,7 @@ export function SalesPage() {
   const canEditSales = hasPermission("sales", "edit");
   const canCreateCustomers = hasPermission("customers", "create");
   const isBillingApprover = ["gerencia", "recursos_humanos"].includes(String(user?.role || "").toLowerCase());
+  const canSeeAdvancedFilters = ["gerencia", "recursos_humanos", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
   const DRAFT_LIST_KEY = "draft_sale_tabs_v1";
   const DRAFT_ACTIVE_KEY = "draft_sale_active_v1";
   const DRAFT_KEY_PREFIX = "draft_sale_v1_";
@@ -229,15 +231,18 @@ export function SalesPage() {
 
   const markDraftSaving = useCallback(() => {
     setDraftSaveState("saving");
+    emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "sales" });
   }, []);
 
   const markDraftSaved = useCallback(() => {
     setDraftSaveState("saved");
     setDraftSavedAt(new Date());
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
   }, []);
 
   const markDraftSaveError = useCallback(() => {
     setDraftSaveState("error");
+    emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
   }, []);
   const formVisibilityStorageKey = useMemo(() => {
     const userToken = user?.user_id || user?.pin_user_id || "anon";
@@ -254,6 +259,13 @@ export function SalesPage() {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+    return () => {
+      emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+    };
   }, []);
 
   useEffect(() => {
@@ -290,6 +302,7 @@ export function SalesPage() {
 
     const loadDrafts = async () => {
       try {
+        emitAutosaveStatus(AUTOSAVE_STATUS.RECOVERING, { source: "sales" });
         const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
         if (cancelled) return;
         const localFallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
@@ -371,11 +384,13 @@ export function SalesPage() {
           updatedAt: draft.updatedAt,
         })));
         setActiveDraftId(mergedActiveDraftId || (mergedDrafts[0]?.id ?? null));
+        emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
       } catch (error) {
         if (cancelled) return;
         const fallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
         setDraftTabs(fallback.draftTabs);
         setActiveDraftId(fallback.activeDraftId);
+        emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
       } finally {
         if (!cancelled) {
           setDraftsLoaded(true);
@@ -485,14 +500,66 @@ export function SalesPage() {
     if (typeof window === "undefined") return null;
     try {
       const raw = window.localStorage.getItem(getDraftKey(draftId));
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const snapshot = parsed?.snapshot && typeof parsed.snapshot === "object" ? parsed.snapshot : parsed;
+      if (!snapshot || typeof snapshot !== "object") return null;
+
+      const normalized = {
+        ...snapshot,
+        selectedCustomerId:
+          snapshot.selectedCustomerId
+          ?? snapshot.selected_customer_id
+          ?? snapshot.customer_id
+          ?? null,
+        selectedVehicle:
+          snapshot.selectedVehicle
+          ?? snapshot.selected_vehicle
+          ?? snapshot.vehicle_id
+          ?? "",
+        cartItems: Array.isArray(snapshot.cartItems)
+          ? snapshot.cartItems
+          : (Array.isArray(snapshot.cart_items)
+            ? snapshot.cart_items
+            : (Array.isArray(snapshot.items) ? snapshot.items : [])),
+        globalDiscount:
+          snapshot.globalDiscount
+          ?? snapshot.global_discount
+          ?? snapshot.discount
+          ?? 0,
+        appliedDiscounts: Array.isArray(snapshot.appliedDiscounts)
+          ? snapshot.appliedDiscounts
+          : (Array.isArray(snapshot.applied_discounts) ? snapshot.applied_discounts : []),
+        applyIVA:
+          snapshot.applyIVA
+          ?? snapshot.apply_iva
+          ?? true,
+        applyRetention:
+          snapshot.applyRetention
+          ?? snapshot.apply_retention
+          ?? false,
+        retentionRate: (() => {
+          const rawRate = snapshot.retentionRate ?? snapshot.retention_rate ?? snapshot.retentionRateHint ?? snapshot.retention_rate_hint;
+          if (rawRate === 0.01 || rawRate === 0.02) return rawRate * 100;
+          if (rawRate === 1 || rawRate === 2) return rawRate;
+          return 2;
+        })(),
+        currency: snapshot.currency || "NIO",
+      };
+      return normalized;
     } catch (error) {
       return null;
     }
   };
 
-  const computeDraftTotal = (draft) => {
-    if (!draft) return 0;
+  const computeDraftTotals = (draft) => {
+    if (!draft) {
+      return {
+        totalDiscounts: 0,
+        retention: 0,
+        total: 0,
+      };
+    }
     const currencyDraft = draft.currency || "NIO";
     const rate = exchangeRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
@@ -522,15 +589,25 @@ export function SalesPage() {
     });
 
     const globalDiscountAmount = subtotal * ((draft.globalDiscount || 0) / 100);
-    const subtotalAfterDiscounts = subtotal - discountFromCodes - globalDiscountAmount;
+    const totalDiscounts = discountFromCodes + globalDiscountAmount;
+    const subtotalAfterDiscounts = subtotal - totalDiscounts;
+    const retention = draft.applyRetention ? subtotalAfterDiscounts * ((draft.retentionRate || 0) / 100) : 0;
     const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
-    return subtotalAfterDiscounts + tax;
+    return {
+      totalDiscounts,
+      retention,
+      total: subtotalAfterDiscounts + tax - retention,
+    };
+  };
+
+  const computeDraftTotal = (draft) => {
+    return computeDraftTotals(draft).total;
   };
 
   const getDraftLabel = (tab) => {
     const draft = readDraft(tab.id);
     if (!draft) return tab.name;
-    const customerName = customers.find(c => c.customer_id === draft.selectedCustomerId)?.name;
+    const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft.selectedCustomerId ?? ""))?.name;
     const total = computeDraftTotal(draft);
     const currencyDraft = draft.currency || "NIO";
     const name = customerName || "Sin cliente";
@@ -539,7 +616,8 @@ export function SalesPage() {
 
   const getVehicleLabel = (vehicleId) => {
     if (!vehicleId) return null;
-    const vehicle = vehicles.find(v => v.vehicle_id === vehicleId || v.id === vehicleId);
+    const normalizedVehicleId = String(vehicleId);
+    const vehicle = vehicles.find((v) => String(v.vehicle_id ?? v.id ?? "") === normalizedVehicleId);
     if (!vehicle) return null;
     const parts = [vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(" ");
     const plate = vehicle.plate || vehicle.plate_number || vehicle.number_plate || vehicle.registration || null;
@@ -553,7 +631,8 @@ export function SalesPage() {
 
   const getVehicleById = (vehicleId) => {
     if (!vehicleId) return null;
-    return vehicles.find(v => v.vehicle_id === vehicleId || v.id === vehicleId) || null;
+    const normalizedVehicleId = String(vehicleId);
+    return vehicles.find((v) => String(v.vehicle_id ?? v.id ?? "") === normalizedVehicleId) || null;
   };
 
   const getSaleItemsPreview = (sale) => {
@@ -575,15 +654,15 @@ export function SalesPage() {
   const getDraftMeta = (tab) => {
     const draft = readDraft(tab.id);
     const preview = getDraftPreview(draft);
-    const customerName = customers.find(c => c.customer_id === draft?.selectedCustomerId)?.name;
-    const total = computeDraftTotal(draft);
+    const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""))?.name;
+    const totals = computeDraftTotals(draft);
     const currencyDraft = draft?.currency || "NIO";
     const itemsCount = Array.isArray(draft?.cartItems) ? draft.cartItems.length : 0;
     const updatedAt = draft?.updatedAt || tab.updatedAt;
     return {
       title: customerName || "Sin cliente",
       subtitle: tab.name,
-      total,
+      total: totals.total,
       currency: currencyDraft,
       itemsCount,
       updatedAt,
@@ -591,6 +670,9 @@ export function SalesPage() {
       previewImage: preview.image,
       previewVehicle: preview.vehicle,
       applyIVA: draft?.applyIVA ?? true,
+      totalDiscounts: totals.totalDiscounts,
+      retention: totals.retention,
+      retentionRate: draft?.retentionRate ?? 2,
     };
   };
 
@@ -598,7 +680,8 @@ export function SalesPage() {
 
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
-    markDraftSaving();
+    setDraftSaveState("saving");
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "sales" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
     try {
@@ -651,7 +734,7 @@ export function SalesPage() {
     try {
       const draft = snapshotOverride || readDraft(draftId);
       if (!draft) return;
-      const customerName = customers.find(c => c.customer_id === draft?.selectedCustomerId)?.name;
+      const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""))?.name;
       let nextName = null;
       setDraftTabs(prev => prev.map(tab => {
         if (tab.id !== draftId) return tab;
@@ -717,6 +800,8 @@ export function SalesPage() {
       notes: snapshot?.notes || "",
       applyIVA: snapshot?.applyIVA ?? true,
       ivaRate: snapshot?.ivaRate ?? effectiveIvaRate,
+      applyRetention: snapshot?.applyRetention ?? false,
+      retentionRate: snapshot?.retentionRate ?? 2,
       currency: snapshot?.currency || "NIO",
       exchangeRate: snapshot?.exchangeRate || exchangeRate,
       appliedDiscounts: Array.isArray(snapshot?.appliedDiscounts) ? snapshot.appliedDiscounts : [],
@@ -735,7 +820,7 @@ export function SalesPage() {
 
     if (!draftId) {
       draftId = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-      const draftName = `Venta - ${customers.find((c) => c.customer_id === safeSnapshot.selectedCustomerId)?.name || "Sin cliente"}`;
+      const draftName = `Venta - ${customers.find((c) => String(c.customer_id ?? "") === String(safeSnapshot.selectedCustomerId ?? ""))?.name || "Sin cliente"}`;
       nextTabs.push({ id: draftId, name: draftName, updatedAt: nowIso });
       setDraftTabs(nextTabs);
       setActiveDraftId(draftId);
@@ -1828,43 +1913,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   <Plus className="h-3.5 w-3.5 sm:mr-2" />
                   <span className="hidden sm:inline">Nueva Venta</span>
                 </Button>
-                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground" title="Estado de autoguardado">
-                  {draftSaveState === "saving" ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span className="hidden sm:inline">Guardando...</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "saved" ? (
-                    <>
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                      <span className="hidden sm:inline">Todos los cambios guardados</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "error" ? (
-                    <>
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                      <span className="hidden sm:inline">Error al guardar, reintentando...</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "idle" ? (
-                    <>
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Listo para autoguardar</span>
-                    </>
-                  ) : null}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={saveActiveDraftNow}
-                  disabled={!canCreateSales}
-                  className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
-                  title="Guardar Borrador"
-                >
-                  <Save className="h-3.5 w-3.5 sm:mr-2" />
-                  <span className="hidden sm:inline">Guardar Borrador</span>
-                </Button>
               </div>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
@@ -1971,7 +2019,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       ) : null}
 
       {/* Filters and Search */}
-      <div className="flex gap-4 flex-wrap">
+      {canSeeAdvancedFilters && <div className="flex gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -2029,7 +2077,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </div>}
 
       {/* Drafts + 3-column invoice board */}
       <div className="xl:hidden">
@@ -2117,6 +2165,20 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                             </p>
                             {meta.previewVehicle ? (
                               <p className="text-[11px] text-muted-foreground">Vehiculo: {meta.previewVehicle}</p>
+                            ) : null}
+                            {(meta.totalDiscounts > 0 || meta.retention > 0) ? (
+                              <div className="space-y-1 rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+                                {meta.totalDiscounts > 0 ? (
+                                  <p className="text-[11px] text-green-700">
+                                    Descuentos: -{formatCurrency(meta.totalDiscounts, meta.currency)}
+                                  </p>
+                                ) : null}
+                                {meta.retention > 0 ? (
+                                  <p className="text-[11px] text-orange-600">
+                                    Retencion IR ({meta.retentionRate}%): -{formatCurrency(meta.retention, meta.currency)}
+                                  </p>
+                                ) : null}
+                              </div>
                             ) : null}
                             <div className="flex flex-wrap gap-2 mt-2">
                               <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={(e) => {

@@ -13034,7 +13034,8 @@ async def update_theme_settings(payload: ThemeSettings, request: Request):
     user = await require_auth(request)
     mode = payload.mode or "system"
     skin = payload.skin or "atlas"
-    custom = payload.custom or {}
+    current_custom = getattr(user, "theme_custom", None) or {}
+    custom = payload.custom if payload.custom is not None else current_custom
 
     if mode not in ALLOWED_THEME_MODES:
         raise HTTPException(status_code=400, detail="Invalid theme mode")

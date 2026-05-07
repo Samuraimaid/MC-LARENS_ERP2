@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "../ui/sonner";
 import { FloatingTools } from "../FloatingTools";
@@ -7,18 +8,21 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getBrandingForBranch } from "../../lib/branding";
 import { APP_ENV } from "../../lib/env";
+import { API_BASE as API } from "@/lib/api";
+import { AUTOSAVE_STATUS, AUTOSAVE_STATUS_EVENT } from "../../lib/autosaveStatus";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../../lib/utils";
 import { toast } from "sonner";
-import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, ClipboardList, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, RefreshCw, Unlock, X } from "lucide-react";
+import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, RefreshCw, Unlock, X } from "lucide-react";
 import { useDevice } from "../../hooks/useDevice";
 import { BottomNav } from "./BottomNav";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
+const SELLER_CONNECTIVITY_POLL_MS = 10000;
 
 const BRANCH_LABELS = {
   branch_main: "Mundo de Accesorios",
@@ -35,6 +39,24 @@ const WORKBENCH_TAB_ITEMS = [
   { key: "customers", label: "Clientes", icon: Users },
   { key: "vehicles", label: "Vehiculos", icon: Car },
 ];
+
+function HeaderCloudSyncIcon({ className }) {
+  return (
+    <span className={cn("relative inline-block", className)} aria-hidden="true">
+      <Cloud className="h-full w-full" />
+      <RefreshCw className="absolute -bottom-[8%] -right-[8%] h-[55%] w-[55%] rounded-full bg-background p-[1px]" />
+    </span>
+  );
+}
+
+function HeaderCloudCheckIcon({ className }) {
+  return (
+    <span className={cn("relative inline-block", className)} aria-hidden="true">
+      <Cloud className="h-full w-full" />
+      <Check className="absolute -bottom-[4%] -right-[8%] h-[55%] w-[55%] rounded-full bg-background p-[1px]" />
+    </span>
+  );
+}
 
 export function MainLayout() {
   const { user, logout } = useAuth();
@@ -74,6 +96,8 @@ export function MainLayout() {
   const [unlockFailedAttempts, setUnlockFailedAttempts] = useState(0);
   const [unlockRemainingAttempts, setUnlockRemainingAttempts] = useState(3);
   const [lockOverlayTone, setLockOverlayTone] = useState("warning");
+  const [sellerAutosaveStatus, setSellerAutosaveStatus] = useState(AUTOSAVE_STATUS.SYNCED);
+  const [sellerServerStatus, setSellerServerStatus] = useState("unknown");
   const lastBackWarningRef = useRef(0);
   const branding = getBrandingForBranch(user?.branch_id);
   const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
@@ -89,6 +113,51 @@ export function MainLayout() {
   const workbenchTabSet = new Set(WORKBENCH_TAB_ITEMS.map((tab) => tab.key));
   const requestedWorkbenchTab = String(new URLSearchParams(location.search).get("tab") || "sales");
   const activeWorkbenchTab = workbenchTabSet.has(requestedWorkbenchTab) ? requestedWorkbenchTab : "sales";
+
+  const sellerStatusPresentation = useMemo(() => {
+    const effectiveStatus = sellerServerStatus === "down"
+      ? AUTOSAVE_STATUS.DISCONNECTED
+      : sellerAutosaveStatus;
+
+    switch (effectiveStatus) {
+      case AUTOSAVE_STATUS.DISCONNECTED:
+        return {
+          icon: CloudAlert,
+          title: "Sin conexión con el servidor",
+          className: "text-destructive hover:text-destructive hover:bg-destructive/10",
+          iconClassName: "",
+        };
+      case AUTOSAVE_STATUS.RECOVERING:
+        return {
+          icon: CloudDownload,
+          title: "Recuperando datos del formulario desde el servidor",
+          className: "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10",
+          iconClassName: "animate-pulse",
+        };
+      case AUTOSAVE_STATUS.SAVING:
+        return {
+          icon: CloudUpload,
+          title: "Guardando cambios localmente",
+          className: "text-violet-600 hover:text-violet-700 hover:bg-violet-500/10",
+          iconClassName: "animate-pulse",
+        };
+      case AUTOSAVE_STATUS.SYNCING:
+        return {
+          icon: HeaderCloudSyncIcon,
+          title: "Sincronizando con el servidor",
+          className: "text-primary hover:text-primary hover:bg-primary/10",
+          iconClassName: "animate-spin",
+        };
+      case AUTOSAVE_STATUS.SYNCED:
+      default:
+        return {
+          icon: HeaderCloudCheckIcon,
+          title: "Todo guardado y sincronizado",
+          className: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10",
+          iconClassName: "",
+        };
+    }
+  }, [sellerAutosaveStatus, sellerServerStatus]);
 
   const handleWorkbenchTabChange = (nextTab) => {
     const safeTab = workbenchTabSet.has(nextTab) ? nextTab : "sales";
@@ -117,6 +186,48 @@ export function MainLayout() {
     const faviconSrc = `${branding.favicon}${String(branding.favicon).includes("?") ? "&" : "?"}v=${encodeURIComponent(buildVersion)}`;
     favicon.setAttribute("href", faviconSrc);
   }, [branding.brandName, branding.favicon, buildVersion]);
+
+  useEffect(() => {
+    if (!isSellerRole || typeof window === "undefined") return undefined;
+
+    const handleSellerAutosaveStatus = (event) => {
+      const nextStatus = event?.detail?.status;
+      if (!nextStatus) return;
+      setSellerAutosaveStatus(nextStatus);
+    };
+
+    window.addEventListener(AUTOSAVE_STATUS_EVENT, handleSellerAutosaveStatus);
+    return () => {
+      window.removeEventListener(AUTOSAVE_STATUS_EVENT, handleSellerAutosaveStatus);
+    };
+  }, [isSellerRole]);
+
+  useEffect(() => {
+    if (!isSellerRole) return undefined;
+
+    let disposed = false;
+
+    const checkServerStatus = async () => {
+      try {
+        await axios.get(`${API}/`, { timeout: 3000, withCredentials: true });
+        if (!disposed) {
+          setSellerServerStatus("ok");
+        }
+      } catch {
+        if (!disposed) {
+          setSellerServerStatus("down");
+        }
+      }
+    };
+
+    checkServerStatus();
+    const intervalId = window.setInterval(checkServerStatus, SELLER_CONNECTIVITY_POLL_MS);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isSellerRole]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -523,16 +634,31 @@ export function MainLayout() {
                 >
                   {resolvedMode === "dark" ? <Sun className="h-4 w-4 icon-spring" /> : <Moon className="h-4 w-4 icon-spring" />}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("ui-interactive haptic-feedback touch-action-manipulation", isPhone ? "h-8 w-8" : "h-10 w-10")}
-                  onClick={handleLockSession}
-                  aria-label="Bloquear sesión"
-                  data-testid="lock-session-btn"
-                >
-                  <Lock className={cn("icon-spring", isPhone ? "h-4 w-4" : "h-5 w-5")} />
-                </Button>
+                {isSellerRole ? (
+                  <div
+                    className={cn(
+                      "inline-flex items-center justify-center rounded-md ui-interactive haptic-feedback touch-action-manipulation",
+                      sellerStatusPresentation.className,
+                      isPhone ? "h-8 w-8" : "h-10 w-10"
+                    )}
+                    title={sellerStatusPresentation.title}
+                    aria-label={sellerStatusPresentation.title}
+                    data-testid="seller-autosave-status"
+                  >
+                    <sellerStatusPresentation.icon className={cn("icon-spring", sellerStatusPresentation.iconClassName, isPhone ? "h-4 w-4" : "h-5 w-5")} />
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("ui-interactive haptic-feedback touch-action-manipulation", isPhone ? "h-8 w-8" : "h-10 w-10")}
+                    onClick={handleLockSession}
+                    aria-label="Bloquear sesión"
+                    data-testid="lock-session-btn"
+                  >
+                    <Lock className={cn("icon-spring", isPhone ? "h-4 w-4" : "h-5 w-5")} />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

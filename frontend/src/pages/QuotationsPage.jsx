@@ -11,11 +11,12 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Loader2, AlertTriangle, Save, Eraser } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Save, Eraser } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
+import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
@@ -82,15 +83,25 @@ export function QuotationsPage() {
   const draftSyncTimersRef = useRef(new Map());
     const markDraftSaving = useCallback(() => {
       setDraftSaveState("saving");
+      emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "quotations" });
     }, []);
 
     const markDraftSaved = useCallback(() => {
       setDraftSaveState("saved");
+      emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
     }, []);
 
     const markDraftSaveError = useCallback(() => {
       setDraftSaveState("error");
+      emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "quotations" });
     }, []);
+
+  useEffect(() => {
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
+    return () => {
+      emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
+    };
+  }, []);
 
   const formVisibilityStorageKey = useMemo(() => {
     const userToken = user?.user_id || user?.pin_user_id || "anon";
@@ -310,6 +321,7 @@ export function QuotationsPage() {
 
     const loadDrafts = async () => {
       try {
+        emitAutosaveStatus(AUTOSAVE_STATUS.RECOVERING, { source: "quotations" });
         const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
         if (cancelled) return;
         mirrorServerDraftsToLocalStorage({
@@ -325,11 +337,13 @@ export function QuotationsPage() {
           updatedAt: draft.updatedAt,
         })));
         setActiveDraftId(bundle.activeDraftId || (bundle.drafts[0]?.id ?? null));
+        emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
       } catch (error) {
         if (cancelled) return;
         const fallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
         setDraftTabs(fallback.draftTabs);
         setActiveDraftId(fallback.activeDraftId);
+        emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "quotations" });
       } finally {
         if (!cancelled) {
           setDraftsLoaded(true);
@@ -394,13 +408,16 @@ export function QuotationsPage() {
 
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
+    setDraftSaveState("saving");
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "quotations" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
     await saveServerDraft(DRAFT_FLOW, draftId, {
       name: nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`,
       snapshot,
     });
-  }, [DRAFT_FLOW]);
+    markDraftSaved();
+  }, [DRAFT_FLOW, markDraftSaved]);
 
   const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId || typeof window === "undefined") return;
@@ -922,32 +939,6 @@ export function QuotationsPage() {
                   <Plus className="h-3.5 w-3.5 sm:mr-2" />
                   <span className="hidden sm:inline">Nueva Cotización</span>
                 </Button>
-                <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground" title="Estado de autoguardado">
-                  {draftSaveState === "saving" ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span className="hidden sm:inline">Guardando...</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "saved" ? (
-                    <>
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                      <span className="hidden sm:inline">Todos los cambios guardados</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "error" ? (
-                    <>
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                      <span className="hidden sm:inline">Error al guardar, reintentando...</span>
-                    </>
-                  ) : null}
-                  {draftSaveState === "idle" ? (
-                    <>
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Listo para autoguardar</span>
-                    </>
-                  ) : null}
-                </div>
                 <Button
                   size="sm"
                   variant="outline"

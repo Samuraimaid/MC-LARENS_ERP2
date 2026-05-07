@@ -9,7 +9,9 @@ import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import SearchableSelect from "@/components/ui/searchable-select";
+import { cn } from "../lib/utils";
 import { toast } from "sonner";
 import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
@@ -30,6 +32,7 @@ export function VehiclesPage() {
   const [searchFields, setSearchFields] = useState({ plate: true, vin: true, brand: true, model: true, customer: true });
   const [showFilters, setShowFilters] = useState(false);
   const [showNewVehicle, setShowNewVehicle] = useState(false);
+  const [boardTab, setBoardTab] = useState("todos");
 
   const [formData, setFormData] = useState({
     customer_id: "",
@@ -330,25 +333,50 @@ export function VehiclesPage() {
         </div>
       )}
 
-      {/* Vehicles Cards */}
-      <div>
-        {loading ? (
-          <div className="text-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-          </div>
-        ) : filteredVehicles.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No hay vehículos registrados</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger xl:grid-cols-2">
-            {filteredVehicles.map(vehicle => {
-              const customer = getCustomer(vehicle.customer_id);
-              const isCompany = customer?.customer_type === "empresa";
-              const cardTone = isCompany
-                ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
-                : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
-              const plateTone = isCompany
-                ? "border-sky-200 bg-sky-100 text-sky-800"
-                : "border-emerald-200 bg-emerald-100 text-emerald-800";
+      {/* Board tabs selector (mobile/tablet) */}
+      <div className="xl:hidden">
+        <Tabs value={boardTab} onValueChange={setBoardTab}>
+          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+            <TabsTrigger value="todos" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Todos ({filteredVehicles.length})
+            </TabsTrigger>
+            <TabsTrigger value="con-vin" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Con VIN ({filteredVehicles.filter(v => v.vin).length})
+            </TabsTrigger>
+            <TabsTrigger value="sin-vin" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Sin VIN ({filteredVehicles.filter(v => !v.vin).length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* 3-panel vehicle board */}
+      <div className="grid gap-6 xl:grid-cols-3">
+        {[
+          { key: "todos", label: "TODOS LOS VEHÍCULOS", list: filteredVehicles },
+          { key: "con-vin", label: "CON VIN / CHASIS", list: filteredVehicles.filter(v => v.vin) },
+          { key: "sin-vin", label: "SIN VIN / CHASIS", list: filteredVehicles.filter(v => !v.vin) },
+        ].map(({ key, label, list }) => (
+          <Card key={key} className={cn("h-fit", boardTab !== key ? "hidden xl:block" : "")}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{label} ({list.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loading ? (
+                <div className="text-center py-8"><RefreshCw className="h-6 w-6 animate-spin mx-auto" /></div>
+              ) : list.length === 0 ? (
+                <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No hay vehículos registrados.</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger">
+                  {list.map(vehicle => {
+                    const customer = getCustomer(vehicle.customer_id);
+                    const isCompany = customer?.customer_type === "empresa";
+                    const cardTone = isCompany
+                      ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
+                      : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
+                    const plateTone = isCompany
+                      ? "border-sky-200 bg-sky-100 text-sky-800"
+                      : "border-emerald-200 bg-emerald-100 text-emerald-800";
 
               return (
               <Card key={vehicle.vehicle_id} className={`group h-full overflow-hidden shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
@@ -446,9 +474,12 @@ export function VehiclesPage() {
                 </CardContent>
               </Card>
               );
-            })}
-          </div>
-        )}
+                    })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

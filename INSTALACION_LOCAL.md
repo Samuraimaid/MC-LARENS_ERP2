@@ -203,8 +203,9 @@ ip addr show | grep "inet " | grep -v 127.0.0.1
 
 #### Windows
 ```powershell
-# Abrir puerto 8001 (web + API)
-netsh advfirewall firewall add rule name="MUNDO DE ACCESORIOS Web" dir=in action=allow protocol=tcp localport=8001
+# Abrir puertos de frontend y backend para acceso LAN
+netsh advfirewall firewall add rule name="MC-LARENS Frontend 3000" dir=in action=allow protocol=tcp localport=3000
+netsh advfirewall firewall add rule name="MC-LARENS Backend 8001" dir=in action=allow protocol=tcp localport=8001
 ```
 
 #### Linux (UFW)
@@ -259,7 +260,17 @@ npm run dev
 - Web + API: http://localhost:8001
 ### Desde Otras Computadoras en la Red
 Reemplazar `SERVER_IP` con la IP del servidor:
-- Web + API: http://SERVER_IP:8001
+- Frontend (Nginx): http://SERVER_IP:3000
+- Backend (FastAPI): http://SERVER_IP:8001
+
+Verificacion rapida (en el servidor):
+
+```powershell
+Invoke-WebRequest http://localhost:3000
+Invoke-WebRequest http://localhost:8001/docs
+Invoke-WebRequest http://SERVER_IP:3000
+Invoke-WebRequest http://SERVER_IP:8001/docs
+```
 ---
 ## Configurar Inicio Automático
 
@@ -310,6 +321,8 @@ sudo kill -9 <PID>
 1. Verificar firewall
 2. Verificar que el servidor escuche en 0.0.0.0 (no 127.0.0.1)
 3. Verificar IP correcta (si usas frontend separado, revisar frontend/.env)
+4. Verificar que Docker publique puertos (`docker ps`) en 3000 y 8001
+5. Si local funciona y remoto no, revisar aislamiento Wi-Fi en router (AP Isolation/Guest Network)
 
 ### Limpiar caché
 ```bash

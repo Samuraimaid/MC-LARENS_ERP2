@@ -9,14 +9,9 @@ const DEFAULT_MODE = "light";
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [mode, setMode] = useState(() => {
-    const saved = localStorage.getItem(THEME_MODE_KEY);
-    if (saved) return saved;
-    const legacy = localStorage.getItem(LEGACY_THEME_KEY);
-    if (legacy) return legacy;
-    return DEFAULT_MODE;
-  });
-  const [skin, setSkin] = useState(() => localStorage.getItem(THEME_SKIN_KEY) || DEFAULT_SKIN);
+  // Do not pre-read persisted theme before auth to avoid visual bleed between users on login.
+  const [mode, setMode] = useState(DEFAULT_MODE);
+  const [skin, setSkin] = useState(DEFAULT_SKIN);
   const [systemMode, setSystemMode] = useState(() => {
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       return "dark";

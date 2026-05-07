@@ -24,10 +24,13 @@ import {
   Package,
   Phone,
   PlusCircle,
+  Percent,
   RefreshCcw,
   ShieldCheck,
   ShoppingCart,
+  Tag,
   Trash2,
+  Undo2,
   User,
   UserPlus,
   Warehouse,
@@ -42,6 +45,13 @@ import {
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
+import {
+  playCartQuantityChangeSound,
+  playCartRemoveSound,
+  playCartPickupSound,
+  playCreationSuccessSound,
+  playSelectionFeedbackSound,
+} from "@/lib/uiSounds";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 
 // Prefijos de placa Nicaragua
@@ -129,10 +139,13 @@ export default function SaleForm({
   const [selectedVehicle, setSelectedVehicle] = useState(initialData.selectedVehicle || "");
   const [selectedWarehouse, setSelectedWarehouse] = useState(initialData.selectedWarehouse || "");
   const [cartItems, setCartItems] = useState(initialData.cartItems || []);
+  const cartHistory = useRef([]);
   const [globalDiscount, setGlobalDiscount] = useState(initialData.globalDiscount || 0);
   const [notes, setNotes] = useState(initialData.notes || "");
   const [applyIVA, setApplyIVA] = useState(initialData.applyIVA ?? true);
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
+  const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
+  const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
   const [currency, setCurrency] = useState(initialData.currency || "NIO");
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -398,16 +411,8 @@ export default function SaleForm({
       if (ivaRate !== 15) {
         setIvaRate(15);
       }
-      return;
     }
-
-    if (isQuotationFlow && applyIVA) {
-      setApplyIVA(false);
-    }
-    if (isQuotationFlow && ivaRate !== defaultIvaRate) {
-      setIvaRate(defaultIvaRate);
-    }
-  }, [isQuotationFlow, selectedCustomer, isCompanyCustomer, applyIVA, ivaRate, defaultIvaRate]);
+  }, [selectedCustomer, isCompanyCustomer, applyIVA, ivaRate]);
 
   useEffect(() => {
     if (!draftKey || typeof window === "undefined") {
@@ -440,6 +445,8 @@ export default function SaleForm({
       setGlobalDiscount(draft?.globalDiscount || 0);
       setNotes(draft?.notes || "");
       setApplyIVA(draft?.applyIVA ?? true);
+        setApplyRetention(draft?.applyRetention ?? false);
+        setRetentionRate(draft?.retentionRate ?? 2);
       setIvaRate(defaultIvaRate);
       applyCurrencyChange(draft?.currency || "NIO");
       setCustomerSearch(draft?.customerSearch || "");
@@ -485,8 +492,16 @@ export default function SaleForm({
     }))
   ), [cartItems]);
 
+  const pushCartHistory = useCallback((snapshot, label) => {
+    cartHistory.current = [{ snapshot, label }, ...cartHistory.current].slice(0, 20);
+  }, []);
+
   const addToCart = (product) => {
     const existing = normalizedCartItems.find(item => item.product_id === product.product_id);
+    const label = existing
+      ? `Se redujo la cantidad de "${product.name}"`
+      : `Se quitó "${product.name}" del carrito`;
+    pushCartHistory([...normalizedCartItems], label);
     const installationType = product.installation_type || "optional";
     const installationPrice = product.installation_price || 0;
     const withInstallation = installationType === "required";
@@ -512,6 +527,7 @@ export default function SaleForm({
     }
     setCartItems(nextCartItems);
     persistDraftSnapshot({ cartItems: nextCartItems });
+    playCartPickupSound();
   };
 
   const requestSampleForItem = async (item) => {
@@ -545,19 +561,30 @@ export default function SaleForm({
   };
 
   const applyDiscountCode = () => {
-    if (!discountCode) return;
+    const normalizedCode = String(discountCode || "").trim().toUpperCase();
+    if (!normalizedCode) {
+      toast.error("Ingresa un codigo de descuento");
+      return;
+    }
     const codes = {
       "DESC10": { type: "percent", value: 10, name: "10% de descuento" },
       "DESC20": { type: "percent", value: 20, name: "20% de descuento" },
       "FIJO100": { type: "fixed", value: 100, name: "C$100 de descuento" },
     };
-    const code = codes[discountCode.toUpperCase()];
-    if (!code) return;
-    if (appliedDiscounts.find(d => d.code === discountCode.toUpperCase())) return;
-    const nextAppliedDiscounts = [...appliedDiscounts, { ...code, code: discountCode.toUpperCase() }];
+    const code = codes[normalizedCode];
+    if (!code) {
+      toast.error("Codigo de descuento no valido");
+      return;
+    }
+    if (appliedDiscounts.find(d => d.code === normalizedCode)) {
+      toast.error("Ese codigo ya fue aplicado");
+      return;
+    }
+    const nextAppliedDiscounts = [...appliedDiscounts, { ...code, code: normalizedCode }];
     setAppliedDiscounts(nextAppliedDiscounts);
     setDiscountCode("");
     persistDraftSnapshot({ appliedDiscounts: nextAppliedDiscounts, discountCode: "" });
+    toast.success(`Codigo ${normalizedCode} aplicado`);
   };
 
   const removeDiscountCode = (code) => {
@@ -661,6 +688,7 @@ export default function SaleForm({
       const response = await axios.post(`${API}/customers`, customerData, { withCredentials: true });
       const customerId = response.data.customer_id;
       toast.success("Cliente creado exitosamente");
+      playCreationSuccessSound();
 
       if (newCustomer.add_vehicle && newCustomer.brand && newCustomer.model) {
         if (!newCustomer.year) {
@@ -688,6 +716,7 @@ export default function SaleForm({
 
         await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
         toast.success("Vehículo registrado");
+        playCreationSuccessSound();
 
         const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
         setLocalVehicles(vehiclesRes.data);
@@ -864,10 +893,12 @@ export default function SaleForm({
     });
 
     const discountAmount = subtotal * (globalDiscount / 100);
-    const subtotalAfterDiscounts = subtotal - discountFromCodes - discountAmount;
+    const totalDiscounts = discountFromCodes + discountAmount;
+    const subtotalAfterDiscounts = subtotal - totalDiscounts;
     const tax = applyIVA ? subtotalAfterDiscounts * (ivaRate / 100) : 0;
-    const total = subtotalAfterDiscounts + tax;
-    return { subtotal, tax, discountAmount, discountFromCodes, total };
+    const retention = applyRetention ? subtotalAfterDiscounts * (retentionRate / 100) : 0;
+    const total = subtotalAfterDiscounts + tax - retention;
+    return { subtotal, tax, discountAmount, discountFromCodes, totalDiscounts, retention, total };
   })();
 
   const handleSubmit = async () => {
@@ -887,6 +918,9 @@ export default function SaleForm({
       currency,
       apply_iva: applyIVA,
       iva_rate: ivaRate,
+      apply_retention: applyRetention,
+      retention_rate: applyRetention ? retentionRate / 100 : 0,
+      retention_amount: totals.retention,
       exchange_rate: exchangeRate,
       discount_codes: appliedDiscounts.map(d => d.code),
       applied_discounts: appliedDiscounts,
@@ -919,6 +953,8 @@ export default function SaleForm({
       notes,
       applyIVA,
       ivaRate,
+      applyRetention,
+      retentionRate,
       currency,
       exchangeRate,
       appliedDiscounts,
@@ -949,6 +985,8 @@ export default function SaleForm({
     notes,
     applyIVA,
     ivaRate,
+    applyRetention,
+    retentionRate,
     currency,
     exchangeRate,
     appliedDiscounts,
@@ -1021,6 +1059,15 @@ export default function SaleForm({
     }
   }, [buildDraftSnapshot, draftKey, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
 
+  const undoCartChange = useCallback(() => {
+    if (cartHistory.current.length === 0) return;
+    const [{ snapshot: prev, label }, ...rest] = cartHistory.current;
+    cartHistory.current = rest;
+    setCartItems(prev);
+    persistDraftSnapshot({ cartItems: prev });
+    toast.info(label || "Acción deshecha");
+  }, [persistDraftSnapshot]);
+
   const handleSelectCustomer = useCallback((customer) => {
     setSelectedCustomer(customer);
     setPendingCustomerId(null);
@@ -1028,6 +1075,7 @@ export default function SaleForm({
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
     setIsVehiclePickerVisible(true);
+    playSelectionFeedbackSound();
     persistDraftSnapshot({
       selectedCustomerId: customer?.customer_id || null,
       customerSearch: "",
@@ -1043,6 +1091,7 @@ export default function SaleForm({
     setVehicleFlowOption("carryout");
     setIsVehiclePickerVisible(true);
     setCustomerSearch("");
+    playSelectionFeedbackSound();
     persistDraftSnapshot({
       selectedCustomerId: null,
       selectedVehicle: "",
@@ -1059,6 +1108,7 @@ export default function SaleForm({
       : normalizedCartItems;
     setVehicleFlowOption(nextFlowOption);
     setSelectedVehicle(normalizedVehicleId);
+    playSelectionFeedbackSound();
     if (nextFlowOption === "carryout") {
       setCartItems(nextCartItems);
     }
@@ -1071,19 +1121,35 @@ export default function SaleForm({
   }, [normalizeVehicleId, normalizedCartItems, persistDraftSnapshot]);
 
   const updateCartItem = useCallback((productId, field, value, options = {}) => {
+    const prevItem = normalizedCartItems.find((item) => item.product_id === productId);
+    const name = prevItem?.product_name || "producto";
+    const fieldLabels = { quantity: "cantidad", discount: "descuento", with_installation: "instalación", unit_price: "precio" };
+    const fieldLabel = fieldLabels[field] || field;
+    pushCartHistory([...normalizedCartItems], `Se restauró ${fieldLabel} de "${name}"`);
     const nextCartItems = normalizedCartItems.map(item => item.product_id === productId ? { ...item, [field]: value } : item);
     setCartItems(nextCartItems);
+    if (field === "quantity") {
+      const prevQuantity = Number(prevItem?.quantity || 0);
+      const nextQuantity = Number(value || 0);
+      if (Number.isFinite(nextQuantity) && nextQuantity > 0 && nextQuantity !== prevQuantity) {
+        playCartQuantityChangeSound();
+      }
+    }
     if (options.persist) {
       persistDraftSnapshot({ cartItems: nextCartItems });
     }
     return nextCartItems;
-  }, [normalizedCartItems, persistDraftSnapshot]);
+  }, [normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
 
   const removeFromCart = useCallback((productId) => {
+    const item = normalizedCartItems.find(i => i.product_id === productId);
+    const name = item?.product_name || "producto";
+    pushCartHistory([...normalizedCartItems], `Se restauró "${name}" al carrito`);
     const nextCartItems = normalizedCartItems.filter(i => i.product_id !== productId);
     setCartItems(nextCartItems);
+    playCartRemoveSound();
     persistDraftSnapshot({ cartItems: nextCartItems });
-  }, [normalizedCartItems, persistDraftSnapshot]);
+  }, [normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
 
   const handleOpenCatalogSearch = useCallback(() => {
     const snapshot = buildDraftSnapshot();
@@ -1881,25 +1947,48 @@ export default function SaleForm({
                       })()}
 
                       <div className="flex h-full min-h-[3.25rem] flex-col items-end justify-end gap-0.5 whitespace-nowrap text-right">
-                        <p className={cn(
-                          "inline-flex items-center gap-1 font-mono text-[11px]",
-                          hasSelectedVehicle ? "text-muted-foreground" : cn("font-semibold", tone.emphasisPrice)
-                        )}>
-                          {isServiceProduct ? (
-                            <Hand className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          ) : (
-                            <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          )}
-                          <span>{formatCurrency(convertPrice(p.price), currency)}</span>
-                        </p>
-                        {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
-                          <p className={cn(
-                            "inline-flex items-center gap-1 font-mono text-[13px]",
-                            hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
-                          )}>
-                            <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                            <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
-                          </p>
+                        {selectedVehicleOption === "carryout" && p.installation_type !== "not_available" && (p.installation_price || 0) > 0 ? (
+                          <>
+                            {/* Con instalación arriba (pequeño, muted) */}
+                            <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                              <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
+                            </p>
+                            {/* Para llevar abajo (grande, negrita = seleccionado) */}
+                            <p className={cn("inline-flex items-center gap-1 font-mono text-[13px] font-extrabold", tone.emphasisPrice)}>
+                              {isServiceProduct ? (
+                                <Hand className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              ) : (
+                                <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              )}
+                              <span>{formatCurrency(convertPrice(p.price), currency)}</span>
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            {/* Para llevar arriba */}
+                            <p className={cn(
+                              "inline-flex items-center gap-1 font-mono text-[11px]",
+                              hasSelectedVehicle ? "text-muted-foreground" : cn("font-semibold", tone.emphasisPrice)
+                            )}>
+                              {isServiceProduct ? (
+                                <Hand className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              ) : (
+                                <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              )}
+                              <span>{formatCurrency(convertPrice(p.price), currency)}</span>
+                            </p>
+                            {/* Con instalación abajo */}
+                            {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
+                              <p className={cn(
+                                "inline-flex items-center gap-1 font-mono text-[13px]",
+                                hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
+                              )}>
+                                <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -1916,10 +2005,22 @@ export default function SaleForm({
       </div>
 
       <div className="space-y-4 animate-fade-up-soft">
-        <Label className="inline-flex items-center gap-2">
-          <ShoppingCart className="h-4 w-4" />
-          <span>{step4Label}</span>
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label className="inline-flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            <span>{step4Label}</span>
+          </Label>
+          <button
+            type="button"
+            onClick={undoCartChange}
+            disabled={cartHistory.current.length === 0}
+            title="Deshacer último cambio en carrito"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          >
+            <Undo2 className="h-3.5 w-3.5" />
+            <span>Deshacer</span>
+          </button>
+        </div>
         <div className={cn(
           "animate-fade-up-soft",
           normalizedCartItems.length === 0
@@ -1935,7 +2036,7 @@ export default function SaleForm({
             const tone = getProductTone(stockStatus, isItemService);
             return (
             <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
-              {item.image ? <img src={item.image} alt={item.product_name} className="row-span-2 h-24 w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-24 w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
+              {item.image ? <img src={item.image} alt={item.product_name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
               <div className="min-w-0">
                 <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{item.product_name}</p>
                 <p className={cn("text-[11px]", tone.sku)}>Código: {item.sku || "N/A"}</p>
@@ -1957,11 +2058,11 @@ export default function SaleForm({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
                       title="Solicitar muestra"
                       onClick={() => requestSampleForItem(item)}
-                      className="h-9 w-9 bg-white/70 ui-interactive"
+                      className="h-9 w-9 text-violet-700 hover:bg-violet-100/70 hover:text-violet-800 ui-interactive"
                     >
                       <FlaskConical className="h-4 w-4" />
                     </Button>
@@ -2044,9 +2145,12 @@ export default function SaleForm({
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          <div>
-            <Label>Código de Descuento</Label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
+          <div className="space-y-1.5">
+            <Label className="inline-flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              <span>Código de descuento</span>
+            </Label>
             <div className="flex gap-2">
               <Input value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} placeholder="Ej: DESC10" />
               <Button type="button" onClick={applyDiscountCode}>Aplicar</Button>
@@ -2062,40 +2166,11 @@ export default function SaleForm({
               </div>
             )}
           </div>
-          <div className="flex items-end gap-2">
-            <Checkbox
-              checked={applyIVA}
-              onCheckedChange={(v) => {
-                if (isCompanyCustomerFlow) return;
-                const nextValue = Boolean(v);
-                setApplyIVA(nextValue);
-                persistDraftSnapshot({ applyIVA: nextValue });
-              }}
-              disabled={isCompanyCustomerFlow}
-            />
-            <Label>{isCompanyCustomerFlow ? "Aplicar IVA (obligatorio empresa 15%)" : "Aplicar IVA"}</Label>
-            <Input
-              type="number"
-              min="0"
-              max="30"
-              value={ivaRate}
-              onChange={(e) => setIvaRate(parseFloat(e.target.value) || 0)}
-              onBlur={(e) => persistDraftSnapshot({ ivaRate: parseFloat(e.target.value) || 0 })}
-              className="w-20"
-              disabled={isCompanyCustomerFlow}
-            />
-          </div>
-        </div>
-
-        {isQuotationFlow && selectedCustomer && !isCompanyCustomerFlow ? (
-          <p className="text-xs text-muted-foreground">
-            Para cliente persona natural, el IVA inicia desactivado y puedes aplicarlo manualmente si lo necesitas.
-          </p>
-        ) : null}
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          <div>
-            <Label>Descuento Global (%)</Label>
+          <div className="space-y-1.5">
+            <Label className="inline-flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5" />
+              <span>Descuento Global (%)</span>
+            </Label>
             <Input
               type="number"
               min="0"
@@ -2105,24 +2180,82 @@ export default function SaleForm({
               onBlur={(e) => persistDraftSnapshot({ globalDiscount: parseFloat(e.target.value) || 0 })}
             />
           </div>
-          <div>
-            <Label>Bodega</Label>
-            <Select
-              value={selectedWarehouse}
-              onValueChange={(value) => {
-                setSelectedWarehouse(value);
-                persistDraftSnapshot({ selectedWarehouse: value });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar bodega" />
-              </SelectTrigger>
-              <SelectContent>
-                {warehouses.map(w => <SelectItem key={w.warehouse_id} value={w.warehouse_id}>{w.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        </div>
+
+        {selectedCustomer && !isCompanyCustomerFlow ? (
+          <p className="text-xs text-muted-foreground">
+            Para cliente persona natural, el IVA es opcional.
+          </p>
+        ) : null}
+
+        <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
+          <Label className="inline-flex items-center gap-1.5">
+            <Percent className="h-3.5 w-3.5" />
+            <span>Aplicación de IVA</span>
+          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={applyIVA}
+                onCheckedChange={(v) => {
+                  if (isCompanyCustomerFlow) return;
+                  const nextValue = Boolean(v);
+                  setApplyIVA(nextValue);
+                  persistDraftSnapshot({ applyIVA: nextValue });
+                }}
+                disabled={isCompanyCustomerFlow}
+              />
+              <span className="text-xs text-muted-foreground">
+                {isCompanyCustomerFlow ? "Aplicación obligatoria para empresa" : "Aplicar IVA"}
+              </span>
+            </div>
+            <Badge variant="secondary" className="font-mono">15% fijo</Badge>
           </div>
         </div>
+
+        {isCompanyCustomerFlow && (
+          <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
+            <Label className="inline-flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5" />
+              <span>Aplicar Retención IR</span>
+            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={applyRetention}
+                  onCheckedChange={(v) => {
+                    const next = Boolean(v);
+                    setApplyRetention(next);
+                    persistDraftSnapshot({ applyRetention: next, retentionRate });
+                  }}
+                />
+                <span className="text-xs text-muted-foreground">Retención sobre subtotal c/descuentos</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { setRetentionRate(1); persistDraftSnapshot({ applyRetention, retentionRate: 1 }); }}
+                  className={cn(
+                    "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
+                    retentionRate === 1 && applyRetention
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-muted-foreground hover:bg-muted"
+                  )}
+                >1%</button>
+                <button
+                  type="button"
+                  onClick={() => { setRetentionRate(2); persistDraftSnapshot({ applyRetention, retentionRate: 2 }); }}
+                  className={cn(
+                    "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
+                    retentionRate === 2 && applyRetention
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-muted-foreground hover:bg-muted"
+                  )}
+                >2%</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!hideCurrencyField ? (
         <div>
@@ -2148,9 +2281,12 @@ export default function SaleForm({
 
         <div className="border-t pt-4 space-y-1">
           <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotal, currency)}</span></div>
-          <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
-          {totals.discountFromCodes > 0 && <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><span className="font-mono">-{formatCurrency(totals.discountFromCodes, currency)}</span></div>}
-          {totals.discountAmount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Descuento Global:</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>}
+          <div className={`flex justify-between text-sm ${totals.discountFromCodes > 0 ? "text-green-600" : "text-muted-foreground"}`}><span>Descuento Códigos:</span><span className="font-mono">{totals.discountFromCodes > 0 ? `-${formatCurrency(totals.discountFromCodes, currency)}` : formatCurrency(0, currency)}</span></div>
+          <div className={`flex justify-between text-sm ${totals.discountAmount > 0 ? "text-green-600" : "text-muted-foreground"}`}><span>Descuento Global:</span><span className="font-mono">{totals.discountAmount > 0 ? `-${formatCurrency(totals.discountAmount, currency)}` : formatCurrency(0, currency)}</span></div>
+          {applyRetention && totals.retention > 0 && (
+            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><span className="font-mono">-{formatCurrency(totals.retention, currency)}</span></div>
+          )}
+            <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
           <div className="flex justify-between text-lg font-bold"><span>Total:</span><span className="font-mono">{formatCurrency(totals.total, currency)}</span></div>
         </div>
 

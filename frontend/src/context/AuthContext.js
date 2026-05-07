@@ -4,6 +4,12 @@ import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { toast } from "sonner";
 import { TOPCAR_BRANCH_IDS } from "../lib/branding";
+import {
+  DEFAULT_UI_SOUND_MUTED,
+  DEFAULT_UI_SOUND_PROFILE,
+  extractSoundPreferencesFromThemeCustom,
+  persistSoundPreferencesToLocalStorage,
+} from "@/lib/userUiPreferences";
 
 const DRAFT_KEY_PREFIXES = ["draft_sale_v1", "draft_quote_v1"];
 const DRAFT_META_KEYS = [
@@ -192,21 +198,22 @@ const applyThemePreferences = (userDoc) => {
   const defaults = getBranchThemeDefaults(userDoc.branch_id);
   const nextMode = userDoc.theme_mode || defaults.mode;
   const nextSkin = userDoc.theme_skin || defaults.skin;
-  let changed = false;
-  if (nextMode && !window.localStorage.getItem(THEME_MODE_KEY)) {
-    window.localStorage.setItem(THEME_MODE_KEY, nextMode);
-    if (nextMode === "light" || nextMode === "dark") {
-      window.localStorage.setItem(LEGACY_THEME_KEY, nextMode);
-    }
-    changed = true;
+  window.localStorage.setItem(THEME_MODE_KEY, nextMode);
+  if (nextMode === "light" || nextMode === "dark") {
+    window.localStorage.setItem(LEGACY_THEME_KEY, nextMode);
+  } else {
+    window.localStorage.removeItem(LEGACY_THEME_KEY);
   }
-  if (nextSkin && !window.localStorage.getItem(THEME_SKIN_KEY)) {
-    window.localStorage.setItem(THEME_SKIN_KEY, nextSkin);
-    changed = true;
-  }
-  if (changed) {
-    window.dispatchEvent(new Event("theme:sync"));
-  }
+  window.localStorage.setItem(THEME_SKIN_KEY, nextSkin);
+
+  const userSoundPrefs = extractSoundPreferencesFromThemeCustom(userDoc.theme_custom);
+  persistSoundPreferencesToLocalStorage({
+    muted: userSoundPrefs.muted ?? DEFAULT_UI_SOUND_MUTED,
+    profile: userSoundPrefs.profile || DEFAULT_UI_SOUND_PROFILE,
+  });
+
+  window.dispatchEvent(new Event("theme:sync"));
+  window.dispatchEvent(new Event("ui:sound-sync"));
 };
 
 const AuthContext = createContext(null);

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { formatCurrency } from "../lib/utils";
+import { formatCurrency, cn } from "../lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -15,6 +16,7 @@ import { Checkbox } from "../components/ui/checkbox";
 import SearchableSelect from "@/components/ui/searchable-select";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
+import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSounds";
 import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import {
@@ -85,6 +87,7 @@ export function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [boardTab, setBoardTab] = useState("todos");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [activeTab, setActiveTab] = useState("customer");
   const [isEditing, setIsEditing] = useState(false);
@@ -545,6 +548,7 @@ export function CustomersPage() {
       const response = await axios.post(`${API}/vehicles`, payload, { withCredentials: true });
       const newVehicle = response.data;
       toast.success("Vehículo agregado");
+      playCreationSuccessSound();
       setCustomerVehicles(prev => [newVehicle, ...prev]);
       if (newVehicle?.vehicle_id) {
         setSelectedVehicleId(newVehicle.vehicle_id);
@@ -693,6 +697,7 @@ export function CustomersPage() {
       const customerId = customerRes.data.customer_id;
       
       toast.success("Cliente creado exitosamente");
+      playCreationSuccessSound();
 
       // Create vehicle if requested
       if (formData.add_vehicle && formData.brand && formData.model) {
@@ -722,6 +727,7 @@ export function CustomersPage() {
 
           await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
           toast.success("Vehículo registrado");
+          playCreationSuccessSound();
         } catch (error) {
           toast.error("Cliente creado pero error al registrar vehículo");
         }
@@ -969,7 +975,14 @@ export function CustomersPage() {
                     <>
                       <div>
                         <Label>Seleccionar vehículo</Label>
-                        <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId} disabled={isAddingVehicle}>
+                        <Select
+                          value={selectedVehicleId}
+                          onValueChange={(value) => {
+                            setSelectedVehicleId(value);
+                            playSelectionFeedbackSound();
+                          }}
+                          disabled={isAddingVehicle}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar vehículo" />
                           </SelectTrigger>
@@ -1228,61 +1241,44 @@ export function CustomersPage() {
         />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL CLIENTES</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold">{customers.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">CON CRÉDITO</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-blue-500">
-              {customers.filter(c => c.credit_limit > 0).length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">PERSONA NATURAL</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-green-500">
-              {customers.filter(c => c.customer_type !== "empresa").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">EMPRESAS</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-purple-500">
-              {customers.filter(c => c.customer_type === "empresa").length}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Board tabs selector (mobile/tablet) */}
+      <div className="xl:hidden">
+        <Tabs value={boardTab} onValueChange={setBoardTab}>
+          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+            <TabsTrigger value="todos" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Todos ({filteredCustomers.length})
+            </TabsTrigger>
+            <TabsTrigger value="personas" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Personas ({filteredCustomers.filter(c => c.customer_type !== "empresa").length})
+            </TabsTrigger>
+            <TabsTrigger value="empresas" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Empresas ({filteredCustomers.filter(c => c.customer_type === "empresa").length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Customers Cards */}
-      <div>
-        {loading ? (
-          <div className="text-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-          </div>
-        ) : filteredCustomers.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No se encontraron clientes</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger xl:grid-cols-2">
-            {filteredCustomers.map(customer => {
-              const isCompany = customer.customer_type === "empresa";
-              const customerVehiclesCount = (vehiclesByCustomer[customer.customer_id] || []).length;
+      {/* 3-panel customer board */}
+      <div className="grid gap-6 xl:grid-cols-3">
+        {[
+          { key: "todos", label: "TODOS LOS CLIENTES", list: filteredCustomers },
+          { key: "personas", label: "PERSONA NATURAL", list: filteredCustomers.filter(c => c.customer_type !== "empresa") },
+          { key: "empresas", label: "EMPRESAS", list: filteredCustomers.filter(c => c.customer_type === "empresa") },
+        ].map(({ key, label, list }) => (
+          <Card key={key} className={cn("h-fit", boardTab !== key ? "hidden xl:block" : "")}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{label} ({list.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loading ? (
+                <div className="text-center py-8"><RefreshCw className="h-6 w-6 animate-spin mx-auto" /></div>
+              ) : list.length === 0 ? (
+                <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No se encontraron clientes.</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger">
+                  {list.map(customer => {
+                    const isCompany = customer.customer_type === "empresa";
+                    const customerVehiclesCount = (vehiclesByCustomer[customer.customer_id] || []).length;
               const cardTone = isCompany
                 ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
                 : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
@@ -1389,7 +1385,10 @@ export function CustomersPage() {
             })}
           </div>
         )}
-      </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
       {/* Vehicles Modal */}
       <Dialog open={showVehiclesModal} onOpenChange={setShowVehiclesModal}>

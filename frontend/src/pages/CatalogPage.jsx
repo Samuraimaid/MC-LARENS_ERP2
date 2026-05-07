@@ -8,9 +8,10 @@ import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Checkbox } from "../components/ui/checkbox";
 import { Label } from "../components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
@@ -122,6 +123,7 @@ const isProductCompatibleWithVehicle = (product, vehicle) => {
 export function CatalogPage() {
   const { user } = useAuth();
   const isWarehouseRole = user?.role === "bodegas";
+  const [boardTab, setBoardTab] = useState("todos");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState({});
   const [vehicleTypes, setVehicleTypes] = useState([]);
@@ -658,8 +660,41 @@ export function CatalogPage() {
           <CardContent className="py-10 text-center text-muted-foreground">Sin resultados</CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
-          {filteredProducts.map((product) => {
+        <>
+          {/* Board tabs selector (mobile/tablet) */}
+          <div className="xl:hidden">
+            <Tabs value={boardTab} onValueChange={setBoardTab}>
+              <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+                <TabsTrigger value="todos" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Todos ({filteredProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="con-stock" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Con stock ({filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) > 0).length})
+                </TabsTrigger>
+                <TabsTrigger value="sin-stock" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Sin stock ({filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) === 0).length})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* 3-panel product board */}
+          <div className="grid gap-6 xl:grid-cols-3">
+            {[
+              { key: "todos", label: "TODOS LOS PRODUCTOS", list: filteredProducts },
+              { key: "con-stock", label: "CON STOCK DISPONIBLE", list: filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) > 0) },
+              { key: "sin-stock", label: "SIN STOCK", list: filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) === 0) },
+            ].map(({ key, label, list }) => (
+              <Card key={key} className={cn("h-fit", boardTab !== key ? "hidden xl:block" : "")}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{label} ({list.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {list.length === 0 ? (
+                    <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">Sin productos en esta sección.</div>
+                  ) : (
+                    <div className="grid gap-6">
+                      {list.map((product) => {
             const compatibility = product?.compatibility || {};
             const compatTypes = getCompatibilityTypes(product);
             const image = getProductImage(product);
@@ -777,8 +812,14 @@ export function CatalogPage() {
                 </CardContent>
               </Card>
             );
-          })}
-        </div>
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
       <Dialog

@@ -2,6 +2,28 @@
 
 Build documental actual: 2026-02-26
 
+## Control de cambios - 2026-05-07 (Deshacer carrito, retencion IR y conectividad LAN)
+
+Estado de cierre
+- Flujo de ventas actualizado con soporte de deshacer cambios de carrito y retencion IR para clientes empresa.
+- Publicacion local validada en Docker y acceso LAN verificado por IP local del host.
+
+Alcance funcional entregado
+- Frontend ventas:
+	- Boton de deshacer en carrito con historial de estados (limite operativo de snapshots para evitar crecimiento indefinido).
+	- Mensajes de deshacer orientados al resultado real de la reversa (accion aplicada tras deshacer).
+	- Retencion IR para cliente empresa con seleccion de 1% o 2%.
+	- Calculo de retencion aplicado despues de descuentos y antes de IVA.
+	- Orden de totales en pantalla: Subtotal -> Descuentos -> Retencion -> IVA -> Total.
+- Borradores de venta:
+	- Persistencia y restauracion de `applyRetention` y `retentionRate`.
+	- Metadatos de tarjeta ampliados para mostrar descuentos y retencion cuando existan.
+
+Operacion y red local
+- Docker Compose operativo con `mundo-frontend` (3000), `mundo-backend` (8001) y `mongodb` (27017).
+- Reglas de firewall habilitadas para puertos 3000/8001 y validacion HTTP por `localhost` e IP LAN.
+- Recomendacion de red: si un cliente remoto sigue sin abrir, revisar aislamiento de clientes (AP Isolation/Guest Network) en el router.
+
 ## Control de cambios - 2026-05-05 (Permisos, ventas y experiencia movil)
 
 Estado de cierre

@@ -1,5 +1,14 @@
 # Here are your Instructions
 
+Actualizacion 2026-05-07 - Ventas y acceso por red local
+---------------------------------------------------------
+
+- Ventas (frontend): agregado boton de deshacer en carrito con historial de cambios y mensajes de confirmacion claros sobre la accion revertida.
+- Ventas (frontend): integrada retencion IR para clientes empresa con tasa seleccionable (1% o 2%), aplicada despues de descuentos y antes de IVA.
+- Borradores: se persisten y restauran `applyRetention` y `retentionRate`; tarjetas de borrador muestran descuentos y retencion cuando corresponde.
+- Totales en venta: orden unificado en UI: Subtotal -> Descuentos -> Retencion -> IVA -> Total.
+- Red local (Windows + Docker Desktop): ajuste operativo para acceso LAN con frontend/backend en `http://<IP_LOCAL>:3000` y `http://<IP_LOCAL>:8001`, incluyendo verificacion de firewall para ambos puertos.
+
 Actualizacion 2026-05-05 - Resumen de avances del dia
 ------------------------------------------------------
 
