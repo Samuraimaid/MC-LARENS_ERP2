@@ -211,6 +211,8 @@ export function SalesPage() {
   
   // IVA and currency
   const [applyIVA, setApplyIVA] = useState(true);
+  const [applyRetention, setApplyRetention] = useState(false);
+  const [retentionRate, setRetentionRate] = useState(2);
   
   const [ivaRate, setIvaRate] = useState(DEFAULT_IVA_RATE);
   const [currency, setCurrency] = useState("NIO");
@@ -1507,6 +1509,8 @@ export function SalesPage() {
     setProductSearch("");
     setAppliedDiscounts([]);
     setApplyIVA(true);
+    setApplyRetention(false);
+    setRetentionRate(2);
     setIvaRate(effectiveIvaRate);
     setCurrency("NIO");
   };
@@ -2016,7 +2020,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               warehouses={warehouses}
               inventory={inventory}
               vehicles={vehicles}
-              initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, globalDiscount, notes, applyIVA, ivaRate, currency }}
+              initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
               onOpenCatalogSearch={openCatalogFromSaleForm}

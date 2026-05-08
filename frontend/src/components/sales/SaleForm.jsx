@@ -1171,6 +1171,18 @@ export default function SaleForm({
     }
   }, [buildDraftSnapshot, draftKey, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
 
+  const clampGlobalDiscount = useCallback((value) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return 0;
+    return Math.max(0, Math.min(100, Math.round(numericValue)));
+  }, []);
+
+  const applyGlobalDiscountChange = useCallback((nextValue) => {
+    const normalizedValue = clampGlobalDiscount(nextValue);
+    setGlobalDiscount(normalizedValue);
+    persistDraftSnapshot({ globalDiscount: normalizedValue });
+  }, [clampGlobalDiscount, persistDraftSnapshot]);
+
   const undoCartChange = useCallback(() => {
     if (cartHistory.current.length === 0) return;
     const [{ snapshot: prev, label }, ...rest] = cartHistory.current;
@@ -2497,15 +2509,51 @@ export default function SaleForm({
               <Percent className="h-3.5 w-3.5" />
               <span>Descuento Global (%)</span>
             </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              disabled={discountsBlockedByPayment}
-              value={globalDiscount}
-              onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
-              onBlur={(e) => persistDraftSnapshot({ globalDiscount: parseFloat(e.target.value) || 0 })}
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "h-9 w-9 ui-interactive",
+                  discountsBlockedByPayment || globalDiscount <= 0
+                    ? "border-slate-300 bg-slate-100 text-slate-400"
+                    : "border-rose-300 bg-white/70 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                )}
+                title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Reducir descuento global"}
+                disabled={discountsBlockedByPayment || globalDiscount <= 0}
+                onClick={() => applyGlobalDiscountChange(globalDiscount - 1)}
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                inputMode="numeric"
+                disabled={discountsBlockedByPayment}
+                value={globalDiscount}
+                onChange={(e) => applyGlobalDiscountChange(e.target.value)}
+                onBlur={(e) => applyGlobalDiscountChange(e.target.value)}
+                className="h-9 text-center font-mono text-sm font-semibold"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "h-9 w-9 ui-interactive",
+                  discountsBlockedByPayment || globalDiscount >= 100
+                    ? "border-slate-300 bg-slate-100 text-slate-400"
+                    : "border-emerald-300 bg-white/70 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                )}
+                title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Aumentar descuento global"}
+                disabled={discountsBlockedByPayment || globalDiscount >= 100}
+                onClick={() => applyGlobalDiscountChange(globalDiscount + 1)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
 
