@@ -11,6 +11,7 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
+import { CarFront, ListFilter, Pin, Search, Shapes, Tags } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
@@ -122,6 +123,10 @@ const isProductCompatibleWithVehicle = (product, vehicle) => {
 
 export function CatalogPage() {
   const { user } = useAuth();
+  const userDraftScopeToken = useMemo(() => {
+    const raw = user?.user_id || user?.pin_user_id || user?.username || "anon";
+    return String(raw).replace(/[^a-zA-Z0-9_-]/g, "_");
+  }, [user?.pin_user_id, user?.user_id, user?.username]);
   const isWarehouseRole = user?.role === "bodegas";
   const [boardTab, setBoardTab] = useState("todos");
   const [products, setProducts] = useState([]);
@@ -149,8 +154,19 @@ export function CatalogPage() {
     choices: [],
   });
 
+  const getDraftConfig = (type) => {
+    const base = DRAFT_CONFIG[type];
+    if (!base) return null;
+    return {
+      ...base,
+      listKey: `${base.listKey}_${userDraftScopeToken}`,
+      activeKey: `${base.activeKey}_${userDraftScopeToken}`,
+      prefix: `${base.prefix}${userDraftScopeToken}_`,
+    };
+  };
+
   const resolveDraftTargetPath = (type) => {
-    const config = DRAFT_CONFIG[type];
+    const config = getDraftConfig(type);
     if (!config) return "/sales";
 
     if (type === "sale" && sourceContext?.source === "sale-form") {
@@ -324,7 +340,7 @@ export function CatalogPage() {
 
   const getDraftTabs = (type) => {
     if (typeof window === "undefined") return [];
-    const config = DRAFT_CONFIG[type];
+    const config = getDraftConfig(type);
     if (!config) return [];
     const list = parseJson(window.localStorage.getItem(config.listKey), []);
     if (!Array.isArray(list)) return [];
@@ -373,7 +389,7 @@ export function CatalogPage() {
 
   const getDraftSnapshot = (type, draftId) => {
     if (typeof window === "undefined") return null;
-    const config = DRAFT_CONFIG[type];
+    const config = getDraftConfig(type);
     if (!config) return null;
     const draftKey = `${config.prefix}${draftId}`;
     return parseJson(window.localStorage.getItem(draftKey), null);
@@ -381,7 +397,7 @@ export function CatalogPage() {
 
   const addProductToDraft = async (type, product, options = {}) => {
     if (typeof window === "undefined") return;
-    const config = DRAFT_CONFIG[type];
+    const config = getDraftConfig(type);
     if (!config) return;
 
     const { forcedDraftId = null, forceNew = false, navigate = true } = options;
@@ -582,68 +598,121 @@ export function CatalogPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Input
-              placeholder="Buscar por SKU, nombre, marca..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="min-w-[220px] max-w-sm"
-            />
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {Object.keys(categories || {}).map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={subcategory} onValueChange={setSubcategory}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Subcategoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {availableSubcategories.map((sub) => (
-                  <SelectItem key={sub} value={sub}>
-                    {sub}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={productType} onValueChange={setProductType}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Tipo de producto" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="product">Producto</SelectItem>
-                <SelectItem value="service">Servicio</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={vehicleType} onValueChange={setVehicleType}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Tipo de vehículo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {vehicleTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex w-full min-w-[300px] items-center gap-2">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <Search className="h-3.5 w-3.5" />
+                Buscar producto
+              </Label>
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="SKU, nombre, marca, categoría o subcategoría"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="pl-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <Tags className="h-3.5 w-3.5" />
+                Categoría
+              </Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{category === "all" ? "Todas las categorías" : category}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las categorías</SelectItem>
+                  {Object.keys(categories || {}).map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <Shapes className="h-3.5 w-3.5" />
+                Subcategoría
+              </Label>
+              <Select value={subcategory} onValueChange={setSubcategory}>
+                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Shapes className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{subcategory === "all" ? "Todas las subcategorías" : subcategory}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las subcategorías</SelectItem>
+                  {availableSubcategories.map((sub) => (
+                    <SelectItem key={sub} value={sub}>
+                      {sub}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <ListFilter className="h-3.5 w-3.5" />
+                Tipo de producto
+              </Label>
+              <Select value={productType} onValueChange={setProductType}>
+                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <ListFilter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">
+                      {productType === "all" ? "Todos los tipos" : productType === "product" ? "Producto" : "Servicio"}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="product">Producto</SelectItem>
+                  <SelectItem value="service">Servicio</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <CarFront className="h-3.5 w-3.5" />
+                Tipo de vehículo
+              </Label>
+              <Select value={vehicleType} onValueChange={setVehicleType}>
+                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CarFront className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{vehicleType === "all" ? "Todos los vehículos" : vehicleType}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vehículos</SelectItem>
+                  {vehicleTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Checkbox
                 id="stay-in-catalog"
                 checked={stayInCatalog}
                 onCheckedChange={(value) => setStayInCatalog(Boolean(value))}
               />
-              <Label htmlFor="stay-in-catalog" className="text-sm text-muted-foreground">
+              <Label htmlFor="stay-in-catalog" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                <Pin className="h-3.5 w-3.5" />
                 Permanecer en catálogo al agregar
               </Label>
             </div>

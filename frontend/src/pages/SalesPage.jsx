@@ -127,11 +127,53 @@ export function SalesPage() {
   const canCreateCustomers = hasPermission("customers", "create");
   const isBillingApprover = ["gerencia", "recursos_humanos"].includes(String(user?.role || "").toLowerCase());
   const canSeeAdvancedFilters = ["gerencia", "recursos_humanos", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
-  const DRAFT_LIST_KEY = "draft_sale_tabs_v1";
-  const DRAFT_ACTIVE_KEY = "draft_sale_active_v1";
-  const DRAFT_KEY_PREFIX = "draft_sale_v1_";
+  const DRAFT_LIST_KEY_BASE = "draft_sale_tabs_v1";
+  const DRAFT_ACTIVE_KEY_BASE = "draft_sale_active_v1";
+  const DRAFT_KEY_PREFIX_BASE = "draft_sale_v1_";
+  const LEGACY_DRAFT_LIST_KEY = "draft_sale_tabs_v1";
+  const LEGACY_DRAFT_ACTIVE_KEY = "draft_sale_active_v1";
+  const LEGACY_DRAFT_PREFIX = "draft_sale_v1_sale_";
   const DRAFT_FLOW = "sale";
   const EMBEDDED_FORM_VISIBILITY_KEY_PREFIX = "sales_embedded_form_visible_v1";
+  const userDraftScopeToken = useMemo(() => {
+    const raw = user?.user_id || user?.pin_user_id || user?.username || "anon";
+    return String(raw).replace(/[^a-zA-Z0-9_-]/g, "_");
+  }, [user?.pin_user_id, user?.user_id, user?.username]);
+  const DRAFT_LIST_KEY = useMemo(
+    () => `${DRAFT_LIST_KEY_BASE}_${userDraftScopeToken}`,
+    [DRAFT_LIST_KEY_BASE, userDraftScopeToken]
+  );
+  const DRAFT_ACTIVE_KEY = useMemo(
+    () => `${DRAFT_ACTIVE_KEY_BASE}_${userDraftScopeToken}`,
+    [DRAFT_ACTIVE_KEY_BASE, userDraftScopeToken]
+  );
+  const DRAFT_KEY_PREFIX = useMemo(
+    () => `${DRAFT_KEY_PREFIX_BASE}${userDraftScopeToken}_`,
+    [DRAFT_KEY_PREFIX_BASE, userDraftScopeToken]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!userDraftScopeToken || userDraftScopeToken === "anon") return;
+
+    try {
+      window.localStorage.removeItem(LEGACY_DRAFT_LIST_KEY);
+      window.localStorage.removeItem(LEGACY_DRAFT_ACTIVE_KEY);
+
+      const keysToRemove = [];
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (!key) continue;
+        if (key.startsWith(LEGACY_DRAFT_PREFIX)) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    } catch (error) {
+      // ignore storage access issues to keep sales UI available
+    }
+  }, [LEGACY_DRAFT_ACTIVE_KEY, LEGACY_DRAFT_LIST_KEY, LEGACY_DRAFT_PREFIX, userDraftScopeToken]);
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -402,13 +444,13 @@ export function SalesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, DRAFT_KEY_PREFIX, DRAFT_LIST_KEY, userDraftScopeToken]);
 
   useEffect(() => {
     if (!draftsLoaded) return;
     if (typeof window === "undefined") return;
     window.localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(draftTabs));
-  }, [draftTabs, draftsLoaded]);
+  }, [DRAFT_LIST_KEY, draftTabs, draftsLoaded]);
 
   useEffect(() => {
     if (!draftsLoaded) return;
@@ -418,7 +460,7 @@ export function SalesPage() {
     } else {
       window.localStorage.removeItem(DRAFT_ACTIVE_KEY);
     }
-  }, [activeDraftId, draftsLoaded]);
+  }, [DRAFT_ACTIVE_KEY, activeDraftId, draftsLoaded]);
 
   useEffect(() => {
     draftTabsRef.current = draftTabs;
@@ -564,10 +606,13 @@ export function SalesPage() {
     const rate = exchangeRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
+    const paymentMethod = String(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash").trim().toLowerCase();
+    const discountsAllowed = paymentMethod === "cash" || paymentMethod === "transfer";
 
     const subtotal = items.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price || 0);
-      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - (item.discount || 0) / 100);
+      const effectiveItemDiscount = discountsAllowed ? (item.discount || 0) : 0;
+      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - effectiveItemDiscount / 100);
       const installType = item.installation_type || "optional";
       const wantsInstall = installType === "required" || Boolean(item.with_installation);
       if (installType !== "not_available" && wantsInstall) {
@@ -588,7 +633,10 @@ export function SalesPage() {
       }
     });
 
-    const globalDiscountAmount = subtotal * ((draft.globalDiscount || 0) / 100);
+    if (!discountsAllowed) {
+      discountFromCodes = 0;
+    }
+    const globalDiscountAmount = discountsAllowed ? (subtotal * ((draft.globalDiscount || 0) / 100)) : 0;
     const totalDiscounts = discountFromCodes + globalDiscountAmount;
     const subtotalAfterDiscounts = subtotal - totalDiscounts;
     const retention = draft.applyRetention ? subtotal * ((draft.retentionRate || 0) / 100) : 0;
@@ -795,6 +843,7 @@ export function SalesPage() {
           }
         : null),
       selectedWarehouse: snapshot?.selectedWarehouse || selectedWarehouse || "",
+      paymentMethod: snapshot?.paymentMethod || snapshot?.payment_type || "cash",
       cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
       globalDiscount: snapshot?.globalDiscount || 0,
       notes: snapshot?.notes || "",
@@ -1358,6 +1407,7 @@ export function SalesPage() {
         warehouse_id: i.warehouse_id || (payload.warehouse_id || selectedWarehouse),
       })));
       setGlobalDiscount(payload.discount || 0);
+      setPaymentType(payload.payment_type || payload.payment_method || "cash");
       setApplyIVA(payload.apply_iva ?? applyIVA);
       setCurrency(payload.currency || currency);
       if (payload.applied_discounts) {
@@ -1366,6 +1416,7 @@ export function SalesPage() {
 
       const totalsLocal = calculateTotals();
 
+      const payloadPaymentType = payload.payment_type || payload.payment_method || paymentType;
       const saleData = {
         customer_id: payload.customer_id,
         vehicle_id: payload.vehicle_id || null,
@@ -1377,8 +1428,9 @@ export function SalesPage() {
           with_installation: item.with_installation || false,
         })),
         discount: payload.discount || 0,
-        payment_type: paymentType,
-        credit_days: paymentType === "credit" ? creditDays : null,
+        payment_type: payloadPaymentType,
+        payment_method: payload.payment_method || payloadPaymentType,
+        credit_days: payloadPaymentType === "credit" ? (payload.credit_days ?? creditDays) : null,
         delivery_required: deliveryRequired,
         delivery_address: deliveryRequired ? deliveryAddress : null,
         manager_authorization_code: authCode || managerAuthCode || null,
@@ -1424,7 +1476,7 @@ export function SalesPage() {
       const name = `Venta (auto)`;
       const newTab = { id, name, updatedAt: new Date().toISOString() };
       setDraftTabs(prev => [...prev, newTab]);
-      window.localStorage.setItem(`draft_sale_v1_${id}`, JSON.stringify({
+      window.localStorage.setItem(getDraftKey(id), JSON.stringify({
         selectedCustomerId: selectedCustomer?.customer_id || null,
         selectedVehicle,
         vehicleFlowOption: selectedVehicle ? "registered" : "carryout",

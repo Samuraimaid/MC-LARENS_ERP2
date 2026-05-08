@@ -1,13 +1,21 @@
 import { getStoredSoundPreferences, UI_SOUND_PROFILES } from "@/lib/userUiPreferences";
 
+let sharedAudioContext = null;
+
 const getAudioContext = () => {
   if (typeof window === "undefined") return null;
   const AudioContextCls = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextCls) return null;
 
+  if (sharedAudioContext && sharedAudioContext.state !== "closed") {
+    return sharedAudioContext;
+  }
+
   try {
-    return new AudioContextCls();
+    sharedAudioContext = new AudioContextCls();
+    return sharedAudioContext;
   } catch (_) {
+    sharedAudioContext = null;
     return null;
   }
 };
@@ -54,7 +62,7 @@ const playPattern = (notes, totalDurationMs) => {
   if (!ctx) return;
 
   const runPattern = () => {
-    const startAt = ctx.currentTime;
+    const startAt = ctx.currentTime + 0.012;
     adjustedNotes.forEach((note, index) => {
       scheduleTone(ctx, {
         startAt: startAt + (note.offset ?? index * 0.05),
@@ -66,10 +74,6 @@ const playPattern = (notes, totalDurationMs) => {
         endFrequency: note.endFrequency,
       });
     });
-
-    window.setTimeout(() => {
-      ctx.close().catch(() => null);
-    }, totalDurationMs);
   };
 
   try {
@@ -112,9 +116,59 @@ export const playCartRemoveSound = () => {
   ], 240);
 };
 
-export const playCartQuantityChangeSound = () => {
+// Agudo: sumar unidad en carrito (ascending high notes)
+export const playCartQuantityUpSound = () => {
   playPattern([
-    { frequency: 659.25, endFrequency: 698.46, offset: 0, duration: 0.07, peak: 0.045, type: "triangle" },
-    { frequency: 783.99, endFrequency: 830.61, offset: 0.045, duration: 0.065, peak: 0.04, type: "sine" },
+    { frequency: 880.0,  endFrequency: 987.77, offset: 0,     duration: 0.07,  peak: 0.05,  type: "triangle" },
+    { frequency: 1174.66, endFrequency: 1318.51, offset: 0.05, duration: 0.065, peak: 0.04,  type: "sine" },
   ], 180);
+};
+
+// Grave: restar unidad en carrito (descending low notes)
+export const playCartQuantityDownSound = () => {
+  playPattern([
+    { frequency: 329.63, endFrequency: 293.66, offset: 0,     duration: 0.08,  peak: 0.055, type: "triangle" },
+    { frequency: 246.94, endFrequency: 220.0,  offset: 0.055, duration: 0.075, peak: 0.045, type: "sine" },
+  ], 180);
+};
+
+// Kept for backward compatibility
+export const playCartQuantityChangeSound = playCartQuantityUpSound;
+
+// Undo action: descending sweep conveying "going back"
+export const playUndoSound = () => {
+  playPattern([
+    { frequency: 523.25, endFrequency: 392.0,  offset: 0,     duration: 0.09,  peak: 0.055, type: "sine" },
+    { frequency: 392.0,  endFrequency: 293.66, offset: 0.07,  duration: 0.1,   peak: 0.045, type: "triangle" },
+    { frequency: 261.63, endFrequency: 220.0,  offset: 0.15,  duration: 0.11,  peak: 0.035, type: "sine" },
+  ], 220);
+};
+
+export const playLoginPinpadSound = (kind = "key") => {
+  if (kind === "success") {
+    playPattern([
+      { frequency: 820, endFrequency: 920, offset: 0, duration: 0.09, peak: 0.09, type: "triangle" },
+      { frequency: 1032.0, endFrequency: 1174.66, offset: 0.055, duration: 0.1, peak: 0.08, type: "triangle" },
+    ], 210);
+    return;
+  }
+
+  if (kind === "warning") {
+    playPattern([
+      { frequency: 520, endFrequency: 460, offset: 0, duration: 0.12, peak: 0.1, type: "sawtooth" },
+    ], 180);
+    return;
+  }
+
+  if (kind === "error") {
+    playPattern([
+      { frequency: 180, endFrequency: 160, offset: 0, duration: 0.16, peak: 0.11, type: "square" },
+      { frequency: 140, endFrequency: 120, offset: 0.085, duration: 0.17, peak: 0.1, type: "square" },
+    ], 250);
+    return;
+  }
+
+  playPattern([
+    { frequency: 1320, endFrequency: 1396.91, offset: 0, duration: 0.075, peak: 0.085, type: "square" },
+  ], 130);
 };

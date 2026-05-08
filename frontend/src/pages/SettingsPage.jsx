@@ -14,14 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText, Plus, Save } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
-import ConnectivityBadge from "../components/ConnectivityBadge";
 import { useRoles } from "../lib/useRoles";
 
 export function SettingsPage() {
   const { user } = useAuth();
   const rolesMap = useRoles();
-  const { mode, skin, setMode, setSkin, setSystemTheme } = useTheme();
+  const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity } = useTheme();
   const canManageVehicleSettings = (user?.role || "").toLowerCase() === "gerencia";
+  const canManageAppearanceSettings = (user?.role || "").toLowerCase() === "gerencia";
   const [profilePin, setProfilePin] = useState("");
   const [savingProfilePin, setSavingProfilePin] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
@@ -52,6 +52,8 @@ export function SettingsPage() {
   const [newIvaRate, setNewIvaRate] = useState("15");
   const [newRule, setNewRule] = useState({ name: "", cadence: "daily", rate: "36.5", start_at: "", end_at: "", active: true });
   const [newCancelReason, setNewCancelReason] = useState("");
+  const [watermarkOpacityPercent, setWatermarkOpacityPercent] = useState(() => String(Math.round(watermarkOpacity * 100)));
+  const [savingAppearanceSettings, setSavingAppearanceSettings] = useState(false);
   const canManageBillingSettings = ["gerencia", "recursos_humanos"].includes((user?.role || "").toLowerCase());
 
   const selectedBrand = useMemo(
@@ -134,6 +136,38 @@ export function SettingsPage() {
   const handleSkinChange = (nextSkin) => {
     setSkin(nextSkin);
     persistTheme(mode, nextSkin);
+  };
+
+  useEffect(() => {
+    setWatermarkOpacityPercent(String(Math.round(watermarkOpacity * 100)));
+  }, [watermarkOpacity]);
+
+  const saveWatermarkOpacity = async () => {
+    if (!canManageAppearanceSettings) {
+      toast.error("Solo gerencia puede modificar esta configuración");
+      return;
+    }
+    const numericPercent = Number(watermarkOpacityPercent);
+    if (!Number.isFinite(numericPercent) || numericPercent < 0 || numericPercent > 30) {
+      toast.error("Ingresa un valor válido entre 0 y 30%");
+      return;
+    }
+
+    const nextOpacity = numericPercent / 100;
+    setSavingAppearanceSettings(true);
+    try {
+      const response = await axios.put(
+        `${API}/settings/appearance`,
+        { watermark_opacity: nextOpacity },
+        { withCredentials: true }
+      );
+      setWatermarkOpacity(response?.data?.watermark_opacity ?? nextOpacity);
+      toast.success("Transparencia de marca de agua actualizada");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo guardar la transparencia");
+    } finally {
+      setSavingAppearanceSettings(false);
+    }
   };
 
   const updateProfilePin = async () => {
@@ -678,6 +712,50 @@ export function SettingsPage() {
                 ))}
               </div>
             </div>
+            {canManageAppearanceSettings ? (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <Label>Transparencia de marca de agua</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Ajuste global para login, reloj de asistencia y fondo principal.
+                      </p>
+                    </div>
+                    <span className="min-w-14 text-right text-sm font-semibold">{watermarkOpacityPercent}%</span>
+                  </div>
+                  <Input
+                    type="range"
+                    min="0"
+                    max="30"
+                    step="1"
+                    value={watermarkOpacityPercent}
+                    onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
+                    data-testid="settings-watermark-opacity"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="30"
+                      step="1"
+                      value={watermarkOpacityPercent}
+                      onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
+                      className="w-24"
+                    />
+                    <Button
+                      onClick={saveWatermarkOpacity}
+                      disabled={savingAppearanceSettings}
+                      data-testid="settings-watermark-opacity-save"
+                    >
+                      {savingAppearanceSettings ? "Guardando..." : "Guardar"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Disponible solo para gerencia. Rango permitido: 0% a 30%.</p>
+                </div>
+              </>
+            ) : null}
             <Separator />
             <div className="space-y-2">
               <Label>PIN de marcación personal (4 dígitos)</Label>
@@ -1157,7 +1235,6 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <ConnectivityBadge />
     </div>
   );
 }

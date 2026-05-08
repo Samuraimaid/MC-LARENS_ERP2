@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
+import { playLoginPinpadSound } from "@/lib/uiSounds";
 import { useDevice } from "../hooks/useDevice";
 
 // Connectivity check interval (ms)
@@ -20,7 +21,7 @@ const ATTENDANCE_KIOSK_SHORTCUT_PIN = (typeof window !== 'undefined' && window._
 
 export function LoginPage() {
   const { checkAuth } = useAuth();
-  const { resolvedMode, toggleMode, setMode, setSkin } = useTheme();
+  const { resolvedMode, toggleMode, setMode, setSkin, watermarkOpacity } = useTheme();
   const device = useDevice();
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -317,56 +318,7 @@ export function LoginPage() {
   }, [activeTool, handleConvertCurrency]);
 
   const playTone = useCallback((kind) => {
-    try {
-      const AudioContextCls = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextCls) return;
-      const ctx = new AudioContextCls();
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      let frequency = 780;
-      let peakGain = 0.2;
-      let duration = 0.18;
-      let oscillatorType = "sine";
-
-      if (kind === "key") {
-        frequency = 1320;
-        peakGain = 0.22;
-        duration = 0.1;
-        oscillatorType = "square";
-      }
-      if (kind === "success") {
-        frequency = 820;
-        peakGain = 0.24;
-        duration = 0.18;
-        oscillatorType = "triangle";
-      }
-      if (kind === "warning") {
-        frequency = 520;
-        peakGain = 0.24;
-        duration = 0.22;
-        oscillatorType = "sawtooth";
-      }
-      if (kind === "error") {
-        frequency = 180;
-        peakGain = 0.28;
-        duration = 0.3;
-        oscillatorType = "square";
-      }
-
-      oscillator.type = oscillatorType;
-      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(peakGain, ctx.currentTime + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + duration + 0.01);
-      oscillator.onended = () => ctx.close();
-    } catch (_) {
-      // Ignore Web Audio failures on browsers that block sound playback.
-    }
+    playLoginPinpadSound(kind);
   }, []);
 
   const handlePinLogin = useCallback(async (pinOverride = null) => {
@@ -770,40 +722,97 @@ export function LoginPage() {
       </div>
 
       {/* Right side - Login */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-md border-0 shadow-xl">
-          <CardContent className="pt-8 pb-8 px-8">
-            <div className="mb-8 lg:hidden">
+      <div className="relative flex-1 flex items-center justify-center overflow-hidden p-8">
+        <Card className="relative z-10 w-full max-w-md border-0 shadow-xl">
+          <CardContent className="relative overflow-hidden pt-8 pb-8 px-8">
+            <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-6">
               <img
-                src="/logo-transparent.png"
-                alt="Mundo de Accesorios"
-                className="h-24 w-auto"
+                src="/logo-big.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="h-auto w-[78%] max-w-lg select-none object-contain"
+                style={{ mixBlendMode: "multiply", opacity: watermarkOpacity }}
               />
             </div>
 
-            <div className="mb-4 flex items-center justify-end gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12"
-                onClick={() => handleToolToggle("calculator")}
-                aria-label="Abrir calculadora"
-              >
-                <Calculator className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12"
-                onClick={() => toggleMode()}
-                aria-label="Cambiar tema"
-              >
-                {resolvedMode === "dark" ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </Button>
+            <div className="relative z-10">
+            <div className="relative mb-4">
+              <div className="flex items-center justify-end gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12"
+                  onClick={() => handleToolToggle("calculator")}
+                  aria-label="Abrir calculadora"
+                >
+                  <Calculator className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12"
+                  onClick={() => setShowLoginInfo((prev) => !prev)}
+                  aria-label={showLoginInfo ? "Ocultar informacion" : "Mostrar informacion"}
+                  data-testid="login-info-toggle"
+                >
+                  <Info className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12"
+                  onClick={() => toggleMode()}
+                  aria-label="Cambiar tema"
+                >
+                  {resolvedMode === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {showLoginInfo ? (
+                <div
+                  className="absolute right-0 top-16 z-20 w-full rounded-xl border border-primary/20 bg-card/95 p-3 text-xs shadow-xl backdrop-blur-md"
+                  data-testid="login-device-validator"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold">Informacion del acceso</span>
+                    <span className="text-muted-foreground">Estado expandido</span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-md border bg-background/80 px-2 py-1">
+                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        backendStatus === 'ok' ? 'bg-emerald-500' : backendStatus === 'down' ? 'bg-destructive' : 'bg-yellow-400 animate-pulse'
+                      }`} />
+                      <span className="text-muted-foreground">
+                        {backendStatus === 'ok' && "Servidor OK"}
+                        {backendStatus === 'down' && "Servidor sin conexion"}
+                        {backendStatus === 'unknown' && (checkingBackend ? "Comprobando servidor..." : "Verificando servidor...")}
+                      </span>
+                    </div>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      Pantalla: <span className="font-semibold text-foreground">{deviceTypeLabel}</span>
+                    </span>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      Regla: <span className="font-semibold text-foreground">{deviceRuleLabel}</span>
+                    </span>
+
+                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
+                      {device.viewportWidth}x{device.viewportHeight} · {device.isPortrait ? "Vertical" : "Horizontal"} · {device.isTouchDevice ? "Tactil" : "No tactil"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 text-right text-muted-foreground">
+                    Version: {buildVersion} · Build: {buildTimeLabel}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {activeTool && (
@@ -907,7 +916,6 @@ export function LoginPage() {
                 ))}
               </div>
 
-              {/* Attempts / Lockout info */}
               {remainingAttempts !== null && (
                 <div className="text-center text-sm text-muted-foreground mb-2">Intentos restantes: {remainingAttempts}</div>
               )}
@@ -915,10 +923,9 @@ export function LoginPage() {
                 <div className="text-center text-sm text-destructive mb-4">PIN bloqueado hasta {lockoutUntil.toLocaleTimeString()}</div>
               )}
 
-              {/* PIN Keypad */}
               <div className={`grid grid-cols-3 gap-2 max-w-xs mx-auto p-2 rounded-xl transition-all duration-300 ${
-                authStatus === "error" ? "bg-destructive/20 ring-2 ring-destructive animate-shake" : 
-                authStatus === "success" ? "bg-green-500/20 ring-2 ring-green-500" : 
+                authStatus === "error" ? "bg-destructive/20 ring-2 ring-destructive animate-shake" :
+                authStatus === "success" ? "bg-green-500/20 ring-2 ring-green-500" :
                 ""
               }`}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
@@ -959,63 +966,7 @@ export function LoginPage() {
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
                 </Button>
               </div>
-
             </div>
-            <div
-              className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs"
-              data-testid="login-device-validator"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => setShowLoginInfo((prev) => !prev)}
-                  data-testid="login-info-toggle"
-                >
-                  <Info className="mr-1.5 h-3.5 w-3.5" />
-                  {showLoginInfo ? "Ocultar información" : "Información"}
-                </Button>
-                <span className="text-muted-foreground">
-                  {showLoginInfo ? "Estado expandido" : "Estado resumido"}
-                </span>
-              </div>
-
-              {showLoginInfo ? (
-                <>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-md border bg-background/80 px-2 py-1">
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${
-                        backendStatus === 'ok' ? 'bg-emerald-500' : backendStatus === 'down' ? 'bg-destructive' : 'bg-yellow-400 animate-pulse'
-                      }`} />
-                      <span className="text-muted-foreground">
-                        {backendStatus === 'ok' && "Servidor OK"}
-                        {backendStatus === 'down' && "Servidor sin conexión"}
-                        {backendStatus === 'unknown' && (checkingBackend ? "Comprobando servidor..." : "Verificando servidor...")}
-                      </span>
-                    </div>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      Pantalla: <span className="font-semibold text-foreground">{deviceTypeLabel}</span>
-                    </span>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      Regla: <span className="font-semibold text-foreground">{deviceRuleLabel}</span>
-                    </span>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      {device.viewportWidth}x{device.viewportHeight} · {device.isPortrait ? "Vertical" : "Horizontal"} · {device.isTouchDevice ? "Táctil" : "No táctil"}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="ml-auto text-muted-foreground">
-                      Version: {buildVersion} · Build: {buildTimeLabel}
-                    </span>
-                  </div>
-                </>
-              ) : null}
             </div>
           </CardContent>
         </Card>

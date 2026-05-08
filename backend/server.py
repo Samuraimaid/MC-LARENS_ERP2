@@ -1301,6 +1301,10 @@ class Quotation(FlexibleModel):
     currency: str = "USD"
     exchange_rate: Optional[float] = None
     discount_codes: List[str] = Field(default_factory=list)
+    payment_type: str = "cash"
+    payment_method: str = "cash"
+    credit_days: Optional[int] = None
+    discounts_blocked_by_method: bool = False
     total: float = 0.0
     valid_until: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     notes: Optional[str] = None
@@ -1317,6 +1321,9 @@ class QuotationCreate(FlexibleModel):
     iva_rate: Optional[float] = None
     discount: float = 0.0
     discount_codes: Optional[List[str]] = None
+    payment_type: Optional[str] = None
+    payment_method: Optional[str] = None
+    credit_days: Optional[int] = None
     vehicle_id: Optional[str] = None
     warehouse_id: Optional[str] = None
     valid_days: int = 7
@@ -1327,6 +1334,10 @@ class ThemeSettings(FlexibleModel):
     mode: Optional[str] = None
     skin: Optional[str] = None
     custom: Optional[Dict[str, str]] = None
+
+
+class AppearanceSettings(FlexibleModel):
+    watermark_opacity: Optional[float] = None
 
 
 class VehicleSettingsNamePayload(FlexibleModel):
@@ -5221,6 +5232,10 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     subtotal = 0
     currency = quot_data.currency or "USD"
     exchange_rate = quot_data.exchange_rate or (36.5 if currency == "NIO" else 1)
+    normalized_payment_method = _normalize_method_name(
+        quot_data.payment_method or quot_data.payment_type
+    )
+    discounts_allowed_by_method = _is_discount_allowed(normalized_payment_method)
     for item in quot_data.items:
         product = await db.products.find_one(
             {"product_id": item["product_id"]}, {"_id": 0}
@@ -5249,7 +5264,7 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
         if wants_installation and install_type != "not_available":
             price = price + install_price
 
-        discount = item.get("discount", 0)
+        discount = item.get("discount", 0) if discounts_allowed_by_method else 0
         item_subtotal = (price * qty) * (1 - discount / 100)
 
         items.append(
@@ -5268,7 +5283,8 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     apply_iva = quot_data.apply_iva if quot_data.apply_iva is not None else True
     iva_rate = float(quot_data.iva_rate) if quot_data.iva_rate is not None else await _get_billing_iva_rate()
     tax = subtotal * (iva_rate / 100) if apply_iva else 0
-    total_discount = subtotal * (quot_data.discount / 100)
+    effective_discount_percent = quot_data.discount if discounts_allowed_by_method else 0.0
+    total_discount = subtotal * (effective_discount_percent / 100)
     total = subtotal + tax - total_discount
 
     quotation = Quotation(
@@ -5284,12 +5300,16 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
         subtotal=round(subtotal, 2),
         tax=round(tax, 2),
         discount=round(total_discount, 2),
-        discount_percent=quot_data.discount,
+        discount_percent=effective_discount_percent,
         apply_iva=apply_iva,
         iva_rate=iva_rate,
         currency=currency,
         exchange_rate=exchange_rate if currency == "NIO" else None,
-        discount_codes=quot_data.discount_codes or [],
+        discount_codes=(quot_data.discount_codes or []) if discounts_allowed_by_method else [],
+        payment_type=normalized_payment_method,
+        payment_method=normalized_payment_method,
+        credit_days=(quot_data.credit_days or 30) if normalized_payment_method == "credit" else None,
+        discounts_blocked_by_method=not discounts_allowed_by_method,
         total=round(total, 2),
         valid_until=datetime.now(timezone.utc) + timedelta(days=quot_data.valid_days),
         notes=quot_data.notes,
@@ -13018,6 +13038,53 @@ ALLOWED_THEME_SKINS = {
     "spectrum-14",
     "github",
 }
+DEFAULT_WATERMARK_OPACITY = 0.11
+MIN_WATERMARK_OPACITY = 0.0
+MAX_WATERMARK_OPACITY = 0.3
+
+
+def _normalize_watermark_opacity(value: Any) -> float:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        numeric = DEFAULT_WATERMARK_OPACITY
+    return max(MIN_WATERMARK_OPACITY, min(MAX_WATERMARK_OPACITY, numeric))
+
+
+async def _get_system_settings_doc() -> Dict[str, Any]:
+    return await db.settings.find_one({"type": "system"}, {"_id": 0}) or {"type": "system"}
+
+
+def _serialize_appearance_settings(doc: Optional[Dict[str, Any]]) -> Dict[str, float]:
+    data = doc or {}
+    return {
+        "watermark_opacity": _normalize_watermark_opacity(data.get("watermark_opacity", DEFAULT_WATERMARK_OPACITY)),
+    }
+
+
+@api_router.get("/settings/appearance/public")
+async def get_public_appearance_settings():
+    doc = await _get_system_settings_doc()
+    return _serialize_appearance_settings(doc)
+
+
+@api_router.get("/settings/appearance")
+async def get_appearance_settings(request: Request):
+    await require_auth(request)
+    doc = await _get_system_settings_doc()
+    return _serialize_appearance_settings(doc)
+
+
+@api_router.put("/settings/appearance")
+async def update_appearance_settings(payload: AppearanceSettings, request: Request):
+    await require_roles(request, ["gerencia"])
+    watermark_opacity = _normalize_watermark_opacity(payload.watermark_opacity)
+    await db.settings.update_one(
+        {"type": "system"},
+        {"$set": {"type": "system", "watermark_opacity": watermark_opacity}},
+        upsert=True,
+    )
+    return {"watermark_opacity": watermark_opacity}
 
 
 @api_router.get("/settings/theme")

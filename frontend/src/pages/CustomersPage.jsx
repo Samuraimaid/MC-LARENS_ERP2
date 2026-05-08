@@ -17,7 +17,7 @@ import SearchableSelect from "@/components/ui/searchable-select";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
 import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSounds";
-import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin } from "lucide-react";
+import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import {
   getVehicleOptionsByBrandYear,
@@ -87,6 +87,7 @@ export function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [customerTypeFilter, setCustomerTypeFilter] = useState("all");
   const [boardTab, setBoardTab] = useState("todos");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [activeTab, setActiveTab] = useState("customer");
@@ -782,6 +783,8 @@ export function CustomersPage() {
 
   const normSearch = normalize(search);
   const filteredCustomers = customers.filter(c => {
+    const customerType = c.customer_type === "empresa" ? "empresa" : "natural";
+    if (customerTypeFilter !== "all" && customerType !== customerTypeFilter) return false;
     if (!normSearch) return true;
     const name = normalize(c.name || '');
     const phone = normalize(c.phone || '');
@@ -899,18 +902,18 @@ export function CustomersPage() {
       ) : (
       <>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground">Gestión de clientes y créditos</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Clientes</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">Gestión de clientes y créditos</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchCustomers}>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:justify-end">
+          <Button variant="outline" onClick={fetchCustomers} className="col-span-2 h-9 px-3 sm:col-auto sm:px-4">
             <RefreshCw className="h-4 w-4" />
           </Button>
             <Dialog open={showNewCustomer} onOpenChange={(open) => { setShowNewCustomer(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="new-customer-btn" disabled={!canCreateCustomers}>
+              <Button data-testid="new-customer-btn" disabled={!canCreateCustomers} className="h-9 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Cliente
               </Button>
@@ -1197,8 +1200,9 @@ export function CustomersPage() {
               </Button>
             </DialogContent>
           </Dialog>
-          <Button variant="outline" onClick={() => setShowManageTemplates(true)}>
-            Plantillas WA
+          <Button variant="outline" onClick={() => setShowManageTemplates(true)} className="h-9 w-full sm:w-auto">
+            <span className="sm:hidden">Plantillas</span>
+            <span className="hidden sm:inline">Plantillas WA</span>
           </Button>
           <Dialog open={showManageTemplates} onOpenChange={setShowManageTemplates}>
             <DialogContent className="max-w-2xl">
@@ -1229,17 +1233,61 @@ export function CustomersPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nombre, teléfono, email o cédula..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-          data-testid="search-customers"
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros rápidos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex w-full min-w-[300px] items-center gap-2">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <Search className="h-3.5 w-3.5" />
+                Buscar cliente
+              </Label>
+              <div className="relative min-w-0 flex-1 max-w-xl">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Nombre, teléfono, email o cédula"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 text-sm"
+                  data-testid="search-customers"
+                />
+              </div>
+            </div>
+
+            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
+              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                <ListFilter className="h-3.5 w-3.5" />
+                Tipo de cliente
+              </Label>
+              <Select value={customerTypeFilter} onValueChange={setCustomerTypeFilter}>
+                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                  <div className="flex min-w-0 items-center gap-2">
+                    {customerTypeFilter === "empresa" ? (
+                      <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="truncate">
+                      {customerTypeFilter === "all"
+                        ? "Todos los clientes"
+                        : customerTypeFilter === "natural"
+                          ? "Persona natural"
+                          : "Empresa"}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los clientes</SelectItem>
+                  <SelectItem value="natural">Persona natural</SelectItem>
+                  <SelectItem value="empresa">Empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Board tabs selector (mobile/tablet) */}
       <div className="xl:hidden">

@@ -16,7 +16,7 @@ import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../../lib/utils";
 import { toast } from "sonner";
-import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, RefreshCw, Unlock, X } from "lucide-react";
+import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, User, Users, RefreshCw, Unlock, X } from "lucide-react";
 import { useDevice } from "../../hooks/useDevice";
 import { BottomNav } from "./BottomNav";
 
@@ -60,7 +60,7 @@ function HeaderCloudCheckIcon({ className }) {
 
 export function MainLayout() {
   const { user, logout } = useAuth();
-  const { resolvedMode, toggleMode } = useTheme();
+  const { resolvedMode, toggleMode, watermarkOpacity } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState(null);
@@ -102,6 +102,19 @@ export function MainLayout() {
   const branding = getBrandingForBranch(user?.branch_id);
   const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
   const roleLabel = String(user?.role || "sin_rol").replace(/_/g, " ").toUpperCase();
+  const userFirstName = String(user?.name || "").trim();
+  const userLastName = String(user?.last_name || user?.lastname || user?.apellido || "").trim();
+  const userDisplayName = useMemo(() => {
+    if (userFirstName && userLastName) {
+      const normalizedFirstName = userFirstName.toLowerCase();
+      const normalizedLastName = userLastName.toLowerCase();
+      if (normalizedFirstName.includes(` ${normalizedLastName}`) || normalizedFirstName.endsWith(normalizedLastName)) {
+        return userFirstName;
+      }
+      return `${userFirstName} ${userLastName}`.trim();
+    }
+    return userFirstName || branding.brandName;
+  }, [userFirstName, userLastName, branding.brandName]);
   const buildVersion = APP_ENV.buildVersion;
   const buildTime = APP_ENV.buildTime;
   const buildTimeLabel = buildTime
@@ -109,12 +122,31 @@ export function MainLayout() {
     : "hora desconocida";
   const isMobile = viewportWidth < 1024;
   const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
+  const isCashierRole = String(user?.role || "").toLowerCase() === "cajero";
   const isWorkbenchRoute = location.pathname === "/workbench";
   const workbenchTabSet = new Set(WORKBENCH_TAB_ITEMS.map((tab) => tab.key));
   const requestedWorkbenchTab = String(new URLSearchParams(location.search).get("tab") || "sales");
   const activeWorkbenchTab = workbenchTabSet.has(requestedWorkbenchTab) ? requestedWorkbenchTab : "sales";
 
-  const sellerStatusPresentation = useMemo(() => {
+  const headerStatusPresentation = useMemo(() => {
+    if (!isSellerRole) {
+      if (sellerServerStatus === "down") {
+        return {
+          icon: CloudAlert,
+          title: "Sin conexión con el servidor",
+          className: "text-destructive hover:text-destructive hover:bg-destructive/10",
+          iconClassName: "",
+        };
+      }
+
+      return {
+        icon: HeaderCloudCheckIcon,
+        title: "Conectado y sincronizado",
+        className: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10",
+        iconClassName: "",
+      };
+    }
+
     const effectiveStatus = sellerServerStatus === "down"
       ? AUTOSAVE_STATUS.DISCONNECTED
       : sellerAutosaveStatus;
@@ -157,7 +189,7 @@ export function MainLayout() {
           iconClassName: "",
         };
     }
-  }, [sellerAutosaveStatus, sellerServerStatus]);
+  }, [isSellerRole, sellerAutosaveStatus, sellerServerStatus]);
 
   const handleWorkbenchTabChange = (nextTab) => {
     const safeTab = workbenchTabSet.has(nextTab) ? nextTab : "sales";
@@ -203,7 +235,7 @@ export function MainLayout() {
   }, [isSellerRole]);
 
   useEffect(() => {
-    if (!isSellerRole) return undefined;
+    if (isCashierRole) return undefined;
 
     let disposed = false;
 
@@ -227,7 +259,7 @@ export function MainLayout() {
       disposed = true;
       window.clearInterval(intervalId);
     };
-  }, [isSellerRole]);
+  }, [isCashierRole]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -566,8 +598,11 @@ export function MainLayout() {
                   </Button>
                 ) : null}
                 <div className="min-w-0 max-w-[48vw] sm:max-w-[360px] md:max-w-[440px]">
-                  <div className="text-sm font-semibold leading-tight truncate" title={user?.name || branding.brandName}>
-                    {user?.name || branding.brandName}
+                  <div className="text-sm font-semibold leading-tight truncate" title={userDisplayName}>
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <User className="h-3.5 w-3.5 shrink-0 icon-spring" />
+                      <span className="truncate">{userDisplayName}</span>
+                    </span>
                   </div>
                   <div className="mt-0.5 flex max-w-full items-center gap-2 text-[10px] text-muted-foreground leading-tight" title={`${roleLabel} ${branchLabel}`}>
                     <span className="inline-flex min-w-0 items-center gap-1">
@@ -634,20 +669,7 @@ export function MainLayout() {
                 >
                   {resolvedMode === "dark" ? <Sun className="h-4 w-4 icon-spring" /> : <Moon className="h-4 w-4 icon-spring" />}
                 </Button>
-                {isSellerRole ? (
-                  <div
-                    className={cn(
-                      "inline-flex items-center justify-center rounded-md ui-interactive haptic-feedback touch-action-manipulation",
-                      sellerStatusPresentation.className,
-                      isPhone ? "h-8 w-8" : "h-10 w-10"
-                    )}
-                    title={sellerStatusPresentation.title}
-                    aria-label={sellerStatusPresentation.title}
-                    data-testid="seller-autosave-status"
-                  >
-                    <sellerStatusPresentation.icon className={cn("icon-spring", sellerStatusPresentation.iconClassName, isPhone ? "h-4 w-4" : "h-5 w-5")} />
-                  </div>
-                ) : (
+                {isCashierRole ? (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -658,6 +680,19 @@ export function MainLayout() {
                   >
                     <Lock className={cn("icon-spring", isPhone ? "h-4 w-4" : "h-5 w-5")} />
                   </Button>
+                ) : (
+                  <div
+                    className={cn(
+                      "inline-flex items-center justify-center rounded-md ui-interactive haptic-feedback touch-action-manipulation",
+                      headerStatusPresentation.className,
+                      isPhone ? "h-8 w-8" : "h-10 w-10"
+                    )}
+                    title={headerStatusPresentation.title}
+                    aria-label={headerStatusPresentation.title}
+                    data-testid="seller-autosave-status"
+                  >
+                    <headerStatusPresentation.icon className={cn("icon-spring", headerStatusPresentation.iconClassName, isPhone ? "h-4 w-4" : "h-5 w-5")} />
+                  </div>
                 )}
                 <Button
                   variant="ghost"
@@ -673,7 +708,20 @@ export function MainLayout() {
             </div>
           </div>
 
-          <main className={cn("flex-1 overflow-auto", isPhone && isWorkbenchRoute ? "pb-16" : "")}>
+          <main className={cn("flex-1 overflow-auto relative", isPhone && isWorkbenchRoute ? "pb-16" : "")}>
+            {/* Watermark: store logo fixed in the content area */}
+            <div className="pointer-events-none sticky top-0 z-0 w-full" style={{ height: 0 }}>
+              <div className="flex items-center justify-center overflow-hidden p-6" style={{ height: "100vh" }}>
+                <img
+                  src={branding.logo}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="w-full h-full select-none object-contain"
+                  style={{ mixBlendMode: "multiply", opacity: watermarkOpacity }}
+                />
+              </div>
+            </div>
             <Outlet />
           </main>
         </div>

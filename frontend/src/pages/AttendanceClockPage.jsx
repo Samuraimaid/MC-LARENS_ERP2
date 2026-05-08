@@ -43,7 +43,7 @@ const KIOSK_TOAST_OPTIONS = {
 };
 
 export function AttendanceClockPage() {
-  const { setMode } = useTheme();
+  const { setMode, watermarkOpacity } = useTheme();
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -522,7 +522,7 @@ export function AttendanceClockPage() {
           <div className={`${isGalaxyTab8PortraitViewport ? "w-full px-1 text-[clamp(3.2rem,14vw,7rem)]" : "text-[clamp(2.2rem,7.2vw,4.8rem)] md:text-[clamp(2.8rem,6.2vw,5.2rem)]"} text-center font-mono font-bold leading-none whitespace-nowrap`}>{timeLabel}</div>
         </CardHeader>
         <CardContent className={`relative overflow-hidden ${isGalaxyTab8PortraitViewport ? "space-y-3 pb-4" : "space-y-4"}`}>
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ opacity: watermarkOpacity }}>
             <img src="/logo-transparent.png" alt="Marca de agua empresa" className={`${isGalaxyTab8PortraitViewport ? "w-[60%]" : "w-[75%]"} max-w-3xl object-contain`} />
           </div>
           <Label className={`text-center block ${isGalaxyTab8PortraitViewport ? "text-lg" : "text-xl"}`}>PIN (4 dígitos)</Label>

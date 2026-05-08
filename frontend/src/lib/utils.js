@@ -88,6 +88,8 @@ export const ROLES = {
 export const PAYMENT_TYPES = {
   cash: "Contado",
   credit: "Crédito",
+  transfer: "Transferencia",
+  card: "Tarjeta",
   stripe: "Tarjeta",
 };
 

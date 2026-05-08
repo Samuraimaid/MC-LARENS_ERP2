@@ -9,20 +9,23 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { cn, formatCurrency } from "@/lib/utils";
+import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
 import { API_BASE as API } from "@/lib/api";
 import {
   Building2,
   BookOpen,
   Car,
   CarFront,
+  CreditCard,
   FileText,
   FlaskConical,
   Hand,
-  Hash,
   MapPin,
+  Minus,
   Palette,
   Package,
   Phone,
+  Plus,
   PlusCircle,
   Percent,
   RefreshCcw,
@@ -32,9 +35,11 @@ import {
   Trash2,
   Undo2,
   User,
+  UserSearch,
   UserPlus,
   Warehouse,
   Wrench,
+  PackageSearch,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -46,10 +51,12 @@ import {
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
 import {
-  playCartQuantityChangeSound,
+  playCartQuantityUpSound,
+  playCartQuantityDownSound,
   playCartRemoveSound,
   playCartPickupSound,
   playCreationSuccessSound,
+  playUndoSound,
   playSelectionFeedbackSound,
 } from "@/lib/uiSounds";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
@@ -130,6 +137,7 @@ export default function SaleForm({
   onDataRefresh = null,
   flowType = "sale",
   step4Label = "Paso 4: Carrito del Cliente",
+  step5Label = "Paso 5: Metodo de Pago",
   currencyValue = null,
   onCurrencyChange = null,
   hideCurrencyField = false,
@@ -141,6 +149,7 @@ export default function SaleForm({
   const [cartItems, setCartItems] = useState(initialData.cartItems || []);
   const cartHistory = useRef([]);
   const [globalDiscount, setGlobalDiscount] = useState(initialData.globalDiscount || 0);
+  const [paymentMethod, setPaymentMethod] = useState(initialData.paymentMethod || initialData.payment_type || "cash");
   const [notes, setNotes] = useState(initialData.notes || "");
   const [applyIVA, setApplyIVA] = useState(initialData.applyIVA ?? true);
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
@@ -173,6 +182,7 @@ export default function SaleForm({
   const didSmoothScrollRef = useRef(false);
   const longPressTimerRef = useRef(null);
   const longPressHideTimerRef = useRef(null);
+  const quantityHoldTimersRef = useRef(new Map());
   const [activeStockBreakdownKey, setActiveStockBreakdownKey] = useState(null);
   const [customerHighlightIndex, setCustomerHighlightIndex] = useState(0);
   const [productHighlightIndex, setProductHighlightIndex] = useState(0);
@@ -208,8 +218,36 @@ export default function SaleForm({
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
   const isNewCustomerCompany = newCustomer.customer_type === "empresa";
   const isQuotationFlow = flowType === "quotation";
+  const normalizedPaymentMethod = useMemo(() => {
+    const method = String(paymentMethod || "").trim().toLowerCase();
+    const aliases = {
+      efectivo: "cash",
+      cash: "cash",
+      tarjeta: "card",
+      card: "card",
+      transferencia: "transfer",
+      transfer: "transfer",
+      credito: "credit",
+      credit: "credit",
+    };
+    return aliases[method] || "cash";
+  }, [paymentMethod]);
+  const discountsAllowedByPayment = normalizedPaymentMethod === "cash" || normalizedPaymentMethod === "transfer";
+  const discountsBlockedByPayment = !discountsAllowedByPayment;
   const isCurrencyControlled = typeof currencyValue === "string" && currencyValue.length > 0;
   const isTouchDevice = typeof window !== "undefined" && navigator.maxTouchPoints > 0;
+  const [isPortraitOrientation, setIsPortraitOrientation] = useState(
+    typeof window !== "undefined" ? window.matchMedia("(orientation: portrait)").matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(orientation: portrait)");
+    const updateOrientation = () => setIsPortraitOrientation(mediaQuery.matches);
+    updateOrientation();
+    mediaQuery.addEventListener("change", updateOrientation);
+    return () => mediaQuery.removeEventListener("change", updateOrientation);
+  }, []);
 
   const clearBreakdownTimers = useCallback(() => {
     if (longPressTimerRef.current) {
@@ -239,6 +277,24 @@ export default function SaleForm({
       longPressHideTimerRef.current = null;
     }, 2200);
   }, [activeStockBreakdownKey, clearBreakdownTimers, isTouchDevice]);
+
+  const clearQuantityHold = useCallback((productId) => {
+    const timerSet = quantityHoldTimersRef.current.get(productId);
+    if (!timerSet) return;
+    if (timerSet.timeoutId) clearTimeout(timerSet.timeoutId);
+    if (timerSet.intervalId) clearInterval(timerSet.intervalId);
+    quantityHoldTimersRef.current.delete(productId);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      quantityHoldTimersRef.current.forEach((timerSet) => {
+        if (timerSet.timeoutId) clearTimeout(timerSet.timeoutId);
+        if (timerSet.intervalId) clearInterval(timerSet.intervalId);
+      });
+      quantityHoldTimersRef.current.clear();
+    };
+  }, []);
 
   function applyCurrencyChange(nextCurrency) {
     if (isCurrencyControlled && typeof onCurrencyChange === "function") {
@@ -415,6 +471,13 @@ export default function SaleForm({
   }, [selectedCustomer, isCompanyCustomer, applyIVA, ivaRate]);
 
   useEffect(() => {
+    if (isCompanyCustomerFlow) return;
+    if (applyRetention) {
+      setApplyRetention(false);
+    }
+  }, [isCompanyCustomerFlow, applyRetention]);
+
+  useEffect(() => {
     if (!draftKey || typeof window === "undefined") {
       setDraftLoaded(true);
       return;
@@ -442,6 +505,7 @@ export default function SaleForm({
       }
       setSelectedWarehouse(draft?.selectedWarehouse || "");
       setCartItems(draft?.cartItems || []);
+      setPaymentMethod(draft?.paymentMethod || draft?.payment_type || "cash");
       setGlobalDiscount(draft?.globalDiscount || 0);
       setNotes(draft?.notes || "");
       setApplyIVA(draft?.applyIVA ?? true);
@@ -497,7 +561,23 @@ export default function SaleForm({
   }, []);
 
   const addToCart = (product) => {
+    const localStock = getLocalStoreStockValue(product);
+    if (localStock <= 0) {
+      toast.error("Sin existencias en tu tienda", {
+        description: `"${product.name}" no tiene existencias disponibles en tu tienda y no puede ser agregado al carrito.`,
+        duration: 4000,
+      });
+      return;
+    }
     const existing = normalizedCartItems.find(item => item.product_id === product.product_id);
+    const currentQty = existing ? Math.max(1, Math.floor(Number(existing.quantity) || 1)) : 0;
+    if (currentQty >= localStock) {
+      toast.warning("Límite de existencias alcanzado", {
+        description: `Ya tienes ${currentQty} unidad${currentQty !== 1 ? "es" : ""} de "${product.name}" en el carrito, que es el máximo disponible en tu tienda.`,
+        duration: 4000,
+      });
+      return;
+    }
     const label = existing
       ? `Se redujo la cantidad de "${product.name}"`
       : `Se quitó "${product.name}" del carrito`;
@@ -561,6 +641,10 @@ export default function SaleForm({
   };
 
   const applyDiscountCode = () => {
+    if (discountsBlockedByPayment) {
+      toast.error("Con este metodo de pago no aplican descuentos ni promociones");
+      return;
+    }
     const normalizedCode = String(discountCode || "").trim().toUpperCase();
     if (!normalizedCode) {
       toast.error("Ingresa un codigo de descuento");
@@ -870,9 +954,10 @@ export default function SaleForm({
   };
 
   const totals = (() => {
-    const subtotal = normalizedCartItems.reduce((sum, item) => {
+    const subtotalWithoutDiscounts = normalizedCartItems.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price);
-      let lineTotal = priceInCurrency * item.quantity * (1 - (item.discount || 0) / 100);
+      const effectiveItemDiscount = discountsBlockedByPayment ? 0 : (item.discount || 0);
+      let lineTotal = priceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
       const installType = item.installation_type || "optional";
       const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
       if (installType !== "not_available" && wantsInstall) {
@@ -882,26 +967,46 @@ export default function SaleForm({
       return sum + lineTotal;
     }, 0);
 
-    let discountFromCodes = 0;
+    let discountFromCodesRaw = 0;
     appliedDiscounts.forEach(d => {
       if (d.type === "percent") {
-        discountFromCodes += subtotal * (d.value / 100);
+        discountFromCodesRaw += subtotalWithoutDiscounts * (d.value / 100);
       } else if (d.type === "fixed") {
         const fixedInCurrency = currency === "USD" ? d.value / exchangeRate : d.value;
-        discountFromCodes += fixedInCurrency;
+        discountFromCodesRaw += fixedInCurrency;
       }
     });
 
-    const discountAmount = subtotal * (globalDiscount / 100);
+    const discountAmountRaw = subtotalWithoutDiscounts * (globalDiscount / 100);
+    const totalDiscountsRaw = discountFromCodesRaw + discountAmountRaw;
+    const discountFromCodes = discountsBlockedByPayment ? 0 : discountFromCodesRaw;
+    const discountAmount = discountsBlockedByPayment ? 0 : discountAmountRaw;
     const totalDiscounts = discountFromCodes + discountAmount;
-    const subtotalAfterDiscounts = subtotal - totalDiscounts;
-    const tax = applyIVA ? subtotalAfterDiscounts * (ivaRate / 100) : 0;
-    const retention = applyRetention ? subtotal * (retentionRate / 100) : 0;
-    const total = subtotalAfterDiscounts + tax - retention;
-    return { subtotal, tax, discountAmount, discountFromCodes, totalDiscounts, retention, total };
+    const blockedDiscountsAmount = discountsBlockedByPayment ? totalDiscountsRaw : 0;
+    const subtotalForRetention = subtotalWithoutDiscounts - totalDiscounts;
+    const shouldApplyRetention = isCompanyCustomerFlow && applyRetention;
+    const retention = shouldApplyRetention ? subtotalForRetention * (retentionRate / 100) : 0;
+    const tax = applyIVA ? subtotalForRetention * (ivaRate / 100) : 0;
+    const total = subtotalForRetention + tax - retention;
+    return {
+      subtotalWithoutDiscounts,
+      subtotalForRetention,
+      tax,
+      discountAmount,
+      discountFromCodes,
+      totalDiscounts,
+      blockedDiscountsAmount,
+      discountsBlockedByPayment,
+      retention,
+      total,
+    };
   })();
 
   const handleSubmit = async () => {
+    const payloadPaymentMethod = normalizedPaymentMethod;
+    const payloadDiscountPercent = discountsBlockedByPayment ? 0 : globalDiscount;
+    const payloadDiscountCodes = discountsBlockedByPayment ? [] : appliedDiscounts.map(d => d.code);
+    const payloadAppliedDiscounts = discountsBlockedByPayment ? [] : appliedDiscounts;
     const payload = {
       customer_id: selectedCustomer?.customer_id || selectedCustomer,
       vehicle_id: selectedVehicle,
@@ -909,21 +1014,25 @@ export default function SaleForm({
       items: normalizedCartItems.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
-        discount: i.discount,
+        discount: discountsBlockedByPayment ? 0 : i.discount,
         unit_price: i.unit_price,
         product_name: i.product_name,
         with_installation: hasSelectedVehicle && (i.installation_type === "required" || Boolean(i.with_installation)),
       })),
-      discount: globalDiscount,
+      discount: payloadDiscountPercent,
+      payment_type: payloadPaymentMethod,
+      payment_method: payloadPaymentMethod,
+      credit_days: payloadPaymentMethod === "credit" ? 30 : null,
       currency,
       apply_iva: applyIVA,
       iva_rate: ivaRate,
-      apply_retention: applyRetention,
-      retention_rate: applyRetention ? retentionRate / 100 : 0,
+      apply_retention: isCompanyCustomerFlow && applyRetention,
+      retention_rate: (isCompanyCustomerFlow && applyRetention) ? retentionRate / 100 : 0,
       retention_amount: totals.retention,
       exchange_rate: exchangeRate,
-      discount_codes: appliedDiscounts.map(d => d.code),
-      applied_discounts: appliedDiscounts,
+      discount_codes: payloadDiscountCodes,
+      applied_discounts: payloadAppliedDiscounts,
+      discounts_blocked_by_method: totals.discountsBlockedByPayment,
       notes,
     };
     try {
@@ -949,6 +1058,7 @@ export default function SaleForm({
       selectedVehicle,
       selectedWarehouse,
       cartItems: normalizedCartItems,
+      paymentMethod: normalizedPaymentMethod,
       globalDiscount,
       notes,
       applyIVA,
@@ -981,6 +1091,7 @@ export default function SaleForm({
     selectedVehicle,
     selectedWarehouse,
     normalizedCartItems,
+    normalizedPaymentMethod,
     globalDiscount,
     notes,
     applyIVA,
@@ -1026,6 +1137,7 @@ export default function SaleForm({
       && !snapshot?.customerSearch
       && !snapshot?.productSearch
       && !snapshot?.globalDiscount
+      && (snapshot?.paymentMethod || "cash") === "cash"
       && (!snapshot?.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
       && !hasNestedDraftData(snapshot);
 
@@ -1065,6 +1177,7 @@ export default function SaleForm({
     cartHistory.current = rest;
     setCartItems(prev);
     persistDraftSnapshot({ cartItems: prev });
+    playUndoSound();
     toast.info(label || "Acción deshecha");
   }, [persistDraftSnapshot]);
 
@@ -1126,13 +1239,17 @@ export default function SaleForm({
     const fieldLabels = { quantity: "cantidad", discount: "descuento", with_installation: "instalación", unit_price: "precio" };
     const fieldLabel = fieldLabels[field] || field;
     pushCartHistory([...normalizedCartItems], `Se restauró ${fieldLabel} de "${name}"`);
-    const nextCartItems = normalizedCartItems.map(item => item.product_id === productId ? { ...item, [field]: value } : item);
+    const normalizedValue = field === "quantity"
+      ? Math.max(1, Math.floor(Number(value) || 1))
+      : value;
+    const nextCartItems = normalizedCartItems.map(item => item.product_id === productId ? { ...item, [field]: normalizedValue } : item);
     setCartItems(nextCartItems);
     if (field === "quantity") {
       const prevQuantity = Number(prevItem?.quantity || 0);
-      const nextQuantity = Number(value || 0);
+      const nextQuantity = Number(normalizedValue || 0);
       if (Number.isFinite(nextQuantity) && nextQuantity > 0 && nextQuantity !== prevQuantity) {
-        playCartQuantityChangeSound();
+        if (nextQuantity > prevQuantity) playCartQuantityUpSound();
+        else playCartQuantityDownSound();
       }
     }
     if (options.persist) {
@@ -1150,6 +1267,29 @@ export default function SaleForm({
     playCartRemoveSound();
     persistDraftSnapshot({ cartItems: nextCartItems });
   }, [normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
+
+  const changeCartItemQuantityBy = useCallback((productId, delta) => {
+    const currentItem = normalizedCartItems.find((item) => item.product_id === productId);
+    const currentQuantity = Math.max(1, Math.floor(Number(currentItem?.quantity) || 1));
+    const nextQuantity = Math.max(1, currentQuantity + delta);
+    updateCartItem(productId, "quantity", nextQuantity, { persist: true });
+  }, [normalizedCartItems, updateCartItem]);
+
+  const startQuantityHold = useCallback((productId, delta) => {
+    clearQuantityHold(productId);
+    changeCartItemQuantityBy(productId, delta);
+
+    const timeoutId = setTimeout(() => {
+      const intervalId = setInterval(() => {
+        changeCartItemQuantityBy(productId, delta);
+      }, 115);
+
+      const current = quantityHoldTimersRef.current.get(productId) || {};
+      quantityHoldTimersRef.current.set(productId, { ...current, intervalId });
+    }, 260);
+
+    quantityHoldTimersRef.current.set(productId, { timeoutId, intervalId: null });
+  }, [changeCartItemQuantityBy, clearQuantityHold]);
 
   const handleOpenCatalogSearch = useCallback(() => {
     const snapshot = buildDraftSnapshot();
@@ -1181,6 +1321,7 @@ export default function SaleForm({
       && !snapshot.customerSearch
       && !snapshot.productSearch
       && !snapshot.globalDiscount
+      && (snapshot?.paymentMethod || "cash") === "cash"
       && (!snapshot.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
       && !hasNestedDraftData(snapshot);
   };
@@ -1271,15 +1412,10 @@ export default function SaleForm({
       }, 0);
     }
 
-    if (selectedWarehouse) {
-      return productRows.reduce((total, row) => {
-        if (String(row?.warehouse_id || "") !== String(selectedWarehouse)) return total;
-        return total + Number(row?.quantity || 0);
-      }, 0);
-    }
-
-    return getFallbackProductStock(product);
-  }, [getFallbackProductStock, inventory, selectedWarehouse, user?.branch_id, warehouseById]);
+    // If seller has no assigned branch, we cannot infer "local store" stock reliably.
+    // Keep tone policy strict to seller store only by treating local stock as zero.
+    return 0;
+  }, [getFallbackProductStock, inventory, user?.branch_id, warehouseById]);
 
   const getProductStockStatus = useCallback((product, isServiceProduct) => {
     if (isServiceProduct) return "service";
@@ -1490,14 +1626,17 @@ export default function SaleForm({
           </Label>
           {!selectedCustomer ? (
             <div className="flex items-center gap-2 mb-2">
-              <Input
-                placeholder="Buscar por nombre, teléfono o cédula..."
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-                onKeyDown={handleCustomerSearchKeyDown}
-                ref={customerSearchRef}
-                className="mb-0"
-              />
+              <div className="relative flex-1">
+                <UserSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre, teléfono o cédula..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  onKeyDown={handleCustomerSearchKeyDown}
+                  ref={customerSearchRef}
+                  className="mb-0 pl-9"
+                />
+              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -1506,50 +1645,66 @@ export default function SaleForm({
                   setShowNewCustomer(true);
                   persistDraftSnapshot({ showNewCustomer: true });
                 }}
+                title="Nuevo Registro"
+                className={cn(isPortraitOrientation ? "w-8 px-0" : "")}
               >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Nuevo Registro
+                {isPortraitOrientation ? (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    <span className="sr-only">Nuevo Registro</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Nuevo Registro
+                  </>
+                )}
               </Button>
             </div>
           ) : null}
           {selectedCustomer ? (
-            <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 shadow-sm ui-panel animate-fade-up-soft">
-              <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-                <p className="inline-flex min-w-0 items-center gap-2 font-semibold text-emerald-900">
-                  {isCompanyCustomer(selectedCustomer) ? <Building2 className="h-4 w-4 text-blue-700" /> : <User className="h-4 w-4 text-emerald-700" />}
-                  <span className="truncate">{selectedCustomer.name}</span>
-                  <Badge variant="outline" className="shrink-0 text-[10px] uppercase tracking-wide">
+            <div className={cn("mb-3", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell)}>
+              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.title}>
+                    {isCompanyCustomer(selectedCustomer) ? <Building2 className="h-4 w-4 text-blue-700" /> : <User className="h-4 w-4 text-emerald-700" />}
+                    <span className="min-w-0 whitespace-normal break-words leading-tight">{selectedCustomer.name}</span>
+                  </p>
+
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.metaGrid}>
+                    <p className="inline-flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-emerald-700" />
+                      {selectedCustomer.phone || "Sin teléfono"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-emerald-700" />
+                      {isCompanyCustomer(selectedCustomer) ? "RUC" : "Cédula"}: {selectedCustomer.tax_id || "Sin registro"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-emerald-700" />
+                      {selectedCustomer.address || selectedCustomer.shipping_address || selectedCustomer.billing_address || "Sin dirección"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5 font-semibold text-emerald-900">
+                      <Car className="h-3.5 w-3.5 text-emerald-700" />
+                      {customerVehicles.length} {customerVehicles.length === 1 ? "vehículo" : "vehículos"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 px-4 text-sm font-medium"
+                    onClick={handleClearSelectedCustomer}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Cambiar
+                  </Button>
+                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.badge}>
                     {isCompanyCustomer(selectedCustomer) ? "Empresa" : "Cliente"}
                   </Badge>
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-10 px-4 text-sm font-medium"
-                  onClick={handleClearSelectedCustomer}
-                >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Cambiar
-                </Button>
-              </div>
-
-              <div className="mt-2 grid gap-x-6 gap-y-1 text-xs text-emerald-900/90 sm:grid-cols-2">
-                <p className="inline-flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-emerald-700" />
-                  {selectedCustomer.phone || "Sin teléfono"}
-                </p>
-                <p className="inline-flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-emerald-700" />
-                  {isCompanyCustomer(selectedCustomer) ? "RUC" : "Cédula"}: {selectedCustomer.tax_id || "Sin registro"}
-                </p>
-                <p className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-700" />
-                  {selectedCustomer.address || selectedCustomer.shipping_address || selectedCustomer.billing_address || "Sin dirección"}
-                </p>
-                <p className="inline-flex items-center gap-1.5 font-semibold text-emerald-900">
-                  <Car className="h-3.5 w-3.5 text-emerald-700" />
-                  {customerVehicles.length} {customerVehicles.length === 1 ? "vehículo" : "vehículos"}
-                </p>
+                </div>
               </div>
             </div>
           ) : null}
@@ -1701,65 +1856,75 @@ export default function SaleForm({
           )}
 
           {!isVehiclePickerVisible && vehicleFlowOption === "carryout" && selectedCustomer ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 shadow-sm ui-panel animate-fade-up-soft">
-              <div className="grid grid-cols-[1fr_auto] items-center gap-2.5">
-                <p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-emerald-900">
-                  <Package className="h-4 w-4 shrink-0 text-emerald-700" />
-                  Producto para llevar
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                  onClick={() => setIsVehiclePickerVisible(true)}
-                >
-                  <RefreshCcw className="h-4 w-4 mr-1.5" />
-                  Cambiar
-                </Button>
+            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.shell)}>
+              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                <div className="min-w-0 space-y-1.5">
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.title}>
+                    <Package className="h-4 w-4 shrink-0 text-emerald-700" />
+                    Producto para llevar
+                  </p>
+                  <p className="text-xs text-emerald-900/90">Venta sin instalación ni vehículo registrado</p>
+                </div>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    onClick={() => setIsVehiclePickerVisible(true)}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1.5" />
+                    Cambiar
+                  </Button>
+                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.badge}>
+                    Para llevar
+                  </Badge>
+                </div>
               </div>
-              <p className="mt-1.5 text-[11px] text-emerald-900/90">Venta sin instalación ni vehículo registrado</p>
             </div>
           ) : null}
 
           {!isVehiclePickerVisible && vehicleFlowOption === "registered" && selectedVehicleData ? (
-            <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-3.5 py-2.5 shadow-sm ui-panel animate-fade-up-soft">
-              <div className="grid grid-cols-[1fr_auto] items-center gap-2.5">
-                <p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-sky-900">
-                  <CarFront className="h-4 w-4 shrink-0 text-sky-700" />
-                  {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo seleccionado"}
-                  <Badge variant="outline" className="shrink-0 border-sky-300 bg-white/70 text-[10px] uppercase tracking-wide text-sky-900">
+            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell)}>
+              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
+                    <CarFront className="h-4 w-4 shrink-0 text-sky-700" />
+                    <span className="min-w-0 whitespace-normal break-words">{[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo seleccionado"}</span>
+                  </p>
+
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
+                    <p className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5">
+                      <Palette className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    onClick={() => {
+                      setIsVehiclePickerVisible(true);
+                      handleSelectVehicleFlow("carryout", "");
+                    }}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1.5" />
+                    Cambiar
+                  </Button>
+                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>
                     Vehículo
                   </Badge>
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                  onClick={() => {
-                    setIsVehiclePickerVisible(true);
-                    handleSelectVehicleFlow("carryout", "");
-                  }}
-                >
-                  <RefreshCcw className="h-4 w-4 mr-1.5" />
-                  Cambiar
-                </Button>
-              </div>
-
-              <div className="mt-1.5 space-y-1 text-[11px] text-sky-900/90">
-                <div className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
-                  <p className="inline-flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-sky-700" />
-                    {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
-                  </p>
-                  <p className="inline-flex items-center gap-1.5">
-                    <Palette className="h-3.5 w-3.5 text-sky-700" />
-                    {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
-                  </p>
                 </div>
-                <p className="inline-flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-sky-700" />
-                  <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
-                </p>
               </div>
             </div>
           ) : null}
@@ -1771,20 +1936,23 @@ export default function SaleForm({
             <span>Paso 3: Seleccionar productos</span>
           </Label>
           <div className="flex flex-col gap-2 mb-2 md:flex-row ui-fade-in-stagger">
-            <Input
-              placeholder="Buscar por nombre o SKU..."
-              value={productSearch}
-              onChange={(e) => {
-                setProductSearch(e.target.value);
-                if (productListRef.current) {
-                  productListRef.current.scrollTop = 0;
-                }
-              }}
-              onWheel={handleProductSearchWheel}
-              onKeyDown={handleProductSearchKeyDown}
-              ref={productSearchRef}
-              className="mb-0"
-            />
+              <div className="relative flex-1">
+                <PackageSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre o SKU..."
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    if (productListRef.current) {
+                      productListRef.current.scrollTop = 0;
+                    }
+                  }}
+                  onWheel={handleProductSearchWheel}
+                  onKeyDown={handleProductSearchKeyDown}
+                  ref={productSearchRef}
+                  className="mb-0 pl-9"
+                />
+              </div>
             <Button
               type="button"
               variant="outline"
@@ -1835,11 +2003,43 @@ export default function SaleForm({
                     <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3">
                       {(() => {
                         const userBranchId = String(user?.branch_id || "");
+                        const fallbackStockValue = getLocalStoreStockValue(p);
+                        const hasFallbackStockValue = Number.isFinite(fallbackStockValue);
+                        const fallbackThreshold = getProductStockThreshold(p);
                         const stockRows = Array.isArray(inventory)
                           ? inventory.filter((row) => String(row?.product_id || "") === String(p.product_id || "") && Number(row?.quantity || 0) > 0)
                           : [];
 
-                        if (stockRows.length === 0) return <div className="min-h-[3.25rem]" />;
+                        if (stockRows.length === 0) {
+                          if (isServiceProduct) return <div className="min-h-[3.25rem]" />;
+
+                          return (
+                            <div className="flex min-h-[3.25rem] items-end">
+                              {hasFallbackStockValue ? (
+                                <div className="inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] leading-tight text-muted-foreground">
+                                  <Package className="h-3.5 w-3.5 text-blue-700" aria-hidden="true" />
+                                  <span className="font-semibold">Disponible:</span>
+                                  <span
+                                    className={cn(
+                                      "font-mono",
+                                      fallbackStockValue <= 0
+                                        ? "text-rose-800"
+                                        : fallbackStockValue <= fallbackThreshold
+                                          ? "text-amber-800"
+                                          : "text-blue-900"
+                                    )}
+                                  >
+                                    {fallbackStockValue}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="text-[11px] leading-tight text-muted-foreground">
+                                  Inventario no cargado
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
 
                         const warehouseById = new Map((warehouses || []).map((wh) => [String(wh.warehouse_id), wh]));
 
@@ -2034,49 +2234,47 @@ export default function SaleForm({
             const sourceProduct = productsById.get(String(item.product_id)) || item;
             const stockStatus = getProductStockStatus(sourceProduct, isItemService);
             const tone = getProductTone(stockStatus, isItemService);
+            const currentQuantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+            const maxStoreQuantityRaw = Number(getLocalStoreStockValue(sourceProduct));
+            const maxStoreQuantity = Number.isFinite(maxStoreQuantityRaw)
+              ? Math.max(0, Math.floor(maxStoreQuantityRaw))
+              : null;
+            const canDecreaseQuantity = currentQuantity > 1;
+            const canIncreaseQuantity = maxStoreQuantity === null ? true : currentQuantity < maxStoreQuantity;
             return (
             <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
-              {item.image ? <img src={item.image} alt={item.product_name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
-              <div className="min-w-0">
-                <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{item.product_name}</p>
-                <p className={cn("text-[11px]", tone.sku)}>Código: {item.sku || "N/A"}</p>
-                {item.sample_status === "requested" && (
-                  <p className="text-[11px] font-medium text-blue-600">Muestra solicitada</p>
-                )}
-                <div className="mt-1.5 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Hash className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                    <Input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      value={item.quantity}
-                      onChange={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01))}
-                      onBlur={(e) => updateCartItem(item.product_id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 0.01), { persist: true })}
-                      className="h-7 w-24 text-[11px]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Solicitar muestra"
-                      onClick={() => requestSampleForItem(item)}
-                      className="h-9 w-9 text-violet-700 hover:bg-violet-100/70 hover:text-violet-800 ui-interactive"
-                    >
-                      <FlaskConical className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Eliminar del carrito"
-                      onClick={() => removeFromCart(item.product_id)}
-                      className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive ui-interactive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+              {item.image
+                ? <img src={item.image} alt={item.product_name} className="mt-0.5 h-14 w-14 shrink-0 rounded-lg object-cover bg-muted/30" />
+                : <div className="mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/40"><Package className="h-5 w-5 text-muted-foreground/30" /></div>
+              }
+              <div className="min-w-0 flex flex-col gap-1">
+                {/* nombre + precio en la misma fila */}
+                <div className="flex items-start justify-between gap-2">
+                  <p className={cn("min-w-0 text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{item.product_name}</p>
+                  {(() => {
+                    const baseTotal = convertPrice(item.unit_price) * item.quantity * (1 - (item.discount || 0) / 100);
+                    const installType = item.installation_type || "optional";
+                    const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
+                    const installTotal = installType !== "not_available" && wantsInstall
+                      ? convertPrice(item.installation_price || 0) * item.quantity
+                      : 0;
+                    return <p className={cn("shrink-0 font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(baseTotal + installTotal, currency)}</p>;
+                  })()}
                 </div>
+                {/* SKU + badges de estado */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={cn("text-[11px]", tone.sku)}>{item.sku || "N/A"}</span>
+                  {hasSelectedVehicle && (() => {
+                    const installType = item.installation_type || "optional";
+                    if (installType === "not_available") return <Badge variant="outline" className="px-1.5 py-0 text-[10px]">Para llevar</Badge>;
+                    if (installType === "required" || Boolean(item.with_installation)) return <Badge variant="outline" className="border-sky-300 bg-sky-50/50 px-1.5 py-0 text-[10px] text-sky-800">Instalado</Badge>;
+                    return null;
+                  })()}
+                  {item.sample_status === "requested" && (
+                    <Badge variant="outline" className="border-violet-300 bg-violet-50/50 px-1.5 py-0 text-[10px] text-violet-700">Muestra</Badge>
+                  )}
+                </div>
+                {/* stock disponible */}
                 {(() => {
                   const cartItemProductId = String(item.product_id || "");
                   const cartStockRows = Array.isArray(inventory)
@@ -2096,12 +2294,12 @@ export default function SaleForm({
                   });
                   const sumQty = (rows) => rows.reduce((acc, r) => acc + r.qty, 0);
                   return (
-                    <div className="mt-1.5 space-y-0.5 text-[11px]">
+                    <div className="space-y-0.5 text-[11px]">
                       {sellerRows.length > 0 && (
                         <div className="flex items-center gap-1.5 whitespace-nowrap leading-tight">
                           <Building2 className="h-3 w-3 text-blue-700" aria-hidden="true" />
                           <span className="text-muted-foreground">Esta Tienda:</span>
-                          <span className="font-mono text-blue-900 font-semibold">{sumQty(sellerRows)}</span>
+                          <span className="font-mono font-semibold text-blue-900">{sumQty(sellerRows)}</span>
                         </div>
                       )}
                       {otherWHRows.length > 0 && (
@@ -2115,7 +2313,7 @@ export default function SaleForm({
                         >
                           <Warehouse className="h-3 w-3 text-amber-700" aria-hidden="true" />
                           <span className="text-muted-foreground">Otras bodegas:</span>
-                          <span className="font-mono text-amber-900 font-semibold">{sumQty(otherWHRows)}</span>
+                          <span className="font-mono font-semibold text-amber-900">{sumQty(otherWHRows)}</span>
                           {isTouchDevice && activeStockBreakdownKey === `cart-${item.product_id}-wh` && (
                             <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 max-w-[22rem] rounded-md border bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-md">
                               {otherWHRows.map(r => `${r.name}: ${r.qty}`).join(", ")}
@@ -2126,23 +2324,146 @@ export default function SaleForm({
                     </div>
                   );
                 })()}
-                <div className="mt-1 flex justify-end">
-                  {(() => {
-                    const baseTotal = convertPrice(item.unit_price) * item.quantity * (1 - (item.discount || 0) / 100);
-                    const installType = item.installation_type || "optional";
-                    const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
-                    const installTotal = installType !== "not_available" && wantsInstall
-                      ? convertPrice(item.installation_price || 0) * item.quantity
-                      : 0;
-                    return (
-                      <p className={cn("font-mono text-[13px] font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(baseTotal + installTotal, currency)}</p>
-                    );
-                  })()}
+                {/* cantidad + acciones */}
+                <div className="mt-0.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      title="Restar unidad"
+                      disabled={!canDecreaseQuantity}
+                      onClick={() => changeCartItemQuantityBy(item.product_id, -1)}
+                      onPointerDown={(e) => {
+                        if (!canDecreaseQuantity) return;
+                        if (e.pointerType !== "touch") return;
+                        e.preventDefault();
+                        startQuantityHold(item.product_id, -1);
+                      }}
+                      onPointerUp={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      onPointerCancel={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      onPointerLeave={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      className={cn(
+                        "h-7 w-7 ui-interactive",
+                        canDecreaseQuantity
+                          ? "border-rose-300 bg-white/70 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                          : "border-slate-300 bg-slate-100 text-slate-400"
+                      )}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
+                    <div
+                      aria-label={`Cantidad ${item.product_name}`}
+                      className="inline-flex h-7 min-w-[3.25rem] items-center justify-center rounded-md border border-input bg-background px-2 font-mono text-[11px] font-semibold"
+                    >
+                      {currentQuantity}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      title={canIncreaseQuantity ? "Sumar unidad" : "Cantidad máxima de tienda alcanzada"}
+                      disabled={!canIncreaseQuantity}
+                      onClick={() => changeCartItemQuantityBy(item.product_id, 1)}
+                      onPointerDown={(e) => {
+                        if (!canIncreaseQuantity) return;
+                        if (e.pointerType !== "touch") return;
+                        e.preventDefault();
+                        startQuantityHold(item.product_id, 1);
+                      }}
+                      onPointerUp={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      onPointerCancel={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      onPointerLeave={(e) => {
+                        if (e.pointerType !== "touch") return;
+                        clearQuantityHold(item.product_id);
+                      }}
+                      className={cn(
+                        "h-7 w-7 ui-interactive",
+                        canIncreaseQuantity
+                          ? "border-emerald-300 bg-white/70 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                          : "border-slate-300 bg-slate-100 text-slate-400"
+                      )}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Solicitar muestra"
+                      onClick={() => requestSampleForItem(item)}
+                      className="h-7 w-7 text-violet-700 hover:bg-violet-100/70 hover:text-violet-800 ui-interactive"
+                    >
+                      <FlaskConical className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Eliminar del carrito"
+                      onClick={() => removeFromCart(item.product_id)}
+                      className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive ui-interactive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
             );
           })}
+        </div>
+
+        <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
+          <Label className="inline-flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5" />
+            <span>{step5Label}</span>
+          </Label>
+          <Select
+            value={normalizedPaymentMethod}
+            onValueChange={(value) => {
+              const nextMethod = String(value || "cash");
+              setPaymentMethod(nextMethod);
+              persistDraftSnapshot({ paymentMethod: nextMethod });
+              if (nextMethod === "card") {
+                toast.info("Con tarjeta no aplican descuentos ni promociones");
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar metodo de pago" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cash">Efectivo</SelectItem>
+              <SelectItem value="transfer">Transferencia</SelectItem>
+              <SelectItem value="card">Tarjeta</SelectItem>
+              <SelectItem value="credit">Credito</SelectItem>
+            </SelectContent>
+          </Select>
+          {discountsBlockedByPayment ? (
+            <p className="text-xs text-amber-700">
+              Este metodo bloquea descuentos y promociones en el calculo final.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Este metodo permite aplicar descuentos y promociones.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
@@ -2152,8 +2473,13 @@ export default function SaleForm({
               <span>Código de descuento</span>
             </Label>
             <div className="flex gap-2">
-              <Input value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} placeholder="Ej: DESC10" />
-              <Button type="button" onClick={applyDiscountCode}>Aplicar</Button>
+              <Input
+                value={discountCode}
+                disabled={discountsBlockedByPayment}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="Ej: DESC10"
+              />
+              <Button type="button" disabled={discountsBlockedByPayment} onClick={applyDiscountCode}>Aplicar</Button>
             </div>
             {appliedDiscounts.length > 0 && (
               <div className="mt-2 space-y-1">
@@ -2175,6 +2501,7 @@ export default function SaleForm({
               type="number"
               min="0"
               max="100"
+              disabled={discountsBlockedByPayment}
               value={globalDiscount}
               onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
               onBlur={(e) => persistDraftSnapshot({ globalDiscount: parseFloat(e.target.value) || 0 })}
@@ -2229,12 +2556,15 @@ export default function SaleForm({
                     persistDraftSnapshot({ applyRetention: next, retentionRate });
                   }}
                 />
-                <span className="text-xs text-muted-foreground">Retención sobre subtotal c/descuentos</span>
+                <span className="text-xs text-muted-foreground">Retención sobre subtotal</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => { setRetentionRate(1); persistDraftSnapshot({ applyRetention, retentionRate: 1 }); }}
+                  onClick={() => {
+                    setRetentionRate(1);
+                    persistDraftSnapshot({ applyRetention, retentionRate: 1 });
+                  }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
                     retentionRate === 1 && applyRetention
@@ -2244,7 +2574,10 @@ export default function SaleForm({
                 >1%</button>
                 <button
                   type="button"
-                  onClick={() => { setRetentionRate(2); persistDraftSnapshot({ applyRetention, retentionRate: 2 }); }}
+                  onClick={() => {
+                    setRetentionRate(2);
+                    persistDraftSnapshot({ applyRetention, retentionRate: 2 });
+                  }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
                     retentionRate === 2 && applyRetention
@@ -2280,15 +2613,21 @@ export default function SaleForm({
         {extraFields}
 
         <div className="border-t pt-4 space-y-1">
-          <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotal, currency)}</span></div>
-          {applyRetention && totals.retention > 0 && (
-            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><span className="font-mono">-{formatCurrency(totals.retention, currency)}</span></div>
+          {totals.totalDiscounts > 0 && (
+            <div className="flex justify-between text-sm"><span>Subtotal sin descuentos:</span><span className="font-mono">{formatCurrency(totals.subtotalWithoutDiscounts, currency)}</span></div>
           )}
           {totals.discountFromCodes > 0 && (
             <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><span className="font-mono">-{formatCurrency(totals.discountFromCodes, currency)}</span></div>
           )}
           {totals.discountAmount > 0 && (
             <div className="flex justify-between text-sm text-green-600"><span>Descuento Global:</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
+          )}
+          {totals.discountsBlockedByPayment && totals.blockedDiscountsAmount > 0 && (
+            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por metodo:</span><span className="font-mono">{formatCurrency(totals.blockedDiscountsAmount, currency)}</span></div>
+          )}
+          <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotalForRetention, currency)}</span></div>
+          {applyRetention && totals.retention > 0 && (
+            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><span className="font-mono">-{formatCurrency(totals.retention, currency)}</span></div>
           )}
           <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
           <div className="flex justify-between text-lg font-bold"><span>Total:</span><span className="font-mono">{formatCurrency(totals.total, currency)}</span></div>

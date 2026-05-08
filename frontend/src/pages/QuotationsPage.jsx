@@ -11,7 +11,7 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Save, Eraser } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
@@ -20,8 +20,10 @@ import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
+import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
 import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
 import { useAuth } from "@/context/AuthContext";
+import { User, CarFront } from "lucide-react";
 
 const WhatsAppIcon = ({ className }) => (
   <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
@@ -60,6 +62,7 @@ export function QuotationsPage() {
   const [quotations, setQuotations] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [inventory, setInventory] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,10 +142,11 @@ export function QuotationsPage() {
     setLoading(true);
     try {
       const params = filterStatus !== "all" ? `?status=${filterStatus}` : "";
-      const [quotesRes, customersRes, productsRes, warehousesRes, vehiclesRes] = await Promise.allSettled([
+      const [quotesRes, customersRes, productsRes, inventoryRes, warehousesRes, vehiclesRes] = await Promise.allSettled([
         axios.get(`${API}/quotations${params}`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }),
         axios.get(`${API}/products`, { withCredentials: true }),
+        axios.get(`${API}/inventory`, { withCredentials: true }),
         axios.get(`${API}/warehouses`, { withCredentials: true }),
         axios.get(`${API}/vehicles`, { withCredentials: true }),
       ]);
@@ -156,6 +160,7 @@ export function QuotationsPage() {
       if (quotesRes.status === "fulfilled") setQuotations(quotesRes.value.data);
       if (customersRes.status === "fulfilled") setCustomers(customersRes.value.data);
       if (productsRes.status === "fulfilled") setProducts(productsRes.value.data);
+      setInventory(inventoryRes.status === "fulfilled" ? inventoryRes.value.data : []);
       if (vehiclesRes.status === "fulfilled") setVehicles(vehiclesRes.value.data);
 
       // Bodegas puede estar restringido por permisos; no debe romper Cotizaciones.
@@ -201,10 +206,13 @@ export function QuotationsPage() {
     const rate = effectiveUsdNioRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
+    const paymentMethod = String(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash").trim().toLowerCase();
+    const discountsAllowed = paymentMethod === "cash" || paymentMethod === "transfer";
 
     const subtotal = items.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price || 0);
-      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - (item.discount || 0) / 100);
+      const effectiveItemDiscount = discountsAllowed ? (item.discount || 0) : 0;
+      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - effectiveItemDiscount / 100);
       const installType = item.installation_type || "optional";
       const wantsInstall = installType === "required" || Boolean(item.with_installation);
       if (installType !== "not_available" && wantsInstall) {
@@ -225,7 +233,10 @@ export function QuotationsPage() {
       }
     });
 
-    const globalDiscountAmount = subtotal * ((draft.globalDiscount || 0) / 100);
+    if (!discountsAllowed) {
+      discountFromCodes = 0;
+    }
+    const globalDiscountAmount = discountsAllowed ? (subtotal * ((draft.globalDiscount || 0) / 100)) : 0;
     const subtotalAfterDiscounts = subtotal - discountFromCodes - globalDiscountAmount;
     const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
     return subtotalAfterDiscounts + tax;
@@ -701,6 +712,9 @@ export function QuotationsPage() {
       currency: payload.currency || "NIO",
       exchange_rate: payload.exchange_rate || null,
       discount_codes: payload.discount_codes || [],
+      payment_type: payload.payment_type || payload.payment_method || "cash",
+      payment_method: payload.payment_method || payload.payment_type || "cash",
+      credit_days: payload.credit_days || null,
     };
 
     const response = await axios.post(`${API}/quotations`, body, { withCredentials: true });
@@ -811,8 +825,9 @@ export function QuotationsPage() {
         quotation_id: quotation.quotation_id,
         items,
         discount: quotation.discount_percent || 0,
-        payment_type: "cash",
-        credit_days: null,
+        payment_type: quotation.payment_type || quotation.payment_method || "cash",
+        payment_method: quotation.payment_method || quotation.payment_type || "cash",
+        credit_days: quotation.payment_type === "credit" ? (quotation.credit_days || 30) : null,
         delivery_required: false,
         delivery_address: null,
         vehicle_id: quotation.vehicle_id || null,
@@ -869,6 +884,7 @@ export function QuotationsPage() {
       selectedCustomerId: quotation.customer_id || null,
       selectedVehicle: quotation.vehicle_id || "",
       selectedWarehouse: quotation.warehouse_id || "",
+      paymentMethod: quotation.payment_method || quotation.payment_type || "cash",
       cartItems,
       globalDiscount: quotation.discount_percent || 0,
       notes: quotation.notes || "",
@@ -939,16 +955,6 @@ export function QuotationsPage() {
                   <Plus className="h-3.5 w-3.5 sm:mr-2" />
                   <span className="hidden sm:inline">Nueva Cotización</span>
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={saveActiveDraftNow}
-                  className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
-                  title="Guardar Borrador"
-                >
-                  <Save className="h-3.5 w-3.5 sm:mr-2" />
-                  <span className="hidden sm:inline">Guardar Borrador</span>
-                </Button>
               </div>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
@@ -997,9 +1003,11 @@ export function QuotationsPage() {
               customers={customers}
               products={products}
               warehouses={warehouses}
+              inventory={inventory}
               vehicles={vehicles}
               flowType="quotation"
               step4Label="Paso 4: Productos en esta Cotizacion"
+              step5Label="Paso 5: Metodo de Pago (Cotizacion)"
               initialData={{ selectedCustomer, cartItems, globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
@@ -1176,12 +1184,29 @@ export function QuotationsPage() {
                               <Badge variant="outline">{isActive ? "Activo" : "Borrador"}</Badge>
                               <Badge variant="secondary">{meta.currency}</Badge>
                             </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
-                            </p>
-                            {meta.previewVehicle ? (
-                              <p className="text-[11px] text-muted-foreground">Vehiculo: {meta.previewVehicle}</p>
-                            ) : null}
+                            <div className="grid gap-2">
+                              <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell, "p-2") }>
+                                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
+                                  <div className="min-w-0 space-y-1">
+                                    <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-emerald-900">
+                                      <User className="h-3.5 w-3.5 text-emerald-700" />
+                                      <span className="truncate">{meta.subtitle || "Sin cliente"}</span>
+                                    </p>
+                                    <p className="text-[11px] text-emerald-900/80">{meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}</p>
+                                  </div>
+                                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.badge}>Cliente</Badge>
+                                </div>
+                              </div>
+                              <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, "p-2") }>
+                                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
+                                  <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-sky-900">
+                                    <CarFront className="h-3.5 w-3.5 text-sky-700" />
+                                    <span className="truncate">{meta.previewVehicle || "Sin vehículo"}</span>
+                                  </p>
+                                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>Vehículo</Badge>
+                                </div>
+                              </div>
+                            </div>
                             <div className="flex flex-wrap gap-2 mt-2">
                               <Button size="sm">
                                 Abrir borrador
@@ -1287,7 +1312,32 @@ export function QuotationsPage() {
                           </div>
                         </div>
 
-                        <p className="text-xs text-muted-foreground">Articulos: {itemsPreview}</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell, "p-2") }>
+                            <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
+                              <div className="min-w-0 space-y-1">
+                                <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-emerald-900">
+                                  <User className="h-3.5 w-3.5 text-emerald-700" />
+                                  <span className="truncate">{customerLabel || "Sin cliente"}</span>
+                                </p>
+                                <p className="text-[11px] text-emerald-900/80">Artículos: {itemsPreview}</p>
+                              </div>
+                              <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.badge}>Cliente</Badge>
+                            </div>
+                          </div>
+                          <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, "p-2") }>
+                            <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
+                              <div className="min-w-0 space-y-1">
+                                <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-sky-900">
+                                  <CarFront className="h-3.5 w-3.5 text-sky-700" />
+                                  <span className="truncate">{vehicleLabel || "Sin vehículo"}</span>
+                                </p>
+                                <p className="text-[11px] text-sky-900/80">Vigencia: {validity.label}</p>
+                              </div>
+                              <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>Vehículo</Badge>
+                            </div>
+                          </div>
+                        </div>
 
                         <div className="flex flex-wrap gap-2">
                           <Button
