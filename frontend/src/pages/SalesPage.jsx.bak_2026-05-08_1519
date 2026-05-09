@@ -1,0 +1,2846 @@
+/* eslint-disable no-unused-vars */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
+// intentionally not destructuring `user` from AuthContext to avoid unused variable
+import { useAuth } from "../context/AuthContext";
+import { formatCurrency, formatDate, getStatusColor, PAYMENT_TYPES } from "../lib/utils";
+import { cn } from "../lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
+import { Separator } from "../components/ui/separator";
+import { Switch } from "../components/ui/switch";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import SearchableSelect from "@/components/ui/searchable-select";
+import { toast } from "sonner";
+import { 
+  Plus, Search, CreditCard, Printer, Download, RefreshCw, 
+  Wrench, Package, ShieldCheck, Car, XCircle,
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser
+} from "lucide-react";
+import { API_BASE as API } from "@/lib/api";
+import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
+import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
+import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
+import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
+import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
+import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import {
+  getVehicleOptionsByBrandYear,
+  getVehicleYearsByBrand,
+  isValidVehicleSelection,
+  VEHICLE_CATALOG_BRANDS,
+  VEHICLE_COLOR_SUGGESTIONS,
+} from "@/lib/vehicleCatalog";
+
+import SaleForm from "../components/sales/SaleForm";
+
+// Divisas disponibles
+const CURRENCIES = [
+  { code: "NIO", symbol: "C$", name: "Córdobas" },
+  { code: "USD", symbol: "$", name: "Dólares" },
+];
+
+const CATALOG_SOURCE_CONTEXT_KEY = "catalog_source_context_v1";
+
+const WhatsAppIcon = ({ className }) => (
+  <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M19.11 17.72c-.28-.14-1.64-.81-1.9-.9-.25-.1-.44-.14-.62.14-.18.28-.71.9-.87 1.08-.16.18-.32.2-.6.06-.28-.14-1.16-.43-2.21-1.37-.82-.73-1.37-1.63-1.53-1.9-.16-.28-.02-.43.12-.57.12-.12.28-.32.42-.48.14-.16.18-.28.28-.46.1-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.44-.46-.62-.47h-.53c-.18 0-.48.07-.73.34-.25.28-.96.94-.96 2.3 0 1.36.99 2.68 1.12 2.86.14.18 1.95 2.98 4.73 4.18.66.28 1.17.45 1.58.58.66.21 1.26.18 1.73.11.53-.08 1.64-.67 1.87-1.32.23-.65.23-1.21.16-1.32-.07-.12-.25-.18-.53-.32zM16.03 5.5c-5.72 0-10.37 4.65-10.37 10.37 0 1.83.48 3.54 1.32 5.03l-1.4 5.13 5.26-1.38a10.33 10.33 0 0 0 5.19 1.4c5.72 0 10.37-4.65 10.37-10.37S21.75 5.5 16.03 5.5zm0 18.9c-1.7 0-3.3-.46-4.67-1.34l-.34-.2-3.13.82.83-3.05-.22-.35a8.84 8.84 0 0 1-1.38-4.71 8.9 8.9 0 0 1 17.8 0 8.9 8.9 0 0 1-8.9 8.83z"
+    />
+  </svg>
+);
+
+// Prefijos de placa Nicaragua
+const PLATE_PREFIXES = [
+  "M", "LE", "CH", "MY", "GR", "CZ", "MT", "BO", "CT", "RI", 
+  "NS", "ES", "MZ", "JI", "RS", "AN", "AS", "TM", "ZC", "PN", 
+  "EN", "CD", "MI", "OI"
+];
+
+// Formatear teléfono Nicaragua
+const formatPhone = (value) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+};
+
+// Formatear cédula Nicaragua (001-000000-0000A)
+const formatCedula = (value) => {
+  const clean = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  if (clean.length <= 3) return clean;
+  if (clean.length <= 9) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+  return `${clean.slice(0, 3)}-${clean.slice(3, 9)}-${clean.slice(9, 14)}`;
+};
+
+// Formatear RUC Nicaragua (J0000000000000)
+const formatRUC = (value) => {
+  const clean = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  return clean.slice(0, 14);
+};
+
+// Formatear CHASIS (17 dígitos alfanuméricos sin I, O, Q, Ñ)
+const formatChasis = (value) => {
+  const clean = value.replace(/[^0-9A-HJ-NPR-Za-hj-npr-z]/g, '').toUpperCase();
+  return clean.slice(0, 17);
+};
+
+// Formatear placa según prefijo
+const formatPlateNumber = (prefix, value) => {
+  const digits = value.replace(/\D/g, '');
+  if (prefix === "M") {
+    if (digits.length <= 3) return digits;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)}`;
+  } else {
+    return digits.slice(0, 5);
+  }
+};
+
+const getPaymentTone = (paymentType) => {
+  switch (paymentType) {
+    case "cash":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/30";
+    case "card":
+      return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-200 dark:border-blue-500/30";
+    case "transfer":
+      return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/30";
+    case "credit":
+      return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-500/30";
+    default:
+      return "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-200 dark:border-slate-500/30";
+  }
+};
+
+export function SalesPage() {
+  const { hasPermission, user } = useAuth();
+  const canViewSales = hasPermission("sales", "view");
+  const canCreateSales = hasPermission("sales", "create");
+  const canEditSales = hasPermission("sales", "edit");
+  const canCreateCustomers = hasPermission("customers", "create");
+  const isBillingApprover = ["gerencia", "recursos_humanos"].includes(String(user?.role || "").toLowerCase());
+  const canSeeAdvancedFilters = ["gerencia", "recursos_humanos", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
+  const DRAFT_LIST_KEY_BASE = "draft_sale_tabs_v1";
+  const DRAFT_ACTIVE_KEY_BASE = "draft_sale_active_v1";
+  const DRAFT_KEY_PREFIX_BASE = "draft_sale_v1_";
+  const LEGACY_DRAFT_LIST_KEY = "draft_sale_tabs_v1";
+  const LEGACY_DRAFT_ACTIVE_KEY = "draft_sale_active_v1";
+  const LEGACY_DRAFT_PREFIX = "draft_sale_v1_sale_";
+  const DRAFT_FLOW = "sale";
+  const EMBEDDED_FORM_VISIBILITY_KEY_PREFIX = "sales_embedded_form_visible_v1";
+  const userDraftScopeToken = useMemo(() => {
+    const raw = user?.user_id || user?.pin_user_id || user?.username || "anon";
+    return String(raw).replace(/[^a-zA-Z0-9_-]/g, "_");
+  }, [user?.pin_user_id, user?.user_id, user?.username]);
+  const DRAFT_LIST_KEY = useMemo(
+    () => `${DRAFT_LIST_KEY_BASE}_${userDraftScopeToken}`,
+    [DRAFT_LIST_KEY_BASE, userDraftScopeToken]
+  );
+  const DRAFT_ACTIVE_KEY = useMemo(
+    () => `${DRAFT_ACTIVE_KEY_BASE}_${userDraftScopeToken}`,
+    [DRAFT_ACTIVE_KEY_BASE, userDraftScopeToken]
+  );
+  const DRAFT_KEY_PREFIX = useMemo(
+    () => `${DRAFT_KEY_PREFIX_BASE}${userDraftScopeToken}_`,
+    [DRAFT_KEY_PREFIX_BASE, userDraftScopeToken]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!userDraftScopeToken || userDraftScopeToken === "anon") return;
+
+    try {
+      window.localStorage.removeItem(LEGACY_DRAFT_LIST_KEY);
+      window.localStorage.removeItem(LEGACY_DRAFT_ACTIVE_KEY);
+
+      const keysToRemove = [];
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (!key) continue;
+        if (key.startsWith(LEGACY_DRAFT_PREFIX)) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    } catch (error) {
+      // ignore storage access issues to keep sales UI available
+    }
+  }, [LEGACY_DRAFT_ACTIVE_KEY, LEGACY_DRAFT_LIST_KEY, LEGACY_DRAFT_PREFIX, userDraftScopeToken]);
+  const [sales, setSales] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterPayment, setFilterPayment] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [showNewSale, setShowNewSale] = useState(true);
+  const [saleFormRenderNonce, setSaleFormRenderNonce] = useState(0);
+  const [draftTabs, setDraftTabs] = useState([]);
+  const [activeDraftId, setActiveDraftId] = useState(null);
+  const [draftsLoaded, setDraftsLoaded] = useState(false);
+  const [showArchivedSales, setShowArchivedSales] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState("idle");
+  const [draftSavedAt, setDraftSavedAt] = useState(null);
+  
+  // Search states
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  
+  // New sale form
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState("");
+  const [selectedWarehouse, setSelectedWarehouse] = useState("");
+  const [cartItems, setCartItems] = useState([]);
+  const [paymentType, setPaymentType] = useState("cash");
+  const [globalDiscount, setGlobalDiscount] = useState(0);
+  const [creditDays] = useState(30);
+  const [deliveryRequired] = useState(false);
+  const [deliveryAddress] = useState("");
+  const [notes, setNotes] = useState("");
+  
+  // IVA and currency
+  const [applyIVA, setApplyIVA] = useState(true);
+  const [applyRetention, setApplyRetention] = useState(false);
+  const [retentionRate, setRetentionRate] = useState(2);
+  
+  const [ivaRate, setIvaRate] = useState(DEFAULT_IVA_RATE);
+  const [currency, setCurrency] = useState("NIO");
+  const [exchangeRate, setExchangeRate] = useState(DEFAULT_USD_NIO_RATE); // USD -> NIO
+  const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
+  
+  // Discount codes
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscounts, setAppliedDiscounts] = useState([]);
+  
+  // Manager authorization states
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authProducts, setAuthProducts] = useState([]);
+  const [managerAuthCode, setManagerAuthCode] = useState("");
+  
+  // Transfer dialog
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferProduct, setTransferProduct] = useState(null);
+  const [transferFromWarehouse, setTransferFromWarehouse] = useState("");
+  
+  // Compatibility warnings
+  const [compatibilityWarnings, setCompatibilityWarnings] = useState([]);
+  
+  // New customer dialog
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCustomerTab, setNewCustomerTab] = useState("customer");
+  const [newCustomer, setNewCustomer] = useState({
+    // Customer fields
+    first_name: "",
+    last_name: "",
+    customer_type: "natural",
+    tax_id: "",
+    email: "",
+    phone_prefix: "+505",
+    phone: "",
+    address: "",
+    credit_limit: 0,
+    // Vehicle fields
+    add_vehicle: false,
+    plate_prefix: "M",
+    plate_number: "",
+    brand: "",
+    model: "",
+    year: "",
+    color: "",
+    chasis: "",
+  });
+  
+  // Additional filters
+  const [filterSeller, setFilterSeller] = useState("all");
+  const [filterBranch, setFilterBranch] = useState("all");
+  const [sellers, setSellers] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [showPrintPrompt, setShowPrintPrompt] = useState(false);
+  const [showClearSaleConfirm, setShowClearSaleConfirm] = useState(false);
+  const [printSaleData, setPrintSaleData] = useState(null);
+  const [boardTab, setBoardTab] = useState("drafts");
+  const draftTabsRef = useRef([]);
+  const draftSyncTimersRef = useRef(new Map());
+
+  const markDraftSaving = useCallback(() => {
+    setDraftSaveState("saving");
+    emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "sales" });
+  }, []);
+
+  const markDraftSaved = useCallback(() => {
+    setDraftSaveState("saved");
+    setDraftSavedAt(new Date());
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+  }, []);
+
+  const markDraftSaveError = useCallback(() => {
+    setDraftSaveState("error");
+    emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
+  }, []);
+  const formVisibilityStorageKey = useMemo(() => {
+    const userToken = user?.user_id || user?.pin_user_id || "anon";
+    return `${EMBEDDED_FORM_VISIBILITY_KEY_PREFIX}_${userToken}`;
+  }, [EMBEDDED_FORM_VISIBILITY_KEY_PREFIX, user?.pin_user_id, user?.user_id]);
+  const newCustomerYearOptions = useMemo(
+    () => getVehicleYearsByBrand(newCustomer.brand),
+    [newCustomer.brand]
+  );
+  const newCustomerModelOptions = useMemo(
+    () => getVehicleOptionsByBrandYear(newCustomer.brand, newCustomer.year),
+    [newCustomer.brand, newCustomer.year]
+  );
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+    return () => {
+      emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const refreshRate = async () => {
+      const [rate, iva] = await Promise.all([
+        fetchEffectiveUsdNioRate({ withCredentials: true, fallback: DEFAULT_USD_NIO_RATE }),
+        fetchEffectiveIvaRate({ withCredentials: true, fallback: DEFAULT_IVA_RATE }),
+      ]);
+      if (mounted) {
+        setExchangeRate(rate);
+        setEffectiveIvaRate(iva);
+        setIvaRate(iva);
+      }
+    };
+
+    refreshRate();
+    const intervalId = window.setInterval(refreshRate, 30000);
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const localBootstrap = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+    if (Array.isArray(localBootstrap.draftTabs) && localBootstrap.draftTabs.length > 0) {
+      setDraftTabs(localBootstrap.draftTabs);
+      setActiveDraftId(localBootstrap.activeDraftId || localBootstrap.draftTabs[0]?.id || null);
+      setDraftsLoaded(true);
+    }
+
+    const loadDrafts = async () => {
+      try {
+        emitAutosaveStatus(AUTOSAVE_STATUS.RECOVERING, { source: "sales" });
+        const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
+        if (cancelled) return;
+        const localFallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+        const hasUsableLocalDrafts =
+          typeof window !== "undefined"
+          && Array.isArray(localFallback.draftTabs)
+          && localFallback.draftTabs.some((tab) => {
+            if (!tab?.id) return false;
+            return Boolean(window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`));
+          });
+
+        if (hasUsableLocalDrafts) {
+          setDraftTabs(localFallback.draftTabs);
+          setActiveDraftId(localFallback.activeDraftId || localFallback.draftTabs[0]?.id || null);
+          return;
+        }
+
+        const shouldUseLocalFallback =
+          Array.isArray(bundle?.drafts)
+          && bundle.drafts.length === 0
+          && localFallback.draftTabs.length > 0;
+
+        if (shouldUseLocalFallback) {
+          setDraftTabs(localFallback.draftTabs);
+          setActiveDraftId(localFallback.activeDraftId || localFallback.draftTabs[0]?.id || null);
+          return;
+        }
+
+        const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
+        let mergedDrafts = serverDrafts;
+        let mergedActiveDraftId = bundle.activeDraftId || (serverDrafts[0]?.id ?? null);
+
+        if (localFallback.draftTabs.length > 0) {
+          const serverById = new Map(serverDrafts.map((draft) => [draft.id, draft]));
+          const localOnlyDrafts = [];
+
+          localFallback.draftTabs.forEach((tab) => {
+            const localKey = `${DRAFT_KEY_PREFIX}${tab.id}`;
+            const raw = typeof window !== "undefined" ? window.localStorage.getItem(localKey) : null;
+            const serverDraft = serverById.get(tab.id);
+
+            if (!serverDraft) {
+              if (!raw) return;
+              let snapshot = {};
+              try {
+                snapshot = JSON.parse(raw) || {};
+              } catch (error) {
+                snapshot = {};
+              }
+              localOnlyDrafts.push({
+                id: tab.id,
+                name: tab.name || `Borrador ${localOnlyDrafts.length + 1}`,
+                updatedAt: tab.updatedAt || snapshot?.updatedAt || new Date().toISOString(),
+                snapshot,
+              });
+            }
+          });
+
+          if (localOnlyDrafts.length > 0) {
+            mergedDrafts = [...serverDrafts, ...localOnlyDrafts];
+          }
+
+          const mergedIds = new Set(mergedDrafts.map((draft) => draft.id));
+          if (localFallback.activeDraftId && mergedIds.has(localFallback.activeDraftId)) {
+            mergedActiveDraftId = localFallback.activeDraftId;
+          }
+        }
+
+        mirrorServerDraftsToLocalStorage({
+          listKey: DRAFT_LIST_KEY,
+          activeKey: DRAFT_ACTIVE_KEY,
+          draftKeyPrefix: DRAFT_KEY_PREFIX,
+          drafts: mergedDrafts,
+          activeDraftId: mergedActiveDraftId,
+        });
+        setDraftTabs(mergedDrafts.map((draft) => ({
+          id: draft.id,
+          name: draft.name,
+          updatedAt: draft.updatedAt,
+        })));
+        setActiveDraftId(mergedActiveDraftId || (mergedDrafts[0]?.id ?? null));
+        emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+      } catch (error) {
+        if (cancelled) return;
+        const fallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+        setDraftTabs(fallback.draftTabs);
+        setActiveDraftId(fallback.activeDraftId);
+        emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
+      } finally {
+        if (!cancelled) {
+          setDraftsLoaded(true);
+        }
+      }
+    };
+
+    loadDrafts();
+    return () => {
+      cancelled = true;
+    };
+  }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, DRAFT_KEY_PREFIX, DRAFT_LIST_KEY, userDraftScopeToken]);
+
+  useEffect(() => {
+    if (!draftsLoaded) return;
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(draftTabs));
+  }, [DRAFT_LIST_KEY, draftTabs, draftsLoaded]);
+
+  useEffect(() => {
+    if (!draftsLoaded) return;
+    if (typeof window === "undefined") return;
+    if (activeDraftId) {
+      window.localStorage.setItem(DRAFT_ACTIVE_KEY, activeDraftId);
+    } else {
+      window.localStorage.removeItem(DRAFT_ACTIVE_KEY);
+    }
+  }, [DRAFT_ACTIVE_KEY, activeDraftId, draftsLoaded]);
+
+  useEffect(() => {
+    draftTabsRef.current = draftTabs;
+  }, [draftTabs]);
+
+  useEffect(() => () => {
+    draftSyncTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    draftSyncTimersRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    if (!draftsLoaded) return;
+    setServerDraftActive(DRAFT_FLOW, activeDraftId).catch(() => {
+      // keep local state if server sync fails
+    });
+  }, [DRAFT_FLOW, activeDraftId, draftsLoaded]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !user) return;
+    const stored = window.localStorage.getItem(formVisibilityStorageKey);
+    if (stored === null) {
+      setShowNewSale(true);
+      return;
+    }
+    setShowNewSale(stored === "1");
+  }, [formVisibilityStorageKey, user]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !user) return;
+    window.localStorage.setItem(formVisibilityStorageKey, showNewSale ? "1" : "0");
+  }, [formVisibilityStorageKey, showNewSale, user]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, usersRes, branchesRes] = await Promise.all([
+        axios.get(`${API}/sales`, { withCredentials: true }),
+        axios.get(`${API}/customers`, { withCredentials: true }),
+        axios.get(`${API}/products`, { withCredentials: true }),
+        axios.get(`${API}/warehouses`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/vehicles`, { withCredentials: true }),
+        axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/users`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/branches`, { withCredentials: true }).catch(() => ({ data: [] })),
+      ]);
+      setSales(salesRes.data);
+      setCustomers(customersRes.data);
+      setProducts(productsRes.data);
+      setWarehouses(warehousesRes.data);
+      setVehicles(vehiclesRes.data);
+      setInventory(inventoryRes.data);
+      setSellers(usersRes.data.filter(u => u.role === "ventas" || u.role === "gerencia"));
+      setBranches(branchesRes.data);
+      if (warehousesRes.data.length > 0) {
+        setSelectedWarehouse(warehousesRes.data[0].warehouse_id);
+      }
+    } catch (error) {
+      toast.error("Error al cargar datos");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const refreshData = () => {
+      fetchData();
+    };
+
+    const intervalId = window.setInterval(refreshData, 30000);
+    window.addEventListener("focus", refreshData);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshData);
+    };
+  }, [fetchData]);
+
+  const readDraft = (draftId) => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(getDraftKey(draftId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const snapshot = parsed?.snapshot && typeof parsed.snapshot === "object" ? parsed.snapshot : parsed;
+      if (!snapshot || typeof snapshot !== "object") return null;
+
+      const normalized = {
+        ...snapshot,
+        selectedCustomerId:
+          snapshot.selectedCustomerId
+          ?? snapshot.selected_customer_id
+          ?? snapshot.customer_id
+          ?? null,
+        selectedVehicle:
+          snapshot.selectedVehicle
+          ?? snapshot.selected_vehicle
+          ?? snapshot.vehicle_id
+          ?? "",
+        cartItems: Array.isArray(snapshot.cartItems)
+          ? snapshot.cartItems
+          : (Array.isArray(snapshot.cart_items)
+            ? snapshot.cart_items
+            : (Array.isArray(snapshot.items) ? snapshot.items : [])),
+        globalDiscount:
+          snapshot.globalDiscount
+          ?? snapshot.global_discount
+          ?? snapshot.discount
+          ?? 0,
+        appliedDiscounts: Array.isArray(snapshot.appliedDiscounts)
+          ? snapshot.appliedDiscounts
+          : (Array.isArray(snapshot.applied_discounts) ? snapshot.applied_discounts : []),
+        applyIVA:
+          snapshot.applyIVA
+          ?? snapshot.apply_iva
+          ?? true,
+        applyRetention:
+          snapshot.applyRetention
+          ?? snapshot.apply_retention
+          ?? false,
+        retentionRate: (() => {
+          const rawRate = snapshot.retentionRate ?? snapshot.retention_rate ?? snapshot.retentionRateHint ?? snapshot.retention_rate_hint;
+          if (rawRate === 0.01 || rawRate === 0.02) return rawRate * 100;
+          if (rawRate === 1 || rawRate === 2) return rawRate;
+          return 2;
+        })(),
+        currency: snapshot.currency || "NIO",
+      };
+      return normalized;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const computeDraftTotals = (draft) => {
+    if (!draft) {
+      return {
+        totalDiscounts: 0,
+        retention: 0,
+        total: 0,
+      };
+    }
+    const currencyDraft = draft.currency || "NIO";
+    const rate = exchangeRate;
+    const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
+    const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
+    const paymentMethod = String(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash").trim().toLowerCase();
+    const discountsAllowed = paymentMethod === "cash" || paymentMethod === "transfer";
+
+    const subtotal = items.reduce((sum, item) => {
+      const priceInCurrency = convertPrice(item.unit_price || 0);
+      const effectiveItemDiscount = discountsAllowed ? (item.discount || 0) : 0;
+      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - effectiveItemDiscount / 100);
+      const installType = item.installation_type || "optional";
+      const wantsInstall = installType === "required" || Boolean(item.with_installation);
+      if (installType !== "not_available" && wantsInstall) {
+        const installPrice = convertPrice(item.installation_price || 0);
+        lineTotal += installPrice * (item.quantity || 0);
+      }
+      return sum + lineTotal;
+    }, 0);
+
+    let discountFromCodes = 0;
+    const applied = Array.isArray(draft.appliedDiscounts) ? draft.appliedDiscounts : [];
+    applied.forEach((d) => {
+      if (d.type === "percent") {
+        discountFromCodes += subtotal * (d.value / 100);
+      } else if (d.type === "fixed") {
+        const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
+        discountFromCodes += fixedInCurrency;
+      }
+    });
+
+    if (!discountsAllowed) {
+      discountFromCodes = 0;
+    }
+    const globalDiscountAmount = discountsAllowed ? (subtotal * ((draft.globalDiscount || 0) / 100)) : 0;
+    const totalDiscounts = discountFromCodes + globalDiscountAmount;
+    const subtotalAfterDiscounts = subtotal - totalDiscounts;
+    const retention = draft.applyRetention ? subtotal * ((draft.retentionRate || 0) / 100) : 0;
+    const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
+    return {
+      totalDiscounts,
+      retention,
+      total: subtotalAfterDiscounts + tax - retention,
+    };
+  };
+
+  const computeDraftTotal = (draft) => {
+    return computeDraftTotals(draft).total;
+  };
+
+  const getDraftLabel = (tab) => {
+    const draft = readDraft(tab.id);
+    if (!draft) return tab.name;
+    const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft.selectedCustomerId ?? ""))?.name;
+    const total = computeDraftTotal(draft);
+    const currencyDraft = draft.currency || "NIO";
+    const name = customerName || "Sin cliente";
+    return `${name} • ${formatCurrency(total || 0, currencyDraft)}`;
+  };
+
+  const getVehicleLabel = (vehicleId) => {
+    if (!vehicleId) return null;
+    const normalizedVehicleId = String(vehicleId);
+    const vehicle = vehicles.find((v) => String(v.vehicle_id ?? v.id ?? "") === normalizedVehicleId);
+    if (!vehicle) return null;
+    const parts = [vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(" ");
+    const plate = vehicle.plate || vehicle.plate_number || vehicle.number_plate || vehicle.registration || null;
+    const color = vehicle.color || vehicle.vehicle_color || vehicle.colour || null;
+    const pieces = [];
+    if (parts) pieces.push(parts);
+    if (plate) pieces.push(plate);
+    if (color) pieces.push(color);
+    return pieces.length ? pieces.join(" • ") : null;
+  };
+
+  const getVehicleById = (vehicleId) => {
+    if (!vehicleId) return null;
+    const normalizedVehicleId = String(vehicleId);
+    return vehicles.find((v) => String(v.vehicle_id ?? v.id ?? "") === normalizedVehicleId) || null;
+  };
+
+  const getSaleItemsPreview = (sale) => {
+    const items = Array.isArray(sale?.items) ? sale.items : [];
+    if (items.length === 0) return "Sin articulos";
+    const names = items.slice(0, 3).map((item) => item.product_name || "Producto");
+    return items.length > 3 ? `${names.join(" · ")} · +${items.length - 3}` : names.join(" · ");
+  };
+
+  const getDraftPreview = (draft) => {
+    if (!draft) return { image: null, items: [], vehicle: null };
+    const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
+    const vehicle = getVehicleById(draft.selectedVehicle);
+    const image = getVehicleThumbnail(vehicle || null);
+    const previewNames = items.slice(0, 3).map((item) => item.product_name || "Producto");
+    return { image, items: previewNames, vehicle: getVehicleLabel(draft.selectedVehicle) };
+  };
+
+  const getDraftMeta = (tab) => {
+    const draft = readDraft(tab.id);
+    const preview = getDraftPreview(draft);
+    const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""))?.name;
+    const totals = computeDraftTotals(draft);
+    const currencyDraft = draft?.currency || "NIO";
+    const itemsCount = Array.isArray(draft?.cartItems) ? draft.cartItems.length : 0;
+    const updatedAt = draft?.updatedAt || tab.updatedAt;
+    return {
+      title: customerName || "Sin cliente",
+      subtitle: tab.name,
+      total: totals.total,
+      currency: currencyDraft,
+      itemsCount,
+      updatedAt,
+      previewItems: preview.items,
+      previewImage: preview.image,
+      previewVehicle: preview.vehicle,
+      applyIVA: draft?.applyIVA ?? true,
+      totalDiscounts: totals.totalDiscounts,
+      retention: totals.retention,
+      retentionRate: draft?.retentionRate ?? 2,
+    };
+  };
+
+  const getDraftKey = (draftId) => `${DRAFT_KEY_PREFIX}${draftId}`;
+
+  const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
+    if (!draftId) return;
+    setDraftSaveState("saving");
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "sales" });
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
+    try {
+      await saveServerDraft(DRAFT_FLOW, draftId, {
+        name: nameOverride || tab?.name || `Venta ${draftTabsRef.current.length || 1}`,
+        snapshot,
+      });
+      markDraftSaved();
+    } catch (error) {
+      markDraftSaveError();
+      throw error;
+    }
+  }, [DRAFT_FLOW, markDraftSaved, markDraftSaveError, markDraftSaving]);
+
+  const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
+    if (!draftId || typeof window === "undefined") return;
+    const existingTimer = draftSyncTimersRef.current.get(draftId);
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
+    }
+    const timerId = window.setTimeout(() => {
+      syncDraftToServer(draftId, snapshotOverride, nameOverride).catch(() => {
+        // preserve local draft state if server sync fails
+      });
+      draftSyncTimersRef.current.delete(draftId);
+    }, 500);
+    draftSyncTimersRef.current.set(draftId, timerId);
+  }, [syncDraftToServer]);
+
+  const isDraftEmpty = (draftId) => {
+    if (typeof window === "undefined") return true;
+    try {
+      const raw = window.localStorage.getItem(getDraftKey(draftId));
+      if (!raw) return true;
+      const draft = JSON.parse(raw);
+      return !draft?.selectedCustomerId
+        && (!draft?.cartItems || draft.cartItems.length === 0)
+        && !draft?.notes
+        && !draft?.customerSearch
+        && !draft?.productSearch
+        && !draft?.globalDiscount
+        && (!draft?.appliedDiscounts || draft.appliedDiscounts.length === 0);
+    } catch (error) {
+      return true;
+    }
+  };
+
+  const updateDraftTabMeta = (draftId, snapshotOverride = null) => {
+    if (typeof window === "undefined") return;
+    try {
+      const draft = snapshotOverride || readDraft(draftId);
+      if (!draft) return;
+      const customerName = customers.find((c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""))?.name;
+      let nextName = null;
+      setDraftTabs(prev => prev.map(tab => {
+        if (tab.id !== draftId) return tab;
+        nextName = customerName ? `Venta - ${customerName}` : tab.name;
+        return { ...tab, name: nextName, updatedAt: draft?.updatedAt || tab.updatedAt };
+      }));
+      scheduleDraftSync(draftId, draft, nextName || undefined);
+    } catch (error) {
+      // ignore
+    }
+  };
+
+  const createDraftTab = useCallback(() => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    const id = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    const name = `Venta ${draftTabs.length + 1}`;
+    const newTab = { id, name, updatedAt: new Date().toISOString() };
+    setDraftTabs(prev => [...prev, newTab]);
+    setActiveDraftId(id);
+    setShowNewSale(true);
+    saveServerDraft(DRAFT_FLOW, id, { name, snapshot: {} }).catch(() => {
+      // keep local draft if server is temporarily unavailable
+    });
+  }, [DRAFT_FLOW, canCreateSales, draftTabs.length]);
+
+  useEffect(() => {
+    if (!draftsLoaded || !showNewSale || !canCreateSales) return;
+    if (activeDraftId) return;
+    createDraftTab();
+  }, [activeDraftId, canCreateSales, createDraftTab, draftsLoaded, showNewSale]);
+
+  const openCatalogFromSaleForm = useCallback(async (snapshot) => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    if (typeof window === "undefined") return;
+
+    const nowIso = new Date().toISOString();
+    const selectedVehicleRecord = vehicles.find((v) => v.vehicle_id === snapshot?.selectedVehicle) || null;
+    const safeSnapshot = {
+      selectedCustomerId: snapshot?.selectedCustomerId || null,
+      selectedVehicle: snapshot?.selectedVehicle || "",
+      vehicleFlowOption: snapshot?.vehicleFlowOption || (snapshot?.selectedVehicle ? "registered" : "carryout"),
+      selectedVehicleData: snapshot?.selectedVehicleData || (selectedVehicleRecord
+        ? {
+            vehicle_id: selectedVehicleRecord.vehicle_id,
+            brand: selectedVehicleRecord.brand,
+            model: selectedVehicleRecord.model,
+            year: selectedVehicleRecord.year,
+            plate: selectedVehicleRecord.plate || selectedVehicleRecord.plate_number || selectedVehicleRecord.number_plate || null,
+            vehicle_type: selectedVehicleRecord.vehicle_type || null,
+            color: selectedVehicleRecord.color || selectedVehicleRecord.vehicle_color || selectedVehicleRecord.colour || null,
+            vin: selectedVehicleRecord.vin || selectedVehicleRecord.chasis || selectedVehicleRecord.chassis || null,
+          }
+        : null),
+      selectedWarehouse: snapshot?.selectedWarehouse || selectedWarehouse || "",
+      paymentMethod: snapshot?.paymentMethod || snapshot?.payment_type || "cash",
+      cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
+      globalDiscount: snapshot?.globalDiscount || 0,
+      notes: snapshot?.notes || "",
+      applyIVA: snapshot?.applyIVA ?? true,
+      ivaRate: snapshot?.ivaRate ?? effectiveIvaRate,
+      applyRetention: snapshot?.applyRetention ?? false,
+      retentionRate: snapshot?.retentionRate ?? 2,
+      currency: snapshot?.currency || "NIO",
+      exchangeRate: snapshot?.exchangeRate || exchangeRate,
+      appliedDiscounts: Array.isArray(snapshot?.appliedDiscounts) ? snapshot.appliedDiscounts : [],
+      customerSearch: snapshot?.customerSearch || "",
+      productSearch: snapshot?.productSearch || "",
+      updatedAt: nowIso,
+    };
+
+    if (!safeSnapshot.selectedCustomerId) {
+      toast.error("Selecciona un cliente antes de buscar desde catalogo");
+      return;
+    }
+
+    let draftId = activeDraftId;
+    let nextTabs = Array.isArray(draftTabs) ? [...draftTabs] : [];
+
+    if (!draftId) {
+      draftId = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      const draftName = `Venta - ${customers.find((c) => String(c.customer_id ?? "") === String(safeSnapshot.selectedCustomerId ?? ""))?.name || "Sin cliente"}`;
+      nextTabs.push({ id: draftId, name: draftName, updatedAt: nowIso });
+      setDraftTabs(nextTabs);
+      setActiveDraftId(draftId);
+    } else {
+      nextTabs = nextTabs.map((tab) => (tab.id === draftId ? { ...tab, updatedAt: nowIso } : tab));
+      setDraftTabs(nextTabs);
+    }
+
+    const selectedCustomerRecord = customers.find((c) => c.customer_id === safeSnapshot.selectedCustomerId) || null;
+
+    const draftKey = getDraftKey(draftId);
+    const draftName = nextTabs.find((tab) => tab.id === draftId)?.name;
+    window.localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(nextTabs));
+    window.localStorage.setItem(DRAFT_ACTIVE_KEY, draftId);
+    window.localStorage.setItem(draftKey, JSON.stringify(safeSnapshot));
+    scheduleDraftSync(draftId, safeSnapshot, draftName);
+    try {
+      await saveServerDraft(DRAFT_FLOW, draftId, {
+        name: draftName,
+        snapshot: safeSnapshot,
+      });
+      await setServerDraftActive(DRAFT_FLOW, draftId);
+    } catch (error) {
+      // continue with local draft context if remote sync is temporarily unavailable
+    }
+    window.localStorage.setItem(CATALOG_SOURCE_CONTEXT_KEY, JSON.stringify({
+      source: "sale-form",
+      returnPath: window.location.pathname || "/sales",
+      draftId,
+      draftName: draftName || draftId,
+      selectedCustomerId: safeSnapshot.selectedCustomerId,
+      customerName: selectedCustomerRecord?.name || null,
+      selectedVehicle: safeSnapshot.selectedVehicle || "",
+      vehicle: selectedVehicleRecord
+        ? {
+            vehicle_id: selectedVehicleRecord.vehicle_id,
+            brand: selectedVehicleRecord.brand,
+            model: selectedVehicleRecord.model,
+            year: selectedVehicleRecord.year,
+            plate: selectedVehicleRecord.plate || selectedVehicleRecord.plate_number || selectedVehicleRecord.number_plate || null,
+            vehicle_type: selectedVehicleRecord.vehicle_type || null,
+          }
+        : null,
+      createdAtTs: Date.now(),
+    }));
+    window.localStorage.setItem("catalog_open_draft", "sale");
+    window.location.href = "/catalog";
+  }, [
+    DRAFT_ACTIVE_KEY,
+    DRAFT_FLOW,
+    DRAFT_LIST_KEY,
+    activeDraftId,
+    canCreateSales,
+    customers,
+    draftTabs,
+    exchangeRate,
+    effectiveIvaRate,
+    scheduleDraftSync,
+    selectedWarehouse,
+    vehicles,
+  ]);
+
+  const closeDraftTab = (draftId) => {
+    // Autoguardado silencioso, sin confirmación
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(getDraftKey(draftId));
+    }
+    setDraftTabs(prev => prev.filter(tab => tab.id !== draftId));
+    if (activeDraftId === draftId) {
+      const remaining = draftTabs.filter(tab => tab.id !== draftId);
+      const next = remaining[remaining.length - 1]?.id || null;
+      setActiveDraftId(next);
+      if (!next) {
+        resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+      }
+    }
+    deleteServerDraft(DRAFT_FLOW, draftId).catch(() => {
+      // keep UI responsive even if remote cleanup fails
+    });
+  };
+
+  const openActiveDraft = useCallback(() => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    if (draftTabs.length === 0) {
+      createDraftTab();
+      return;
+    }
+    if (!activeDraftId) {
+      setActiveDraftId(draftTabs[0]?.id || null);
+    }
+    setShowNewSale(true);
+  }, [activeDraftId, canCreateSales, createDraftTab, draftTabs]);
+
+  const toggleEmbeddedSaleForm = useCallback(() => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    if (showNewSale) {
+      setShowNewSale(false);
+      return;
+    }
+    if (draftTabs.length === 0) {
+      createDraftTab();
+      return;
+    }
+    if (!activeDraftId) {
+      setActiveDraftId(draftTabs[0]?.id || null);
+    }
+    setShowNewSale(true);
+  }, [activeDraftId, canCreateSales, createDraftTab, draftTabs, showNewSale]);
+
+  const saveActiveDraftNow = useCallback(() => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    if (!activeDraftId) {
+      createDraftTab();
+      toast.success("Borrador creado y listo para editar");
+      return;
+    }
+    if (typeof window === "undefined") return;
+
+    const draftKey = getDraftKey(activeDraftId);
+    const raw = window.localStorage.getItem(draftKey);
+    if (!raw) {
+      toast.info("No hay datos nuevos para guardar");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      const snapshot = {
+        ...parsed,
+        updatedAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
+      updateDraftTabMeta(activeDraftId, snapshot);
+      syncDraftToServer(activeDraftId, snapshot).catch(() => {
+        // preserve local draft if manual sync fails
+      });
+      toast.success("Borrador guardado");
+    } catch (error) {
+      toast.error("No se pudo guardar el borrador");
+    }
+  }, [activeDraftId, canCreateSales, createDraftTab, syncDraftToServer]);
+
+  const clearEmbeddedSaleForm = useCallback(() => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    let draftIdToClear = activeDraftId;
+    if (typeof window !== "undefined" && !draftIdToClear) {
+      draftIdToClear = window.localStorage.getItem(DRAFT_ACTIVE_KEY) || null;
+    }
+
+    if (typeof window !== "undefined" && draftIdToClear) {
+      window.localStorage.removeItem(getDraftKey(draftIdToClear));
+    }
+
+    if (draftIdToClear) {
+      setDraftTabs((prev) => prev.filter((tab) => tab.id !== draftIdToClear));
+      if (activeDraftId === draftIdToClear) {
+        setActiveDraftId(null);
+      }
+      deleteServerDraft(DRAFT_FLOW, draftIdToClear).catch(() => {
+        // keep local clear behavior even if remote cleanup fails
+      });
+    }
+
+    setSaleFormRenderNonce((prev) => prev + 1);
+    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+    toast.success("Formulario limpiado");
+  }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, activeDraftId, canCreateSales]);
+
+  useEffect(() => {
+    if (!draftsLoaded || typeof window === "undefined") return;
+    const flag = window.localStorage.getItem("catalog_open_draft");
+    if (flag !== "sale") return;
+    openActiveDraft();
+    window.localStorage.removeItem("catalog_open_draft");
+  }, [draftsLoaded, openActiveDraft]);
+
+  // Filtered customers based on search
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch) return customers.slice(0, 10);
+    const searchLower = customerSearch.toLowerCase();
+    return customers.filter(c => 
+      c.name?.toLowerCase().includes(searchLower) ||
+      c.phone?.includes(customerSearch) ||
+      c.tax_id?.includes(customerSearch)
+    ).slice(0, 20);
+  }, [customers, customerSearch]);
+
+  // Filtered products based on search
+  const filteredProducts = useMemo(() => {
+    if (!productSearch) return products.slice(0, 20);
+    const searchLower = productSearch.toLowerCase();
+    return products.filter(p => 
+      p.name?.toLowerCase().includes(searchLower) ||
+      p.sku?.toLowerCase().includes(searchLower)
+    ).slice(0, 30);
+  }, [products, productSearch]);
+
+  // Get vehicles for selected customer
+  const customerVehicles = useMemo(() => {
+    if (!selectedCustomer) return [];
+    return vehicles.filter(v => v.customer_id === selectedCustomer.customer_id);
+  }, [vehicles, selectedCustomer]);
+
+  // Get stock for a product in a specific warehouse
+  const getProductStock = (productId, warehouseId) => {
+    const inv = inventory.find(i => i.product_id === productId && i.warehouse_id === warehouseId);
+    return inv?.quantity || 0;
+  };
+
+  // Get stock in other warehouses
+  const getOtherWarehouseStock = (productId, currentWarehouseId) => {
+    return inventory
+      .filter(i => i.product_id === productId && i.warehouse_id !== currentWarehouseId && i.quantity > 0)
+      .map(i => ({
+        warehouse_id: i.warehouse_id,
+        warehouse_name: warehouses.find(w => w.warehouse_id === i.warehouse_id)?.name || i.warehouse_id,
+        quantity: i.quantity
+      }));
+  };
+
+  // Check product compatibility
+  const checkCompatibility = async (product) => {
+    if (!selectedVehicle) return { compatible: true };
+    
+    try {
+      const response = await axios.get(
+        `${API}/products/${product.product_id}/check-compatibility/${selectedVehicle}`,
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      return { compatible: true };
+    }
+  };
+
+  const addToCart = async (product) => {
+    const currentStock = getProductStock(product.product_id, selectedWarehouse);
+    
+    // Check if stock is available
+    if (currentStock <= 0) {
+      const otherStock = getOtherWarehouseStock(product.product_id, selectedWarehouse);
+      if (otherStock.length > 0) {
+        setTransferProduct(product);
+        setTransferFromWarehouse(otherStock[0].warehouse_id);
+        setShowTransferDialog(true);
+        return;
+      } else {
+        toast.error(`${product.name} no tiene stock disponible`);
+        return;
+      }
+    }
+
+    // Check compatibility if vehicle is selected
+    if (selectedVehicle) {
+      const compatResult = await checkCompatibility(product);
+      if (!compatResult.compatible) {
+        setCompatibilityWarnings(prev => {
+          const existing = prev.find(w => w.product_id === product.product_id);
+          if (existing) return prev;
+          return [...prev, {
+            product_id: product.product_id,
+            product_name: product.name,
+            reasons: compatResult.reasons,
+          }];
+        });
+        toast.warning(`${product.name}: ${compatResult.reasons?.join(", ") || "Posible incompatibilidad"}`, {
+          duration: 5000
+        });
+      }
+    }
+
+    const existing = cartItems.find(item => item.product_id === product.product_id);
+    if (existing) {
+      if (existing.quantity >= currentStock) {
+        toast.error("No hay más stock disponible");
+        return;
+      }
+      setCartItems(cartItems.map(item =>
+        item.product_id === product.product_id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      const installationType = product.installation_type || "optional";
+      const withInstallation = installationType === "required";
+      
+      setCartItems([...cartItems, {
+        product_id: product.product_id,
+        product_name: product.name,
+        image: product.images?.[0] || null,
+        quantity: 1,
+        unit_price: product.price,
+        discount: 0,
+        warehouse_id: selectedWarehouse,
+        installation_type: installationType,
+        with_installation: withInstallation,
+        installation_price: product.installation_price || 0,
+        stock: currentStock,
+      }]);
+    }
+  };
+
+  const requestTransfer = async () => {
+    if (!canEditSales) {
+      toast.error("No tienes permiso para solicitar traslados");
+      return;
+    }
+    if (!transferProduct || !transferFromWarehouse) return;
+    
+    try {
+      await axios.post(`${API}/inventory/transfer-request`, {
+        product_id: transferProduct.product_id,
+        from_warehouse_id: transferFromWarehouse,
+        to_warehouse_id: selectedWarehouse,
+        quantity: 1,
+        reason: "Venta - Solicitud de traslado",
+        sale_pending: true,
+      }, { withCredentials: true });
+      
+      toast.success("Solicitud de traslado enviada a supervisor");
+      setShowTransferDialog(false);
+      setTransferProduct(null);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al solicitar traslado");
+    }
+  };
+
+  const toggleInstallation = (productId) => {
+    setCartItems(cartItems.map(item => {
+      if (item.product_id === productId) {
+        return { ...item, with_installation: !item.with_installation };
+      }
+      return item;
+    }));
+  };
+
+  const removeFromCart = (productId) => {
+    setCartItems(cartItems.filter(item => item.product_id !== productId));
+    setCompatibilityWarnings(prev => prev.filter(w => w.product_id !== productId));
+  };
+
+  const updateCartItem = (productId, field, value) => {
+    setCartItems(cartItems.map(item =>
+      item.product_id === productId ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const applyDiscountCode = () => {
+    if (!discountCode) return;
+    
+    // Example discount codes (in real app, validate against backend)
+    const codes = {
+      "DESC10": { type: "percent", value: 10, name: "10% de descuento" },
+      "DESC20": { type: "percent", value: 20, name: "20% de descuento" },
+      "FIJO100": { type: "fixed", value: 100, name: "C$100 de descuento" },
+    };
+    
+    const code = codes[discountCode.toUpperCase()];
+    if (code) {
+      if (appliedDiscounts.find(d => d.code === discountCode.toUpperCase())) {
+        toast.error("Este código ya fue aplicado");
+        return;
+      }
+      setAppliedDiscounts([...appliedDiscounts, { ...code, code: discountCode.toUpperCase() }]);
+      toast.success(`Código aplicado: ${code.name}`);
+      setDiscountCode("");
+    } else {
+      toast.error("Código de descuento inválido");
+    }
+  };
+
+  const removeDiscountCode = (code) => {
+    setAppliedDiscounts(appliedDiscounts.filter(d => d.code !== code));
+  };
+
+  // Los precios de productos están en USD. Convertir según moneda seleccionada.
+  const convertPrice = (priceUSD) => {
+    if (currency === "NIO") {
+      return priceUSD * exchangeRate; // Convertir USD a NIO
+    }
+    return priceUSD; // Mantener en USD
+  };
+
+  const calculateTotals = () => {
+    // Calcular subtotal convirtiendo cada precio según la moneda seleccionada
+    let subtotalInCurrency = cartItems.reduce((sum, item) => {
+      const priceInCurrency = convertPrice(item.unit_price);
+      let itemTotal = priceInCurrency * item.quantity * (1 - (item.discount || 0) / 100);
+      if (item.with_installation && item.installation_price) {
+        const installationInCurrency = convertPrice(item.installation_price);
+        itemTotal += installationInCurrency * item.quantity;
+      }
+      return sum + itemTotal;
+    }, 0);
+
+    // Apply discount codes
+    let discountFromCodes = 0;
+    appliedDiscounts.forEach(d => {
+      if (d.type === "percent") {
+        discountFromCodes += subtotalInCurrency * (d.value / 100);
+      } else if (d.type === "fixed") {
+        // Fixed discounts are in NIO, convert if needed
+        const fixedInCurrency = currency === "USD" ? d.value / exchangeRate : d.value;
+        discountFromCodes += fixedInCurrency;
+      }
+    });
+
+    // Apply global discount
+    const globalDiscountAmount = subtotalInCurrency * (globalDiscount / 100);
+    
+    const subtotalAfterDiscounts = subtotalInCurrency - discountFromCodes - globalDiscountAmount;
+    const tax = applyIVA ? subtotalAfterDiscounts * (ivaRate / 100) : 0;
+    const total = subtotalAfterDiscounts + tax;
+
+    // También calcular equivalente en la otra moneda para referencia
+    const totalInUSD = currency === "USD" ? total : total / exchangeRate;
+    const totalInNIO = currency === "NIO" ? total : total * exchangeRate;
+
+    return { 
+      subtotal: subtotalInCurrency, 
+      discountFromCodes,
+      globalDiscountAmount,
+      tax, 
+      total,
+      totalInUSD,
+      totalInNIO,
+      currencySymbol: currency === "USD" ? "USD " : "C$",
+      currencyCode: currency
+    };
+  };
+
+  const createSale = async (authCode = null) => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    if (!selectedCustomer || cartItems.length === 0) {
+      toast.error("Selecciona un cliente y agrega productos");
+      return;
+    }
+
+    try {
+      const totals = calculateTotals();
+      
+      const saleData = {
+        customer_id: selectedCustomer.customer_id,
+        vehicle_id: selectedVehicle || null,
+        items: cartItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          discount: item.discount,
+          warehouse_id: item.warehouse_id,
+          with_installation: item.with_installation,
+        })),
+        discount: globalDiscount,
+        payment_type: paymentType,
+        credit_days: paymentType === "credit" ? creditDays : null,
+        delivery_required: deliveryRequired,
+        delivery_address: deliveryRequired ? deliveryAddress : null,
+        manager_authorization_code: authCode || managerAuthCode || null,
+        apply_iva: applyIVA,
+        iva_rate: ivaRate,
+        currency: currency,
+        exchange_rate: exchangeRate,
+        discount_codes: appliedDiscounts.map(d => d.code),
+        total_amount: totals.total,
+      };
+
+      const response = await axios.post(`${API}/sales`, saleData, { withCredentials: true });
+      
+      if (response.data.requires_manager_auth) {
+        setAuthProducts(response.data.products || []);
+        setShowAuthDialog(true);
+        return;
+      }
+      
+      toast.success(`Venta ${response.data.invoice_number} creada exitosamente`);
+      
+      if (response.data.work_order_id) {
+        toast.info(`Orden de trabajo generada: ${response.data.work_order_id}`);
+      }
+      
+      if (paymentType === "stripe") {
+        const checkoutRes = await axios.post(`${API}/payments/checkout`, {
+          sale_id: response.data.sale_id,
+          origin_url: window.location.origin,
+        }, { withCredentials: true });
+        window.location.href = checkoutRes.data.url;
+        return;
+      }
+      
+      resetSaleForm();
+      fetchData();
+    } catch (error) {
+      if (error.response?.data?.requires_manager_auth) {
+        setAuthProducts(error.response?.data?.products || []);
+        setShowAuthDialog(true);
+        return;
+      }
+      toast.error(error.response?.data?.detail || "Error al crear venta");
+    }
+  };
+
+  // Helper to create a sale using payload from SaleForm component
+  const createSaleWithPayload = async (payload, authCode = null) => {
+    if (!canCreateSales) {
+      throw new Error("No tienes permiso para crear ventas");
+    }
+    if (!payload?.customer_id || !payload?.items || payload.items.length === 0) {
+      throw new Error("Selecciona un cliente y agrega productos");
+    }
+
+    try {
+      // Keep local UI state in sync
+      setSelectedCustomer(customers.find(c => c.customer_id === payload.customer_id) || null);
+      setSelectedVehicle(payload.vehicle_id || "");
+      setSelectedWarehouse(payload.warehouse_id || selectedWarehouse);
+      setCartItems(payload.items.map(i => ({
+        product_id: i.product_id,
+        product_name: i.product_name || "",
+        quantity: i.quantity,
+        unit_price: i.unit_price || 0,
+        discount: i.discount || 0,
+        warehouse_id: i.warehouse_id || (payload.warehouse_id || selectedWarehouse),
+      })));
+      setGlobalDiscount(payload.discount || 0);
+      setPaymentType(payload.payment_type || payload.payment_method || "cash");
+      setApplyIVA(payload.apply_iva ?? applyIVA);
+      setCurrency(payload.currency || currency);
+      if (payload.applied_discounts) {
+        setAppliedDiscounts(payload.applied_discounts);
+      }
+
+      const totalsLocal = calculateTotals();
+
+      const payloadPaymentType = payload.payment_type || payload.payment_method || paymentType;
+      const saleData = {
+        customer_id: payload.customer_id,
+        vehicle_id: payload.vehicle_id || null,
+        items: payload.items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          discount: item.discount,
+          warehouse_id: item.warehouse_id || (payload.warehouse_id || selectedWarehouse),
+          with_installation: item.with_installation || false,
+        })),
+        discount: payload.discount || 0,
+        payment_type: payloadPaymentType,
+        payment_method: payload.payment_method || payloadPaymentType,
+        credit_days: payloadPaymentType === "credit" ? (payload.credit_days ?? creditDays) : null,
+        delivery_required: deliveryRequired,
+        delivery_address: deliveryRequired ? deliveryAddress : null,
+        manager_authorization_code: authCode || managerAuthCode || null,
+        apply_iva: payload.apply_iva ?? applyIVA,
+        iva_rate: ivaRate,
+        currency: payload.currency || currency,
+        exchange_rate: exchangeRate,
+        discount_codes: payload.discount_codes || appliedDiscounts.map(d => d.code),
+        total_amount: totalsLocal.total,
+        notes: payload.notes || null,
+      };
+
+      const response = await axios.post(`${API}/sales`, saleData, { withCredentials: true });
+
+      if (response.data.requires_manager_auth) {
+        setAuthProducts(response.data.products || []);
+        setShowAuthDialog(true);
+        return;
+      }
+
+      toast.success(`Venta ${response.data.invoice_number} creada exitosamente`);
+      setPrintSaleData(response.data);
+      setShowPrintPrompt(true);
+      setPrintSaleData(response.data);
+      setShowPrintPrompt(true);
+      resetSaleForm();
+      fetchData();
+    } catch (error) {
+      if (error.response?.data?.requires_manager_auth) {
+        setAuthProducts(error.response?.data?.products || []);
+        setShowAuthDialog(true);
+        return;
+      }
+      throw error;
+    }
+  };
+
+  const resetSaleForm = ({ keepVisible = true, skipAutoDraft = false } = {}) => {
+    // Save draft if not empty before resetting
+    if (!skipAutoDraft && !activeDraftId && (cartItems.length > 0 || selectedCustomer || notes)) {
+      // If no active draft but form has data, create a new draft and save it
+      const id = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      const name = `Venta (auto)`;
+      const newTab = { id, name, updatedAt: new Date().toISOString() };
+      setDraftTabs(prev => [...prev, newTab]);
+      window.localStorage.setItem(getDraftKey(id), JSON.stringify({
+        selectedCustomerId: selectedCustomer?.customer_id || null,
+        selectedVehicle,
+        vehicleFlowOption: selectedVehicle ? "registered" : "carryout",
+        selectedWarehouse,
+        cartItems,
+        globalDiscount,
+        notes,
+        applyIVA,
+        ivaRate,
+        currency,
+        exchangeRate,
+        appliedDiscounts,
+        customerSearch,
+        productSearch,
+        updatedAt: new Date().toISOString(),
+      }));
+    }
+    setShowNewSale(keepVisible);
+    setCartItems([]);
+    setSelectedCustomer(null);
+    setSelectedVehicle("");
+    setGlobalDiscount(0);
+    setManagerAuthCode("");
+    setShowAuthDialog(false);
+    setAuthProducts([]);
+    setCompatibilityWarnings([]);
+    setCustomerSearch("");
+    setProductSearch("");
+    setAppliedDiscounts([]);
+    setApplyIVA(true);
+    setApplyRetention(false);
+    setRetentionRate(2);
+    setIvaRate(effectiveIvaRate);
+    setCurrency("NIO");
+  };
+
+  const requestManagerAuth = async () => {
+    try {
+      const response = await axios.post(`${API}/auth/manager/generate-code`, null, {
+        params: { reason: "Instalación de productos solo para llevar" },
+        withCredentials: true
+      });
+      toast.success(`Código de autorización generado: ${response.data.code}`);
+      setManagerAuthCode(response.data.code);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al generar código. ¿Eres gerente?");
+    }
+  };
+
+  const submitWithAuth = async () => {
+    if (!managerAuthCode) {
+      toast.error("Ingresa el código de autorización del gerente");
+      return;
+    }
+    setShowAuthDialog(false);
+    await createSale(managerAuthCode);
+  };
+
+  const totals = calculateTotals();
+
+  const filteredSales = sales.filter(sale => {
+    const matchesSearch = sale.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
+                         sale.customer_name?.toLowerCase().includes(search.toLowerCase());
+    const matchesPayment = filterPayment === "all" || sale.payment_type === filterPayment;
+    const matchesStatus = filterStatus === "all" || sale.status === filterStatus;
+    const matchesSeller = filterSeller === "all" || sale.seller_id === filterSeller || sale.created_by === filterSeller;
+    const matchesBranch = filterBranch === "all" || sale.branch_id === filterBranch;
+    return matchesSearch && matchesPayment && matchesStatus && matchesSeller && matchesBranch;
+  });
+
+  const openInvoicesInCash = filteredSales.filter((sale) => {
+    const invoiceState = String(sale.invoice_state || "").toLowerCase();
+    const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
+    if (invoiceState === "cancelled") return false;
+    if (invoiceState === "open") return true;
+    return Boolean(sale.cash_session_id) && paymentStatus !== "paid";
+  });
+
+  const closedInvoicesToday = filteredSales.filter((sale) => {
+    const invoiceState = String(sale.invoice_state || "").toLowerCase();
+    const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
+    if (invoiceState === "cancelled") return false;
+    if (paymentStatus !== "paid") return false;
+    if (!sale.created_at) return false;
+    const created = new Date(sale.created_at);
+    const now = new Date();
+    return (
+      created.getFullYear() === now.getFullYear() &&
+      created.getMonth() === now.getMonth() &&
+      created.getDate() === now.getDate()
+    );
+  });
+
+  const requestInvoiceEdit = async (sale) => {
+    const reason = window.prompt("Motivo de la solicitud de edición", "Corrección de items/precios/descuentos");
+    if (!reason) return;
+    try {
+      await axios.post(
+        `${API}/sales/${sale.sale_id}/requests/edit`,
+        { reason },
+        { withCredentials: true }
+      );
+      toast.success("Solicitud de edición enviada a Gerencia/RRHH");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo enviar la solicitud de edición");
+    }
+  };
+
+  const requestInvoiceCancel = async (sale) => {
+    const reason = window.prompt("Motivo de la solicitud de anulación", "Cliente desistió / corrección de factura");
+    if (!reason) return;
+    try {
+    useEffect(() => {
+      if (!activeDraftId || typeof window === "undefined") return;
+    
+      try {
+        const draft = readDraft(activeDraftId);
+        if (!draft) return;
+      
+        // Sync all form state with the draft data
+        const customerId = draft.selectedCustomerId;
+        if (customerId) {
+          const customer = customers.find(c => c.customer_id === customerId);
+          if (customer) setSelectedCustomer(customer);
+        } else {
+          setSelectedCustomer(null);
+        }
+      
+        setSelectedVehicle(draft.selectedVehicle || "");
+        setSelectedWarehouse(draft.selectedWarehouse || "");
+        setCartItems(draft.cartItems || []);
+        setGlobalDiscount(draft.globalDiscount || 0);
+        setNotes(draft.notes || "");
+        setApplyIVA(draft.applyIVA ?? true);
+        setApplyRetention(draft.applyRetention ?? false);
+        setRetentionRate(draft.retentionRate ?? 2);
+        setCurrency(draft.currency || "NIO");
+        setAppliedDiscounts(draft.appliedDiscounts || []);
+      } catch (error) {
+        // ignore errors silently
+      }
+    }, [activeDraftId, customers]);
+      await axios.post(
+        `${API}/sales/${sale.sale_id}/requests/cancel`,
+        { reason },
+        { withCredentials: true }
+      );
+      toast.success("Solicitud de anulación enviada a Gerencia/RRHH");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo enviar la solicitud de anulación");
+    }
+  };
+
+  const cancelInvoiceDirectly = async (sale) => {
+    const motivo = window.prompt("Motivo de anulación", "Anulación autorizada por gerencia/RRHH");
+    if (!motivo) return;
+    const justificacion = window.prompt("Justificación interna (mínimo 20 caracteres)", "Detalle interno de anulación autorizada");
+    if (!justificacion) return;
+    try {
+      await axios.post(
+        `${API}/caja/facturas/${sale.sale_id}/anular`,
+        {
+          motivo,
+          justificacion_interna: justificacion,
+          autorizado_por: user?.user_id,
+        },
+        { withCredentials: true }
+      );
+      toast.success("Factura anulada correctamente");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo anular la factura");
+    }
+  };
+
+  // Print sale receipt
+  const printSale = async (sale) => {
+    try {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Factura ${sale.invoice_number}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+              .company { font-size: 24px; font-weight: bold; }
+              .invoice-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+              .customer-info { margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f4f4f4; }
+              .totals { text-align: right; }
+              .total-row { font-weight: bold; font-size: 18px; }
+              @media print { body { print-color-adjust: exact; } }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="company">AutoAccesorios ERP</div>
+              <div>Sistema de Facturación</div>
+            </div>
+            <div class="invoice-info">
+              <div><strong>Factura:</strong> ${sale.invoice_number}</div>
+              <div><strong>Fecha:</strong> ${new Date(sale.created_at).toLocaleDateString('es-NI')}</div>
+            </div>
+            <div class="customer-info">
+              <strong>Cliente:</strong> ${sale.customer_name || 'N/A'}<br>
+              <strong>Tipo de Pago:</strong> ${sale.payment_type === 'cash' ? 'Contado' : sale.payment_type === 'credit' ? 'Crédito' : 'Tarjeta'}
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unit.</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(sale.items || []).map(item => `
+                  <tr>
+                    <td>${item.product_name || 'Producto'}</td>
+                    <td>${item.quantity}</td>
+                    <td>C$${(item.unit_price || 0).toFixed(2)}</td>
+                    <td>C$${((item.unit_price || 0) * item.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <div class="totals">
+              <p>Subtotal: C$${(sale.subtotal || sale.total || 0).toFixed(2)}</p>
+              ${sale.discount ? `<p>Descuento: -C$${sale.discount.toFixed(2)}</p>` : ''}
+              ${sale.tax ? `<p>IVA: C$${sale.tax.toFixed(2)}</p>` : ''}
+              <p class="total-row">TOTAL: C$${(sale.total || 0).toFixed(2)}</p>
+            </div>
+            <script>window.print(); setTimeout(() => window.close(), 500);</script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } catch (error) {
+      toast.error("Error al imprimir");
+    }
+  };
+
+  const printThermalSale = async (saleId) => {
+    try {
+      const response = await axios.get(`${API}/print/thermal/${saleId}`, {
+        withCredentials: true,
+        responseType: "text",
+      });
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`<pre style="font-family: monospace; font-size: 12px;">${response.data}</pre>`);
+      printWindow.document.close();
+      printWindow.print();
+    } catch (error) {
+      toast.error("Error al imprimir");
+    }
+  };
+
+  const openInvoicePdf = async (saleId) => {
+    if (!saleId) {
+      toast.error("ID de venta inválido");
+      return;
+    }
+    try {
+      // Request PDF from backend first to verify it exists and get blob
+      const response = await axios.get(`${API}/print/invoice-pdf/${saleId}`, {
+        withCredentials: true,
+        responseType: 'blob',
+      });
+
+      // If backend returned a JSON error blob (e.g., 404 HTML/JSON), try to detect and handle
+      const contentType = response.headers['content-type'] || '';
+      if (response.status !== 200 || !contentType.includes('pdf')) {
+        toast.error('Factura no disponible');
+        return;
+      }
+
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(blobUrl, '_blank');
+      // Do not revoke immediately; let browser keep the blob for the new tab. Revoke after a delay.
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
+    } catch (e) {
+      console.error('openInvoicePdf error:', e);
+      toast.error('No se pudo obtener la factura');
+    }
+  };
+
+  const normalizePhone = (phone) => (phone || "").toString().replace(/[^\d]/g, "");
+
+  const resolveSalePhone = (sale) => {
+    const fromSale = sale?.customer_phone || sale?.phone || "";
+    if (fromSale) return fromSale;
+    const fromCustomerId = customers.find(c => c.customer_id === sale?.customer_id)?.phone;
+    if (fromCustomerId) return fromCustomerId;
+    const fromName = customers.find(c => c.name === sale?.customer_name)?.phone;
+    return fromName || "";
+  };
+
+  const sendInvoiceWhatsApp = async (sale) => {
+    const phone = normalizePhone(resolveSalePhone(sale));
+    if (!phone) {
+      toast.error("El cliente no tiene teléfono válido");
+      return;
+    }
+
+    const invoiceUrl = `${API}/print/invoice-pdf/${sale.sale_id}`;
+    // Verify invoice exists before opening WhatsApp link
+    try {
+      const headResp = await axios.get(invoiceUrl, { withCredentials: true, responseType: 'blob' });
+      const ct = headResp.headers['content-type'] || '';
+      if (headResp.status !== 200 || !ct.includes('pdf')) {
+        toast.error('La factura no está disponible para compartir');
+        return;
+      }
+    } catch (err) {
+      console.error('Invoice check failed:', err);
+      toast.error('La factura no está disponible para compartir');
+      return;
+    }
+
+    const customerName = sale.customer_name || 'cliente';
+    const message = `Hola ${customerName}, te envío tu factura ${sale.invoice_number}. Puedes verla aquí: ${invoiceUrl}`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    // Note: recipient may need access to the backend to view the invoice
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Download sale as PDF (simple HTML to PDF)
+  const downloadSale = async (sale) => {
+    try {
+      // Try to get PDF from backend if available
+      const response = await axios.get(`${API}/sales/${sale.sale_id}/pdf`, {
+        withCredentials: true,
+        responseType: 'blob'
+      });
+      const ct = response.headers['content-type'] || '';
+      if (response.status !== 200 || !ct.includes('pdf')) {
+        throw new Error('PDF not available');
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `factura_${sale.invoice_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Factura descargada");
+    } catch (error) {
+      // Fallback: generate simple PDF-like download
+      const content = `
+FACTURA: ${sale.invoice_number}
+Fecha: ${new Date(sale.created_at).toLocaleDateString('es-NI')}
+Cliente: ${sale.customer_name || 'N/A'}
+----------------------------------------
+${(sale.items || []).map(item => `${item.product_name || 'Producto'} x${item.quantity} - C$${((item.unit_price || 0) * item.quantity).toFixed(2)}`).join('\n')}
+----------------------------------------
+TOTAL: C$${(sale.total || 0).toFixed(2)}
+      `;
+      
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `factura_${sale.invoice_number}.txt`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Factura descargada (formato texto)");
+    }
+  };
+
+  // Create new customer
+  const createNewCustomer = async () => {
+    if (!canCreateCustomers) {
+      toast.error("No tienes permiso para crear clientes");
+      return;
+    }
+    if (!newCustomer.first_name || !newCustomer.phone) {
+      toast.error("Nombre y teléfono son requeridos");
+      return;
+    }
+    
+    try {
+      const fullPhone = `${newCustomer.phone_prefix}-${newCustomer.phone}`;
+      const customerData = {
+        name: `${newCustomer.first_name} ${newCustomer.last_name}`.trim(),
+        first_name: newCustomer.first_name,
+        last_name: newCustomer.last_name,
+        customer_type: newCustomer.customer_type,
+        tax_id: newCustomer.tax_id,
+        email: newCustomer.email || null,
+        phone: fullPhone,
+        address: newCustomer.address || null,
+        credit_limit: parseFloat(newCustomer.credit_limit) || 0,
+      };
+      
+      const response = await axios.post(`${API}/customers`, customerData, { withCredentials: true });
+      const customerId = response.data.customer_id;
+      toast.success("Cliente creado exitosamente");
+      
+      // Create vehicle if requested
+      if (newCustomer.add_vehicle && newCustomer.brand && newCustomer.model) {
+        if (!newCustomer.year) {
+          toast.error("Selecciona el año del vehículo");
+          return;
+        }
+        if (!isValidVehicleSelection(newCustomer.brand, newCustomer.year, newCustomer.model)) {
+          toast.error("Marca, año y modelo deben seleccionarse desde la lista");
+          return;
+        }
+        try {
+          const plateFormatted = newCustomer.plate_prefix === "M"
+            ? `M ${newCustomer.plate_number}`
+            : `${newCustomer.plate_prefix} ${newCustomer.plate_number}`;
+          
+          const vehicleData = {
+            customer_id: customerId,
+            plate: plateFormatted,
+            brand: newCustomer.brand,
+            model: newCustomer.model,
+            year: parseInt(newCustomer.year) || new Date().getFullYear(),
+            color: newCustomer.color || null,
+            vin: newCustomer.chasis || null,
+            vehicle_type: "sedan",
+          };
+
+          await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
+          toast.success("Vehículo registrado");
+          
+          // Refresh vehicles
+          const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
+          setVehicles(vehiclesRes.data);
+        } catch (error) {
+          toast.error("Cliente creado pero error al registrar vehículo");
+        }
+      }
+      
+      // Refresh customers and select the new one
+      const customersRes = await axios.get(`${API}/customers`, { withCredentials: true });
+      setCustomers(customersRes.data);
+      
+      // Find and select the newly created customer
+      const newCust = customersRes.data.find(c => c.customer_id === customerId);
+      if (newCust) {
+        setSelectedCustomer(newCust);
+      }
+      
+      // Reset form and close dialog
+      resetNewCustomerForm();
+      setShowNewCustomer(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al crear cliente");
+    }
+  };
+
+  const resetNewCustomerForm = () => {
+    setNewCustomer({
+      first_name: "",
+      last_name: "",
+      customer_type: "natural",
+      tax_id: "",
+      email: "",
+      phone_prefix: "+505",
+      phone: "",
+      address: "",
+      credit_limit: 0,
+      add_vehicle: false,
+      plate_prefix: "M",
+      plate_number: "",
+      brand: "",
+      model: "",
+      year: "",
+      color: "",
+      chasis: "",
+    });
+    setNewCustomerTab("customer");
+  };
+
+  return (
+    <div className="p-6 space-y-6" data-testid="sales-page">
+      {!canViewSales ? (
+        <Card>
+          <CardContent className="py-6">
+            <p className="text-sm text-muted-foreground">No tienes permiso para ver ventas.</p>
+          </CardContent>
+        </Card>
+      ) : (
+      <>
+      {showNewSale && canCreateSales ? (
+        <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+          <CardHeader className="pb-3">
+            <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={fetchData}
+                  className="ui-interactive"
+                  title="Actualizar datos"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  data-testid="new-sale-btn"
+                  onClick={createDraftTab}
+                  disabled={!canCreateSales}
+                  className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  title="Nueva Venta"
+                >
+                  <Plus className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Nueva Venta</span>
+                </Button>
+              </div>
+              <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+                <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
+                <Switch
+                  checked={currency === "USD"}
+                  onCheckedChange={(checked) => setCurrency(checked ? "USD" : "NIO")}
+                  className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
+                  aria-label="Cambiar moneda entre córdobas y dólares"
+                />
+                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
+              </div>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => setShowClearSaleConfirm(true)}
+                disabled={!canCreateSales}
+                className="h-8 w-8 ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                title="Limpiar Formulario"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>¿Limpiar formulario?</DialogTitle>
+                  <DialogDescription>
+                    Se borrarán todos los datos ingresados en la venta actual. Esta acción no se puede deshacer.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex gap-2 sm:justify-end">
+                  <Button variant="outline" onClick={() => setShowClearSaleConfirm(false)}>Cancelar</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => { setShowClearSaleConfirm(false); clearEmbeddedSaleForm(); }}
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Sí, limpiar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <SaleForm
+              key={`${activeDraftId || "draft"}-${saleFormRenderNonce}`}
+              customers={customers}
+              products={products}
+              warehouses={warehouses}
+              inventory={inventory}
+              vehicles={vehicles}
+              initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
+              defaultIvaRate={effectiveIvaRate}
+              draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
+              onOpenCatalogSearch={openCatalogFromSaleForm}
+              onDraftPersist={(snapshot) => {
+                if (!activeDraftId) return;
+                markDraftSaving();
+                updateDraftTabMeta(activeDraftId, snapshot);
+              }}
+              onDraftSaveStateChange={(payload) => {
+                if (!activeDraftId) return;
+                const state = payload?.state;
+                if (state === "saving") {
+                  markDraftSaving();
+                  return;
+                }
+                if (state === "saved") {
+                  markDraftSaved();
+                  return;
+                }
+                if (state === "error") {
+                  markDraftSaveError();
+                }
+              }}
+              onDraftClear={() => {
+                if (!activeDraftId) return;
+                syncDraftToServer(
+                  activeDraftId,
+                  {},
+                  draftTabsRef.current.find((tab) => tab.id === activeDraftId)?.name
+                ).catch(() => {
+                  // keep local clear behavior if remote cleanup fails
+                });
+              }}
+              onDataRefresh={fetchData}
+              currencyValue={currency}
+              onCurrencyChange={setCurrency}
+              hideCurrencyField={true}
+              submitLabel="Crear Venta"
+              onSubmit={async (payload) => {
+                try {
+                  await createSaleWithPayload(payload);
+                  if (activeDraftId) {
+                    closeDraftTab(activeDraftId);
+                  }
+                } catch (err) {
+                  toast.error(err?.response?.data?.detail || "Error al crear venta");
+                }
+              }}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Filters and Search */}
+      {canSeeAdvancedFilters && <div className="flex gap-4 flex-wrap">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por factura o cliente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={filterPayment} onValueChange={setFilterPayment}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tipo pago" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="cash">Efectivo</SelectItem>
+            <SelectItem value="card">Tarjeta</SelectItem>
+            <SelectItem value="credit">Crédito</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="pending">Pendiente</SelectItem>
+            <SelectItem value="paid">Pagado</SelectItem>
+            <SelectItem value="cancelled">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterSeller} onValueChange={setFilterSeller}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Vendedor" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos Vendedores</SelectItem>
+            {sellers.map(s => (
+              <SelectItem key={s.user_id || s.pin_user_id} value={s.user_id || s.pin_user_id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterBranch} onValueChange={setFilterBranch}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Sucursal" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas Sucursales</SelectItem>
+            {branches.map(b => (
+              <SelectItem key={b.branch_id} value={b.branch_id}>
+                {b.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>}
+
+      {/* Drafts + 3-column invoice board */}
+      <div className="xl:hidden">
+        <Tabs value={boardTab} onValueChange={setBoardTab}>
+          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
+            <TabsTrigger value="drafts" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Borradores
+            </TabsTrigger>
+            <TabsTrigger value="open" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Abiertas
+            </TabsTrigger>
+            <TabsTrigger value="closed" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Cerradas
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden xl:block" : "") }>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE VENTA</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {draftTabs.length === 0 ? (
+              <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">
+                No hay borradores abiertos.
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {draftTabs.map((tab) => {
+                  const meta = getDraftMeta(tab);
+                  const isActive = activeDraftId === tab.id;
+                  return (
+                    <Card key={tab.id} className={`overflow-hidden transition ${isActive ? "border-primary" : ""}`}>
+                      <CardContent className="p-0">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="grid gap-3 md:grid-cols-[140px,1fr]"
+                          onClick={() => {
+                            setActiveDraftId(tab.id);
+                            updateDraftTabMeta(tab.id);
+                            setShowNewSale(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setActiveDraftId(tab.id);
+                              updateDraftTabMeta(tab.id);
+                              setShowNewSale(true);
+                            }
+                          }}
+                        >
+                          <div className="bg-muted/30 flex items-center justify-center min-h-[120px]">
+                            {meta.previewImage ? (
+                              <img
+                                src={meta.previewImage}
+                                alt={meta.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="text-xs text-muted-foreground">Sin imagen</div>
+                            )}
+                          </div>
+                          <div className="p-3 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-[140px]">
+                                <p className="text-sm font-semibold truncate">{meta.title}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">{meta.subtitle}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-semibold">
+                                  {formatCurrency(meta.total || 0, meta.currency)}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} items</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline">{isActive ? "Activo" : "Borrador"}</Badge>
+                              <Badge variant="secondary">{meta.currency}</Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
+                            </p>
+                            {meta.previewVehicle ? (
+                              <p className="text-[11px] text-muted-foreground">Vehiculo: {meta.previewVehicle}</p>
+                            ) : null}
+                            {(meta.totalDiscounts > 0 || meta.retention > 0) ? (
+                              <div className="space-y-1 rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+                                {meta.totalDiscounts > 0 ? (
+                                  <p className="text-[11px] text-green-700">
+                                    Descuentos: -{formatCurrency(meta.totalDiscounts, meta.currency)}
+                                  </p>
+                                ) : null}
+                                {meta.retention > 0 ? (
+                                  <p className="text-[11px] text-orange-600">
+                                    Retencion IR ({meta.retentionRate}%): -{formatCurrency(meta.retention, meta.currency)}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDraftId(tab.id);
+                                updateDraftTabMeta(tab.id);
+                                setShowNewSale(true);
+                              }}>
+                                Abrir borrador
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  closeDraftTab(tab.id);
+                                }}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className={cn(boardTab !== "open" ? "hidden xl:block" : "") }>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">FACTURAS ABIERTAS EN CAJA</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {loading ? (
+              <div className="py-10 text-center text-muted-foreground">
+                <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+              </div>
+            ) : openInvoicesInCash.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground">
+                No hay facturas abiertas en caja
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {openInvoicesInCash.map((sale) => (
+                  <Card key={sale.sale_id} className="overflow-hidden">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex gap-3 items-start">
+                        <img
+                          src={getVehicleThumbnail(getVehicleById(sale.vehicle_id))}
+                          alt="Vehículo"
+                          className="w-28 h-20 rounded-md object-cover bg-muted/30"
+                        />
+                        <div className="flex-1 flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {sale.invoice_number || "Sin factura"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {sale.customer_name || "Sin cliente"}
+                            </p>
+                            {sale.vehicle_id ? (
+                              <p className="text-xs text-muted-foreground">
+                                Vehiculo: {getVehicleLabel(sale.vehicle_id) || "Sin vehiculo"}
+                              </p>
+                            ) : null}
+                            <p className="text-xs text-muted-foreground">
+                              {sale.created_at ? formatDate(sale.created_at) : "—"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold">
+                              {formatCurrency(sale.total)}
+                            </p>
+                            <div className="flex flex-wrap justify-end gap-2 mt-1">
+                              <Badge className={getPaymentTone(sale.payment_type)}>
+                                {PAYMENT_TYPES[sale.payment_type] || sale.payment_type}
+                              </Badge>
+                              <Badge className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-200 dark:border-blue-500/30">
+                                Abierta en caja
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground">
+                        Articulos: {getSaleItemsPreview(sale)}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Imprimir"
+                          onClick={() => printSale(sale)}
+                          data-testid={`print-sale-${sale.sale_id}`}
+                        >
+                          <Printer className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Descargar"
+                          onClick={() => downloadSale(sale)}
+                          data-testid={`download-sale-${sale.sale_id}`}
+                        >
+                          <Download className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Enviar por WhatsApp"
+                          onClick={() => sendInvoiceWhatsApp(sale)}
+                          data-testid={`whatsapp-sale-${sale.sale_id}`}
+                        >
+                          <WhatsAppIcon className="h-6 w-6 text-[#25D366]" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Ver factura"
+                          onClick={() => openInvoicePdf(sale.sale_id)}
+                          data-testid={`view-sale-${sale.sale_id}`}
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                        {isBillingApprover ? (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => requestInvoiceEdit(sale)}>
+                              Abrir/Editar
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => cancelInvoiceDirectly(sale)}>
+                              Anular factura
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => requestInvoiceEdit(sale)}>
+                              Solicitar edición
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => requestInvoiceCancel(sale)}>
+                              Solicitar anulación
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className={cn(boardTab !== "closed" ? "hidden xl:block" : "") }>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">FACTURAS CERRADAS DEL DÍA</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {loading ? (
+              <div className="py-10 text-center text-muted-foreground">
+                <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+              </div>
+            ) : closedInvoicesToday.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground">
+                No hay facturas cerradas hoy
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {closedInvoicesToday.map((sale) => (
+                  <Card key={`closed-${sale.sale_id}`} className="overflow-hidden">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">{sale.invoice_number || "Sin factura"}</p>
+                          <p className="text-xs text-muted-foreground">{sale.customer_name || "Sin cliente"}</p>
+                          <p className="text-xs text-muted-foreground">{sale.created_at ? formatDate(sale.created_at) : "—"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{formatCurrency(sale.total)}</p>
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/30">
+                            Cerrada
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Artículos: {getSaleItemsPreview(sale)}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="ghost" size="icon" title="Imprimir" onClick={() => printSale(sale)}>
+                          <Printer className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" title="Descargar" onClick={() => downloadSale(sale)}>
+                          <Download className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" title="Ver factura" onClick={() => openInvoicePdf(sale.sale_id)}>
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Transfer Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="h-5 w-5" />
+              Solicitar Traslado
+            </DialogTitle>
+            <DialogDescription>
+              {transferProduct?.name} no tiene stock en esta bodega pero está disponible en otras.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {transferProduct && (
+              <div className="p-3 bg-muted rounded-md">
+                <p className="font-medium">{transferProduct.name}</p>
+                <p className="text-sm text-muted-foreground">Stock en otras bodegas:</p>
+                {getOtherWarehouseStock(transferProduct.product_id, selectedWarehouse).map(s => (
+                  <p key={s.warehouse_id} className="text-sm">• {s.warehouse_name}: {s.quantity} unidades</p>
+                ))}
+              </div>
+            )}
+            <div>
+              <Label>Trasladar desde:</Label>
+              <Select value={transferFromWarehouse} onValueChange={setTransferFromWarehouse}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {transferProduct && getOtherWarehouseStock(transferProduct.product_id, selectedWarehouse).map(s => (
+                    <SelectItem key={s.warehouse_id} value={s.warehouse_id}>
+                      {s.warehouse_name} ({s.quantity} disponibles)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Se enviará una solicitud de traslado que debe ser aprobada por un supervisor.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTransferDialog(false)}>Cancelar</Button>
+            <Button onClick={requestTransfer} disabled={!canEditSales}>
+              <Truck className="h-4 w-4 mr-2" />
+              Solicitar Traslado
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manager Authorization Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-orange-500" />
+              Autorización de Gerente Requerida
+            </DialogTitle>
+            <DialogDescription>
+              Los siguientes productos son Solo para llevar y requieren autorización del gerente para ser instalados.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {authProducts.length > 0 && (
+              <div className="border rounded-lg p-3 bg-orange-50 dark:bg-orange-950/20">
+                <p className="text-sm font-medium mb-2">Productos que requieren autorización:</p>
+                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                  {authProducts.map((p, idx) => (
+                    <li key={idx}>{p.name || p.product_name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div>
+              <Label>Código de Autorización</Label>
+              <Input
+                value={managerAuthCode}
+                onChange={(e) => setManagerAuthCode(e.target.value.toUpperCase())}
+                placeholder="Ingresa el código del gerente"
+                className="font-mono"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={requestManagerAuth} className="flex-1">
+                Generar Código (Gerente)
+              </Button>
+              <Button onClick={submitWithAuth} disabled={!managerAuthCode} className="flex-1">
+                Confirmar Venta
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Customer Dialog */}
+      <Dialog open={showNewCustomer} onOpenChange={(open) => { setShowNewCustomer(open); if (!open) resetNewCustomerForm(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Nuevo Cliente
+            </DialogTitle>
+            <DialogDescription>
+              Registra un nuevo cliente y opcionalmente su vehículo.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs value={newCustomerTab} onValueChange={setNewCustomerTab}>
+            <TabsContent value="customer" className="space-y-4 mt-4">
+              {/* Apellidos */}
+              <div>
+                <Label>Apellidos *</Label>
+                <Input
+                  value={newCustomer.last_name}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
+                  placeholder="Pérez López"
+                />
+              </div>
+              {/* Tax ID */}
+              <div>
+                <Label>{newCustomer.customer_type === "natural" ? "Cédula" : "RUC"}</Label>
+                <Input
+                  value={newCustomer.tax_id}
+                  onChange={(e) => setNewCustomer({ 
+                    ...newCustomer, 
+                    tax_id: newCustomer.customer_type === "natural" 
+                      ? formatCedula(e.target.value) 
+                      : formatRUC(e.target.value)
+                  })}
+                  placeholder={newCustomer.customer_type === "natural" ? "001-000000-0000A" : "J0000000000000"}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {newCustomer.customer_type === "natural" 
+                    ? "Formato: 001-000000-0000A" 
+                    : "Formato: J0000000000000"}
+                </p>
+              </div>
+              {/* Phone */}
+              <div>
+                <Label>Teléfono *</Label>
+                <div className="flex gap-2">
+                  <Select 
+                    value={newCustomer.phone_prefix} 
+                    onValueChange={(v) => setNewCustomer({ ...newCustomer, phone_prefix: v })}
+                  >
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="+505">+505</SelectItem>
+                      <SelectItem value="+1">+1</SelectItem>
+                      <SelectItem value="+52">+52</SelectItem>
+                      <SelectItem value="+57">+57</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: formatPhone(e.target.value) })}
+                    placeholder="0000-0000"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Formato: +505-0000-0000</p>
+              </div>
+              {/* Email */}
+              <div>
+                <Label>Email <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+                <Input
+                  type="email"
+                  value={newCustomer.email}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                  placeholder="cliente@email.com"
+                />
+              </div>
+              {/* Address */}
+              <div>
+                <Label>Dirección <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+                <Input
+                  value={newCustomer.address}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                  placeholder="Dirección del cliente"
+                />
+              </div>
+              {/* Credit Limit */}
+              <div>
+                <Label>Límite de Crédito (C$)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={newCustomer.credit_limit}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, credit_limit: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              {/* Add Vehicle Checkbox */}
+              <div className="flex items-center space-x-2 pt-2 border-t">
+                <Checkbox
+                  id="add-vehicle-sale"
+                  checked={newCustomer.add_vehicle}
+                  onCheckedChange={(checked) => {
+                    setNewCustomer({ ...newCustomer, add_vehicle: checked });
+                    if (checked) setNewCustomerTab("vehicle");
+                  }}
+                />
+                <Label htmlFor="add-vehicle-sale" className="cursor-pointer">
+                  Registrar vehículo del cliente
+                </Label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="vehicle" className="space-y-4 mt-4">
+              {/* Plate */}
+              <div>
+                <Label>Placa *</Label>
+                <div className="flex gap-2">
+                  <Select 
+                    value={newCustomer.plate_prefix} 
+                    onValueChange={(v) => setNewCustomer({ ...newCustomer, plate_prefix: v, plate_number: "" })}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLATE_PREFIXES.map(prefix => (
+                        <SelectItem key={prefix} value={prefix}>{prefix}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={newCustomer.plate_number}
+                    onChange={(e) => setNewCustomer({ 
+                      ...newCustomer, 
+                      plate_number: formatPlateNumber(newCustomer.plate_prefix, e.target.value)
+                    })}
+                    placeholder={newCustomer.plate_prefix === "M" ? "123 456" : "12345"}
+                    className="flex-1 font-mono"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {newCustomer.plate_prefix === "M" 
+                    ? "Formato: M 123 456 (6 dígitos)" 
+                    : `Formato: ${newCustomer.plate_prefix} 12345 (4-5 dígitos)`}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Marca *</Label>
+                  <SearchableSelect
+                    value={newCustomer.brand}
+                    onChange={(v) => setNewCustomer({ ...newCustomer, brand: v, year: "", model: "" })}
+                    options={VEHICLE_CATALOG_BRANDS}
+                    placeholder="Seleccionar marca"
+                    searchPlaceholder="Buscar marca..."
+                  />
+                </div>
+
+                <div>
+                  <Label>Año *</Label>
+                  <SearchableSelect
+                    value={String(newCustomer.year || "")}
+                    onChange={(v) => setNewCustomer({ ...newCustomer, year: v, model: "" })}
+                    options={newCustomerYearOptions}
+                    placeholder="Seleccionar año"
+                    searchPlaceholder="Buscar año..."
+                    disabled={!newCustomer.brand}
+                  />
+                </div>
+
+                <div>
+                  <Label>Modelo *</Label>
+                  <SearchableSelect
+                    value={newCustomer.model}
+                    onChange={(v) => setNewCustomer({ ...newCustomer, model: v })}
+                    options={newCustomerModelOptions}
+                    placeholder="Seleccionar modelo"
+                    searchPlaceholder="Buscar modelo..."
+                    disabled={!newCustomer.brand || !newCustomer.year}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Color</Label>
+                <Input
+                  list="sales-new-customer-color-options"
+                  value={newCustomer.color}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, color: e.target.value })}
+                  placeholder="Escribe para sugerencias de color"
+                />
+                <datalist id="sales-new-customer-color-options">
+                  {VEHICLE_COLOR_SUGGESTIONS.map((color) => (
+                    <option key={color} value={color} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Chasis */}
+              <div>
+                <Label>CHASIS (VIN)</Label>
+                <Input
+                  value={newCustomer.chasis}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, chasis: formatChasis(e.target.value) })}
+                  placeholder="1HGBH41JXMN109186"
+                  className="font-mono"
+                  maxLength={17}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  17 caracteres alfanuméricos (sin I, O, Q, Ñ). {newCustomer.chasis.length}/17
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Button onClick={createNewCustomer} className="w-full mt-4" disabled={!canCreateCustomers}>
+            {newCustomer.add_vehicle ? "Crear Cliente y Vehículo" : "Crear Cliente"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPrintPrompt} onOpenChange={setShowPrintPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Imprimir factura</DialogTitle>
+            <DialogDescription>
+              Elige el formato de impresion para la factura de la venta seleccionada.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              ¿Cómo deseas imprimir la factura?
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  if (printSaleData?.sale_id) {
+                    printThermalSale(printSaleData.sale_id);
+                  }
+                  setShowPrintPrompt(false);
+                }}
+              >
+                Térmica 80mm
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  if (printSaleData?.sale_id) {
+                    openInvoicePdf(printSaleData.sale_id);
+                  }
+                  setShowPrintPrompt(false);
+                }}
+              >
+                PDF membretado
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </>
+      )}
+    </div>
+  );
+}
