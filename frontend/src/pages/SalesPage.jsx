@@ -21,9 +21,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import SearchableSelect from "@/components/ui/searchable-select";
 import { toast } from "sonner";
 import { 
-  Plus, Search, CreditCard, Printer, Download, RefreshCw, 
+  FilePlus2, Search, CreditCard, Printer, Download, RefreshCw, 
   Wrench, Package, ShieldCheck, Car, XCircle,
-  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, Save
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
@@ -32,6 +32,12 @@ import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
 import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import { playSelectionFeedbackSound } from "@/lib/uiSounds";
+import {
+  normalizePaymentMethodCode,
+  normalizePaymentMethodList,
+  paymentMethodsAllowDiscounts,
+} from "@/lib/paymentMethods";
 import {
   getVehicleOptionsByBrandYear,
   getVehicleYearsByBrand,
@@ -181,6 +187,7 @@ export function SalesPage() {
   const [vehicles, setVehicles] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshingData, setIsRefreshingData] = useState(false);
   const [search, setSearch] = useState("");
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -203,6 +210,7 @@ export function SalesPage() {
   const [selectedWarehouse, setSelectedWarehouse] = useState("");
   const [cartItems, setCartItems] = useState([]);
   const [paymentType, setPaymentType] = useState("cash");
+  const [mixedPaymentMethods, setMixedPaymentMethods] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
   const [creditDays] = useState(30);
   const [deliveryRequired] = useState(false);
@@ -337,101 +345,51 @@ export function SalesPage() {
   useEffect(() => {
     let cancelled = false;
 
-    const localBootstrap = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
-    if (Array.isArray(localBootstrap.draftTabs) && localBootstrap.draftTabs.length > 0) {
-      setDraftTabs(localBootstrap.draftTabs);
-      setActiveDraftId(localBootstrap.activeDraftId || localBootstrap.draftTabs[0]?.id || null);
-      setDraftsLoaded(true);
-    }
+    const getUsableLocalDraftState = () => {
+      const state = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+      if (typeof window === "undefined") {
+        return state;
+      }
+
+      const usableTabs = Array.isArray(state.draftTabs)
+        ? state.draftTabs.filter((tab) => {
+            if (!tab?.id) return false;
+            return Boolean(window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`));
+          })
+        : [];
+
+      const activeDraftId = usableTabs.some((tab) => tab.id === state.activeDraftId)
+        ? state.activeDraftId
+        : (usableTabs[0]?.id ?? null);
+
+      return { draftTabs: usableTabs, activeDraftId };
+    };
 
     const loadDrafts = async () => {
       try {
         emitAutosaveStatus(AUTOSAVE_STATUS.RECOVERING, { source: "sales" });
         const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
         if (cancelled) return;
-        const localFallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
-        const hasUsableLocalDrafts =
-          typeof window !== "undefined"
-          && Array.isArray(localFallback.draftTabs)
-          && localFallback.draftTabs.some((tab) => {
-            if (!tab?.id) return false;
-            return Boolean(window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`));
-          });
-
-        if (hasUsableLocalDrafts) {
-          setDraftTabs(localFallback.draftTabs);
-          setActiveDraftId(localFallback.activeDraftId || localFallback.draftTabs[0]?.id || null);
-          return;
-        }
-
-        const shouldUseLocalFallback =
-          Array.isArray(bundle?.drafts)
-          && bundle.drafts.length === 0
-          && localFallback.draftTabs.length > 0;
-
-        if (shouldUseLocalFallback) {
-          setDraftTabs(localFallback.draftTabs);
-          setActiveDraftId(localFallback.activeDraftId || localFallback.draftTabs[0]?.id || null);
-          return;
-        }
-
         const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
-        let mergedDrafts = serverDrafts;
-        let mergedActiveDraftId = bundle.activeDraftId || (serverDrafts[0]?.id ?? null);
-
-        if (localFallback.draftTabs.length > 0) {
-          const serverById = new Map(serverDrafts.map((draft) => [draft.id, draft]));
-          const localOnlyDrafts = [];
-
-          localFallback.draftTabs.forEach((tab) => {
-            const localKey = `${DRAFT_KEY_PREFIX}${tab.id}`;
-            const raw = typeof window !== "undefined" ? window.localStorage.getItem(localKey) : null;
-            const serverDraft = serverById.get(tab.id);
-
-            if (!serverDraft) {
-              if (!raw) return;
-              let snapshot = {};
-              try {
-                snapshot = JSON.parse(raw) || {};
-              } catch (error) {
-                snapshot = {};
-              }
-              localOnlyDrafts.push({
-                id: tab.id,
-                name: tab.name || `Borrador ${localOnlyDrafts.length + 1}`,
-                updatedAt: tab.updatedAt || snapshot?.updatedAt || new Date().toISOString(),
-                snapshot,
-              });
-            }
-          });
-
-          if (localOnlyDrafts.length > 0) {
-            mergedDrafts = [...serverDrafts, ...localOnlyDrafts];
-          }
-
-          const mergedIds = new Set(mergedDrafts.map((draft) => draft.id));
-          if (localFallback.activeDraftId && mergedIds.has(localFallback.activeDraftId)) {
-            mergedActiveDraftId = localFallback.activeDraftId;
-          }
-        }
+        const nextActiveDraftId = bundle.activeDraftId || (serverDrafts[0]?.id ?? null);
 
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: mergedDrafts,
-          activeDraftId: mergedActiveDraftId,
+          drafts: serverDrafts,
+          activeDraftId: nextActiveDraftId,
         });
-        setDraftTabs(mergedDrafts.map((draft) => ({
+        setDraftTabs(serverDrafts.map((draft) => ({
           id: draft.id,
           name: draft.name,
           updatedAt: draft.updatedAt,
         })));
-        setActiveDraftId(mergedActiveDraftId || (mergedDrafts[0]?.id ?? null));
+        setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
       } catch (error) {
         if (cancelled) return;
-        const fallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+        const fallback = getUsableLocalDraftState();
         setDraftTabs(fallback.draftTabs);
         setActiveDraftId(fallback.activeDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
@@ -480,6 +438,42 @@ export function SalesPage() {
     });
   }, [DRAFT_FLOW, activeDraftId, draftsLoaded]);
 
+  // Keep SalesPage state in sync when switching between server-restored drafts.
+  useEffect(() => {
+    if (!activeDraftId || typeof window === "undefined") return;
+
+    try {
+      const draft = readDraft(activeDraftId);
+      if (!draft) return;
+
+      const customerId = draft.selectedCustomerId;
+      if (customerId) {
+        const customer = customers.find(
+          (c) => String(c.customer_id ?? "") === String(customerId)
+        );
+        if (customer) {
+          setSelectedCustomer(customer);
+        }
+      } else {
+        setSelectedCustomer(null);
+      }
+
+      setSelectedVehicle(draft.selectedVehicle || "");
+      setSelectedWarehouse(draft.selectedWarehouse || "");
+      setCartItems(draft.cartItems || []);
+      setPaymentType(draft.paymentMethod || draft.payment_type || "cash");
+      setGlobalDiscount(draft.globalDiscount || 0);
+      setNotes(draft.notes || "");
+      setApplyIVA(draft.applyIVA ?? true);
+      setApplyRetention(draft.applyRetention ?? false);
+      setRetentionRate(draft.retentionRate ?? 2);
+      setCurrency(draft.currency || "NIO");
+      setAppliedDiscounts(draft.appliedDiscounts || []);
+    } catch (error) {
+      // keep current state if draft parsing fails
+    }
+  }, [activeDraftId, customers]);
+
   useEffect(() => {
     if (typeof window === "undefined" || !user) return;
     const stored = window.localStorage.getItem(formVisibilityStorageKey);
@@ -517,7 +511,12 @@ export function SalesPage() {
       setSellers(usersRes.data.filter(u => u.role === "ventas" || u.role === "gerencia"));
       setBranches(branchesRes.data);
       if (warehousesRes.data.length > 0) {
-        setSelectedWarehouse(warehousesRes.data[0].warehouse_id);
+        setSelectedWarehouse((currentWarehouseId) => {
+          if (currentWarehouseId && warehousesRes.data.some((warehouse) => warehouse.warehouse_id === currentWarehouseId)) {
+            return currentWarehouseId;
+          }
+          return warehousesRes.data[0].warehouse_id;
+        });
       }
     } catch (error) {
       toast.error("Error al cargar datos");
@@ -525,6 +524,15 @@ export function SalesPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleRefreshData = useCallback(async () => {
+    setIsRefreshingData(true);
+    try {
+      await fetchData();
+    } finally {
+      setIsRefreshingData(false);
+    }
+  }, [fetchData]);
 
   useEffect(() => {
     const refreshData = () => {
@@ -608,8 +616,9 @@ export function SalesPage() {
     const rate = exchangeRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
-    const paymentMethod = String(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash").trim().toLowerCase();
-    const discountsAllowed = paymentMethod === "cash" || paymentMethod === "transfer";
+    const paymentMethod = normalizePaymentMethodCode(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash");
+    const mixedMethods = normalizePaymentMethodList(draft.mixedPaymentMethods || draft.mixed_payment_methods || []);
+    const discountsAllowed = paymentMethodsAllowDiscounts(paymentMethod, mixedMethods);
 
     const subtotal = items.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price || 0);
@@ -626,14 +635,16 @@ export function SalesPage() {
 
     let discountFromCodes = 0;
     const applied = Array.isArray(draft.appliedDiscounts) ? draft.appliedDiscounts : [];
-    applied.forEach((d) => {
-      if (d.type === "percent") {
-        discountFromCodes += subtotal * (d.value / 100);
-      } else if (d.type === "fixed") {
-        const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
-        discountFromCodes += fixedInCurrency;
-      }
-    });
+    if (discountsAllowed) {
+      applied.forEach((d) => {
+        if (d.type === "percent") {
+          discountFromCodes += subtotal * (d.value / 100);
+        } else if (d.type === "fixed") {
+          const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
+          discountFromCodes += fixedInCurrency;
+        }
+      });
+    }
 
     if (!discountsAllowed) {
       discountFromCodes = 0;
@@ -846,6 +857,7 @@ export function SalesPage() {
         : null),
       selectedWarehouse: snapshot?.selectedWarehouse || selectedWarehouse || "",
       paymentMethod: snapshot?.paymentMethod || snapshot?.payment_type || "cash",
+      mixedPaymentMethods: normalizePaymentMethodList(snapshot?.mixedPaymentMethods || snapshot?.mixed_payment_methods || []),
       cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
       globalDiscount: snapshot?.globalDiscount || 0,
       notes: snapshot?.notes || "",
@@ -1267,10 +1279,11 @@ export function SalesPage() {
   };
 
   const calculateTotals = () => {
+    const discountsAllowed = paymentMethodsAllowDiscounts(paymentType, mixedPaymentMethods);
     // Calcular subtotal convirtiendo cada precio según la moneda seleccionada
     let subtotalInCurrency = cartItems.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price);
-      let itemTotal = priceInCurrency * item.quantity * (1 - (item.discount || 0) / 100);
+      let itemTotal = priceInCurrency * item.quantity * (1 - (discountsAllowed ? (item.discount || 0) : 0) / 100);
       if (item.with_installation && item.installation_price) {
         const installationInCurrency = convertPrice(item.installation_price);
         itemTotal += installationInCurrency * item.quantity;
@@ -1291,7 +1304,7 @@ export function SalesPage() {
     });
 
     // Apply global discount
-    const globalDiscountAmount = subtotalInCurrency * (globalDiscount / 100);
+    const globalDiscountAmount = discountsAllowed ? subtotalInCurrency * (globalDiscount / 100) : 0;
     
     const subtotalAfterDiscounts = subtotalInCurrency - discountFromCodes - globalDiscountAmount;
     const tax = applyIVA ? subtotalAfterDiscounts * (ivaRate / 100) : 0;
@@ -1410,15 +1423,18 @@ export function SalesPage() {
       })));
       setGlobalDiscount(payload.discount || 0);
       setPaymentType(payload.payment_type || payload.payment_method || "cash");
+      setMixedPaymentMethods(normalizePaymentMethodList(payload.mixed_payment_methods || payload.mixedPaymentMethods || []));
       setApplyIVA(payload.apply_iva ?? applyIVA);
       setCurrency(payload.currency || currency);
       if (payload.applied_discounts) {
         setAppliedDiscounts(payload.applied_discounts);
       }
 
-      const totalsLocal = calculateTotals();
+      const totalsLocal = typeof payload.total_amount === "number" ? { total: payload.total_amount } : calculateTotals();
 
       const payloadPaymentType = payload.payment_type || payload.payment_method || paymentType;
+      const payloadMixedPaymentMethods = normalizePaymentMethodList(payload.mixed_payment_methods || payload.mixedPaymentMethods || []);
+      const discountsAllowed = paymentMethodsAllowDiscounts(payloadPaymentType, payloadMixedPaymentMethods);
       const saleData = {
         customer_id: payload.customer_id,
         vehicle_id: payload.vehicle_id || null,
@@ -1432,6 +1448,7 @@ export function SalesPage() {
         discount: payload.discount || 0,
         payment_type: payloadPaymentType,
         payment_method: payload.payment_method || payloadPaymentType,
+        mixed_payment_methods: payloadMixedPaymentMethods,
         credit_days: payloadPaymentType === "credit" ? (payload.credit_days ?? creditDays) : null,
         delivery_required: deliveryRequired,
         delivery_address: deliveryRequired ? deliveryAddress : null,
@@ -1440,7 +1457,7 @@ export function SalesPage() {
         iva_rate: ivaRate,
         currency: payload.currency || currency,
         exchange_rate: exchangeRate,
-        discount_codes: payload.discount_codes || appliedDiscounts.map(d => d.code),
+        discount_codes: discountsAllowed ? (payload.discount_codes || appliedDiscounts.map(d => d.code)) : [],
         total_amount: totalsLocal.total,
         notes: payload.notes || null,
       };
@@ -1951,44 +1968,74 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={fetchData}
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    handleRefreshData();
+                  }}
+                  disabled={isRefreshingData}
                   className="ui-interactive"
                   title="Actualizar datos"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  <RefreshCw className={cn("h-3.5 w-3.5", isRefreshingData ? "animate-spin" : "")} />
+                  <span className="hidden sm:inline sm:ml-2">Actualizar datos</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   data-testid="new-sale-btn"
-                  onClick={createDraftTab}
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    createDraftTab();
+                  }}
                   disabled={!canCreateSales}
-                  className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
                   title="Nueva Venta"
                 >
-                  <Plus className="h-3.5 w-3.5 sm:mr-2" />
+                  <FilePlus2 className="h-3.5 w-3.5 text-emerald-700 sm:mr-2" />
                   <span className="hidden sm:inline">Nueva Venta</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    saveActiveDraftNow();
+                  }}
+                  disabled={!canCreateSales}
+                  data-testid="save-sale-draft-btn"
+                  className="ui-interactive border-violet-500/40 bg-violet-500/10 text-violet-800 hover:bg-violet-500/20"
+                  title="Guardar borrador"
+                >
+                  <Save className="h-3.5 w-3.5 text-violet-700" />
+                  <span className="hidden sm:inline sm:ml-2">Guardar</span>
                 </Button>
               </div>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
-                  onCheckedChange={(checked) => setCurrency(checked ? "USD" : "NIO")}
+                  onCheckedChange={(checked) => {
+                    playSelectionFeedbackSound();
+                    setCurrency(checked ? "USD" : "NIO");
+                  }}
                   className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
                   aria-label="Cambiar moneda entre córdobas y dólares"
                 />
                 <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
               </div>
               <Button
-                size="icon"
+                size="sm"
                 variant="outline"
-                onClick={() => setShowClearSaleConfirm(true)}
+                onClick={() => {
+                  playSelectionFeedbackSound();
+                  setShowClearSaleConfirm(true);
+                }}
                 disabled={!canCreateSales}
-                className="h-8 w-8 ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                className="ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
                 title="Limpiar Formulario"
               >
                 <Eraser className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline sm:ml-2">Limpiar</span>
               </Button>
             </div>
             <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
@@ -2020,7 +2067,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               warehouses={warehouses}
               inventory={inventory}
               vehicles={vehicles}
-              initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
+              initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, paymentMethod: paymentType, mixedPaymentMethods, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
               onOpenCatalogSearch={openCatalogFromSaleForm}

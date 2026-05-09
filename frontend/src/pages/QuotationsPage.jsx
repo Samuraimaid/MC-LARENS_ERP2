@@ -11,7 +11,7 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
@@ -22,6 +22,12 @@ import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRa
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
 import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
 import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import { playSelectionFeedbackSound } from "@/lib/uiSounds";
+import {
+  normalizePaymentMethodCode,
+  normalizePaymentMethodList,
+  paymentMethodsAllowDiscounts,
+} from "@/lib/paymentMethods";
 import { useAuth } from "@/context/AuthContext";
 import { User, CarFront } from "lucide-react";
 
@@ -206,8 +212,9 @@ export function QuotationsPage() {
     const rate = effectiveUsdNioRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
-    const paymentMethod = String(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash").trim().toLowerCase();
-    const discountsAllowed = paymentMethod === "cash" || paymentMethod === "transfer";
+    const paymentMethod = normalizePaymentMethodCode(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash");
+    const mixedMethods = normalizePaymentMethodList(draft.mixedPaymentMethods || draft.mixed_payment_methods || []);
+    const discountsAllowed = paymentMethodsAllowDiscounts(paymentMethod, mixedMethods);
 
     const subtotal = items.reduce((sum, item) => {
       const priceInCurrency = convertPrice(item.unit_price || 0);
@@ -330,28 +337,51 @@ export function QuotationsPage() {
   useEffect(() => {
     let cancelled = false;
 
+    const getUsableLocalDraftState = () => {
+      const state = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+      if (typeof window === "undefined") {
+        return state;
+      }
+
+      const usableTabs = Array.isArray(state.draftTabs)
+        ? state.draftTabs.filter((tab) => {
+            if (!tab?.id) return false;
+            return Boolean(window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`));
+          })
+        : [];
+
+      const activeDraftId = usableTabs.some((tab) => tab.id === state.activeDraftId)
+        ? state.activeDraftId
+        : (usableTabs[0]?.id ?? null);
+
+      return { draftTabs: usableTabs, activeDraftId };
+    };
+
     const loadDrafts = async () => {
       try {
         emitAutosaveStatus(AUTOSAVE_STATUS.RECOVERING, { source: "quotations" });
         const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
         if (cancelled) return;
+        const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
+        const nextActiveDraftId = bundle.activeDraftId || (serverDrafts[0]?.id ?? null);
+
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: bundle.drafts,
-          activeDraftId: bundle.activeDraftId,
+          drafts: serverDrafts,
+          activeDraftId: nextActiveDraftId,
         });
-        setDraftTabs(bundle.drafts.map((draft) => ({
+        setDraftTabs(serverDrafts.map((draft) => ({
           id: draft.id,
           name: draft.name,
           updatedAt: draft.updatedAt,
         })));
-        setActiveDraftId(bundle.activeDraftId || (bundle.drafts[0]?.id ?? null));
+        setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
       } catch (error) {
         if (cancelled) return;
-        const fallback = loadLocalDraftState(DRAFT_LIST_KEY, DRAFT_ACTIVE_KEY);
+        const fallback = getUsableLocalDraftState();
         setDraftTabs(fallback.draftTabs);
         setActiveDraftId(fallback.activeDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "quotations" });
@@ -366,7 +396,7 @@ export function QuotationsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, DRAFT_KEY_PREFIX, DRAFT_LIST_KEY]);
 
   useEffect(() => {
     if (!draftsLoaded) return;
@@ -714,6 +744,7 @@ export function QuotationsPage() {
       discount_codes: payload.discount_codes || [],
       payment_type: payload.payment_type || payload.payment_method || "cash",
       payment_method: payload.payment_method || payload.payment_type || "cash",
+      mixed_payment_methods: normalizePaymentMethodList(payload.mixed_payment_methods || payload.mixedPaymentMethods || []),
       credit_days: payload.credit_days || null,
     };
 
@@ -885,6 +916,7 @@ export function QuotationsPage() {
       selectedVehicle: quotation.vehicle_id || "",
       selectedWarehouse: quotation.warehouse_id || "",
       paymentMethod: quotation.payment_method || quotation.payment_type || "cash",
+      mixedPaymentMethods: normalizePaymentMethodList(quotation.mixed_payment_methods || quotation.mixedPaymentMethods || []),
       cartItems,
       globalDiscount: quotation.discount_percent || 0,
       notes: quotation.notes || "",
@@ -938,42 +970,71 @@ export function QuotationsPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={fetchData}
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    fetchData();
+                  }}
                   className="ui-interactive"
                   title="Actualizar datos"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline sm:ml-2">Actualizar datos</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   data-testid="new-quotation-btn"
-                  onClick={createDraftTab}
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    createDraftTab();
+                  }}
                   className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
                   title="Nueva Cotización"
                 >
                   <Plus className="h-3.5 w-3.5 sm:mr-2" />
                   <span className="hidden sm:inline">Nueva Cotización</span>
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    saveActiveDraftNow();
+                  }}
+                  disabled={draftSaveState === "saving"}
+                  data-testid="save-quotation-draft-btn"
+                  className="ui-interactive border-violet-500/40 bg-violet-500/10 text-violet-800 hover:bg-violet-500/20"
+                  title="Guardar borrador"
+                >
+                  <Save className="h-3.5 w-3.5 text-violet-700" />
+                  <span className="hidden sm:inline sm:ml-2">Guardar</span>
+                </Button>
               </div>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
-                  onCheckedChange={(checked) => setCurrency(checked ? "USD" : "NIO")}
+                  onCheckedChange={(checked) => {
+                    playSelectionFeedbackSound();
+                    setCurrency(checked ? "USD" : "NIO");
+                  }}
                   className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
                   aria-label="Cambiar moneda entre córdobas y dólares"
                 />
                 <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
               </div>
               <Button
-                size="icon"
+                size="sm"
                 variant="outline"
-                onClick={() => setShowClearQuoteConfirm(true)}
-                className="h-8 w-8 ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
+                onClick={() => {
+                  playSelectionFeedbackSound();
+                  setShowClearQuoteConfirm(true);
+                }}
+                className="ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
                 title="Limpiar Formulario"
               >
                 <Eraser className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline sm:ml-2">Limpiar</span>
               </Button>
             </div>
             <Dialog open={showClearQuoteConfirm} onOpenChange={setShowClearQuoteConfirm}>
@@ -1008,7 +1069,7 @@ export function QuotationsPage() {
               flowType="quotation"
               step4Label="Paso 4: Productos en esta Cotizacion"
               step5Label="Paso 5: Metodo de Pago (Cotizacion)"
-              initialData={{ selectedCustomer, cartItems, globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
+              initialData={{ selectedCustomer, cartItems, paymentMethod: "cash", mixedPaymentMethods: [], globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
               onDraftPersist={(snapshot) => {

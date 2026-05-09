@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchableSelect from "@/components/ui/searchable-select";
@@ -22,12 +23,16 @@ import {
   Hand,
   MapPin,
   Minus,
+  Banknote,
   Palette,
   Package,
   Phone,
   Plus,
   PlusCircle,
   Percent,
+  PencilLine,
+  ArrowRightLeft,
+  BadgeAlert,
   RefreshCcw,
   ShieldCheck,
   ShoppingCart,
@@ -50,6 +55,12 @@ import {
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
+import {
+  getPaymentMethodSummaryLabel,
+  normalizePaymentMethodCode,
+  normalizePaymentMethodList,
+  paymentMethodsAllowDiscounts,
+} from "@/lib/paymentMethods";
 import {
   playCartQuantityUpSound,
   playCartQuantityDownSound,
@@ -107,6 +118,17 @@ const formatChasis = (value) => {
   return clean.slice(0, 17);
 };
 
+const normalizeGlobalDiscountMode = (value) => (value === "fixed" ? "fixed" : "percent");
+
+const clampGlobalDiscountValue = (value, mode = "percent") => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return 0;
+  if (mode === "fixed") {
+    return Math.max(0, Number(numericValue.toFixed(2)));
+  }
+  return Math.max(0, Math.min(100, Math.round(numericValue)));
+};
+
 // Formatear placa según prefijo
 const formatPlateNumber = (prefix, value) => {
   const digits = value.replace(/\D/g, "");
@@ -148,13 +170,24 @@ export default function SaleForm({
   const [selectedWarehouse, setSelectedWarehouse] = useState(initialData.selectedWarehouse || "");
   const [cartItems, setCartItems] = useState(initialData.cartItems || []);
   const cartHistory = useRef([]);
-  const [globalDiscount, setGlobalDiscount] = useState(initialData.globalDiscount || 0);
+  const [globalDiscountMode, setGlobalDiscountMode] = useState(
+    normalizeGlobalDiscountMode(initialData.globalDiscountMode || initialData.global_discount_mode)
+  );
+  const [globalDiscount, setGlobalDiscount] = useState(
+    clampGlobalDiscountValue(
+      initialData.globalDiscount || 0,
+      normalizeGlobalDiscountMode(initialData.globalDiscountMode || initialData.global_discount_mode)
+    )
+  );
   const [paymentMethod, setPaymentMethod] = useState(initialData.paymentMethod || initialData.payment_type || "cash");
   const [notes, setNotes] = useState(initialData.notes || "");
   const [applyIVA, setApplyIVA] = useState(initialData.applyIVA ?? true);
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
+  const [mixedPaymentMethods, setMixedPaymentMethods] = useState(
+    normalizePaymentMethodList(initialData.mixedPaymentMethods || initialData.mixed_payment_methods || [])
+  );
   const [currency, setCurrency] = useState(initialData.currency || "NIO");
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -186,6 +219,11 @@ export default function SaleForm({
   const [activeStockBreakdownKey, setActiveStockBreakdownKey] = useState(null);
   const [customerHighlightIndex, setCustomerHighlightIndex] = useState(0);
   const [productHighlightIndex, setProductHighlightIndex] = useState(0);
+  const [priceEditorOpen, setPriceEditorOpen] = useState(false);
+  const [priceEditorItemId, setPriceEditorItemId] = useState(null);
+  const [priceEditorMode, setPriceEditorMode] = useState("amount");
+  const [priceEditorAmount, setPriceEditorAmount] = useState("");
+  const [priceEditorPercent, setPriceEditorPercent] = useState("0");
   const [newCustomer, setNewCustomer] = useState({
     first_name: "",
     last_name: "",
@@ -218,22 +256,55 @@ export default function SaleForm({
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
   const isNewCustomerCompany = newCustomer.customer_type === "empresa";
   const isQuotationFlow = flowType === "quotation";
-  const normalizedPaymentMethod = useMemo(() => {
-    const method = String(paymentMethod || "").trim().toLowerCase();
-    const aliases = {
-      efectivo: "cash",
-      cash: "cash",
-      tarjeta: "card",
-      card: "card",
-      transferencia: "transfer",
-      transfer: "transfer",
-      credito: "credit",
-      credit: "credit",
-    };
-    return aliases[method] || "cash";
-  }, [paymentMethod]);
-  const discountsAllowedByPayment = normalizedPaymentMethod === "cash" || normalizedPaymentMethod === "transfer";
+  const normalizedPaymentMethod = useMemo(() => normalizePaymentMethodCode(paymentMethod), [paymentMethod]);
+  const normalizedMixedPaymentMethods = useMemo(
+    () => normalizePaymentMethodList(mixedPaymentMethods),
+    [mixedPaymentMethods]
+  );
+  const paymentOptionMeta = useMemo(() => ({
+    cash: {
+      label: "Efectivo",
+      icon: Banknote,
+      className: "text-emerald-700",
+      itemClassName: "text-emerald-800 data-[highlighted]:bg-emerald-50 data-[state=checked]:bg-emerald-50",
+      badgeClassName: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    transfer: {
+      label: "Transferencia",
+      icon: ArrowRightLeft,
+      className: "text-emerald-700",
+      itemClassName: "text-emerald-800 data-[highlighted]:bg-emerald-50 data-[state=checked]:bg-emerald-50",
+      badgeClassName: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    card: {
+      label: "Tarjeta",
+      icon: CreditCard,
+      className: "text-amber-700",
+      itemClassName: "text-amber-800 data-[highlighted]:bg-amber-50 data-[state=checked]:bg-amber-50",
+      badgeClassName: "bg-amber-50 text-amber-700 border-amber-200",
+    },
+    credit: {
+      label: "Credito",
+      icon: BadgeAlert,
+      className: "text-red-700",
+      itemClassName: "text-red-800 data-[highlighted]:bg-red-50 data-[state=checked]:bg-red-50",
+      badgeClassName: "bg-red-50 text-red-700 border-red-200",
+    },
+    mixed: {
+      label: "Mixto",
+      icon: ArrowRightLeft,
+      className: "text-slate-700",
+      itemClassName: "text-slate-800 data-[highlighted]:bg-slate-50 data-[state=checked]:bg-slate-50",
+      badgeClassName: "bg-slate-50 text-slate-700 border-slate-200",
+    },
+  }), []);
+  const discountsAllowedByPayment = paymentMethodsAllowDiscounts(normalizedPaymentMethod, normalizedMixedPaymentMethods);
   const discountsBlockedByPayment = !discountsAllowedByPayment;
+  const paymentMethodSummaryLabel = useMemo(
+    () => getPaymentMethodSummaryLabel(normalizedPaymentMethod, normalizedMixedPaymentMethods),
+    [normalizedMixedPaymentMethods, normalizedPaymentMethod]
+  );
+  const paymentMethodSelectionItems = useMemo(() => ["cash", "transfer", "card", "credit"], []);
   const isCurrencyControlled = typeof currencyValue === "string" && currencyValue.length > 0;
   const isTouchDevice = typeof window !== "undefined" && navigator.maxTouchPoints > 0;
   const [isPortraitOrientation, setIsPortraitOrientation] = useState(
@@ -471,11 +542,13 @@ export default function SaleForm({
   }, [selectedCustomer, isCompanyCustomer, applyIVA, ivaRate]);
 
   useEffect(() => {
+    if (!draftLoaded) return;
+    if (pendingCustomerId) return;
     if (isCompanyCustomerFlow) return;
     if (applyRetention) {
       setApplyRetention(false);
     }
-  }, [isCompanyCustomerFlow, applyRetention]);
+  }, [draftLoaded, pendingCustomerId, isCompanyCustomerFlow, applyRetention]);
 
   useEffect(() => {
     if (!draftKey || typeof window === "undefined") {
@@ -506,7 +579,10 @@ export default function SaleForm({
       setSelectedWarehouse(draft?.selectedWarehouse || "");
       setCartItems(draft?.cartItems || []);
       setPaymentMethod(draft?.paymentMethod || draft?.payment_type || "cash");
-      setGlobalDiscount(draft?.globalDiscount || 0);
+      setMixedPaymentMethods(normalizePaymentMethodList(draft?.mixedPaymentMethods || draft?.mixed_payment_methods || []));
+      const restoredGlobalDiscountMode = normalizeGlobalDiscountMode(draft?.globalDiscountMode || draft?.global_discount_mode);
+      setGlobalDiscountMode(restoredGlobalDiscountMode);
+      setGlobalDiscount(clampGlobalDiscountValue(draft?.globalDiscount || 0, restoredGlobalDiscountMode));
       setNotes(draft?.notes || "");
       setApplyIVA(draft?.applyIVA ?? true);
         setApplyRetention(draft?.applyRetention ?? false);
@@ -533,7 +609,7 @@ export default function SaleForm({
     } finally {
       setDraftLoaded(true);
     }
-  }, [draftKey, normalizeVehicleId, defaultIvaRate]);
+  }, [defaultIvaRate, draftKey, normalizeVehicleId]);
 
   useEffect(() => {
     if (!pendingCustomerId || localCustomers.length === 0) return;
@@ -553,6 +629,24 @@ export default function SaleForm({
       installation_type: i.installation_type || "optional",
       installation_price: i.installation_price || 0,
       with_installation: i.with_installation || false,
+      original_unit_price: (() => {
+        const raw = Number(i.original_unit_price);
+        if (Number.isFinite(raw) && raw > 0) return raw;
+        return Number(i.unit_price || 0);
+      })(),
+      price_edit_history: (Array.isArray(i.price_edit_history)
+        ? i.price_edit_history
+        : (Number.isFinite(Number(i.previous_unit_price)) ? [Number(i.previous_unit_price)] : [])
+      )
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .slice(0, 2),
+      price_edit_count: (() => {
+        const raw = Number(i.price_edit_count);
+        if (Number.isFinite(raw) && raw >= 0) return Math.floor(raw);
+        const legacy = Number.isFinite(Number(i.previous_unit_price)) ? 1 : 0;
+        return legacy;
+      })(),
     }))
   ), [cartItems]);
 
@@ -598,6 +692,9 @@ export default function SaleForm({
           image: product.images?.[0] || null,
           quantity: 1,
           unit_price: product.price,
+          original_unit_price: product.price,
+          price_edit_history: [],
+          price_edit_count: 0,
           discount: 0,
           installation_type: installationType,
           installation_price: installationPrice,
@@ -954,45 +1051,72 @@ export default function SaleForm({
   };
 
   const totals = (() => {
-    const subtotalWithoutDiscounts = normalizedCartItems.reduce((sum, item) => {
-      const priceInCurrency = convertPrice(item.unit_price);
+    const lineBreakdown = normalizedCartItems.map((item) => {
       const effectiveItemDiscount = discountsBlockedByPayment ? 0 : (item.discount || 0);
-      let lineTotal = priceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
+      const unitPriceInCurrency = convertPrice(item.unit_price);
+      const originalUnitPrice = Number(item.original_unit_price || item.unit_price || 0);
+      const originalUnitPriceInCurrency = convertPrice(originalUnitPrice);
+      const currentLineBase = unitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
+      const originalLineBase = originalUnitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
       const installType = item.installation_type || "optional";
       const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
-      if (installType !== "not_available" && wantsInstall) {
-        const installPrice = convertPrice(item.installation_price || 0);
-        lineTotal += installPrice * item.quantity;
-      }
-      return sum + lineTotal;
-    }, 0);
+      const installTotal = installType !== "not_available" && wantsInstall
+        ? convertPrice(item.installation_price || 0) * item.quantity
+        : 0;
+      const manualPriceDiscount = Math.max(0, originalLineBase - currentLineBase);
+      return {
+        item,
+        originalLineTotal: originalLineBase + installTotal,
+        manualPriceDiscount,
+      };
+    });
+
+    const subtotalWithoutDiscounts = lineBreakdown.reduce((sum, row) => sum + row.originalLineTotal, 0);
+    const manualPriceDiscountEntries = lineBreakdown
+      .filter((row) => row.manualPriceDiscount > 0.000001)
+      .map((row) => ({
+        productId: row.item.product_id,
+        productName: row.item.product_name || "Producto",
+        amount: row.manualPriceDiscount,
+      }));
+    const manualPriceDiscountTotal = manualPriceDiscountEntries.reduce((sum, row) => sum + row.amount, 0);
+    const subtotalAfterItemPriceDiscounts = subtotalWithoutDiscounts - manualPriceDiscountTotal;
 
     let discountFromCodesRaw = 0;
     appliedDiscounts.forEach(d => {
       if (d.type === "percent") {
-        discountFromCodesRaw += subtotalWithoutDiscounts * (d.value / 100);
+        discountFromCodesRaw += subtotalAfterItemPriceDiscounts * (d.value / 100);
       } else if (d.type === "fixed") {
         const fixedInCurrency = currency === "USD" ? d.value / exchangeRate : d.value;
         discountFromCodesRaw += fixedInCurrency;
       }
     });
 
-    const discountAmountRaw = subtotalWithoutDiscounts * (globalDiscount / 100);
+    const requestedGlobalDiscountRaw = Math.max(0, Number(globalDiscount) || 0);
+    const discountAmountRaw = globalDiscountMode === "fixed"
+      ? Math.min(requestedGlobalDiscountRaw, subtotalAfterItemPriceDiscounts)
+      : subtotalAfterItemPriceDiscounts * (requestedGlobalDiscountRaw / 100);
     const totalDiscountsRaw = discountFromCodesRaw + discountAmountRaw;
     const discountFromCodes = discountsBlockedByPayment ? 0 : discountFromCodesRaw;
     const discountAmount = discountsBlockedByPayment ? 0 : discountAmountRaw;
     const totalDiscounts = discountFromCodes + discountAmount;
     const blockedDiscountsAmount = discountsBlockedByPayment ? totalDiscountsRaw : 0;
-    const subtotalForRetention = subtotalWithoutDiscounts - totalDiscounts;
+    const subtotalForRetention = subtotalAfterItemPriceDiscounts - totalDiscounts;
     const shouldApplyRetention = isCompanyCustomerFlow && applyRetention;
     const retention = shouldApplyRetention ? subtotalForRetention * (retentionRate / 100) : 0;
     const tax = applyIVA ? subtotalForRetention * (ivaRate / 100) : 0;
     const total = subtotalForRetention + tax - retention;
+    const globalDiscountEffectivePercent = subtotalAfterItemPriceDiscounts > 0
+      ? (discountAmountRaw / subtotalAfterItemPriceDiscounts) * 100
+      : 0;
     return {
       subtotalWithoutDiscounts,
+      manualPriceDiscountEntries,
+      manualPriceDiscountTotal,
       subtotalForRetention,
       tax,
       discountAmount,
+      globalDiscountEffectivePercent,
       discountFromCodes,
       totalDiscounts,
       blockedDiscountsAmount,
@@ -1004,7 +1128,14 @@ export default function SaleForm({
 
   const handleSubmit = async () => {
     const payloadPaymentMethod = normalizedPaymentMethod;
-    const payloadDiscountPercent = discountsBlockedByPayment ? 0 : globalDiscount;
+    const payloadMixedPaymentMethods = normalizedPaymentMethod === "mixed" ? normalizedMixedPaymentMethods : [];
+    if (normalizedPaymentMethod === "mixed" && payloadMixedPaymentMethods.length === 0) {
+      toast.error("Selecciona al menos un método para el pago mixto");
+      return;
+    }
+    const payloadDiscountPercent = discountsBlockedByPayment
+      ? 0
+      : Number(totals.globalDiscountEffectivePercent || 0);
     const payloadDiscountCodes = discountsBlockedByPayment ? [] : appliedDiscounts.map(d => d.code);
     const payloadAppliedDiscounts = discountsBlockedByPayment ? [] : appliedDiscounts;
     const payload = {
@@ -1022,6 +1153,7 @@ export default function SaleForm({
       discount: payloadDiscountPercent,
       payment_type: payloadPaymentMethod,
       payment_method: payloadPaymentMethod,
+      mixed_payment_methods: payloadMixedPaymentMethods,
       credit_days: payloadPaymentMethod === "credit" ? 30 : null,
       currency,
       apply_iva: applyIVA,
@@ -1033,6 +1165,7 @@ export default function SaleForm({
       discount_codes: payloadDiscountCodes,
       applied_discounts: payloadAppliedDiscounts,
       discounts_blocked_by_method: totals.discountsBlockedByPayment,
+      total_amount: totals.total,
       notes,
     };
     try {
@@ -1059,6 +1192,8 @@ export default function SaleForm({
       selectedWarehouse,
       cartItems: normalizedCartItems,
       paymentMethod: normalizedPaymentMethod,
+      mixedPaymentMethods: normalizedPaymentMethod === "mixed" ? normalizedMixedPaymentMethods : [],
+      globalDiscountMode,
       globalDiscount,
       notes,
       applyIVA,
@@ -1092,6 +1227,8 @@ export default function SaleForm({
     selectedWarehouse,
     normalizedCartItems,
     normalizedPaymentMethod,
+    normalizedMixedPaymentMethods,
+    globalDiscountMode,
     globalDiscount,
     notes,
     applyIVA,
@@ -1137,7 +1274,9 @@ export default function SaleForm({
       && !snapshot?.customerSearch
       && !snapshot?.productSearch
       && !snapshot?.globalDiscount
+      && (snapshot?.globalDiscountMode || "percent") === "percent"
       && (snapshot?.paymentMethod || "cash") === "cash"
+      && (!snapshot?.mixedPaymentMethods || snapshot.mixedPaymentMethods.length === 0)
       && (!snapshot?.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
       && !hasNestedDraftData(snapshot);
 
@@ -1171,17 +1310,23 @@ export default function SaleForm({
     }
   }, [buildDraftSnapshot, draftKey, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
 
-  const clampGlobalDiscount = useCallback((value) => {
-    const numericValue = Number(value);
-    if (!Number.isFinite(numericValue)) return 0;
-    return Math.max(0, Math.min(100, Math.round(numericValue)));
-  }, []);
-
   const applyGlobalDiscountChange = useCallback((nextValue) => {
-    const normalizedValue = clampGlobalDiscount(nextValue);
+    const normalizedValue = clampGlobalDiscountValue(nextValue, globalDiscountMode);
     setGlobalDiscount(normalizedValue);
     persistDraftSnapshot({ globalDiscount: normalizedValue });
-  }, [clampGlobalDiscount, persistDraftSnapshot]);
+  }, [globalDiscountMode, persistDraftSnapshot]);
+
+  const applyGlobalDiscountModeChange = useCallback((nextModeValue) => {
+    const nextMode = normalizeGlobalDiscountMode(nextModeValue);
+    const normalizedValue = clampGlobalDiscountValue(globalDiscount, nextMode);
+    setGlobalDiscountMode(nextMode);
+    setGlobalDiscount(normalizedValue);
+    playSelectionFeedbackSound();
+    persistDraftSnapshot({
+      globalDiscountMode: nextMode,
+      globalDiscount: normalizedValue,
+    });
+  }, [globalDiscount, persistDraftSnapshot]);
 
   const undoCartChange = useCallback(() => {
     if (cartHistory.current.length === 0) return;
@@ -1254,7 +1399,10 @@ export default function SaleForm({
     const normalizedValue = field === "quantity"
       ? Math.max(1, Math.floor(Number(value) || 1))
       : value;
-    const nextCartItems = normalizedCartItems.map(item => item.product_id === productId ? { ...item, [field]: normalizedValue } : item);
+    const additionalPatch = options.patch && typeof options.patch === "object" ? options.patch : null;
+    const nextCartItems = normalizedCartItems.map(item => item.product_id === productId
+      ? { ...item, [field]: normalizedValue, ...(additionalPatch || {}) }
+      : item);
     setCartItems(nextCartItems);
     if (field === "quantity") {
       const prevQuantity = Number(prevItem?.quantity || 0);
@@ -1286,6 +1434,160 @@ export default function SaleForm({
     const nextQuantity = Math.max(1, currentQuantity + delta);
     updateCartItem(productId, "quantity", nextQuantity, { persist: true });
   }, [normalizedCartItems, updateCartItem]);
+
+  const priceEditorItem = useMemo(
+    () => normalizedCartItems.find((item) => item.product_id === priceEditorItemId) || null,
+    [normalizedCartItems, priceEditorItemId]
+  );
+
+  const priceEditorPreview = useMemo(() => {
+    if (!priceEditorItem) return null;
+
+    const currentAmountInCurrency = convertPrice(priceEditorItem.unit_price || 0);
+    const quantity = Math.max(1, Math.floor(Number(priceEditorItem.quantity) || 1));
+    let nextAmountInCurrency = currentAmountInCurrency;
+    let isValid = true;
+
+    if (priceEditorMode === "amount") {
+      const parsedAmount = Number(priceEditorAmount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        isValid = false;
+      } else {
+        nextAmountInCurrency = parsedAmount;
+      }
+    } else {
+      const parsedPercent = Number(priceEditorPercent);
+      if (!Number.isFinite(parsedPercent) || parsedPercent <= -100) {
+        isValid = false;
+      } else {
+        nextAmountInCurrency = currentAmountInCurrency * (1 + parsedPercent / 100);
+        if (nextAmountInCurrency <= 0) {
+          isValid = false;
+        }
+      }
+    }
+
+    const deltaPerUnit = nextAmountInCurrency - currentAmountInCurrency;
+    const discountPerUnit = Math.max(0, -deltaPerUnit);
+    const increasePerUnit = Math.max(0, deltaPerUnit);
+    return {
+      isValid,
+      quantity,
+      nextAmountInCurrency,
+      discountPerUnit,
+      discountTotal: discountPerUnit * quantity,
+      increasePerUnit,
+      increaseTotal: increasePerUnit * quantity,
+      deltaPerUnit,
+      deltaTotal: deltaPerUnit * quantity,
+    };
+  }, [
+    convertPrice,
+    priceEditorAmount,
+    priceEditorItem,
+    priceEditorMode,
+    priceEditorPercent,
+  ]);
+
+  const openPriceEditor = useCallback((item) => {
+    if (Number(item.price_edit_count || 0) >= 3) {
+      toast.error("Solo se permite editar el precio 3 veces por producto");
+      return;
+    }
+    const currentAmountInCurrency = convertPrice(item.unit_price || 0);
+    setPriceEditorItemId(item.product_id);
+    setPriceEditorMode("amount");
+    setPriceEditorAmount(String(Number(currentAmountInCurrency.toFixed(2))));
+    setPriceEditorPercent("0");
+    setPriceEditorOpen(true);
+    playSelectionFeedbackSound();
+  }, [convertPrice]);
+
+  const closePriceEditor = useCallback(() => {
+    setPriceEditorOpen(false);
+    setPriceEditorItemId(null);
+  }, []);
+
+  const applyPriceEditor = useCallback(() => {
+    if (!priceEditorItem) {
+      toast.error("No se encontró el producto a editar");
+      return;
+    }
+
+    const currentAmountInCurrency = convertPrice(priceEditorItem.unit_price || 0);
+    let nextAmountInCurrency = currentAmountInCurrency;
+
+    if (priceEditorMode === "amount") {
+      const parsedAmount = Number(priceEditorAmount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        toast.error("Ingresa un monto válido mayor a 0");
+        return;
+      }
+      nextAmountInCurrency = parsedAmount;
+    } else {
+      const parsedPercent = Number(priceEditorPercent);
+      if (!Number.isFinite(parsedPercent) || parsedPercent <= -100) {
+        toast.error("El porcentaje debe ser mayor a -100");
+        return;
+      }
+      nextAmountInCurrency = currentAmountInCurrency * (1 + parsedPercent / 100);
+      if (nextAmountInCurrency <= 0) {
+        toast.error("El precio final debe ser mayor a 0");
+        return;
+      }
+    }
+
+    const nextUnitPrice = currency === "NIO"
+      ? nextAmountInCurrency / exchangeRate
+      : nextAmountInCurrency;
+    const roundedNextUnitPrice = Number(nextUnitPrice.toFixed(6));
+    const currentUnitPrice = Number(priceEditorItem.unit_price || 0);
+    const currentEditCount = Math.max(0, Math.floor(Number(priceEditorItem.price_edit_count || 0)));
+    const currentHistory = Array.isArray(priceEditorItem.price_edit_history)
+      ? priceEditorItem.price_edit_history
+      : [];
+
+    if (currentEditCount >= 3) {
+      toast.error("Este producto ya alcanzó el máximo de 3 ediciones de precio");
+      closePriceEditor();
+      return;
+    }
+
+    if (Math.abs(roundedNextUnitPrice - currentUnitPrice) < 0.000001) {
+      toast.info("El precio no cambió");
+      closePriceEditor();
+      return;
+    }
+
+    updateCartItem(
+      priceEditorItem.product_id,
+      "unit_price",
+      roundedNextUnitPrice,
+      {
+        persist: true,
+        patch: {
+          price_edit_count: currentEditCount + 1,
+          price_edit_history: [currentUnitPrice, ...currentHistory]
+            .map((value) => Number(value))
+            .filter((value) => Number.isFinite(value) && value > 0)
+            .slice(0, 2),
+        },
+      }
+    );
+    toast.success("Precio actualizado");
+    playSelectionFeedbackSound();
+    closePriceEditor();
+  }, [
+    closePriceEditor,
+    convertPrice,
+    currency,
+    exchangeRate,
+    priceEditorAmount,
+    priceEditorItem,
+    priceEditorMode,
+    priceEditorPercent,
+    updateCartItem,
+  ]);
 
   const startQuantityHold = useCallback((productId, delta) => {
     clearQuantityHold(productId);
@@ -1333,6 +1635,7 @@ export default function SaleForm({
       && !snapshot.customerSearch
       && !snapshot.productSearch
       && !snapshot.globalDiscount
+      && (snapshot?.globalDiscountMode || "percent") === "percent"
       && (snapshot?.paymentMethod || "cash") === "cash"
       && (!snapshot.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
       && !hasNestedDraftData(snapshot);
@@ -2270,7 +2573,35 @@ export default function SaleForm({
                     const installTotal = installType !== "not_available" && wantsInstall
                       ? convertPrice(item.installation_price || 0) * item.quantity
                       : 0;
-                    return <p className={cn("shrink-0 font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(baseTotal + installTotal, currency)}</p>;
+                    const currentTotal = baseTotal + installTotal;
+                    const previousTotals = (Array.isArray(item.price_edit_history) ? item.price_edit_history : [])
+                      .map((value) => Number(value))
+                      .filter((value) => Number.isFinite(value) && value > 0)
+                      .filter((value) => Math.abs(value - Number(item.unit_price || 0)) >= 0.000001)
+                      .slice(0, 2)
+                      .map((value) => (
+                        convertPrice(value) * item.quantity * (1 - (item.discount || 0) / 100)
+                      ) + installTotal);
+
+                    if (previousTotals.length === 0) {
+                      return <p className={cn("shrink-0 font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(currentTotal, currency)}</p>;
+                    }
+
+                    return (
+                      <div className="shrink-0 text-right leading-tight">
+                        {previousTotals.map((previousTotal, index) => (
+                          <p
+                            key={`${item.product_id}-price-history-${index}`}
+                            className="font-mono text-[11px] text-muted-foreground line-through decoration-1"
+                          >
+                            {formatCurrency(previousTotal, currency)}
+                          </p>
+                        ))}
+                        <p className={cn("font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>
+                          {formatCurrency(currentTotal, currency)}
+                        </p>
+                      </div>
+                    );
                   })()}
                 </div>
                 {/* SKU + badges de estado */}
@@ -2418,6 +2749,16 @@ export default function SaleForm({
                     <Button
                       variant="ghost"
                       size="icon"
+                      title={Number(item.price_edit_count || 0) >= 3 ? "Máximo 3 ediciones de precio" : "Editar precio"}
+                      onClick={() => openPriceEditor(item)}
+                      disabled={Number(item.price_edit_count || 0) >= 3}
+                      className="h-7 w-7 text-sky-700 hover:bg-sky-100/70 hover:text-sky-800 ui-interactive"
+                    >
+                      <PencilLine className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       title="Solicitar muestra"
                       onClick={() => requestSampleForItem(item)}
                       className="h-7 w-7 text-violet-700 hover:bg-violet-100/70 hover:text-violet-800 ui-interactive"
@@ -2441,6 +2782,127 @@ export default function SaleForm({
           })}
         </div>
 
+        <Dialog
+          open={priceEditorOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closePriceEditor();
+              return;
+            }
+            setPriceEditorOpen(open);
+          }}
+        >
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Editar precio del producto</DialogTitle>
+              <DialogDescription>
+                {priceEditorItem?.product_name || "Producto"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Modo de edición</Label>
+                <Select
+                  value={priceEditorMode}
+                  onValueChange={(value) => {
+                    setPriceEditorMode(value === "percent" ? "percent" : "amount");
+                    playSelectionFeedbackSound();
+                  }}
+                >
+                  <SelectTrigger className="ui-interactive">
+                    <SelectValue placeholder="Selecciona modo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="amount" className="ui-interactive">Monto fijo</SelectItem>
+                    <SelectItem value="percent" className="ui-interactive">Porcentaje sobre precio actual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {priceEditorMode === "amount" ? (
+                <div className="space-y-1.5">
+                  <Label>Monto en {currency}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={priceEditorAmount}
+                    onChange={(event) => setPriceEditorAmount(event.target.value)}
+                    placeholder={`Precio en ${currency}`}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label>Porcentaje (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={priceEditorPercent}
+                    onChange={(event) => setPriceEditorPercent(event.target.value)}
+                    placeholder="Ej: 10 o -5"
+                  />
+                </div>
+              )}
+
+              {priceEditorItem ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Precio actual: {formatCurrency(convertPrice(priceEditorItem.unit_price || 0), currency)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ediciones usadas: {Math.max(0, Math.floor(Number(priceEditorItem.price_edit_count || 0)))}/3
+                  </p>
+                  {priceEditorPreview?.isValid ? (
+                    <div className="space-y-1 rounded-md border border-emerald-200 bg-emerald-50/70 p-2">
+                      <p className="text-[11px] font-medium text-emerald-800">Resumen monetario de la edición</p>
+                      {priceEditorPreview.discountPerUnit > 0 ? (
+                        <p className="text-[11px] text-emerald-700">
+                          Descuento aplicado: -{formatCurrency(priceEditorPreview.discountPerUnit, currency)}
+                        </p>
+                      ) : priceEditorPreview.increasePerUnit > 0 ? (
+                        <p className="text-[11px] text-amber-700">
+                          Incremento aplicado: +{formatCurrency(priceEditorPreview.increasePerUnit, currency)}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground">
+                          Sin cambio monetario.
+                        </p>
+                      )}
+                      {priceEditorPreview.quantity > 1 ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          Impacto total (x{priceEditorPreview.quantity}): {priceEditorPreview.deltaTotal < 0 ? "-" : "+"}{formatCurrency(Math.abs(priceEditorPreview.deltaTotal), currency)}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-amber-700">
+                      Ingresa un valor válido para calcular el descuento monetario.
+                    </p>
+                  )}
+                  {Array.isArray(priceEditorItem.price_edit_history) && priceEditorItem.price_edit_history.length > 0 ? (
+                    <div className="space-y-1 rounded-md border border-slate-200 bg-slate-50 p-2">
+                      <p className="text-[11px] font-medium text-slate-700">Historial de precios (más reciente primero)</p>
+                      {priceEditorItem.price_edit_history
+                        .map((value) => Number(value))
+                        .filter((value) => Number.isFinite(value) && value > 0)
+                        .slice(0, 3)
+                        .map((value, index) => (
+                          <p key={`price-editor-history-${index}`} className="font-mono text-[11px] text-muted-foreground line-through decoration-1">
+                            {formatCurrency(convertPrice(value), currency)}
+                          </p>
+                        ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={closePriceEditor}>Cancelar</Button>
+              <Button type="button" onClick={applyPriceEditor}>Aplicar precio</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
           <Label className="inline-flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5" />
@@ -2451,22 +2913,65 @@ export default function SaleForm({
             onValueChange={(value) => {
               const nextMethod = String(value || "cash");
               setPaymentMethod(nextMethod);
-              persistDraftSnapshot({ paymentMethod: nextMethod });
+              playSelectionFeedbackSound();
+              const nextMixedPaymentMethods = nextMethod === "mixed" ? normalizedMixedPaymentMethods : [];
+              if (nextMethod !== "mixed") {
+                setMixedPaymentMethods([]);
+              }
+              persistDraftSnapshot({ paymentMethod: nextMethod, mixedPaymentMethods: nextMixedPaymentMethods });
               if (nextMethod === "card") {
                 toast.info("Con tarjeta no aplican descuentos ni promociones");
               }
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="ui-interactive">
               <SelectValue placeholder="Seleccionar metodo de pago" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cash">Efectivo</SelectItem>
-              <SelectItem value="transfer">Transferencia</SelectItem>
-              <SelectItem value="card">Tarjeta</SelectItem>
-              <SelectItem value="credit">Credito</SelectItem>
+              {Object.entries(paymentOptionMeta).map(([value, meta]) => {
+                const Icon = meta.icon;
+                return (
+                  <SelectItem key={value} value={value} className={`${meta.itemClassName} ui-interactive`}>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${meta.className}`} />
+                      <span>{meta.label}</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
+          {normalizedPaymentMethod === "mixed" && (
+            <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-2.5 animate-fade-up-soft">
+              <p className="text-xs font-medium text-slate-700">Selecciona los métodos incluidos en el pago mixto</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {paymentMethodSelectionItems.map((method) => {
+                  const meta = paymentOptionMeta[method];
+                  const Icon = meta.icon;
+                  const checked = normalizedMixedPaymentMethods.includes(method);
+                  return (
+                    <label key={method} className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-800 ui-interactive">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => {
+                          const nextChecked = Boolean(value);
+                          const nextMethods = nextChecked
+                            ? Array.from(new Set([...normalizedMixedPaymentMethods, method]))
+                            : normalizedMixedPaymentMethods.filter((item) => item !== method);
+                          setMixedPaymentMethods(nextMethods);
+                          playSelectionFeedbackSound();
+                          persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
+                        }}
+                      />
+                      <Icon className={`h-4 w-4 ${meta.className}`} />
+                      <span>{meta.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-600">Métodos elegidos: {paymentMethodSummaryLabel}</p>
+            </div>
+          )}
           {discountsBlockedByPayment ? (
             <p className="text-xs text-amber-700">
               Este metodo bloquea descuentos y promociones en el calculo final.
@@ -2505,10 +3010,22 @@ export default function SaleForm({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label className="inline-flex items-center gap-1.5">
-              <Percent className="h-3.5 w-3.5" />
-              <span>Descuento Global (%)</span>
-            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="inline-flex items-center gap-1.5">
+                {globalDiscountMode === "fixed" ? <Banknote className="h-3.5 w-3.5" /> : <Percent className="h-3.5 w-3.5" />}
+                <span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto fijo)" : "Descuento Global (%)"}</span>
+              </Label>
+              <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white/60 px-2 py-1 text-[11px]">
+                <span className={cn("font-semibold", globalDiscountMode === "percent" ? "text-emerald-700" : "text-slate-500")}>%</span>
+                <Switch
+                  checked={globalDiscountMode === "fixed"}
+                  disabled={discountsBlockedByPayment}
+                  onCheckedChange={(checked) => applyGlobalDiscountModeChange(checked ? "fixed" : "percent")}
+                  aria-label="Cambiar tipo de descuento global"
+                />
+                <span className={cn("font-semibold", globalDiscountMode === "fixed" ? "text-emerald-700" : "text-slate-500")}>{currency}</span>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -2522,19 +3039,20 @@ export default function SaleForm({
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Reducir descuento global"}
                 disabled={discountsBlockedByPayment || globalDiscount <= 0}
-                onClick={() => applyGlobalDiscountChange(globalDiscount - 1)}
+                onClick={() => applyGlobalDiscountChange(globalDiscount - (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Minus className="h-3.5 w-3.5" />
               </Button>
               <Input
                 type="number"
                 min="0"
-                max="100"
+                max={globalDiscountMode === "percent" ? "100" : undefined}
                 inputMode="numeric"
                 disabled={discountsBlockedByPayment}
                 value={globalDiscount}
                 onChange={(e) => applyGlobalDiscountChange(e.target.value)}
                 onBlur={(e) => applyGlobalDiscountChange(e.target.value)}
+                step={globalDiscountMode === "fixed" ? "10" : "1"}
                 className="h-9 text-center font-mono text-sm font-semibold"
               />
               <Button
@@ -2543,13 +3061,13 @@ export default function SaleForm({
                 size="icon"
                 className={cn(
                   "h-9 w-9 ui-interactive",
-                  discountsBlockedByPayment || globalDiscount >= 100
+                  discountsBlockedByPayment || (globalDiscountMode === "percent" && globalDiscount >= 100)
                     ? "border-slate-300 bg-slate-100 text-slate-400"
                     : "border-emerald-300 bg-white/70 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Aumentar descuento global"}
-                disabled={discountsBlockedByPayment || globalDiscount >= 100}
-                onClick={() => applyGlobalDiscountChange(globalDiscount + 1)}
+                disabled={discountsBlockedByPayment || (globalDiscountMode === "percent" && globalDiscount >= 100)}
+                onClick={() => applyGlobalDiscountChange(globalDiscount + (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -2661,14 +3179,20 @@ export default function SaleForm({
         {extraFields}
 
         <div className="border-t pt-4 space-y-1">
-          {totals.totalDiscounts > 0 && (
+          {(totals.totalDiscounts > 0 || totals.manualPriceDiscountTotal > 0) && (
             <div className="flex justify-between text-sm"><span>Subtotal sin descuentos:</span><span className="font-mono">{formatCurrency(totals.subtotalWithoutDiscounts, currency)}</span></div>
           )}
+          {totals.manualPriceDiscountEntries.length > 0 && totals.manualPriceDiscountEntries.map((entry) => (
+            <div key={`manual-discount-${entry.productId}`} className="flex justify-between text-sm text-green-600">
+              <span>Descuento Individual ({entry.productName}):</span>
+              <span className="font-mono">-{formatCurrency(entry.amount, currency)}</span>
+            </div>
+          ))}
           {totals.discountFromCodes > 0 && (
             <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><span className="font-mono">-{formatCurrency(totals.discountFromCodes, currency)}</span></div>
           )}
           {totals.discountAmount > 0 && (
-            <div className="flex justify-between text-sm text-green-600"><span>Descuento Global:</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
+            <div className="flex justify-between text-sm text-green-600"><span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
           )}
           {totals.discountsBlockedByPayment && totals.blockedDiscountsAmount > 0 && (
             <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por metodo:</span><span className="font-mono">{formatCurrency(totals.blockedDiscountsAmount, currency)}</span></div>
