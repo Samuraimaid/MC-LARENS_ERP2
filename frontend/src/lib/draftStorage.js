@@ -14,6 +14,33 @@ export function loadLocalDraftState(listKey, activeKey) {
   }
 }
 
+function getDraftCompletenessScore(value) {
+  if (!value) return 0;
+  try {
+    const draft = typeof value === "string" ? JSON.parse(value) : value;
+    if (!draft || typeof draft !== "object") return 0;
+
+    let score = 0;
+    if (draft.selectedCustomerId) score += 4;
+    if (draft.selectedVehicle) score += 3;
+    if (draft.selectedVehicleData && typeof draft.selectedVehicleData === "object") score += 2;
+    if (draft.selectedWarehouse) score += 1;
+    if (draft.paymentMethod && draft.paymentMethod !== "cash") score += 1;
+    if (Array.isArray(draft.cartItems) && draft.cartItems.length > 0) score += 6 + Math.min(draft.cartItems.length, 5);
+    if (Number(draft.globalDiscount) > 0) score += 2;
+    if ((draft.globalDiscountMode || "percent") !== "percent") score += 1;
+    if (Array.isArray(draft.appliedDiscounts) && draft.appliedDiscounts.length > 0) score += 2 + draft.appliedDiscounts.length;
+    if (draft.notes) score += 1;
+    if (draft.customerSearch) score += 1;
+    if (draft.productSearch) score += 1;
+    if (draft.applyIVA === false) score += 1;
+    if (draft.applyRetention) score += 1;
+    return score;
+  } catch (error) {
+    return 0;
+  }
+}
+
 export function mirrorServerDraftsToLocalStorage({
   listKey,
   activeKey,
@@ -28,16 +55,6 @@ export function mirrorServerDraftsToLocalStorage({
   if (!allowEmptyOverwrite && serverDrafts.length === 0) {
     return;
   }
-
-  const existingKeys = [];
-  for (let index = 0; index < window.localStorage.length; index += 1) {
-    const key = window.localStorage.key(index);
-    if (key && key.startsWith(draftKeyPrefix)) {
-      existingKeys.push(key);
-    }
-  }
-
-  existingKeys.forEach((key) => window.localStorage.removeItem(key));
 
   const tabs = serverDrafts.map((draft, index) => ({
     id: draft.id,
@@ -54,6 +71,12 @@ export function mirrorServerDraftsToLocalStorage({
 
   serverDrafts.forEach((draft) => {
     if (!draft?.id) return;
-    window.localStorage.setItem(`${draftKeyPrefix}${draft.id}`, JSON.stringify(draft.snapshot || {}));
+    const storageKey = `${draftKeyPrefix}${draft.id}`;
+    const incomingSnapshot = draft.snapshot || {};
+    const currentValue = window.localStorage.getItem(storageKey);
+    const shouldReplace = !currentValue || getDraftCompletenessScore(incomingSnapshot) >= getDraftCompletenessScore(currentValue);
+    if (shouldReplace) {
+      window.localStorage.setItem(storageKey, JSON.stringify(incomingSnapshot));
+    }
   });
 }

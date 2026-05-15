@@ -115,7 +115,7 @@ export function DashboardPage() {
       const seeded = response?.data?.seeded || {};
       const customers = seeded.customers || 0;
       const vehicles = seeded.vehicles || 0;
-      toast.success(`Datos de prueba creados: ${customers} clientes y ${vehicles} vehiculos`);
+      toast.success(`Datos de prueba creados: ${customers} clientes y ${vehicles} vehículos`);
       fetchStats();
     } catch {
       toast.error("Error al crear datos de prueba");

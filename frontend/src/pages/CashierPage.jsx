@@ -339,7 +339,7 @@ export function CashierPage() {
       setSessionId(newSessionId);
       setOpenedSessionId(newSessionId);
       setIsLocked(false);
-      toast.success(`Caja abierta. Session ID: ${newSessionId}`);
+      toast.success(`Caja abierta. ID de sesión: ${newSessionId}`);
     } catch (error) {
       toast.error(error?.response?.data?.detail || "No se pudo abrir caja");
     } finally {

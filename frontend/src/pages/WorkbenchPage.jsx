@@ -39,7 +39,7 @@ const TAB_CONFIG = [
   },
   {
     key: "catalog",
-    label: "Catalogo",
+    label: "Catálogo",
     icon: BookOpen,
     component: CatalogPage,
   },
@@ -57,7 +57,7 @@ const TAB_CONFIG = [
   },
   {
     key: "vehicles",
-    label: "Vehiculos",
+    label: "Vehículos",
     icon: Car,
     component: VehiclesPage,
   },

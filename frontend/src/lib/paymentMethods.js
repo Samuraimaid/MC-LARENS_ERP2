@@ -15,7 +15,7 @@ const PAYMENT_METHOD_LABELS = {
   cash: "Efectivo",
   transfer: "Transferencia",
   card: "Tarjeta",
-  credit: "Credito",
+  credit: "Crédito",
 };
 
 export const PAYMENT_METHOD_CODES = ["cash", "transfer", "card", "credit", "mixed"];

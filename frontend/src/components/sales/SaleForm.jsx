@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
@@ -159,7 +160,7 @@ export default function SaleForm({
   onDataRefresh = null,
   flowType = "sale",
   step4Label = "Paso 4: Carrito del Cliente",
-  step5Label = "Paso 5: Metodo de Pago",
+  step5Label = "Paso 5: Método de Pago",
   currencyValue = null,
   onCurrencyChange = null,
   hideCurrencyField = false,
@@ -212,10 +213,18 @@ export default function SaleForm({
   const customerListRef = useRef(null);
   const productListRef = useRef(null);
   const leftPaneRef = useRef(null);
-  const didSmoothScrollRef = useRef(false);
+  const stepTwoSectionRef = useRef(null);
+  const stepThreeSectionRef = useRef(null);
+  const stepFourSectionRef = useRef(null);
+  const didStepThreeAutoScrollRef = useRef(false);
+  const productTransferTimerRef = useRef(null);
+  const cartFlashTimerRef = useRef(null);
   const longPressTimerRef = useRef(null);
   const longPressHideTimerRef = useRef(null);
   const quantityHoldTimersRef = useRef(new Map());
+  const clearProductSearchAfterCartUpdateRef = useRef(false);
+  const [productTransferAnimation, setProductTransferAnimation] = useState(null);
+  const [cartFlashActive, setCartFlashActive] = useState(false);
   const [activeStockBreakdownKey, setActiveStockBreakdownKey] = useState(null);
   const [customerHighlightIndex, setCustomerHighlightIndex] = useState(0);
   const [productHighlightIndex, setProductHighlightIndex] = useState(0);
@@ -284,7 +293,7 @@ export default function SaleForm({
       badgeClassName: "bg-amber-50 text-amber-700 border-amber-200",
     },
     credit: {
-      label: "Credito",
+      label: "Crédito",
       icon: BadgeAlert,
       className: "text-red-700",
       itemClassName: "text-red-800 data-[highlighted]:bg-red-50 data-[state=checked]:bg-red-50",
@@ -654,7 +663,79 @@ export default function SaleForm({
     cartHistory.current = [{ snapshot, label }, ...cartHistory.current].slice(0, 20);
   }, []);
 
-  const addToCart = (product) => {
+  const clearProductTransferAnimation = useCallback(() => {
+    if (productTransferTimerRef.current) {
+      clearTimeout(productTransferTimerRef.current);
+      productTransferTimerRef.current = null;
+    }
+    setProductTransferAnimation(null);
+  }, []);
+
+  const flashCartLanding = useCallback(() => {
+    if (cartFlashTimerRef.current) {
+      clearTimeout(cartFlashTimerRef.current);
+    }
+    setCartFlashActive(true);
+    cartFlashTimerRef.current = window.setTimeout(() => {
+      setCartFlashActive(false);
+    }, 650);
+  }, []);
+
+  const clearProductSearch = useCallback(() => {
+    flushSync(() => {
+      setProductSearch("");
+      setProductHighlightIndex(0);
+    });
+    const input = productSearchRef.current;
+    if (input) {
+      input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus();
+    }
+  }, []);
+
+  const triggerProductTransferAnimation = useCallback((product, sourceElement) => {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+    if (!sourceElement?.getBoundingClientRect) return;
+
+    const sourceRect = sourceElement.getBoundingClientRect();
+    const targetRect = stepFourSectionRef.current?.getBoundingClientRect();
+    if (!targetRect) return;
+
+    const animationId = `${product.product_id}-${Date.now()}`;
+    const destinationLeft = Math.max(16, targetRect.left + 16);
+    const destinationTop = Math.max(16, targetRect.top + 12);
+    const cardWidth = Math.min(Math.max(sourceRect.width, 180), 360);
+    const cardHeight = Math.min(Math.max(sourceRect.height, 96), 140);
+
+    clearProductTransferAnimation();
+    setProductTransferAnimation({
+      id: animationId,
+      title: product.name,
+      sku: product.sku || "",
+      startLeft: sourceRect.left,
+      startTop: sourceRect.top,
+      startWidth: cardWidth,
+      startHeight: cardHeight,
+      endLeft: destinationLeft,
+      endTop: destinationTop,
+      endWidth: Math.min(targetRect.width - 24, Math.max(cardWidth - 16, 160)),
+      endHeight: Math.min(110, cardHeight - 10),
+    });
+
+    window.requestAnimationFrame(() => {
+      setProductTransferAnimation((current) => (current && current.id === animationId ? { ...current, active: true } : current));
+    });
+
+    productTransferTimerRef.current = window.setTimeout(() => {
+      setProductTransferAnimation((current) => (current && current.id === animationId ? null : current));
+      productTransferTimerRef.current = null;
+    }, 850);
+  }, [clearProductTransferAnimation]);
+
+  const addToCart = (product, options = {}) => {
+    const { sourceElement = null } = options;
     const localStock = getLocalStoreStockValue(product);
     if (localStock <= 0) {
       toast.error("Sin existencias en tu tienda", {
@@ -702,8 +783,11 @@ export default function SaleForm({
         },
       ];
     }
+        clearProductSearchAfterCartUpdateRef.current = true;
+        flashCartLanding();
+        triggerProductTransferAnimation(product, sourceElement);
     setCartItems(nextCartItems);
-    persistDraftSnapshot({ cartItems: nextCartItems });
+    persistDraftSnapshot({ cartItems: nextCartItems, productSearch: "" });
     playCartPickupSound();
   };
 
@@ -739,12 +823,12 @@ export default function SaleForm({
 
   const applyDiscountCode = () => {
     if (discountsBlockedByPayment) {
-      toast.error("Con este metodo de pago no aplican descuentos ni promociones");
+      toast.error("Con este método de pago no aplican descuentos ni promociones");
       return;
     }
     const normalizedCode = String(discountCode || "").trim().toUpperCase();
     if (!normalizedCode) {
-      toast.error("Ingresa un codigo de descuento");
+      toast.error("Ingresa un código de descuento");
       return;
     }
     const codes = {
@@ -1102,7 +1186,11 @@ export default function SaleForm({
     const totalDiscounts = discountFromCodes + discountAmount;
     const blockedDiscountsAmount = discountsBlockedByPayment ? totalDiscountsRaw : 0;
     const subtotalForRetention = subtotalAfterItemPriceDiscounts - totalDiscounts;
-    const shouldApplyRetention = isCompanyCustomerFlow && applyRetention;
+    const subtotalForRetentionNio = currency === "USD"
+      ? subtotalForRetention * exchangeRate
+      : subtotalForRetention;
+    const retentionThresholdMet = subtotalForRetentionNio >= 1000;
+    const shouldApplyRetention = isCompanyCustomerFlow && applyRetention && retentionThresholdMet;
     const retention = shouldApplyRetention ? subtotalForRetention * (retentionRate / 100) : 0;
     const tax = applyIVA ? subtotalForRetention * (ivaRate / 100) : 0;
     const total = subtotalForRetention + tax - retention;
@@ -1114,6 +1202,8 @@ export default function SaleForm({
       manualPriceDiscountEntries,
       manualPriceDiscountTotal,
       subtotalForRetention,
+      subtotalForRetentionNio,
+      retentionThresholdMet,
       tax,
       discountAmount,
       globalDiscountEffectivePercent,
@@ -1158,8 +1248,8 @@ export default function SaleForm({
       currency,
       apply_iva: applyIVA,
       iva_rate: ivaRate,
-      apply_retention: isCompanyCustomerFlow && applyRetention,
-      retention_rate: (isCompanyCustomerFlow && applyRetention) ? retentionRate / 100 : 0,
+      apply_retention: isCompanyCustomerFlow && applyRetention && totals.retentionThresholdMet,
+      retention_rate: (isCompanyCustomerFlow && applyRetention && totals.retentionThresholdMet) ? retentionRate / 100 : 0,
       retention_amount: totals.retention,
       exchange_rate: exchangeRate,
       discount_codes: payloadDiscountCodes,
@@ -1267,6 +1357,7 @@ export default function SaleForm({
 
   const persistDraftSnapshot = useCallback((overrides = {}) => {
     if (!draftKey || typeof window === "undefined") return false;
+    if (!draftLoaded) return false;
     const snapshot = buildDraftSnapshot(overrides);
     const snapshotEmpty = !snapshot?.selectedCustomerId
       && (!snapshot?.cartItems || snapshot.cartItems.length === 0)
@@ -1308,7 +1399,23 @@ export default function SaleForm({
       }
       return false;
     }
-  }, [buildDraftSnapshot, draftKey, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
+  }, [buildDraftSnapshot, draftKey, draftLoaded, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
+
+  useEffect(() => {
+    if (!isCompanyCustomerFlow) return;
+    if (!applyRetention) return;
+    if (totals.retentionThresholdMet) return;
+
+    setApplyRetention(false);
+    persistDraftSnapshot({ applyRetention: false, retentionRate });
+    toast.info("La retención IR requiere subtotal con descuentos >= C$1,000.00");
+  }, [
+    applyRetention,
+    isCompanyCustomerFlow,
+    persistDraftSnapshot,
+    retentionRate,
+    totals.retentionThresholdMet,
+  ]);
 
   const applyGlobalDiscountChange = useCallback((nextValue) => {
     const normalizedValue = clampGlobalDiscountValue(nextValue, globalDiscountMode);
@@ -1608,7 +1715,7 @@ export default function SaleForm({
   const handleOpenCatalogSearch = useCallback(() => {
     const snapshot = buildDraftSnapshot();
     if (!snapshot.selectedCustomerId) {
-      toast.error("Selecciona un cliente antes de buscar desde catalogo");
+      toast.error("Selecciona un cliente antes de buscar desde catálogo");
       return;
     }
 
@@ -1624,7 +1731,7 @@ export default function SaleForm({
       return;
     }
 
-    toast.error("No se pudo abrir catalogo porque no hay un borrador activo");
+    toast.error("No se pudo abrir catálogo porque no hay un borrador activo");
   }, [buildDraftSnapshot, draftKey, onOpenCatalogSearch]);
 
   const isSnapshotEmpty = (snapshot) => {
@@ -1828,11 +1935,15 @@ export default function SaleForm({
     if (event.key === "Enter") {
       event.preventDefault();
       const item = filteredProducts[productHighlightIndex];
-      if (item) addToCart(item);
+      if (item) {
+        const list = productListRef.current;
+        const sourceElement = list?.querySelector(`[data-index="${productHighlightIndex}"]`) || null;
+        addToCart(item, { sourceElement });
+      }
     }
     if (event.key === "Escape") {
       event.preventDefault();
-      setProductSearch("");
+      clearProductSearch();
     }
   };
 
@@ -1911,29 +2022,86 @@ export default function SaleForm({
 
   useEffect(() => {
     const stepOneDone = Boolean(selectedCustomer?.customer_id);
-    const stepTwoDone = Boolean(vehicleFlowOption);
-    if (!stepOneDone || !stepTwoDone) {
-      didSmoothScrollRef.current = false;
+    const stepTwoSelected = stepOneDone && !isVehiclePickerVisible;
+
+    if (!stepTwoSelected) {
+      didStepThreeAutoScrollRef.current = false;
       return;
     }
-    if (didSmoothScrollRef.current) return;
+
+    if (didStepThreeAutoScrollRef.current || typeof window === "undefined") return;
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
 
     const leftPane = leftPaneRef.current;
-    if (!leftPane) return;
-    didSmoothScrollRef.current = true;
+    const stepThreeSection = stepThreeSectionRef.current;
+    const stepFourSection = stepFourSectionRef.current;
+    if (!stepThreeSection || !stepFourSection) return;
 
-    if (typeof leftPane.scrollTo === "function") {
-      leftPane.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [selectedCustomer?.customer_id, vehicleFlowOption]);
+    didStepThreeAutoScrollRef.current = true;
+    window.requestAnimationFrame(() => {
+      const stepThreeTop = stepThreeSection.getBoundingClientRect().top;
+      const stepFourTop = stepFourSection.getBoundingClientRect().top;
+      const delta = stepThreeTop - stepFourTop;
+
+      if (Math.abs(delta) > 8) {
+        if (leftPane && leftPane.scrollHeight > leftPane.clientHeight) {
+          leftPane.scrollBy({ top: delta, behavior: "smooth" });
+        } else {
+          window.scrollBy({ top: delta, behavior: "smooth" });
+        }
+      }
+
+      window.requestAnimationFrame(() => {
+        productSearchRef.current?.focus();
+      });
+    });
+  }, [selectedCustomer?.customer_id, isVehiclePickerVisible]);
 
   useEffect(() => {
     return () => clearBreakdownTimers();
   }, [clearBreakdownTimers]);
 
+  useEffect(() => {
+    if (!clearProductSearchAfterCartUpdateRef.current) return;
+    clearProductSearchAfterCartUpdateRef.current = false;
+    clearProductSearch();
+  }, [cartItems, clearProductSearch]);
+
+  useEffect(() => {
+    return () => {
+      clearProductTransferAnimation();
+      if (cartFlashTimerRef.current) {
+        clearTimeout(cartFlashTimerRef.current);
+        cartFlashTimerRef.current = null;
+      }
+    };
+  }, [clearProductTransferAnimation]);
+
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
-      <div ref={leftPaneRef} className="space-y-4">
+      {productTransferAnimation ? (
+        <div
+          className={cn(
+            "pointer-events-none fixed z-50 rounded-2xl border border-sky-200/70 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-3 shadow-[0_18px_45px_rgba(14,165,233,0.28)] ring-1 ring-white/80 backdrop-blur-sm transition-all duration-700 ease-out",
+            productTransferAnimation.active ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          )}
+          style={{
+            left: `${productTransferAnimation.active ? productTransferAnimation.endLeft : productTransferAnimation.startLeft}px`,
+            top: `${productTransferAnimation.active ? productTransferAnimation.endTop : productTransferAnimation.startTop}px`,
+            width: `${productTransferAnimation.active ? productTransferAnimation.endWidth : productTransferAnimation.startWidth}px`,
+            height: `${productTransferAnimation.active ? productTransferAnimation.endHeight : productTransferAnimation.startHeight}px`,
+          }}
+        >
+          <div className="flex h-full items-center gap-3 overflow-hidden">
+            <div className="h-12 w-12 shrink-0 rounded-xl bg-gradient-to-br from-sky-200 via-white to-emerald-200 shadow-inner ring-1 ring-white/70" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-900">{productTransferAnimation.title}</p>
+              <p className="truncate text-[11px] text-slate-600">{productTransferAnimation.sku}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div ref={leftPaneRef} className="space-y-4 xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto xl:pr-1">
         <div>
           <Label className="inline-flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -1978,7 +2146,7 @@ export default function SaleForm({
             </div>
           ) : null}
           {selectedCustomer ? (
-            <div className={cn("mb-3", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell)}>
+            <div className={cn("mt-1 mb-3", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell)}>
               <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
                   <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.title}>
@@ -2085,7 +2253,7 @@ export default function SaleForm({
           ) : null}
         </div>
 
-        <div className="space-y-2 animate-fade-up-soft">
+        <div ref={stepTwoSectionRef} className="space-y-2 animate-fade-up-soft">
           <Label className="inline-flex items-center gap-2">
             <CarFront className="h-4 w-4" />
             <span>Paso 2: Seleccionar opción de vehículo</span>
@@ -2245,7 +2413,7 @@ export default function SaleForm({
           ) : null}
         </div>
 
-        <div className="space-y-2 animate-fade-up-soft">
+        <div ref={stepThreeSectionRef} className="space-y-2 animate-fade-up-soft">
           <Label className="inline-flex items-center gap-2">
             <Package className="h-4 w-4" />
             <span>Paso 3: Seleccionar productos</span>
@@ -2276,7 +2444,7 @@ export default function SaleForm({
               className="shrink-0 ui-interactive"
             >
               <BookOpen className="h-4 w-4 mr-2" />
-              Buscar desde Catalogo
+              Buscar desde Catálogo
             </Button>
           </div>
           {productSearch.trim() ? (
@@ -2304,7 +2472,7 @@ export default function SaleForm({
                     tone.hover,
                     index === productHighlightIndex ? tone.selected : ""
                   )}
-                  onClick={() => addToCart(p)}
+                  onClick={(event) => addToCart(p, { sourceElement: event.currentTarget })}
                   onMouseEnter={() => setProductHighlightIndex(index)}
                 >
                   {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
@@ -2519,7 +2687,10 @@ export default function SaleForm({
         </div>
       </div>
 
-      <div className="space-y-4 animate-fade-up-soft">
+      <div ref={stepFourSectionRef} className={cn("relative space-y-4 animate-fade-up-soft rounded-2xl transition-all duration-500", cartFlashActive ? "ring-2 ring-sky-300 shadow-[0_0_0_1px_rgba(125,211,252,0.35),0_18px_40px_rgba(56,189,248,0.12)]" : "") }>
+        {cartFlashActive ? (
+          <div className="pointer-events-none absolute inset-x-3 top-10 h-28 rounded-3xl bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.98),rgba(186,230,253,0.34)_35%,rgba(255,255,255,0)_70%)] opacity-90 blur-sm" />
+        ) : null}
         <div className="flex items-center justify-between">
           <Label className="inline-flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
@@ -2828,6 +2999,11 @@ export default function SaleForm({
                     min="0"
                     value={priceEditorAmount}
                     onChange={(event) => setPriceEditorAmount(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      applyPriceEditor();
+                    }}
                     placeholder={`Precio en ${currency}`}
                   />
                 </div>
@@ -2839,6 +3015,11 @@ export default function SaleForm({
                     step="0.01"
                     value={priceEditorPercent}
                     onChange={(event) => setPriceEditorPercent(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      applyPriceEditor();
+                    }}
                     placeholder="Ej: 10 o -5"
                   />
                 </div>
@@ -2925,7 +3106,7 @@ export default function SaleForm({
             }}
           >
             <SelectTrigger className="ui-interactive">
-              <SelectValue placeholder="Seleccionar metodo de pago" />
+              <SelectValue placeholder="Seleccionar método de pago" />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(paymentOptionMeta).map(([value, meta]) => {
@@ -2974,17 +3155,24 @@ export default function SaleForm({
           )}
           {discountsBlockedByPayment ? (
             <p className="text-xs text-amber-700">
-              Este metodo bloquea descuentos y promociones en el calculo final.
+              Este método bloquea descuentos y promociones en el cálculo final.
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Este metodo permite aplicar descuentos y promociones.
+              Este método permite aplicar descuentos y promociones.
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
-          <div className="space-y-1.5">
+          <div
+            className={cn(
+              "space-y-1.5 rounded-md border p-2 transition-colors",
+              appliedDiscounts.length > 0
+                ? "border-emerald-300 bg-emerald-50/70"
+                : "border-transparent bg-transparent"
+            )}
+          >
             <Label className="inline-flex items-center gap-1.5">
               <Tag className="h-3.5 w-3.5" />
               <span>Código de descuento</span>
@@ -3009,7 +3197,14 @@ export default function SaleForm({
               </div>
             )}
           </div>
-          <div className="space-y-1.5">
+          <div
+            className={cn(
+              "space-y-1.5 rounded-md border p-2 transition-colors",
+              totals.discountAmount > 0
+                ? "border-emerald-300 bg-emerald-50/70"
+                : "border-transparent bg-transparent"
+            )}
+          >
             <div className="flex items-center justify-between gap-2">
               <Label className="inline-flex items-center gap-1.5">
                 {globalDiscountMode === "fixed" ? <Banknote className="h-3.5 w-3.5" /> : <Percent className="h-3.5 w-3.5" />}
@@ -3116,43 +3311,61 @@ export default function SaleForm({
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={applyRetention}
+                  disabled={!totals.retentionThresholdMet}
                   onCheckedChange={(v) => {
                     const next = Boolean(v);
+                    if (next && !totals.retentionThresholdMet) {
+                      toast.info("La retención IR requiere subtotal con descuentos >= C$1,000.00");
+                      return;
+                    }
                     setApplyRetention(next);
                     persistDraftSnapshot({ applyRetention: next, retentionRate });
                   }}
                 />
-                <span className="text-xs text-muted-foreground">Retención sobre subtotal</span>
+                <span className="text-xs text-muted-foreground">
+                  Retención sobre subtotal (habilita desde C$1,000.00 después de descuentos)
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
+                  disabled={!totals.retentionThresholdMet}
                   onClick={() => {
                     setRetentionRate(1);
                     persistDraftSnapshot({ applyRetention, retentionRate: 1 });
                   }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    retentionRate === 1 && applyRetention
+                    !totals.retentionThresholdMet
+                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                      : retentionRate === 1 && applyRetention
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-background text-muted-foreground hover:bg-muted"
                   )}
                 >1%</button>
                 <button
                   type="button"
+                  disabled={!totals.retentionThresholdMet}
                   onClick={() => {
                     setRetentionRate(2);
                     persistDraftSnapshot({ applyRetention, retentionRate: 2 });
                   }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    retentionRate === 2 && applyRetention
+                    !totals.retentionThresholdMet
+                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                      : retentionRate === 2 && applyRetention
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-background text-muted-foreground hover:bg-muted"
                   )}
                 >2%</button>
               </div>
             </div>
+            {!totals.retentionThresholdMet ? (
+              <p className="text-xs text-amber-700">
+                Subtotal actual para retención: {formatCurrency(totals.subtotalForRetentionNio, "NIO")} (mínimo C$1,000.00)
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -3195,7 +3408,7 @@ export default function SaleForm({
             <div className="flex justify-between text-sm text-green-600"><span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
           )}
           {totals.discountsBlockedByPayment && totals.blockedDiscountsAmount > 0 && (
-            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por metodo:</span><span className="font-mono">{formatCurrency(totals.blockedDiscountsAmount, currency)}</span></div>
+            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por método:</span><span className="font-mono">{formatCurrency(totals.blockedDiscountsAmount, currency)}</span></div>
           )}
           <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotalForRetention, currency)}</span></div>
           {applyRetention && totals.retention > 0 && (

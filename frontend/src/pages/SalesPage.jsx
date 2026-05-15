@@ -698,7 +698,7 @@ export function SalesPage() {
 
   const getSaleItemsPreview = (sale) => {
     const items = Array.isArray(sale?.items) ? sale.items : [];
-    if (items.length === 0) return "Sin articulos";
+    if (items.length === 0) return "Sin artículos";
     const names = items.slice(0, 3).map((item) => item.product_name || "Producto");
     return items.length > 3 ? `${names.join(" · ")} · +${items.length - 3}` : names.join(" · ");
   };
@@ -874,7 +874,7 @@ export function SalesPage() {
     };
 
     if (!safeSnapshot.selectedCustomerId) {
-      toast.error("Selecciona un cliente antes de buscar desde catalogo");
+      toast.error("Selecciona un cliente antes de buscar desde catálogo");
       return;
     }
 
@@ -2060,6 +2060,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
+            <div key={activeDraftId || "no-draft"} className="animate-draft-load">
             <SaleForm
               key={`${activeDraftId || "draft"}-${saleFormRenderNonce}`}
               customers={customers}
@@ -2117,6 +2118,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 }
               }}
             />
+            </div>
           </CardContent>
         </Card>
       ) : null}
@@ -2132,6 +2134,29 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             className="pl-9"
           />
         </div>
+        <Button
+          type="button"
+          variant={showNewSale ? "outline" : "default"}
+          onClick={() => {
+            playSelectionFeedbackSound();
+            toggleEmbeddedSaleForm();
+          }}
+          className="ui-interactive"
+          title={showNewSale ? "Ocultar formulario" : "Mostrar formulario"}
+          aria-label={showNewSale ? "Ocultar formulario de venta" : "Mostrar formulario de venta"}
+        >
+          {showNewSale ? (
+            <>
+              <XCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Ocultar formulario</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Mostrar formulario</span>
+            </>
+          )}
+        </Button>
         <Select value={filterPayment} onValueChange={setFilterPayment}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Tipo pago" />
@@ -2183,24 +2208,24 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       </div>}
 
       {/* Drafts + 3-column invoice board */}
-      <div className="xl:hidden">
+      <div className="2xl:hidden">
         <Tabs value={boardTab} onValueChange={setBoardTab}>
-          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
-            <TabsTrigger value="drafts" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsList className="h-11 w-full justify-center overflow-auto rounded-full border bg-card/95 p-1 touch-pan-x">
+            <TabsTrigger value="drafts" className="shrink-0 rounded-full px-4 text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Borradores
             </TabsTrigger>
-            <TabsTrigger value="open" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="open" className="shrink-0 rounded-full px-4 text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Abiertas
             </TabsTrigger>
-            <TabsTrigger value="closed" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="closed" className="shrink-0 rounded-full px-4 text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Cerradas
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden xl:block" : "") }>
+      <div className="grid gap-6 2xl:grid-cols-3">
+        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden 2xl:block" : "") }>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE VENTA</CardTitle>
           </CardHeader>
@@ -2256,7 +2281,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                                 <p className="text-xs font-semibold">
                                   {formatCurrency(meta.total || 0, meta.currency)}
                                 </p>
-                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} items</p>
+                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} ítems</p>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -2267,7 +2292,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                               {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
                             </p>
                             {meta.previewVehicle ? (
-                              <p className="text-[11px] text-muted-foreground">Vehiculo: {meta.previewVehicle}</p>
+                              <p className="text-[11px] text-muted-foreground">Vehículo: {meta.previewVehicle}</p>
                             ) : null}
                             {(meta.totalDiscounts > 0 || meta.retention > 0) ? (
                               <div className="space-y-1 rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
@@ -2278,7 +2303,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                                 ) : null}
                                 {meta.retention > 0 ? (
                                   <p className="text-[11px] text-orange-600">
-                                    Retencion IR ({meta.retentionRate}%): -{formatCurrency(meta.retention, meta.currency)}
+                                    Retención IR ({meta.retentionRate}%): -{formatCurrency(meta.retention, meta.currency)}
                                   </p>
                                 ) : null}
                               </div>
@@ -2314,7 +2339,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
           </CardContent>
         </Card>
 
-        <Card className={cn(boardTab !== "open" ? "hidden xl:block" : "") }>
+        <Card className={cn(boardTab !== "open" ? "hidden 2xl:block" : "") }>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">FACTURAS ABIERTAS EN CAJA</CardTitle>
           </CardHeader>
@@ -2348,7 +2373,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                             </p>
                             {sale.vehicle_id ? (
                               <p className="text-xs text-muted-foreground">
-                                Vehiculo: {getVehicleLabel(sale.vehicle_id) || "Sin vehiculo"}
+                                Vehículo: {getVehicleLabel(sale.vehicle_id) || "Sin vehículo"}
                               </p>
                             ) : null}
                             <p className="text-xs text-muted-foreground">
@@ -2372,7 +2397,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                       </div>
 
                       <p className="text-xs text-muted-foreground">
-                        Articulos: {getSaleItemsPreview(sale)}
+                        Artículos: {getSaleItemsPreview(sale)}
                       </p>
 
                       <div className="flex flex-wrap gap-2">
@@ -2440,7 +2465,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
           </CardContent>
         </Card>
 
-        <Card className={cn(boardTab !== "closed" ? "hidden xl:block" : "") }>
+        <Card className={cn(boardTab !== "closed" ? "hidden 2xl:block" : "") }>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">FACTURAS CERRADAS DEL DÍA</CardTitle>
           </CardHeader>

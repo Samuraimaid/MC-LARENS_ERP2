@@ -1364,6 +1364,12 @@ class BillingIvaUpdatePayload(FlexibleModel):
     iva_rate: float
 
 
+class SellerGlobalDiscountPolicyPayload(FlexibleModel):
+    enabled: bool = True
+    max_percent: float = 5.0
+    max_amount_nio: float = 1000.0
+
+
 class BillingExchangeRulePayload(FlexibleModel):
     name: str
     cadence: str  # daily | weekly | monthly | custom
@@ -1596,6 +1602,110 @@ def _is_card_method(value: Any) -> bool:
 def _is_discount_allowed(method: str) -> bool:
     normalized = _normalize_method_name(method)
     return normalized in {"cash", "transfer"}
+
+
+async def _get_seller_global_discount_policy() -> Dict[str, Any]:
+    default_policy = {
+        "type": "seller_global_discount_policy",
+        "enabled": True,
+        "max_percent": 5.0,
+        "max_amount_nio": 1000.0,
+        "updated_at": None,
+    }
+
+    doc = await db.settings.find_one({"type": "seller_global_discount_policy"}, {"_id": 0})
+    if not doc:
+        return default_policy
+
+    enabled = bool(doc.get("enabled", True))
+    try:
+        max_percent = float(doc.get("max_percent", 5.0))
+    except (TypeError, ValueError):
+        max_percent = 5.0
+    try:
+        max_amount_nio = float(doc.get("max_amount_nio", 1000.0))
+    except (TypeError, ValueError):
+        max_amount_nio = 1000.0
+
+    max_percent = max(0.0, min(100.0, max_percent))
+    max_amount_nio = max(0.0, max_amount_nio)
+
+    return {
+        "type": "seller_global_discount_policy",
+        "enabled": enabled,
+        "max_percent": max_percent,
+        "max_amount_nio": max_amount_nio,
+        "updated_at": doc.get("updated_at"),
+    }
+
+
+async def _enforce_seller_global_discount_limits(
+    actor: User,
+    subtotal: float,
+    discount_percent: float,
+    currency: str = "USD",
+    exchange_rate: Optional[float] = None,
+) -> None:
+    effective_role = resolve_effective_role(getattr(actor, "role", None))
+    if effective_role != "ventas":
+        return
+
+    requested_percent = max(float(discount_percent or 0.0), 0.0)
+    if requested_percent <= 0:
+        return
+
+    policy = await _get_seller_global_discount_policy()
+    if not bool(policy.get("enabled", True)):
+        return
+
+    max_percent = float(policy.get("max_percent") or 0.0)
+    max_amount_nio = float(policy.get("max_amount_nio") or 0.0)
+
+    if requested_percent > max_percent + 1e-9:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "SELLER_GLOBAL_DISCOUNT_LIMIT_EXCEEDED",
+                "message": f"El descuento global para vendedores no puede superar {max_percent:.2f}%.",
+                "policy": policy,
+                "requested_discount_percent": round(requested_percent, 4),
+            },
+        )
+
+    normalized_currency = _currency_code(currency)
+    subtotal_amount = max(float(subtotal or 0.0), 0.0)
+    requested_discount_amount = subtotal_amount * (requested_percent / 100.0)
+
+    if normalized_currency == "NIO":
+        discount_amount_nio = requested_discount_amount
+        rate = float(exchange_rate or 0.0)
+        if rate <= 0:
+            rate = await _get_usd_to_nio_rate()
+        max_in_currency = max_amount_nio
+    else:
+        rate = float(exchange_rate or 0.0)
+        if rate <= 0:
+            rate = await _get_usd_to_nio_rate()
+        discount_amount_nio = requested_discount_amount * rate
+        max_in_currency = (max_amount_nio / rate) if rate > 0 else 0.0
+
+    if discount_amount_nio > (max_amount_nio + 0.009):
+        max_label = "C$" if normalized_currency == "NIO" else "USD"
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "SELLER_GLOBAL_DISCOUNT_LIMIT_EXCEEDED",
+                "message": "El descuento global para vendedores no puede superar 5% ni C$1,000.00 (o su equivalente en USD).",
+                "policy": policy,
+                "requested_discount_percent": round(requested_percent, 4),
+                "requested_discount_amount": round(requested_discount_amount, 2),
+                "requested_discount_amount_nio": round(discount_amount_nio, 2),
+                "currency": normalized_currency,
+                "max_discount_amount_in_currency": round(max_in_currency, 2),
+                "max_discount_amount_nio": round(max_amount_nio, 2),
+                "max_discount_amount_label": f"{max_label} {round(max_in_currency, 2):.2f}",
+            },
+        )
 
 
 def _normalize_print_format(value: Any) -> str:
@@ -5284,6 +5394,13 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     iva_rate = float(quot_data.iva_rate) if quot_data.iva_rate is not None else await _get_billing_iva_rate()
     tax = subtotal * (iva_rate / 100) if apply_iva else 0
     effective_discount_percent = quot_data.discount if discounts_allowed_by_method else 0.0
+    await _enforce_seller_global_discount_limits(
+        actor=user,
+        subtotal=subtotal,
+        discount_percent=effective_discount_percent,
+        currency=currency,
+        exchange_rate=exchange_rate,
+    )
     total_discount = subtotal * (effective_discount_percent / 100)
     total = subtotal + tax - total_discount
 
@@ -5950,6 +6067,20 @@ async def create_sale(sale_data: SaleCreate, request: Request):
     iva_rate_percent = await _get_billing_iva_rate()
     iva_rate_decimal = iva_rate_percent / 100.0
     tax = subtotal * iva_rate_decimal
+    raw_sale_currency = getattr(sale_data, "currency", "USD")
+    sale_currency = _currency_code(raw_sale_currency)
+    raw_sale_exchange_rate = getattr(sale_data, "exchange_rate", None)
+    try:
+        sale_exchange_rate = float(raw_sale_exchange_rate) if raw_sale_exchange_rate is not None else None
+    except (TypeError, ValueError):
+        sale_exchange_rate = None
+    await _enforce_seller_global_discount_limits(
+        actor=user,
+        subtotal=subtotal,
+        discount_percent=sale_data.discount,
+        currency=sale_currency,
+        exchange_rate=sale_exchange_rate,
+    )
     total_discount = subtotal * (sale_data.discount / 100)
     total = subtotal + tax - total_discount
 
@@ -13012,6 +13143,41 @@ async def set_system_currency(currency: str, request: Request):
     )
 
     return {"message": f"System currency set to {currency}"}
+
+
+@api_router.get("/settings/discount-policy/seller")
+async def get_seller_discount_policy(request: Request):
+    await require_auth(request)
+    return await _get_seller_global_discount_policy()
+
+
+@api_router.put("/settings/discount-policy/seller")
+async def update_seller_discount_policy(payload: SellerGlobalDiscountPolicyPayload, request: Request):
+    await require_roles(request, ["gerencia", "recursos_humanos"])
+
+    max_percent = float(payload.max_percent or 0.0)
+    max_amount_nio = float(payload.max_amount_nio or 0.0)
+
+    if max_percent <= 0 or max_percent > 100:
+        raise HTTPException(status_code=400, detail="max_percent debe estar entre 0 y 100")
+    if max_amount_nio <= 0:
+        raise HTTPException(status_code=400, detail="max_amount_nio debe ser mayor a cero")
+
+    doc = {
+        "type": "seller_global_discount_policy",
+        "enabled": bool(payload.enabled),
+        "max_percent": round(max_percent, 4),
+        "max_amount_nio": round(max_amount_nio, 2),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    await db.settings.update_one(
+        {"type": "seller_global_discount_policy"},
+        {"$set": doc},
+        upsert=True,
+    )
+
+    return doc
 
 
 ALLOWED_THEME_MODES = {"light", "dark", "system"}

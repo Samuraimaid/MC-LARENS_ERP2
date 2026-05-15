@@ -34,10 +34,10 @@ const WORKBENCH_TAB_ITEMS = [
   { key: "notifications", label: "Notificaciones", icon: Bell },
   { key: "sales", label: "Ventas", icon: ShoppingCart },
   { key: "quotations", label: "Cotizaciones", icon: ClipboardList },
-  { key: "catalog", label: "Catalogo", icon: BookOpen },
+  { key: "catalog", label: "Catálogo", icon: BookOpen },
   { key: "samples", label: "Muestras", icon: FlaskConical },
   { key: "customers", label: "Clientes", icon: Users },
-  { key: "vehicles", label: "Vehiculos", icon: Car },
+  { key: "vehicles", label: "Vehículos", icon: Car },
 ];
 
 function HeaderCloudSyncIcon({ className }) {

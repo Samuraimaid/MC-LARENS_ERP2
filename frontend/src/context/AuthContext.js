@@ -74,6 +74,35 @@ const isDraftValueEmpty = (value) => {
   }
 };
 
+const getDraftCompletenessScore = (value) => {
+  if (!value) return 0;
+  try {
+    const draft = typeof value === "string" ? JSON.parse(value) : value;
+    if (!draft || typeof draft !== "object") return 0;
+
+    let score = 0;
+    if (draft.selectedCustomerId) score += 4;
+    if (draft.selectedVehicle) score += 3;
+    if (draft.selectedVehicleData && typeof draft.selectedVehicleData === "object") score += 2;
+    if (draft.selectedWarehouse) score += 1;
+    if (draft.paymentMethod && draft.paymentMethod !== "cash") score += 1;
+    if (Array.isArray(draft.cartItems) && draft.cartItems.length > 0) score += 6 + Math.min(draft.cartItems.length, 5);
+    if (Number(draft.globalDiscount) > 0) score += 2;
+    if ((draft.globalDiscountMode || "percent") !== "percent") score += 1;
+    if (Array.isArray(draft.appliedDiscounts) && draft.appliedDiscounts.length > 0) score += 2 + draft.appliedDiscounts.length;
+    if (draft.notes) score += 1;
+    if (draft.customerSearch) score += 1;
+    if (draft.productSearch) score += 1;
+    if (draft.applyIVA === false) score += 1;
+    if (draft.applyRetention) score += 1;
+    if (draft.showNewCustomer || draft.showNewVehicleDialog) score += 1;
+    if (draft.newCustomer || draft.newVehicle) score += 1;
+    return score;
+  } catch (error) {
+    return 0;
+  }
+};
+
 const collectDraftEntries = () => {
   if (typeof window === "undefined" || !window.localStorage) return [];
   const entries = [];
@@ -147,7 +176,8 @@ const applyDraftEntries = (entries = []) => {
     }
     const shouldReplace = existing === null
       || existing === ""
-      || (isDraftValueEmpty(existing) && !isDraftValueEmpty(value));
+      || (isDraftValueEmpty(existing) && !isDraftValueEmpty(value))
+      || getDraftCompletenessScore(value) > getDraftCompletenessScore(existing);
     if (shouldReplace) {
       window.localStorage.setItem(key, value);
     }

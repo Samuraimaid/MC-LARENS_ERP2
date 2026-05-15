@@ -542,6 +542,13 @@ export function QuotationsPage() {
     });
   };
 
+  const selectDraftAndOpenForm = useCallback((draftId) => {
+    if (!draftId) return;
+    setActiveDraftId(draftId);
+    updateDraftTabMeta(draftId);
+    setShowNewQuote(true);
+  }, [updateDraftTabMeta]);
+
   const openActiveDraft = useCallback(() => {
     if (draftTabs.length === 0) {
       createDraftTab();
@@ -620,6 +627,13 @@ export function QuotationsPage() {
     if (!draftsLoaded || !showNewQuote || activeDraftId) return;
     createDraftTab();
   }, [activeDraftId, createDraftTab, draftsLoaded, showNewQuote]);
+
+  useEffect(() => {
+    if (!draftsLoaded) return;
+    if (showNewQuote) return;
+    if (draftTabs.length > 0) return;
+    setShowNewQuote(true);
+  }, [draftTabs.length, draftsLoaded, showNewQuote]);
 
   useEffect(() => {
     if (!activeDraftId) {
@@ -1059,6 +1073,7 @@ export function QuotationsPage() {
             </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
+            <div key={activeDraftId || "no-draft"} className="animate-draft-load">
             <SaleForm
               key={`${activeDraftId || "draft"}-${quoteFormRenderNonce}`}
               customers={customers}
@@ -1067,8 +1082,8 @@ export function QuotationsPage() {
               inventory={inventory}
               vehicles={vehicles}
               flowType="quotation"
-              step4Label="Paso 4: Productos en esta Cotizacion"
-              step5Label="Paso 5: Metodo de Pago (Cotizacion)"
+              step4Label="Paso 4: Productos en esta Cotización"
+              step5Label="Paso 5: Método de Pago (Cotización)"
               initialData={{ selectedCustomer, cartItems, paymentMethod: "cash", mixedPaymentMethods: [], globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
@@ -1127,12 +1142,13 @@ export function QuotationsPage() {
                 }
               }}
             />
+            </div>
           </CardContent>
         </Card>
       ) : null}
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -1143,6 +1159,29 @@ export function QuotationsPage() {
             data-testid="search-quotations"
           />
         </div>
+        <Button
+          type="button"
+          variant={showNewQuote ? "outline" : "default"}
+          onClick={() => {
+            playSelectionFeedbackSound();
+            toggleEmbeddedQuoteForm();
+          }}
+          className="ui-interactive"
+          title={showNewQuote ? "Ocultar formulario" : "Mostrar formulario"}
+          aria-label={showNewQuote ? "Ocultar formulario de cotización" : "Mostrar formulario de cotización"}
+        >
+          {showNewQuote ? (
+            <>
+              <XCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Ocultar formulario</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Mostrar formulario</span>
+            </>
+          )}
+        </Button>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Estado" />
@@ -1168,23 +1207,23 @@ export function QuotationsPage() {
       </div>
 
       {/* Drafts + Quotations */}
-      <div className="lg:hidden">
+      <div className="2xl:hidden">
         <Tabs value={boardTab} onValueChange={setBoardTab}>
-          <TabsList className="grid h-11 w-full grid-cols-2 rounded-full border bg-card/95 p-1">
-            <TabsTrigger value="drafts" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsList className="h-11 w-full justify-center overflow-auto rounded-full border bg-card/95 p-1 touch-pan-x">
+            <TabsTrigger value="drafts" className="shrink-0 rounded-full px-4 text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Borradores
             </TabsTrigger>
-            <TabsTrigger value="created" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="created" className="shrink-0 rounded-full px-4 text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Creadas
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[440px,1fr]">
-        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden lg:block" : "") }>
+      <div className="grid gap-6 2xl:grid-cols-[440px,1fr]">
+        <Card className={cn("h-fit", boardTab !== "drafts" ? "hidden 2xl:block" : "") }>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE COTIZACION</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE COTIZACIÓN</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {draftTabs.length === 0 ? (
@@ -1204,16 +1243,12 @@ export function QuotationsPage() {
                           tabIndex={0}
                           className="grid gap-3 md:grid-cols-[140px,1fr]"
                           onClick={() => {
-                            setActiveDraftId(tab.id);
-                            updateDraftTabMeta(tab.id);
-                            setShowNewQuote(true);
+                            selectDraftAndOpenForm(tab.id);
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
-                              setActiveDraftId(tab.id);
-                              updateDraftTabMeta(tab.id);
-                              setShowNewQuote(true);
+                              selectDraftAndOpenForm(tab.id);
                             }
                           }}
                         >
@@ -1238,38 +1273,28 @@ export function QuotationsPage() {
                                 <p className="text-xs font-semibold">
                                   {formatCurrency(meta.total || 0, meta.currency)}
                                 </p>
-                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} items</p>
+                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} ítems</p>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               <Badge variant="outline">{isActive ? "Activo" : "Borrador"}</Badge>
                               <Badge variant="secondary">{meta.currency}</Badge>
                             </div>
-                            <div className="grid gap-2">
-                              <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.customer.shell, "p-2") }>
-                                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
-                                  <div className="min-w-0 space-y-1">
-                                    <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-emerald-900">
-                                      <User className="h-3.5 w-3.5 text-emerald-700" />
-                                      <span className="truncate">{meta.subtitle || "Sin cliente"}</span>
-                                    </p>
-                                    <p className="text-[11px] text-emerald-900/80">{meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}</p>
-                                  </div>
-                                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.badge}>Cliente</Badge>
-                                </div>
-                              </div>
-                              <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.shared.pairedCompactMinHeight, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, "p-2") }>
-                                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.splitCompact}>
-                                  <p className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-sky-900">
-                                    <CarFront className="h-3.5 w-3.5 text-sky-700" />
-                                    <span className="truncate">{meta.previewVehicle || "Sin vehículo"}</span>
-                                  </p>
-                                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>Vehículo</Badge>
-                                </div>
-                              </div>
-                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
+                            </p>
+                            {meta.previewVehicle ? (
+                              <p className="text-[11px] text-muted-foreground">Vehículo: {meta.previewVehicle}</p>
+                            ) : null}
                             <div className="flex flex-wrap gap-2 mt-2">
-                              <Button size="sm">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  selectDraftAndOpenForm(tab.id);
+                                }}
+                              >
                                 Abrir borrador
                               </Button>
                               <Button
@@ -1294,7 +1319,7 @@ export function QuotationsPage() {
           </CardContent>
         </Card>
 
-        <Card className={cn(boardTab !== "created" ? "hidden lg:block" : "") }>
+        <Card className={cn(boardTab !== "created" ? "hidden 2xl:block" : "") }>
           <CardContent className="p-4">
             {loading ? (
               <div className="py-10 text-center text-muted-foreground">
@@ -1340,7 +1365,7 @@ export function QuotationsPage() {
                                 {customerLabel}
                               </p>
                               {vehicleLabel ? (
-                                <p className="text-xs text-muted-foreground">Vehiculo: {vehicleLabel}</p>
+                                <p className="text-xs text-muted-foreground">Vehículo: {vehicleLabel}</p>
                               ) : null}
                               <p className="text-xs text-muted-foreground">
                                 {q.created_at ? formatDate(q.created_at) : "—"}
