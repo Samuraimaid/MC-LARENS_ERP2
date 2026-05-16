@@ -57,6 +57,13 @@ import {
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
 import {
+  formatChasis,
+  formatCedula,
+  formatPhone,
+  formatPlateNumber,
+  formatRUC,
+} from "@/lib/formatters";
+import {
   getPaymentMethodSummaryLabel,
   normalizePaymentMethodCode,
   normalizePaymentMethodList,
@@ -92,33 +99,6 @@ const VEHICLE_BRANDS = [
   "VOLVO", "ZOTYE"
 ];
 
-// Formatear teléfono Nicaragua
-const formatPhone = (value) => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-};
-
-// Formatear cédula Nicaragua (001-000000-0000A)
-const formatCedula = (value) => {
-  const clean = value.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
-  if (clean.length <= 3) return clean;
-  if (clean.length <= 9) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
-  return `${clean.slice(0, 3)}-${clean.slice(3, 9)}-${clean.slice(9, 14)}`;
-};
-
-// Formatear RUC Nicaragua (J0000000000000)
-const formatRUC = (value) => {
-  const clean = value.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
-  return clean.slice(0, 14);
-};
-
-// Formatear CHASIS (17 dígitos alfanuméricos sin I, O, Q, Ñ)
-const formatChasis = (value) => {
-  const clean = value.replace(/[^0-9A-HJ-NPR-Za-hj-npr-z]/g, "").toUpperCase();
-  return clean.slice(0, 17);
-};
-
 const normalizeGlobalDiscountMode = (value) => (value === "fixed" ? "fixed" : "percent");
 
 const clampGlobalDiscountValue = (value, mode = "percent") => {
@@ -128,16 +108,6 @@ const clampGlobalDiscountValue = (value, mode = "percent") => {
     return Math.max(0, Number(numericValue.toFixed(2)));
   }
   return Math.max(0, Math.min(100, Math.round(numericValue)));
-};
-
-// Formatear placa según prefijo
-const formatPlateNumber = (prefix, value) => {
-  const digits = value.replace(/\D/g, "");
-  if (prefix === "M") {
-    if (digits.length <= 3) return digits;
-    return `${digits.slice(0, 3)} ${digits.slice(3, 6)}`;
-  }
-  return digits.slice(0, 5);
 };
 
 export default function SaleForm({

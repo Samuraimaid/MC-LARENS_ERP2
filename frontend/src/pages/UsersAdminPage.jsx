@@ -16,6 +16,7 @@ import { Checkbox } from "../components/ui/checkbox";
 import { toast } from "sonner";
 import { Search, RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { formatPhone } from "@/lib/formatters";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -24,12 +25,6 @@ const ACTION_LABELS = {
   view: "Ver",
   edit: "Editar",
   delete: "Eliminar",
-};
-
-const formatPhone = (value) => {
-  const digits = (value || "").replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
 };
 
 export function UsersAdminPage() {
