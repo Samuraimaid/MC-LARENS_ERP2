@@ -11,6 +11,7 @@ import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
 import { useDevice } from "../hooks/useDevice";
+import { formatCurrency } from "../lib/utils";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -34,7 +35,6 @@ export function LoginPage() {
   const [remainingAttempts, setRemainingAttempts] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const [lockoutSeconds, setLockoutSeconds] = useState(null);
-  const [pinUsers, setPinUsers] = useState([]);
   const [showLoginInfo, setShowLoginInfo] = useState(false);
   const buildVersion = APP_ENV.buildVersion;
   const buildTimeRaw = APP_ENV.buildTime;
@@ -54,17 +54,6 @@ export function LoginPage() {
   const [fxLoading, setFxLoading] = useState(false);
   const [fxError, setFxError] = useState("");
 
-  const sha256 = useCallback(async (value) => {
-    const source = String(value ?? "");
-    if (!source) return "";
-    if (typeof window !== "undefined" && window.crypto?.subtle) {
-      const data = new TextEncoder().encode(source);
-      const digest = await window.crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-    return "";
-  }, []);
-  
   // Frases aleatorias
   const messages = [
     "¡A romperla en ventas hoy! 🚀",
@@ -342,34 +331,23 @@ export function LoginPage() {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      let resolvedUserId = null;
-      try {
-        const pinIndex = await sha256(pinToUse);
-        if (pinIndex && Array.isArray(pinUsers) && pinUsers.length > 0) {
-          const match = pinUsers.find((u) => u?.login_pin_index === pinIndex);
-          if (match?.user_id) resolvedUserId = match.user_id;
-        }
-      } catch (_) {
-        // ignore local resolution failures; backend fallback still works
-      }
-
-      const payload = resolvedUserId ? { pin: pinToUse, user_id: resolvedUserId } : { pin: pinToUse };
       const response = await axios.post(
         `${API}/auth/pin/login`,
-        payload,
+        { pin: pinToUse },
         { withCredentials: true, signal: controller.signal, timeout: 25000 }
       );
       setAuthStatus("success");
       // Apply saved theme from server/session if provided
       try {
-        const serverMode = response.data.theme_mode || response.data.mode;
-        const serverSkin = response.data.theme_skin || response.data.skin;
+        const loggedUser = response.data?.user || response.data || {};
+        const serverMode = loggedUser.theme_mode || loggedUser.mode;
+        const serverSkin = loggedUser.theme_skin || loggedUser.skin;
         if (serverMode) setMode(serverMode);
         if (serverSkin) setSkin(serverSkin);
       } catch (e) {
         // ignore
       }
-      toast.success(`Bienvenido, ${response.data.name}`);
+      toast.success(`Bienvenido, ${(response.data?.user || response.data)?.name || "usuario"}`);
       playTone("success");
       
       // Attempt auth check but don't block widely if it delays
@@ -378,7 +356,9 @@ export function LoginPage() {
         new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
       ]).catch(() => null);
 
-      window.location.href = "/workbench";
+      const loggedRole = (response.data?.user || response.data)?.role;
+      const homePath = String(loggedRole || "").toLowerCase() === "cajero" ? "/cashier" : "/workbench";
+      window.location.href = homePath;
     } catch (error) {
       setAuthStatus("error");
       setShowResetWarning(true);
@@ -422,7 +402,7 @@ export function LoginPage() {
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [checkAuth, pin, pinUsers, playTone, setMode, setSkin, sha256]);
+  }, [checkAuth, pin, playTone, setMode, setSkin]);
 
   const handlePinKeyPress = useCallback((digit) => {
     if (authStatus === 'error') setAuthStatus('idle');
@@ -512,21 +492,6 @@ export function LoginPage() {
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [handlePinBackspace, handlePinKeyPress, handlePinLogin, loading, pin.length]);
 
-  // Load PIN users so we can attribute login attempts to a specific user
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await axios.get(`${API}/auth/pin/users`);
-        if (!mounted) return;
-        setPinUsers(r.data || []);
-      } catch (e) {
-        // ignore failures; backend may be unavailable or no users defined
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
   // Connectivity check: ping API root and update status
   const checkBackend = useCallback(async (signal) => {
     setCheckingBackend(true);
@@ -588,9 +553,6 @@ export function LoginPage() {
         disabled={loading}
         aria-label="PIN"
       />
-
-      {/* keep pinUsers referenced to avoid unused-vars lint (no visual impact) */}
-      <span style={{display:'none'}}>{pinUsers.length}</span>
 
       {/* Left side - Info */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between relative overflow-hidden">
@@ -684,10 +646,7 @@ export function LoginPage() {
                   <span>Resultado</span>
                   <span>
                     {fxResult !== "" && fxResult !== null
-                      ? new Intl.NumberFormat("es-NI", {
-                          style: "currency",
-                          currency: fxTo,
-                        }).format(fxResult)
+                      ? formatCurrency(fxResult, fxTo)
                       : "-"}
                   </span>
                 </div>

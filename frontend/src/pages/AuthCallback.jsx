@@ -29,8 +29,8 @@ export function AuthCallback() {
         // Process the session
         const user = await processSession(sessionId);
         
-        // Navigate to default workspace with user data
-        navigate("/workbench", { replace: true, state: { user } });
+        const homePath = String(user?.role || "").toLowerCase() === "cajero" ? "/cashier" : "/workbench";
+        navigate(homePath, { replace: true, state: { user } });
       } catch (error) {
         console.error("Auth callback error:", error);
         navigate("/login", { replace: true });

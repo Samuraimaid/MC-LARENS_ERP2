@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import { getStatusColor, getPriorityColor, WORK_ORDER_STATUS } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { Card, CardContent } from "../components/ui/card";
@@ -14,7 +15,13 @@ import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Search, Wrench, Clock, Printer, RefreshCw } from "lucide-react";
 
+const QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"];
+
 export function WorkOrdersPage() {
+  const { user } = useAuth();
+  const canApproveCompleted = QC_APPROVER_ROLES.includes(
+    String(user?.role || "").toLowerCase()
+  );
   const [workOrders, setWorkOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -490,10 +497,15 @@ export function WorkOrdersPage() {
                     Enviar a Control
                   </Button>
                 )}
-                {showDetails.status === "quality_check" && (
+                {showDetails.status === "quality_check" && canApproveCompleted && (
                   <Button onClick={() => updateStatus(showDetails.work_order_id, "completed")} className="flex-1">
-                    Aprobar
+                    Aprobar (Coordinador)
                   </Button>
+                )}
+                {showDetails.status === "quality_check" && !canApproveCompleted && (
+                  <p className="flex-1 text-sm text-muted-foreground text-center py-2">
+                    Pendiente de aprobación del coordinador de instalaciones
+                  </p>
                 )}
                 {showDetails.status === "completed" && (
                   <Button onClick={() => updateStatus(showDetails.work_order_id, "delivered")} className="flex-1">

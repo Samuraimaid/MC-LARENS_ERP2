@@ -4,16 +4,33 @@ import csv
 import hashlib
 import io
 import os
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any, Dict, List, Optional
 import uuid
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
-import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+
+from backend.domains.export.dependencies import (
+    get_reportlab_symbols as export_get_reportlab_symbols,
+)
+
+
+def _get_pandas() -> Any:
+    try:
+        import pandas as pd
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Excel export dependencies are not installed",
+        ) from exc
+    return pd
+
+
+def _get_reportlab_symbols() -> tuple[Any, Any]:
+    _, letter, _, canvas = export_get_reportlab_symbols()
+    return letter, canvas
 
 
 def get_human_resources_router(
@@ -29,7 +46,11 @@ def get_human_resources_router(
     TECHNICIAN_ROLES = {"instalaciones", "tecnico", "bodegas", "polarizador", "electrico"}
     CLOCK_EVENTS = {"clock_in", "lunch_out", "lunch_in", "clock_out"}
     PIN_LENGTH = 4
-    ATTENDANCE_TIMEZONE = ZoneInfo("America/Managua")
+    try:
+        ATTENDANCE_TIMEZONE = ZoneInfo("America/Managua")
+    except Exception:
+        # Keep runtime startup resilient when tzdata is not installed.
+        ATTENDANCE_TIMEZONE = timezone(timedelta(hours=-6), name="America/Managua")
 
     EVENT_LABELS = {
         "clock_in": "Entrada a labores",
@@ -781,8 +802,8 @@ def get_human_resources_router(
         def build_metrics_for_range(
             user_settings: Dict[str, Any],
             events_by_day: Dict[str, List[Dict[str, Any]]],
-            date_start: datetime.date,
-            date_end: datetime.date,
+            date_start: date,
+            date_end: date,
         ) -> Dict[str, Any]:
             range_days_local = (date_end - date_start).days + 1
             tardies = 0
@@ -1131,6 +1152,7 @@ def get_human_resources_router(
         end_label = report.get("end_date") or "fin"
 
         if fmt == "excel":
+            pd = _get_pandas()
             df = pd.DataFrame(export_rows)
             payroll_df = pd.DataFrame(
                 [
@@ -1161,6 +1183,7 @@ def get_human_resources_router(
             )
 
         if fmt == "pdf":
+            letter, canvas = _get_reportlab_symbols()
             pdf_buffer = io.BytesIO()
             pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
             width, height = letter

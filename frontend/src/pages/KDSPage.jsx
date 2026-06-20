@@ -203,13 +203,12 @@ export function KDSPage() {
                   </button>
                 )}
                 {order.status === "quality_check" && (
-                  <button
-                    onClick={() => updateStatus(order.work_order_id, "completed")}
-                    className="flex-1 py-2 px-3 rounded-sm bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-colors"
-                    data-testid={`kds-complete-${order.work_order_id}`}
+                  <div
+                    className="flex-1 py-2 px-3 rounded-sm bg-purple-500/15 text-purple-700 dark:text-purple-300 text-sm font-medium text-center"
+                    data-testid={`kds-qc-pending-${order.work_order_id}`}
                   >
-                    COMPLETAR
-                  </button>
+                    PENDIENTE QC
+                  </div>
                 )}
               </div>
             </div>

@@ -112,11 +112,27 @@ coverage.xml
 test_reports/
 tmp_*
 
+# IDE / agent session artifacts
+terminals/
+test-results/
+frontend/test-results/
+
 # Local archives and workspace artifacts
 *.7z
 .emergent_disabled/
 memory/
 tools/winget-portable/
+
+# Temporary validation venvs (Phase 5 generated, safe to discard physically)
+# These are generated Python virtual environments used during Phase 5/6 validation only.
+temporary_cleanup_validation/**/cleanroom_runtime_evidence_venv/
+temporary_cleanup_validation/**/cleanroom_runtime_only_fresh/
+temporary_cleanup_validation/**/lockgen_*/
+temporary_cleanup_validation/**/stability_*/
+temporary_cleanup_validation/**/*venv*/Lib/
+temporary_cleanup_validation/**/*venv*/Scripts/
+temporary_cleanup_validation/**/*venv*/Include/
+temporary_cleanup_validation/**/*venv*/pyvenv.cfg
 
 # Historical backups and bundled installers (very large)
 backend/scripts/back-ups/

@@ -58,3 +58,33 @@ export async function setServerDraftActive(flow, activeDraftId) {
   );
   return response?.data || null;
 }
+
+export async function watchServerDraft(flow, draftId) {
+  const normalizedFlow = normalizeFlow(flow);
+  const response = await axios.post(
+    `${API}/drafts/${normalizedFlow}/${encodeURIComponent(draftId)}/review/watch`,
+    null,
+    { withCredentials: true }
+  );
+  return response?.data || null;
+}
+
+export async function unwatchServerDraft(flow, draftId) {
+  const normalizedFlow = normalizeFlow(flow);
+  const response = await axios.post(
+    `${API}/drafts/${normalizedFlow}/${encodeURIComponent(draftId)}/review/unwatch`,
+    null,
+    { withCredentials: true }
+  );
+  return response?.data || null;
+}
+
+export async function releaseServerDraft(flow, draftId) {
+  const normalizedFlow = normalizeFlow(flow);
+  const response = await axios.post(
+    `${API}/drafts/${normalizedFlow}/${encodeURIComponent(draftId)}/review/release`,
+    null,
+    { withCredentials: true }
+  );
+  return response?.data || null;
+}

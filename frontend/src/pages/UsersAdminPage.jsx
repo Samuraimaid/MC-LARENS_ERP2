@@ -14,9 +14,14 @@ import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Checkbox } from "../components/ui/checkbox";
 import { toast } from "sonner";
-import { Search, RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff, Shield } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { formatPhone } from "@/lib/formatters";
+import { UserDirectoryPicker } from "@/components/users/UserDirectoryPicker";
+import { UserDirectoryFilters } from "@/components/users/UserDirectoryFilters";
+import { FilterCombobox } from "@/components/users/FilterCombobox";
+import { DirectoryPagination } from "@/components/users/DirectoryPagination";
+import { useUserDirectory } from "@/hooks/useUserDirectory";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -35,9 +40,13 @@ export function UsersAdminPage() {
   const [warehouses, setWarehouses] = useState([]);
   const [rolesMap, setRolesMap] = useState(ROLES);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("pin");
+
+  const pinDirectory = useUserDirectory({
+    active: activeTab === "pin",
+    pageSize: 25,
+    pinOnly: true,
+  });
   
   // (Google auth removed)
   const [editingUser, setEditingUser] = useState(null);
@@ -74,13 +83,17 @@ export function UsersAdminPage() {
   // Permissions panel
   const [permissionsCatalog, setPermissionsCatalog] = useState(null);
   const [rolePermissionsMap, setRolePermissionsMap] = useState({});
-  const [permissionScope, setPermissionScope] = useState("role"); // role | user
   const [selectedRoleForPermissions, setSelectedRoleForPermissions] = useState("ventas");
   const [selectedUserForPermissions, setSelectedUserForPermissions] = useState("");
-  const [permissionsDraft, setPermissionsDraft] = useState(null);
+  const [rolePermissionsDraft, setRolePermissionsDraft] = useState(null);
+  const [userEffectiveDraft, setUserEffectiveDraft] = useState(null);
+  const [userRoleBaseline, setUserRoleBaseline] = useState(null);
+  const [userPermissionsOverlay, setUserPermissionsOverlay] = useState(null);
+  const [hasUserOverrides, setHasUserOverrides] = useState(false);
   const [permissionsTargetLabel, setPermissionsTargetLabel] = useState("");
   const [loadingPermissions, setLoadingPermissions] = useState(false);
-  const [savingPermissions, setSavingPermissions] = useState(false);
+  const [savingRolePermissions, setSavingRolePermissions] = useState(false);
+  const [savingUserPermissions, setSavingUserPermissions] = useState(false);
   const [newRoleKey, setNewRoleKey] = useState("");
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [newRoleColor, setNewRoleColor] = useState("");
@@ -118,7 +131,17 @@ export function UsersAdminPage() {
       setWarehouses(warehousesRes.data);
       setKioskPinsTable(Array.isArray(kioskPinsRes.data) ? kioskPinsRes.data : []);
     } catch (error) {
-      toast.error("Error al cargar usuarios");
+      const status = error?.response?.status;
+      const detail = error?.response?.data?.detail;
+      if (status === 403) {
+        toast.error(
+          typeof detail === "string"
+            ? detail
+            : "No tienes permiso para ver usuarios. Contacta a soporte si eres gerencia."
+        );
+      } else {
+        toast.error("Error al cargar usuarios");
+      }
     } finally {
       setLoading(false);
     }
@@ -141,11 +164,9 @@ export function UsersAdminPage() {
   }, []);
 
   const beginRolePermissionEdit = useCallback((role) => {
-    setPermissionScope("role");
     setSelectedRoleForPermissions(role);
-    setSelectedUserForPermissions("");
     const matrix = rolePermissionsMap?.[role];
-    setPermissionsDraft(matrix ? JSON.parse(JSON.stringify(matrix)) : null);
+    setRolePermissionsDraft(matrix ? JSON.parse(JSON.stringify(matrix)) : null);
     setPermissionsTargetLabel(`Rol: ${(rolesMap && rolesMap[role]?.label) || role}`);
   }, [rolePermissionsMap, rolesMap]);
 
@@ -174,33 +195,55 @@ export function UsersAdminPage() {
 
   useEffect(() => {
     if (
-      activeTab === "permissions" &&
+      activeTab === "role-permissions" &&
       canManagePermissions &&
-      permissionScope === "role" &&
-      !permissionsDraft
+      !rolePermissionsDraft
     ) {
       beginRolePermissionEdit(selectedRoleForPermissions || "ventas");
     }
   }, [
     activeTab,
     canManagePermissions,
-    permissionScope,
-    permissionsDraft,
+    rolePermissionsDraft,
     selectedRoleForPermissions,
     beginRolePermissionEdit,
   ]);
 
   const beginUserPermissionEdit = async (userId) => {
-    if (!userId) return;
-    setPermissionScope("user");
+    if (!userId) {
+      setSelectedUserForPermissions("");
+      setUserEffectiveDraft(null);
+      setUserRoleBaseline(null);
+      setUserPermissionsOverlay(null);
+      setHasUserOverrides(false);
+      setPermissionsTargetLabel("Selecciona un usuario");
+      return;
+    }
     setSelectedUserForPermissions(userId);
     setLoadingPermissions(true);
     try {
       const res = await axios.get(`${API}/permissions/users/${userId}`, { withCredentials: true });
-      const matrix = res?.data?.effective_permissions || null;
-      setPermissionsDraft(matrix ? JSON.parse(JSON.stringify(matrix)) : null);
-      const targetUser = pinUsers.find(u => u.user_id === userId) || users.find(u => u.user_id === userId);
-      setPermissionsTargetLabel(`Usuario: ${targetUser?.name || userId} (${res?.data?.role || "sin rol"})`);
+      const effective = res?.data?.effective_permissions || null;
+      setUserEffectiveDraft(effective ? JSON.parse(JSON.stringify(effective)) : null);
+      setUserRoleBaseline(
+        res?.data?.role_permissions
+          ? JSON.parse(JSON.stringify(res.data.role_permissions))
+          : null
+      );
+      setUserPermissionsOverlay(
+        res?.data?.user_permissions
+          ? JSON.parse(JSON.stringify(res.data.user_permissions))
+          : null
+      );
+      setHasUserOverrides(Boolean(res?.data?.has_user_overrides));
+      const targetUser =
+        pinDirectory.rows.find((u) => u.user_id === userId)
+        || pinUsers.find((u) => u.user_id === userId)
+        || users.find((u) => u.user_id === userId);
+      const displayName = targetUser?.display_name || targetUser?.name || userId;
+      setPermissionsTargetLabel(
+        `Usuario: ${displayName} · Rol: ${res?.data?.role || "sin rol"}`
+      );
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al cargar permisos del usuario");
     } finally {
@@ -208,8 +251,8 @@ export function UsersAdminPage() {
     }
   };
 
-  const togglePermission = (moduleKey, functionKey, action, checked) => {
-    setPermissionsDraft(prev => {
+  const updatePermissionDraft = (setter, moduleKey, functionKey, action, checked) => {
+    setter((prev) => {
       if (!prev?.[moduleKey]?.[functionKey]) return prev;
       return {
         ...prev,
@@ -224,35 +267,79 @@ export function UsersAdminPage() {
     });
   };
 
-  const savePermissions = async () => {
+  const toggleRolePermission = (moduleKey, functionKey, action, checked) => {
+    updatePermissionDraft(setRolePermissionsDraft, moduleKey, functionKey, action, checked);
+  };
+
+  const toggleUserPermission = (moduleKey, functionKey, action, checked) => {
+    updatePermissionDraft(setUserEffectiveDraft, moduleKey, functionKey, action, checked);
+  };
+
+  const isUserPermissionOverridden = (moduleKey, functionKey, action) => {
+    const overlayAction = userPermissionsOverlay?.[moduleKey]?.[functionKey]?.[action];
+    if (overlayAction !== undefined) {
+      return true;
+    }
+    const roleValue = Boolean(userRoleBaseline?.[moduleKey]?.[functionKey]?.[action]);
+    const effectiveValue = Boolean(userEffectiveDraft?.[moduleKey]?.[functionKey]?.[action]);
+    return roleValue !== effectiveValue;
+  };
+
+  const saveRolePermissions = async () => {
     if (!canEditUsers) {
       toast.error("No tienes permiso para editar permisos");
       return;
     }
-    if (!permissionsDraft) return;
-    setSavingPermissions(true);
+    if (!rolePermissionsDraft || !selectedRoleForPermissions) return;
+    setSavingRolePermissions(true);
     try {
-      if (permissionScope === "role") {
-        await axios.put(
-          `${API}/permissions/roles/${selectedRoleForPermissions}`,
-          { permissions: permissionsDraft },
-          { withCredentials: true }
-        );
-        toast.success("Permisos de rol actualizados");
-        await loadPermissionsBase();
+      const res = await axios.put(
+        `${API}/permissions/roles/${selectedRoleForPermissions}`,
+        { permissions: rolePermissionsDraft },
+        { withCredentials: true }
+      );
+      toast.success("Permisos de rol actualizados");
+      await loadPermissionsBase();
+      const refreshed = res?.data?.effective_permissions;
+      if (refreshed) {
+        setRolePermissionsDraft(JSON.parse(JSON.stringify(refreshed)));
+      } else {
         beginRolePermissionEdit(selectedRoleForPermissions);
-      } else if (permissionScope === "user" && selectedUserForPermissions) {
-        await axios.put(
-          `${API}/permissions/users/${selectedUserForPermissions}`,
-          { permissions: permissionsDraft },
-          { withCredentials: true }
-        );
-        toast.success("Permisos de usuario actualizados");
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al guardar permisos");
+      toast.error(error.response?.data?.detail || "Error al guardar permisos de rol");
     } finally {
-      setSavingPermissions(false);
+      setSavingRolePermissions(false);
+    }
+  };
+
+  const saveUserPermissions = async () => {
+    if (!canEditUsers) {
+      toast.error("No tienes permiso para editar permisos");
+      return;
+    }
+    if (!userEffectiveDraft || !selectedUserForPermissions) return;
+    setSavingUserPermissions(true);
+    try {
+      const res = await axios.put(
+        `${API}/permissions/users/${selectedUserForPermissions}`,
+        { effective_permissions: userEffectiveDraft },
+        { withCredentials: true }
+      );
+      toast.success("Permisos personalizados del usuario actualizados");
+      if (res?.data?.effective_permissions) {
+        setUserEffectiveDraft(JSON.parse(JSON.stringify(res.data.effective_permissions)));
+      }
+      setUserPermissionsOverlay(
+        res?.data?.user_permissions
+          ? JSON.parse(JSON.stringify(res.data.user_permissions))
+          : null
+      );
+      setHasUserOverrides(Boolean(res?.data?.has_user_overrides));
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al guardar permisos de usuario");
+    } finally {
+      setSavingUserPermissions(false);
     }
   };
 
@@ -547,25 +634,82 @@ export function UsersAdminPage() {
   const getUserDisplayLabel = (userItem) =>
     `${userItem?.name || "Sin nombre"} - ${getUserRoleLabel(userItem?.role)} - ${getUserBranchLabel(userItem)}`;
 
-  const filteredPinUsers = pinUsers
-    .filter((u) => {
-      const matchesSearch = (u.name || "").toLowerCase().includes(search.toLowerCase());
-      const matchesBranch = branchFilter === "all" ? true : (u.branch_id || "__none__") === branchFilter;
-      return matchesSearch && matchesBranch;
-    })
-    .sort((a, b) => {
-      const byName = (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" });
-      if (byName !== 0) return byName;
+  const roleFilterOptions = Object.entries(rolesMap || ROLES)
+    .map(([value, meta]) => ({
+      value,
+      label: meta?.label || value,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "es", { sensitivity: "base" }));
 
-      const byRole = getUserRoleLabel(a.role).localeCompare(getUserRoleLabel(b.role), "es", {
-        sensitivity: "base",
-      });
-      if (byRole !== 0) return byRole;
+  const openUserPermissions = async (userId) => {
+    setActiveTab("user-permissions");
+    await beginUserPermissionEdit(userId);
+  };
 
-      return getUserBranchLabel(a).localeCompare(getUserBranchLabel(b), "es", {
-        sensitivity: "base",
-      });
-    });
+  const renderPermissionsMatrix = ({
+    draft,
+    onToggle,
+    highlightOverrides = false,
+  }) => {
+    if (!draft || !permissionsCatalog) {
+      return (
+        <div className="text-sm text-muted-foreground">
+          {highlightOverrides ? "Selecciona un usuario para editar permisos personalizados." : "No hay permisos para mostrar."}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(permissionsCatalog.modules || {}).map(([moduleKey, moduleCfg]) => (
+          <Card key={moduleKey}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">{moduleCfg.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Función</TableHead>
+                    {PERMISSION_ACTIONS.map((action) => (
+                      <TableHead key={action} className="text-center">{ACTION_LABELS[action]}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(moduleCfg.functions || {}).map(([functionKey, functionLabel]) => (
+                    <TableRow key={functionKey}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{functionLabel}</span>
+                          {highlightOverrides &&
+                          PERMISSION_ACTIONS.some((action) => isUserPermissionOverridden(moduleKey, functionKey, action)) ? (
+                            <Badge variant="outline" className="text-[10px]">Personalizado</Badge>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      {PERMISSION_ACTIONS.map((action) => {
+                        const overridden = highlightOverrides && isUserPermissionOverridden(moduleKey, functionKey, action);
+                        return (
+                          <TableCell key={action} className="text-center">
+                            <Checkbox
+                              checked={Boolean(draft?.[moduleKey]?.[functionKey]?.[action])}
+                              onCheckedChange={(checked) => onToggle(moduleKey, functionKey, action, checked)}
+                              className={overridden ? "border-amber-500 data-[state=checked]:bg-amber-500" : ""}
+                            />
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
 
   const getRoleColor = (role) => {
     const colors = {
@@ -631,54 +775,26 @@ export function UsersAdminPage() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre o email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-users"
-          />
-        </div>
-        <div className="w-56">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger data-testid="filter-branch-users">
-              <SelectValue placeholder="Filtrar por sucursal" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las sucursales</SelectItem>
-              <SelectItem value="__none__">Sin sucursal</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.branch_id} value={branch.branch_id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button variant="outline" onClick={fetchData} aria-label="Refrescar usuarios">
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </div>
-
-      {/* Tabs (PIN users only) */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="animate-fade-up-soft">
         <TabsList>
           <TabsTrigger value="pin" className="gap-2">
             <KeyRound className="h-4 w-4" />
             Usuarios PIN ({pinUsers.length})
           </TabsTrigger>
           {canManagePermissions && (
-            <TabsTrigger value="permissions" className="gap-2">
-              Permisos
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="role-permissions" className="gap-2">
+                Permisos por Rol
+              </TabsTrigger>
+              <TabsTrigger value="user-permissions" className="gap-2">
+                Permisos por Usuario
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
         <TabsContent value="pin">
-          <Card>
+          <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Usuarios con PIN</CardTitle>
@@ -868,7 +984,20 @@ export function UsersAdminPage() {
                 </Dialog>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="space-y-4">
+              <UserDirectoryFilters
+                directory={pinDirectory}
+                rolesMap={rolesMap}
+                branches={branches}
+                showOverridesFilter
+                searchTestId="search-users"
+                onRefresh={fetchData}
+              />
+
+              <div
+                key={pinDirectory.queryKey}
+                className="rounded-lg border overflow-hidden ui-panel shadow-sm animate-draft-load"
+              >
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -882,27 +1011,31 @@ export function UsersAdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {loading || pinDirectory.loading ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8">
                         <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  ) : filteredPinUsers.length === 0 ? (
+                  ) : pinDirectory.rows.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         <KeyRound className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No hay usuarios PIN creados</p>
-                        <p className="text-sm">Crea usuarios con acceso rápido para el personal operativo</p>
+                        <p>{pinUsers.length === 0 ? "No hay usuarios PIN creados" : "No hay usuarios con esos filtros"}</p>
+                        <p className="text-sm">
+                          {pinUsers.length === 0
+                            ? "Crea usuarios con acceso rápido para el personal operativo"
+                            : "Prueba con otros criterios de búsqueda o limpia los filtros"}
+                        </p>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredPinUsers.map(user => {
+                    pinDirectory.rows.map(user => {
                       const branch = branches.find(b => b.branch_id === user.branch_id);
                       const warehouse = warehouses.find(w => w.warehouse_id === user.warehouse_id);
                       
                       return (
-                        <TableRow key={user.user_id} data-testid={`pin-user-${user.user_id}`}>
+                        <TableRow key={user.user_id} data-testid={`pin-user-${user.user_id}`} className="ui-interactive">
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
@@ -911,7 +1044,12 @@ export function UsersAdminPage() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-medium">{user.name}</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium">{user.display_name || user.name}</p>
+                                  {user.has_user_overrides ? (
+                                    <Badge variant="secondary" className="text-[10px]">Personalizado</Badge>
+                                  ) : null}
+                                </div>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                                   <KeyRound className="h-3 w-3" />
                                   Acceso PIN
@@ -948,7 +1086,18 @@ export function UsersAdminPage() {
                             <Badge variant="outline">Activo</Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
+                              {canManagePermissions ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openUserPermissions(user.user_id)}
+                                  data-testid={`edit-permissions-${user.user_id}`}
+                                >
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Permisos
+                                </Button>
+                              ) : null}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1030,10 +1179,17 @@ export function UsersAdminPage() {
                   )}
                 </TableBody>
               </Table>
+              <DirectoryPagination
+                pagination={pinDirectory.pagination}
+                loading={pinDirectory.loading}
+                onPrev={pinDirectory.prevPage}
+                onNext={pinDirectory.nextPage}
+              />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="mt-4">
+          <Card className="mt-4 border-primary/20 shadow-sm ui-panel animate-fade-up-soft">
             <CardHeader>
               <CardTitle>Tabla de PIN Kiosko</CardTitle>
               <CardDescription>PIN de marcación actuales para pruebas de entrada/salida</CardDescription>
@@ -1076,12 +1232,12 @@ export function UsersAdminPage() {
         </TabsContent>
 
         {canManagePermissions && (
-        <TabsContent value="permissions">
-          <Card>
+        <TabsContent value="role-permissions">
+          <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
             <CardHeader>
-              <CardTitle>Panel de Permisos</CardTitle>
+              <CardTitle>Permisos por Rol</CardTitle>
               <CardDescription>
-                Configura permisos predeterminados por rol y permisos específicos por usuario para cada función de cada módulo.
+                Define el comportamiento predeterminado de cada rol. Los cambios aplican a todos los usuarios con ese rol que no tengan permisos personalizados.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1123,128 +1279,107 @@ export function UsersAdminPage() {
                 </CardContent>
               </Card>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-[1fr_auto] ui-fade-in-stagger">
                 <div className="space-y-2">
-                  <Label>Modo de edición</Label>
-                  <Select
-                    value={permissionScope}
-                    onValueChange={(v) => {
-                      setPermissionScope(v);
-                      if (v === "role") {
-                        beginRolePermissionEdit(selectedRoleForPermissions || "ventas");
-                      } else {
-                        setPermissionsDraft(null);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="role">Permisos por Rol</SelectItem>
-                      <SelectItem value="user">Permisos por Usuario</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Buscar rol</Label>
+                  <FilterCombobox
+                    value={selectedRoleForPermissions}
+                    onChange={beginRolePermissionEdit}
+                    options={roleFilterOptions}
+                    placeholder="Seleccionar rol"
+                    searchPlaceholder="Buscar rol..."
+                    includeAllOption={false}
+                  />
                 </div>
-
-                {permissionScope === "role" ? (
-                  <div className="space-y-2">
-                    <Label>Rol</Label>
-                    <Select
-                      value={selectedRoleForPermissions}
-                      onValueChange={(v) => beginRolePermissionEdit(v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(rolesMap || ROLES).map(([key, value]) => (
-                          <SelectItem key={key} value={key}>{value?.label || key}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label>Usuario</Label>
-                    <Select
-                      value={selectedUserForPermissions || "none"}
-                      onValueChange={(v) => beginUserPermissionEdit(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona usuario" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Selecciona usuario</SelectItem>
-                        {pinUsers.map((u) => (
-                          <SelectItem key={u.user_id} value={u.user_id}>
-                            {getUserDisplayLabel(u)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{permissionsTargetLabel || "Selecciona un rol o usuario"}</p>
-                <div className="flex gap-2">
-                  {permissionScope === "user" && selectedUserForPermissions && (
-                    <Button variant="outline" onClick={resetUserPermissions}>
-                      Restablecer a rol
-                    </Button>
-                  )}
-                  <Button onClick={savePermissions} disabled={!permissionsDraft || savingPermissions || !canEditUsers}>
-                    Guardar permisos
+                <div className="flex items-end justify-end">
+                  <Button
+                    onClick={saveRolePermissions}
+                    disabled={!rolePermissionsDraft || savingRolePermissions || !canEditUsers}
+                  >
+                    {savingRolePermissions ? "Guardando..." : "Guardar permisos de rol"}
                   </Button>
                 </div>
               </div>
 
+              <p className="text-sm text-muted-foreground animate-erp-fade-check">
+                {permissionsTargetLabel || "Selecciona un rol"}
+              </p>
+
+              <div key={selectedRoleForPermissions} className="animate-draft-load">
               {loadingPermissions ? (
                 <div className="text-sm text-muted-foreground">Cargando permisos...</div>
-              ) : !permissionsDraft || !permissionsCatalog ? (
-                <div className="text-sm text-muted-foreground">No hay permisos para mostrar.</div>
               ) : (
-                <div className="space-y-4">
-                  {Object.entries(permissionsCatalog.modules || {}).map(([moduleKey, moduleCfg]) => (
-                    <Card key={moduleKey}>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">{moduleCfg.label}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Función</TableHead>
-                              {PERMISSION_ACTIONS.map((action) => (
-                                <TableHead key={action} className="text-center">{ACTION_LABELS[action]}</TableHead>
-                              ))}
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {Object.entries(moduleCfg.functions || {}).map(([functionKey, functionLabel]) => (
-                              <TableRow key={functionKey}>
-                                <TableCell>{functionLabel}</TableCell>
-                                {PERMISSION_ACTIONS.map((action) => (
-                                  <TableCell key={action} className="text-center">
-                                    <Checkbox
-                                      checked={Boolean(permissionsDraft?.[moduleKey]?.[functionKey]?.[action])}
-                                      onCheckedChange={(checked) =>
-                                        togglePermission(moduleKey, functionKey, action, checked)
-                                      }
-                                    />
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                  ))}
+                renderPermissionsMatrix({
+                  draft: rolePermissionsDraft,
+                  onToggle: toggleRolePermission,
+                })
+              )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        )}
+
+        {canManagePermissions && (
+        <TabsContent value="user-permissions">
+          <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+            <CardHeader>
+              <CardTitle>Permisos por Usuario</CardTitle>
+              <CardDescription>
+                Ajusta excepciones individuales sobre el rol asignado. Solo se guardan las diferencias respecto al rol; el resto se hereda automáticamente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <UserDirectoryPicker
+                selectedUserId={selectedUserForPermissions}
+                onSelect={beginUserPermissionEdit}
+                rolesMap={rolesMap}
+                branches={branches}
+                active={activeTab === "user-permissions"}
+              />
+
+              <div className="flex flex-wrap items-center justify-between gap-2 animate-erp-fade-check">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>{permissionsTargetLabel || "Selecciona un usuario"}</span>
+                {selectedUserForPermissions ? (
+                  <Badge variant={hasUserOverrides ? "secondary" : "outline"}>
+                    {hasUserOverrides ? "Con personalizaciones" : "Hereda todo del rol"}
+                  </Badge>
+                ) : null}
+                </div>
+                <div className="flex gap-2">
+                  {selectedUserForPermissions ? (
+                    <Button variant="outline" onClick={resetUserPermissions}>
+                      Restablecer a rol
+                    </Button>
+                  ) : null}
+                  <Button
+                    onClick={saveUserPermissions}
+                    disabled={!userEffectiveDraft || !selectedUserForPermissions || savingUserPermissions || !canEditUsers}
+                  >
+                    {savingUserPermissions ? "Guardando..." : "Guardar permisos de usuario"}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Las casillas marcadas en ámbar son permisos personalizados. Las demás se heredan del rol actual del usuario.
+              </p>
+
+              <div key={selectedUserForPermissions || "no-user"} className="animate-draft-load">
+              {loadingPermissions ? (
+                <div className="text-sm text-muted-foreground">Cargando permisos...</div>
+              ) : selectedUserForPermissions ? (
+                renderPermissionsMatrix({
+                  draft: userEffectiveDraft,
+                  onToggle: toggleUserPermission,
+                  highlightOverrides: true,
+                })
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  Selecciona un usuario del directorio para editar permisos personalizados.
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

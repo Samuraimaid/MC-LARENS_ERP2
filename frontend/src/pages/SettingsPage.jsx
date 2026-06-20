@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -11,10 +11,60 @@ import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText, Plus, Save } from "lucide-react";
+import { Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText, Plus, Save, FileText, Eye, ExternalLink, X } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useRoles } from "../lib/useRoles";
+
+const PDF_PREVIEW_OPTIONS = [
+  { id: "invoice_paid", label: "Factura pagada" },
+  { id: "invoice_pending", label: "Factura pendiente" },
+  { id: "invoice_credit", label: "Factura a crédito" },
+  { id: "payment_partial", label: "Abono / pago parcial" },
+  { id: "quotation", label: "Cotización" },
+];
+
+const WATERMARK_LOGO_AUTO = "auto";
+
+const WATERMARK_LOGO_PRESETS = [
+  { id: WATERMARK_LOGO_AUTO, label: "Automático por sucursal" },
+  { id: "mundo-logo", label: "Mundo de Accesorios" },
+  { id: "topcar-logo", label: "TopCar" },
+  { id: "logo-transparent", label: "Logo transparente (formularios)" },
+];
+
+const normalizeWatermarkLogoPreset = (value) => {
+  const raw = String(value || "").trim();
+  return raw || WATERMARK_LOGO_AUTO;
+};
+
+const watermarkLogoPresetToPayload = (value) => {
+  const normalized = normalizeWatermarkLogoPreset(value);
+  return normalized === WATERMARK_LOGO_AUTO ? "" : normalized;
+};
+
+const DEFAULT_PDF_DOCUMENT_SETTINGS = {
+  watermark_enabled: true,
+  watermark_opacity: 0.11,
+  watermark_scale: 0.62,
+  watermark_logo_url: "",
+  show_status_badge: true,
+  theme_colors: {
+    invoice_paid: "#16A34A",
+    quotation: "#2563EB",
+    invoice_credit: "#DC2626",
+    payment_partial: "#EAB308",
+    invoice_pending: "#1E3A5F",
+  },
+};
+
+const PDF_THEME_COLOR_OPTIONS = [
+  { key: "invoice_paid", label: "Factura pagada", hint: "Verde — cobro completado" },
+  { key: "quotation", label: "Cotización", hint: "Azul — presupuestos" },
+  { key: "invoice_credit", label: "Factura a crédito", hint: "Rojo — venta financiada" },
+  { key: "payment_partial", label: "Abono / pago parcial", hint: "Amarillo — saldo pendiente" },
+  { key: "invoice_pending", label: "Factura pendiente", hint: "Neutro — sin cobro aún" },
+];
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -45,7 +95,14 @@ export function SettingsPage() {
     exchange: { official_rate: 36.5, effective_rate: 36.5, effective_source: "billing_official", rules: [] },
     iva_rate: 15,
     cancel_reasons: [],
+    pdf_documents: DEFAULT_PDF_DOCUMENT_SETTINGS,
   });
+  const [pdfDocumentsSettings, setPdfDocumentsSettings] = useState(DEFAULT_PDF_DOCUMENT_SETTINGS);
+  const [previewingPdfKind, setPreviewingPdfKind] = useState("");
+  const [embeddedPreviewKind, setEmbeddedPreviewKind] = useState("invoice_pending");
+  const [embeddedPdfPreviewUrl, setEmbeddedPdfPreviewUrl] = useState("");
+  const [embeddedPdfPreviewLabel, setEmbeddedPdfPreviewLabel] = useState("");
+  const embeddedPdfPreviewUrlRef = useRef("");
   const [loadingBillingSettings, setLoadingBillingSettings] = useState(false);
   const [savingBillingSettings, setSavingBillingSettings] = useState(false);
   const [newOfficialRate, setNewOfficialRate] = useState("36.5");
@@ -222,6 +279,14 @@ export function SettingsPage() {
       const payload = response.data || {};
       const exchange = payload.exchange || {};
       const cancelReasons = Array.isArray(payload.cancel_reasons) ? payload.cancel_reasons : [];
+      const pdfDocuments = {
+        ...DEFAULT_PDF_DOCUMENT_SETTINGS,
+        ...(payload.pdf_documents || {}),
+        theme_colors: {
+          ...DEFAULT_PDF_DOCUMENT_SETTINGS.theme_colors,
+          ...((payload.pdf_documents || {}).theme_colors || {}),
+        },
+      };
       setBillingSettings({
         exchange: {
           official_rate: Number(exchange.official_rate || 36.5),
@@ -231,6 +296,11 @@ export function SettingsPage() {
         },
         iva_rate: Number(payload.iva_rate || 15),
         cancel_reasons: cancelReasons,
+        pdf_documents: pdfDocuments,
+      });
+      setPdfDocumentsSettings({
+        ...pdfDocuments,
+        watermark_logo_url: normalizeWatermarkLogoPreset(pdfDocuments.watermark_logo_url),
       });
       setNewOfficialRate(String(exchange.official_rate || 36.5));
       setNewIvaRate(String(payload.iva_rate || 15));
@@ -258,6 +328,119 @@ export function SettingsPage() {
       await fetchBillingSettings();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo actualizar la tasa oficial");
+    } finally {
+      setSavingBillingSettings(false);
+    }
+  };
+
+  const updatePdfDocumentsField = (field, value) => {
+    setPdfDocumentsSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updatePdfThemeColor = (key, value) => {
+    setPdfDocumentsSettings((prev) => ({
+      ...prev,
+      theme_colors: { ...prev.theme_colors, [key]: value },
+    }));
+  };
+
+  const buildPdfPreviewDraftPayload = () => ({
+    watermark_enabled: Boolean(pdfDocumentsSettings.watermark_enabled),
+    watermark_opacity: Number(pdfDocumentsSettings.watermark_opacity),
+    watermark_scale: Number(pdfDocumentsSettings.watermark_scale),
+    watermark_logo_url: watermarkLogoPresetToPayload(pdfDocumentsSettings.watermark_logo_url),
+    show_status_badge: Boolean(pdfDocumentsSettings.show_status_badge),
+    theme_colors: pdfDocumentsSettings.theme_colors,
+  });
+
+  const revokeEmbeddedPdfPreview = () => {
+    if (embeddedPdfPreviewUrlRef.current) {
+      window.URL.revokeObjectURL(embeddedPdfPreviewUrlRef.current);
+      embeddedPdfPreviewUrlRef.current = "";
+    }
+    setEmbeddedPdfPreviewUrl("");
+    setEmbeddedPdfPreviewLabel("");
+  };
+
+  useEffect(() => () => {
+    if (embeddedPdfPreviewUrlRef.current) {
+      window.URL.revokeObjectURL(embeddedPdfPreviewUrlRef.current);
+    }
+  }, []);
+
+  const fetchPdfPreviewBlob = async (kind, { useDraft = true } = {}) => {
+    const response = useDraft
+      ? await axios.post(
+          `${API}/settings/billing/pdf-documents/preview`,
+          { kind, pdf_documents: buildPdfPreviewDraftPayload() },
+          { withCredentials: true, responseType: "blob" }
+        )
+      : await axios.get(`${API}/settings/billing/pdf-documents/preview`, {
+          params: { kind },
+          withCredentials: true,
+          responseType: "blob",
+        });
+    const contentType = response.headers["content-type"] || "";
+    if (response.status !== 200 || !contentType.includes("pdf")) {
+      throw new Error("No se pudo generar la vista previa PDF");
+    }
+    return window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+  };
+
+  const showEmbeddedPdfPreview = async (kind = embeddedPreviewKind) => {
+    setPreviewingPdfKind(kind);
+    try {
+      revokeEmbeddedPdfPreview();
+      const blobUrl = await fetchPdfPreviewBlob(kind, { useDraft: true });
+      const label = PDF_PREVIEW_OPTIONS.find((option) => option.id === kind)?.label || kind;
+      embeddedPdfPreviewUrlRef.current = blobUrl;
+      setEmbeddedPdfPreviewUrl(blobUrl);
+      setEmbeddedPdfPreviewLabel(label);
+      setEmbeddedPreviewKind(kind);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || error?.message || "Error al generar vista previa PDF");
+    } finally {
+      setPreviewingPdfKind("");
+    }
+  };
+
+  const openPdfPreviewInNewTab = async (kind = embeddedPreviewKind) => {
+    setPreviewingPdfKind(kind);
+    try {
+      const blobUrl = await fetchPdfPreviewBlob(kind, { useDraft: true });
+      const previewWindow = window.open(blobUrl, "_blank");
+      if (!previewWindow) {
+        toast.error("Permite ventanas emergentes para abrir la vista previa");
+      }
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || error?.message || "Error al abrir vista previa PDF");
+    } finally {
+      setPreviewingPdfKind("");
+    }
+  };
+
+  const savePdfDocumentsSettings = async () => {
+    setSavingBillingSettings(true);
+    try {
+      const response = await axios.put(
+        `${API}/settings/billing/pdf-documents`,
+        {
+          watermark_enabled: Boolean(pdfDocumentsSettings.watermark_enabled),
+          watermark_opacity: Number(pdfDocumentsSettings.watermark_opacity),
+          watermark_scale: Number(pdfDocumentsSettings.watermark_scale),
+          watermark_logo_url: watermarkLogoPresetToPayload(pdfDocumentsSettings.watermark_logo_url),
+          show_status_badge: Boolean(pdfDocumentsSettings.show_status_badge),
+          theme_colors: pdfDocumentsSettings.theme_colors,
+        },
+        { withCredentials: true }
+      );
+      const saved = response.data?.pdf_documents || pdfDocumentsSettings;
+      setPdfDocumentsSettings(saved);
+      setBillingSettings((prev) => ({ ...prev, pdf_documents: saved }));
+      toast.success("Apariencia de documentos PDF actualizada");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo guardar la configuración PDF");
     } finally {
       setSavingBillingSettings(false);
     }
@@ -908,7 +1091,7 @@ export function SettingsPage() {
                 Facturación
               </CardTitle>
               <CardDescription>
-                Configura tasa oficial/schedule y catálogo de motivos de anulación.
+                Configura tasa oficial, IVA, apariencia de PDFs, programación de tasas y motivos de anulación.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1031,6 +1214,193 @@ export function SettingsPage() {
                         ))
                       )}
                     </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="flex items-start gap-3">
+                      <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">Documentos PDF (facturas y cotizaciones)</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Usa los mismos logos del ERP (formularios). Si no eliges uno, se aplica el logo de la sucursal.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                      <div>
+                        <Label>Marca de agua en fondo</Label>
+                        <p className="text-xs text-muted-foreground">Logo centrado con transparencia</p>
+                      </div>
+                      <Switch
+                        checked={Boolean(pdfDocumentsSettings.watermark_enabled)}
+                        onCheckedChange={(checked) => updatePdfDocumentsField("watermark_enabled", checked)}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Opacidad de marca de agua ({Math.round(Number(pdfDocumentsSettings.watermark_opacity || 0) * 100)}%)</Label>
+                        <Input
+                          type="range"
+                          min="2"
+                          max="35"
+                          step="1"
+                          value={Math.round(Number(pdfDocumentsSettings.watermark_opacity || 0.08) * 100)}
+                          onChange={(e) => updatePdfDocumentsField("watermark_opacity", Number(e.target.value) / 100)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Escala del logo ({Math.round(Number(pdfDocumentsSettings.watermark_scale || 0.55) * 100)}%)</Label>
+                        <Input
+                          type="range"
+                          min="25"
+                          max="90"
+                          step="1"
+                          value={Math.round(Number(pdfDocumentsSettings.watermark_scale || 0.55) * 100)}
+                          onChange={(e) => updatePdfDocumentsField("watermark_scale", Number(e.target.value) / 100)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Logo de marca de agua</Label>
+                        <Select
+                          value={
+                            WATERMARK_LOGO_PRESETS.some(
+                              (preset) => preset.id === normalizeWatermarkLogoPreset(pdfDocumentsSettings.watermark_logo_url)
+                            )
+                              ? normalizeWatermarkLogoPreset(pdfDocumentsSettings.watermark_logo_url)
+                              : "custom"
+                          }
+                          onValueChange={(value) => {
+                            if (value === "custom") return;
+                            updatePdfDocumentsField("watermark_logo_url", value);
+                          }}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Seleccionar logo" /></SelectTrigger>
+                          <SelectContent>
+                            {WATERMARK_LOGO_PRESETS.map((preset) => (
+                              <SelectItem key={preset.id} value={preset.id}>{preset.label}</SelectItem>
+                            ))}
+                            <SelectItem value="custom">URL personalizada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>URL personalizada (opcional)</Label>
+                        <Input
+                          value={pdfDocumentsSettings.watermark_logo_url || ""}
+                          onChange={(e) => updatePdfDocumentsField("watermark_logo_url", e.target.value)}
+                          placeholder="https://... o preset: mundo-logo"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-md border bg-muted/20 p-4">
+                      <div>
+                        <Label>Vista previa integrada</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Usa los valores actuales del formulario (no necesitas guardar antes de previsualizar).
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-end gap-3">
+                        <div className="min-w-[220px] flex-1 space-y-2">
+                          <Label className="text-xs text-muted-foreground">Tipo de documento</Label>
+                          <Select value={embeddedPreviewKind} onValueChange={setEmbeddedPreviewKind}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
+                            <SelectContent>
+                              {PDF_PREVIEW_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          onClick={() => showEmbeddedPdfPreview(embeddedPreviewKind)}
+                          disabled={Boolean(previewingPdfKind)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {previewingPdfKind ? "Generando..." : "Ver vista previa aquí"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => openPdfPreviewInNewTab(embeddedPreviewKind)}
+                          disabled={Boolean(previewingPdfKind)}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Abrir en pestaña nueva
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {PDF_PREVIEW_OPTIONS.map((option) => (
+                          <Button
+                            key={option.id}
+                            variant="outline"
+                            size="sm"
+                            disabled={Boolean(previewingPdfKind)}
+                            onClick={() => showEmbeddedPdfPreview(option.id)}
+                          >
+                            {previewingPdfKind === option.id ? "Generando..." : option.label}
+                          </Button>
+                        ))}
+                      </div>
+                      {embeddedPdfPreviewUrl ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium">Vista previa: {embeddedPdfPreviewLabel}</p>
+                            <Button variant="ghost" size="sm" onClick={revokeEmbeddedPdfPreview}>
+                              <X className="h-4 w-4 mr-1" />
+                              Cerrar
+                            </Button>
+                          </div>
+                          <div className="overflow-hidden rounded-md border bg-white shadow-sm">
+                            <iframe
+                              title={`Vista previa PDF ${embeddedPdfPreviewLabel}`}
+                              src={embeddedPdfPreviewUrl}
+                              className="h-[min(72vh,760px)] w-full"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                      <div>
+                        <Label>Etiqueta de estado en encabezado</Label>
+                        <p className="text-xs text-muted-foreground">Ej: Factura pagada, Cotización, Abono registrado</p>
+                      </div>
+                      <Switch
+                        checked={Boolean(pdfDocumentsSettings.show_status_badge)}
+                        onCheckedChange={(checked) => updatePdfDocumentsField("show_status_badge", checked)}
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Colores por tipo de documento</Label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {PDF_THEME_COLOR_OPTIONS.map((option) => (
+                          <div key={option.key} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium">{option.label}</p>
+                              <p className="text-xs text-muted-foreground">{option.hint}</p>
+                            </div>
+                            <Input
+                              type="color"
+                              value={pdfDocumentsSettings.theme_colors?.[option.key] || DEFAULT_PDF_DOCUMENT_SETTINGS.theme_colors[option.key]}
+                              onChange={(e) => updatePdfThemeColor(option.key, e.target.value.toUpperCase())}
+                              className="h-10 w-14 cursor-pointer p-1"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button onClick={savePdfDocumentsSettings} disabled={savingBillingSettings}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Guardar apariencia PDF
+                    </Button>
                   </div>
 
                   <div className="space-y-3 rounded-md border p-4">

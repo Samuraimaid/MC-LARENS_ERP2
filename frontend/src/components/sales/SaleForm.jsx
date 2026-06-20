@@ -79,6 +79,26 @@ import {
   playSelectionFeedbackSound,
 } from "@/lib/uiSounds";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
+import SaleFlowStepProgress from "@/components/erp/SaleFlowStepProgress";
+import EmptyCartPlaceholder from "@/components/erp/EmptyCartPlaceholder";
+import SavingsHighlightRow from "@/components/erp/SavingsHighlightRow";
+import { ErpRollingCurrency, ErpRollingQuantity } from "@/components/erp/ErpRollingNumber";
+import {
+  ERP_ANIMATION_CLASSES,
+  ERP_SEARCH_ROW,
+  ERP_SEMANTIC_TONES,
+  buildSaleFlowSteps,
+  getErpCustomerSearchRowTone,
+  getErpProductTone,
+  isErpDraftSupervisor,
+} from "@/lib/erpDesignSystem";
+import {
+  clampSellerGlobalDiscount,
+  getSellerCartLineLockState,
+  isDraftBlockedForSeller,
+  isDraftReleasedWithRestrictions,
+  sellerGlobalDiscountExceeded,
+} from "@/lib/draftReview";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -134,8 +154,22 @@ export default function SaleForm({
   currencyValue = null,
   onCurrencyChange = null,
   hideCurrencyField = false,
+  draftReview = {},
 }) {
   const { user } = useAuth();
+  const isSupervisorUser = isErpDraftSupervisor(user?.role);
+  const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
+  const sellerReleasedRestricted = isDraftReleasedWithRestrictions(draftReview) && !isSupervisorUser;
+  const sellerParamsLocked = sellerReleasedRestricted;
+  const sellerFlowLocked = sellerParamsLocked || (!isSupervisorUser && isDraftBlockedForSeller(draftReview));
+
+  const notifySellerFlowLocked = useCallback(() => {
+    toast.error("No puedes modificar cliente, vehículo ni opción para llevar en este borrador.");
+  }, []);
+
+  const notifySellerParamsLocked = useCallback(() => {
+    toast.error("No puedes modificar método de pago, retención IR ni parámetros fiscales en un borrador revisado por supervisión.");
+  }, []);
   const [selectedCustomer, setSelectedCustomer] = useState(initialData.selectedCustomer || null);
   const [selectedVehicle, setSelectedVehicle] = useState(initialData.selectedVehicle || "");
   const [selectedWarehouse, setSelectedWarehouse] = useState(initialData.selectedWarehouse || "");
@@ -195,6 +229,9 @@ export default function SaleForm({
   const clearProductSearchAfterCartUpdateRef = useRef(false);
   const [productTransferAnimation, setProductTransferAnimation] = useState(null);
   const [cartFlashActive, setCartFlashActive] = useState(false);
+  const [vehiclePulseActive, setVehiclePulseActive] = useState(false);
+  const [stepThreeUnlockFlash, setStepThreeUnlockFlash] = useState(false);
+  const prevStepTwoCompleteRef = useRef(false);
   const [activeStockBreakdownKey, setActiveStockBreakdownKey] = useState(null);
   const [customerHighlightIndex, setCustomerHighlightIndex] = useState(0);
   const [productHighlightIndex, setProductHighlightIndex] = useState(0);
@@ -346,12 +383,18 @@ export default function SaleForm({
     };
   }, []);
 
-  function applyCurrencyChange(nextCurrency) {
+  function applyCurrencyChange(nextCurrency, { force = false } = {}) {
+    if (sellerParamsLocked && !force) {
+      notifySellerParamsLocked();
+      return;
+    }
     if (isCurrencyControlled && typeof onCurrencyChange === "function") {
       onCurrencyChange(nextCurrency);
     }
     setCurrency(nextCurrency);
-    persistDraftSnapshot({ currency: nextCurrency });
+    if (!force) {
+      persistDraftSnapshot({ currency: nextCurrency });
+    }
   }
 
   useEffect(() => {
@@ -413,6 +456,14 @@ export default function SaleForm({
     return customerVehicles.find((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedSelectedVehicle) || null;
   }, [customerVehicles, normalizeVehicleId, selectedVehicle]);
 
+  const stepOneComplete = Boolean(selectedCustomer?.customer_id);
+  const stepTwoComplete = stepOneComplete && !isVehiclePickerVisible;
+
+  const triggerVehiclePulse = useCallback(() => {
+    setVehiclePulseActive(true);
+    window.setTimeout(() => setVehiclePulseActive(false), 2000);
+  }, []);
+
   const isCompanyCustomer = useCallback((customer) => {
     const type = String(customer?.customer_type || "").toLowerCase();
     return type === "empresa" || type === "company" || type === "juridica" || type === "juridico";
@@ -422,14 +473,14 @@ export default function SaleForm({
 
   const newCustomerTone = isNewCustomerCompany
     ? {
-      modal: "border-blue-400 bg-blue-100/80",
-      tabsList: "bg-blue-100/90",
-      panel: "border border-blue-200 bg-blue-50/85 rounded-md p-3",
+      modal: "border-blue-400 bg-blue-100/80 dark:border-blue-500/40 dark:bg-blue-500/15",
+      tabsList: "bg-blue-100/90 dark:bg-blue-500/20",
+      panel: "border border-blue-200 bg-blue-50/85 dark:border-blue-500/30 dark:bg-blue-500/10 rounded-md p-3",
     }
     : {
-      modal: "border-emerald-400 bg-emerald-100/80",
-      tabsList: "bg-emerald-100/90",
-      panel: "border border-emerald-200 bg-emerald-50/85 rounded-md p-3",
+      modal: "border-emerald-400 bg-emerald-100/80 dark:border-emerald-500/40 dark:bg-emerald-500/15",
+      tabsList: "bg-emerald-100/90 dark:bg-emerald-500/20",
+      panel: "border border-emerald-200 bg-emerald-50/85 dark:border-emerald-500/30 dark:bg-emerald-500/10 rounded-md p-3",
     };
 
   const vehicleOptionTriggerTone = useMemo(() => {
@@ -495,10 +546,13 @@ export default function SaleForm({
       }
       return;
     }
+    if (isVehiclePickerVisible) {
+      return;
+    }
     if (vehicleFlowOption === "registered") {
       setVehicleFlowOption("carryout");
     }
-  }, [draftLoaded, pendingCustomerId, selectedCustomer, customerVehicles, localVehicles.length, normalizeVehicleId, selectedVehicle, vehicleFlowOption]);
+  }, [draftLoaded, pendingCustomerId, selectedCustomer, customerVehicles, isVehiclePickerVisible, localVehicles.length, normalizeVehicleId, selectedVehicle, vehicleFlowOption]);
 
   useEffect(() => {
     if (vehicleFlowOption === "carryout") {
@@ -567,7 +621,7 @@ export default function SaleForm({
         setApplyRetention(draft?.applyRetention ?? false);
         setRetentionRate(draft?.retentionRate ?? 2);
       setIvaRate(defaultIvaRate);
-      applyCurrencyChange(draft?.currency || "NIO");
+      applyCurrencyChange(draft?.currency || "NIO", { force: true });
       setCustomerSearch(draft?.customerSearch || "");
       setProductSearch(draft?.productSearch || "");
       setAppliedDiscounts(draft?.appliedDiscounts || []);
@@ -715,6 +769,13 @@ export default function SaleForm({
       return;
     }
     const existing = normalizedCartItems.find(item => item.product_id === product.product_id);
+    if (existing && !isSupervisorUser) {
+      const lineLock = getSellerCartLineLockState(existing.product_id, draftReview);
+      if (lineLock.locked) {
+        toast.error("No puedes modificar líneas revisadas por supervisión");
+        return;
+      }
+    }
     const currentQty = existing ? Math.max(1, Math.floor(Number(existing.quantity) || 1)) : 0;
     if (currentQty >= localStock) {
       toast.warning("Límite de existencias alcanzado", {
@@ -750,6 +811,7 @@ export default function SaleForm({
           installation_type: installationType,
           installation_price: installationPrice,
           with_installation: hasSelectedVehicle ? withInstallation : false,
+          ...(sellerReleasedRestricted ? { added_after_release: true } : {}),
         },
       ];
     }
@@ -792,6 +854,10 @@ export default function SaleForm({
   };
 
   const applyDiscountCode = () => {
+    if (sellerParamsLocked) {
+      toast.error("No puedes aplicar códigos de descuento en un borrador liberado con cambios de supervisión");
+      return;
+    }
     if (discountsBlockedByPayment) {
       toast.error("Con este método de pago no aplican descuentos ni promociones");
       return;
@@ -823,6 +889,10 @@ export default function SaleForm({
   };
 
   const removeDiscountCode = (code) => {
+    if (sellerParamsLocked) {
+      notifySellerParamsLocked();
+      return;
+    }
     const nextAppliedDiscounts = appliedDiscounts.filter(d => d.code !== code);
     setAppliedDiscounts(nextAppliedDiscounts);
     persistDraftSnapshot({ appliedDiscounts: nextAppliedDiscounts });
@@ -896,22 +966,34 @@ export default function SaleForm({
   };
 
   const createNewCustomer = async () => {
-    if (!newCustomer.first_name || !newCustomer.phone) {
-      toast.error("Nombre y teléfono son requeridos");
+    if (!newCustomer.phone) {
+      toast.error("El teléfono es requerido");
       return;
     }
 
-    if (isNewCustomerCompany && !String(newCustomer.tax_id || "").trim()) {
-      toast.error("El RUC es requerido para registrar una empresa");
+    if (isNewCustomerCompany) {
+      if (!String(newCustomer.first_name || "").trim()) {
+        toast.error("El nombre de la empresa es requerido");
+        return;
+      }
+      if (!String(newCustomer.tax_id || "").trim()) {
+        toast.error("El RUC es requerido para registrar una empresa");
+        return;
+      }
+    } else if (!newCustomer.first_name) {
+      toast.error("Nombre y teléfono son requeridos");
       return;
     }
 
     try {
       const fullPhone = `${newCustomer.phone_prefix}-${newCustomer.phone}`;
+      const companyName = String(newCustomer.first_name || "").trim();
       const customerData = {
-        name: `${newCustomer.first_name} ${newCustomer.last_name}`.trim(),
-        first_name: newCustomer.first_name,
-        last_name: newCustomer.last_name,
+        name: isNewCustomerCompany
+          ? companyName
+          : `${newCustomer.first_name} ${newCustomer.last_name}`.trim(),
+        first_name: isNewCustomerCompany ? companyName : newCustomer.first_name,
+        last_name: isNewCustomerCompany ? "" : newCustomer.last_name,
         customer_type: newCustomer.customer_type,
         tax_id: newCustomer.tax_id,
         email: newCustomer.email || null,
@@ -925,6 +1007,7 @@ export default function SaleForm({
       toast.success("Cliente creado exitosamente");
       playCreationSuccessSound();
 
+      let createdVehicleId = null;
       if (newCustomer.add_vehicle && newCustomer.brand && newCustomer.model) {
         if (!newCustomer.year) {
           toast.error("Selecciona el año del vehículo");
@@ -949,12 +1032,20 @@ export default function SaleForm({
           vehicle_type: "sedan",
         };
 
-        await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
+        const vehicleResponse = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
+        createdVehicleId = vehicleResponse?.data?.vehicle_id;
         toast.success("Vehículo registrado");
         playCreationSuccessSound();
 
         const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
         setLocalVehicles(vehiclesRes.data);
+
+        if (createdVehicleId) {
+          setVehicleFlowOption("registered");
+          setSelectedVehicle(normalizeVehicleId(createdVehicleId));
+          setIsVehiclePickerVisible(false);
+          triggerVehiclePulse();
+        }
       }
 
       const customersRes = await axios.get(`${API}/customers`, { withCredentials: true });
@@ -962,6 +1053,9 @@ export default function SaleForm({
       const created = customersRes.data.find(c => c.customer_id === customerId);
       if (created) {
         setSelectedCustomer(created);
+        if (!newCustomer.add_vehicle) {
+          setIsVehiclePickerVisible(true);
+        }
       }
 
       resetNewCustomerForm();
@@ -971,6 +1065,8 @@ export default function SaleForm({
       }
       persistDraftSnapshot({
         selectedCustomerId: customerId,
+        vehicleFlowOption: createdVehicleId ? "registered" : "carryout",
+        selectedVehicle: createdVehicleId ? normalizeVehicleId(createdVehicleId) : "",
         showNewCustomer: false,
         newCustomerTab: "customer",
         newCustomer: {
@@ -1092,6 +1188,7 @@ export default function SaleForm({
         useVehicleVinDecoder: false,
       });
       toast.success("Vehículo registrado para el cliente");
+      triggerVehiclePulse();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo registrar el vehículo");
     }
@@ -1169,6 +1266,7 @@ export default function SaleForm({
       : 0;
     return {
       subtotalWithoutDiscounts,
+      subtotalAfterItemPriceDiscounts,
       manualPriceDiscountEntries,
       manualPriceDiscountTotal,
       subtotalForRetention,
@@ -1388,12 +1486,39 @@ export default function SaleForm({
   ]);
 
   const applyGlobalDiscountChange = useCallback((nextValue) => {
-    const normalizedValue = clampGlobalDiscountValue(nextValue, globalDiscountMode);
+    if (sellerParamsLocked) {
+      toast.error("No puedes modificar descuentos globales en un borrador liberado con cambios de supervisión");
+      return;
+    }
+    let normalizedValue = clampGlobalDiscountValue(nextValue, globalDiscountMode);
+    if (!isSupervisorUser && isSellerRole) {
+      const subtotalBase = totals.subtotalAfterItemPriceDiscounts || 0;
+      if (sellerGlobalDiscountExceeded({
+        value: normalizedValue,
+        mode: globalDiscountMode,
+        currency,
+        exchangeRate,
+        subtotal: subtotalBase,
+      })) {
+        toast.warning("Descuentos mayores a 2% o C$500 solo los puede aprobar gerencia.", { duration: 5000 });
+        normalizedValue = clampSellerGlobalDiscount({
+          value: normalizedValue,
+          mode: globalDiscountMode,
+          currency,
+          exchangeRate,
+          subtotal: subtotalBase,
+        });
+      }
+    }
     setGlobalDiscount(normalizedValue);
     persistDraftSnapshot({ globalDiscount: normalizedValue });
-  }, [globalDiscountMode, persistDraftSnapshot]);
+  }, [currency, exchangeRate, globalDiscountMode, isSellerRole, isSupervisorUser, persistDraftSnapshot, sellerParamsLocked, totals.subtotalAfterItemPriceDiscounts]);
 
   const applyGlobalDiscountModeChange = useCallback((nextModeValue) => {
+    if (sellerParamsLocked) {
+      notifySellerParamsLocked();
+      return;
+    }
     const nextMode = normalizeGlobalDiscountMode(nextModeValue);
     const normalizedValue = clampGlobalDiscountValue(globalDiscount, nextMode);
     setGlobalDiscountMode(nextMode);
@@ -1403,7 +1528,7 @@ export default function SaleForm({
       globalDiscountMode: nextMode,
       globalDiscount: normalizedValue,
     });
-  }, [globalDiscount, persistDraftSnapshot]);
+  }, [globalDiscount, notifySellerParamsLocked, persistDraftSnapshot, sellerParamsLocked]);
 
   const undoCartChange = useCallback(() => {
     if (cartHistory.current.length === 0) return;
@@ -1415,7 +1540,28 @@ export default function SaleForm({
     toast.info(label || "Acción deshecha");
   }, [persistDraftSnapshot]);
 
+  const resetSaleFlowForCustomerChange = useCallback(() => {
+    cartHistory.current = [];
+    setCartItems([]);
+    setAppliedDiscounts([]);
+    setProductSearch("");
+    setSelectedVehicle("");
+    setVehicleFlowOption("carryout");
+    setIsVehiclePickerVisible(true);
+    setStepThreeUnlockFlash(false);
+    prevStepTwoCompleteRef.current = false;
+    didStepThreeAutoScrollRef.current = false;
+  }, []);
+
   const handleSelectCustomer = useCallback((customer) => {
+    if (sellerFlowLocked) {
+      notifySellerFlowLocked();
+      return;
+    }
+    const shouldResetCart = normalizedCartItems.length > 0;
+    if (shouldResetCart) {
+      resetSaleFlowForCustomerChange();
+    }
     setSelectedCustomer(customer);
     setPendingCustomerId(null);
     setCustomerSearch("");
@@ -1428,10 +1574,25 @@ export default function SaleForm({
       customerSearch: "",
       selectedVehicle: "",
       vehicleFlowOption: "carryout",
+      cartItems: shouldResetCart ? [] : normalizedCartItems,
+      appliedDiscounts: shouldResetCart ? [] : appliedDiscounts,
+      productSearch: "",
     });
-  }, [persistDraftSnapshot]);
+  }, [
+    appliedDiscounts,
+    normalizedCartItems,
+    persistDraftSnapshot,
+    resetSaleFlowForCustomerChange,
+    sellerFlowLocked,
+    notifySellerFlowLocked,
+  ]);
 
   const handleClearSelectedCustomer = useCallback(() => {
+    if (sellerFlowLocked) {
+      notifySellerFlowLocked();
+      return;
+    }
+    resetSaleFlowForCustomerChange();
     setSelectedCustomer(null);
     setPendingCustomerId(null);
     setSelectedVehicle("");
@@ -1444,20 +1605,33 @@ export default function SaleForm({
       selectedVehicle: "",
       vehicleFlowOption: "carryout",
       customerSearch: "",
+      cartItems: [],
+      appliedDiscounts: [],
+      productSearch: "",
     });
     setTimeout(() => customerSearchRef.current?.focus(), 0);
-  }, [persistDraftSnapshot]);
+  }, [notifySellerFlowLocked, persistDraftSnapshot, resetSaleFlowForCustomerChange, sellerFlowLocked]);
 
   const handleSelectVehicleFlow = useCallback((nextFlowOption, nextVehicleId = "") => {
+    if (sellerFlowLocked) {
+      notifySellerFlowLocked();
+      return;
+    }
     const normalizedVehicleId = normalizeVehicleId(nextVehicleId);
     const nextCartItems = nextFlowOption === "carryout"
       ? normalizedCartItems.map((item) => ({ ...item, with_installation: false }))
       : normalizedCartItems;
     setVehicleFlowOption(nextFlowOption);
     setSelectedVehicle(normalizedVehicleId);
+    if (nextFlowOption !== "new") {
+      setIsVehiclePickerVisible(false);
+    }
     playSelectionFeedbackSound();
     if (nextFlowOption === "carryout") {
       setCartItems(nextCartItems);
+    }
+    if (nextFlowOption === "registered" && normalizedVehicleId) {
+      triggerVehiclePulse();
     }
     persistDraftSnapshot({
       vehicleFlowOption: nextFlowOption,
@@ -1465,9 +1639,16 @@ export default function SaleForm({
       cartItems: nextCartItems,
       showNewVehicleDialog: nextFlowOption === "new",
     });
-  }, [normalizeVehicleId, normalizedCartItems, persistDraftSnapshot]);
+  }, [normalizeVehicleId, normalizedCartItems, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
 
   const updateCartItem = useCallback((productId, field, value, options = {}) => {
+    if (!isSupervisorUser) {
+      const lineLock = getSellerCartLineLockState(productId, draftReview);
+      if (lineLock.locked && ["quantity", "discount", "unit_price", "with_installation"].includes(field)) {
+        toast.error("No puedes modificar líneas revisadas por supervisión");
+        return normalizedCartItems;
+      }
+    }
     const prevItem = normalizedCartItems.find((item) => item.product_id === productId);
     const name = prevItem?.product_name || "producto";
     const fieldLabels = { quantity: "cantidad", discount: "descuento", with_installation: "instalación", unit_price: "precio" };
@@ -1493,9 +1674,16 @@ export default function SaleForm({
       persistDraftSnapshot({ cartItems: nextCartItems });
     }
     return nextCartItems;
-  }, [normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
+  }, [draftReview, isSupervisorUser, normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
 
   const removeFromCart = useCallback((productId) => {
+    if (!isSupervisorUser) {
+      const lineLock = getSellerCartLineLockState(productId, draftReview);
+      if (!lineLock.deletable) {
+        toast.error("No puedes eliminar productos revisados por supervisión");
+        return;
+      }
+    }
     const item = normalizedCartItems.find(i => i.product_id === productId);
     const name = item?.product_name || "producto";
     pushCartHistory([...normalizedCartItems], `Se restauró "${name}" al carrito`);
@@ -1503,7 +1691,7 @@ export default function SaleForm({
     setCartItems(nextCartItems);
     playCartRemoveSound();
     persistDraftSnapshot({ cartItems: nextCartItems });
-  }, [normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
+  }, [draftReview, isSupervisorUser, normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
 
   const changeCartItemQuantityBy = useCallback((productId, delta) => {
     const currentItem = normalizedCartItems.find((item) => item.product_id === productId);
@@ -1567,6 +1755,10 @@ export default function SaleForm({
   ]);
 
   const openPriceEditor = useCallback((item) => {
+    if (!isSupervisorUser) {
+      toast.error("Solo supervisores y gerencia pueden modificar precios.");
+      return;
+    }
     if (Number(item.price_edit_count || 0) >= 3) {
       toast.error("Solo se permite editar el precio 3 veces por producto");
       return;
@@ -1578,7 +1770,7 @@ export default function SaleForm({
     setPriceEditorPercent("0");
     setPriceEditorOpen(true);
     playSelectionFeedbackSound();
-  }, [convertPrice]);
+  }, [convertPrice, isSupervisorUser]);
 
   const closePriceEditor = useCallback(() => {
     setPriceEditorOpen(false);
@@ -1696,13 +1888,13 @@ export default function SaleForm({
 
     if (draftKey && typeof window !== "undefined") {
       window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
-      window.localStorage.setItem("catalog_open_draft", "sale");
+      window.localStorage.setItem("catalog_open_draft", isQuotationFlow ? "quote" : "sale");
       window.location.href = "/catalog";
       return;
     }
 
     toast.error("No se pudo abrir catálogo porque no hay un borrador activo");
-  }, [buildDraftSnapshot, draftKey, onOpenCatalogSearch]);
+  }, [buildDraftSnapshot, draftKey, isQuotationFlow, onOpenCatalogSearch]);
 
   const isSnapshotEmpty = (snapshot) => {
     if (!snapshot) return true;
@@ -1821,47 +2013,21 @@ export default function SaleForm({
     return "in_stock";
   }, [getLocalStoreStockValue, getProductStockThreshold]);
 
-  const getProductTone = useCallback((stockStatus, isServiceProduct) => {
-    if (isServiceProduct) {
-      return {
-        base: "border-blue-200 bg-blue-50/70",
-        hover: "hover:border-blue-300 hover:bg-blue-100/80",
-        selected: "border-blue-500 bg-blue-100/90 ring-2 ring-blue-200",
-        title: "text-blue-950",
-        sku: "text-blue-800/75",
-        emphasisPrice: "text-blue-950",
-      };
-    }
+  const getProductTone = useCallback(
+    (stockStatus, isServiceProduct) => getErpProductTone(stockStatus, isServiceProduct),
+    []
+  );
 
-    const toneByStatus = {
-      in_stock: {
-        base: "border-emerald-200 bg-emerald-50/70",
-        hover: "hover:border-emerald-300 hover:bg-emerald-100/80",
-        selected: "border-emerald-500 bg-emerald-100/90 ring-2 ring-emerald-200",
-        title: "text-emerald-950",
-        sku: "text-emerald-800/75",
-        emphasisPrice: "text-emerald-950",
-      },
-      low_stock: {
-        base: "border-amber-200 bg-amber-50/70",
-        hover: "hover:border-amber-300 hover:bg-amber-100/80",
-        selected: "border-amber-500 bg-amber-100/90 ring-2 ring-amber-200",
-        title: "text-amber-950",
-        sku: "text-amber-800/75",
-        emphasisPrice: "text-amber-950",
-      },
-      out_of_stock: {
-        base: "border-rose-200 bg-rose-50/70",
-        hover: "hover:border-rose-300 hover:bg-rose-100/80",
-        selected: "border-rose-500 bg-rose-100/90 ring-2 ring-rose-200",
-        title: "text-rose-950",
-        sku: "text-rose-800/75",
-        emphasisPrice: "text-rose-950",
-      },
-    };
+  const saleFlowSteps = useMemo(
+    () => buildSaleFlowSteps({
+      stepOneComplete,
+      stepTwoComplete,
+      cartCount: normalizedCartItems.length,
+    }),
+    [stepOneComplete, stepTwoComplete, normalizedCartItems.length]
+  );
 
-    return toneByStatus[stockStatus] || toneByStatus.in_stock;
-  }, []);
+  const saleFlowProgressKey = `${selectedCustomer?.customer_id ?? "none"}:${isVehiclePickerVisible ? "pick" : "set"}:${normalizedCartItems.length}`;
 
   const productsById = useMemo(
     () => new Map((products || []).map((product) => [String(product.product_id), product])),
@@ -2047,8 +2213,25 @@ export default function SaleForm({
     };
   }, [clearProductTransferAnimation]);
 
+  useEffect(() => {
+    if (stepTwoComplete && !prevStepTwoCompleteRef.current) {
+      setStepThreeUnlockFlash(true);
+      const timer = window.setTimeout(() => setStepThreeUnlockFlash(false), 700);
+      prevStepTwoCompleteRef.current = stepTwoComplete;
+      return () => window.clearTimeout(timer);
+    }
+    prevStepTwoCompleteRef.current = stepTwoComplete;
+  }, [stepTwoComplete]);
+
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
+    <div className="space-y-4">
+      {sellerReleasedRestricted ? (
+        <div className={ERP_SEMANTIC_TONES.restrictedBanner}>
+          Borrador liberado por supervisión. Cliente, vehículo, líneas existentes, método de pago y retención IR están bloqueados; solo puedes agregar productos nuevos.
+        </div>
+      ) : null}
+      <SaleFlowStepProgress key={saleFlowProgressKey} steps={saleFlowSteps} />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start">
       {productTransferAnimation ? (
         <div
           className={cn(
@@ -2071,14 +2254,14 @@ export default function SaleForm({
           </div>
         </div>
       ) : null}
-      <div ref={leftPaneRef} className="space-y-4 xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto xl:pr-1">
-        <div>
+      <div ref={leftPaneRef} className="space-y-4 lg:pr-1 lg:min-h-[28rem]">
+        <div className="shrink-0 overflow-hidden">
           <Label className="inline-flex items-center gap-2">
             <User className="h-4 w-4" />
             <span>Paso 1: Agregar Cliente/Empresa o buscar en la lista</span>
           </Label>
           {!selectedCustomer ? (
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 mt-2">
               <div className="relative flex-1">
                 <UserSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -2087,6 +2270,7 @@ export default function SaleForm({
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   onKeyDown={handleCustomerSearchKeyDown}
                   ref={customerSearchRef}
+                  disabled={sellerFlowLocked}
                   className="mb-0 pl-9"
                 />
               </div>
@@ -2094,24 +2278,20 @@ export default function SaleForm({
                 type="button"
                 variant="outline"
                 size="sm"
+                disabled={sellerFlowLocked}
                 onClick={() => {
                   setShowNewCustomer(true);
                   persistDraftSnapshot({ showNewCustomer: true });
                 }}
                 title="Nuevo Registro"
-                className={cn(isPortraitOrientation ? "w-8 px-0" : "")}
-              >
-                {isPortraitOrientation ? (
-                  <>
-                    <UserPlus className="h-4 w-4" />
-                    <span className="sr-only">Nuevo Registro</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Nuevo Registro
-                  </>
+                className={cn(
+                  "ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20 dark:text-emerald-200",
+                  isPortraitOrientation ? "px-2" : ""
                 )}
+              >
+                <UserPlus className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                <Building2 className={cn("h-4 w-4 text-emerald-700 dark:text-emerald-300", isPortraitOrientation ? "" : "mr-2")} />
+                {!isPortraitOrientation ? "Nuevo Registro" : <span className="sr-only">Nuevo Registro</span>}
               </Button>
             </div>
           ) : null}
@@ -2149,6 +2329,7 @@ export default function SaleForm({
                     type="button"
                     variant="ghost"
                     className="h-10 px-4 text-sm font-medium"
+                    disabled={sellerFlowLocked}
                     onClick={handleClearSelectedCustomer}
                   >
                     <RefreshCcw className="h-4 w-4 mr-2" />
@@ -2163,7 +2344,15 @@ export default function SaleForm({
           ) : null}
           {!selectedCustomer ? (
             customerSearch.trim() ? (
-              <div ref={customerListRef} className="border rounded-sm max-h-64 overflow-y-auto p-2 animate-fade-up-soft">
+              <div
+                ref={customerListRef}
+                className={cn(
+                  "rounded-lg border p-2",
+                  filteredCustomers.length > 6
+                    ? "max-h-64 overflow-y-auto overscroll-contain"
+                    : "overflow-hidden"
+                )}
+              >
                 {filteredCustomers.length === 0 ? (
                   <p className="text-center text-muted-foreground p-4">Sin resultados</p>
                 ) : (
@@ -2175,25 +2364,26 @@ export default function SaleForm({
                       const rowAddress = c.address || c.shipping_address || c.billing_address || "Sin dirección";
                       const taxLabel = isCompany ? "RUC" : "Cédula";
                       const rowVehicleCount = customerVehicleCountById[c.customer_id] || 0;
-                      const rowTone = isCompany
-                        ? "border-blue-200 bg-blue-50/70 hover:bg-blue-100/80"
-                        : "border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80";
-                      const activeTone = isCompany ? "ring-2 ring-blue-300" : "ring-2 ring-emerald-300";
+                      const rowTone = getErpCustomerSearchRowTone(isCompany, isHighlighted);
                       return (
                         <button
                           key={c.customer_id}
                           data-index={index}
                           type="button"
-                          className={`w-full rounded-lg border p-2.5 text-left transition-colors ui-interactive ${rowTone} ${isHighlighted ? activeTone : ""}`}
+                          className={cn(rowTone.row, ERP_SEARCH_ROW.customer)}
                           onClick={() => handleSelectCustomer(c)}
                           onMouseEnter={() => setCustomerHighlightIndex(index)}
                         >
-                          <p className="text-sm font-semibold inline-flex items-center gap-1.5 text-slate-900">
-                            {isCompany ? <Building2 className="h-4 w-4 text-blue-700" /> : <User className="h-4 w-4 text-emerald-700" />}
-                            {c.name}
-                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">({typeLabel})</span>
-                          </p>
-                          <div className="mt-1.5 grid gap-x-3 gap-y-1 text-[11px] text-slate-700 sm:grid-cols-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={cn("text-sm font-semibold inline-flex min-w-0 items-center gap-1.5", rowTone.title)}>
+                              {isCompany ? <Building2 className="h-4 w-4 shrink-0 text-blue-700 dark:text-blue-300" /> : <User className="h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300" />}
+                              <span className="truncate">{c.name}</span>
+                            </p>
+                            <Badge variant="outline" className={cn("shrink-0 text-[10px]", rowTone.badge)}>
+                              {typeLabel}
+                            </Badge>
+                          </div>
+                          <div className={cn("mt-1.5 grid gap-x-3 gap-y-1 text-[11px] sm:grid-cols-2", rowTone.meta)}>
                             <p className="inline-flex items-center gap-1.5">
                               <Phone className="h-3 w-3" />
                               <span className="truncate">{c.phone || "Sin teléfono"}</span>
@@ -2223,29 +2413,38 @@ export default function SaleForm({
           ) : null}
         </div>
 
-        <div ref={stepTwoSectionRef} className="space-y-2 animate-fade-up-soft">
+        <div
+          ref={stepTwoSectionRef}
+          className={cn(
+            "space-y-2 animate-fade-up-soft",
+            !stepOneComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked
+          )}
+        >
           <Label className="inline-flex items-center gap-2">
             <CarFront className="h-4 w-4" />
             <span>Paso 2: Seleccionar opción de vehículo</span>
           </Label>
+          {!stepOneComplete ? (
+            <p className="text-xs text-muted-foreground">Completa el paso 1 para habilitar la selección de vehículo</p>
+          ) : null}
           {isVehiclePickerVisible ? (
             <div className={`grid gap-2 ui-fade-in-stagger ${selectedCustomer ? "sm:grid-cols-2" : ""}`}>
               <button
                 type="button"
-                disabled={!selectedCustomer}
+                disabled={!selectedCustomer || sellerFlowLocked}
                 onClick={() => {
                   setIsVehiclePickerVisible(false);
                   handleSelectVehicleFlow("carryout", "");
                 }}
                 className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${selectedVehicleOption === "carryout"
-                  ? "border-emerald-500 bg-emerald-100/80"
-                  : "border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100/80"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
+                  ? "border-emerald-500 bg-emerald-100/80 dark:border-emerald-500/50 dark:bg-emerald-500/20"
+                  : "border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100/80 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
               >
-                <p className="font-medium text-emerald-900 inline-flex items-center gap-1.5">
-                  <Package className="h-4 w-4 text-emerald-700" />
+                <p className="font-medium text-emerald-900 dark:text-emerald-100 inline-flex items-center gap-1.5">
+                  <Package className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
                   Producto para llevar
                 </p>
-                <p className="text-xs text-emerald-800 mt-1">Venta sin instalación ni vehículo registrado</p>
+                <p className="text-xs text-emerald-800 dark:text-emerald-200/90 mt-1">Venta sin instalación ni vehículo registrado</p>
               </button>
 
               {customerVehicles.map((v) => {
@@ -2258,17 +2457,17 @@ export default function SaleForm({
                   <button
                     key={v.vehicle_id ?? v.id}
                     type="button"
-                    disabled={!selectedCustomer}
+                    disabled={!selectedCustomer || sellerFlowLocked}
                     onClick={() => {
                       setIsVehiclePickerVisible(false);
                       handleSelectVehicleFlow("registered", vehicleOptionId);
                     }}
                     className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${isActiveVehicle
-                      ? "border-sky-500 bg-sky-100/80"
-                      : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
+                      ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
+                      : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80 dark:border-sky-500/30 dark:bg-sky-500/10 dark:hover:bg-sky-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
-                    <p className="font-medium text-sky-900 inline-flex items-center gap-1.5">
-                      <CarFront className="h-4 w-4 text-sky-700" />
+                    <p className="font-medium text-sky-900 dark:text-sky-100 inline-flex items-center gap-1.5">
+                      <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
                       {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
                     </p>
                     <p className="text-xs text-sky-800 mt-1">{plate}</p>
@@ -2279,18 +2478,18 @@ export default function SaleForm({
 
               <button
                 type="button"
-                disabled={!selectedCustomer}
+                disabled={!selectedCustomer || sellerFlowLocked}
                 onClick={() => {
                   setIsVehiclePickerVisible(false);
                   setShowNewVehicleDialog(true);
                   handleSelectVehicleFlow("new", "");
                 }}
                 className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${selectedVehicleOption === "new"
-                  ? "border-violet-500 bg-violet-100/80"
-                  : "border-violet-200 bg-violet-50/80 hover:bg-violet-100/80"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
+                  ? "border-violet-500 bg-violet-100/80 dark:border-violet-500/50 dark:bg-violet-500/20"
+                  : "border-violet-200 bg-violet-50/80 hover:bg-violet-100/80 dark:border-violet-500/30 dark:bg-violet-500/10 dark:hover:bg-violet-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
               >
-                <p className="font-medium text-violet-900 inline-flex items-center gap-1.5">
-                  <PlusCircle className="h-4 w-4 text-violet-700" />
+                <p className="font-medium text-violet-900 dark:text-violet-100 inline-flex items-center gap-1.5">
+                  <PlusCircle className="h-4 w-4 text-violet-700 dark:text-violet-300" />
                   Registrar nuevo vehículo
                 </p>
                 <p className="text-xs text-violet-800 mt-1">Agregar otro vehículo a este cliente</p>
@@ -2323,6 +2522,7 @@ export default function SaleForm({
                     type="button"
                     variant="ghost"
                     className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    disabled={sellerFlowLocked}
                     onClick={() => setIsVehiclePickerVisible(true)}
                   >
                     <RefreshCcw className="h-4 w-4 mr-1.5" />
@@ -2337,7 +2537,7 @@ export default function SaleForm({
           ) : null}
 
           {!isVehiclePickerVisible && vehicleFlowOption === "registered" && selectedVehicleData ? (
-            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell)}>
+            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
               <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
                   <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
@@ -2366,6 +2566,7 @@ export default function SaleForm({
                     type="button"
                     variant="ghost"
                     className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    disabled={sellerFlowLocked}
                     onClick={() => {
                       setIsVehiclePickerVisible(true);
                       handleSelectVehicleFlow("carryout", "");
@@ -2383,11 +2584,21 @@ export default function SaleForm({
           ) : null}
         </div>
 
-        <div ref={stepThreeSectionRef} className="space-y-2 animate-fade-up-soft">
+        <div
+          ref={stepThreeSectionRef}
+          className={cn(
+            "space-y-2 animate-fade-up-soft",
+            !stepTwoComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked,
+            stepThreeUnlockFlash && ERP_ANIMATION_CLASSES.unlock
+          )}
+        >
           <Label className="inline-flex items-center gap-2">
             <Package className="h-4 w-4" />
             <span>Paso 3: Seleccionar productos</span>
           </Label>
+          {!stepTwoComplete ? (
+            <p className="text-xs text-muted-foreground">Selecciona cliente y opción de vehículo para habilitar productos</p>
+          ) : null}
           <div className="flex flex-col gap-2 mb-2 md:flex-row ui-fade-in-stagger">
               <div className="relative flex-1">
                 <PackageSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -2438,6 +2649,7 @@ export default function SaleForm({
                   type="button"
                   className={cn(
                     "grid w-full grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 text-left shadow-sm transition-colors ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5",
+                    ERP_SEARCH_ROW.product,
                     tone.base,
                     tone.hover,
                     index === productHighlightIndex ? tone.selected : ""
@@ -2544,7 +2756,7 @@ export default function SaleForm({
                             >
                               {icon}
                               <span className="font-semibold">{label}:</span>
-                              <span className={cn("font-mono", qtyClassName)}>{qty}</span>
+                              <ErpRollingQuantity value={qty} className={cn(qtyClassName)} />
                               {showBreakdown && rows.length > 0 && (
                                 <span className="truncate text-muted-foreground" title={rows.map((row) => `${row.name}: ${row.qty}`).join(" | ")}>
                                   ({rows.map((row) => `${row.name}: ${row.qty}`).join(", ")})
@@ -2605,7 +2817,7 @@ export default function SaleForm({
                             {/* Con instalación arriba (pequeño, muted) */}
                             <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
                               <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                              <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
+                              <ErpRollingCurrency value={convertPrice(p.price + (p.installation_price || 0))} currency={currency} />
                             </p>
                             {/* Para llevar abajo (grande, negrita = seleccionado) */}
                             <p className={cn("inline-flex items-center gap-1 font-mono text-[13px] font-extrabold", tone.emphasisPrice)}>
@@ -2614,7 +2826,7 @@ export default function SaleForm({
                               ) : (
                                 <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                               )}
-                              <span>{formatCurrency(convertPrice(p.price), currency)}</span>
+                              <ErpRollingCurrency value={convertPrice(p.price)} currency={currency} />
                             </p>
                           </>
                         ) : (
@@ -2629,7 +2841,7 @@ export default function SaleForm({
                               ) : (
                                 <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                               )}
-                              <span>{formatCurrency(convertPrice(p.price), currency)}</span>
+                              <ErpRollingCurrency value={convertPrice(p.price)} currency={currency} />
                             </p>
                             {/* Con instalación abajo */}
                             {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
@@ -2638,7 +2850,7 @@ export default function SaleForm({
                                 hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
                               )}>
                                 <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                <span>{formatCurrency(convertPrice(p.price + (p.installation_price || 0)), currency)}</span>
+                                <ErpRollingCurrency value={convertPrice(p.price + (p.installation_price || 0))} currency={currency} />
                               </p>
                             )}
                           </>
@@ -2657,7 +2869,17 @@ export default function SaleForm({
         </div>
       </div>
 
-      <div ref={stepFourSectionRef} className={cn("relative space-y-4 animate-fade-up-soft rounded-2xl transition-all duration-500", cartFlashActive ? "ring-2 ring-sky-300 shadow-[0_0_0_1px_rgba(125,211,252,0.35),0_18px_40px_rgba(56,189,248,0.12)]" : "") }>
+      <div
+        ref={stepFourSectionRef}
+        className={cn(
+          "relative min-h-[28rem] space-y-4 rounded-2xl transition-all duration-500",
+          cartFlashActive ? "ring-2 ring-sky-300 shadow-[0_0_0_1px_rgba(125,211,252,0.35),0_18px_40px_rgba(56,189,248,0.12)]" : "",
+          !stepTwoComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked
+        )}
+      >
+        {!stepTwoComplete ? (
+          <p className="text-xs text-muted-foreground">Los pasos 4 y 5 se habilitan después de seleccionar la opción de vehículo</p>
+        ) : null}
         {cartFlashActive ? (
           <div className="pointer-events-none absolute inset-x-3 top-10 h-28 rounded-3xl bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.98),rgba(186,230,253,0.34)_35%,rgba(255,255,255,0)_70%)] opacity-90 blur-sm" />
         ) : null}
@@ -2680,10 +2902,12 @@ export default function SaleForm({
         <div className={cn(
           "animate-fade-up-soft",
           normalizedCartItems.length === 0
-            ? "rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-muted-foreground"
+            ? ""
             : "max-h-72 space-y-2 overflow-y-auto pr-1"
         )}>
-          {normalizedCartItems.length === 0 ? "Sin productos" : normalizedCartItems.map(item => {
+          {normalizedCartItems.length === 0 ? (
+            <EmptyCartPlaceholder flowType={flowType} />
+          ) : normalizedCartItems.map(item => {
             const itemNormalizedSku = String(item.sku || "").toUpperCase();
             const itemNormalizedName = String(item.product_name || "").toLowerCase();
             const isItemService = itemNormalizedSku.startsWith("SRV") || itemNormalizedName.includes("servicio");
@@ -2695,8 +2919,13 @@ export default function SaleForm({
             const maxStoreQuantity = Number.isFinite(maxStoreQuantityRaw)
               ? Math.max(0, Math.floor(maxStoreQuantityRaw))
               : null;
-            const canDecreaseQuantity = currentQuantity > 1;
-            const canIncreaseQuantity = maxStoreQuantity === null ? true : currentQuantity < maxStoreQuantity;
+            const lineLock = isSupervisorUser
+              ? { locked: false, deletable: true }
+              : getSellerCartLineLockState(item.product_id, draftReview);
+            const canDecreaseQuantity = !lineLock.locked && currentQuantity > 1;
+            const canIncreaseQuantity = !lineLock.locked && (maxStoreQuantity === null ? true : currentQuantity < maxStoreQuantity);
+            const canEditLinePrice = isSupervisorUser;
+            const canRemoveLine = lineLock.deletable;
             return (
             <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
               {item.image
@@ -2725,7 +2954,7 @@ export default function SaleForm({
                       ) + installTotal);
 
                     if (previousTotals.length === 0) {
-                      return <p className={cn("shrink-0 font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>{formatCurrency(currentTotal, currency)}</p>;
+                      return <ErpRollingCurrency value={currentTotal} currency={currency} className={cn("shrink-0 text-sm font-extrabold tracking-tight", tone.emphasisPrice)} />;
                     }
 
                     return (
@@ -2738,9 +2967,11 @@ export default function SaleForm({
                             {formatCurrency(previousTotal, currency)}
                           </p>
                         ))}
-                        <p className={cn("font-mono text-sm font-extrabold tracking-tight", tone.emphasisPrice)}>
-                          {formatCurrency(currentTotal, currency)}
-                        </p>
+                        <ErpRollingCurrency
+                          value={currentTotal}
+                          currency={currency}
+                          className={cn("text-sm font-extrabold tracking-tight", tone.emphasisPrice)}
+                        />
                       </div>
                     );
                   })()}
@@ -2783,7 +3014,7 @@ export default function SaleForm({
                         <div className="flex items-center gap-1.5 whitespace-nowrap leading-tight">
                           <Building2 className="h-3 w-3 text-blue-700" aria-hidden="true" />
                           <span className="text-muted-foreground">Esta Tienda:</span>
-                          <span className="font-mono font-semibold text-blue-900">{sumQty(sellerRows)}</span>
+                          <ErpRollingQuantity value={sumQty(sellerRows)} className="font-semibold text-blue-900" />
                         </div>
                       )}
                       {otherWHRows.length > 0 && (
@@ -2797,7 +3028,7 @@ export default function SaleForm({
                         >
                           <Warehouse className="h-3 w-3 text-amber-700" aria-hidden="true" />
                           <span className="text-muted-foreground">Otras bodegas:</span>
-                          <span className="font-mono font-semibold text-amber-900">{sumQty(otherWHRows)}</span>
+                          <ErpRollingQuantity value={sumQty(otherWHRows)} className="font-semibold text-amber-900" />
                           {isTouchDevice && activeStockBreakdownKey === `cart-${item.product_id}-wh` && (
                             <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 max-w-[22rem] rounded-md border bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-md">
                               {otherWHRows.map(r => `${r.name}: ${r.qty}`).join(", ")}
@@ -2849,7 +3080,7 @@ export default function SaleForm({
                       aria-label={`Cantidad ${item.product_name}`}
                       className="inline-flex h-7 min-w-[3.25rem] items-center justify-center rounded-md border border-input bg-background px-2 font-mono text-[11px] font-semibold"
                     >
-                      {currentQuantity}
+                      <ErpRollingQuantity value={currentQuantity} className="text-[11px] font-semibold" />
                     </div>
                     <Button
                       type="button"
@@ -2887,16 +3118,18 @@ export default function SaleForm({
                     </Button>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={Number(item.price_edit_count || 0) >= 3 ? "Máximo 3 ediciones de precio" : "Editar precio"}
-                      onClick={() => openPriceEditor(item)}
-                      disabled={Number(item.price_edit_count || 0) >= 3}
-                      className="h-7 w-7 text-sky-700 hover:bg-sky-100/70 hover:text-sky-800 ui-interactive"
-                    >
-                      <PencilLine className="h-3.5 w-3.5" />
-                    </Button>
+                    {canEditLinePrice ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={Number(item.price_edit_count || 0) >= 3 ? "Máximo 3 ediciones de precio" : "Editar precio"}
+                        onClick={() => openPriceEditor(item)}
+                        disabled={Number(item.price_edit_count || 0) >= 3}
+                        className="h-7 w-7 text-sky-700 hover:bg-sky-100/70 hover:text-sky-800 ui-interactive"
+                      >
+                        <PencilLine className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -2909,8 +3142,9 @@ export default function SaleForm({
                     <Button
                       variant="ghost"
                       size="icon"
-                      title="Eliminar del carrito"
+                      title={canRemoveLine ? "Eliminar del carrito" : "Línea bloqueada por supervisión"}
                       onClick={() => removeFromCart(item.product_id)}
+                      disabled={!canRemoveLine}
                       className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive ui-interactive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -2998,7 +3232,7 @@ export default function SaleForm({
               {priceEditorItem ? (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    Precio actual: {formatCurrency(convertPrice(priceEditorItem.unit_price || 0), currency)}
+                    Precio actual: <ErpRollingCurrency value={convertPrice(priceEditorItem.unit_price || 0)} currency={currency} />
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Ediciones usadas: {Math.max(0, Math.floor(Number(priceEditorItem.price_edit_count || 0)))}/3
@@ -3008,11 +3242,11 @@ export default function SaleForm({
                       <p className="text-[11px] font-medium text-emerald-800">Resumen monetario de la edición</p>
                       {priceEditorPreview.discountPerUnit > 0 ? (
                         <p className="text-[11px] text-emerald-700">
-                          Descuento aplicado: -{formatCurrency(priceEditorPreview.discountPerUnit, currency)}
+                          Descuento aplicado: <ErpRollingCurrency value={priceEditorPreview.discountPerUnit} currency={currency} prefix="-" />
                         </p>
                       ) : priceEditorPreview.increasePerUnit > 0 ? (
                         <p className="text-[11px] text-amber-700">
-                          Incremento aplicado: +{formatCurrency(priceEditorPreview.increasePerUnit, currency)}
+                          Incremento aplicado: <ErpRollingCurrency value={priceEditorPreview.increasePerUnit} currency={currency} prefix="+" />
                         </p>
                       ) : (
                         <p className="text-[11px] text-muted-foreground">
@@ -3021,7 +3255,12 @@ export default function SaleForm({
                       )}
                       {priceEditorPreview.quantity > 1 ? (
                         <p className="text-[11px] text-muted-foreground">
-                          Impacto total (x{priceEditorPreview.quantity}): {priceEditorPreview.deltaTotal < 0 ? "-" : "+"}{formatCurrency(Math.abs(priceEditorPreview.deltaTotal), currency)}
+                          Impacto total (x{priceEditorPreview.quantity}):{" "}
+                          <ErpRollingCurrency
+                            value={Math.abs(priceEditorPreview.deltaTotal)}
+                            currency={currency}
+                            prefix={priceEditorPreview.deltaTotal < 0 ? "-" : "+"}
+                          />
                         </p>
                       ) : null}
                     </div>
@@ -3061,7 +3300,12 @@ export default function SaleForm({
           </Label>
           <Select
             value={normalizedPaymentMethod}
+            disabled={sellerParamsLocked}
             onValueChange={(value) => {
+              if (sellerParamsLocked) {
+                notifySellerParamsLocked();
+                return;
+              }
               const nextMethod = String(value || "cash");
               setPaymentMethod(nextMethod);
               playSelectionFeedbackSound();
@@ -3075,7 +3319,7 @@ export default function SaleForm({
               }
             }}
           >
-            <SelectTrigger className="ui-interactive">
+            <SelectTrigger className="ui-interactive" disabled={sellerParamsLocked}>
               <SelectValue placeholder="Seleccionar método de pago" />
             </SelectTrigger>
             <SelectContent>
@@ -3101,10 +3345,21 @@ export default function SaleForm({
                   const Icon = meta.icon;
                   const checked = normalizedMixedPaymentMethods.includes(method);
                   return (
-                    <label key={method} className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-800 ui-interactive">
+                    <label
+                      key={method}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-800",
+                        sellerParamsLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer ui-interactive"
+                      )}
+                    >
                       <Checkbox
                         checked={checked}
+                        disabled={sellerParamsLocked}
                         onCheckedChange={(value) => {
+                          if (sellerParamsLocked) {
+                            notifySellerParamsLocked();
+                            return;
+                          }
                           const nextChecked = Boolean(value);
                           const nextMethods = nextChecked
                             ? Array.from(new Set([...normalizedMixedPaymentMethods, method]))
@@ -3123,7 +3378,11 @@ export default function SaleForm({
               <p className="text-xs text-slate-600">Métodos elegidos: {paymentMethodSummaryLabel}</p>
             </div>
           )}
-          {discountsBlockedByPayment ? (
+          {sellerParamsLocked ? (
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              Método de pago definido por supervisión; no editable.
+            </p>
+          ) : discountsBlockedByPayment ? (
             <p className="text-xs text-amber-700">
               Este método bloquea descuentos y promociones en el cálculo final.
             </p>
@@ -3150,18 +3409,26 @@ export default function SaleForm({
             <div className="flex gap-2">
               <Input
                 value={discountCode}
-                disabled={discountsBlockedByPayment}
+                disabled={discountsBlockedByPayment || sellerParamsLocked}
                 onChange={(e) => setDiscountCode(e.target.value)}
                 placeholder="Ej: DESC10"
               />
-              <Button type="button" disabled={discountsBlockedByPayment} onClick={applyDiscountCode}>Aplicar</Button>
+              <Button type="button" disabled={discountsBlockedByPayment || sellerParamsLocked} onClick={applyDiscountCode}>Aplicar</Button>
             </div>
             {appliedDiscounts.length > 0 && (
               <div className="mt-2 space-y-1">
                 {appliedDiscounts.map(d => (
                   <div key={d.code} className="flex items-center justify-between text-xs">
                     <span>{d.code} - {d.name}</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeDiscountCode(d.code)}>×</Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={sellerParamsLocked}
+                      onClick={() => removeDiscountCode(d.code)}
+                    >
+                      ×
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -3184,7 +3451,7 @@ export default function SaleForm({
                 <span className={cn("font-semibold", globalDiscountMode === "percent" ? "text-emerald-700" : "text-slate-500")}>%</span>
                 <Switch
                   checked={globalDiscountMode === "fixed"}
-                  disabled={discountsBlockedByPayment}
+                  disabled={discountsBlockedByPayment || sellerParamsLocked}
                   onCheckedChange={(checked) => applyGlobalDiscountModeChange(checked ? "fixed" : "percent")}
                   aria-label="Cambiar tipo de descuento global"
                 />
@@ -3203,7 +3470,7 @@ export default function SaleForm({
                     : "border-rose-300 bg-white/70 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Reducir descuento global"}
-                disabled={discountsBlockedByPayment || globalDiscount <= 0}
+                disabled={discountsBlockedByPayment || sellerParamsLocked || globalDiscount <= 0}
                 onClick={() => applyGlobalDiscountChange(globalDiscount - (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -3213,7 +3480,7 @@ export default function SaleForm({
                 min="0"
                 max={globalDiscountMode === "percent" ? "100" : undefined}
                 inputMode="numeric"
-                disabled={discountsBlockedByPayment}
+                disabled={discountsBlockedByPayment || sellerParamsLocked}
                 value={globalDiscount}
                 onChange={(e) => applyGlobalDiscountChange(e.target.value)}
                 onBlur={(e) => applyGlobalDiscountChange(e.target.value)}
@@ -3231,7 +3498,7 @@ export default function SaleForm({
                     : "border-emerald-300 bg-white/70 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Aumentar descuento global"}
-                disabled={discountsBlockedByPayment || (globalDiscountMode === "percent" && globalDiscount >= 100)}
+                disabled={discountsBlockedByPayment || sellerParamsLocked || (globalDiscountMode === "percent" && globalDiscount >= 100)}
                 onClick={() => applyGlobalDiscountChange(globalDiscount + (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -3256,12 +3523,16 @@ export default function SaleForm({
               <Checkbox
                 checked={applyIVA}
                 onCheckedChange={(v) => {
+                  if (sellerParamsLocked) {
+                    notifySellerParamsLocked();
+                    return;
+                  }
                   if (isCompanyCustomerFlow) return;
                   const nextValue = Boolean(v);
                   setApplyIVA(nextValue);
                   persistDraftSnapshot({ applyIVA: nextValue });
                 }}
-                disabled={isCompanyCustomerFlow}
+                disabled={isCompanyCustomerFlow || sellerParamsLocked}
               />
               <span className="text-xs text-muted-foreground">
                 {isCompanyCustomerFlow ? "Aplicación obligatoria para empresa" : "Aplicar IVA"}
@@ -3281,8 +3552,12 @@ export default function SaleForm({
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={applyRetention}
-                  disabled={!totals.retentionThresholdMet}
+                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
                   onCheckedChange={(v) => {
+                    if (sellerParamsLocked) {
+                      notifySellerParamsLocked();
+                      return;
+                    }
                     const next = Boolean(v);
                     if (next && !totals.retentionThresholdMet) {
                       toast.info("La retención IR requiere subtotal con descuentos >= C$1,000.00");
@@ -3299,14 +3574,18 @@ export default function SaleForm({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  disabled={!totals.retentionThresholdMet}
+                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
                   onClick={() => {
+                    if (sellerParamsLocked) {
+                      notifySellerParamsLocked();
+                      return;
+                    }
                     setRetentionRate(1);
                     persistDraftSnapshot({ applyRetention, retentionRate: 1 });
                   }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    !totals.retentionThresholdMet
+                    !totals.retentionThresholdMet || sellerParamsLocked
                       ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                       : retentionRate === 1 && applyRetention
                       ? "border-primary bg-primary text-primary-foreground"
@@ -3315,14 +3594,18 @@ export default function SaleForm({
                 >1%</button>
                 <button
                   type="button"
-                  disabled={!totals.retentionThresholdMet}
+                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
                   onClick={() => {
+                    if (sellerParamsLocked) {
+                      notifySellerParamsLocked();
+                      return;
+                    }
                     setRetentionRate(2);
                     persistDraftSnapshot({ applyRetention, retentionRate: 2 });
                   }}
                   className={cn(
                     "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    !totals.retentionThresholdMet
+                    !totals.retentionThresholdMet || sellerParamsLocked
                       ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                       : retentionRate === 2 && applyRetention
                       ? "border-primary bg-primary text-primary-foreground"
@@ -3331,7 +3614,11 @@ export default function SaleForm({
                 >2%</button>
               </div>
             </div>
-            {!totals.retentionThresholdMet ? (
+            {sellerParamsLocked ? (
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                Retención IR definida por supervisión; no editable.
+              </p>
+            ) : !totals.retentionThresholdMet ? (
               <p className="text-xs text-amber-700">
                 Subtotal actual para retención: {formatCurrency(totals.subtotalForRetentionNio, "NIO")} (mínimo C$1,000.00)
               </p>
@@ -3344,16 +3631,17 @@ export default function SaleForm({
           <Label>Moneda</Label>
           <Select
             value={currency}
+            disabled={sellerParamsLocked}
             onValueChange={(value) => {
               applyCurrencyChange(value);
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger disabled={sellerParamsLocked}>
               <SelectValue placeholder="Seleccionar moneda" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="NIO">C$ Córdobas</SelectItem>
-              <SelectItem value="USD">USD Dólares</SelectItem>
+              <SelectItem value="USD">US$ Dólares</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -3363,29 +3651,34 @@ export default function SaleForm({
 
         <div className="border-t pt-4 space-y-1">
           {(totals.totalDiscounts > 0 || totals.manualPriceDiscountTotal > 0) && (
-            <div className="flex justify-between text-sm"><span>Subtotal sin descuentos:</span><span className="font-mono">{formatCurrency(totals.subtotalWithoutDiscounts, currency)}</span></div>
+            <div className="flex justify-between text-sm"><span>Subtotal sin descuentos:</span><ErpRollingCurrency value={totals.subtotalWithoutDiscounts} currency={currency} /></div>
           )}
           {totals.manualPriceDiscountEntries.length > 0 && totals.manualPriceDiscountEntries.map((entry) => (
             <div key={`manual-discount-${entry.productId}`} className="flex justify-between text-sm text-green-600">
               <span>Descuento Individual ({entry.productName}):</span>
-              <span className="font-mono">-{formatCurrency(entry.amount, currency)}</span>
+              <ErpRollingCurrency value={entry.amount} currency={currency} prefix="-" />
             </div>
           ))}
           {totals.discountFromCodes > 0 && (
-            <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><span className="font-mono">-{formatCurrency(totals.discountFromCodes, currency)}</span></div>
+            <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><ErpRollingCurrency value={totals.discountFromCodes} currency={currency} prefix="-" /></div>
           )}
           {totals.discountAmount > 0 && (
-            <div className="flex justify-between text-sm text-green-600"><span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}</span><span className="font-mono">-{formatCurrency(totals.discountAmount, currency)}</span></div>
+            <div className="flex justify-between text-sm text-green-600"><span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}</span><ErpRollingCurrency value={totals.discountAmount} currency={currency} prefix="-" /></div>
           )}
           {totals.discountsBlockedByPayment && totals.blockedDiscountsAmount > 0 && (
-            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por método:</span><span className="font-mono">{formatCurrency(totals.blockedDiscountsAmount, currency)}</span></div>
+            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por método:</span><ErpRollingCurrency value={totals.blockedDiscountsAmount} currency={currency} /></div>
           )}
-          <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-mono">{formatCurrency(totals.subtotalForRetention, currency)}</span></div>
+          <div className="flex justify-between text-sm"><span>Subtotal:</span><ErpRollingCurrency value={totals.subtotalForRetention} currency={currency} /></div>
           {applyRetention && totals.retention > 0 && (
-            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><span className="font-mono">-{formatCurrency(totals.retention, currency)}</span></div>
+            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><ErpRollingCurrency value={totals.retention} currency={currency} prefix="-" /></div>
           )}
-          <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><span className="font-mono">{formatCurrency(totals.tax, currency)}</span></div>
-          <div className="flex justify-between text-lg font-bold"><span>Total:</span><span className="font-mono">{formatCurrency(totals.total, currency)}</span></div>
+          <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><ErpRollingCurrency value={totals.tax} currency={currency} /></div>
+          <div className="flex justify-between text-lg font-bold"><span>Total:</span><ErpRollingCurrency value={totals.total} currency={currency} className="text-lg font-bold" /></div>
+          <SavingsHighlightRow
+            amount={totals.totalDiscounts + totals.manualPriceDiscountTotal}
+            currency={currency}
+            className="mt-2"
+          />
         </div>
 
         <div>
@@ -3403,6 +3696,7 @@ export default function SaleForm({
             {submitLabel}
           </Button>
         </div>
+      </div>
       </div>
 
       <Dialog
@@ -3684,7 +3978,9 @@ export default function SaleForm({
           />
 
           <Button onClick={createNewCustomer} className="w-full mt-3">
-            {newCustomer.add_vehicle ? "Crear Cliente y Vehículo" : "Crear Cliente"}
+            {newCustomer.add_vehicle
+              ? (isNewCustomerCompany ? "Crear Empresa y Vehículo" : "Crear Cliente y Vehículo")
+              : (isNewCustomerCompany ? "Crear Empresa" : "Crear Cliente")}
           </Button>
         </DialogContent>
       </Dialog>

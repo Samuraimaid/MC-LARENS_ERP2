@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "./components/ui/sonner";
 import { APP_ENV } from "./lib/env";
+import { getRoleHomePath, isCashierRole } from "./lib/roleHome";
 
 // Layouts
 import { MainLayout } from "./components/layout/MainLayout";
@@ -50,6 +51,10 @@ const QuotationsPage = lazyNamedPage(() => import("./pages/QuotationsPage"), "Qu
 const ReportsPage = lazyNamedPage(() => import("./pages/ReportsPage"), "ReportsPage");
 const SettingsPage = lazyNamedPage(() => import("./pages/SettingsPage"), "SettingsPage");
 const TechnicianMobilePage = lazyNamedPage(() => import("./pages/TechnicianMobilePage"), "TechnicianMobilePage");
+const TechnicianCompletedJobsPage = lazyNamedPage(
+  () => import("./pages/TechnicianCompletedJobsPage"),
+  "TechnicianCompletedJobsPage"
+);
 const UsersAdminPage = lazyNamedPage(() => import("./pages/UsersAdminPage"), "UsersAdminPage");
 const DeliveriesPage = lazyNamedPage(() => import("./pages/DeliveriesPage"), "DeliveriesPage");
 const PromotionsPage = lazyNamedPage(() => import("./pages/PromotionsPage"), "PromotionsPage");
@@ -64,6 +69,9 @@ const WarehousesPage = lazyNamedPage(() => import("./pages/WarehousesPage"), "Wa
 const DispatchPage = lazyNamedPage(() => import("./pages/DispatchPage"), "DispatchPage");
 const ProductTransfersPage = lazyNamedPage(() => import("./pages/ProductTransfersPage"), "ProductTransfersPage");
 const TintOrdersPage = lazyNamedPage(() => import("./pages/TintOrdersPage"), "TintOrdersPage");
+const CoordinatorIndexRedirect = lazyNamedPage(() => import("./pages/CoordinatorPage"), "CoordinatorIndexRedirect");
+const CoordinatorInstalacionesPage = lazyNamedPage(() => import("./pages/CoordinatorPage"), "CoordinatorInstalacionesPage");
+const CoordinatorPolarizadosPage = lazyNamedPage(() => import("./pages/CoordinatorPage"), "CoordinatorPolarizadosPage");
 const TutorialsPage = lazyNamedPage(() => import("./pages/TutorialsPage"), "TutorialsPage");
 const SamplesPage = lazyNamedPage(() => import("./pages/SamplesPage"), "SamplesPage");
 const HumanResourcesPage = lazyNamedPage(() => import("./pages/HumanResourcesPage"), "HumanResourcesPage");
@@ -107,10 +115,23 @@ function DashboardOnlyRoute() {
   const canAccessDashboard = normalizedRole === "gerencia" || normalizedRole === "recursos_humanos";
 
   if (!canAccessDashboard) {
-    return <Navigate to="/workbench" replace />;
+    return <Navigate to={getRoleHomePath(user?.role)} replace />;
   }
 
   return <DashboardPage />;
+}
+
+function WorkbenchOnlyRoute() {
+  const { user } = useAuth();
+  if (isCashierRole(user?.role)) {
+    return <Navigate to="/cashier" replace />;
+  }
+  return <WorkbenchPage />;
+}
+
+function RoleHomeRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={getRoleHomePath(user?.role)} replace />;
 }
 
 function AppRouter() {
@@ -144,11 +165,14 @@ function AppRouter() {
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/vehicles" element={<VehiclesPage />} />
-        <Route path="/workbench" element={<WorkbenchPage />} />
+        <Route path="/workbench" element={<WorkbenchOnlyRoute />} />
         <Route path="/approvals" element={<ApprovalsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/followups" element={<FollowupsPage />} />
         <Route path="/work-orders" element={<WorkOrdersPage />} />
+        <Route path="/coordinator" element={<CoordinatorIndexRedirect />} />
+        <Route path="/coordinator/instalaciones" element={<CoordinatorInstalacionesPage />} />
+        <Route path="/coordinator/polarizados" element={<CoordinatorPolarizadosPage />} />
         <Route path="/deliveries" element={<DeliveriesPage />} />
         <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/credits" element={<CreditsPage />} />
@@ -163,6 +187,7 @@ function AppRouter() {
         <Route path="/dispatch" element={<DispatchPage />} />
         <Route path="/product-transfers" element={<ProductTransfersPage />} />
         <Route path="/tint-orders" element={<TintOrdersPage />} />
+        <Route path="/my-completed-jobs" element={<TechnicianCompletedJobsPage />} />
         <Route path="/samples" element={<SamplesPage />} />
         <Route path="/help/tutorials" element={<TutorialsPage />} />
         <Route path="/warehouses" element={<WarehousesPage />} />
@@ -197,8 +222,8 @@ function AppRouter() {
       />
 
       {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/workbench" replace />} />
-      <Route path="*" element={<Navigate to="/workbench" replace />} />
+      <Route path="/" element={<RoleHomeRedirect />} />
+      <Route path="*" element={<RoleHomeRedirect />} />
       </Routes>
     </Suspense>
   );

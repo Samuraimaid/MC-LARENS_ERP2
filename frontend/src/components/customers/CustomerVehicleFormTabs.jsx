@@ -107,28 +107,41 @@ export default function CustomerVehicleFormTabs({
           </Select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {isCompany ? (
           <div className="space-y-2">
-            <Label>Nombres *</Label>
+            <Label>Nombre de la Empresa *</Label>
             <Input
               value={formData.first_name}
-              onChange={(e) => updateForm({ first_name: e.target.value })}
+              onChange={(e) => updateForm({ first_name: e.target.value, last_name: "" })}
               onBlur={commitForm}
-              placeholder="Juan Carlos"
+              placeholder="Empresa S.A."
               data-testid={firstNameTestId}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Apellidos *</Label>
-            <Input
-              value={formData.last_name}
-              onChange={(e) => updateForm({ last_name: e.target.value })}
-              onBlur={commitForm}
-              placeholder="Pérez López"
-              data-testid={lastNameTestId}
-            />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Nombres *</Label>
+              <Input
+                value={formData.first_name}
+                onChange={(e) => updateForm({ first_name: e.target.value })}
+                onBlur={commitForm}
+                placeholder="Juan Carlos"
+                data-testid={firstNameTestId}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Apellidos *</Label>
+              <Input
+                value={formData.last_name}
+                onChange={(e) => updateForm({ last_name: e.target.value })}
+                onBlur={commitForm}
+                placeholder="Pérez López"
+                data-testid={lastNameTestId}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <Label>{isCompany ? "RUC *" : "Cédula"}</Label>

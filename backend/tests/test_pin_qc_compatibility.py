@@ -50,6 +50,8 @@ class TestSetup:
 class TestPinAuthentication(TestSetup):
     """Test PIN Authentication endpoints"""
 
+    created_pin_user_id: str | None = None
+
     def test_get_pin_users_public(self, session):
         """GET /api/auth/pin/users - Public endpoint to list PIN users"""
         response = requests.get(f"{BASE_URL}/api/auth/pin/users")

@@ -111,11 +111,23 @@ export function NotificationsPage() {
     }
     setProcessingAction(requestId + actionType);
     try {
-      const endpoint = actionType === "edit"
-        ? `${API}/sales/requests/${requestId}/approve-edit`
-        : `${API}/sales/requests/${requestId}/approve-cancel`;
+      const endpointByAction = {
+        edit: `${API}/sales/requests/${requestId}/approve-edit`,
+        cancel: `${API}/sales/requests/${requestId}/approve-cancel`,
+        pos_discount: `${API}/sales/requests/${requestId}/approve-pos-discount`,
+      };
+      const endpoint = endpointByAction[actionType];
+      if (!endpoint) {
+        toast.error("Acción de aprobación no soportada");
+        return;
+      }
       await axios.post(endpoint, {}, { withCredentials: true });
-      toast.success(actionType === "edit" ? "Solicitud de edición aprobada" : "Solicitud de anulación aprobada");
+      const successByAction = {
+        edit: "Solicitud de edición aprobada",
+        cancel: "Solicitud de anulación aprobada",
+        pos_discount: "Autorización de descuento + tarjeta aprobada",
+      };
+      toast.success(successByAction[actionType]);
       await fetchNotes();
       try { window.dispatchEvent(new CustomEvent('notifications:changed')); } catch (_) { /* ignore */ }
     } catch (e) {
@@ -202,7 +214,9 @@ export function NotificationsPage() {
           <div className="text-muted-foreground">No hay notificaciones</div>
         ) : notes.map(n => {
           const requestType = n?.metadata?.type;
-          const isSaleRequest = requestType === "sale_edit_request" || requestType === "sale_cancel_request";
+          const isSaleRequest = requestType === "sale_edit_request"
+            || requestType === "sale_cancel_request"
+            || requestType === "pos_discount_card_request";
           const requestStatus = String(n?.metadata?.request_status || "pending").toLowerCase();
           const canProcessRequest = isSaleRequest && !n.read && requestStatus === "pending";
           return (
@@ -232,6 +246,13 @@ export function NotificationsPage() {
                       >
                         Aprobar edición
                       </Button>
+                    ) : requestType === "pos_discount_card_request" ? (
+                      <Button
+                        onClick={() => approveSaleRequest(n, "pos_discount")}
+                        disabled={processingAction === `${n?.metadata?.request_id}pos_discount`}
+                      >
+                        Aprobar descuento + tarjeta
+                      </Button>
                     ) : (
                       <Button
                         variant="destructive"
@@ -259,7 +280,7 @@ export function NotificationsPage() {
 
         <TabsContent value="approvals" className="mt-0">
           <div className="rounded-md border bg-background p-1">
-            <ApprovalsPage />
+            <ApprovalsPage active={sectionTab === "approvals"} />
           </div>
         </TabsContent>
 

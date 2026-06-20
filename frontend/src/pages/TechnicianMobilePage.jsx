@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
@@ -8,7 +9,6 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
-import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import {
@@ -25,7 +25,7 @@ import {
   LogOut,
   ChevronRight,
   Timer,
-  Star,
+  ClipboardList,
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 
@@ -36,9 +36,7 @@ export function TechnicianMobilePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showQualityModal, setShowQualityModal] = useState(false);
-  const [qualityNotes, setQualityNotes] = useState("");
-  const [qualityScore, setQualityScore] = useState(8);
+
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -113,29 +111,6 @@ export function TechnicianMobilePage() {
     }
   };
 
-  const completeWithQuality = async () => {
-    if (!selectedOrder) return;
-    try {
-      await axios.put(
-        `${API}/work-orders/${selectedOrder.work_order_id}`,
-        {
-          status: "completed",
-          quality_score: qualityScore,
-          quality_notes: qualityNotes,
-        },
-        { withCredentials: true }
-      );
-      toast.success("Orden completada");
-      setShowQualityModal(false);
-      setSelectedOrder(null);
-      setQualityNotes("");
-      setQualityScore(8);
-      fetchOrders();
-    } catch (error) {
-      toast.error("Error al completar");
-    }
-  };
-
   const getTimeElapsed = (startTime) => {
     if (!startTime) return null;
     const start = new Date(startTime);
@@ -194,7 +169,9 @@ export function TechnicianMobilePage() {
             </Avatar>
             <div>
               <p className="font-heading text-lg font-bold">Hola, {user?.name?.split(" ")[0]}</p>
-              <p className="text-xs opacity-80">Técnico de Instalaciones</p>
+              <p className="text-xs opacity-80">
+                {ROLE_LABELS[user?.role] || "Técnico"}
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -240,8 +217,13 @@ export function TechnicianMobilePage() {
         </Card>
       </div>
 
-      {/* Pull to refresh */}
-      <div className="px-4 mb-2">
+      <div className="px-4 mb-2 space-y-2">
+        <Button variant="secondary" size="sm" className="w-full" asChild>
+          <Link to="/my-completed-jobs">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Ver trabajos realizados
+          </Link>
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -448,14 +430,13 @@ export function TechnicianMobilePage() {
                 )}
 
                 {selectedOrder.status === "quality_check" && (
-                  <Button
-                    onClick={() => setShowQualityModal(true)}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Completar con Revisión
-                  </Button>
+                  <div className="rounded-lg border border-purple-300/60 bg-purple-50/80 p-4 text-center dark:border-purple-500/30 dark:bg-purple-500/10">
+                    <ClipboardCheck className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                    <p className="font-medium text-sm">En control de calidad</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      El coordinador de instalaciones revisará y aprobará el trabajo.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -463,67 +444,13 @@ export function TechnicianMobilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Quality Check Modal */}
-      <Dialog open={showQualityModal} onOpenChange={setShowQualityModal}>
-        <DialogContent className="max-w-md mx-4">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              Control de Calidad
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Quality Score */}
-            <div>
-              <Label>Puntuación de Calidad</Label>
-              <div className="flex gap-1 mt-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
-                  <button
-                    key={score}
-                    onClick={() => setQualityScore(score)}
-                    className={`flex-1 py-2 rounded-sm text-sm font-bold transition-colors ${
-                      score <= qualityScore
-                        ? score >= 8
-                          ? "bg-green-500 text-white"
-                          : score >= 5
-                          ? "bg-yellow-500 text-white"
-                          : "bg-red-500 text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {score}
-                  </button>
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {qualityScore >= 8
-                  ? "✅ Excelente calidad"
-                  : qualityScore >= 5
-                  ? "⚠️ Calidad aceptable"
-                  : "❌ Requiere revisión"}
-              </p>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <Label>Notas de Inspección</Label>
-              <Textarea
-                value={qualityNotes}
-                onChange={(e) => setQualityNotes(e.target.value)}
-                placeholder="Observaciones del trabajo realizado..."
-                className="mt-2"
-                rows={3}
-              />
-            </div>
-
-            <Button onClick={completeWithQuality} className="w-full bg-green-600 hover:bg-green-700" size="lg">
-              <CheckCircle className="h-5 w-5 mr-2" />
-              Completar Orden
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+
+const ROLE_LABELS = {
+  instalaciones: "Instalador",
+  instalador: "Instalador",
+  electrico: "Eléctrico",
+  polarizador: "Polarizador",
+};

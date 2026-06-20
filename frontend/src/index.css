@@ -1233,6 +1233,104 @@ html {
     animation: draft-load 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@keyframes erp-unlock {
+    from {
+        opacity: 0.45;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-erp-unlock {
+    animation: erp-unlock 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes erp-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 hsl(199 89% 48% / 0.45);
+    }
+    50% {
+        box-shadow: 0 0 0 8px hsl(199 89% 48% / 0);
+    }
+}
+
+.animate-erp-pulse {
+    animation: erp-pulse 1.6s ease-out 2;
+}
+
+@keyframes erp-fade-check {
+    from {
+        opacity: 0;
+        transform: translateX(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-erp-fade-check {
+    animation: erp-fade-check 320ms ease-out;
+}
+
+.erp-rolling-amount {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.erp-rolling-static {
+    display: inline-flex;
+    height: 1em;
+    align-items: center;
+    line-height: 1;
+}
+
+.erp-rolling-digit-wrap {
+    display: inline-flex;
+    height: 1em;
+    align-items: center;
+}
+
+.erp-rolling-digit {
+    width: 0.62em;
+    height: 1em;
+    flex-shrink: 0;
+}
+
+.erp-rolling-digit-strip {
+    display: flex;
+    flex-direction: column;
+    transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.erp-rolling-digit-cell {
+    display: flex;
+    height: 1em;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+@keyframes erp-digit-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-0.35em);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-erp-digit-enter {
+    animation: erp-digit-enter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .ui-interactive {
     transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease, filter 180ms ease;
 }
@@ -1265,8 +1363,16 @@ html {
 @media (prefers-reduced-motion: reduce) {
     .animate-fade-up-soft,
     .animate-draft-load,
+    .animate-erp-unlock,
+    .animate-erp-pulse,
+    .animate-erp-fade-check,
+    .animate-erp-digit-enter,
     .ui-fade-in-stagger > * {
         animation: none !important;
+    }
+
+    .erp-rolling-digit-strip {
+        transition: none !important;
     }
 
     .ui-interactive,

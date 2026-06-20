@@ -176,7 +176,9 @@ export function QualityControlPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Control de Calidad</h1>
-          <p className="text-muted-foreground">Inspección y evaluación de instalaciones</p>
+          <p className="text-muted-foreground">
+            Aprobación final de instalaciones y trabajos eléctricos por el coordinador
+          </p>
         </div>
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4 mr-2" />

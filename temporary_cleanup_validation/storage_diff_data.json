@@ -1,0 +1,33 @@
+﻿{
+    "path_comparison":  [
+                            {
+                                "Path":  "frontend/node_modules",
+                                "CurrentMB":  214.41,
+                                "BaselineMB":  223.49,
+                                "DeltaMB":  -9.08
+                            },
+                            {
+                                "Path":  ".venv",
+                                "CurrentMB":  272.49,
+                                "BaselineMB":  8.01,
+                                "DeltaMB":  264.48
+                            },
+                            {
+                                "Path":  "backend/.venv",
+                                "CurrentMB":  0,
+                                "BaselineMB":  0,
+                                "DeltaMB":  0
+                            },
+                            {
+                                "Path":  "node_modules",
+                                "CurrentMB":  0,
+                                "BaselineMB":  7.96,
+                                "DeltaMB":  -7.96
+                            }
+                        ],
+    "total_baseline_mb":  239.46,
+    "net_delta_mb":  247.44,
+    "backup_total_mb":  241.44,
+    "total_current_mb":  486.9,
+    "backup_folder":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\dependency_backup_20260516_095855"
+}

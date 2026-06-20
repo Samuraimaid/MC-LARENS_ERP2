@@ -11,7 +11,17 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, Save } from "lucide-react";
+import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock } from "lucide-react";
+import DraftBoardCard from "@/components/erp/DraftBoardCard";
+import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
+import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/erpDesignSystem";
+import { useDraftReviewPolling } from "@/hooks/useDraftReviewPolling";
+import {
+  canSellerDeleteDraft,
+  canSellerOpenDraft,
+  isDraftReleasedWithRestrictions,
+  normalizeDraftReview,
+} from "@/lib/draftReview";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
@@ -21,7 +31,15 @@ import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
 import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
-import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import {
+  deleteServerDraft,
+  fetchServerDraftBundle,
+  releaseServerDraft,
+  saveServerDraft,
+  setServerDraftActive,
+  unwatchServerDraft,
+  watchServerDraft,
+} from "@/lib/serverDrafts";
 import { playSelectionFeedbackSound } from "@/lib/uiSounds";
 import {
   normalizePaymentMethodCode,
@@ -39,6 +57,8 @@ const WhatsAppIcon = ({ className }) => (
     />
   </svg>
 );
+
+const CATALOG_SOURCE_CONTEXT_KEY = "catalog_source_context_v1";
 
 const getPaymentTone = (paymentType) => {
   switch (paymentType) {
@@ -80,16 +100,19 @@ export function QuotationsPage() {
   const [draftTabs, setDraftTabs] = useState([]);
   const [activeDraftId, setActiveDraftId] = useState(null);
   const [draftsLoaded, setDraftsLoaded] = useState(false);
+  const [draftContentRevision, setDraftContentRevision] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [showArchivedQuotes, setShowArchivedQuotes] = useState(false);
   const [showClearQuoteConfirm, setShowClearQuoteConfirm] = useState(false);
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
   const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
   const [draftSaveState, setDraftSaveState] = useState("idle");
+  const [saveFlash, setSaveFlash] = useState(false);
   const [boardTab, setBoardTab] = useState("drafts");
   const [currency, setCurrency] = useState("NIO");
   const draftTabsRef = useRef([]);
   const draftSyncTimersRef = useRef(new Map());
+  const supervisorWatchingDraftRef = useRef(null);
     const markDraftSaving = useCallback(() => {
       setDraftSaveState("saving");
       emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "quotations" });
@@ -138,11 +161,19 @@ export function QuotationsPage() {
     };
   }, []);
 
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState("");
+  const [selectedWarehouse, setSelectedWarehouse] = useState("");
   const [cartItems, setCartItems] = useState([]);
-  const [discount, setDiscount] = useState(0);
+  const [paymentType, setPaymentType] = useState("cash");
+  const [mixedPaymentMethods, setMixedPaymentMethods] = useState([]);
+  const [globalDiscount, setGlobalDiscount] = useState(0);
   const [validDays, setValidDays] = useState(7);
   const [notes, setNotes] = useState("");
+  const [applyIVA, setApplyIVA] = useState(true);
+  const [applyRetention, setApplyRetention] = useState(false);
+  const [retentionRate, setRetentionRate] = useState(2);
+  const [appliedDiscounts, setAppliedDiscounts] = useState([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -206,8 +237,10 @@ export function QuotationsPage() {
     }
   };
 
-  const computeDraftTotal = (draft) => {
-    if (!draft) return 0;
+  const computeDraftTotals = (draft) => {
+    if (!draft) {
+      return { totalDiscounts: 0, retention: 0, total: 0 };
+    }
     const currencyDraft = draft.currency || "NIO";
     const rate = effectiveUsdNioRate;
     const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
@@ -231,23 +264,30 @@ export function QuotationsPage() {
 
     let discountFromCodes = 0;
     const applied = Array.isArray(draft.appliedDiscounts) ? draft.appliedDiscounts : [];
-    applied.forEach((d) => {
-      if (d.type === "percent") {
-        discountFromCodes += subtotal * (d.value / 100);
-      } else if (d.type === "fixed") {
-        const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
-        discountFromCodes += fixedInCurrency;
-      }
-    });
-
-    if (!discountsAllowed) {
-      discountFromCodes = 0;
+    if (discountsAllowed) {
+      applied.forEach((d) => {
+        if (d.type === "percent") {
+          discountFromCodes += subtotal * (d.value / 100);
+        } else if (d.type === "fixed") {
+          const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
+          discountFromCodes += fixedInCurrency;
+        }
+      });
     }
+
     const globalDiscountAmount = discountsAllowed ? (subtotal * ((draft.globalDiscount || 0) / 100)) : 0;
-    const subtotalAfterDiscounts = subtotal - discountFromCodes - globalDiscountAmount;
+    const totalDiscounts = discountFromCodes + globalDiscountAmount;
+    const subtotalAfterDiscounts = subtotal - totalDiscounts;
+    const retention = draft.applyRetention ? subtotalAfterDiscounts * ((draft.retentionRate || 0) / 100) : 0;
     const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
-    return subtotalAfterDiscounts + tax;
+    return {
+      totalDiscounts,
+      retention,
+      total: subtotalAfterDiscounts + tax - retention,
+    };
   };
+
+  const computeDraftTotal = (draft) => computeDraftTotals(draft).total;
 
   const getDraftLabel = (tab) => {
     const draft = readDraft(tab.id);
@@ -304,14 +344,14 @@ export function QuotationsPage() {
     const draft = readDraft(tab.id);
     const preview = getDraftPreview(draft);
     const customerName = customers.find(c => c.customer_id === draft?.selectedCustomerId)?.name;
-    const total = computeDraftTotal(draft);
+    const totals = computeDraftTotals(draft);
     const currencyDraft = draft?.currency || "NIO";
     const itemsCount = Array.isArray(draft?.cartItems) ? draft.cartItems.length : 0;
     const updatedAt = draft?.updatedAt || tab.updatedAt;
     return {
       title: customerName || "Sin cliente",
       subtitle: tab.name,
-      total,
+      total: totals.total,
       currency: currencyDraft,
       itemsCount,
       updatedAt,
@@ -319,6 +359,11 @@ export function QuotationsPage() {
       previewImage: preview.image,
       previewVehicle: preview.vehicle,
       applyIVA: draft?.applyIVA ?? true,
+      totalDiscounts: totals.totalDiscounts,
+      retention: totals.retention,
+      retentionRate: draft?.retentionRate ?? 2,
+      sellerName: tab.ownerName || user?.name || null,
+      review: tab.review || normalizeDraftReview(null),
     };
   };
 
@@ -376,6 +421,9 @@ export function QuotationsPage() {
           id: draft.id,
           name: draft.name,
           updatedAt: draft.updatedAt,
+          ownerUserId: draft.owner_user_id || null,
+          ownerName: draft.owner_name || null,
+          review: normalizeDraftReview(draft.review),
         })));
         setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
@@ -397,6 +445,94 @@ export function QuotationsPage() {
       cancelled = true;
     };
   }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, DRAFT_KEY_PREFIX, DRAFT_LIST_KEY]);
+
+  const handleServerSnapshotChanged = useCallback((draftId) => {
+    setDraftContentRevision((prev) => prev + 1);
+    if (draftId === activeDraftId) {
+      setQuoteFormRenderNonce((prev) => prev + 1);
+    }
+  }, [activeDraftId]);
+
+  useDraftReviewPolling({
+    flow: DRAFT_FLOW,
+    user,
+    draftsLoaded,
+    activeDraftId,
+    showForm: showNewQuote,
+    setDraftTabs,
+    setShowForm: setShowNewQuote,
+    listKey: DRAFT_LIST_KEY,
+    activeKey: DRAFT_ACTIVE_KEY,
+    draftKeyPrefix: DRAFT_KEY_PREFIX,
+    onServerSnapshotChanged: handleServerSnapshotChanged,
+  });
+
+  const activeDraftTab = useMemo(
+    () => draftTabs.find((tab) => tab.id === activeDraftId) || null,
+    [activeDraftId, draftTabs]
+  );
+
+  const activeDraftReview = activeDraftTab?.review || normalizeDraftReview(null);
+  const sellerQuoteParamsLocked = isDraftReleasedWithRestrictions(activeDraftReview)
+    && !isErpDraftSupervisor(user?.role);
+
+  const showReleaseDraftButton = Boolean(
+    isErpDraftSupervisor(user?.role)
+    && activeDraftTab
+    && !isOwnErpDraft(activeDraftTab, user?.user_id)
+    && ["watching", "blocked"].includes(activeDraftReview.status)
+  );
+
+  const stopSupervisorWatch = useCallback(async (draftId) => {
+    if (!draftId || !isErpDraftSupervisor(user?.role)) return;
+    try {
+      await unwatchServerDraft(DRAFT_FLOW, draftId);
+    } catch (error) {
+      // keep UI responsive
+    }
+    if (supervisorWatchingDraftRef.current === draftId) {
+      supervisorWatchingDraftRef.current = null;
+    }
+  }, [DRAFT_FLOW, user?.role]);
+
+  const startSupervisorWatch = useCallback(async (draftId) => {
+    if (!draftId || !isErpDraftSupervisor(user?.role)) return;
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    if (!tab || isOwnErpDraft(tab, user?.user_id)) return;
+    try {
+      const updated = await watchServerDraft(DRAFT_FLOW, draftId);
+      setDraftTabs((prev) => prev.map((entry) => (
+        entry.id === draftId
+          ? { ...entry, review: normalizeDraftReview(updated?.review) }
+          : entry
+      )));
+      supervisorWatchingDraftRef.current = draftId;
+    } catch (error) {
+      // supervisor can still open locally if watch fails
+    }
+  }, [DRAFT_FLOW, user?.role, user?.user_id]);
+
+  const handleReleaseDraft = useCallback(async () => {
+    if (!activeDraftId) return;
+    try {
+      const updated = await releaseServerDraft(DRAFT_FLOW, activeDraftId);
+      setDraftTabs((prev) => prev.map((entry) => (
+        entry.id === activeDraftId
+          ? { ...entry, review: normalizeDraftReview(updated?.review) }
+          : entry
+      )));
+      supervisorWatchingDraftRef.current = null;
+      toast.success("Borrador liberado para el vendedor.");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo liberar el borrador");
+    }
+  }, [DRAFT_FLOW, activeDraftId]);
+
+  useEffect(() => {
+    if (!showNewQuote && supervisorWatchingDraftRef.current) {
+      stopSupervisorWatch(supervisorWatchingDraftRef.current);
+    }
+  }, [showNewQuote, stopSupervisorWatch]);
 
   useEffect(() => {
     if (!draftsLoaded) return;
@@ -447,17 +583,63 @@ export function QuotationsPage() {
 
   const getDraftKey = (draftId) => `${DRAFT_KEY_PREFIX}${draftId}`;
 
+  const isDraftSnapshotEmpty = (draft) => {
+    if (!draft || typeof draft !== "object") return true;
+    if (draft.selectedCustomerId) return false;
+    if (Array.isArray(draft.cartItems) && draft.cartItems.length > 0) return false;
+    if (String(draft.notes || "").trim()) return false;
+    return true;
+  };
+
+  const createEmptyDraftSnapshot = () => ({ updatedAt: new Date().toISOString(), validDays: 7 });
+
+  const resetQuoteFormState = useCallback(() => {
+    setCartItems([]);
+    setSelectedCustomer(null);
+    setSelectedVehicle("");
+    setSelectedWarehouse("");
+    setPaymentType("cash");
+    setMixedPaymentMethods([]);
+    setGlobalDiscount(0);
+    setNotes("");
+    setValidDays(7);
+    setApplyIVA(true);
+    setApplyRetention(false);
+    setRetentionRate(2);
+    setAppliedDiscounts([]);
+    setCurrency("NIO");
+  }, []);
+
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
     setDraftSaveState("saving");
     emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "quotations" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
-    await saveServerDraft(DRAFT_FLOW, draftId, {
-      name: nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`,
-      snapshot,
-    });
-    markDraftSaved();
+    try {
+      const saved = await saveServerDraft(DRAFT_FLOW, draftId, {
+        name: nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`,
+        snapshot,
+      });
+      if (saved?.review) {
+        setDraftTabs((prev) => prev.map((entry) => (
+          entry.id === draftId
+            ? { ...entry, review: normalizeDraftReview(saved.review) }
+            : entry
+        )));
+      }
+      if (saved?.snapshot && typeof window !== "undefined") {
+        window.localStorage.setItem(getDraftKey(draftId), JSON.stringify(saved.snapshot));
+        setDraftContentRevision((prev) => prev + 1);
+      }
+      markDraftSaved();
+    } catch (error) {
+      if (error.response?.status === 423) {
+        toast.warning("Este borrador está en revisión por supervisión.");
+        setShowNewQuote(false);
+      }
+      throw error;
+    }
   }, [DRAFT_FLOW, markDraftSaved]);
 
   const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
@@ -514,16 +696,65 @@ export function QuotationsPage() {
   const createDraftTab = useCallback(() => {
     const id = `quote_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
     const name = `Cotización ${draftTabs.length + 1}`;
-    const newTab = { id, name, updatedAt: new Date().toISOString() };
+    const newTab = {
+      id,
+      name,
+      updatedAt: new Date().toISOString(),
+      ownerUserId: user?.user_id || null,
+      ownerName: user?.name || null,
+      review: normalizeDraftReview(null),
+    };
     setDraftTabs(prev => [...prev, newTab]);
     setActiveDraftId(id);
     setShowNewQuote(true);
+    setQuoteFormRenderNonce((prev) => prev + 1);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(getDraftKey(id), JSON.stringify(createEmptyDraftSnapshot()));
+    }
     saveServerDraft(DRAFT_FLOW, id, { name, snapshot: {} }).catch(() => {
       // keep local draft if server is unavailable
     });
-  }, [DRAFT_FLOW, draftTabs.length]);
+  }, [DRAFT_FLOW, draftTabs.length, user?.name, user?.user_id]);
 
-  const closeDraftTab = (draftId) => {
+  const handleSaveAndClearQuote = useCallback(async () => {
+    playSelectionFeedbackSound();
+
+    if (activeDraftId && typeof window !== "undefined") {
+      try {
+        const draftKey = getDraftKey(activeDraftId);
+        const raw = window.localStorage.getItem(draftKey);
+        if (raw) {
+          const snapshot = {
+            ...JSON.parse(raw),
+            validDays,
+            updatedAt: new Date().toISOString(),
+          };
+          window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
+          updateDraftTabMeta(activeDraftId, snapshot);
+          await syncDraftToServer(activeDraftId, snapshot);
+          setSaveFlash(true);
+          window.setTimeout(() => setSaveFlash(false), 2000);
+        }
+      } catch (error) {
+        toast.error("No se pudo guardar el borrador");
+        return;
+      }
+    }
+
+    createDraftTab();
+    resetQuoteFormState();
+    toast.success("Borrador guardado. Formulario listo para nueva cotización.");
+  }, [activeDraftId, createDraftTab, resetQuoteFormState, syncDraftToServer, validDays]);
+
+  const closeDraftTab = (draftId, { force = false } = {}) => {
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    if (
+      !force
+      && !canSellerDeleteDraft(tab, tab?.review, user?.user_id, user?.role)
+    ) {
+      toast.error("No puedes eliminar un borrador revisado por supervisión");
+      return;
+    }
     // Autoguardado silencioso, sin confirmación
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(getDraftKey(draftId));
@@ -535,6 +766,8 @@ export function QuotationsPage() {
       setActiveDraftId(next);
       if (!next) {
         setShowNewQuote(false);
+        resetQuoteFormState();
+        setQuoteFormRenderNonce((prev) => prev + 1);
       }
     }
     deleteServerDraft(DRAFT_FLOW, draftId).catch(() => {
@@ -542,12 +775,27 @@ export function QuotationsPage() {
     });
   };
 
-  const selectDraftAndOpenForm = useCallback((draftId) => {
+  const selectDraftAndOpenForm = useCallback(async (draftId) => {
     if (!draftId) return;
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    if (!canSellerOpenDraft(tab, tab?.review, user?.user_id, user?.role)) {
+      toast.warning("Este borrador está en revisión por supervisión.");
+      return;
+    }
+    if (supervisorWatchingDraftRef.current && supervisorWatchingDraftRef.current !== draftId) {
+      await stopSupervisorWatch(supervisorWatchingDraftRef.current);
+    }
+    if (tab && !isOwnErpDraft(tab, user?.user_id)) {
+      if (tab.ownerName) {
+        toast.info(`Revisión silenciosa del borrador de ${tab.ownerName}`);
+      }
+      await startSupervisorWatch(draftId);
+    }
     setActiveDraftId(draftId);
     updateDraftTabMeta(draftId);
     setShowNewQuote(true);
-  }, [updateDraftTabMeta]);
+    setQuoteFormRenderNonce((prev) => prev + 1);
+  }, [startSupervisorWatch, stopSupervisorWatch, updateDraftTabMeta, user?.user_id]);
 
   const openActiveDraft = useCallback(() => {
     if (draftTabs.length === 0) {
@@ -572,35 +820,6 @@ export function QuotationsPage() {
     setShowNewQuote(true);
   }, [activeDraftId, createDraftTab, showNewQuote]);
 
-  const saveActiveDraftNow = useCallback(() => {
-    if (typeof window === "undefined") return;
-    if (!activeDraftId) {
-      createDraftTab();
-      toast.success("Se creó un borrador para autoguardado.");
-      return;
-    }
-    try {
-      const raw = window.localStorage.getItem(getDraftKey(activeDraftId));
-      if (!raw) {
-        toast.error("No hay contenido para guardar en el borrador activo.");
-        return;
-      }
-      const snapshot = {
-        ...JSON.parse(raw),
-        validDays,
-        updatedAt: new Date().toISOString(),
-      };
-      window.localStorage.setItem(getDraftKey(activeDraftId), JSON.stringify(snapshot));
-      updateDraftTabMeta(activeDraftId, snapshot);
-      syncDraftToServer(activeDraftId, snapshot).catch(() => {
-        // preserve local draft if remote sync fails
-      });
-      toast.success("Borrador guardado.");
-    } catch (error) {
-      toast.error("No se pudo guardar el borrador activo.");
-    }
-  }, [activeDraftId, createDraftTab, syncDraftToServer, validDays]);
-
   const clearEmbeddedQuoteForm = useCallback(() => {
     if (typeof window !== "undefined" && activeDraftId) {
       window.localStorage.removeItem(getDraftKey(activeDraftId));
@@ -610,10 +829,10 @@ export function QuotationsPage() {
         // keep local clear behavior even if remote sync fails
       });
     }
-    setValidDays(7);
+    resetQuoteFormState();
     setQuoteFormRenderNonce((prev) => prev + 1);
     toast.success("Formulario limpiado.");
-  }, [activeDraftId, syncDraftToServer]);
+  }, [activeDraftId, resetQuoteFormState, syncDraftToServer]);
 
   useEffect(() => {
     if (!draftsLoaded || typeof window === "undefined") return;
@@ -636,13 +855,42 @@ export function QuotationsPage() {
   }, [draftTabs.length, draftsLoaded, showNewQuote]);
 
   useEffect(() => {
-    if (!activeDraftId) {
-      setValidDays(7);
-      return;
+    if (!activeDraftId || typeof window === "undefined") return;
+
+    try {
+      const draft = readDraft(activeDraftId);
+      if (!draft || isDraftSnapshotEmpty(draft)) {
+        resetQuoteFormState();
+        return;
+      }
+
+      const customerId = draft.selectedCustomerId;
+      if (customerId) {
+        const customer = customers.find(
+          (c) => String(c.customer_id ?? "") === String(customerId)
+        );
+        setSelectedCustomer(customer || null);
+      } else {
+        setSelectedCustomer(null);
+      }
+
+      setSelectedVehicle(draft.selectedVehicle || "");
+      setSelectedWarehouse(draft.selectedWarehouse || "");
+      setCartItems(draft.cartItems || []);
+      setPaymentType(draft.paymentMethod || draft.payment_type || "cash");
+      setMixedPaymentMethods(normalizePaymentMethodList(draft.mixedPaymentMethods || draft.mixed_payment_methods || []));
+      setGlobalDiscount(draft.globalDiscount || 0);
+      setNotes(draft.notes || "");
+      setApplyIVA(draft.applyIVA ?? true);
+      setApplyRetention(draft.applyRetention ?? false);
+      setRetentionRate(draft.retentionRate ?? 2);
+      setCurrency(draft.currency || "NIO");
+      setAppliedDiscounts(draft.appliedDiscounts || []);
+      setValidDays(Number.parseInt(draft?.validDays, 10) || 7);
+    } catch (error) {
+      // keep current state if draft parsing fails
     }
-    const draft = readDraft(activeDraftId);
-    setValidDays(Number.parseInt(draft?.validDays, 10) || 7);
-  }, [activeDraftId]);
+  }, [activeDraftId, customers, draftContentRevision, resetQuoteFormState]);
 
   useEffect(() => {
     if (!activeDraftId || typeof window === "undefined") return;
@@ -659,6 +907,127 @@ export function QuotationsPage() {
       // ignore local draft persistence errors
     }
   }, [activeDraftId, scheduleDraftSync, validDays]);
+
+  const openCatalogFromQuoteForm = useCallback(async (snapshot) => {
+    if (typeof window === "undefined") return;
+
+    const nowIso = new Date().toISOString();
+    const selectedVehicleRecord = vehicles.find((v) => v.vehicle_id === snapshot?.selectedVehicle) || null;
+    const safeSnapshot = {
+      selectedCustomerId: snapshot?.selectedCustomerId || null,
+      selectedVehicle: snapshot?.selectedVehicle || "",
+      vehicleFlowOption: snapshot?.vehicleFlowOption || (snapshot?.selectedVehicle ? "registered" : "carryout"),
+      selectedVehicleData: snapshot?.selectedVehicleData || (selectedVehicleRecord
+        ? {
+            vehicle_id: selectedVehicleRecord.vehicle_id,
+            brand: selectedVehicleRecord.brand,
+            model: selectedVehicleRecord.model,
+            year: selectedVehicleRecord.year,
+            plate: selectedVehicleRecord.plate || selectedVehicleRecord.plate_number || selectedVehicleRecord.number_plate || null,
+            vehicle_type: selectedVehicleRecord.vehicle_type || null,
+            color: selectedVehicleRecord.color || selectedVehicleRecord.vehicle_color || selectedVehicleRecord.colour || null,
+            vin: selectedVehicleRecord.vin || selectedVehicleRecord.chasis || selectedVehicleRecord.chassis || null,
+          }
+        : null),
+      selectedWarehouse: snapshot?.selectedWarehouse || selectedWarehouse || "",
+      paymentMethod: snapshot?.paymentMethod || snapshot?.payment_type || "cash",
+      mixedPaymentMethods: normalizePaymentMethodList(snapshot?.mixedPaymentMethods || snapshot?.mixed_payment_methods || []),
+      cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
+      globalDiscount: snapshot?.globalDiscount || 0,
+      notes: snapshot?.notes || "",
+      applyIVA: snapshot?.applyIVA ?? true,
+      ivaRate: snapshot?.ivaRate ?? effectiveIvaRate,
+      applyRetention: snapshot?.applyRetention ?? false,
+      retentionRate: snapshot?.retentionRate ?? 2,
+      currency: snapshot?.currency || "NIO",
+      exchangeRate: snapshot?.exchangeRate || effectiveUsdNioRate,
+      appliedDiscounts: Array.isArray(snapshot?.appliedDiscounts) ? snapshot.appliedDiscounts : [],
+      validDays,
+      customerSearch: snapshot?.customerSearch || "",
+      productSearch: snapshot?.productSearch || "",
+      updatedAt: nowIso,
+    };
+
+    if (!safeSnapshot.selectedCustomerId) {
+      toast.error("Selecciona un cliente antes de buscar desde catálogo");
+      return;
+    }
+
+    let draftId = activeDraftId;
+    let nextTabs = Array.isArray(draftTabs) ? [...draftTabs] : [];
+
+    if (!draftId) {
+      draftId = `quote_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      const draftName = `Cotización - ${customers.find((c) => String(c.customer_id ?? "") === String(safeSnapshot.selectedCustomerId ?? ""))?.name || "Sin cliente"}`;
+      nextTabs.push({
+        id: draftId,
+        name: draftName,
+        updatedAt: nowIso,
+        ownerUserId: user?.user_id || null,
+        ownerName: user?.name || null,
+        review: normalizeDraftReview(null),
+      });
+      setDraftTabs(nextTabs);
+      setActiveDraftId(draftId);
+    } else {
+      nextTabs = nextTabs.map((tab) => (tab.id === draftId ? { ...tab, updatedAt: nowIso } : tab));
+      setDraftTabs(nextTabs);
+    }
+
+    const selectedCustomerRecord = customers.find((c) => c.customer_id === safeSnapshot.selectedCustomerId) || null;
+    const draftKey = getDraftKey(draftId);
+    const draftName = nextTabs.find((tab) => tab.id === draftId)?.name;
+    window.localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(nextTabs));
+    window.localStorage.setItem(DRAFT_ACTIVE_KEY, draftId);
+    window.localStorage.setItem(draftKey, JSON.stringify(safeSnapshot));
+    scheduleDraftSync(draftId, safeSnapshot, draftName);
+    try {
+      await saveServerDraft(DRAFT_FLOW, draftId, {
+        name: draftName,
+        snapshot: safeSnapshot,
+      });
+      await setServerDraftActive(DRAFT_FLOW, draftId);
+    } catch (error) {
+      // continue with local draft context if remote sync is temporarily unavailable
+    }
+    window.localStorage.setItem(CATALOG_SOURCE_CONTEXT_KEY, JSON.stringify({
+      source: "quote-form",
+      returnPath: window.location.pathname || "/quotations",
+      draftId,
+      draftName: draftName || draftId,
+      selectedCustomerId: safeSnapshot.selectedCustomerId,
+      customerName: selectedCustomerRecord?.name || null,
+      selectedVehicle: safeSnapshot.selectedVehicle || "",
+      vehicle: selectedVehicleRecord
+        ? {
+            vehicle_id: selectedVehicleRecord.vehicle_id,
+            brand: selectedVehicleRecord.brand,
+            model: selectedVehicleRecord.model,
+            year: selectedVehicleRecord.year,
+            plate: selectedVehicleRecord.plate || selectedVehicleRecord.plate_number || selectedVehicleRecord.number_plate || null,
+            vehicle_type: selectedVehicleRecord.vehicle_type || null,
+          }
+        : null,
+      createdAtTs: Date.now(),
+    }));
+    window.localStorage.setItem("catalog_open_draft", "quote");
+    window.location.href = "/catalog";
+  }, [
+    DRAFT_ACTIVE_KEY,
+    DRAFT_FLOW,
+    DRAFT_LIST_KEY,
+    activeDraftId,
+    customers,
+    draftTabs,
+    effectiveIvaRate,
+    effectiveUsdNioRate,
+    scheduleDraftSync,
+    selectedWarehouse,
+    user?.name,
+    user?.user_id,
+    validDays,
+    vehicles,
+  ]);
 
   const addToCart = (product) => {
     const existing = cartItems.find(item => item.product_id === product.product_id);
@@ -696,7 +1065,7 @@ export function QuotationsPage() {
       return sum + itemTotal;
     }, 0);
     const tax = subtotal * (effectiveIvaRate / 100);
-    const discountAmount = subtotal * (discount / 100);
+    const discountAmount = subtotal * (globalDiscount / 100);
     const total = subtotal + tax - discountAmount;
     return { subtotal, tax, discountAmount, total };
   };
@@ -709,23 +1078,20 @@ export function QuotationsPage() {
 
     try {
       await axios.post(`${API}/quotations`, {
-        customer_id: selectedCustomer,
+        customer_id: selectedCustomer?.customer_id || selectedCustomer,
         items: cartItems.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
           discount: item.discount,
         })),
-        discount,
+        discount: globalDiscount,
         valid_days: validDays,
         notes,
       }, { withCredentials: true });
 
       toast.success("Cotización creada exitosamente");
       setShowNewQuote(false);
-      setCartItems([]);
-      setSelectedCustomer("");
-      setDiscount(0);
-      setNotes("");
+      resetQuoteFormState();
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al crear cotización");
@@ -770,10 +1136,7 @@ export function QuotationsPage() {
       window.open(url, "_blank");
     }
     setShowNewQuote(false);
-    setCartItems([]);
-    setSelectedCustomer("");
-    setDiscount(0);
-    setNotes("");
+    resetQuoteFormState();
     fetchData();
   };
 
@@ -980,76 +1343,64 @@ export function QuotationsPage() {
         <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
+              <ErpFormToolbar saveFlash={saveFlash}>
+                <ErpToolbarButton
+                  action="refresh"
+                  icon={RefreshCw}
+                  label="Actualizar datos"
                   onClick={() => {
                     playSelectionFeedbackSound();
                     fetchData();
                   }}
-                  className="ui-interactive"
                   title="Actualizar datos"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline sm:ml-2">Actualizar datos</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  data-testid="new-quotation-btn"
-                  onClick={() => {
-                    playSelectionFeedbackSound();
-                    createDraftTab();
-                  }}
-                  className="ui-interactive border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-                  title="Nueva Cotización"
-                >
-                  <Plus className="h-3.5 w-3.5 sm:mr-2" />
-                  <span className="hidden sm:inline">Nueva Cotización</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    playSelectionFeedbackSound();
-                    saveActiveDraftNow();
-                  }}
+                />
+                <ErpToolbarButton
+                  action="saveClear"
+                  icon={SaveAll}
+                  label="Guardar y Limpiar"
+                  testId="save-and-clear-quotation-btn"
+                  onClick={handleSaveAndClearQuote}
                   disabled={draftSaveState === "saving"}
-                  data-testid="save-quotation-draft-btn"
-                  className="ui-interactive border-violet-500/40 bg-violet-500/10 text-violet-800 hover:bg-violet-500/20"
-                  title="Guardar borrador"
-                >
-                  <Save className="h-3.5 w-3.5 text-violet-700" />
-                  <span className="hidden sm:inline sm:ml-2">Guardar</span>
-                </Button>
-              </div>
+                  title="Guardar borrador y limpiar formulario"
+                />
+                {showReleaseDraftButton ? (
+                  <ErpToolbarButton
+                    action="save"
+                    icon={Unlock}
+                    label="Liberar"
+                    onClick={handleReleaseDraft}
+                    title="Liberar borrador para el vendedor"
+                  />
+                ) : null}
+              </ErpFormToolbar>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
+                  disabled={sellerQuoteParamsLocked}
                   onCheckedChange={(checked) => {
+                    if (sellerQuoteParamsLocked) {
+                      toast.error("No puedes modificar la moneda en un borrador revisado por supervisión");
+                      return;
+                    }
                     playSelectionFeedbackSound();
                     setCurrency(checked ? "USD" : "NIO");
                   }}
                   className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
                   aria-label="Cambiar moneda entre córdobas y dólares"
                 />
-                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
+                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>US$</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
+              <ErpToolbarButton
+                action="clear"
+                icon={Eraser}
+                label="Limpiar"
                 onClick={() => {
                   playSelectionFeedbackSound();
                   setShowClearQuoteConfirm(true);
                 }}
-                className="ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
                 title="Limpiar Formulario"
-              >
-                <Eraser className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline sm:ml-2">Limpiar</span>
-              </Button>
+              />
             </div>
             <Dialog open={showClearQuoteConfirm} onOpenChange={setShowClearQuoteConfirm}>
               <DialogContent className="max-w-sm">
@@ -1084,9 +1435,26 @@ export function QuotationsPage() {
               flowType="quotation"
               step4Label="Paso 4: Productos en esta Cotización"
               step5Label="Paso 5: Método de Pago (Cotización)"
-              initialData={{ selectedCustomer, cartItems, paymentMethod: "cash", mixedPaymentMethods: [], globalDiscount: discount, notes, applyIVA: false, ivaRate: effectiveIvaRate, currency }}
+              initialData={{
+                selectedCustomer,
+                selectedVehicle,
+                selectedWarehouse,
+                cartItems,
+                paymentMethod: paymentType,
+                mixedPaymentMethods,
+                globalDiscount,
+                notes,
+                applyIVA,
+                applyRetention,
+                retentionRate,
+                ivaRate: effectiveIvaRate,
+                currency,
+                appliedDiscounts,
+              }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
+              draftReview={activeDraftReview}
+              onOpenCatalogSearch={openCatalogFromQuoteForm}
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
                 markDraftSaving();
@@ -1126,7 +1494,24 @@ export function QuotationsPage() {
               extraFields={
                 <div>
                   <Label>Validez (días)</Label>
-                  <Input type="number" min="1" value={validDays} onChange={(e) => setValidDays(parseInt(e.target.value, 10) || 1)} />
+                  <Input
+                    type="number"
+                    min="1"
+                    value={validDays}
+                    disabled={sellerQuoteParamsLocked}
+                    onChange={(e) => {
+                      if (sellerQuoteParamsLocked) {
+                        toast.error("No puedes modificar la validez en un borrador revisado por supervisión");
+                        return;
+                      }
+                      setValidDays(parseInt(e.target.value, 10) || 1);
+                    }}
+                  />
+                  {sellerQuoteParamsLocked ? (
+                    <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                      Validez definida por supervisión; no editable.
+                    </p>
+                  ) : null}
                 </div>
               }
               submitLabel="Crear Cotización"
@@ -1134,7 +1519,7 @@ export function QuotationsPage() {
                 try {
                   await createQuotationWithPayload(payload);
                   if (activeDraftId) {
-                    closeDraftTab(activeDraftId);
+                    closeDraftTab(activeDraftId, { force: true });
                   }
                   setShowNewQuote(false);
                 } catch (err) {
@@ -1235,83 +1620,22 @@ export function QuotationsPage() {
                 {draftTabs.map((tab) => {
                   const meta = getDraftMeta(tab);
                   const isActive = activeDraftId === tab.id;
+                  const openDraft = () => {
+                    selectDraftAndOpenForm(tab.id);
+                  };
                   return (
-                    <Card key={tab.id} className={`overflow-hidden transition ${isActive ? "border-primary" : ""}`}>
-                      <CardContent className="p-0">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          className="grid gap-3 md:grid-cols-[140px,1fr]"
-                          onClick={() => {
-                            selectDraftAndOpenForm(tab.id);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              selectDraftAndOpenForm(tab.id);
-                            }
-                          }}
-                        >
-                          <div className="bg-muted/30 flex items-center justify-center min-h-[120px]">
-                            {meta.previewImage ? (
-                              <img
-                                src={meta.previewImage}
-                                alt={meta.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="text-xs text-muted-foreground">Sin imagen</div>
-                            )}
-                          </div>
-                          <div className="p-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-[140px]">
-                                <p className="text-sm font-semibold truncate">{meta.title}</p>
-                                <p className="text-[11px] text-muted-foreground truncate">{meta.subtitle}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs font-semibold">
-                                  {formatCurrency(meta.total || 0, meta.currency)}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} ítems</p>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline">{isActive ? "Activo" : "Borrador"}</Badge>
-                              <Badge variant="secondary">{meta.currency}</Badge>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
-                            </p>
-                            {meta.previewVehicle ? (
-                              <p className="text-[11px] text-muted-foreground">Vehículo: {meta.previewVehicle}</p>
-                            ) : null}
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  selectDraftAndOpenForm(tab.id);
-                                }}
-                              >
-                                Abrir borrador
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  closeDraftTab(tab.id);
-                                }}
-                              >
-                                Eliminar
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <DraftBoardCard
+                      key={`${tab.id}-${draftContentRevision}`}
+                      tab={tab}
+                      meta={meta}
+                      isActive={isActive}
+                      currentUserId={user?.user_id}
+                      currentUserRole={user?.role}
+                      nowMs={now}
+                      emptyProductsLabel="Sin productos aún"
+                      onOpen={openDraft}
+                      onDelete={() => closeDraftTab(tab.id)}
+                    />
                   );
                 })}
               </div>

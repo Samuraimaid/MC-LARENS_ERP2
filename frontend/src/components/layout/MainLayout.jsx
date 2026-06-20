@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, User, Users, RefreshCw, Unlock, X } from "lucide-react";
 import { useDevice } from "../../hooks/useDevice";
 import { BottomNav } from "./BottomNav";
+import { isCashierRole as isCashierRoleHelper } from "../../lib/roleHome";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -122,7 +123,8 @@ export function MainLayout() {
     : "hora desconocida";
   const isMobile = viewportWidth < 1024;
   const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
-  const isCashierRole = String(user?.role || "").toLowerCase() === "cajero";
+  const isCashierRole = isCashierRoleHelper(user?.role);
+  const hideNavigationChrome = isSellerRole || isCashierRole;
   const isWorkbenchRoute = location.pathname === "/workbench";
   const workbenchTabSet = new Set(WORKBENCH_TAB_ITEMS.map((tab) => tab.key));
   const requestedWorkbenchTab = String(new URLSearchParams(location.search).get("tab") || "sales");
@@ -271,6 +273,13 @@ export function MainLayout() {
   useEffect(() => {
     setMobileNavOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isCashierRole) return;
+    if (location.pathname !== "/cashier") {
+      navigate("/cashier", { replace: true });
+    }
+  }, [isCashierRole, location.pathname, navigate]);
 
   useEffect(() => {
     if (!user) return;
@@ -563,7 +572,7 @@ export function MainLayout() {
   return (
     <div className="relative h-screen overflow-hidden bg-background">
       <div className={cn("flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
-        {!isMobile && !isSellerRole ? (
+        {!isMobile && !hideNavigationChrome ? (
           <Sidebar
             mode={isSidebarCollapsed ? "icon" : "full"}
             onToggleCalculator={() => handleSelectTool("calculator")}
@@ -580,7 +589,7 @@ export function MainLayout() {
           >
             <div className="flex h-full items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                {!isSellerRole ? (
+                {!hideNavigationChrome ? (
                   <Button
                     variant="outline"
                     size="icon"
@@ -726,7 +735,7 @@ export function MainLayout() {
           </main>
         </div>
 
-        {isMobile && !isSellerRole ? (
+        {isMobile && !hideNavigationChrome ? (
           <div
             className={`fixed inset-0 z-40 ${mobileNavOpen ? "pointer-events-auto" : "pointer-events-none"}`}
             aria-hidden={!mobileNavOpen}

@@ -5,11 +5,44 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount, currency = "NIO") {
+/** Símbolos unificados del ERP para montos en pantalla */
+export const ERP_CURRENCY_SYMBOLS = {
+  NIO: "C$",
+  USD: "US$",
+};
+
+export function normalizeCurrencyCode(currency = "NIO") {
+  const code = String(currency || "NIO").trim().toUpperCase();
+  if (code === "USD" || code === "US$") return "USD";
+  if (code === "NIO" || code === "C$") return "NIO";
+  return code;
+}
+
+export function getCurrencySymbol(currency = "NIO") {
+  const code = normalizeCurrencyCode(currency);
+  return ERP_CURRENCY_SYMBOLS[code] ?? code;
+}
+
+function formatCurrencyNumber(amount) {
+  const safeAmount = Number.isFinite(Number(amount)) ? Number(amount) : 0;
   return new Intl.NumberFormat("es-NI", {
-    style: "currency",
-    currency: currency,
-  }).format(amount);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
+}
+
+export function formatCurrency(amount, currency = "NIO") {
+  return `${getCurrencySymbol(currency)}${formatCurrencyNumber(amount)}`;
+}
+
+export function formatCurrencyToParts(amount, currency = "NIO") {
+  const safeAmount = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+  const numberParts = new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).formatToParts(safeAmount);
+
+  return [{ type: "currency", value: getCurrencySymbol(currency) }, ...numberParts];
 }
 
 export function formatDate(dateString) {

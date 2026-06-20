@@ -1,0 +1,1153 @@
+[
+  {
+    "package": "aiohappyeyeballs",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "aiohttp",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "aiosignal",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "annotated-types",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "anyio",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "apscheduler",
+    "category": "Background/Schedulers",
+    "used_in_files": [
+      "backend/services/weekly_business_sentinel.py"
+    ],
+    "import_count": 1,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "attrs",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "black",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "boto3",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "botocore",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "certifi",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "cffi",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "charset-normalizer",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "click",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "cryptography",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "distro",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "dnspython",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "ecdsa",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "email-validator",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "fastuuid",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "filelock",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "flake8",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "frozenlist",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "fsspec",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-ai-generativelanguage",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-api-core",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-api-python-client",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-auth",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-auth-httplib2",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-genai",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "google-generativeai",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "googleapis-common-protos",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "grpcio",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "grpcio-status",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "h11",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "hf-xet",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "httpcore",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "httplib2",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "huggingface-hub",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "idna",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "importlib-metadata",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "iniconfig",
+    "category": "Test Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "isort",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jinja2",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jiter",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jmespath",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jq",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jsonschema",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "jsonschema-specifications",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "librt",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "litellm",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "markdown-it-py",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "markupsafe",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "mccabe",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "mdurl",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "multidict",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "mypy",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "mypy-extensions",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "numpy",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "oauthlib",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "openai",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "openpyxl",
+    "category": "Export/Reporting",
+    "used_in_files": [
+      "backend/server.py"
+    ],
+    "import_count": 1,
+    "startup_critical": true,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "packaging",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pandas",
+    "category": "Export/Reporting",
+    "used_in_files": [
+      "backend/routes/human_resources.py",
+      "backend/routes/inventory.py"
+    ],
+    "import_count": 2,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pathspec",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pillow",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "platformdirs",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pluggy",
+    "category": "Test Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pre-commit",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "propcache",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "proto-plus",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "protobuf",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pyasn1",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pyasn1-modules",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pycodestyle",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pycparser",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pydantic-core",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pyflakes",
+    "category": "Dev Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pygments",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pyparsing",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pytest",
+    "category": "Test Tooling",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "python-dateutil",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "python-http-client",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pytokens",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "pyyaml",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "referencing",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "regex",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "reportlab",
+    "category": "Export/Reporting",
+    "used_in_files": [
+      "backend/server.py",
+      "backend/routes/human_resources.py",
+      "backend/routes/inventory.py"
+    ],
+    "import_count": 3,
+    "startup_critical": true,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "requests-oauthlib",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "rich",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "rpds-py",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "rsa",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "s3transfer",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "s5cmd",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "shellingham",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "six",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "sniffio",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "stripe",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "tenacity",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "tiktoken",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "tokenizers",
+    "category": "Optional Integrations",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "tqdm",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "typer",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "typer-slim",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "typing-extensions",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "typing-inspection",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "tzdata",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "uritemplate",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "urllib3",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "watchfiles",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "websockets",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "werkzeug",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "yarl",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  },
+  {
+    "package": "zipp",
+    "category": "Unknown Ownership",
+    "used_in_files": [],
+    "import_count": 0,
+    "startup_critical": false,
+    "admin_or_report_only": false,
+    "optional_candidate": true,
+    "notes": ""
+  }
+]

@@ -49,47 +49,47 @@ This document captures the implied runtime contracts discovered in Phase 2.
 - new customer / new vehicle dialogs and partial data
 - updatedAt timestamp
 
-### Contract risk
-- The draft precedence rule depends on completeness scoring, so a poorer snapshot must not overwrite a richer one.
+    ### Contract risk
+    - The draft precedence rule depends on completeness scoring, so a poorer snapshot must not overwrite a richer one.
 
-## Sales
+    ## Sales
 
-### Expected payload fields
-- `customer_id`
-- `vehicle_id`
-- `warehouse_id`
-- `items`
-- `discount`
-- `payment_type`
-- `payment_method`
-- `mixed_payment_methods`
-- `credit_days`
-- `delivery_required`
-- `delivery_address`
-- `apply_iva`
-- `iva_rate`
-- `apply_retention`
-- `retention_rate`
-- `retention_amount`
-- `exchange_rate`
-- `currency`
-- `discount_codes`
-- `applied_discounts`
-- `total_amount`
-- `notes`
+    ### Expected payload fields
+    - `customer_id`
+    - `vehicle_id`
+    - `warehouse_id`
+    - `items`
+    - `discount`
+    - `payment_type`
+    - `payment_method`
+    - `mixed_payment_methods`
+    - `credit_days`
+    - `delivery_required`
+    - `delivery_address`
+    - `apply_iva`
+    - `iva_rate`
+    - `apply_retention`
+    - `retention_rate`
+    - `retention_amount`
+    - `exchange_rate`
+    - `currency`
+    - `discount_codes`
+    - `applied_discounts`
+    - `total_amount`
+    - `notes`
 
-### Semantic rules
-- Discounts may be blocked by payment method.
-- Mixed payment must include at least one valid subpayment when selected.
-- Cashier and invoice workflows assume sale totals match backend validation.
-- Quote conversion to sale must preserve the business meaning of items, discounts, and vehicle linkage.
+    ### Semantic rules
+    - Discounts may be blocked by payment method.
+    - Mixed payment must include at least one valid subpayment when selected.
+    - Cashier and invoice workflows assume sale totals match backend validation.
+    - Quote conversion to sale must preserve the business meaning of items, discounts, and vehicle linkage.
 
-## Quotations
+    ## Quotations
 
-### Expected payload fields
-- same core sales fields minus sale-specific delivery or manager authorization concerns
-- `valid_days`
-- `notes`
+    ### Expected payload fields
+    - same core sales fields minus sale-specific delivery or manager authorization concerns
+    - `valid_days`
+    - `notes`
 - `currency`
 - `exchange_rate`
 

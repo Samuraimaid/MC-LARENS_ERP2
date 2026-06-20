@@ -3,6 +3,9 @@ from datetime import datetime, timedelta
 import os
 import requests
 from backend.db.session import get_collection
+from backend.domains.integrations import (
+    send_executive_summary as integrations_send_executive_summary,
+)
 import pytz
 import logging
 
@@ -14,16 +17,12 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # --- Utilidades ---
 def send_executive_summary(message: str):
-    if not TELEGRAM_WEBHOOK or not TELEGRAM_CHAT_ID:
-        logging.error("Webhook o Chat ID no configurados")
-        return False
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": message,
-        "parse_mode": "HTML"
-    }
-    resp = requests.post(TELEGRAM_WEBHOOK, json=payload)
-    return resp.status_code == 200
+    return integrations_send_executive_summary(
+        message=message,
+        telegram_webhook=TELEGRAM_WEBHOOK,
+        telegram_chat_id=TELEGRAM_CHAT_ID,
+        logger=logging,
+    )
 
 # --- Tarea programada ---
 def weekly_business_sentinel():

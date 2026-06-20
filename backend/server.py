@@ -28,20 +28,39 @@ from fastapi import (
 )
 import re
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response as FastAPIResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, ConfigDict, Field
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen import canvas
-from openpyxl import Workbook, load_workbook
 
+from backend.domains.export.dependencies import (
+    get_openpyxl_symbols as export_get_openpyxl_symbols,
+    get_reportlab_symbols as export_get_reportlab_symbols,
+)
+from backend.domains.export.pdf_documents import (
+    DEFAULT_PDF_DOCUMENT_SETTINGS as export_default_pdf_document_settings,
+    WATERMARK_LOGO_PRESETS as export_watermark_logo_presets,
+    build_preview_pdf_bytes as export_build_preview_pdf_bytes,
+    build_retention_receipt_pdf_bytes as export_build_retention_receipt_pdf_bytes,
+    draw_document_pdf as export_draw_document_pdf,
+    draw_invoice_letter_pdf as export_draw_invoice_letter_pdf,
+    draw_payment_receipt_pdf as export_draw_payment_receipt_pdf,
+    load_logo_image as export_load_logo_image,
+    normalize_pdf_document_settings as export_normalize_pdf_document_settings,
+    resolve_invoice_theme as export_resolve_invoice_theme,
+    resolve_quotation_theme as export_resolve_quotation_theme,
+    _payment_method_summary as export_payment_method_summary,
+)
+from backend.domains.integrations import (
+    create_stripe_checkout as integrations_create_stripe_checkout,
+    get_stripe_checkout_symbols as integrations_get_stripe_checkout_symbols,
+    send_email_notification as integrations_send_email_notification,
+)
 from backend.services.audit import AuditService
 from backend.services.cash import CashService
 from backend.services.pin_policy import PinPolicyService
+from backend.services.venta_service import revert_sale_effects
 
 logger = logging.getLogger("erp")
 logging.basicConfig(level=logging.INFO)
@@ -66,27 +85,41 @@ async def api_root():
     return JSONResponse({"message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
 
 
-# Drafts backup endpoints - simple storage in `drafts_backup` collection
+# Drafts backup endpoints - scoped by authenticated user.
 @api_router.get("/drafts/backup")
-async def get_drafts_backup():
-    doc = await db.drafts_backup.find_one({"_id": "backup"})
+async def get_drafts_backup(request: Request):
+    user = await require_auth(request)
+    doc = await db.drafts_backup.find_one({"_id": user.user_id})
     entries = doc.get("entries") if doc else []
     return JSONResponse({"entries": entries})
 
 
 @api_router.post("/drafts/backup")
 async def post_drafts_backup(request: Request):
+    user = await require_auth(request)
     payload = await request.json()
     entries = payload.get("entries") if isinstance(payload, dict) else None
     if entries is None:
         return JSONResponse({"detail": "No entries provided"}, status_code=400)
-    await db.drafts_backup.update_one({"_id": "backup"}, {"$set": {"entries": entries}}, upsert=True)
+    await db.drafts_backup.update_one(
+        {"_id": user.user_id},
+        {
+            "$set": {
+                "entries": entries,
+                "user_id": user.user_id,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            "$setOnInsert": {"created_at": datetime.now(timezone.utc).isoformat()},
+        },
+        upsert=True,
+    )
     return JSONResponse({"status": "ok"})
 
 
 @api_router.delete("/drafts/backup")
-async def delete_drafts_backup():
-    await db.drafts_backup.delete_one({"_id": "backup"})
+async def delete_drafts_backup(request: Request):
+    user = await require_auth(request)
+    await db.drafts_backup.delete_one({"_id": user.user_id})
     return JSONResponse({"status": "deleted"})
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
@@ -126,6 +159,22 @@ def normalize_excel_value(value: Any) -> Any:
         if value and value[0] in ("=", "+", "-", "@", "\t"):
             return "'" + value
     return value
+
+
+def _get_openpyxl_symbols() -> Tuple[Any, Any]:
+    return export_get_openpyxl_symbols()
+
+
+def _get_reportlab_symbols() -> Tuple[Any, Any, Any, Any]:
+    return export_get_reportlab_symbols()
+
+
+def _get_stripe_checkout_symbols() -> Tuple[Any, Any]:
+    return integrations_get_stripe_checkout_symbols()
+
+
+def _create_stripe_checkout(webhook_url: str) -> Any:
+    return integrations_create_stripe_checkout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
 
 BACKUP_SCOPE_COLLECTIONS: Dict[str, List[str]] = {
@@ -208,7 +257,7 @@ def read_backup_manifest_metadata(workbook: Any) -> Dict[str, Any]:
             metadata["format"] = value
         elif key_text == "schema_version":
             try:
-                metadata["schema_version"] = int(value)
+                metadata["schema_version"] = int(value or 1)
             except Exception:
                 metadata["schema_version"] = 1
         elif key_text == "selected_scopes":
@@ -397,6 +446,9 @@ ROLES = {
     "transporte": {"label": "Transporte", "color": "orange"},
     "bodegas": {"label": "Bodegas", "color": "yellow"},
     "instalaciones": {"label": "Instalaciones", "color": "red"},
+    "coordinador_instalaciones": {"label": "Coord. Instalaciones", "color": "rose"},
+    "coordinador_polarizados": {"label": "Coord. Polarizados", "color": "fuchsia"},
+    "entregador": {"label": "Entregador", "color": "amber"},
     "programador": {"label": "Programador", "color": "slate"},
 }
 
@@ -514,11 +566,14 @@ PERMISSIONS_CATALOG: Dict[str, Dict[str, Any]] = {
         "label": "Operaciones",
         "functions": {
             "work_orders": "Órdenes de Trabajo",
+            "coordinator_instalaciones": "Coord. Instalaciones",
+            "coordinator_polarizados": "Coord. Polarizados",
             "quality_control": "Control de Calidad",
             "kds": "KDS",
             "deliveries": "Entregas",
             "calendar": "Calendario",
             "tint_orders": "Polarizados",
+            "technician_completed_jobs": "Mis Trabajos Realizados",
             "warranties": "Garantías",
         },
     },
@@ -553,12 +608,23 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "dispatch": ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
     "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
     "promotions": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
-    "work_orders": ["gerencia", "supervisor", "instalaciones"],
-    "quality_control": ["gerencia", "supervisor"],
+    "work_orders": ["gerencia", "supervisor", "instalaciones", "electrico", "coordinador_instalaciones"],
+    "coordinator_instalaciones": ["gerencia", "supervisor", "coordinador_instalaciones"],
+    "coordinator_polarizados": ["gerencia", "supervisor", "coordinador_polarizados"],
+    "quality_control": ["gerencia", "supervisor", "coordinador_instalaciones"],
     "kds": ["all"],
-    "deliveries": ["gerencia", "supervisor", "transporte"],
-    "calendar": ["gerencia", "supervisor", "instalaciones"],
-    "tint_orders": ["gerencia", "supervisor", "instalaciones"],
+    "deliveries": ["gerencia", "supervisor", "transporte", "entregador"],
+    "calendar": ["gerencia", "supervisor", "instalaciones", "coordinador_instalaciones"],
+    "tint_orders": ["gerencia", "supervisor", "instalaciones", "polarizador", "coordinador_polarizados"],
+    "technician_completed_jobs": [
+        "gerencia",
+        "supervisor",
+        "instalaciones",
+        "electrico",
+        "polarizador",
+        "coordinador_instalaciones",
+        "coordinador_polarizados",
+    ],
     "warranties": ["gerencia", "supervisor", "instalaciones"],
     "reports": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
     "branches": ["gerencia"],
@@ -577,6 +643,13 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
 }
 
 ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
+    "gerencia": {
+        # Gerencia must always retain admin access; custom role matrices cannot self-lockout.
+        "users": {"view": True, "create": True, "edit": True, "delete": True},
+        "settings": {"view": True, "create": True, "edit": True, "delete": True},
+        "system_settings": {"view": True, "create": True, "edit": True, "delete": True},
+        "branches": {"view": True, "create": True, "edit": True, "delete": True},
+    },
     "programador": {
         "users": {"view": True, "create": True, "edit": True, "delete": True},
     },
@@ -630,11 +703,13 @@ PERMISSION_ROUTE_MAP: List[tuple[str, str]] = [
     ("/api/warehouses", "warehouses"),
     ("/api/promotions", "promotions"),
     ("/api/work-orders", "work_orders"),
+    ("/api/coordinator", "coordinator_instalaciones"),
     ("/api/quality-control", "quality_control"),
     ("/api/kds", "kds"),
     ("/api/deliveries", "deliveries"),
     ("/api/calendar", "calendar"),
     ("/api/tint", "tint_orders"),
+    ("/api/technician", "technician_completed_jobs"),
     ("/api/warranties", "warranties"),
     ("/api/reports", "reports"),
     ("/api/branches", "branches"),
@@ -651,7 +726,6 @@ PERMISSION_ENFORCEMENT_EXACT_PATHS = {
     "/api/health",
     "/api/roles",
     "/api/auth/pin/login",
-    "/api/auth/pin/users",
     "/api/auth/logout",
     "/api/auth/me",
     "/api/permissions/me",
@@ -668,7 +742,6 @@ SESSION_LOCK_EXEMPT_PATHS = {
     "/api/auth/session/lock",
     "/api/auth/session/unlock",
     "/api/auth/pin/login",
-    "/api/auth/pin/users",
     "/api/health",
     "/api",
     "/api/",
@@ -773,6 +846,51 @@ def merge_permission_matrix(base: Dict[str, Any], extra: Dict[str, Any]) -> Dict
                     )
 
     return merged
+
+
+def extract_permission_delta_sparse(
+    base: Dict[str, Any], target: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Return only permission cells that differ from the role baseline."""
+    base_norm = normalize_permission_matrix(base)
+    target_norm = normalize_permission_matrix(target)
+    delta: Dict[str, Any] = {}
+
+    for module_key, module_cfg in PERMISSIONS_CATALOG.items():
+        module_delta: Dict[str, Any] = {}
+        for function_key in module_cfg.get("functions", {}).keys():
+            function_delta: Dict[str, bool] = {}
+            for action in PERMISSION_ACTIONS:
+                base_val = bool(base_norm[module_key][function_key][action])
+                target_val = bool(target_norm[module_key][function_key][action])
+                if target_val != base_val:
+                    function_delta[action] = target_val
+            if function_delta:
+                module_delta[function_key] = function_delta
+        if module_delta:
+            delta[module_key] = module_delta
+
+    return delta
+
+
+def enforce_permission_floors_on_matrix(matrix: Dict[str, Any], role: str) -> Dict[str, Any]:
+    """Prevent saving matrices that violate non-revocable permission floors."""
+    normalized = normalize_permission_matrix(matrix)
+    return apply_role_permission_floor(normalized, role)
+
+
+def permission_matrix_has_entries(matrix: Dict[str, Any]) -> bool:
+    if not isinstance(matrix, dict):
+        return False
+    for module_key, module_cfg in PERMISSIONS_CATALOG.items():
+        module_raw = matrix.get(module_key)
+        if not isinstance(module_raw, dict):
+            continue
+        for function_key in module_cfg.get("functions", {}).keys():
+            function_raw = module_raw.get(function_key)
+            if isinstance(function_raw, dict) and function_raw:
+                return True
+    return False
 
 
 async def get_effective_role_permissions(role: str) -> Dict[str, Any]:
@@ -934,23 +1052,37 @@ async def update_role_permissions(role: str, payload: Dict[str, Any], request: R
     if role not in roles_catalog:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
-    matrix = normalize_permission_matrix((payload or {}).get("permissions", {}))
+    defaults = build_default_role_permissions(role)
+    submitted = normalize_permission_matrix((payload or {}).get("permissions", {}))
+    delta_sparse = extract_permission_delta_sparse(defaults, submitted)
+    stored_matrix = enforce_permission_floors_on_matrix(
+        merge_permission_matrix(defaults, delta_sparse),
+        role,
+    )
+    delta_to_store = extract_permission_delta_sparse(defaults, stored_matrix)
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    await db.role_permissions.update_one(
-        {"role": role},
-        {
-            "$set": {
-                "role": role,
-                "permissions": matrix,
-                "updated_at": now_iso,
-                "updated_by": user.user_id,
-            }
-        },
-        upsert=True,
-    )
+    if not permission_matrix_has_entries(delta_to_store):
+        await db.role_permissions.delete_one({"role": role})
+    else:
+        await db.role_permissions.update_one(
+            {"role": role},
+            {
+                "$set": {
+                    "role": role,
+                    "permissions": delta_to_store,
+                    "updated_at": now_iso,
+                    "updated_by": user.user_id,
+                }
+            },
+            upsert=True,
+        )
 
-    return {"message": "Permisos de rol actualizados", "role": role}
+    return {
+        "message": "Permisos de rol actualizados",
+        "role": role,
+        "effective_permissions": await get_effective_role_permissions(role),
+    }
 
 
 @api_router.get("/permissions/users/{user_id}")
@@ -961,22 +1093,28 @@ async def get_user_permissions(user_id: str, request: Request):
     if not user_doc:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    role = user_doc.get("role", "ventas")
+    role = str(user_doc.get("role") or "ventas")
     role_effective = await get_effective_role_permissions(role)
+    user_model = User(
+        user_id=str(user_doc.get("user_id") or user_id),
+        name=str(user_doc.get("name") or "Usuario"),
+        role=role,
+        email=user_doc.get("email"),
+        branch_id=user_doc.get("branch_id"),
+        warehouse_id=user_doc.get("warehouse_id"),
+    )
+    effective = await get_effective_permissions_for_user(user_model)
 
     user_custom_doc = await db.user_permissions.find_one({"user_id": user_id}, {"_id": 0})
-    user_custom = normalize_permission_matrix((user_custom_doc or {}).get("permissions", {}))
-    effective = (
-        merge_permission_matrix(role_effective, user_custom_doc.get("permissions", {}))
-        if user_custom_doc
-        else role_effective
-    )
+    user_custom_raw = (user_custom_doc or {}).get("permissions", {})
+    user_custom = user_custom_raw if isinstance(user_custom_raw, dict) else {}
 
     return {
         "user_id": user_id,
         "role": role,
         "role_permissions": role_effective,
         "user_permissions": user_custom,
+        "has_user_overrides": permission_matrix_has_entries(user_custom),
         "effective_permissions": effective,
     }
 
@@ -985,27 +1123,55 @@ async def get_user_permissions(user_id: str, request: Request):
 async def update_user_permissions(user_id: str, payload: Dict[str, Any], request: Request):
     actor = await require_roles(request, ["gerencia"])
 
-    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "user_id": 1})
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
     if not user_doc:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    matrix = normalize_permission_matrix((payload or {}).get("permissions", {}))
+    role = str(user_doc.get("role") or "ventas")
+    role_effective = await get_effective_role_permissions(role)
+    data = payload or {}
+
+    if "effective_permissions" in data:
+        target = normalize_permission_matrix(data.get("effective_permissions", {}))
+        delta_sparse = extract_permission_delta_sparse(role_effective, target)
+    else:
+        # Backward compatibility: treat payload.permissions as sparse overrides.
+        delta_sparse = data.get("permissions", {}) if isinstance(data.get("permissions"), dict) else {}
+
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    await db.user_permissions.update_one(
-        {"user_id": user_id},
-        {
-            "$set": {
-                "user_id": user_id,
-                "permissions": matrix,
-                "updated_at": now_iso,
-                "updated_by": actor.user_id,
-            }
-        },
-        upsert=True,
+    if not permission_matrix_has_entries(delta_sparse):
+        await db.user_permissions.delete_one({"user_id": user_id})
+    else:
+        await db.user_permissions.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "user_id": user_id,
+                    "permissions": delta_sparse,
+                    "updated_at": now_iso,
+                    "updated_by": actor.user_id,
+                }
+            },
+            upsert=True,
+        )
+
+    user_model = User(
+        user_id=str(user_doc.get("user_id") or user_id),
+        name=str(user_doc.get("name") or "Usuario"),
+        role=role,
+        email=user_doc.get("email"),
+        branch_id=user_doc.get("branch_id"),
+        warehouse_id=user_doc.get("warehouse_id"),
     )
 
-    return {"message": "Permisos de usuario actualizados", "user_id": user_id}
+    return {
+        "message": "Permisos de usuario actualizados",
+        "user_id": user_id,
+        "user_permissions": delta_sparse,
+        "has_user_overrides": permission_matrix_has_entries(delta_sparse),
+        "effective_permissions": await get_effective_permissions_for_user(user_model),
+    }
 
 
 @api_router.delete("/permissions/users/{user_id}")
@@ -1385,6 +1551,28 @@ class BillingCancelReasonPayload(FlexibleModel):
     sort_order: Optional[int] = None
 
 
+class BillingPdfThemeColorsPayload(FlexibleModel):
+    invoice_paid: Optional[str] = None
+    quotation: Optional[str] = None
+    invoice_credit: Optional[str] = None
+    payment_partial: Optional[str] = None
+    invoice_pending: Optional[str] = None
+
+
+class BillingPdfDocumentsUpdatePayload(FlexibleModel):
+    watermark_enabled: Optional[bool] = None
+    watermark_opacity: Optional[float] = None
+    watermark_scale: Optional[float] = None
+    watermark_logo_url: Optional[str] = None
+    show_status_badge: Optional[bool] = None
+    theme_colors: Optional[BillingPdfThemeColorsPayload] = None
+
+
+class BillingPdfPreviewPayload(FlexibleModel):
+    kind: str = "invoice_paid"
+    pdf_documents: Optional[BillingPdfDocumentsUpdatePayload] = None
+
+
 class SaleRequestPayload(FlexibleModel):
     reason: str
 
@@ -1471,6 +1659,7 @@ class SaleCreate(FlexibleModel):
     cash_session_id: Optional[str] = None
     payment_method: Optional[str] = None
     idempotency_key: Optional[str] = None
+    supervisor_discount_preapproved: bool = False
 
 
 class DraftEntryPayload(FlexibleModel):
@@ -1515,6 +1704,9 @@ class CashierCollectRequest(FlexibleModel):
     force_remove_discount: bool = False
     pagos: List[MixedPaymentItem] = Field(default_factory=list)
     autorizacion_descuento_pos: Optional[PosDiscountAuthorization] = None
+    card_type: Optional[str] = None
+    bank_name: Optional[str] = None
+    transaction_number: Optional[str] = None
 
 
 class MixedPaymentItem(FlexibleModel):
@@ -1525,10 +1717,18 @@ class MixedPaymentItem(FlexibleModel):
     monto_cordobas: Optional[float] = None
     referencia_bancaria: Optional[str] = None
     notas_auditoria: Optional[str] = None
+    card_type: Optional[str] = None
+    bank_name: Optional[str] = None
+    transaction_number: Optional[str] = None
 
 
 class PosDiscountAuthorization(FlexibleModel):
     autorizado_por: str
+    justificacion_interna: str
+    mostrar_al_cliente: bool = False
+
+
+class CajaPosDiscountRequestPayload(FlexibleModel):
     justificacion_interna: str
     mostrar_al_cliente: bool = False
 
@@ -1555,6 +1755,9 @@ class CashierInvoiceCollectRequest(FlexibleModel):
     force_remove_discount: bool = False
     pagos: List[MixedPaymentItem] = Field(default_factory=list)
     autorizacion_descuento_pos: Optional[PosDiscountAuthorization] = None
+    card_type: Optional[str] = None
+    bank_name: Optional[str] = None
+    transaction_number: Optional[str] = None
 
 
 class CashierInvoiceCancelRequest(FlexibleModel):
@@ -1593,6 +1796,78 @@ def _round4(value: Union[int, float]) -> float:
 
 def _round2(value: Union[int, float]) -> float:
     return round(float(value or 0.0), 2)
+
+
+def _coerce_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_card_type(value: Any) -> Optional[str]:
+    raw = str(value or "").strip().lower()
+    if raw in {"debit", "debito", "débito", "tarjeta_debito"}:
+        return "debit"
+    if raw in {"credit", "credito", "crédito", "tarjeta_credito"}:
+        return "credit"
+    return None
+
+
+def _card_metadata_from_fields(
+    *,
+    card_type: Any = None,
+    bank_name: Any = None,
+    transaction_number: Any = None,
+    reference: Any = None,
+) -> Dict[str, Any]:
+    normalized_type = _normalize_card_type(card_type)
+    bank = str(bank_name or "").strip()
+    txn = str(transaction_number or "").strip()
+    ref = str(reference or "").strip()
+    metadata: Dict[str, Any] = {}
+    if normalized_type:
+        metadata["card_type"] = normalized_type
+    if bank:
+        metadata["bank_name"] = bank
+    if txn:
+        metadata["transaction_number"] = txn
+    if ref:
+        metadata["card_reference"] = ref
+    return metadata
+
+
+def _validate_card_payment_metadata(
+    *,
+    method: str,
+    card_type: Any = None,
+    bank_name: Any = None,
+    transaction_number: Any = None,
+    reference: Any = None,
+    line_label: str = "pago",
+) -> Dict[str, Any]:
+    if not _is_card_method(method):
+        return {}
+    normalized_type = _normalize_card_type(card_type)
+    bank = str(bank_name or "").strip()
+    txn = str(transaction_number or "").strip()
+    ref = str(reference or "").strip()
+    if not normalized_type:
+        raise HTTPException(status_code=400, detail=f"Indica si la tarjeta es débito o crédito en {line_label}")
+    if not bank:
+        raise HTTPException(status_code=400, detail=f"Indica el banco emisor en {line_label}")
+    if not txn:
+        raise HTTPException(status_code=400, detail=f"Indica el número de transacción en {line_label}")
+    if not ref:
+        raise HTTPException(status_code=400, detail=f"Indica la referencia bancaria en {line_label}")
+    return _card_metadata_from_fields(
+        card_type=normalized_type,
+        bank_name=bank,
+        transaction_number=txn,
+        reference=ref,
+    )
 
 
 def _is_card_method(value: Any) -> bool:
@@ -1690,7 +1965,7 @@ async def _enforce_seller_global_discount_limits(
         max_in_currency = (max_amount_nio / rate) if rate > 0 else 0.0
 
     if discount_amount_nio > (max_amount_nio + 0.009):
-        max_label = "C$" if normalized_currency == "NIO" else "USD"
+        max_label = "C$" if normalized_currency == "NIO" else "US$"
         raise HTTPException(
             status_code=400,
             detail={
@@ -2538,6 +2813,14 @@ def _sanitize_user_doc(user_doc: Dict[str, Any]) -> Dict[str, Any]:
     sanitized = dict(user_doc)
     for key in (
         "pin_hash",
+        "pin_index",
+        "attendance_pin_hash",
+        "attendance_pin_index",
+        "attendance_pin_last_set_at",
+        "login_pin_hash",
+        "login_pin_index",
+        "login_pin_last_set_at",
+        "kiosk_pin_plain",
         "failed_pin_attempts",
         "pin_lockout_until",
         "pin_last_set_at",
@@ -2639,7 +2922,258 @@ def _default_draft_name(flow: str, draft_id: str) -> str:
     return f"{label} {suffix}".strip()
 
 
-def _serialize_user_draft(doc: Dict[str, Any]) -> Dict[str, Any]:
+DRAFT_BRANCH_SUPERVISOR_ROLES = {
+    "gerencia",
+    "supervisor",
+    "jefe_vendedores",
+    "jefe_tienda",
+    "recursos_humanos",
+}
+
+
+def _is_draft_branch_supervisor(role: Optional[str]) -> bool:
+    return str(role or "").strip().lower() in DRAFT_BRANCH_SUPERVISOR_ROLES
+
+
+def _draft_visibility_filter(user: User) -> Dict[str, Any]:
+    if _is_draft_branch_supervisor(user.role):
+        branch_id = str(user.branch_id or "").strip()
+        if branch_id:
+            return {"branch_id": branch_id}
+        return {"owner_user_id": user.user_id}
+    return {"owner_user_id": user.user_id}
+
+
+def _can_access_draft(user: User, doc: Optional[Dict[str, Any]]) -> bool:
+    if not doc:
+        return False
+    owner_user_id = str(doc.get("owner_user_id") or doc.get("user_id") or "").strip()
+    if owner_user_id == user.user_id:
+        return True
+    if not _is_draft_branch_supervisor(user.role):
+        return False
+    doc_branch_id = str(doc.get("branch_id") or "").strip()
+    user_branch_id = str(user.branch_id or "").strip()
+    return bool(doc_branch_id and user_branch_id and doc_branch_id == user_branch_id)
+
+
+def _default_draft_review() -> Dict[str, Any]:
+    return {
+        "status": "idle",
+        "watching_by_user_id": None,
+        "watching_by_name": None,
+        "watching_started_at": None,
+        "blocked_by_user_id": None,
+        "blocked_by_name": None,
+        "blocked_at": None,
+        "released_at": None,
+        "released_by_user_id": None,
+        "released_by_name": None,
+        "supervisor_changed": False,
+        "locked_product_ids": [],
+        "seller_added_product_ids": [],
+    }
+
+
+def _normalize_draft_review(raw: Any) -> Dict[str, Any]:
+    review = _default_draft_review()
+    if not isinstance(raw, dict):
+        return review
+    status = str(raw.get("status") or "idle").strip().lower()
+    if status not in {"idle", "watching", "blocked", "released"}:
+        status = "idle"
+    review["status"] = status
+    for key in (
+        "watching_by_user_id",
+        "watching_by_name",
+        "watching_started_at",
+        "blocked_by_user_id",
+        "blocked_by_name",
+        "blocked_at",
+        "released_at",
+        "released_by_user_id",
+        "released_by_name",
+    ):
+        value = raw.get(key)
+        if value is not None and str(value).strip():
+            review[key] = str(value).strip()
+    review["supervisor_changed"] = bool(raw.get("supervisor_changed"))
+    for list_key in ("locked_product_ids", "seller_added_product_ids"):
+        values = raw.get(list_key)
+        if isinstance(values, list):
+            review[list_key] = [str(item).strip() for item in values if str(item).strip()]
+    return review
+
+
+def _serialize_draft_review_for_user(user: User, review: Dict[str, Any], owner_user_id: Optional[str]) -> Dict[str, Any]:
+    normalized = _normalize_draft_review(review)
+    is_owner = str(owner_user_id or "") == str(user.user_id or "")
+    is_supervisor = _is_draft_branch_supervisor(user.role)
+    if is_owner and not is_supervisor and normalized["status"] == "watching":
+        masked = dict(normalized)
+        if masked.get("released_at") and masked.get("supervisor_changed"):
+            masked["status"] = "released"
+        else:
+            masked["status"] = "idle"
+        masked["watching_by_user_id"] = None
+        masked["watching_by_name"] = None
+        masked["watching_started_at"] = None
+        return masked
+    return normalized
+
+
+def _normalize_cart_item_for_compare(item: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(item, dict):
+        return None
+    product_id = str(item.get("product_id") or "").strip()
+    if not product_id:
+        return None
+    return {
+        "product_id": product_id,
+        "quantity": round(float(item.get("quantity") or 1), 4),
+        "unit_price": round(float(item.get("unit_price") or 0), 6),
+        "discount": round(float(item.get("discount") or 0), 4),
+        "with_installation": bool(item.get("with_installation")),
+    }
+
+
+def _cart_map_from_snapshot(snapshot: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    cart_map: Dict[str, Dict[str, Any]] = {}
+    for item in snapshot.get("cartItems") or []:
+        normalized = _normalize_cart_item_for_compare(item)
+        if normalized:
+            cart_map[normalized["product_id"]] = normalized
+    return cart_map
+
+
+def _draft_has_meaningful_supervisor_change(old_snapshot: Dict[str, Any], new_snapshot: Dict[str, Any]) -> bool:
+    old_cart = _cart_map_from_snapshot(old_snapshot)
+    new_cart = _cart_map_from_snapshot(new_snapshot)
+    if old_cart != new_cart:
+        return True
+    scalar_fields = (
+        "globalDiscount",
+        "globalDiscountMode",
+        "applyRetention",
+        "retentionRate",
+        "applyIVA",
+        "notes",
+        "selectedCustomerId",
+        "selectedVehicle",
+        "vehicleFlowOption",
+        "selectedWarehouse",
+        "paymentMethod",
+        "currency",
+        "validDays",
+    )
+    for field in scalar_fields:
+        if str(old_snapshot.get(field) or "") != str(new_snapshot.get(field) or ""):
+            return True
+    old_codes = json.dumps(old_snapshot.get("appliedDiscounts") or [], sort_keys=True, default=str)
+    new_codes = json.dumps(new_snapshot.get("appliedDiscounts") or [], sort_keys=True, default=str)
+    if old_codes != new_codes:
+        return True
+    old_mixed = json.dumps(old_snapshot.get("mixedPaymentMethods") or [], sort_keys=True, default=str)
+    new_mixed = json.dumps(new_snapshot.get("mixedPaymentMethods") or [], sort_keys=True, default=str)
+    return old_mixed != new_mixed
+
+
+def _cart_item_changed(old_item: Optional[Dict[str, Any]], new_item: Optional[Dict[str, Any]]) -> bool:
+    if not old_item and not new_item:
+        return False
+    if not old_item or not new_item:
+        return True
+    return old_item != new_item
+
+
+def _seller_global_discount_exceeds_limit(snapshot: Dict[str, Any], exchange_rate: float = 36.5) -> bool:
+    mode = str(snapshot.get("globalDiscountMode") or snapshot.get("global_discount_mode") or "percent").strip().lower()
+    raw_value = float(snapshot.get("globalDiscount") or 0)
+    if raw_value <= 0:
+        return False
+    currency = str(snapshot.get("currency") or "NIO").strip().upper()
+    rate = exchange_rate if exchange_rate > 0 else 36.5
+    if mode == "fixed":
+        limit = 500.0 if currency == "NIO" else round(500.0 / rate, 2)
+        return raw_value > limit + 0.0001
+    return raw_value > 2.0001
+
+
+def _validate_seller_released_snapshot(
+    old_snapshot: Dict[str, Any],
+    new_snapshot: Dict[str, Any],
+    review: Dict[str, Any],
+) -> None:
+    if not review.get("supervisor_changed"):
+        return
+    locked_ids = {str(item).strip() for item in (review.get("locked_product_ids") or []) if str(item).strip()}
+    seller_added_ids = {str(item).strip() for item in (review.get("seller_added_product_ids") or []) if str(item).strip()}
+    old_cart = _cart_map_from_snapshot(old_snapshot)
+    new_cart = _cart_map_from_snapshot(new_snapshot)
+
+    for product_id in locked_ids:
+        if product_id not in new_cart:
+            raise HTTPException(status_code=403, detail="No puedes eliminar productos revisados por supervisión")
+        if _cart_item_changed(old_cart.get(product_id), new_cart.get(product_id)):
+            raise HTTPException(status_code=403, detail="No puedes modificar líneas revisadas por supervisión")
+
+    for product_id in old_cart:
+        if product_id in locked_ids or product_id in seller_added_ids:
+            continue
+        if product_id not in new_cart:
+            raise HTTPException(status_code=403, detail="No puedes eliminar productos de un borrador liberado")
+
+    restricted_fields = (
+        "globalDiscount",
+        "globalDiscountMode",
+        "applyRetention",
+        "retentionRate",
+        "applyIVA",
+        "appliedDiscounts",
+        "selectedCustomerId",
+        "selectedVehicle",
+        "vehicleFlowOption",
+        "selectedWarehouse",
+        "paymentMethod",
+        "mixedPaymentMethods",
+        "currency",
+        "validDays",
+    )
+    for field in restricted_fields:
+        old_value = old_snapshot.get(field)
+        new_value = new_snapshot.get(field)
+        if field in {"appliedDiscounts", "mixedPaymentMethods"}:
+            old_json = json.dumps(old_value or [], sort_keys=True, default=str)
+            new_json = json.dumps(new_value or [], sort_keys=True, default=str)
+            if old_json != new_json:
+                raise HTTPException(status_code=403, detail="No puedes modificar parámetros revisados por supervisión")
+        elif str(old_value or "") != str(new_value or ""):
+            raise HTTPException(status_code=403, detail="No puedes modificar parámetros revisados por supervisión")
+
+
+def _collect_locked_product_ids(snapshot: Dict[str, Any]) -> List[str]:
+    return sorted(_cart_map_from_snapshot(snapshot).keys())
+
+
+def _collect_new_seller_product_ids(
+    old_snapshot: Dict[str, Any],
+    new_snapshot: Dict[str, Any],
+    review: Dict[str, Any],
+) -> List[str]:
+    locked_ids = {str(item).strip() for item in (review.get("locked_product_ids") or []) if str(item).strip()}
+    existing_added = [str(item).strip() for item in (review.get("seller_added_product_ids") or []) if str(item).strip()]
+    old_cart = _cart_map_from_snapshot(old_snapshot)
+    new_cart = _cart_map_from_snapshot(new_snapshot)
+    added: List[str] = []
+    for product_id in new_cart:
+        if product_id in locked_ids or product_id in old_cart:
+            continue
+        added.append(product_id)
+    merged = list(dict.fromkeys([*existing_added, *added]))
+    return [item for item in merged if item in new_cart]
+
+
+def _serialize_user_draft(doc: Dict[str, Any], viewer: Optional[User] = None) -> Dict[str, Any]:
     flow = _normalize_draft_flow(str(doc.get("flow") or "sale"))
     draft_id = str(doc.get("draft_id") or "").strip()
     raw_snapshot = doc.get("snapshot")
@@ -2650,11 +3184,23 @@ def _serialize_user_draft(doc: Dict[str, Any]) -> Dict[str, Any]:
         or str(doc.get("created_at") or "").strip()
         or datetime.now(timezone.utc).isoformat()
     )
+    owner_user_id = str(doc.get("owner_user_id") or doc.get("user_id") or "").strip() or None
+    review_raw = doc.get("review") if isinstance(doc.get("review"), dict) else {}
+    review = (
+        _serialize_draft_review_for_user(viewer, review_raw, owner_user_id)
+        if viewer is not None
+        else _normalize_draft_review(review_raw)
+    )
     return {
         "id": draft_id,
         "name": str(doc.get("name") or _default_draft_name(flow, draft_id)),
         "updatedAt": updated_at,
         "snapshot": snapshot,
+        "owner_user_id": owner_user_id,
+        "owner_name": str(doc.get("owner_name") or "").strip() or None,
+        "branch_id": str(doc.get("branch_id") or "").strip() or None,
+        "owner_role": str(doc.get("owner_role") or "").strip() or None,
+        "review": review,
     }
 
 
@@ -2662,11 +3208,12 @@ def _serialize_user_draft(doc: Dict[str, Any]) -> Dict[str, Any]:
 async def list_user_drafts(flow: str, request: Request):
     user = await require_auth(request)
     normalized_flow = _normalize_draft_flow(flow)
+    visibility_filter = _draft_visibility_filter(user)
     docs = await db.user_drafts.find(
-        {"user_id": user.user_id, "flow": normalized_flow},
+        {"flow": normalized_flow, **visibility_filter},
         {"_id": 0},
     ).sort("updated_at", -1).to_list(100)
-    drafts = [_serialize_user_draft(doc) for doc in docs if doc.get("draft_id")]
+    drafts = [_serialize_user_draft(doc, viewer=user) for doc in docs if doc.get("draft_id")]
     state_doc = await db.user_draft_state.find_one(
         {"user_id": user.user_id, "flow": normalized_flow},
         {"_id": 0, "active_draft_id": 1},
@@ -2717,22 +3264,74 @@ async def upsert_user_draft(flow: str, draft_id: str, payload: DraftEntryPayload
     now_iso = str(snapshot.get("updatedAt") or "").strip() or datetime.now(timezone.utc).isoformat()
 
     existing = await db.user_drafts.find_one(
-        {"user_id": user.user_id, "flow": normalized_flow, "draft_id": cleaned_draft_id},
-        {"_id": 0, "name": 1},
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
     )
+    if existing and not _can_access_draft(user, existing):
+        raise HTTPException(status_code=403, detail="No tienes permiso para editar este borrador")
+
     draft_name = str(
         payload.name or (existing or {}).get("name") or _default_draft_name(normalized_flow, cleaned_draft_id)
     ).strip()
+    owner_user_id = str((existing or {}).get("owner_user_id") or (existing or {}).get("user_id") or user.user_id).strip()
+    owner_name = str((existing or {}).get("owner_name") or user.name or "").strip() or user.name
+    owner_role = str((existing or {}).get("owner_role") or user.role or "ventas").strip() or "ventas"
+    branch_id = str((existing or {}).get("branch_id") or user.branch_id or "").strip() or None
+    review = _normalize_draft_review((existing or {}).get("review"))
+    old_snapshot = (existing or {}).get("snapshot") if isinstance((existing or {}).get("snapshot"), dict) else {}
+    is_owner = owner_user_id == str(user.user_id or "").strip()
+    is_supervisor_editor = _is_draft_branch_supervisor(user.role) and not is_owner
+
+    if is_owner and review.get("status") == "blocked":
+        raise HTTPException(status_code=423, detail="Este borrador está en revisión por supervisión")
+
+    if is_owner and review.get("status") == "released" and review.get("supervisor_changed"):
+        _validate_seller_released_snapshot(old_snapshot, snapshot, review)
+        review["seller_added_product_ids"] = _collect_new_seller_product_ids(old_snapshot, snapshot, review)
+
+    if is_owner and str(user.role or "").strip().lower() == "ventas":
+        exchange_rate = float(snapshot.get("exchangeRate") or old_snapshot.get("exchangeRate") or 36.5)
+        supervisor_released = (
+            review.get("status") == "released" and bool(review.get("supervisor_changed"))
+        )
+        if not supervisor_released and _seller_global_discount_exceeds_limit(snapshot, exchange_rate):
+            raise HTTPException(
+                status_code=403,
+                detail="Descuentos globales mayores a 2% o C$500 requieren aprobación de gerencia",
+            )
+        old_cart = _cart_map_from_snapshot(old_snapshot)
+        new_cart = _cart_map_from_snapshot(snapshot)
+        for product_id, new_item in new_cart.items():
+            old_item = old_cart.get(product_id)
+            if old_item and _cart_item_changed(old_item, new_item):
+                if old_item.get("unit_price") != new_item.get("unit_price"):
+                    raise HTTPException(status_code=403, detail="Solo supervisores y gerencia pueden modificar precios")
+
+    if is_supervisor_editor and review.get("status") in {"idle", "watching", "blocked", "released"}:
+        if _draft_has_meaningful_supervisor_change(old_snapshot, snapshot):
+            review["status"] = "blocked"
+            review["supervisor_changed"] = True
+            review["blocked_by_user_id"] = user.user_id
+            review["blocked_by_name"] = user.name
+            review["blocked_at"] = now_iso
+            review["watching_by_user_id"] = None
+            review["watching_by_name"] = None
+            review["watching_started_at"] = None
 
     await db.user_drafts.update_one(
-        {"user_id": user.user_id, "flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
         {
             "$set": {
-                "user_id": user.user_id,
+                "user_id": owner_user_id,
+                "owner_user_id": owner_user_id,
+                "owner_name": owner_name,
+                "owner_role": owner_role,
+                "branch_id": branch_id,
                 "flow": normalized_flow,
                 "draft_id": cleaned_draft_id,
                 "name": draft_name,
                 "snapshot": snapshot,
+                "review": review,
                 "updated_at": now_iso,
             },
             "$setOnInsert": {"created_at": now_iso},
@@ -2741,7 +3340,7 @@ async def upsert_user_draft(flow: str, draft_id: str, payload: DraftEntryPayload
     )
 
     saved = await db.user_drafts.find_one(
-        {"user_id": user.user_id, "flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
         {"_id": 0},
     )
     return _serialize_user_draft(saved or {
@@ -2749,8 +3348,9 @@ async def upsert_user_draft(flow: str, draft_id: str, payload: DraftEntryPayload
         "draft_id": cleaned_draft_id,
         "name": draft_name,
         "snapshot": snapshot,
+        "review": review,
         "updated_at": now_iso,
-    })
+    }, viewer=user)
 
 
 @api_router.delete("/drafts/{flow}/{draft_id}")
@@ -2761,8 +3361,28 @@ async def delete_user_draft(flow: str, draft_id: str, request: Request):
     if not cleaned_draft_id:
         raise HTTPException(status_code=400, detail="Draft id is required")
 
+    existing = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
+    )
+    if existing and not _can_access_draft(user, existing):
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este borrador")
+
+    if existing:
+        owner_user_id = str(existing.get("owner_user_id") or existing.get("user_id") or "").strip()
+        review = _normalize_draft_review(existing.get("review"))
+        if (
+            owner_user_id == str(user.user_id or "").strip()
+            and not _is_draft_branch_supervisor(user.role)
+            and review.get("supervisor_changed")
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="No puedes eliminar un borrador revisado por supervisión",
+            )
+
     await db.user_drafts.delete_one(
-        {"user_id": user.user_id, "flow": normalized_flow, "draft_id": cleaned_draft_id}
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id}
     )
 
     state_doc = await db.user_draft_state.find_one(
@@ -2772,8 +3392,9 @@ async def delete_user_draft(flow: str, draft_id: str, request: Request):
     current_active_id = str((state_doc or {}).get("active_draft_id") or "").strip() or None
     next_active_id = current_active_id
     if current_active_id == cleaned_draft_id:
+        visibility_filter = _draft_visibility_filter(user)
         next_draft = await db.user_drafts.find_one(
-            {"user_id": user.user_id, "flow": normalized_flow},
+            {"flow": normalized_flow, **visibility_filter},
             {"_id": 0, "draft_id": 1},
             sort=[("updated_at", -1)],
         )
@@ -2794,6 +3415,116 @@ async def delete_user_draft(flow: str, draft_id: str, request: Request):
         )
 
     return {"status": "deleted", "active_draft_id": next_active_id}
+
+
+async def _get_accessible_draft_doc(flow: str, draft_id: str, user: User) -> Dict[str, Any]:
+    existing = await db.user_drafts.find_one(
+        {"flow": flow, "draft_id": draft_id},
+        {"_id": 0},
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Borrador no encontrado")
+    if not _can_access_draft(user, existing):
+        raise HTTPException(status_code=403, detail="No tienes permiso para acceder a este borrador")
+    return existing
+
+
+@api_router.post("/drafts/{flow}/{draft_id}/review/watch")
+async def watch_user_draft(flow: str, draft_id: str, request: Request):
+    user = await require_auth(request)
+    if not _is_draft_branch_supervisor(user.role):
+        raise HTTPException(status_code=403, detail="Solo supervisión puede revisar borradores de otros vendedores")
+    normalized_flow = _normalize_draft_flow(flow)
+    cleaned_draft_id = str(draft_id or "").strip()
+    existing = await _get_accessible_draft_doc(normalized_flow, cleaned_draft_id, user)
+    owner_user_id = str(existing.get("owner_user_id") or existing.get("user_id") or "").strip()
+    if owner_user_id == str(user.user_id or "").strip():
+        return _serialize_user_draft(existing, viewer=user)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    review = _normalize_draft_review(existing.get("review"))
+    if review.get("status") in {"idle", "released", "watching"}:
+        review["status"] = "watching"
+        review["watching_by_user_id"] = user.user_id
+        review["watching_by_name"] = user.name
+        review["watching_started_at"] = now_iso
+
+    await db.user_drafts.update_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"$set": {"review": review, "updated_at": now_iso}},
+    )
+    saved = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
+    )
+    return _serialize_user_draft(saved or existing, viewer=user)
+
+
+@api_router.post("/drafts/{flow}/{draft_id}/review/unwatch")
+async def unwatch_user_draft(flow: str, draft_id: str, request: Request):
+    user = await require_auth(request)
+    if not _is_draft_branch_supervisor(user.role):
+        raise HTTPException(status_code=403, detail="Solo supervisión puede finalizar una revisión silenciosa")
+    normalized_flow = _normalize_draft_flow(flow)
+    cleaned_draft_id = str(draft_id or "").strip()
+    existing = await _get_accessible_draft_doc(normalized_flow, cleaned_draft_id, user)
+    review = _normalize_draft_review(existing.get("review"))
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if review.get("status") == "watching" and not review.get("supervisor_changed"):
+        review = _default_draft_review()
+    elif review.get("status") == "watching":
+        review["watching_by_user_id"] = None
+        review["watching_by_name"] = None
+        review["watching_started_at"] = None
+    await db.user_drafts.update_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"$set": {"review": review, "updated_at": now_iso}},
+    )
+    saved = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
+    )
+    return _serialize_user_draft(saved or existing, viewer=user)
+
+
+@api_router.post("/drafts/{flow}/{draft_id}/review/release")
+async def release_user_draft(flow: str, draft_id: str, request: Request):
+    user = await require_auth(request)
+    if not _is_draft_branch_supervisor(user.role):
+        raise HTTPException(status_code=403, detail="Solo supervisión puede liberar borradores")
+    normalized_flow = _normalize_draft_flow(flow)
+    cleaned_draft_id = str(draft_id or "").strip()
+    existing = await _get_accessible_draft_doc(normalized_flow, cleaned_draft_id, user)
+    owner_user_id = str(existing.get("owner_user_id") or existing.get("user_id") or "").strip()
+    if owner_user_id == str(user.user_id or "").strip():
+        raise HTTPException(status_code=400, detail="No puedes liberar tu propio borrador")
+
+    snapshot = existing.get("snapshot") if isinstance(existing.get("snapshot"), dict) else {}
+    review = _normalize_draft_review(existing.get("review"))
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    if review.get("supervisor_changed"):
+        review["status"] = "released"
+        review["released_at"] = now_iso
+        review["released_by_user_id"] = user.user_id
+        review["released_by_name"] = user.name
+        review["locked_product_ids"] = _collect_locked_product_ids(snapshot)
+        review["seller_added_product_ids"] = []
+        review["watching_by_user_id"] = None
+        review["watching_by_name"] = None
+        review["watching_started_at"] = None
+    else:
+        review = _default_draft_review()
+
+    await db.user_drafts.update_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"$set": {"review": review, "updated_at": now_iso}},
+    )
+    saved = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
+    )
+    return _serialize_user_draft(saved or existing, viewer=user)
 
 
 @api_router.get("/auth/me")
@@ -2886,7 +3617,8 @@ async def unlock_current_session(payload: SessionUnlockRequest, request: Request
 
 
 @api_router.get("/auth/pin/users")
-async def get_pin_users():
+async def get_pin_users(request: Request):
+    await require_auth(request)
     users = await db.users.find(
         {"is_pin_user": True, "is_active": True},
         {
@@ -2898,6 +3630,7 @@ async def get_pin_users():
             "attendance_pin_index": 0,
             "attendance_pin_last_set_at": 0,
             "login_pin_hash": 0,
+            "login_pin_index": 0,
             "login_pin_last_set_at": 0,
             "kiosk_pin_plain": 0,
             "failed_pin_attempts": 0,
@@ -2928,11 +3661,24 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
         if user_doc:
             await _validate_login_pin_for_user(user_doc, pin, request)
     else:
-        user_doc = None
-        async for u in db.users.find({"is_pin_user": True, "is_active": True}, {"_id": 0}):
-            if verify_pin_hash(pin, get_login_pin_hash(u)):
-                user_doc = u
-                break
+        login_index = compute_pin_index(pin)
+        user_doc = await db.users.find_one(
+            {
+                "is_pin_user": True,
+                "is_active": True,
+                "login_pin_index": login_index,
+            },
+            {"_id": 0},
+        )
+        if user_doc:
+            await _validate_login_pin_for_user(user_doc, pin, request)
+        else:
+            # Legacy compatibility for users missing login_pin_index.
+            async for candidate in db.users.find({"is_pin_user": True, "is_active": True}, {"_id": 0}):
+                if verify_pin_hash(pin, get_login_pin_hash(candidate)):
+                    user_doc = candidate
+                    await _validate_login_pin_for_user(cast(Dict[str, Any], candidate), pin, request)
+                    break
 
     if not user_doc:
         await audit_service.log_pin_auth_attempt(None, request.client.host if request.client else "unknown", False)
@@ -2941,30 +3687,185 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
     return await _create_session_response(user_doc)
 
 
+USER_LIST_PROJECTION: Dict[str, int] = {
+    "_id": 0,
+    "pin_hash": 0,
+    "pin_index": 0,
+    "pin_last_set_at": 0,
+    "attendance_pin_hash": 0,
+    "attendance_pin_index": 0,
+    "attendance_pin_last_set_at": 0,
+    "login_pin_hash": 0,
+    "login_pin_index": 0,
+    "login_pin_last_set_at": 0,
+    "kiosk_pin_plain": 0,
+    "failed_pin_attempts": 0,
+    "pin_lockout_until": 0,
+}
+
+
+def _build_users_directory_query(
+    *,
+    search: str = "",
+    role: str = "",
+    branch_id: str = "",
+    pin_only: bool = True,
+) -> Dict[str, Any]:
+    query: Dict[str, Any] = {"is_active": True}
+    if pin_only:
+        query["is_pin_user"] = True
+
+    role_value = str(role or "").strip()
+    if role_value and role_value != "all":
+        query["role"] = role_value
+
+    branch_value = str(branch_id or "").strip()
+    if branch_value and branch_value != "all":
+        if branch_value == "__none__":
+            query["$or"] = [
+                {"branch_id": None},
+                {"branch_id": ""},
+                {"branch_id": {"$exists": False}},
+            ]
+        else:
+            query["branch_id"] = branch_value
+
+    search_term = str(search or "").strip()
+    if search_term:
+        pattern = re.escape(search_term)
+        regex = {"$regex": pattern, "$options": "i"}
+        search_clause: Dict[str, Any] = {
+            "$or": [
+                {"name": regex},
+                {"last_name": regex},
+                {"phone": regex},
+                {"email": regex},
+            ]
+        }
+        if "$or" in query:
+            branch_clause = {"$or": query.pop("$or")}
+            query["$and"] = [branch_clause, search_clause]
+        else:
+            query.update(search_clause)
+
+    return query
+
+
+async def _get_user_ids_with_permission_overrides() -> set[str]:
+    override_ids: set[str] = set()
+    docs = await db.user_permissions.find(
+        {},
+        {"_id": 0, "user_id": 1, "permissions": 1},
+    ).to_list(5000)
+    for doc in docs:
+        if permission_matrix_has_entries(doc.get("permissions", {})):
+            override_ids.add(str(doc.get("user_id") or ""))
+    return override_ids
+
+
+def _apply_has_overrides_filter(
+    query: Dict[str, Any],
+    override_ids: set[str],
+    has_overrides: Optional[bool],
+) -> Dict[str, Any]:
+    if has_overrides is None:
+        return query
+
+    filtered = dict(query)
+    if has_overrides:
+        if not override_ids:
+            filtered["user_id"] = {"$in": []}
+        else:
+            filtered["user_id"] = {"$in": list(override_ids)}
+    elif override_ids:
+        filtered["user_id"] = {"$nin": list(override_ids)}
+    return filtered
+
+
+async def _enrich_user_directory_rows(users: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    override_ids: set[str] = set()
+    user_ids = [str(row.get("user_id") or "") for row in users if row.get("user_id")]
+    if user_ids:
+        override_docs = await db.user_permissions.find(
+            {"user_id": {"$in": user_ids}},
+            {"_id": 0, "user_id": 1, "permissions": 1},
+        ).to_list(len(user_ids))
+        for doc in override_docs:
+            if permission_matrix_has_entries(doc.get("permissions", {})):
+                override_ids.add(str(doc.get("user_id") or ""))
+
+    rows: List[Dict[str, Any]] = []
+    for doc in users:
+        row = dict(doc)
+        uid = str(row.get("user_id") or "")
+        name = str(row.get("name") or "").strip()
+        last_name = str(row.get("last_name") or "").strip()
+        row["display_name"] = " ".join(part for part in [name, last_name] if part).strip() or uid
+        row["has_user_overrides"] = uid in override_ids
+        rows.append(row)
+    return rows
+
+
 # Basic users list (sanitized) - required by frontend admin pages
 @api_router.get("/users")
 async def list_users(request: Request):
     # Gerencia and Programador may list users in the admin UI
     await require_roles(request, ["gerencia", "programador"])
-    users = await db.users.find(
-        {},
-        {
-            "_id": 0,
-            "pin_hash": 0,
-            "pin_index": 0,
-            "pin_last_set_at": 0,
-            "attendance_pin_hash": 0,
-            "attendance_pin_index": 0,
-            "attendance_pin_last_set_at": 0,
-            "login_pin_hash": 0,
-            "login_pin_index": 0,
-            "login_pin_last_set_at": 0,
-            "kiosk_pin_plain": 0,
-            "failed_pin_attempts": 0,
-            "pin_lockout_until": 0,
-        },
-    ).to_list(1000)
+    users = await db.users.find({}, USER_LIST_PROJECTION).to_list(1000)
     return users
+
+
+@api_router.get("/users/directory")
+async def list_users_directory(
+    request: Request,
+    search: str = "",
+    role: str = "",
+    branch_id: str = "",
+    pin_only: bool = True,
+    has_overrides: Optional[bool] = None,
+    limit: int = 40,
+    offset: int = 0,
+):
+    """Searchable user directory for admin pickers (permissions, assignments, etc.)."""
+    await require_roles(request, ["gerencia", "programador"])
+
+    safe_limit = max(1, min(int(limit or 40), 100))
+    safe_offset = max(0, int(offset or 0))
+    query = _build_users_directory_query(
+        search=search,
+        role=role,
+        branch_id=branch_id,
+        pin_only=pin_only,
+    )
+
+    if has_overrides is not None:
+        override_ids = await _get_user_ids_with_permission_overrides()
+        query = _apply_has_overrides_filter(query, override_ids, has_overrides)
+
+    total = await db.users.count_documents(query)
+    users = (
+        await db.users.find(query, USER_LIST_PROJECTION)
+        .sort([("name", 1), ("last_name", 1)])
+        .skip(safe_offset)
+        .limit(safe_limit)
+        .to_list(safe_limit)
+    )
+    rows = await _enrich_user_directory_rows(users)
+
+    return {
+        "rows": rows,
+        "total": total,
+        "limit": safe_limit,
+        "offset": safe_offset,
+        "has_more": safe_offset + len(rows) < total,
+        "filters": {
+            "search": str(search or "").strip(),
+            "role": str(role or "").strip() or "all",
+            "branch_id": str(branch_id or "").strip() or "all",
+            "pin_only": bool(pin_only),
+            "has_overrides": has_overrides,
+        },
+    }
 
 
 @api_router.put("/users/{user_id}/role")
@@ -4245,6 +5146,7 @@ async def export_full_backup_excel(
 ):
     await require_roles(request, ["gerencia", "programador", "recursos_humanos"])
 
+    Workbook, _ = _get_openpyxl_symbols()
     wb = Workbook()
     default_sheet = wb.active
     if default_sheet is not None:
@@ -4416,6 +5318,7 @@ async def import_backup_excel(
         raise HTTPException(status_code=400, detail="Archivo vacío")
 
     try:
+        _, load_workbook = _get_openpyxl_symbols()
         wb = load_workbook(filename=BytesIO(payload), data_only=True)
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer el archivo Excel")
@@ -5091,11 +5994,22 @@ async def create_approval(payload: Dict[str, Any], request: Request):
 
 
 @api_router.get("/approvals")
-async def list_approvals(request: Request):
-    # Only supervisors/gerencia may review approvals
-    await require_roles(request, ["gerencia", "supervisor"])
-    approvals = await db.approvals.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    return approvals
+async def list_approvals(request: Request, pending_only: bool = True):
+    user = await require_roles(request, ["gerencia", "supervisor", "recursos_humanos"])
+
+    approval_query: Dict[str, Any] = {}
+    if pending_only:
+        approval_query["status"] = "pending"
+
+    legacy_approvals = await db.approvals.find(approval_query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    for row in legacy_approvals:
+        row["source"] = "approval"
+        row["type_label"] = str(row.get("type") or "Solicitud")
+
+    sale_requests = await _list_pending_sale_requests_for_reviewer(user)
+    merged = sale_requests + legacy_approvals
+    merged.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return merged
 
 
 @api_router.put("/approvals/{approval_id}/approve")
@@ -5560,6 +6474,24 @@ async def build_work_order_visibility_query(user: User) -> Dict[str, Any]:
             return seller_filters[0]
         return {"$or": seller_filters}
 
+    if effective_role in {"instalaciones", "electrico", "polarizador", "coordinador_instalaciones", "coordinador_polarizados"}:
+        query: Dict[str, Any] = {}
+        if user.branch_id:
+            query["branch_id"] = user.branch_id
+        if effective_role == "electrico":
+            query["department"] = "electrico"
+            query["technician_id"] = user.user_id
+        elif effective_role == "instalaciones":
+            query["$or"] = [{"department": "instalaciones"}, {"department": {"$exists": False}}]
+            query["technician_id"] = user.user_id
+        elif effective_role == "coordinador_instalaciones":
+            query["$or"] = [{"department": "instalaciones"}, {"department": "electrico"}, {"department": {"$exists": False}}]
+        elif effective_role in {"polarizador", "coordinador_polarizados"}:
+            query["department"] = "polarizados"
+            if effective_role == "polarizador":
+                query["technician_id"] = user.user_id
+        return query
+
     if user.branch_id:
         return {"branch_id": user.branch_id}
     return {"branch_id": "__no_branch__"}
@@ -5638,10 +6570,92 @@ async def _notify_branch_reviewers(
     return created_ids
 
 
-async def _close_sale_request_notifications(request_id: str, request_type: str) -> None:
+async def _notify_pos_discount_reviewers(
+    branch_id: str,
+    message: str,
+    metadata: Optional[Dict[str, Any]] = None,
+    dedupe_seed: Optional[str] = None,
+) -> List[str]:
+    recipients = await db.users.find(
+        {
+            "role": {"$in": ["gerencia", "supervisor"]},
+            "is_active": {"$ne": False},
+            "$or": [
+                {"branch_id": branch_id},
+                {"role": "gerencia"},
+            ],
+        },
+        {"_id": 0, "user_id": 1},
+    ).to_list(200)
+    created_ids: List[str] = []
+    for row in recipients:
+        recipient_id = str(row.get("user_id") or "").strip()
+        if not recipient_id:
+            continue
+        dedupe = f"{dedupe_seed}:{recipient_id}" if dedupe_seed else None
+        notification_id = await create_notification_entry(
+            message=message,
+            recipient_id=recipient_id,
+            metadata=metadata,
+            dedupe_key=dedupe,
+        )
+        created_ids.append(notification_id)
+    return created_ids
+
+
+async def _get_pos_discount_card_request_status(sale_id: str) -> Dict[str, Any]:
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    sale = cast(Dict[str, Any], sale)
+
+    if bool(sale.get("pos_discount_authorized")):
+        return {
+            "status": "approved",
+            "request_id": sale.get("pos_discount_request_id"),
+            "authorized_by": sale.get("pos_discount_authorized_by"),
+            "authorized_by_name": sale.get("pos_discount_authorized_by_name"),
+            "authorized_at": sale.get("pos_discount_authorized_at"),
+            "justification": sale.get("pos_discount_justification_internal"),
+        }
+
+    pending_cursor = db.sale_requests.find(
+        {
+            "sale_id": sale_id,
+            "request_type": "pos_discount_card",
+            "status": "pending",
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).limit(1)
+    pending_rows = await pending_cursor.to_list(1)
+    pending = pending_rows[0] if pending_rows else None
+    if pending:
+        return {
+            "status": "pending",
+            "request_id": pending.get("request_id"),
+            "requested_by": pending.get("requested_by"),
+            "requested_by_name": pending.get("requested_by_name"),
+            "created_at": pending.get("created_at"),
+            "justification": pending.get("reason"),
+        }
+
+    return {"status": "none"}
+
+
+async def _close_sale_request_notifications(
+    request_id: str,
+    request_type: str,
+    *,
+    final_status: str = "approved",
+) -> None:
     if not request_id:
         return
-    notif_type = "sale_edit_request" if request_type == "edit" else "sale_cancel_request"
+    notif_type_by_request = {
+        "edit": "sale_edit_request",
+        "cancel": "sale_cancel_request",
+        "pos_discount_card": "pos_discount_card_request",
+    }
+    notif_type = notif_type_by_request.get(request_type, "sale_edit_request")
     now_iso = _utc_now().isoformat()
     await db.notifications.update_many(
         {
@@ -5653,10 +6667,60 @@ async def _close_sale_request_notifications(request_id: str, request_type: str) 
             "$set": {
                 "read": True,
                 "read_at": now_iso,
-                "metadata.request_status": "approved",
+                "metadata.request_status": final_status,
             }
         },
     )
+
+
+def _sale_request_type_label(request_type: str) -> str:
+    labels = {
+        "edit": "Edición de factura",
+        "cancel": "Anulación de factura",
+        "pos_discount_card": "Descuento + tarjeta en caja",
+    }
+    return labels.get(str(request_type or ""), str(request_type or "Solicitud"))
+
+
+async def _list_pending_sale_requests_for_reviewer(user: User) -> List[Dict[str, Any]]:
+    query: Dict[str, Any] = {"status": "pending"}
+    effective_role = resolve_effective_role(user.role)
+
+    if effective_role == "supervisor":
+        query["request_type"] = "pos_discount_card"
+        query["branch_id"] = str(user.branch_id or "")
+    elif effective_role == "recursos_humanos":
+        query["request_type"] = {"$in": ["edit", "cancel"]}
+    elif effective_role == "gerencia":
+        pass
+    else:
+        return []
+
+    docs = await db.sale_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    rows: List[Dict[str, Any]] = []
+    for doc in docs:
+        req = cast(Dict[str, Any], doc)
+        request_type = str(req.get("request_type") or "")
+        rows.append(
+            {
+                "approval_id": req.get("request_id"),
+                "source": "sale_request",
+                "type": request_type,
+                "type_label": _sale_request_type_label(request_type),
+                "status": "pending",
+                "requester_id": req.get("requested_by"),
+                "requester_name": req.get("requested_by_name"),
+                "reason": req.get("reason"),
+                "created_at": req.get("created_at"),
+                "payload": {
+                    "sale_id": req.get("sale_id"),
+                    "invoice_number": req.get("invoice_number"),
+                    "branch_id": req.get("branch_id"),
+                    "request_id": req.get("request_id"),
+                },
+            }
+        )
+    return rows
 
 
 def _normalize_dispatch_status(status: Optional[str]) -> str:
@@ -5674,12 +6738,70 @@ def _can_transition_dispatch_status(current: str, next_status: str) -> bool:
     return next_status in transitions.get(current, set())
 
 
-async def pick_available_technician(branch_id: Optional[str]) -> Optional[Dict[str, Any]]:
+def _resolve_sale_item_unit_price(user: User, product: Dict[str, Any], item: Dict[str, Any]) -> float:
+    catalog_price = float(product.get("price") or 0.0)
+    raw_unit_price = item.get("unit_price")
+    if raw_unit_price is None:
+        return catalog_price
+    try:
+        requested_price = float(raw_unit_price)
+    except (TypeError, ValueError):
+        return catalog_price
+    if requested_price <= 0:
+        return catalog_price
+    if abs(requested_price - catalog_price) <= 0.0001:
+        return catalog_price
+
+    role = str(user.role or "").strip().lower()
+    if _is_draft_branch_supervisor(role):
+        return requested_price
+    if role == "ventas":
+        if requested_price > catalog_price + 0.0001:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo supervisión puede aumentar precios por encima del catálogo",
+            )
+        return requested_price
+    return catalog_price
+
+
+def _resolve_installation_department(product: Dict[str, Any]) -> str:
+    category = str(product.get("category") or "").lower()
+    if category in {"polarizados", "tint"}:
+        return "polarizados"
+    if category in {"accesorios_electronicos", "audio", "security"} or "electronic" in category:
+        return "electrico"
+    return "instalaciones"
+
+
+async def _get_coordinator_user_ids(roles: List[str], branch_id: Optional[str] = None) -> List[str]:
+    query: Dict[str, Any] = {
+        "is_active": {"$ne": False},
+        "role": {"$in": roles},
+    }
+    if branch_id:
+        query["$or"] = [{"branch_id": branch_id}, {"branch_id": None}, {"branch_id": ""}]
+    users = await db.users.find(query, {"_id": 0, "user_id": 1}).to_list(50)
+    ids = [str(u.get("user_id")) for u in users if u.get("user_id")]
+    if ids:
+        return ids
+    fallback = await db.users.find(
+        {"is_active": {"$ne": False}, "role": {"$in": ["supervisor", "gerencia"]}},
+        {"_id": 0, "user_id": 1},
+    ).to_list(20)
+    return [str(u.get("user_id")) for u in fallback if u.get("user_id")]
+
+
+async def pick_available_technician(
+    branch_id: Optional[str],
+    roles: Optional[List[str]] = None,
+) -> Optional[Dict[str, Any]]:
+    role_filter = roles or ["instalaciones", "electrico", "polarizador", "instalador"]
     tech_query: Dict[str, Any] = {
         "is_active": {"$ne": False},
         "$or": [
             {"is_technician": True},
-            {"role": {"$in": ["instalaciones", "electrico", "polarizador", "instalador"]}},
+            {"role": {"$in": role_filter}},
         ],
     }
     technicians = await db.users.find(
@@ -5793,6 +6915,347 @@ async def create_dispatch_order_from_sale(
     }
     await db.dispatch_orders.insert_one(dispatch_doc)
     return dispatch_doc
+
+
+def _sale_item_needs_installation(item: Dict[str, Any], product: Dict[str, Any]) -> bool:
+    install_type = str(product.get("installation_type") or item.get("installation_type") or "optional").lower()
+    wants_installation = bool(item.get("with_installation", False))
+    if install_type == "required":
+        return True
+    if install_type == "optional" and wants_installation:
+        return True
+    return False
+
+
+async def _build_department_installation_items(
+    sale_doc: Dict[str, Any],
+) -> Dict[str, List[Dict[str, Any]]]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {
+        "instalaciones": [],
+        "electrico": [],
+        "polarizados": [],
+    }
+    for item in cast(List[Dict[str, Any]], sale_doc.get("items") or []):
+        product_id = item.get("product_id")
+        if not product_id:
+            continue
+        product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if not product:
+            continue
+        if not _sale_item_needs_installation(item, product):
+            continue
+        department = _resolve_installation_department(product)
+        grouped[department].append(
+            {
+                "product_id": product_id,
+                "product_name": product.get("name") or item.get("product_name") or "Producto",
+                "quantity": item.get("quantity", 1),
+                "installation_price": product.get("installation_price", 0),
+                "installation_time_minutes": product.get("installation_time_minutes", 60),
+                "category": product.get("category"),
+                "subcategory": product.get("subcategory"),
+                "is_electric": department == "electrico",
+            }
+        )
+    return grouped
+
+
+async def _create_work_order_for_department(
+    sale_doc: Dict[str, Any],
+    customer: Dict[str, Any],
+    department: str,
+    items: List[Dict[str, Any]],
+    vehicle_info: str,
+) -> Optional[str]:
+    if not items:
+        return None
+    sale_id = sale_doc.get("sale_id")
+    existing = await db.work_orders.find_one(
+        {"sale_id": sale_id, "department": department},
+        {"_id": 0, "work_order_id": 1},
+    )
+    if existing and existing.get("work_order_id"):
+        return str(existing.get("work_order_id"))
+
+    total_install_time = sum(int(i.get("installation_time_minutes") or 60) for i in items)
+    work_order_id = f"wo_{uuid.uuid4().hex[:8]}"
+    work_order_doc: Dict[str, Any] = {
+        "work_order_id": work_order_id,
+        "sale_id": sale_id,
+        "invoice_number": sale_doc.get("invoice_number"),
+        "customer_id": customer.get("customer_id"),
+        "customer_name": customer.get("name"),
+        "vehicle_id": sale_doc.get("vehicle_id"),
+        "vehicle_info": vehicle_info,
+        "branch_id": sale_doc.get("branch_id"),
+        "salesperson_id": sale_doc.get("salesperson_id"),
+        "salesperson_name": sale_doc.get("salesperson_name"),
+        "department": department,
+        "assignment_status": "pending_assignment",
+        "items": items,
+        "accessories": items,
+        "status": "pending",
+        "priority": "normal",
+        "estimated_time": total_install_time,
+        "actual_time": None,
+        "technician_id": None,
+        "technician_name": None,
+        "start_time": None,
+        "end_time": None,
+        "quality_score": None,
+        "notes": (
+            f"Orden {department} generada tras cobro de factura "
+            f"{sale_doc.get('invoice_number', 'N/A')}"
+        ),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "auto_generated": True,
+        "awaiting_warehouse_handoff": True,
+    }
+    await db.work_orders.insert_one(work_order_doc)
+    return work_order_id
+
+
+async def _create_tint_order_from_sale(
+    sale_doc: Dict[str, Any],
+    customer: Dict[str, Any],
+    polarizado_items: List[Dict[str, Any]],
+    vehicle_info: Dict[str, Any],
+) -> Optional[str]:
+    if not polarizado_items:
+        return None
+    sale_id = sale_doc.get("sale_id")
+    existing = await db.tint_orders.find_one({"sale_id": sale_id}, {"_id": 0, "tint_order_id": 1})
+    if existing and existing.get("tint_order_id"):
+        return str(existing.get("tint_order_id"))
+
+    windows: List[Dict[str, Any]] = []
+    for item in polarizado_items:
+        product = await db.products.find_one({"product_id": item.get("product_id")}, {"_id": 0})
+        window_options = (product or {}).get("window_options") or []
+        if window_options:
+            for opt in window_options:
+                windows.append(
+                    {
+                        "window_type": opt.get("window_type") or opt.get("type") or "general",
+                        "material": opt.get("material"),
+                        "shade_percentage": opt.get("shade_percentage"),
+                        "width_cm": opt.get("width_cm"),
+                        "height_cm": opt.get("height_cm"),
+                        "status": "pending",
+                        "technician_id": None,
+                        "completed_at": None,
+                    }
+                )
+        else:
+            windows.append(
+                {
+                    "window_type": item.get("product_name") or "polarizado",
+                    "material": None,
+                    "shade_percentage": None,
+                    "width_cm": None,
+                    "height_cm": None,
+                    "status": "pending",
+                    "technician_id": None,
+                    "completed_at": None,
+                }
+            )
+
+    tint_order_id = f"TINT-{uuid.uuid4().hex[:8].upper()}"
+    tint_doc: Dict[str, Any] = {
+        "tint_order_id": tint_order_id,
+        "sale_id": sale_id,
+        "invoice_number": sale_doc.get("invoice_number"),
+        "work_order_id": None,
+        "customer_id": customer.get("customer_id"),
+        "customer_name": customer.get("name"),
+        "vehicle_id": sale_doc.get("vehicle_id"),
+        "vehicle_info": vehicle_info,
+        "salesperson_id": sale_doc.get("salesperson_id"),
+        "salesperson_name": sale_doc.get("salesperson_name"),
+        "windows": windows,
+        "items": polarizado_items,
+        "total_material_used": None,
+        "status": "pending_assignment",
+        "assignment_status": "pending_assignment",
+        "priority": "normal",
+        "notes": f"Polarizado desde factura {sale_doc.get('invoice_number', 'N/A')}",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": None,
+        "completed_at": None,
+        "quality_rating": None,
+        "auto_generated": True,
+    }
+    await db.tint_orders.insert_one(tint_doc)
+    return tint_order_id
+
+
+async def trigger_sale_fulfillment_after_payment(sale_id: str) -> Dict[str, Any]:
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        return {"triggered": False, "reason": "sale_not_found"}
+
+    if sale.get("fulfillment_triggered_at"):
+        return {
+            "triggered": False,
+            "reason": "already_triggered",
+            "dispatch_id": sale.get("dispatch_id"),
+            "work_order_ids": sale.get("work_order_ids") or [],
+            "tint_order_id": sale.get("tint_order_id"),
+        }
+
+    customer = await db.customers.find_one(
+        {"customer_id": sale.get("customer_id")},
+        {"_id": 0},
+    )
+    if not customer:
+        customer = {
+            "customer_id": sale.get("customer_id"),
+            "name": sale.get("customer_name", "Cliente"),
+        }
+
+    vehicle_info_str = ""
+    vehicle_info_obj: Dict[str, Any] = {}
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one(
+            {"vehicle_id": sale.get("vehicle_id")},
+            {"_id": 0},
+        )
+        if vehicle:
+            vehicle_info_str = (
+                f"{vehicle.get('brand')} {vehicle.get('model')} {vehicle.get('year')} "
+                f"- {vehicle.get('plate')}"
+            )
+            vehicle_info_obj = {
+                "plate": vehicle.get("plate"),
+                "brand": vehicle.get("brand"),
+                "model": vehicle.get("model"),
+                "year": vehicle.get("year"),
+                "color": vehicle.get("color"),
+            }
+
+    dispatch_doc = await create_dispatch_order_from_sale(sale, customer)
+    dispatch_id = dispatch_doc.get("dispatch_id") if dispatch_doc else None
+
+    grouped_items = await _build_department_installation_items(sale)
+    work_order_ids: List[str] = []
+    primary_work_order_id: Optional[str] = None
+
+    for department in ("instalaciones", "electrico"):
+        dept_items = grouped_items.get(department) or []
+        wo_id = await _create_work_order_for_department(
+            sale, customer, department, dept_items, vehicle_info_str
+        )
+        if wo_id:
+            work_order_ids.append(wo_id)
+            if not primary_work_order_id:
+                primary_work_order_id = wo_id
+
+    tint_order_id = await _create_tint_order_from_sale(
+        sale,
+        customer,
+        grouped_items.get("polarizados") or [],
+        vehicle_info_obj,
+    )
+
+    has_physical_dispatch = dispatch_id is not None
+    has_installation = bool(work_order_ids) or bool(tint_order_id)
+    if has_physical_dispatch:
+        workflow_state = "dispatch_pending"
+        warehouse_dispatch_status = "pending"
+    elif has_installation:
+        workflow_state = "installation_pending"
+        warehouse_dispatch_status = sale.get("warehouse_dispatch_status") or "not_required"
+    else:
+        workflow_state = "fulfilled"
+        warehouse_dispatch_status = "not_required"
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sale_update: Dict[str, Any] = {
+        "fulfillment_triggered_at": now_iso,
+        "workflow_state": workflow_state,
+        "warehouse_dispatch_status": warehouse_dispatch_status,
+        "paid_at": sale.get("collected_at") or now_iso,
+    }
+    if dispatch_id:
+        sale_update["dispatch_id"] = dispatch_id
+    if primary_work_order_id:
+        sale_update["work_order_id"] = primary_work_order_id
+    if work_order_ids:
+        sale_update["work_order_ids"] = work_order_ids
+    if tint_order_id:
+        sale_update["tint_order_id"] = tint_order_id
+
+    await db.sales.update_one({"sale_id": sale_id}, {"$set": sale_update})
+
+    branch_id = str(sale.get("branch_id") or "")
+    invoice_number = sale.get("invoice_number", "N/A")
+    for coordinator_id in await _get_coordinator_user_ids(
+        ["coordinador_instalaciones", "supervisor"],
+        branch_id,
+    ):
+        if work_order_ids:
+            await create_notification_entry(
+                message=(
+                    f"Factura {invoice_number} pagada: órdenes de instalación "
+                    f"pendientes de asignación ({', '.join(work_order_ids)})"
+                ),
+                recipient_id=coordinator_id,
+                metadata={
+                    "type": "installation_orders_pending_assignment",
+                    "sale_id": sale_id,
+                    "work_order_ids": work_order_ids,
+                    "invoice_number": invoice_number,
+                },
+                dedupe_key=f"installation_pending_assignment:{sale_id}:{coordinator_id}",
+            )
+
+    for coordinator_id in await _get_coordinator_user_ids(
+        ["coordinador_polarizados", "supervisor"],
+        branch_id,
+    ):
+        if tint_order_id:
+            await create_notification_entry(
+                message=(
+                    f"Factura {invoice_number} pagada: orden de polarizado "
+                    f"{tint_order_id} pendiente de asignación"
+                ),
+                recipient_id=coordinator_id,
+                metadata={
+                    "type": "tint_order_pending_assignment",
+                    "sale_id": sale_id,
+                    "tint_order_id": tint_order_id,
+                    "invoice_number": invoice_number,
+                },
+                dedupe_key=f"tint_pending_assignment:{sale_id}:{coordinator_id}",
+            )
+
+    if dispatch_id:
+        for warehouse_user in await db.users.find(
+            {"is_active": {"$ne": False}, "role": "bodegas"},
+            {"_id": 0, "user_id": 1},
+        ).to_list(30):
+            user_id = warehouse_user.get("user_id")
+            if not user_id:
+                continue
+            await create_notification_entry(
+                message=f"Nueva orden de despacho {dispatch_id} para factura {invoice_number}",
+                recipient_id=user_id,
+                metadata={
+                    "type": "dispatch_order_created",
+                    "sale_id": sale_id,
+                    "dispatch_id": dispatch_id,
+                    "invoice_number": invoice_number,
+                },
+                dedupe_key=f"dispatch_created:{dispatch_id}:{user_id}",
+            )
+
+    return {
+        "triggered": True,
+        "dispatch_id": dispatch_id,
+        "work_order_ids": work_order_ids,
+        "tint_order_id": tint_order_id,
+        "workflow_state": workflow_state,
+    }
 
 
 @api_router.get("/sales")
@@ -6006,7 +7469,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
                 )
 
         qty = item["quantity"]
-        price = product["price"]
+        price = _resolve_sale_item_unit_price(user, product, item)
         discount = item.get("discount", 0)
         item_subtotal = (price * qty) * (1 - discount / 100)
 
@@ -6074,13 +7537,14 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         sale_exchange_rate = float(raw_sale_exchange_rate) if raw_sale_exchange_rate is not None else None
     except (TypeError, ValueError):
         sale_exchange_rate = None
-    await _enforce_seller_global_discount_limits(
-        actor=user,
-        subtotal=subtotal,
-        discount_percent=sale_data.discount,
-        currency=sale_currency,
-        exchange_rate=sale_exchange_rate,
-    )
+    if not bool(getattr(sale_data, "supervisor_discount_preapproved", False)):
+        await _enforce_seller_global_discount_limits(
+            actor=user,
+            subtotal=subtotal,
+            discount_percent=sale_data.discount,
+            currency=sale_currency,
+            exchange_rate=sale_exchange_rate,
+        )
     total_discount = subtotal * (sale_data.discount / 100)
     total = subtotal + tax - total_discount
 
@@ -6119,11 +7583,6 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             raise HTTPException(
                 status_code=400, detail="Código de autorización inválido o expirado"
             )
-        # Mark authorization as used
-        await db.manager_authorizations.update_one(
-            {"code": sale_data.manager_authorization_code},
-            {"$set": {"used": True, "used_at": datetime.now(timezone.utc).isoformat()}},
-        )
 
     invoice_number = await generate_invoice_number()
     credit_due_date = None
@@ -6159,7 +7618,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         discount=round(total_discount, 2),
         total=round(total, 2),
         payment_type=sale_data.payment_type,
-        payment_status="pending" if sale_data.payment_type != "cash" else "paid",
+        payment_status="pending",
         payment_method=normalized_payment_method,
         sale_channel=sale_channel,
         credit_due_date=credit_due_date,
@@ -6192,12 +7651,24 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         doc["credit_due_date"] = doc["credit_due_date"].isoformat()
     doc["idempotency_key"] = idempotency_key or None
     doc["cash_session_id"] = selected_cash_session_id
-    doc["warehouse_dispatch_status"] = (
-        "pending" if sale_data.delivery_required else "not_required"
-    )
-    doc["workflow_state"] = (
-        "dispatch_pending" if sale_data.delivery_required else "created"
-    )
+    doc["vehicle_id"] = sale_data.vehicle_id
+    doc["invoice_state"] = "open"
+    doc["amount_paid"] = 0.0
+    doc["amount_pending"] = round(total, 2)
+    doc["warehouse_dispatch_status"] = "awaiting_payment"
+    doc["workflow_state"] = "awaiting_payment"
+    doc["inventory_adjustments"] = inventory_updates
+    if items_requiring_manager_auth and sale_data.manager_authorization_code:
+        await db.manager_authorizations.update_one(
+            {"code": sale_data.manager_authorization_code},
+            {
+                "$set": {
+                    "used": True,
+                    "used_at": datetime.now(timezone.utc).isoformat(),
+                    "sale_id": doc.get("sale_id"),
+                }
+            },
+        )
     await db.sales.insert_one(doc)
 
     branch_info = await get_branch_with_policy(user_branch_id)
@@ -6337,16 +7808,24 @@ async def create_sale(sale_data: SaleCreate, request: Request):
 
     # Mark samples as consumed when used in sale
     for usage in sample_usage:
-        if usage.get("sample_id"):
-            await db.sample_requests.update_one(
-                {"sample_id": usage.get("sample_id")},
-                {
-                    "$set": {
-                        "status": "consumed",
-                        "sale_id": doc.get("sale_id"),
-                    }
-                },
-            )
+        sample_id = usage.get("sample_id")
+        if not sample_id:
+            continue
+        sample_doc = await db.sample_requests.find_one(
+            {"sample_id": sample_id},
+            {"_id": 0, "status": 1},
+        )
+        previous_status = (sample_doc or {}).get("status") or "delivered"
+        await db.sample_requests.update_one(
+            {"sample_id": sample_id},
+            {
+                "$set": {
+                    "status": "consumed",
+                    "sale_id": doc.get("sale_id"),
+                    "status_before_consumption": previous_status,
+                }
+            },
+        )
 
     # Update credit balance
     if sale_data.payment_type == "credit":
@@ -6361,104 +7840,13 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             {"quotation_id": sale_data.quotation_id}, {"$set": {"status": "converted"}}
         )
 
-    # AUTO-GENERATE WORK ORDER if products require installation
-    work_order_id = None
-    dispatch_id = None
-    if needs_work_order:
-        # Get vehicle if provided
-        vehicle_info = ""
-        if sale_data.vehicle_id:
-            vehicle = await db.vehicles.find_one(
-                {"vehicle_id": sale_data.vehicle_id}, {"_id": 0}
-            )
-            if vehicle:
-                vehicle_info = f"{vehicle['brand']} {vehicle['model']} {vehicle['year']} - {vehicle['plate']}"
-
-        total_install_time = sum(
-            i["installation_time_minutes"] for i in items_requiring_installation
-        )
-
-        assigned_technician = await pick_available_technician(user_branch_id)
-
-        work_order_doc = {
-            "work_order_id": f"wo_{uuid.uuid4().hex[:8]}",
-            "sale_id": doc["sale_id"],
-            "invoice_number": invoice_number,
-            "customer_id": customer["customer_id"],
-            "customer_name": customer["name"],
-            "vehicle_id": sale_data.vehicle_id,
-            "vehicle_info": vehicle_info,
-            "branch_id": user_branch_id,
-            "items": items_requiring_installation,
-            "status": "pending",
-            "priority": "normal",
-            "estimated_time": total_install_time,
-            "actual_time": None,
-            "technician_id": assigned_technician.get("user_id") if assigned_technician else None,
-            "technician_name": assigned_technician.get("name") if assigned_technician else None,
-            "start_time": None,
-            "end_time": None,
-            "quality_score": None,
-            "notes": f"Orden generada automáticamente desde venta {invoice_number}",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "auto_generated": True,
-        }
-
-        await db.work_orders.insert_one(work_order_doc)
-        work_order_id = work_order_doc["work_order_id"]
-
-        if assigned_technician and assigned_technician.get("user_id"):
-            await create_notification_entry(
-                message=(
-                    f"Nueva orden de instalación {work_order_id} asignada: "
-                    f"venta {invoice_number} para {customer.get('name', 'cliente')}"
-                ),
-                recipient_id=assigned_technician.get("user_id"),
-                metadata={
-                    "type": "work_order_assigned",
-                    "work_order_id": work_order_id,
-                    "sale_id": doc.get("sale_id"),
-                    "invoice_number": invoice_number,
-                },
-                dedupe_key=f"work_order_assigned:{work_order_id}",
-            )
-        elif doc.get("salesperson_id"):
-            await create_notification_entry(
-                message=(
-                    f"Orden {work_order_id} creada sin técnico disponible para "
-                    f"la venta {invoice_number}."
-                ),
-                recipient_id=doc.get("salesperson_id"),
-                metadata={
-                    "type": "work_order_unassigned",
-                    "work_order_id": work_order_id,
-                    "sale_id": doc.get("sale_id"),
-                    "invoice_number": invoice_number,
-                },
-                dedupe_key=f"work_order_unassigned:{work_order_id}",
-            )
-
-        # Update sale with work order reference
-        await db.sales.update_one(
-            {"sale_id": doc["sale_id"]}, {"$set": {"work_order_id": work_order_id}}
-        )
-        doc["work_order_id"] = work_order_id
-
-    dispatch_doc = await create_dispatch_order_from_sale(doc, customer)
-    if dispatch_doc:
-        dispatch_id = dispatch_doc.get("dispatch_id")
-        await db.sales.update_one(
-            {"sale_id": doc["sale_id"]},
-            {"$set": {"dispatch_id": dispatch_id}},
-        )
-        doc["dispatch_id"] = dispatch_id
-
     return {
         **doc,
-        "work_order_created": work_order_id is not None,
-        "work_order_id": work_order_id,
-        "dispatch_created": dispatch_id is not None,
-        "dispatch_id": dispatch_id,
+        "work_order_created": False,
+        "work_order_id": None,
+        "dispatch_created": False,
+        "dispatch_id": None,
+        "awaiting_cashier_payment": True,
     }
 
 
@@ -6605,6 +7993,15 @@ async def _normalize_mixed_payments(
             methods_summary[method] = {"NIO": 0.0, "USD": 0.0}
         methods_summary[method][currency] = _round2(methods_summary[method].get(currency, 0.0) + source_amount)
 
+        card_meta = _validate_card_payment_metadata(
+            method=method,
+            card_type=row.card_type,
+            bank_name=row.bank_name,
+            transaction_number=row.transaction_number,
+            reference=row.referencia_bancaria,
+            line_label=f"pago mixto #{idx + 1}",
+        )
+
         normalized_rows.append(
             {
                 "line_no": idx + 1,
@@ -6615,6 +8012,7 @@ async def _normalize_mixed_payments(
                 "amount_nio": _round2(amount_nio),
                 "reference": row.referencia_bancaria,
                 "audit_note": row.notas_auditoria,
+                **card_meta,
             }
         )
 
@@ -6640,6 +8038,18 @@ async def _enforce_pos_discount_policy(
             "sale": sale,
             "warning": None,
             "audit_note": None,
+        }
+
+    if bool(sale.get("pos_discount_authorized")):
+        audit_note = (
+            "POS_DISCOUNT_PREAPPROVED|"
+            f"autorizado_por={sale.get('pos_discount_authorized_by')}|"
+            f"request_id={sale.get('pos_discount_request_id')}"
+        )
+        return {
+            "sale": sale,
+            "warning": None,
+            "audit_note": audit_note,
         }
 
     if authorization and authorization.autorizado_por and authorization.justificacion_interna:
@@ -6668,12 +8078,29 @@ async def _enforce_pos_discount_policy(
         }
 
     if not force_remove_discount:
+        pending_req = await db.sale_requests.find_one(
+            {
+                "sale_id": sale.get("sale_id"),
+                "request_type": "pos_discount_card",
+                "status": "pending",
+            },
+            {"_id": 0, "request_id": 1},
+        )
+        if pending_req:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "POS_DISCOUNT_PENDING",
+                    "message": "Hay una solicitud de autorización pendiente. Espera aprobación de gerencia o supervisor.",
+                    "request_id": pending_req.get("request_id"),
+                },
+            )
         raise HTTPException(
             status_code=409,
             detail={
                 "code": "POS_DISCOUNT_CONFLICT",
-                "message": "El pago con tarjeta anula el descuento. ¿Desea proceder o requiere autorización de gerencia?",
-                "requires": ["force_remove_discount=true", "autorizacion_descuento_pos"],
+                "message": "El pago con tarjeta y descuento requiere solicitud aprobada por gerencia o supervisor.",
+                "requires": ["force_remove_discount=true", "solicitud_descuento_tarjeta_aprobada"],
             },
         )
 
@@ -6724,6 +8151,78 @@ async def _enforce_pos_discount_policy(
     }
 
 
+async def _resolve_supervisor_or_gerencia_by_pin(
+    pin: str,
+    request: Request,
+    *,
+    sale_branch_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    normalized_pin = str(pin or "").strip()
+    if not is_valid_login_pin(normalized_pin):
+        raise HTTPException(status_code=400, detail="PIN inválido")
+
+    approver_doc: Optional[Dict[str, Any]] = None
+    login_index = compute_pin_index(normalized_pin)
+    approver_doc = await db.users.find_one(
+        {
+            "is_pin_user": True,
+            "is_active": True,
+            "login_pin_index": login_index,
+            "role": {"$in": ["supervisor", "gerencia"]},
+        },
+        {"_id": 0},
+    )
+    if approver_doc:
+        await _validate_login_pin_for_user(cast(Dict[str, Any], approver_doc), normalized_pin, request)
+    else:
+        async for candidate in db.users.find(
+            {"is_pin_user": True, "is_active": True, "role": {"$in": ["supervisor", "gerencia"]}},
+            {"_id": 0},
+        ):
+            if verify_pin_hash(normalized_pin, get_login_pin_hash(candidate)):
+                await _validate_login_pin_for_user(cast(Dict[str, Any], candidate), normalized_pin, request)
+                approver_doc = candidate
+                break
+
+    if not approver_doc:
+        raise HTTPException(status_code=401, detail="PIN incorrecto o sin permisos de autorización")
+
+    role = str(approver_doc.get("role") or "")
+    if role == "supervisor" and sale_branch_id:
+        if str(approver_doc.get("branch_id") or "") != str(sale_branch_id):
+            raise HTTPException(status_code=403, detail="El supervisor autorizador debe pertenecer a la misma sucursal")
+
+    return cast(Dict[str, Any], approver_doc)
+
+
+async def _get_sale_payment_totals(sale: Dict[str, Any]) -> Dict[str, float]:
+    sale_id = str(sale.get("sale_id") or "")
+    net_to_collect = sale.get("net_to_collect")
+    due = _round2(
+        _coerce_float(net_to_collect if net_to_collect is not None else sale.get("total"))
+    )
+
+    invoice_paid_docs = await db.invoice_payments.find(
+        {"sale_id": sale_id, "status": "paid"},
+        {"_id": 0, "amount": 1},
+    ).to_list(2000)
+    invoice_paid = _round2(sum(float(p.get("amount") or 0.0) for p in invoice_paid_docs))
+
+    credit_paid = 0.0
+    if str(sale.get("payment_type") or "").lower() in {"credit", "credito"}:
+        credit_paid_docs = await db.credit_payments.find(
+            {"sale_id": sale_id},
+            {"_id": 0, "amount": 1},
+        ).to_list(2000)
+        credit_paid = _round2(sum(float(p.get("amount") or 0.0) for p in credit_paid_docs))
+
+    paid_from_docs = _round2(invoice_paid + credit_paid)
+    paid_stored = _round2(_coerce_float(sale.get("amount_paid")))
+    paid = _round2(max(paid_from_docs, paid_stored))
+    pending = _round2(max(due - paid, 0.0))
+    return {"due": due, "paid": paid, "pending": pending}
+
+
 def _can_collect_sale_for_user(user: User, sale: Dict[str, Any]) -> bool:
     if user.role == "gerencia":
         return True
@@ -6742,22 +8241,106 @@ def _sale_effective_state(sale: Dict[str, Any]) -> str:
     return "open"
 
 
-def _cashier_invoice_summary(sale: Dict[str, Any]) -> Dict[str, Any]:
-    due = _round2(float(sale.get("net_to_collect") if sale.get("net_to_collect") is not None else sale.get("total") or 0.0))
-    amount_paid = _round2(float(sale.get("amount_paid") or 0.0))
-    amount_pending = _round2(float(sale.get("amount_pending") if sale.get("amount_pending") is not None else max(due - amount_paid, 0.0)))
+def _sale_items_preview_for_cashier(sale: Dict[str, Any], limit: int = 3) -> Dict[str, Any]:
+    items = cast(List[Dict[str, Any]], sale.get("items") or [])
+    preview_names: List[str] = []
+    items_detail: List[Dict[str, Any]] = []
+    installation_count = 0
+    for item in items:
+        qty = max(1, int(item.get("quantity") or 1))
+        name = str(item.get("product_name") or item.get("description") or "Producto")
+        items_detail.append({"name": name, "quantity": qty})
+        if item.get("with_installation") or str(item.get("installation_type") or "") == "required":
+            installation_count += 1
+    for item in items[:limit]:
+        qty = max(1, int(item.get("quantity") or 1))
+        name = str(item.get("product_name") or item.get("description") or "Producto")
+        preview_names.append(f"{name} ×{qty}" if qty > 1 else name)
+    total = len(items)
+    extra = max(0, total - limit)
+    preview = " · ".join(preview_names)
+    if extra:
+        preview = f"{preview} +{extra} más" if preview else f"+{extra} más"
+    return {
+        "item_count": total,
+        "items_preview": preview or "Sin artículos",
+        "items_detail": items_detail,
+        "installation_item_count": installation_count,
+        "has_installation": installation_count > 0 or bool(sale.get("has_installation")),
+    }
+
+
+def _vehicle_fields_for_cashier(vehicle: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    if not vehicle:
+        return {"vehicle_plate": "", "vehicle_label": ""}
+    plate = str(vehicle.get("plate") or "").strip()
+    label_parts = [
+        str(vehicle.get(key) or "").strip()
+        for key in ("brand", "model", "year")
+        if str(vehicle.get(key) or "").strip()
+    ]
+    vehicle_label = " ".join(label_parts)
+    if plate and vehicle_label:
+        vehicle_label = f"{vehicle_label} · {plate}"
+    elif plate:
+        vehicle_label = plate
+    return {
+        "vehicle_plate": plate,
+        "vehicle_label": vehicle_label,
+    }
+
+
+def _cashier_invoice_summary(
+    sale: Dict[str, Any],
+    vehicle: Optional[Dict[str, Any]] = None,
+    customer: Optional[Dict[str, Any]] = None,
+    branch: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    net_to_collect = sale.get("net_to_collect")
+    due = _round2(
+        _coerce_float(net_to_collect if net_to_collect is not None else sale.get("total"))
+    )
+    amount_paid = _round2(_coerce_float(sale.get("amount_paid")))
+    amount_pending_raw = sale.get("amount_pending")
+    amount_pending = _round2(
+        _coerce_float(
+            amount_pending_raw if amount_pending_raw is not None else max(due - amount_paid, 0.0)
+        )
+    )
     state = _sale_effective_state(sale)
+    items_meta = _sale_items_preview_for_cashier(sale)
+    vehicle_fields = _vehicle_fields_for_cashier(vehicle)
+    dispatch_status = str(sale.get("warehouse_dispatch_status") or "").strip().lower()
+    dispatch_completed_at = sale.get("warehouse_dispatch_completed_at")
+    has_installation = bool(items_meta.get("has_installation"))
+    needs_warehouse_dispatch = (
+        has_installation
+        and not dispatch_completed_at
+        and dispatch_status not in {"completed", "not_required"}
+    )
 
     return {
         "sale_id": sale.get("sale_id"),
         "invoice_number": sale.get("invoice_number"),
         "customer_id": sale.get("customer_id"),
         "customer_name": sale.get("customer_name"),
+        "customer_phone": str((customer or {}).get("phone") or "").strip(),
         "branch_id": sale.get("branch_id"),
+        "branch_name": str((branch or {}).get("name") or sale.get("branch_id") or "").strip(),
+        "vehicle_id": sale.get("vehicle_id"),
+        **vehicle_fields,
+        "salesperson_id": sale.get("salesperson_id"),
+        "salesperson_name": sale.get("salesperson_name"),
         "created_at": sale.get("created_at"),
         "payment_status": sale.get("payment_status"),
+        "payment_type": sale.get("payment_type"),
+        "currency": sale.get("currency") or "NIO",
         "invoice_state": state,
         "payment_method": sale.get("payment_method") or sale.get("payment_type"),
+        "warehouse_dispatch_status": dispatch_status or None,
+        "warehouse_dispatch_completed_at": dispatch_completed_at,
+        "needs_warehouse_dispatch": needs_warehouse_dispatch,
+        **items_meta,
         "subtotal": _round2(float(sale.get("subtotal") or 0.0)),
         "discount": _round2(float(sale.get("discount") or 0.0)),
         "discounts_applied_amount": _round2(float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0)),
@@ -6771,6 +8354,277 @@ def _cashier_invoice_summary(sale: Dict[str, Any]) -> Dict[str, Any]:
         "cancelled_at": sale.get("cancelled_at"),
         "cancelled_by_name": sale.get("cancelled_by_name"),
         "cancel_reason": sale.get("cancel_reason"),
+        "pos_discount_authorized": bool(sale.get("pos_discount_authorized")),
+        "pos_discount_request_status": sale.get("pos_discount_request_status"),
+        "pos_discount_request_id": sale.get("pos_discount_request_id"),
+    }
+
+
+@api_router.get("/caja/facturas/{sale_id}/estado-autorizacion-descuento-tarjeta")
+async def get_cashier_pos_discount_auth_status(sale_id: str, request: Request):
+    await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    return await _get_pos_discount_card_request_status(sale_id)
+
+
+@api_router.post("/caja/facturas/{sale_id}/solicitud-descuento-tarjeta")
+async def request_cashier_pos_discount_authorization(
+    sale_id: str,
+    payload: CajaPosDiscountRequestPayload,
+    request: Request,
+):
+    user = await require_roles(request, ["cajero", "supervisor", "gerencia"])
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    sale = cast(Dict[str, Any], sale)
+
+    if not _can_collect_sale_for_user(user, sale):
+        raise HTTPException(status_code=403, detail="No autorizado para solicitar autorización de esta factura")
+
+    discount_amount = _round2(float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0))
+    if discount_amount <= 0:
+        raise HTTPException(status_code=400, detail="La factura no tiene descuento aplicado")
+
+    justification = str(payload.justificacion_interna or "").strip()
+    if len(justification) < 20:
+        raise HTTPException(status_code=400, detail="La justificación debe tener al menos 20 caracteres")
+
+    if bool(sale.get("pos_discount_authorized")):
+        return {
+            "message": "La factura ya tiene autorización de descuento con tarjeta",
+            "status": "approved",
+        }
+
+    existing_pending = await db.sale_requests.find_one(
+        {
+            "sale_id": sale_id,
+            "request_type": "pos_discount_card",
+            "status": "pending",
+        },
+        {"_id": 0, "request_id": 1},
+    )
+    if existing_pending:
+        return {
+            "message": "Ya existe una solicitud pendiente para esta factura",
+            "status": "pending",
+            "request_id": existing_pending.get("request_id"),
+        }
+
+    request_id = f"sreq_{uuid.uuid4().hex[:12]}"
+    now_iso = _utc_now().isoformat()
+    request_doc = {
+        "request_id": request_id,
+        "sale_id": sale_id,
+        "invoice_number": sale.get("invoice_number"),
+        "request_type": "pos_discount_card",
+        "reason": justification,
+        "status": "pending",
+        "branch_id": sale.get("branch_id"),
+        "requested_by": user.user_id,
+        "requested_by_name": user.name,
+        "created_at": now_iso,
+        "resolved_at": None,
+        "resolved_by": None,
+        "show_to_customer": bool(payload.mostrar_al_cliente),
+    }
+    await db.sale_requests.insert_one(request_doc)
+
+    await db.sales.update_one(
+        {"sale_id": sale_id},
+        {
+            "$set": {
+                "pos_discount_request_id": request_id,
+                "pos_discount_request_status": "pending",
+                "updated_at": now_iso,
+            }
+        },
+    )
+
+    await _notify_pos_discount_reviewers(
+        branch_id=str(sale.get("branch_id") or ""),
+        message=(
+            f"Solicitud caja: cobrar con tarjeta manteniendo descuento en "
+            f"{sale.get('invoice_number') or sale_id} ({user.name})"
+        ),
+        metadata={
+            "type": "pos_discount_card_request",
+            "request_id": request_id,
+            "sale_id": sale_id,
+            "invoice_number": sale.get("invoice_number"),
+            "branch_id": sale.get("branch_id"),
+            "request_status": "pending",
+            "requested_by": user.user_id,
+            "requested_by_name": user.name,
+        },
+        dedupe_seed=f"pos_discount_card_request:{request_id}",
+    )
+
+    return {
+        "message": "Solicitud enviada a gerencia/supervisor",
+        "status": "pending",
+        "request_id": request_id,
+    }
+
+
+@api_router.get("/caja/clientes-pendientes")
+async def search_cashier_pending_customers(
+    request: Request,
+    search: str = "",
+    branch_id: Optional[str] = None,
+    limit: int = 50,
+):
+    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    effective_role = resolve_effective_role(user.role)
+    safe_limit = max(1, min(int(limit or 50), 200))
+    search_value = str(search or "").strip()
+
+    effective_branch = str(branch_id or user.branch_id or "").strip()
+    if effective_role in {"supervisor", "cajero"}:
+        effective_branch = str(user.branch_id or "")
+    if not effective_branch and effective_role != "gerencia":
+        raise HTTPException(status_code=400, detail="branch_id requerido")
+
+    customer_ids: set[str] = set()
+    if search_value:
+        customer_docs = await db.customers.find(
+            {
+                "is_active": True,
+                "$or": [
+                    {"name": {"$regex": search_value, "$options": "i"}},
+                    {"phone": {"$regex": search_value, "$options": "i"}},
+                    {"email": {"$regex": search_value, "$options": "i"}},
+                    {"customer_id": {"$regex": search_value, "$options": "i"}},
+                ],
+            },
+            {"_id": 0, "customer_id": 1},
+        ).to_list(200)
+        customer_ids.update(str(doc.get("customer_id")) for doc in customer_docs if doc.get("customer_id"))
+
+        vehicle_docs = await db.vehicles.find(
+            {"plate": {"$regex": search_value, "$options": "i"}},
+            {"_id": 0, "customer_id": 1},
+        ).to_list(100)
+        customer_ids.update(str(doc.get("customer_id")) for doc in vehicle_docs if doc.get("customer_id"))
+
+    sales_query: Dict[str, Any] = {
+        "invoice_state": {"$ne": "cancelled"},
+        "payment_status": {"$in": ["pending", "partial"]},
+    }
+    if effective_branch:
+        sales_query["branch_id"] = effective_branch
+
+    if search_value:
+        sale_search_filter: Dict[str, Any] = {
+            "$or": [
+                {"invoice_number": {"$regex": search_value, "$options": "i"}},
+                {"customer_name": {"$regex": search_value, "$options": "i"}},
+                {"sale_id": {"$regex": search_value, "$options": "i"}},
+            ]
+        }
+        if customer_ids:
+            sale_search_filter["$or"].append({"customer_id": {"$in": list(customer_ids)}})
+        sales_query = {"$and": [sales_query, sale_search_filter]}
+    elif customer_ids:
+        sales_query["customer_id"] = {"$in": list(customer_ids)}
+
+    sales_docs = await db.sales.find(
+        sales_query,
+        {
+            "_id": 0,
+            "sale_id": 1,
+            "invoice_number": 1,
+            "customer_id": 1,
+            "customer_name": 1,
+            "branch_id": 1,
+            "payment_status": 1,
+            "payment_type": 1,
+            "payment_method": 1,
+            "total": 1,
+            "net_to_collect": 1,
+            "amount_paid": 1,
+            "amount_pending": 1,
+            "discount": 1,
+            "discounts_applied_amount": 1,
+            "pos_discount_authorized": 1,
+            "pos_discount_request_status": 1,
+            "created_at": 1,
+            "credit_due_date": 1,
+            "vehicle_id": 1,
+        },
+    ).sort("created_at", -1).to_list(500)
+
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for sale_doc in sales_docs:
+        sale = cast(Dict[str, Any], sale_doc)
+        totals = await _get_sale_payment_totals(sale)
+        if totals["pending"] <= 0:
+            continue
+
+        customer_id = str(sale.get("customer_id") or "")
+        if not customer_id:
+            continue
+
+        if customer_id not in grouped:
+            customer = await db.customers.find_one(
+                {"customer_id": customer_id},
+                {"_id": 0, "customer_id": 1, "name": 1, "phone": 1, "credit_balance": 1},
+            )
+            grouped[customer_id] = {
+                "customer_id": customer_id,
+                "customer_name": str((customer or {}).get("name") or sale.get("customer_name") or "Cliente"),
+                "customer_phone": str((customer or {}).get("phone") or ""),
+                "credit_balance": _round2(float((customer or {}).get("credit_balance") or 0.0)),
+                "pending_total": 0.0,
+                "pending_sales": [],
+            }
+
+        payment_type = str(sale.get("payment_type") or "").lower()
+        account_kind = "credito" if payment_type in {"credit", "credito"} else "pendiente"
+        vehicle_fields = {}
+        vehicle_id = sale.get("vehicle_id")
+        if vehicle_id:
+            vehicle = await db.vehicles.find_one(
+                {"vehicle_id": vehicle_id},
+                {"_id": 0, "plate": 1, "brand": 1, "model": 1},
+            )
+            vehicle_fields = _vehicle_fields_for_cashier(cast(Optional[Dict[str, Any]], vehicle))
+
+        grouped[customer_id]["pending_sales"].append(
+            {
+                "sale_id": sale.get("sale_id"),
+                "invoice_number": sale.get("invoice_number"),
+                "account_kind": account_kind,
+                "payment_status": sale.get("payment_status"),
+                "payment_type": sale.get("payment_type"),
+                "payment_method": sale.get("payment_method") or sale.get("payment_type"),
+                "amount_due": totals["due"],
+                "amount_paid": totals["paid"],
+                "amount_pending": totals["pending"],
+                "net_to_collect": totals["due"],
+                "discounts_applied_amount": _round2(
+                    float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0)
+                ),
+                "pos_discount_authorized": bool(sale.get("pos_discount_authorized")),
+                "pos_discount_request_status": sale.get("pos_discount_request_status"),
+                "created_at": sale.get("created_at"),
+                "credit_due_date": sale.get("credit_due_date"),
+                **vehicle_fields,
+            }
+        )
+        grouped[customer_id]["pending_total"] = _round2(
+            grouped[customer_id]["pending_total"] + totals["pending"]
+        )
+
+    customers = sorted(
+        grouped.values(),
+        key=lambda row: (-float(row.get("pending_total") or 0.0), str(row.get("customer_name") or "")),
+    )[:safe_limit]
+
+    return {
+        "search": search_value,
+        "branch_id": effective_branch or None,
+        "count": len(customers),
+        "customers": customers,
     }
 
 
@@ -6803,7 +8657,9 @@ async def list_cashier_invoices(
     query: Dict[str, Any] = {}
     if effective_role == "supervisor":
         query["branch_id"] = str(user.branch_id or "")
-    elif effective_role in {"ventas", "cajero"}:
+    elif effective_role == "cajero":
+        query["branch_id"] = str(user.branch_id or "")
+    elif effective_role == "ventas":
         query["$or"] = [
             {"salesperson_id": user.user_id},
             {"seller_id": user.user_id},
@@ -6844,10 +8700,18 @@ async def list_cashier_invoices(
         "customer_id": 1,
         "customer_name": 1,
         "branch_id": 1,
+        "vehicle_id": 1,
+        "salesperson_id": 1,
+        "salesperson_name": 1,
         "created_at": 1,
         "payment_status": 1,
         "payment_method": 1,
         "payment_type": 1,
+        "currency": 1,
+        "has_installation": 1,
+        "warehouse_dispatch_status": 1,
+        "warehouse_dispatch_completed_at": 1,
+        "items": 1,
         "subtotal": 1,
         "discount": 1,
         "discounts_applied_amount": 1,
@@ -6864,10 +8728,62 @@ async def list_cashier_invoices(
         "cancelled_at": 1,
         "cancelled_by_name": 1,
         "cancel_reason": 1,
+        "pos_discount_authorized": 1,
+        "pos_discount_request_status": 1,
+        "pos_discount_request_id": 1,
     }
 
     docs = await db.sales.find(query, projection).sort("created_at", -1).to_list(safe_limit)
-    rows = [_cashier_invoice_summary(cast(Dict[str, Any], d)) for d in docs]
+
+    vehicle_ids = list({str(doc.get("vehicle_id")) for doc in docs if doc.get("vehicle_id")})
+    customer_ids = list({str(doc.get("customer_id")) for doc in docs if doc.get("customer_id")})
+    branch_ids = list({str(doc.get("branch_id")) for doc in docs if doc.get("branch_id")})
+
+    vehicle_map: Dict[str, Dict[str, Any]] = {}
+    if vehicle_ids:
+        vehicle_docs = await db.vehicles.find(
+            {"vehicle_id": {"$in": vehicle_ids}},
+            {"_id": 0, "vehicle_id": 1, "plate": 1, "brand": 1, "model": 1, "year": 1},
+        ).to_list(len(vehicle_ids))
+        vehicle_map = {
+            str(doc.get("vehicle_id")): cast(Dict[str, Any], doc)
+            for doc in vehicle_docs
+            if doc.get("vehicle_id")
+        }
+
+    customer_map: Dict[str, Dict[str, Any]] = {}
+    if customer_ids:
+        customer_docs = await db.customers.find(
+            {"customer_id": {"$in": customer_ids}},
+            {"_id": 0, "customer_id": 1, "phone": 1},
+        ).to_list(len(customer_ids))
+        customer_map = {
+            str(doc.get("customer_id")): cast(Dict[str, Any], doc)
+            for doc in customer_docs
+            if doc.get("customer_id")
+        }
+
+    branch_map: Dict[str, Dict[str, Any]] = {}
+    if branch_ids:
+        branch_docs = await db.branches.find(
+            {"branch_id": {"$in": branch_ids}},
+            {"_id": 0, "branch_id": 1, "name": 1},
+        ).to_list(len(branch_ids))
+        branch_map = {
+            str(doc.get("branch_id")): cast(Dict[str, Any], doc)
+            for doc in branch_docs
+            if doc.get("branch_id")
+        }
+
+    rows = [
+        _cashier_invoice_summary(
+            cast(Dict[str, Any], doc),
+            vehicle_map.get(str(doc.get("vehicle_id") or "")),
+            customer_map.get(str(doc.get("customer_id") or "")),
+            branch_map.get(str(doc.get("branch_id") or "")),
+        )
+        for doc in docs
+    ]
 
     return {
         "tab": target_state,
@@ -6895,39 +8811,42 @@ async def collect_cashier_invoice(sale_id: str, payload: CashierInvoiceCollectRe
     if str(sale.get("invoice_state") or "").lower() == "cancelled":
         raise HTTPException(status_code=400, detail="La factura está anulada")
 
-    has_card = any(_is_card_method(p.metodo) for p in payload.pagos)
+    has_card = any(_is_card_method(p.metodo) for p in payload.pagos) or _is_card_method(payload.payment_method)
     discount_amount = _round2(float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0))
-    auth = payload.autorizacion_descuento_pos
     if has_card and discount_amount > 0 and not payload.force_remove_discount:
-        if not auth:
+        if not bool(sale.get("pos_discount_authorized")):
+            auth_status = await _get_pos_discount_card_request_status(sale_id)
+            if auth_status.get("status") == "pending":
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "POS_DISCOUNT_PENDING",
+                        "message": "Solicitud de autorización pendiente. Espera aprobación de gerencia o supervisor.",
+                        "request_id": auth_status.get("request_id"),
+                    },
+                )
             raise HTTPException(
                 status_code=409,
                 detail={
                     "code": "POS_DISCOUNT_CONFLICT",
-                    "message": "Con tarjeta y descuento activo requiere autorización de supervisor/gerencia o remover descuento.",
+                    "message": "Con tarjeta y descuento activo debes enviar solicitud a gerencia/supervisor o remover descuento.",
                 },
             )
-
-        authorized_user_id = str(auth.autorizado_por or "").strip()
-        if not authorized_user_id:
-            raise HTTPException(status_code=400, detail="Debe indicar quién autoriza el descuento POS")
-        if len(str(auth.justificacion_interna or "").strip()) < 20:
-            raise HTTPException(status_code=400, detail="La justificación interna debe tener al menos 20 caracteres")
-
-        authorized_user = await db.users.find_one({"user_id": authorized_user_id}, {"_id": 0})
-        if not authorized_user:
-            raise HTTPException(status_code=404, detail="Usuario autorizador no encontrado")
-        if str(authorized_user.get("role") or "") not in {"supervisor", "gerencia"}:
-            raise HTTPException(status_code=403, detail="Solo supervisor o gerencia pueden autorizar descuentos con tarjeta")
-
-        if str(authorized_user.get("role") or "") == "supervisor":
-            if str(authorized_user.get("branch_id") or "") != str(sale.get("branch_id") or ""):
-                raise HTTPException(status_code=403, detail="El supervisor autorizador debe pertenecer a la misma sucursal")
 
     await db.sales.update_one(
         {"sale_id": sale_id},
         {"$set": {"cash_session_id": payload.sesion_id, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
+
+    if has_card and not payload.pagos:
+        _validate_card_payment_metadata(
+            method=str(payload.payment_method or "card"),
+            card_type=payload.card_type,
+            bank_name=payload.bank_name,
+            transaction_number=payload.transaction_number,
+            reference=payload.reference,
+            line_label="cobro con tarjeta",
+        )
 
     collect_payload = CashierCollectRequest(
         amount=payload.amount,
@@ -6939,6 +8858,9 @@ async def collect_cashier_invoice(sale_id: str, payload: CashierInvoiceCollectRe
         force_remove_discount=payload.force_remove_discount,
         pagos=payload.pagos,
         autorizacion_descuento_pos=payload.autorizacion_descuento_pos,
+        card_type=payload.card_type,
+        bank_name=payload.bank_name,
+        transaction_number=payload.transaction_number,
     )
     result = await collect_sale_invoice(sale_id, collect_payload, request)
     return result
@@ -6972,6 +8894,9 @@ async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequ
         authorized_by = user.user_id
 
     now_iso = datetime.now(timezone.utc).isoformat()
+    revert_result = await revert_sale_effects(db, sale_id, user)
+    await _notify_cancelled_work_order(revert_result)
+
     await db.sales.update_one(
         {"sale_id": sale_id},
         {
@@ -7153,6 +9078,175 @@ async def approve_sale_edit_request(request_id: str, request: Request):
     return {"message": "Solicitud de edición aprobada", "request_id": request_id}
 
 
+@api_router.post("/sales/requests/{request_id}/approve-pos-discount")
+async def approve_pos_discount_card_request(request_id: str, request: Request):
+    approver = await require_roles(request, ["gerencia", "supervisor"])
+    req = await db.sale_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    if str(req.get("request_type") or "") != "pos_discount_card":
+        raise HTTPException(status_code=400, detail="Solicitud no corresponde a descuento con tarjeta en caja")
+
+    req_status = str(req.get("status") or "")
+    if req_status != "pending":
+        if req_status == "approved":
+            await _close_sale_request_notifications(request_id, "pos_discount_card")
+            return {"message": "Solicitud ya estaba aprobada", "request_id": request_id}
+        raise HTTPException(status_code=400, detail="Solicitud ya procesada")
+
+    if approver.role == "supervisor":
+        if str(approver.branch_id or "") != str(req.get("branch_id") or ""):
+            raise HTTPException(status_code=403, detail="El supervisor debe pertenecer a la misma sucursal")
+
+    sale_id = str(req.get("sale_id") or "")
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+    now_iso = _utc_now().isoformat()
+    await db.sale_requests.update_one(
+        {"request_id": request_id},
+        {
+            "$set": {
+                "status": "approved",
+                "resolved_at": now_iso,
+                "resolved_by": approver.user_id,
+                "resolved_by_name": approver.name,
+            }
+        },
+    )
+    await _close_sale_request_notifications(request_id, "pos_discount_card")
+
+    await db.sales.update_one(
+        {"sale_id": sale_id},
+        {
+            "$set": {
+                "pos_discount_authorized": True,
+                "pos_discount_authorized_by": approver.user_id,
+                "pos_discount_authorized_by_name": approver.name,
+                "pos_discount_justification_internal": req.get("reason"),
+                "pos_discount_show_to_customer": bool(req.get("show_to_customer")),
+                "pos_discount_authorized_at": now_iso,
+                "pos_discount_request_id": request_id,
+                "pos_discount_request_status": "approved",
+                "updated_at": now_iso,
+            }
+        },
+    )
+
+    requester_id = str(req.get("requested_by") or "")
+    if requester_id:
+        await create_notification_entry(
+            message=(
+                f"Autorización aprobada: descuento + tarjeta en "
+                f"{req.get('invoice_number') or sale_id}. Ya puedes cobrar en caja."
+            ),
+            recipient_id=requester_id,
+            metadata={
+                "type": "pos_discount_card_request_approved",
+                "request_id": request_id,
+                "sale_id": sale_id,
+                "invoice_number": req.get("invoice_number"),
+            },
+            dedupe_key=f"pos_discount_card_request_approved:{request_id}:{requester_id}",
+        )
+
+    return {"message": "Autorización de descuento con tarjeta aprobada", "request_id": request_id, "sale_id": sale_id}
+
+
+@api_router.post("/sales/requests/{request_id}/reject")
+async def reject_sale_request(request_id: str, request: Request):
+    reviewer = await require_roles(request, ["gerencia", "supervisor", "recursos_humanos"])
+    req = await db.sale_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+
+    request_type = str(req.get("request_type") or "")
+    req_status = str(req.get("status") or "")
+    if req_status != "pending":
+        raise HTTPException(status_code=400, detail="Solicitud ya procesada")
+
+    if request_type == "pos_discount_card":
+        if reviewer.role not in {"gerencia", "supervisor"}:
+            raise HTTPException(status_code=403, detail="Sin permisos para rechazar esta solicitud")
+        if reviewer.role == "supervisor" and str(reviewer.branch_id or "") != str(req.get("branch_id") or ""):
+            raise HTTPException(status_code=403, detail="El supervisor debe pertenecer a la misma sucursal")
+    elif request_type in {"edit", "cancel"}:
+        if reviewer.role not in {"gerencia", "recursos_humanos"}:
+            raise HTTPException(status_code=403, detail="Sin permisos para rechazar esta solicitud")
+    else:
+        raise HTTPException(status_code=400, detail="Tipo de solicitud no soportado")
+
+    now_iso = _utc_now().isoformat()
+    await db.sale_requests.update_one(
+        {"request_id": request_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "resolved_at": now_iso,
+                "resolved_by": reviewer.user_id,
+                "resolved_by_name": reviewer.name,
+            }
+        },
+    )
+    await _close_sale_request_notifications(request_id, request_type, final_status="rejected")
+
+    sale_id = str(req.get("sale_id") or "")
+    if request_type == "pos_discount_card" and sale_id:
+        await db.sales.update_one(
+            {"sale_id": sale_id},
+            {
+                "$set": {
+                    "pos_discount_request_status": "rejected",
+                    "pos_discount_authorized": False,
+                    "updated_at": now_iso,
+                }
+            },
+        )
+
+    requester_id = str(req.get("requested_by") or "")
+    if requester_id:
+        await create_notification_entry(
+            message=(
+                f"Solicitud rechazada ({_sale_request_type_label(request_type)}): "
+                f"{req.get('invoice_number') or sale_id}"
+            ),
+            recipient_id=requester_id,
+            metadata={
+                "type": f"{request_type}_request_rejected",
+                "request_id": request_id,
+                "sale_id": sale_id,
+                "invoice_number": req.get("invoice_number"),
+            },
+            dedupe_key=f"sale_request_rejected:{request_id}:{requester_id}",
+        )
+
+    return {"message": "Solicitud rechazada", "request_id": request_id}
+
+
+async def _notify_cancelled_work_order(revert_result: Dict[str, Any]) -> None:
+    technician_id = revert_result.get("technician_id")
+    work_order_id = revert_result.get("work_order_id")
+    if not technician_id or not work_order_id:
+        return
+    invoice_number = revert_result.get("invoice_number") or revert_result.get("sale_id")
+    sale_id = revert_result.get("sale_id")
+    await create_notification_entry(
+        message=(
+            f"La orden de instalación {work_order_id} fue cancelada "
+            f"por anulación de factura {invoice_number}"
+        ),
+        recipient_id=str(technician_id),
+        metadata={
+            "type": "work_order_cancelled",
+            "work_order_id": work_order_id,
+            "sale_id": sale_id,
+            "invoice_number": invoice_number,
+        },
+        dedupe_key=f"work_order_cancelled:{work_order_id}:{sale_id}",
+    )
+
+
 @api_router.post("/sales/requests/{request_id}/approve-cancel")
 async def approve_sale_cancel_request(request_id: str, request: Request):
     approver = await require_roles(request, ["gerencia", "recursos_humanos"])
@@ -7180,6 +9274,10 @@ async def approve_sale_cancel_request(request_id: str, request: Request):
 
     now_iso = _utc_now().isoformat()
     reason = str(req.get("reason") or "Solicitud de anulación")
+
+    revert_result = await revert_sale_effects(db, sale_id, approver)
+    await _notify_cancelled_work_order(revert_result)
+
     await db.sales.update_one(
         {"sale_id": sale_id},
         {
@@ -7241,7 +9339,14 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         raise HTTPException(status_code=400, detail="La factura ya está pagada")
 
     method_to_use = _normalize_method_name(payload.payment_method or sale.get("payment_method") or sale.get("payment_type"))
-    if sale.get("payment_method") and method_to_use != _normalize_method_name(sale.get("payment_method")) and not payload.force_remove_discount:
+    original_method = _normalize_method_name(sale.get("payment_method") or sale.get("payment_type"))
+    pos_card_authorized = bool(sale.get("pos_discount_authorized")) and _is_card_method(method_to_use)
+    if (
+        sale.get("payment_method")
+        and method_to_use != original_method
+        and not payload.force_remove_discount
+        and not pos_card_authorized
+    ):
         raise HTTPException(status_code=400, detail="El cajero no puede cambiar el método de pago de la factura")
 
     idempotency_key = str(payload.idempotency_key or "").strip()
@@ -7253,7 +9358,10 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         if existing:
             return existing
 
-    due = _round2(float(sale.get("net_to_collect") if sale.get("net_to_collect") is not None else sale.get("total") or 0.0))
+    net_to_collect = sale.get("net_to_collect")
+    due = _round2(
+        _coerce_float(net_to_collect if net_to_collect is not None else sale.get("total"))
+    )
     paid_so_far_docs = await db.invoice_payments.find(
         {"sale_id": sale_id, "status": "paid"},
         {"_id": 0, "amount": 1},
@@ -7266,6 +9374,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     mixed_rows: List[Dict[str, Any]] = []
     mixed_warning: Optional[str] = None
     mixed_audit_note: Optional[str] = None
+    single_card_meta: Dict[str, Any] = {}
 
     if payload.pagos:
         normalized_mixed = await _normalize_mixed_payments(payload.pagos, usd_to_nio_rate)
@@ -7280,7 +9389,10 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         mixed_warning = cast(Optional[str], pos_policy.get("warning"))
         mixed_audit_note = cast(Optional[str], pos_policy.get("audit_note"))
 
-        due = _round2(float(sale.get("net_to_collect") if sale.get("net_to_collect") is not None else sale.get("total") or 0.0))
+        net_to_collect = sale.get("net_to_collect")
+        due = _round2(
+            _coerce_float(net_to_collect if net_to_collect is not None else sale.get("total"))
+        )
         pending = _round2(due - paid_so_far)
 
         amount = _round2(normalized_mixed.get("total_nio") or 0.0)
@@ -7291,6 +9403,34 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         amount = _round2(float(payload.amount or 0.0))
         if amount <= 0:
             raise HTTPException(status_code=400, detail="amount debe ser mayor a 0")
+
+        if _is_card_method(method_to_use):
+            single_card_meta = _validate_card_payment_metadata(
+                method=method_to_use,
+                card_type=payload.card_type,
+                bank_name=payload.bank_name,
+                transaction_number=payload.transaction_number,
+                reference=payload.reference,
+                line_label="cobro con tarjeta",
+            )
+            pos_policy = await _enforce_pos_discount_policy(
+                sale,
+                has_card=True,
+                authorization=payload.autorizacion_descuento_pos,
+                force_remove_discount=bool(payload.force_remove_discount),
+                actor=user,
+            )
+            sale = cast(Dict[str, Any], pos_policy.get("sale") or sale)
+            mixed_warning = cast(Optional[str], pos_policy.get("warning"))
+            mixed_audit_note = cast(Optional[str], pos_policy.get("audit_note"))
+
+            net_to_collect = sale.get("net_to_collect")
+            due = _round2(
+                _coerce_float(net_to_collect if net_to_collect is not None else sale.get("total"))
+            )
+            pending = _round2(due - paid_so_far)
+        else:
+            single_card_meta = {}
 
     if amount > pending:
         raise HTTPException(status_code=400, detail=f"El cobro excede el pendiente. Pendiente actual: C${pending:.2f}")
@@ -7326,6 +9466,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         "amount_origin": amount,
         "exchange_rate": 1.0,
         "notes_auditoria": mixed_audit_note,
+        **single_card_meta,
     }
 
     docs_to_insert: List[Dict[str, Any]] = []
@@ -7354,6 +9495,10 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
                 "exchange_rate": _round4(row.get("exchange_rate") or 1.0),
                 "amount_nio_internal": _round4(row.get("amount_nio") or 0.0),
                 "notes_auditoria": row.get("audit_note") or mixed_audit_note,
+                "card_type": row.get("card_type"),
+                "bank_name": row.get("bank_name"),
+                "transaction_number": row.get("transaction_number"),
+                "card_reference": row.get("card_reference"),
             }
             docs_to_insert.append(row_doc)
     else:
@@ -7366,7 +9511,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     new_pending = _round2(due - new_paid)
     new_status = "paid" if new_pending <= 0.0001 else "partial"
 
-    update_sale_set = {
+    update_sale_set: Dict[str, Any] = {
         "payment_status": new_status,
         "payment_method": sale.get("payment_method") or method_to_use,
         "payment_type": sale.get("payment_type") or method_to_use,
@@ -7375,11 +9520,17 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         "collected_at": now_iso,
         "collected_by": user.user_id,
     }
+    if new_status == "paid":
+        update_sale_set["invoice_state"] = "closed"
     if method_to_use == "card":
         total_legal = float(sale.get("total_legal") or sale.get("total") or 0.0)
         update_sale_set["pos_bank_withholding_expected"] = _round2(total_legal * 0.015)
 
     await db.sales.update_one({"sale_id": sale_id}, {"$set": update_sale_set})
+
+    fulfillment_result: Dict[str, Any] = {}
+    if new_status == "paid":
+        fulfillment_result = await trigger_sale_fulfillment_after_payment(sale_id)
 
     pending_usd_suggested = _round2((new_pending / usd_to_nio_rate) if usd_to_nio_rate > 0 else 0.0)
 
@@ -7403,6 +9554,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
             for d in docs_to_insert
         ],
         "warnings": [w for w in [mixed_warning] if w],
+        "fulfillment": fulfillment_result,
     }
 
 
@@ -7444,35 +9596,7 @@ async def pay_invoice_facturacion(payload: FacturacionPagarRequest, request: Req
 
 
 def _build_retention_receipt_pdf_bytes(receipt: Dict[str, Any], sale: Dict[str, Any]) -> bytes:
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    c.setFont("Helvetica-Bold", 13)
-    c.drawString(50, 760, "Comprobante de Retención IR")
-    c.setFont("Helvetica", 10)
-    lines = [
-        f"Correlativo: {receipt.get('receipt_number', 'N/A')}",
-        f"Fecha: {receipt.get('created_at', '')}",
-        f"Factura: {sale.get('invoice_number', 'N/A')}",
-        f"Venta ID: {sale.get('sale_id', 'N/A')}",
-        f"Cliente: {sale.get('customer_name', 'N/A')}",
-        f"Sucursal: {sale.get('branch_id', 'N/A')}",
-        f"Subtotal base: C${float(receipt.get('subtotal_base') or 0.0):,.2f}",
-        f"Tasa retención: {float(receipt.get('retention_rate') or 0.0) * 100:.2f}%",
-        f"Monto retenido: C${float(receipt.get('retention_amount') or 0.0):,.2f}",
-        f"Total legal factura: C${float(sale.get('total_legal') or sale.get('total') or 0.0):,.2f}",
-        f"Neto a cobrar: C${float(sale.get('net_to_collect') or sale.get('total') or 0.0):,.2f}",
-        "",
-        "Documento generado automáticamente por ERP.",
-    ]
-    y = 730
-    for line in lines:
-        c.drawString(50, y, line)
-        y -= 18
-    c.showPage()
-    c.save()
-    pdf_bytes = buffer.getvalue()
-    buffer.close()
-    return pdf_bytes
+    return export_build_retention_receipt_pdf_bytes(receipt, sale)
 
 
 @api_router.post("/invoices/{sale_id}/retention-receipt")
@@ -7542,13 +9666,7 @@ async def create_retention_receipt(sale_id: str, request: Request):
 @api_router.post("/payments/checkout")
 async def create_checkout(checkout_req: CheckoutRequest, request: Request):
     await require_auth(request)
-    try:
-        from emergentintegrations.payments.stripe.checkout import (  # type: ignore[import]
-            CheckoutSessionRequest,
-            StripeCheckout,
-        )
-    except Exception:
-        raise HTTPException(status_code=501, detail="Stripe integration not available")
+    CheckoutSessionRequest, _ = _get_stripe_checkout_symbols()
 
     sale = await db.sales.find_one({"sale_id": checkout_req.sale_id}, {"_id": 0})
     if not sale:
@@ -7559,7 +9677,7 @@ async def create_checkout(checkout_req: CheckoutRequest, request: Request):
         f"{os.environ.get('REACT_APP_BACKEND_URL', host_url)}/api/webhook/stripe"
     )
 
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    stripe_checkout = _create_stripe_checkout(webhook_url)
 
     success_url = (
         f"{host_url}/sales/{sale['sale_id']}?session_id={{CHECKOUT_SESSION_ID}}"
@@ -7601,12 +9719,7 @@ async def create_checkout(checkout_req: CheckoutRequest, request: Request):
 @api_router.get("/payments/status/{session_id}")
 async def get_payment_status(session_id: str, request: Request):
     await require_auth(request)
-    try:
-        from emergentintegrations.payments.stripe.checkout import StripeCheckout  # type: ignore[import]
-    except Exception:
-        raise HTTPException(status_code=501, detail="Stripe integration not available")
-
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+    stripe_checkout = _create_stripe_checkout("")
     status = await stripe_checkout.get_checkout_status(session_id)
 
     # Update transaction and sale if paid
@@ -7616,9 +9729,16 @@ async def get_payment_status(session_id: str, request: Request):
             await db.payment_transactions.update_one(
                 {"stripe_session_id": session_id}, {"$set": {"status": "paid"}}
             )
-            await db.sales.update_one(
-                {"stripe_session_id": session_id}, {"$set": {"payment_status": "paid"}}
+            sale = await db.sales.find_one(
+                {"stripe_session_id": session_id},
+                {"_id": 0, "sale_id": 1, "payment_status": 1},
             )
+            if sale and sale.get("sale_id") and str(sale.get("payment_status") or "").lower() != "paid":
+                await db.sales.update_one(
+                    {"sale_id": sale.get("sale_id")},
+                    {"$set": {"payment_status": "paid", "invoice_state": "closed"}},
+                )
+                await trigger_sale_fulfillment_after_payment(str(sale.get("sale_id")))
 
     return {
         "status": status.status,
@@ -7630,15 +9750,10 @@ async def get_payment_status(session_id: str, request: Request):
 
 @api_router.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
-    try:
-        from emergentintegrations.payments.stripe.checkout import StripeCheckout  # type: ignore[import]
-    except Exception:
-        raise HTTPException(status_code=501, detail="Stripe integration not available")
-
     body = await request.body()
     signature = request.headers.get("Stripe-Signature")
 
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+    stripe_checkout = _create_stripe_checkout("")
     webhook_response = await stripe_checkout.handle_webhook(body, signature)
 
     if webhook_response.payment_status == "paid":
@@ -7646,10 +9761,16 @@ async def stripe_webhook(request: Request):
             {"stripe_session_id": webhook_response.session_id},
             {"$set": {"status": "paid"}},
         )
-        await db.sales.update_one(
+        sale = await db.sales.find_one(
             {"stripe_session_id": webhook_response.session_id},
-            {"$set": {"payment_status": "paid"}},
+            {"_id": 0, "sale_id": 1, "payment_status": 1},
         )
+        if sale and sale.get("sale_id") and str(sale.get("payment_status") or "").lower() != "paid":
+            await db.sales.update_one(
+                {"sale_id": sale.get("sale_id")},
+                {"$set": {"payment_status": "paid", "invoice_state": "closed"}},
+            )
+            await trigger_sale_fulfillment_after_payment(str(sale.get("sale_id")))
 
     return {"received": True}
 
@@ -7659,7 +9780,11 @@ async def stripe_webhook(request: Request):
 
 @api_router.get("/work-orders")
 async def get_work_orders(
-    request: Request, status: Optional[str] = None, branch_id: Optional[str] = None
+    request: Request,
+    status: Optional[str] = None,
+    branch_id: Optional[str] = None,
+    department: Optional[str] = None,
+    assignment_status: Optional[str] = None,
 ):
     user = await require_auth(request)
     query: dict[str, Any] = {}
@@ -7667,17 +9792,410 @@ async def get_work_orders(
         query["status"] = status
     if branch_id:
         query["branch_id"] = branch_id
+    if department:
+        query["department"] = str(department).strip().lower()
+    if assignment_status:
+        query["assignment_status"] = str(assignment_status).strip().lower()
 
     visibility_query = await build_work_order_visibility_query(user)
     query = merge_queries(query, visibility_query)
-
-    if user.role == "instalaciones":
-        query = merge_queries(query, {"technician_id": user.user_id})
 
     work_orders = (
         await db.work_orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     )
     return work_orders
+
+
+@api_router.get("/coordinator/team")
+async def get_coordinator_team(
+    request: Request,
+    department: str,
+    branch_id: Optional[str] = None,
+    profile: Optional[str] = None,
+):
+    """Team roster with active workload for coordinator assignment UI."""
+    user = await require_roles(
+        request,
+        ["gerencia", "supervisor", "coordinador_instalaciones", "coordinador_polarizados"],
+    )
+
+    dept = str(department or "").strip().lower()
+    assert_coordinator_department_access(user, dept, profile)
+    role_map: Dict[str, List[str]] = {
+        "instalaciones": ["instalaciones", "instalador"],
+        "electrico": ["electrico"],
+        "polarizados": ["polarizador"],
+    }
+    target_roles = role_map.get(dept)
+    if not target_roles:
+        raise HTTPException(status_code=400, detail="department inválido")
+
+    effective_branch = str(branch_id or user.branch_id or "").strip()
+    member_query: Dict[str, Any] = {
+        "is_active": {"$ne": False},
+        "role": {"$in": target_roles},
+    }
+    if effective_branch and resolve_effective_role(user.role) != "gerencia":
+        member_query["$or"] = [
+            {"branch_id": effective_branch},
+            {"branch_id": None},
+            {"branch_id": ""},
+        ]
+
+    members = await db.users.find(
+        member_query,
+        {"_id": 0, "user_id": 1, "name": 1, "role": 1, "branch_id": 1},
+    ).to_list(100)
+    member_ids = [m.get("user_id") for m in members if m.get("user_id")]
+
+    load_map: Dict[str, int] = {}
+    active_statuses = ["pending", "in_progress", "quality_check"]
+
+    if dept == "polarizados" and member_ids:
+        tint_pipeline = [
+            {
+                "$match": {
+                    "assigned_technician_id": {"$in": member_ids},
+                    "status": {"$in": active_statuses + ["pending_assignment"]},
+                }
+            },
+            {"$group": {"_id": "$assigned_technician_id", "count": {"$sum": 1}}},
+        ]
+        for row in await db.tint_orders.aggregate(tint_pipeline).to_list(200):
+            if row.get("_id"):
+                load_map[str(row["_id"])] = int(row.get("count") or 0)
+    elif member_ids:
+        wo_pipeline = [
+            {
+                "$match": {
+                    "technician_id": {"$in": member_ids},
+                    "status": {"$in": active_statuses},
+                }
+            },
+            {"$group": {"_id": "$technician_id", "count": {"$sum": 1}}},
+        ]
+        for row in await db.work_orders.aggregate(wo_pipeline).to_list(200):
+            if row.get("_id"):
+                load_map[str(row["_id"])] = int(row.get("count") or 0)
+
+    roster = [
+        {
+            **member,
+            "active_jobs": load_map.get(str(member.get("user_id")), 0),
+        }
+        for member in members
+    ]
+    roster.sort(key=lambda row: (row.get("active_jobs", 0), str(row.get("name") or "").lower()))
+
+    return {
+        "department": dept,
+        "branch_id": effective_branch or None,
+        "members": roster,
+        "count": len(roster),
+    }
+
+
+@api_router.get("/coordinator/queue")
+async def get_coordinator_queue(
+    request: Request,
+    branch_id: Optional[str] = None,
+    profile: Optional[str] = None,
+):
+    """Pending assignment queue for installation, electric and tint coordinators."""
+    user = await require_roles(
+        request,
+        ["gerencia", "supervisor", "coordinador_instalaciones", "coordinador_polarizados"],
+    )
+
+    effective_branch = str(branch_id or user.branch_id or "").strip()
+    allowed_departments = set(coordinator_allowed_departments(user, profile))
+    wo_query: Dict[str, Any] = {
+        "assignment_status": "pending_assignment",
+        "status": {"$in": ["pending", "in_progress"]},
+    }
+    if effective_branch:
+        wo_query["branch_id"] = effective_branch
+
+    work_orders = (
+        await db.work_orders.find(wo_query, {"_id": 0})
+        .sort([("awaiting_warehouse_handoff", 1), ("created_at", 1)])
+        .to_list(300)
+    )
+
+    tint_query: Dict[str, Any] = {
+        "assignment_status": "pending_assignment",
+        "status": {"$in": ["pending_assignment", "pending"]},
+    }
+    tint_orders = (
+        await db.tint_orders.find(tint_query, {"_id": 0})
+        .sort("created_at", 1)
+        .to_list(200)
+    )
+
+    by_department: Dict[str, List[Dict[str, Any]]] = {
+        "instalaciones": [],
+        "electrico": [],
+        "polarizados": tint_orders if "polarizados" in allowed_departments else [],
+    }
+    for order in work_orders:
+        dept = str(order.get("department") or "instalaciones").lower()
+        if dept not in allowed_departments:
+            continue
+        if dept not in by_department:
+            by_department[dept] = []
+        by_department[dept].append(order)
+
+    filtered_board = {
+        key: value for key, value in by_department.items() if key in allowed_departments
+    }
+
+    return {
+        "branch_id": effective_branch or None,
+        "profile": profile,
+        "departments": filtered_board,
+        "counts": {k: len(v) for k, v in filtered_board.items()},
+        "total_pending": sum(len(v) for v in filtered_board.values()),
+    }
+
+
+COORDINATOR_INSTALLATION_DEPARTMENTS = ["instalaciones", "electrico"]
+COORDINATOR_TINT_DEPARTMENTS = ["polarizados"]
+
+
+def coordinator_allowed_departments(
+    user: User,
+    profile: Optional[str] = None,
+) -> List[str]:
+    raw_role = str(user.role or "").strip().lower()
+    effective_role = resolve_effective_role(user.role)
+    profile_key = str(profile or "").strip().lower()
+
+    if profile_key == "instalaciones":
+        if raw_role == "coordinador_polarizados":
+            return []
+        return list(COORDINATOR_INSTALLATION_DEPARTMENTS)
+    if profile_key == "polarizados":
+        if raw_role == "coordinador_instalaciones":
+            return []
+        return list(COORDINATOR_TINT_DEPARTMENTS)
+
+    if effective_role in {"gerencia", "supervisor"}:
+        return COORDINATOR_INSTALLATION_DEPARTMENTS + COORDINATOR_TINT_DEPARTMENTS
+    if raw_role == "coordinador_instalaciones":
+        return list(COORDINATOR_INSTALLATION_DEPARTMENTS)
+    if raw_role == "coordinador_polarizados":
+        return list(COORDINATOR_TINT_DEPARTMENTS)
+    return []
+
+
+def assert_coordinator_department_access(
+    user: User,
+    department: str,
+    profile: Optional[str] = None,
+) -> None:
+    dept = str(department or "").strip().lower()
+    allowed = coordinator_allowed_departments(user, profile)
+    if dept not in allowed:
+        raise HTTPException(
+            status_code=403,
+            detail="No autorizado para este perfil de coordinación",
+        )
+
+
+async def _coordinator_department_roster(
+    department: str,
+    effective_branch: str,
+    user: User,
+) -> List[Dict[str, Any]]:
+    dept = str(department or "").strip().lower()
+    role_map: Dict[str, List[str]] = {
+        "instalaciones": ["instalaciones", "instalador"],
+        "electrico": ["electrico"],
+        "polarizados": ["polarizador"],
+    }
+    target_roles = role_map.get(dept, [])
+    if not target_roles:
+        return []
+
+    member_query: Dict[str, Any] = {
+        "is_active": {"$ne": False},
+        "role": {"$in": target_roles},
+    }
+    if effective_branch and resolve_effective_role(user.role) != "gerencia":
+        member_query["$or"] = [
+            {"branch_id": effective_branch},
+            {"branch_id": None},
+            {"branch_id": ""},
+        ]
+
+    members = await db.users.find(
+        member_query,
+        {"_id": 0, "user_id": 1, "name": 1, "role": 1, "branch_id": 1},
+    ).to_list(100)
+    return sorted(members, key=lambda row: str(row.get("name") or "").lower())
+
+
+async def _enrich_coordinator_orders_with_sale_context(
+    orders: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    if not orders:
+        return orders
+
+    sale_ids = list({str(row.get("sale_id")) for row in orders if row.get("sale_id")})
+    sale_map: Dict[str, Dict[str, Any]] = {}
+    if sale_ids:
+        sale_docs = await db.sales.find(
+            {"sale_id": {"$in": sale_ids}},
+            {
+                "_id": 0,
+                "sale_id": 1,
+                "created_at": 1,
+                "warehouse_dispatch_completed_at": 1,
+                "collected_at": 1,
+                "paid_at": 1,
+            },
+        ).to_list(len(sale_ids))
+        sale_map = {
+            str(doc.get("sale_id")): cast(Dict[str, Any], doc)
+            for doc in sale_docs
+            if doc.get("sale_id")
+        }
+
+    enriched: List[Dict[str, Any]] = []
+    for order in orders:
+        row = {**order}
+        sale_id = str(order.get("sale_id") or "")
+        sale_doc = sale_map.get(sale_id) or {}
+        row["sale_invoiced_at"] = sale_doc.get("created_at")
+        row["sale_paid_at"] = sale_doc.get("paid_at") or sale_doc.get("collected_at")
+        if not row.get("accessories_delivered_at"):
+            row["warehouse_dispatch_completed_at"] = sale_doc.get(
+                "warehouse_dispatch_completed_at"
+            )
+        enriched.append(row)
+    return enriched
+
+
+@api_router.get("/coordinator/board")
+async def get_coordinator_board(
+    request: Request,
+    branch_id: Optional[str] = None,
+    department: Optional[str] = None,
+    profile: Optional[str] = None,
+):
+    """Kanban payload: pending queue + per-technician assigned jobs for coordinator UI."""
+    user = await require_roles(
+        request,
+        ["gerencia", "supervisor", "coordinador_instalaciones", "coordinador_polarizados"],
+    )
+
+    effective_branch = str(branch_id or user.branch_id or "").strip()
+    active_statuses = ["pending", "in_progress", "quality_check"]
+    allowed = coordinator_allowed_departments(user, profile)
+    if department:
+        dept_key = str(department).strip().lower()
+        assert_coordinator_department_access(user, dept_key, profile)
+        target_departments = [dept_key]
+    else:
+        target_departments = allowed
+
+    board: Dict[str, Dict[str, Any]] = {}
+    for dept in target_departments:
+        roster = await _coordinator_department_roster(dept, effective_branch, user)
+        pending: List[Dict[str, Any]] = []
+        assigned_map: Dict[str, List[Dict[str, Any]]] = {
+            str(member.get("user_id")): [] for member in roster if member.get("user_id")
+        }
+
+        if dept == "polarizados":
+            pending_rows = await db.tint_orders.find(
+                {
+                    "assignment_status": "pending_assignment",
+                    "status": {"$in": ["pending_assignment", "pending"]},
+                },
+                {"_id": 0},
+            ).sort("created_at", 1).to_list(200)
+            for row in pending_rows:
+                pending.append({**row, "order_kind": "tint"})
+
+            assigned_rows = await db.tint_orders.find(
+                {
+                    "assignment_status": "assigned",
+                    "status": {"$in": active_statuses},
+                },
+                {"_id": 0},
+            ).sort("assigned_at", -1).to_list(300)
+            for row in assigned_rows:
+                tech_id = str(row.get("assigned_technician_id") or "")
+                if not tech_id:
+                    continue
+                assigned_map.setdefault(tech_id, []).append({**row, "order_kind": "tint"})
+        else:
+            wo_base: Dict[str, Any] = {}
+            if effective_branch:
+                wo_base["branch_id"] = effective_branch
+            if dept in {"instalaciones", "electrico"}:
+                wo_base["department"] = dept
+
+            pending_rows = await db.work_orders.find(
+                {
+                    **wo_base,
+                    "assignment_status": "pending_assignment",
+                    "status": {"$in": ["pending", "in_progress"]},
+                },
+                {"_id": 0},
+            ).sort([("awaiting_warehouse_handoff", 1), ("created_at", 1)]).to_list(300)
+            for row in pending_rows:
+                pending.append({**row, "order_kind": "work"})
+
+            assigned_rows = await db.work_orders.find(
+                {
+                    **wo_base,
+                    "assignment_status": "assigned",
+                    "status": {"$in": active_statuses},
+                },
+                {"_id": 0},
+            ).sort("assigned_at", -1).to_list(300)
+            for row in assigned_rows:
+                tech_id = str(row.get("technician_id") or "")
+                if not tech_id:
+                    continue
+                assigned_map.setdefault(tech_id, []).append({**row, "order_kind": "work"})
+
+        technicians: List[Dict[str, Any]] = []
+        for member in roster:
+            user_id = str(member.get("user_id") or "")
+            orders = assigned_map.get(user_id, [])
+            technicians.append(
+                {
+                    **member,
+                    "orders": orders,
+                    "active_jobs": len(orders),
+                }
+            )
+
+        pending = await _enrich_coordinator_orders_with_sale_context(pending)
+        for tech in technicians:
+            tech["orders"] = await _enrich_coordinator_orders_with_sale_context(
+                cast(List[Dict[str, Any]], tech.get("orders") or [])
+            )
+
+        assigned_total = sum(len(tech.get("orders") or []) for tech in technicians)
+        board[dept] = {
+            "pending": pending,
+            "technicians": technicians,
+            "counts": {
+                "pending": len(pending),
+                "assigned": assigned_total,
+            },
+        }
+
+    return {
+        "branch_id": effective_branch or None,
+        "profile": profile,
+        "departments": board,
+        "refreshed_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @api_router.post("/work-orders")
@@ -7724,34 +10242,88 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
     return doc
 
 
+WORK_ORDER_FIELD_TECHNICIAN_ROLES = {"instalaciones", "instalador", "electrico"}
+WORK_ORDER_QC_APPROVER_ROLES = {"gerencia", "coordinador_instalaciones"}
+
+
 @api_router.put("/work-orders/{work_order_id}")
 async def update_work_order(
     work_order_id: str, update: WorkOrderStatusUpdate, request: Request
 ):
-    await require_auth(request)
+    user = await require_auth(request)
+    raw_role = str(user.role or "").strip().lower()
 
     wo = await db.work_orders.find_one({"work_order_id": work_order_id})
     if not wo:
         raise HTTPException(status_code=404, detail="Work order not found")
+    wo = cast(Dict[str, Any], wo)
 
     updates = {}
 
     if update.status:
+        if update.status in {"completed", "delivered"}:
+            if raw_role in WORK_ORDER_FIELD_TECHNICIAN_ROLES:
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "Solo el coordinador de instalaciones puede aprobar trabajos terminados. "
+                        "Envíe la orden a control de calidad."
+                    ),
+                )
+            if raw_role not in WORK_ORDER_QC_APPROVER_ROLES:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Solo el coordinador de instalaciones puede aprobar trabajos terminados",
+                )
+
         updates["status"] = update.status
         if update.status == "in_progress" and not wo.get("start_time"):
             updates["start_time"] = datetime.now(timezone.utc).isoformat()
+        if update.status == "quality_check":
+            updates["submitted_for_qc_at"] = datetime.now(timezone.utc).isoformat()
         if update.status in ["completed", "delivered"] and not wo.get("end_time"):
             updates["end_time"] = datetime.now(timezone.utc).isoformat()
             if wo.get("start_time"):
                 start = datetime.fromisoformat(wo["start_time"])
                 end = datetime.now(timezone.utc)
                 updates["actual_time"] = int((end - start).total_seconds() / 60)
+        if update.status == "completed" and raw_role in WORK_ORDER_QC_APPROVER_ROLES:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            updates["qc_approved"] = True
+            updates["qc_approved_at"] = now_iso
+            updates["qc_approved_by"] = user.user_id
+            updates["qc_approved_by_name"] = user.name
 
     if update.technician_id:
+        if raw_role == "coordinador_polarizados":
+            raise HTTPException(
+                status_code=403,
+                detail="El coordinador de polarizados no puede asignar órdenes de instalación",
+            )
+        wo_department = str(wo.get("department") or "instalaciones").lower()
+        if raw_role == "coordinador_instalaciones":
+            assert_coordinator_department_access(user, wo_department, "instalaciones")
+
         tech = await db.users.find_one({"user_id": update.technician_id}, {"_id": 0})
         if tech:
             updates["technician_id"] = tech["user_id"]
             updates["technician_name"] = tech["name"]
+            updates["assignment_status"] = "assigned"
+            updates["assigned_at"] = datetime.now(timezone.utc).isoformat()
+            if wo.get("technician_id") != tech["user_id"]:
+                await create_notification_entry(
+                    message=(
+                        f"Nueva orden de trabajo {work_order_id} asignada: "
+                        f"{wo.get('customer_name', 'cliente')}"
+                    ),
+                    recipient_id=tech["user_id"],
+                    metadata={
+                        "type": "work_order_assigned",
+                        "work_order_id": work_order_id,
+                        "sale_id": wo.get("sale_id"),
+                    },
+                    dedupe_key=f"work_order_assigned:{work_order_id}:{tech['user_id']}",
+                )
 
     if update.quality_score is not None:
         updates["quality_score"] = update.quality_score
@@ -7761,6 +10333,29 @@ async def update_work_order(
         updates["notes"] = update.notes
 
     await db.work_orders.update_one({"work_order_id": work_order_id}, {"$set": updates})
+
+    if update.status == "quality_check":
+        branch_id = str(wo.get("branch_id") or user.branch_id or "")
+        tech_name = wo.get("technician_name") or "técnico"
+        for coordinator_id in await _get_coordinator_user_ids(
+            ["coordinador_instalaciones"],
+            branch_id,
+        ):
+            await create_notification_entry(
+                message=(
+                    f"Orden {work_order_id} lista para control de calidad "
+                    f"({tech_name}): {wo.get('customer_name', 'cliente')}"
+                ),
+                recipient_id=coordinator_id,
+                metadata={
+                    "type": "work_order_pending_qc",
+                    "work_order_id": work_order_id,
+                    "sale_id": wo.get("sale_id"),
+                    "technician_id": wo.get("technician_id"),
+                },
+                dedupe_key=f"work_order_pending_qc:{work_order_id}",
+            )
+
     return {"message": "Work order updated"}
 
 
@@ -7774,7 +10369,276 @@ async def get_work_order(work_order_id: str, request: Request):
     return wo
 
 
+TECHNICIAN_SELF_JOB_ROLES = {"instalaciones", "instalador", "electrico", "polarizador"}
+TECHNICIAN_JOB_SUPERVISOR_ROLES = {
+    "gerencia",
+    "supervisor",
+    "coordinador_instalaciones",
+    "coordinador_polarizados",
+}
+
+
+def _iso_date_prefix_today() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _iso_date_prefix_month() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m")
+
+
+def _job_completed_timestamp(job: Dict[str, Any], job_type: str) -> Optional[str]:
+    if job_type == "work_order":
+        return (
+            job.get("end_time")
+            or job.get("completed_at")
+            or job.get("updated_at")
+            or job.get("created_at")
+        )
+    return job.get("completed_at") or job.get("updated_at") or job.get("created_at")
+
+
+def _technician_includes_work_orders(role: str) -> bool:
+    normalized = str(role or "").strip().lower()
+    return normalized in {
+        "instalaciones",
+        "instalador",
+        "electrico",
+        "gerencia",
+        "supervisor",
+        "coordinador_instalaciones",
+    }
+
+
+def _technician_includes_tint_orders(role: str) -> bool:
+    normalized = str(role or "").strip().lower()
+    return normalized in {
+        "polarizador",
+        "gerencia",
+        "supervisor",
+        "coordinador_polarizados",
+    }
+
+
+def _serialize_completed_work_order(wo: Dict[str, Any]) -> Dict[str, Any]:
+    vehicle_info = wo.get("vehicle_info")
+    if isinstance(vehicle_info, dict):
+        vehicle_label = " ".join(
+            str(vehicle_info.get(key) or "")
+            for key in ("brand", "model", "plate")
+            if vehicle_info.get(key)
+        ).strip()
+    else:
+        vehicle_label = str(vehicle_info or "")
+
+    items = wo.get("items") or []
+    item_count = len(items) if isinstance(items, list) else 0
+
+    return {
+        "job_type": "work_order",
+        "job_id": wo.get("work_order_id"),
+        "sale_id": wo.get("sale_id"),
+        "department": str(wo.get("department") or "instalaciones").lower(),
+        "customer_name": wo.get("customer_name"),
+        "vehicle_info": vehicle_label or wo.get("vehicle_info"),
+        "status": wo.get("status"),
+        "completed_at": _job_completed_timestamp(wo, "work_order"),
+        "actual_time_minutes": wo.get("actual_time"),
+        "quality_score": wo.get("quality_score"),
+        "qc_approved": bool(wo.get("qc_approved")),
+        "qc_approved_at": wo.get("qc_approved_at"),
+        "qc_approved_by_name": wo.get("qc_approved_by_name"),
+        "item_count": item_count,
+        "branch_id": wo.get("branch_id"),
+    }
+
+
+def _serialize_completed_tint_order(order: Dict[str, Any], technician_id: str) -> Dict[str, Any]:
+    vehicle_info = order.get("vehicle_info")
+    if isinstance(vehicle_info, dict):
+        vehicle_label = " ".join(
+            str(vehicle_info.get(key) or "")
+            for key in ("brand", "model", "plate")
+            if vehicle_info.get(key)
+        ).strip()
+    else:
+        vehicle_label = str(vehicle_info or "")
+
+    return {
+        "job_type": "tint_order",
+        "job_id": order.get("tint_order_id"),
+        "sale_id": order.get("sale_id"),
+        "department": "polarizados",
+        "customer_name": order.get("customer_name"),
+        "vehicle_info": vehicle_label,
+        "status": order.get("status"),
+        "completed_at": _job_completed_timestamp(order, "tint_order"),
+        "vehicle_count": 1,
+        "quality_rating": order.get("quality_rating"),
+        "branch_id": order.get("branch_id"),
+    }
+
+
+@api_router.get("/technician/completed-jobs")
+async def get_technician_completed_jobs(
+    request: Request,
+    technician_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    """Historial de trabajos completados para conteo de comisiones."""
+    user = await require_auth(request)
+    raw_role = str(user.role or "").strip().lower()
+
+    if raw_role not in TECHNICIAN_SELF_JOB_ROLES | TECHNICIAN_JOB_SUPERVISOR_ROLES:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para consultar trabajos realizados",
+        )
+
+    target_user = user
+    if technician_id:
+        if raw_role not in TECHNICIAN_JOB_SUPERVISOR_ROLES:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo supervisores pueden consultar el historial de otro técnico",
+            )
+        tech_doc = await db.users.find_one({"user_id": technician_id}, {"_id": 0})
+        if not tech_doc:
+            raise HTTPException(status_code=404, detail="Técnico no encontrado")
+        if raw_role == "supervisor" and user.branch_id:
+            if tech_doc.get("branch_id") and tech_doc.get("branch_id") != user.branch_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="El técnico no pertenece a tu sucursal",
+                )
+        target_user = User(**tech_doc)
+
+    target_role = str(target_user.role or "").strip().lower()
+    target_id = target_user.user_id
+    jobs: List[Dict[str, Any]] = []
+
+    if _technician_includes_work_orders(target_role):
+        legacy_qc_rows = await db.quality_controls.find(
+            {"technician_id": target_id, "approved": True},
+            {"_id": 0, "work_order_id": 1},
+        ).to_list(5000)
+        legacy_approved_ids = [
+            str(row.get("work_order_id"))
+            for row in legacy_qc_rows
+            if row.get("work_order_id")
+        ]
+
+        qc_filters: List[Dict[str, Any]] = [{"qc_approved": True}]
+        if legacy_approved_ids:
+            qc_filters.append({"work_order_id": {"$in": legacy_approved_ids}})
+
+        wo_query: Dict[str, Any] = {
+            "technician_id": target_id,
+            "status": {"$in": ["completed", "delivered"]},
+            "$or": qc_filters,
+        }
+        if target_role == "electrico":
+            wo_query["department"] = "electrico"
+        elif target_role in {"instalaciones", "instalador"}:
+            wo_query["$or"] = [
+                {"department": "instalaciones"},
+                {"department": {"$exists": False}},
+            ]
+        if user.branch_id and raw_role != "gerencia":
+            wo_query["branch_id"] = user.branch_id
+        if date_from or date_to:
+            end_filter: Dict[str, Any] = {}
+            if date_from:
+                end_filter["$gte"] = date_from
+            if date_to:
+                end_filter["$lte"] = f"{date_to}T23:59:59"
+            wo_query["end_time"] = end_filter
+
+        work_orders = (
+            await db.work_orders.find(wo_query, {"_id": 0})
+            .sort("end_time", -1)
+            .to_list(2000)
+        )
+        for wo in work_orders:
+            jobs.append(_serialize_completed_work_order(cast(Dict[str, Any], wo)))
+
+    if _technician_includes_tint_orders(target_role):
+        tint_query: Dict[str, Any] = {
+            "assigned_technician_id": target_id,
+            "status": "completed",
+        }
+        if user.branch_id and raw_role != "gerencia":
+            tint_query["branch_id"] = user.branch_id
+        if date_from or date_to:
+            completed_filter: Dict[str, Any] = {}
+            if date_from:
+                completed_filter["$gte"] = date_from
+            if date_to:
+                completed_filter["$lte"] = f"{date_to}T23:59:59"
+            tint_query["completed_at"] = completed_filter
+
+        tint_orders = (
+            await db.tint_orders.find(tint_query, {"_id": 0})
+            .sort("completed_at", -1)
+            .to_list(2000)
+        )
+        for order in tint_orders:
+            jobs.append(
+                _serialize_completed_tint_order(cast(Dict[str, Any], order), target_id)
+            )
+
+    jobs.sort(
+        key=lambda row: str(row.get("completed_at") or ""),
+        reverse=True,
+    )
+
+    today_prefix = _iso_date_prefix_today()
+    month_prefix = _iso_date_prefix_month()
+    work_order_jobs = [job for job in jobs if job.get("job_type") == "work_order"]
+    tint_jobs = [job for job in jobs if job.get("job_type") == "tint_order"]
+
+    summary = {
+        "today": sum(
+            1
+            for job in jobs
+            if str(job.get("completed_at") or "").startswith(today_prefix)
+        ),
+        "this_month": sum(
+            1
+            for job in jobs
+            if str(job.get("completed_at") or "").startswith(month_prefix)
+        ),
+        "total": len(jobs),
+        "work_orders": len(work_order_jobs),
+        "tint_orders": len(tint_jobs),
+        "tint_vehicles": len(tint_jobs),
+        "by_department": {
+            "instalaciones": sum(
+                1 for job in work_order_jobs if job.get("department") == "instalaciones"
+            ),
+            "electrico": sum(
+                1 for job in work_order_jobs if job.get("department") == "electrico"
+            ),
+            "polarizados": len(tint_jobs),
+        },
+    }
+
+    return {
+        "technician_id": target_id,
+        "technician_name": target_user.name,
+        "technician_role": target_role,
+        "date_from": date_from,
+        "date_to": date_to,
+        "summary": summary,
+        "jobs": jobs,
+    }
+
+
 # ============ QUALITY CONTROL ============
+
+
+QC_VIEW_ROLES = ["gerencia", "supervisor", "coordinador_instalaciones"]
+QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"]
 
 
 @api_router.get("/quality-control")
@@ -7785,7 +10649,7 @@ async def get_quality_controls(
     date_to: Optional[str] = None,
 ):
     """Get quality control records with optional filters"""
-    await require_roles(request, ["gerencia", "supervisor"])
+    user = await require_roles(request, QC_VIEW_ROLES)
 
     query: dict[str, Any] = {}
     if technician_id:
@@ -7798,6 +10662,21 @@ async def get_quality_controls(
         else:
             query["created_at"] = {"$lte": date_to}
 
+    if user.role in {"supervisor", "coordinador_instalaciones"} and user.branch_id:
+        branch_work_orders = await db.work_orders.find(
+            {"branch_id": user.branch_id},
+            {"_id": 0, "work_order_id": 1},
+        ).to_list(5000)
+        branch_work_order_ids = [
+            str(row.get("work_order_id"))
+            for row in branch_work_orders
+            if row.get("work_order_id")
+        ]
+        if branch_work_order_ids:
+            query["work_order_id"] = {"$in": branch_work_order_ids}
+        else:
+            return []
+
     qcs = (
         await db.quality_controls.find(query, {"_id": 0})
         .sort("created_at", -1)
@@ -7809,11 +10688,11 @@ async def get_quality_controls(
 @api_router.get("/quality-control/pending")
 async def get_pending_quality_checks(request: Request):
     """Get work orders pending quality check"""
-    user = await require_roles(request, ["gerencia", "supervisor"])
+    user = await require_roles(request, QC_VIEW_ROLES)
 
     # Get work orders in "quality_check" status that don't have a QC record yet
     query: Dict[str, Any] = {"status": "quality_check"}
-    if user.role == "supervisor":
+    if user.role in {"supervisor", "coordinador_instalaciones"}:
         if user.branch_id:
             query["branch_id"] = user.branch_id
         else:
@@ -7840,7 +10719,7 @@ async def get_pending_quality_checks(request: Request):
 @api_router.post("/quality-control")
 async def create_quality_control(qc_data: QualityControlCreate, request: Request):
     """Create a quality control record for a work order"""
-    inspector = await require_roles(request, ["gerencia", "supervisor"])
+    inspector = await require_roles(request, QC_APPROVER_ROLES)
 
     # Get work order
     wo = await db.work_orders.find_one(
@@ -7892,17 +10771,67 @@ async def create_quality_control(qc_data: QualityControlCreate, request: Request
     await db.quality_controls.insert_one(qc_doc)
 
     # Update work order with QC info
-    new_status = "completed" if qc_data.approved else "quality_check"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    new_status = "completed" if qc_data.approved else "in_progress"
+    wo_updates: Dict[str, Any] = {
+        "quality_score": qc_data.overall_rating,
+        "quality_notes": qc_data.comments,
+        "status": new_status,
+        "qc_approved": bool(qc_data.approved),
+        "qc_inspected_at": now_iso,
+        "qc_inspected_by": inspector.user_id,
+        "qc_inspected_by_name": inspector.name,
+    }
+    if qc_data.approved:
+        wo_updates["qc_approved_at"] = now_iso
+        wo_updates["qc_approved_by"] = inspector.user_id
+        wo_updates["qc_approved_by_name"] = inspector.name
+        if not wo.get("end_time"):
+            wo_updates["end_time"] = now_iso
+            if wo.get("start_time"):
+                start = datetime.fromisoformat(str(wo["start_time"]).replace("Z", "+00:00"))
+                end = datetime.now(timezone.utc)
+                wo_updates["actual_time"] = int((end - start).total_seconds() / 60)
+    else:
+        wo_updates["qc_rejected_at"] = now_iso
+        wo_updates["qc_rejected_by"] = inspector.user_id
+        wo_updates["qc_rejected_by_name"] = inspector.name
+
     await db.work_orders.update_one(
         {"work_order_id": qc_data.work_order_id},
-        {
-            "$set": {
-                "quality_score": qc_data.overall_rating,
-                "quality_notes": qc_data.comments,
-                "status": new_status,
-            }
-        },
+        {"$set": wo_updates},
     )
+
+    technician_id = str(wo.get("technician_id") or "")
+    if technician_id:
+        if qc_data.approved:
+            await create_notification_entry(
+                message=(
+                    f"Instalación aprobada por control de calidad: "
+                    f"orden {qc_data.work_order_id}"
+                ),
+                recipient_id=technician_id,
+                metadata={
+                    "type": "work_order_qc_approved",
+                    "work_order_id": qc_data.work_order_id,
+                    "sale_id": wo.get("sale_id"),
+                },
+                dedupe_key=f"work_order_qc_approved:{qc_data.work_order_id}",
+            )
+        else:
+            await create_notification_entry(
+                message=(
+                    f"Instalación requiere correcciones: "
+                    f"orden {qc_data.work_order_id}"
+                ),
+                recipient_id=technician_id,
+                metadata={
+                    "type": "work_order_qc_rejected",
+                    "work_order_id": qc_data.work_order_id,
+                    "sale_id": wo.get("sale_id"),
+                },
+                dedupe_key=f"work_order_qc_rejected:{qc_data.work_order_id}:{now_iso[:16]}",
+            )
 
     qc_doc.pop("_id", None)
     return qc_doc
@@ -7962,7 +10891,7 @@ async def get_qc_checklist_template(request: Request):
 @api_router.get("/quality-control/{qc_id}")
 async def get_quality_control(qc_id: str, request: Request):
     """Get a specific quality control record"""
-    await require_roles(request, ["gerencia", "supervisor"])
+    await require_roles(request, QC_VIEW_ROLES)
 
     qc = await db.quality_controls.find_one({"qc_id": qc_id}, {"_id": 0})
     if not qc:
@@ -7988,7 +10917,7 @@ async def get_quality_control_by_work_order(work_order_id: str, request: Request
 @api_router.get("/quality-control/stats/technicians")
 async def get_technician_quality_stats(request: Request):
     """Get quality statistics by technician"""
-    await require_roles(request, ["gerencia", "supervisor"])
+    await require_roles(request, QC_VIEW_ROLES)
 
     # Get all QC records
     qcs = await db.quality_controls.find({}, {"_id": 0}).to_list(10000)
@@ -8057,11 +10986,20 @@ async def get_technician_quality_stats(request: Request):
 
 
 @api_router.get("/kds/orders")
-async def get_kds_orders(request: Request, branch_id: Optional[str] = None):
+async def get_kds_orders(
+    request: Request,
+    branch_id: Optional[str] = None,
+    department: Optional[str] = None,
+    assignment_status: Optional[str] = None,
+):
     user = await require_auth(request)
     query: dict[str, Any] = {"status": {"$in": ["pending", "in_progress", "quality_check"]}}
     if branch_id:
         query["branch_id"] = branch_id
+    if department:
+        query["department"] = str(department).strip().lower()
+    if assignment_status:
+        query["assignment_status"] = str(assignment_status).strip().lower()
 
     visibility_query = await build_work_order_visibility_query(user)
     query = merge_queries(query, visibility_query)
@@ -8073,6 +11011,60 @@ async def get_kds_orders(request: Request, branch_id: Optional[str] = None):
     )
 
     return orders
+
+
+@api_router.get("/kds/tint-orders")
+async def get_kds_tint_orders(
+    request: Request,
+    branch_id: Optional[str] = None,
+    assignment_status: Optional[str] = None,
+):
+    await require_auth(request)
+    query: Dict[str, Any] = {
+        "status": {"$in": ["pending_assignment", "pending", "in_progress", "quality_check"]},
+    }
+    if branch_id:
+        query["branch_id"] = branch_id
+    if assignment_status:
+        query["assignment_status"] = str(assignment_status).strip().lower()
+
+    orders = (
+        await db.tint_orders.find(query, {"_id": 0})
+        .sort([("priority", -1), ("created_at", 1)])
+        .to_list(100)
+    )
+    return orders
+
+
+@api_router.get("/kds/board")
+async def get_kds_department_board(request: Request, branch_id: Optional[str] = None):
+    """Aggregated KDS view by operational department."""
+    await require_auth(request)
+    effective_branch = branch_id or None
+    work_orders = await get_kds_orders(
+        request,
+        branch_id=effective_branch,
+    )
+    tint_orders = await get_kds_tint_orders(request, branch_id=effective_branch)
+    warehouse = await get_kds_warehouse(request, warehouse_id=None)
+
+    by_department: Dict[str, List[Dict[str, Any]]] = {
+        "bodega": warehouse if isinstance(warehouse, list) else [],
+        "instalaciones": [],
+        "electrico": [],
+        "polarizados": tint_orders if isinstance(tint_orders, list) else [],
+    }
+    for order in work_orders if isinstance(work_orders, list) else []:
+        dept = str(order.get("department") or "instalaciones").lower()
+        if dept not in by_department:
+            by_department[dept] = []
+        by_department[dept].append(order)
+
+    return {
+        "branch_id": effective_branch,
+        "departments": by_department,
+        "counts": {k: len(v) for k, v in by_department.items()},
+    }
 
 
 @api_router.get("/kds/warehouse")
@@ -8903,8 +11895,8 @@ def _build_cash_close_email_html(report: Dict[str, Any]) -> str:
       </ul>
       <h3>Ventas No Efectivas</h3>
       <ul>
-        <li>Tarjetas: C${float(card.get('nio') or 0):,.2f} | USD ${float(card.get('usd') or 0):,.2f}</li>
-        <li>Transferencias: C${float(transfer.get('nio') or 0):,.2f} | USD ${float(transfer.get('usd') or 0):,.2f}</li>
+        <li>Tarjetas: C${float(card.get('nio') or 0):,.2f} | US${float(card.get('usd') or 0):,.2f}</li>
+        <li>Transferencias: C${float(transfer.get('nio') or 0):,.2f} | US${float(transfer.get('usd') or 0):,.2f}</li>
       </ul>
       <h3>Alertas de Auditoria (Descuento + POS)</h3>
       <ul>{pos_alert_rows}</ul>
@@ -8918,6 +11910,64 @@ def _build_cash_close_email_html(report: Dict[str, Any]) -> str:
       </ul>
     </body></html>
     """
+
+
+@api_router.get("/caja/sesion-activa")
+async def get_active_cash_session(
+    request: Request,
+    caja_id: Optional[str] = None,
+):
+    """Return the currently open cash session for the user's branch (optionally scoped by caja_id)."""
+    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    branch_id = str(user.branch_id or "")
+    if not branch_id:
+        raise HTTPException(status_code=400, detail="El usuario no tiene sucursal asignada")
+
+    query: Dict[str, Any] = {
+        "branch_id": branch_id,
+        "estado": "abierta",
+    }
+    caja_value = str(caja_id or "").strip()
+    if caja_value:
+        query["caja_id"] = caja_value
+
+    session = await db.caja_sesiones.find_one(
+        query,
+        {
+            "_id": 0,
+            "session_id": 1,
+            "branch_id": 1,
+            "caja_id": 1,
+            "usuario_id": 1,
+            "opened_by": 1,
+            "opened_by_name": 1,
+            "estado": 1,
+            "opened_at": 1,
+            "opening_totals": 1,
+            "opening_total_nio_equiv": 1,
+            "usd_to_nio_rate": 1,
+        },
+        sort=[("opened_at", -1)],
+    )
+    if not session:
+        return {"active": False, "session": None}
+
+    return {
+        "active": True,
+        "session": {
+            "session_id": session.get("session_id"),
+            "branch_id": session.get("branch_id"),
+            "caja_id": session.get("caja_id"),
+            "usuario_id": session.get("usuario_id"),
+            "opened_by": session.get("opened_by"),
+            "opened_by_name": session.get("opened_by_name"),
+            "estado": session.get("estado"),
+            "opened_at": session.get("opened_at"),
+            "opening_totals": session.get("opening_totals") or {},
+            "opening_total_nio_equiv": session.get("opening_total_nio_equiv") or 0,
+            "usd_to_nio_rate": session.get("usd_to_nio_rate"),
+        },
+    }
 
 
 @api_router.post("/caja/apertura")
@@ -9337,6 +12387,7 @@ async def export_cash_close_excel(session_id: str, request: Request):
         raise HTTPException(status_code=400, detail="La sesión debe estar cerrada para exportar")
 
     report_data = await _get_cash_close_report_data(cast(Dict[str, Any], session))
+    Workbook, _ = _get_openpyxl_symbols()
     wb = Workbook()
 
     # Hoja 1: Resumen General
@@ -9453,6 +12504,10 @@ class CreditPaymentCreate(BaseModel):
     payment_method: str = "cash"  # cash, transfer, card
     reference: Optional[str] = None
     notes: Optional[str] = None
+    sesion_id: Optional[str] = None
+    card_type: Optional[str] = None
+    bank_name: Optional[str] = None
+    transaction_number: Optional[str] = None
 
 
 class CreditPayment(BaseModel):
@@ -9468,13 +12523,22 @@ class CreditPayment(BaseModel):
 
 
 @api_router.get("/credit/pending")
-async def get_pending_credits(request: Request):
-    await require_roles(request, ["gerencia", "supervisor", "ventas", "cajero"])
+async def get_pending_credits(request: Request, branch_id: Optional[str] = None):
+    user = await require_roles(request, ["gerencia", "supervisor", "ventas", "cajero"])
+    effective_role = resolve_effective_role(user.role)
+
+    query: Dict[str, Any] = {
+        "payment_type": "credit",
+        "payment_status": {"$ne": "paid"},
+        "invoice_state": {"$ne": "cancelled"},
+    }
+    if effective_role in {"supervisor", "cajero"}:
+        query["branch_id"] = str(user.branch_id or "")
+    elif branch_id:
+        query["branch_id"] = str(branch_id)
 
     sales = (
-        await db.sales.find(
-            {"payment_type": "credit", "payment_status": {"$ne": "paid"}}, {"_id": 0}
-        )
+        await db.sales.find(query, {"_id": 0})
         .sort("credit_due_date", 1)
         .to_list(500)
     )
@@ -9491,8 +12555,9 @@ async def get_pending_credits(request: Request):
             {"sale_id": sale["sale_id"]}, {"_id": 0}
         ).to_list(100)
         sale["payments"] = payments
-        sale["amount_paid"] = sum(p["amount"] for p in payments)
-        sale["amount_pending"] = sale["total"] - sale["amount_paid"]
+        totals = await _get_sale_payment_totals(cast(Dict[str, Any], sale))
+        sale["amount_paid"] = totals["paid"]
+        sale["amount_pending"] = totals["pending"]
 
     return sales
 
@@ -9504,16 +12569,51 @@ async def register_credit_payment(payment_data: CreditPaymentCreate, request: Re
     sale = await db.sales.find_one({"sale_id": payment_data.sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
+    sale = cast(Dict[str, Any], sale)
 
-    if sale["payment_type"] != "credit":
+    if sale.get("payment_type") != "credit":
         raise HTTPException(status_code=400, detail="Sale is not a credit sale")
 
-    # Get existing payments
-    existing_payments = await db.credit_payments.find(
-        {"sale_id": payment_data.sale_id}, {"_id": 0}
-    ).to_list(100)
-    total_paid = sum(p["amount"] for p in existing_payments)
-    pending = sale["total"] - total_paid
+    if user.role in {"cajero", "supervisor"} and payment_data.sesion_id:
+        session = await db.caja_sesiones.find_one({"session_id": payment_data.sesion_id}, {"_id": 0})
+        if not session:
+            raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
+        _validate_session_access(user, cast(Dict[str, Any], session))
+        if session.get("estado") != "abierta":
+            raise HTTPException(status_code=400, detail="La sesión de caja no está abierta")
+        if str(sale.get("branch_id") or "") != str(session.get("branch_id") or ""):
+            raise HTTPException(status_code=400, detail="La factura no pertenece a la misma sucursal de la sesión")
+
+        method = _normalize_method_name(payment_data.payment_method)
+        if _is_card_method(method):
+            _validate_card_payment_metadata(
+                method=method,
+                card_type=payment_data.card_type,
+                bank_name=payment_data.bank_name,
+                transaction_number=payment_data.transaction_number,
+                reference=payment_data.reference,
+                line_label="abono con tarjeta",
+            )
+
+        await db.sales.update_one(
+            {"sale_id": payment_data.sale_id},
+            {"$set": {"cash_session_id": payment_data.sesion_id}},
+        )
+
+        collect_payload = CashierCollectRequest(
+            amount=payment_data.amount,
+            payment_method=payment_data.payment_method,
+            reference=payment_data.reference,
+            notes=payment_data.notes,
+            card_type=payment_data.card_type,
+            bank_name=payment_data.bank_name,
+            transaction_number=payment_data.transaction_number,
+        )
+        return await collect_sale_invoice(str(payment_data.sale_id), collect_payload, request)
+
+    totals = await _get_sale_payment_totals(sale)
+    pending = totals["pending"]
+    total_paid = totals["paid"]
 
     if payment_data.amount > pending:
         raise HTTPException(
@@ -9535,22 +12635,29 @@ async def register_credit_payment(payment_data: CreditPaymentCreate, request: Re
     await db.credit_payments.insert_one(doc)
     doc.pop("_id", None)
 
-    # Update customer credit balance
     await db.customers.update_one(
         {"customer_id": sale["customer_id"]},
         {"$inc": {"credit_balance": -payment_data.amount}},
     )
 
-    # Check if fully paid
-    new_total_paid = total_paid + payment_data.amount
-    if new_total_paid >= sale["total"]:
-        await db.sales.update_one(
-            {"sale_id": payment_data.sale_id}, {"$set": {"payment_status": "paid"}}
-        )
-    else:
-        await db.sales.update_one(
-            {"sale_id": payment_data.sale_id}, {"$set": {"payment_status": "partial"}}
-        )
+    new_total_paid = _round2(total_paid + payment_data.amount)
+    due = totals["due"]
+    new_pending = _round2(max(due - new_total_paid, 0.0))
+    new_status = "paid" if new_pending <= 0.0001 else "partial"
+    update_set: Dict[str, Any] = {
+        "payment_status": new_status,
+        "amount_paid": new_total_paid,
+        "amount_pending": new_pending,
+        "collected_at": datetime.now(timezone.utc).isoformat(),
+        "collected_by": user.user_id,
+    }
+    if new_status == "paid":
+        update_set["invoice_state"] = "closed"
+
+    await db.sales.update_one({"sale_id": payment_data.sale_id}, {"$set": update_set})
+
+    if new_status == "paid":
+        await trigger_sale_fulfillment_after_payment(str(payment_data.sale_id))
 
     return doc
 
@@ -9715,28 +12822,17 @@ def _safe_date(value: Optional[str]) -> str:
     return str(value).replace("T", " ").split("+")[0]
 
 
-def _load_logo_image(logo_url: Optional[str]) -> Optional[ImageReader]:
-    if not logo_url:
-        return None
-    try:
-        if logo_url.startswith("data:image"):
-            header, data = logo_url.split(",", 1)
-            return ImageReader(BytesIO(base64.b64decode(data)))
-        if logo_url.startswith("http://") or logo_url.startswith("https://"):
-            resp = httpx.get(logo_url, timeout=5.0)
-            resp.raise_for_status()
-            return ImageReader(BytesIO(resp.content))
-        # local file path
-        path = Path(logo_url)
-        if path.exists():
-            return ImageReader(str(path))
-    except Exception:
-        logger.exception("Failed to load logo image")
-    return None
+def _load_logo_image(logo_url: Optional[str]) -> Optional[Any]:
+    return export_load_logo_image(logo_url, logger)
 
 
-def _draw_document_pdf(
-    p: canvas.Canvas,
+async def _get_billing_pdf_settings() -> Dict[str, Any]:
+    doc = await _get_billing_settings_doc()
+    return export_normalize_pdf_document_settings(doc.get("pdf_documents"))
+
+
+async def _draw_document_pdf(
+    p: Any,
     doc_title: str,
     doc_number: str,
     doc_date: str,
@@ -9749,169 +12845,166 @@ def _draw_document_pdf(
     apply_iva: bool,
     totals: dict,
     notes: Optional[str] = None,
+    pdf_settings: Optional[Dict[str, Any]] = None,
+    document_theme: Optional[Dict[str, str]] = None,
 ):
-    width, height = letter
-    safe_items = items if isinstance(items, list) else list(items or [])
+    settings = pdf_settings or await _get_billing_pdf_settings()
+    theme = document_theme
+    if theme is None:
+        title_key = str(doc_title or "").strip().lower()
+        if title_key in {"quotation", "cotización", "cotizacion"}:
+            theme = export_resolve_quotation_theme(settings)
+        else:
+            theme = export_resolve_quotation_theme(settings)
+    export_draw_document_pdf(
+        p=p,
+        doc_title=doc_title,
+        doc_number=doc_number,
+        doc_date=doc_date,
+        company=company,
+        customer=customer,
+        vehicle=vehicle,
+        items=items,
+        currency=currency,
+        iva_rate=iva_rate,
+        apply_iva=apply_iva,
+        totals=totals,
+        currencies=CURRENCIES,
+        logger=logger,
+        notes=notes,
+        pdf_settings=settings,
+        document_theme=theme,
+    )
 
-    # Header bar
-    p.setFillColor(colors.HexColor("#EAF1F9"))
-    p.rect(0, height - 120, width, 90, stroke=0, fill=1)
 
-    # Brand / Logo
-    logo = _load_logo_image(company.get("logo_url"))
-    if logo:
-        p.drawImage(logo, 50, height - 90, width=90, height=40, preserveAspectRatio=True, mask='auto')
-        brand_x = 150
-    else:
-        brand_x = 50
-    p.setFillColor(colors.HexColor("#1F2937"))
-    p.setFont("Helvetica-Bold", 18)
-    p.drawString(brand_x, height - 70, company.get("name", "MUNDO DE ACCESORIOS"))
-    p.setFont("Helvetica", 9)
-    p.setFillColor(colors.HexColor("#6B7280"))
-    p.drawString(50, height - 85, company.get("tagline", "Sistema ERP"))
+def _payment_method_label(method: Optional[str]) -> str:
+    return export_payment_method_summary(method, [])
 
-    # Document info
-    p.setFillColor(colors.HexColor("#1F2937"))
-    p.setFont("Helvetica-Bold", 10)
-    p.drawRightString(width - 50, height - 60, "Date")
-    p.drawRightString(width - 50, height - 80, f"{doc_title} #")
-    p.setFont("Helvetica", 10)
-    p.drawRightString(width - 110, height - 60, _safe_date(doc_date))
-    p.drawRightString(width - 110, height - 80, doc_number)
 
-    # Parties block (two columns)
-    left_x = 50
-    right_x = width / 2 + 20
-    left_y = height - 135
-    right_y = height - 135
+def _build_sale_payment_info(sale: Dict[str, Any]) -> Dict[str, Any]:
+    mixed_methods = sale.get("mixed_payment_methods") or sale.get("mixedPaymentMethods") or []
+    if not isinstance(mixed_methods, list):
+        mixed_methods = []
+    method_code = sale.get("payment_method") or sale.get("payment_type") or "cash"
+    return {
+        "payment_status": sale.get("payment_status"),
+        "payment_type": sale.get("payment_type"),
+        "payment_method": method_code,
+        "method_summary": export_payment_method_summary(method_code, mixed_methods),
+        "mixed_payment_methods": mixed_methods,
+        "amount_paid": sale.get("amount_paid"),
+        "amount_pending": sale.get("amount_pending"),
+        "credit_days": sale.get("credit_days"),
+        "total_legal": sale.get("total_legal", sale.get("total")),
+        "net_to_collect": sale.get("net_to_collect", sale.get("total")),
+        "discounts_blocked_by_method": bool(sale.get("discounts_blocked_by_method")),
+        "blocked_discounts_amount": sale.get("discounts_removed_amount") or sale.get("blocked_discounts_amount"),
+    }
 
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(left_x, left_y, company.get("legal_name", "Supplier Company"))
-    left_y -= 14
-    p.setFont("Helvetica", 9)
-    if company.get("tax_id"):
-        p.drawString(left_x, left_y, f"RUC: {company.get('tax_id')}")
-        left_y -= 12
-    if company.get("vat"):
-        p.drawString(left_x, left_y, f"VAT: {company.get('vat')}")
-        left_y -= 12
-    if company.get("address"):
-        p.drawString(left_x, left_y, f"Dirección: {company.get('address')}")
-        left_y -= 12
-    if company.get("city"):
-        p.drawString(left_x, left_y, f"Ciudad: {company.get('city')}")
-        left_y -= 12
-    if company.get("country"):
-        p.drawString(left_x, left_y, f"País: {company.get('country')}")
-        left_y -= 12
-    if company.get("phone"):
-        p.drawString(left_x, left_y, f"Tel: {company.get('phone')}")
-        left_y -= 12
-    if company.get("email"):
-        p.drawString(left_x, left_y, f"Email: {company.get('email')}")
-        left_y -= 12
 
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(right_x, right_y, "Cliente")
-    right_y -= 14
-    p.setFont("Helvetica", 9)
-    if customer.get("name"):
-        p.drawString(right_x, right_y, f"Nombre: {customer.get('name')}")
-        right_y -= 12
-    if customer.get("tax_id"):
-        p.drawString(right_x, right_y, f"RUC: {customer.get('tax_id')}")
-        right_y -= 12
-    if customer.get("phone"):
-        p.drawString(right_x, right_y, f"Tel: {customer.get('phone')}")
-        right_y -= 12
-    if customer.get("email"):
-        p.drawString(right_x, right_y, f"Email: {customer.get('email')}")
-        right_y -= 12
-    if customer.get("address"):
-        p.drawString(right_x, right_y, f"Dirección: {customer.get('address')}")
-        right_y -= 12
+async def _build_letter_invoice_context(sale: Dict[str, Any]) -> Dict[str, Any]:
+    customer = await db.customers.find_one(
+        {"customer_id": sale.get("customer_id")}, {"_id": 0}
+    )
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+    branch = None
+    if sale.get("branch_id"):
+        branch = await db.branches.find_one({"branch_id": sale["branch_id"]}, {"_id": 0})
 
-    if vehicle:
-        left_y -= 6
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(left_x, left_y, "Vehículo")
-        left_y -= 14
-        p.setFont("Helvetica", 9)
-        vehicle_line = f"{vehicle.get('brand','')} {vehicle.get('model','')} {vehicle.get('year','')}"
-        if vehicle_line.strip():
-            p.drawString(left_x, left_y, vehicle_line.strip())
-            left_y -= 12
-        if vehicle.get("plate"):
-            p.drawString(left_x, left_y, f"Placa: {vehicle.get('plate')}")
-            left_y -= 12
-        vin = vehicle.get("vin") or vehicle.get("chasis")
-        if vin:
-            p.drawString(left_x, left_y, f"Chasis: {vin}")
-            left_y -= 12
-        if vehicle.get("color"):
-            p.drawString(left_x, left_y, f"Color: {vehicle.get('color')}")
-            left_y -= 12
+    iva_rate_raw = sale.get("iva_rate", 0.12)
+    try:
+        iva_rate_percent = float(iva_rate_raw)
+        if iva_rate_percent <= 1:
+            iva_rate_percent *= 100
+    except (TypeError, ValueError):
+        iva_rate_percent = 12.0
 
-    # Table header
-    y = min(left_y, right_y) - 10
-    p.setFillColor(colors.HexColor("#E6EAF2"))
-    p.rect(50, y, width - 100, 18, stroke=0, fill=1)
-    p.setFillColor(colors.HexColor("#374151"))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(55, y + 5, "#")
-    p.drawString(70, y + 5, "Product details")
-    p.drawRightString(360, y + 5, "Price")
-    p.drawRightString(430, y + 5, "Qty")
-    p.drawRightString(width - 60, y + 5, "Subtotal")
-    y -= 12
+    return {
+        "company": {
+            "name": (branch or {}).get("company_name") or os.environ.get("COMPANY_NAME", "MUNDO DE ACCESORIOS"),
+            "tagline": os.environ.get("COMPANY_TAGLINE", "Accesorios y servicios automotrices"),
+            "legal_name": (branch or {}).get("company_legal_name")
+            or (branch or {}).get("name")
+            or os.environ.get("COMPANY_LEGAL_NAME", "MUNDO DE ACCESORIOS"),
+            "tax_id": (branch or {}).get("company_tax_id") or "",
+            "vat": (branch or {}).get("company_vat") or "",
+            "address": (branch or {}).get("company_address") or (branch or {}).get("address") or "",
+            "city": (branch or {}).get("company_city") or "",
+            "country": (branch or {}).get("company_country") or "Nicaragua",
+            "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
+            "email": (branch or {}).get("company_email") or "",
+            "logo_url": (branch or {}).get("logo_url") or "",
+            "branch_id": sale.get("branch_id") or (branch or {}).get("branch_id") or "",
+        },
+        "customer": {
+            "name": sale.get("customer_name", ""),
+            "tax_id": (customer or {}).get("tax_id", ""),
+            "address": (customer or {}).get("address", ""),
+            "phone": (customer or {}).get("phone", ""),
+            "email": (customer or {}).get("email", ""),
+        },
+        "vehicle": vehicle,
+        "currency": sale.get("currency", "NIO"),
+        "iva_rate": iva_rate_percent,
+        "apply_iva": bool(sale.get("apply_iva", True)),
+        "totals": {
+            "subtotal": sale.get("subtotal", 0),
+            "tax": sale.get("tax", sale.get("iva_amount", 0)),
+            "total": sale.get("total", 0),
+            "total_legal": sale.get("total_legal", sale.get("total", 0)),
+            "discount": sale.get("discount", 0),
+            "discounts_applied_amount": sale.get("discounts_applied_amount", sale.get("discount", 0)),
+            "retention_amount": sale.get("retention_amount", 0),
+            "retention_rate": sale.get("retention_rate", 0),
+        },
+        "salesperson_name": sale.get("salesperson_name", ""),
+        "payment_method": export_payment_method_summary(
+            sale.get("payment_method") or sale.get("payment_type"),
+            sale.get("mixed_payment_methods") or sale.get("mixedPaymentMethods") or [],
+        ),
+        "payment_info": _build_sale_payment_info(sale),
+        "notes": sale.get("notes"),
+    }
 
-    p.setFont("Helvetica", 9)
-    index = 1
-    for item in safe_items:
-        if not item:
-            continue
-        if y < 110:
-            p.showPage()
-            y = height - 80
-        unit_price = float(item.get("unit_price", 0) or 0)
-        qty = float(item.get("quantity", 0) or 0)
-        discount = float(item.get("discount", 0) or 0)
-        line_subtotal = unit_price * qty * (1 - discount / 100)
-        p.setFillColor(colors.HexColor("#111827"))
-        p.drawString(55, y, f"{index}.")
-        p.drawString(70, y, str(item.get("product_name", ""))[:45])
-        p.drawRightString(360, y, _format_money(unit_price, currency))
-        p.drawRightString(430, y, f"{int(qty)}")
-        p.drawRightString(width - 60, y, _format_money(line_subtotal, currency))
-        y -= 14
-        index += 1
 
-    # Totals block
-    y -= 10
-    p.setFont("Helvetica-Bold", 10)
-    p.setFillColor(colors.HexColor("#374151"))
-    p.drawRightString(width - 120, y, "Subtotal:")
-    p.drawRightString(width - 60, y, _format_money(totals.get("subtotal", 0), currency))
-    y -= 14
-    p.drawRightString(width - 120, y, "IVA total:")
-    p.drawRightString(width - 60, y, _format_money(totals.get("tax", 0), currency))
-    y -= 20
-    p.setFillColor(colors.HexColor("#5B6BD6"))
-    p.rect(width - 170, y - 4, 110, 20, stroke=0, fill=1)
-    p.setFillColor(colors.white)
-    p.drawRightString(width - 60, y + 2, _format_money(totals.get("total", 0), currency))
-    p.setFillColor(colors.white)
-    p.drawString(width - 160, y + 2, "Total:")
-
-    # Notes
-    if notes:
-        y -= 40
-        p.setFillColor(colors.HexColor("#374151"))
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(50, y, "Notes")
-        p.setFont("Helvetica", 9)
-        p.drawString(50, y - 14, str(notes)[:120])
+async def _draw_invoice_letter_pdf(
+    p: Any,
+    sale: Dict[str, Any],
+    context: Dict[str, Any],
+    pdf_settings: Optional[Dict[str, Any]] = None,
+) -> None:
+    settings = pdf_settings or await _get_billing_pdf_settings()
+    document_theme = export_resolve_invoice_theme(sale, settings)
+    sale_payment_meta = {
+        "payment_status": sale.get("payment_status"),
+        "amount_paid": sale.get("amount_paid"),
+        "amount_pending": sale.get("amount_pending"),
+    }
+    payment_info = context.get("payment_info") or _build_sale_payment_info(sale)
+    export_draw_invoice_letter_pdf(
+        p=p,
+        invoice_number=str(sale.get("invoice_number") or ""),
+        invoice_date=str(sale.get("created_at") or ""),
+        company=context["company"],
+        customer=context["customer"],
+        vehicle=context.get("vehicle"),
+        items=sale.get("items") or [],
+        currency=context["currency"],
+        iva_rate=context["iva_rate"],
+        apply_iva=context["apply_iva"],
+        totals=context["totals"],
+        currencies=CURRENCIES,
+        logger=logger,
+        salesperson_name=context.get("salesperson_name", ""),
+        payment_method=context.get("payment_method", ""),
+        notes=context.get("notes"),
+        pdf_settings=settings,
+        document_theme=document_theme,
+        sale_payment_meta=sale_payment_meta,
+        payment_info=payment_info,
+    )
 
 
 
@@ -10067,65 +13160,13 @@ async def get_invoice_pdf(sale_id: str, request: Request):
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
 
-    customer = await db.customers.find_one(
-        {"customer_id": sale["customer_id"]}, {"_id": 0}
-    )
-    vehicle = None
-    if sale.get("vehicle_id"):
-        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
-    branch = None
-    if sale.get("branch_id"):
-        branch = await db.branches.find_one({"branch_id": sale["branch_id"]}, {"_id": 0})
+    context = await _build_letter_invoice_context(cast(Dict[str, Any], sale))
 
     buffer = BytesIO()
+    _, letter, _, canvas = _get_reportlab_symbols()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    currency = sale.get("currency", "USD")
-    iva_rate = sale.get("iva_rate", 12)
-    apply_iva = sale.get("apply_iva", True)
-
-    company = {
-        "name": (branch or {}).get("company_name") or os.environ.get("COMPANY_NAME", "MUNDO DE ACCESORIOS"),
-        "tagline": os.environ.get("COMPANY_TAGLINE", "Sistema ERP"),
-        "legal_name": (branch or {}).get("company_legal_name") or (branch or {}).get("name") or os.environ.get("COMPANY_LEGAL_NAME", "MUNDO DE ACCESORIOS"),
-        "tax_id": (branch or {}).get("company_tax_id") or "",
-        "vat": (branch or {}).get("company_vat") or "",
-        "address": (branch or {}).get("company_address") or (branch or {}).get("address") or "",
-        "city": (branch or {}).get("company_city") or "",
-        "country": (branch or {}).get("company_country") or "",
-        "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
-        "email": (branch or {}).get("company_email") or "",
-        "logo_url": (branch or {}).get("logo_url") or "",
-    }
-    customer_info = {
-        "name": sale.get("customer_name", ""),
-        "tax_id": customer.get("tax_id") if customer else "",
-        "address": customer.get("address") if customer else "",
-        "phone": customer.get("phone") if customer else "",
-        "email": customer.get("email") if customer else "",
-    }
-
-    totals = {
-        "subtotal": sale.get("subtotal", 0),
-        "tax": sale.get("tax", 0),
-        "total": sale.get("total", 0),
-    }
-
-    _draw_document_pdf(
-        p,
-        "Invoice",
-        sale.get("invoice_number", ""),
-        sale.get("created_at", ""),
-        company,
-        customer_info,
-        vehicle,
-        sale.get("items") or [],
-        currency,
-        iva_rate,
-        apply_iva,
-        totals,
-        notes=sale.get("notes"),
-    )
+    await _draw_invoice_letter_pdf(p, cast(Dict[str, Any], sale), context)
 
     p.save()
     buffer.seek(0)
@@ -10135,6 +13176,52 @@ async def get_invoice_pdf(sale_id: str, request: Request):
         media_type="application/pdf",
         headers={
             "Content-Disposition": f"attachment; filename=factura_{sale['invoice_number']}.pdf"
+        },
+    )
+
+
+@api_router.get("/print/payment-receipt-pdf/{sale_id}")
+async def get_payment_receipt_pdf(sale_id: str, request: Request):
+    await require_auth(request)
+
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    sale = cast(Dict[str, Any], sale)
+
+    payment_status = str(sale.get("payment_status") or "").lower()
+    amount_paid = float(sale.get("amount_paid") or 0)
+    if payment_status not in {"partial", "paid"} and amount_paid <= 0:
+        raise HTTPException(status_code=400, detail="La venta no tiene abonos registrados")
+
+    context = await _build_letter_invoice_context(sale)
+    payments = list(sale.get("payments") or [])
+    latest_payment = payments[-1] if payments else None
+    settings = await _get_billing_pdf_settings()
+    theme = export_resolve_invoice_theme(sale, settings)
+
+    buffer = BytesIO()
+    _, letter, _, canvas = _get_reportlab_symbols()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    export_draw_payment_receipt_pdf(
+        p=p,
+        sale=sale,
+        company=context["company"],
+        customer=context["customer"],
+        payment=latest_payment,
+        currencies=CURRENCIES,
+        logger=logger,
+        pdf_settings=settings,
+        document_theme=theme,
+    )
+    p.save()
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=abono_{sale.get('invoice_number', sale_id)}.pdf"
         },
     )
 
@@ -10160,6 +13247,7 @@ async def get_quotation_pdf(quotation_id: str, request: Request):
         branch = await db.branches.find_one({"branch_id": quotation["branch_id"]}, {"_id": 0})
 
     buffer = BytesIO()
+    _, letter, _, canvas = _get_reportlab_symbols()
     p = canvas.Canvas(buffer, pagesize=letter)
 
     currency = quotation.get("currency", "USD")
@@ -10178,6 +13266,7 @@ async def get_quotation_pdf(quotation_id: str, request: Request):
         "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
         "email": (branch or {}).get("company_email") or "",
         "logo_url": (branch or {}).get("logo_url") or "",
+        "branch_id": quotation.get("branch_id") or (branch or {}).get("branch_id") or "",
     }
     customer_info = {
         "name": quotation.get("customer_name", ""),
@@ -10193,9 +13282,9 @@ async def get_quotation_pdf(quotation_id: str, request: Request):
         "total": quotation.get("total", 0),
     }
 
-    _draw_document_pdf(
+    await _draw_document_pdf(
         p,
-        "Quotation",
+        "Cotización",
         quotation_id,
         quotation.get("created_at", ""),
         company,
@@ -11377,49 +14466,15 @@ async def send_email_notification(
     attachment_data: Optional[bytes] = None,
     attachment_name: Optional[str] = None,
 ):
-    """Send email via SendGrid if configured, otherwise log"""
-    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
-    sender_email = os.environ.get("SENDER_EMAIL", "noreply@mundodeaccesorios.com")
-
-    if sendgrid_key and sendgrid_key != "your_sendgrid_api_key":
-        try:
-            import base64
-
-            import sendgrid  # type: ignore[import]
-            from sendgrid.helpers.mail import (  # type: ignore[import]
-                Attachment,
-                Disposition,
-                FileContent,
-                FileName,
-                FileType,
-                Mail,
-            )
-
-            message = Mail(
-                from_email=sender_email,
-                to_emails=to_email,
-                subject=subject,
-                html_content=html_content,
-            )
-
-            if attachment_data and attachment_name:
-                encoded = base64.b64encode(attachment_data).decode()
-                attachment = Attachment()
-                attachment.file_content = FileContent(encoded)
-                attachment.file_name = FileName(attachment_name)
-                attachment.file_type = FileType("application/pdf")
-                attachment.disposition = Disposition("attachment")
-                message.attachment = attachment
-
-            sg = sendgrid.SendGridAPIClient(api_key=sendgrid_key)
-            response = sg.send(message)
-            return response.status_code == 202
-        except Exception as e:
-            logger.error(f"SendGrid error: {e}")
-            return False
-    else:
-        logger.info(f"Email would be sent to {to_email}: {subject}")
-        return True  # Simulated success when no SendGrid key
+    """Compatibility wrapper for integrations email provider."""
+    return await integrations_send_email_notification(
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        logger=logger,
+        attachment_data=attachment_data,
+        attachment_name=attachment_name,
+    )
 
 
 @api_router.post("/notifications/send-invoice/{sale_id}")
@@ -11441,61 +14496,11 @@ async def send_invoice_email(
 
     # Generate PDF
     buffer = BytesIO()
+    _, letter, _, canvas = _get_reportlab_symbols()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    vehicle = None
-    if sale.get("vehicle_id"):
-        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
-    branch = None
-    if sale.get("branch_id"):
-        branch = await db.branches.find_one({"branch_id": sale["branch_id"]}, {"_id": 0})
-
-    currency = sale.get("currency", "USD")
-    iva_rate = sale.get("iva_rate", 12)
-    apply_iva = sale.get("apply_iva", True)
-
-    company = {
-        "name": (branch or {}).get("company_name") or os.environ.get("COMPANY_NAME", "MUNDO DE ACCESORIOS"),
-        "tagline": os.environ.get("COMPANY_TAGLINE", "Sistema ERP"),
-        "legal_name": (branch or {}).get("company_legal_name") or (branch or {}).get("name") or os.environ.get("COMPANY_LEGAL_NAME", "MUNDO DE ACCESORIOS"),
-        "tax_id": (branch or {}).get("company_tax_id") or "",
-        "vat": (branch or {}).get("company_vat") or "",
-        "address": (branch or {}).get("company_address") or (branch or {}).get("address") or "",
-        "city": (branch or {}).get("company_city") or "",
-        "country": (branch or {}).get("company_country") or "",
-        "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
-        "email": (branch or {}).get("company_email") or "",
-        "logo_url": (branch or {}).get("logo_url") or "",
-    }
-    customer_info = {
-        "name": sale.get("customer_name", ""),
-        "tax_id": customer.get("tax_id") if customer else "",
-        "address": customer.get("address") if customer else "",
-        "phone": customer.get("phone") if customer else "",
-        "email": customer.get("email") if customer else "",
-    }
-
-    totals = {
-        "subtotal": sale.get("subtotal", 0),
-        "tax": sale.get("tax", 0),
-        "total": sale.get("total", 0),
-    }
-
-    _draw_document_pdf(
-        p,
-        "Invoice",
-        sale.get("invoice_number", ""),
-        sale.get("created_at", ""),
-        company,
-        customer_info,
-        vehicle,
-        sale.get("items", []),
-        currency,
-        iva_rate,
-        apply_iva,
-        totals,
-        notes=sale.get("notes"),
-    )
+    invoice_context = await _build_letter_invoice_context(cast(Dict[str, Any], sale))
+    await _draw_invoice_letter_pdf(p, cast(Dict[str, Any], sale), invoice_context)
 
     p.save()
     pdf_data = buffer.getvalue()
@@ -12406,6 +15411,7 @@ async def export_sales_report(
 
     elif format == "pdf":
         buffer = BytesIO()
+        _, letter, _, canvas = _get_reportlab_symbols()
         p = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
 
@@ -12938,7 +15944,7 @@ async def generate_thermal_print(job: ThermalPrintJob, request: Request):
 
 
 CURRENCIES = {
-    "USD": {"symbol": "$", "name": "Dólar Estadounidense", "decimal_places": 2},
+    "USD": {"symbol": "US$", "name": "Dólar Estadounidense", "decimal_places": 2},
     "NIO": {"symbol": "C$", "name": "Córdoba Nicaragüense", "decimal_places": 2},
     "EUR": {"symbol": "€", "name": "Euro", "decimal_places": 2},
     "MXN": {"symbol": "$", "name": "Peso Mexicano", "decimal_places": 2},
@@ -13304,6 +16310,7 @@ async def get_billing_settings(request: Request):
         },
         "iva_rate": float(doc.get("iva_rate") or DEFAULT_BILLING_IVA_RATE),
         "cancel_reasons": reasons,
+        "pdf_documents": export_normalize_pdf_document_settings(doc.get("pdf_documents")),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -13493,6 +16500,110 @@ async def delete_billing_cancel_reason(reason_id: str, request: Request):
     return {"message": "Motivo eliminado"}
 
 
+def _merge_pdf_documents_settings(
+    current: Dict[str, Any],
+    payload: Optional[BillingPdfDocumentsUpdatePayload],
+) -> Dict[str, Any]:
+    if payload is None:
+        return export_normalize_pdf_document_settings(current)
+    incoming_colors = payload.theme_colors.model_dump(exclude_none=True) if payload.theme_colors else {}
+    merged_colors = {**current.get("theme_colors", {}), **incoming_colors}
+    merged = {
+        **current,
+        **payload.model_dump(exclude_none=True, exclude={"theme_colors"}),
+        "theme_colors": merged_colors,
+    }
+    return export_normalize_pdf_document_settings(merged)
+
+
+async def _build_preview_company_for_user(user: Any) -> Dict[str, Any]:
+    branch = None
+    user_branch_id = getattr(user, "branch_id", None)
+    if user_branch_id:
+        branch = await db.branches.find_one({"branch_id": user_branch_id}, {"_id": 0})
+    return {
+        "name": (branch or {}).get("company_name") or os.environ.get("COMPANY_NAME", "MUNDO DE ACCESORIOS"),
+        "tagline": os.environ.get("COMPANY_TAGLINE", "Accesorios y servicios automotrices"),
+        "legal_name": (branch or {}).get("company_legal_name")
+        or (branch or {}).get("name")
+        or os.environ.get("COMPANY_LEGAL_NAME", "MUNDO DE ACCESORIOS"),
+        "tax_id": (branch or {}).get("company_tax_id") or "",
+        "address": (branch or {}).get("company_address") or (branch or {}).get("address") or "",
+        "city": (branch or {}).get("company_city") or "",
+        "country": (branch or {}).get("company_country") or "Nicaragua",
+        "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
+        "email": (branch or {}).get("company_email") or "",
+        "logo_url": (branch or {}).get("logo_url") or "",
+        "branch_id": user_branch_id or (branch or {}).get("branch_id") or "",
+    }
+
+
+def _pdf_preview_response(pdf_bytes: bytes, kind: str) -> FastAPIResponse:
+    safe_kind = str(kind or "invoice_paid").strip().lower().replace("/", "-")
+    return FastAPIResponse(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="preview_{safe_kind}.pdf"'},
+    )
+
+
+@api_router.get("/settings/billing/pdf-documents/preview")
+async def preview_billing_pdf_documents(request: Request, kind: str = "invoice_paid"):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    settings = await _get_billing_pdf_settings()
+    company = await _build_preview_company_for_user(user)
+    pdf_bytes = export_build_preview_pdf_bytes(
+        preview_kind=kind,
+        company=company,
+        currencies=CURRENCIES,
+        logger=logger,
+        pdf_settings=settings,
+    )
+    return _pdf_preview_response(pdf_bytes, kind)
+
+
+@api_router.post("/settings/billing/pdf-documents/preview")
+async def preview_billing_pdf_documents_draft(payload: BillingPdfPreviewPayload, request: Request):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    saved_settings = await _get_billing_pdf_settings()
+    settings = _merge_pdf_documents_settings(saved_settings, payload.pdf_documents)
+    company = await _build_preview_company_for_user(user)
+    pdf_bytes = export_build_preview_pdf_bytes(
+        preview_kind=payload.kind,
+        company=company,
+        currencies=CURRENCIES,
+        logger=logger,
+        pdf_settings=settings,
+    )
+    return _pdf_preview_response(pdf_bytes, payload.kind)
+
+
+@api_router.get("/settings/billing/pdf-documents/logo-presets")
+async def get_pdf_logo_presets(request: Request):
+    await require_roles(request, ["gerencia", "recursos_humanos"])
+    return {
+        "presets": [
+            {"id": "", "label": "Automático por sucursal"},
+            {"id": "mundo-logo", "label": "Mundo de Accesorios"},
+            {"id": "topcar-logo", "label": "TopCar"},
+            {"id": "logo-transparent", "label": "Logo transparente (formularios)"},
+        ]
+    }
+
+
+@api_router.put("/settings/billing/pdf-documents")
+async def update_billing_pdf_documents(payload: BillingPdfDocumentsUpdatePayload, request: Request):
+    await require_roles(request, ["gerencia", "recursos_humanos"])
+    doc = await _get_billing_settings_doc()
+    current = export_normalize_pdf_document_settings(doc.get("pdf_documents"))
+    doc["pdf_documents"] = _merge_pdf_documents_settings(current, payload)
+    await _save_billing_settings_doc(doc)
+    return {
+        "message": "Configuración de documentos PDF actualizada",
+        "pdf_documents": doc["pdf_documents"],
+    }
+
+
 VEHICLE_SETTINGS_DOC_TYPE = "vehicle_catalog_settings"
 ALLOWED_FUEL_CODES = {"G", "D", "H", "E", "G/D", "D/G"}
 BILLING_SETTINGS_DOC_TYPE = "billing_settings"
@@ -13535,6 +16646,10 @@ async def _get_billing_settings_doc() -> Dict[str, Any]:
     exchange.setdefault("rules", [])
     doc.setdefault("iva_rate", DEFAULT_BILLING_IVA_RATE)
     doc.setdefault("cancel_reasons", _billing_default_cancel_reasons())
+    doc.setdefault(
+        "pdf_documents",
+        export_normalize_pdf_document_settings(export_default_pdf_document_settings),
+    )
     return doc
 
 
@@ -15217,12 +18332,49 @@ async def deliver_dispatch_item(
                     "warehouse_dispatch_status": "completed",
                     "warehouse_dispatch_completed_at": completed_at.isoformat(),
                 }
+                sale_full = sale_record or await db.sales.find_one(
+                    {"sale_id": sale_id},
+                    {"_id": 0, "has_installation": 1, "work_order_ids": 1, "work_order_id": 1},
+                )
+                has_installation = bool(
+                    (sale_full or {}).get("has_installation")
+                    or (sale_full or {}).get("work_order_id")
+                    or (sale_full or {}).get("work_order_ids")
+                )
                 if requires_delivery:
                     sale_update["delivery_status"] = "ready_for_delivery"
                     sale_update["workflow_state"] = "ready_for_delivery"
+                elif has_installation:
+                    sale_update["workflow_state"] = "accessories_ready_for_installation"
+                    sale_update["installation_handoff_status"] = "ready_for_coordinator"
+                    await db.work_orders.update_many(
+                        {"sale_id": sale_id},
+                        {"$set": {"awaiting_warehouse_handoff": False, "accessories_delivered_at": completed_at.isoformat()}},
+                    )
                 else:
                     sale_update["workflow_state"] = "fulfilled"
                 await db.sales.update_one({"sale_id": sale_id}, {"$set": sale_update})
+
+                if has_installation and not requires_delivery:
+                    branch_id = str(dispatch.get("branch_id") or (sale_full or {}).get("branch_id") or "")
+                    for coordinator_id in await _get_coordinator_user_ids(
+                        ["coordinador_instalaciones", "entregador", "supervisor"],
+                        branch_id,
+                    ):
+                        await create_notification_entry(
+                            message=(
+                                f"Despacho {dispatch_id} completado: accesorios de factura "
+                                f"{sale_invoice} listos para coordinación de instalaciones"
+                            ),
+                            recipient_id=coordinator_id,
+                            metadata={
+                                "type": "installation_accessories_ready",
+                                "sale_id": sale_id,
+                                "dispatch_id": dispatch_id,
+                                "invoice_number": sale_invoice,
+                            },
+                            dedupe_key=f"installation_accessories_ready:{dispatch_id}:{coordinator_id}",
+                        )
 
             if salesperson_id:
                 await create_notification_entry(
@@ -15539,6 +18691,71 @@ async def create_tint_order(request: Request, order: TintOrderCreate):
     await db.tint_orders.insert_one(tint_doc)
 
     return {**tint_doc, "_id": None}
+
+
+@api_router.put("/tint-orders/{tint_order_id}/assign")
+async def assign_tint_order(
+    request: Request,
+    tint_order_id: str,
+    technician_id: str,
+):
+    """Assign a polarizador to a tint order (coordinator action)."""
+    actor = await require_roles(
+        request,
+        ["gerencia", "supervisor", "coordinador_polarizados"],
+    )
+
+    order = await db.tint_orders.find_one({"tint_order_id": tint_order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Tint order not found")
+
+    technician = await db.users.find_one({"user_id": technician_id}, {"_id": 0})
+    if not technician:
+        raise HTTPException(status_code=404, detail="Polarizador no encontrado")
+    if str(technician.get("role") or "") not in {"polarizador", "instalaciones", "gerencia"}:
+        raise HTTPException(status_code=400, detail="El usuario seleccionado no es polarizador")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    windows = cast(List[Dict[str, Any]], order.get("windows") or [])
+    for window in windows:
+        if not window.get("technician_id"):
+            window["technician_id"] = technician_id
+
+    await db.tint_orders.update_one(
+        {"tint_order_id": tint_order_id},
+        {
+            "$set": {
+                "assigned_technician_id": technician_id,
+                "assigned_technician_name": technician.get("name"),
+                "assignment_status": "assigned",
+                "assigned_at": now_iso,
+                "assigned_by": actor.user_id,
+                "status": "pending",
+                "windows": windows,
+            }
+        },
+    )
+
+    await create_notification_entry(
+        message=(
+            f"Orden de polarizado {tint_order_id} asignada: "
+            f"cliente {order.get('customer_name', 'N/A')}"
+        ),
+        recipient_id=technician_id,
+        metadata={
+            "type": "tint_order_assigned",
+            "tint_order_id": tint_order_id,
+            "sale_id": order.get("sale_id"),
+        },
+        dedupe_key=f"tint_order_assigned:{tint_order_id}:{technician_id}",
+    )
+
+    return {
+        "message": "Orden de polarizado asignada",
+        "tint_order_id": tint_order_id,
+        "technician_id": technician_id,
+        "technician_name": technician.get("name"),
+    }
 
 
 @api_router.put("/tint-orders/{tint_order_id}/start")

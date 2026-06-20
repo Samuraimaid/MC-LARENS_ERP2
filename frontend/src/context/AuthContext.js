@@ -393,8 +393,24 @@ export function AuthProvider({ children }) {
     return effectiveAllowedRoles.includes(effectiveUserRole);
   };
 
+  const ADMIN_PERMISSION_FLOOR = {
+    users: ["view", "create", "edit", "delete"],
+    settings: ["view", "create", "edit", "delete"],
+    system_settings: ["view", "create", "edit", "delete"],
+    branches: ["view", "create", "edit", "delete"],
+  };
+
   const hasPermission = (functionKey, action = "view") => {
     if (!user || !functionKey) return false;
+    const effectiveRole = resolveEffectiveRole(user.role);
+    const adminActions = ADMIN_PERMISSION_FLOOR[functionKey];
+    if (
+      (effectiveRole === "gerencia" || effectiveRole === "programador")
+      && Array.isArray(adminActions)
+      && adminActions.includes(action)
+    ) {
+      return true;
+    }
     if (!permissions || typeof permissions !== "object") {
       return true;
     }

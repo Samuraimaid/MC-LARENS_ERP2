@@ -8,9 +8,26 @@ from io import BytesIO, StringIO
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-import pandas as pd
+
+from backend.domains.export.dependencies import (
+    get_reportlab_symbols as export_get_reportlab_symbols,
+)
+
+
+def _get_pandas() -> Any:
+    try:
+        import pandas as pd
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Excel export dependencies are not installed",
+        ) from exc
+    return pd
+
+
+def _get_reportlab_symbols() -> tuple[Any, Any]:
+    _, letter, _, canvas = export_get_reportlab_symbols()
+    return letter, canvas
 
 
 def get_inventory_router(db, audit_service, require_auth, require_roles, InventoryUpdate):
@@ -227,6 +244,7 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
             )
 
         if fmt == "excel":
+            pd = _get_pandas()
             df = pd.DataFrame(export_rows)
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
@@ -239,6 +257,7 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
             )
 
         # pdf
+        letter, canvas = _get_reportlab_symbols()
         pdf_buffer = BytesIO()
         pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
         width, height = letter
@@ -421,7 +440,7 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
         return {"message": "Solicitud de garantía rechazada"}
 
     @router.post("/inventory")
-    async def update_inventory(inv_data: InventoryUpdate, request: Request):
+    async def update_inventory(inv_data: Any, request: Request):
         user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
 
         if user.role == "bodegas":

@@ -1,6 +1,6 @@
 {
   "venvPath": ".",
-  "venv": ".venv-win",
+  "venv": ".venv",
   "include": [
     "backend"
   ],

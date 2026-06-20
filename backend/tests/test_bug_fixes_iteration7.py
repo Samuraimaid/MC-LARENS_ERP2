@@ -323,6 +323,8 @@ class TestSalesCreation:
         if not product_with_stock:
             pytest.skip("No products with stock available")
 
+        assert product_with_stock is not None
+
         # Create sale with NIO currency
         sale_data = {
             "customer_id": customer.get("customer_id"),
@@ -364,6 +366,32 @@ class TestSalesCreation:
             print(
                 f"⚠ Sale creation returned {response.status_code}: {response.text[:200]}"
             )
+
+    def test_gerencia_can_list_users_with_pin(self):
+        """Gerencia PIN must always retain users admin access (permission floor)."""
+        login = requests.post(
+            f"{BASE_URL}/api/auth/pin/login",
+            json={"pin": "01011990"},
+            timeout=30,
+        )
+        assert login.status_code == 200, login.text[:300]
+        cookies = login.cookies
+
+        perms = requests.get(f"{BASE_URL}/api/permissions/me", cookies=cookies, timeout=30)
+        assert perms.status_code == 200, perms.text[:300]
+        users_perm = (
+            perms.json()
+            .get("effective_permissions", {})
+            .get("administracion", {})
+            .get("users", {})
+        )
+        assert users_perm.get("view") is True
+
+        users = requests.get(f"{BASE_URL}/api/users", cookies=cookies, timeout=30)
+        assert users.status_code == 200, users.text[:300]
+        payload = users.json()
+        assert isinstance(payload, list)
+        assert len(payload) > 0
 
 
 if __name__ == "__main__":

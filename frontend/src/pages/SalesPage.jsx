@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 // intentionally not destructuring `user` from AuthContext to avoid unused variable
 import { useAuth } from "../context/AuthContext";
@@ -21,9 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import SearchableSelect from "@/components/ui/searchable-select";
 import { toast } from "sonner";
 import { 
-  FilePlus2, Search, CreditCard, Printer, Download, RefreshCw, 
+  Search, CreditCard, Printer, Download, RefreshCw,
   Wrench, Package, ShieldCheck, Car, XCircle,
-  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, Save
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
@@ -31,7 +32,22 @@ import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
-import { deleteServerDraft, fetchServerDraftBundle, saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import {
+  deleteServerDraft,
+  fetchServerDraftBundle,
+  releaseServerDraft,
+  saveServerDraft,
+  setServerDraftActive,
+  unwatchServerDraft,
+  watchServerDraft,
+} from "@/lib/serverDrafts";
+import { useDraftReviewPolling } from "@/hooks/useDraftReviewPolling";
+import {
+  canSellerDeleteDraft,
+  canSellerOpenDraft,
+  isDraftReleasedWithRestrictions,
+  normalizeDraftReview,
+} from "@/lib/draftReview";
 import { playSelectionFeedbackSound } from "@/lib/uiSounds";
 import {
   normalizePaymentMethodCode,
@@ -54,11 +70,15 @@ import {
 } from "@/lib/formatters";
 
 import SaleForm from "../components/sales/SaleForm";
+import DraftBoardCard from "@/components/erp/DraftBoardCard";
+import { OperationalJobCard } from "@/components/erp/OperationalJobCard";
+import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
+import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/erpDesignSystem";
 
 // Divisas disponibles
 const CURRENCIES = [
   { code: "NIO", symbol: "C$", name: "Córdobas" },
-  { code: "USD", symbol: "$", name: "Dólares" },
+  { code: "USD", symbol: "US$", name: "Dólares" },
 ];
 
 const CATALOG_SOURCE_CONTEXT_KEY = "catalog_source_context_v1";
@@ -95,6 +115,7 @@ const getPaymentTone = (paymentType) => {
 };
 
 export function SalesPage() {
+  const navigate = useNavigate();
   const { hasPermission, user } = useAuth();
   const canViewSales = hasPermission("sales", "view");
   const canCreateSales = hasPermission("sales", "create");
@@ -150,6 +171,7 @@ export function SalesPage() {
     }
   }, [LEGACY_DRAFT_ACTIVE_KEY, LEGACY_DRAFT_LIST_KEY, LEGACY_DRAFT_PREFIX, userDraftScopeToken]);
   const [sales, setSales] = useState([]);
+  const [openCashierInvoices, setOpenCashierInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -162,9 +184,12 @@ export function SalesPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showNewSale, setShowNewSale] = useState(true);
   const [saleFormRenderNonce, setSaleFormRenderNonce] = useState(0);
+  const [saveFlash, setSaveFlash] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const [draftTabs, setDraftTabs] = useState([]);
   const [activeDraftId, setActiveDraftId] = useState(null);
   const [draftsLoaded, setDraftsLoaded] = useState(false);
+  const [draftContentRevision, setDraftContentRevision] = useState(0);
   const [showArchivedSales, setShowArchivedSales] = useState(false);
   const [draftSaveState, setDraftSaveState] = useState("idle");
   const [draftSavedAt, setDraftSavedAt] = useState(null);
@@ -249,6 +274,7 @@ export function SalesPage() {
   const [boardTab, setBoardTab] = useState("drafts");
   const draftTabsRef = useRef([]);
   const draftSyncTimersRef = useRef(new Map());
+  const supervisorWatchingDraftRef = useRef(null);
 
   const markDraftSaving = useCallback(() => {
     setDraftSaveState("saving");
@@ -353,6 +379,9 @@ export function SalesPage() {
           id: draft.id,
           name: draft.name,
           updatedAt: draft.updatedAt,
+          ownerUserId: draft.owner_user_id || null,
+          ownerName: draft.owner_name || null,
+          review: normalizeDraftReview(draft.review),
         })));
         setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
@@ -374,6 +403,100 @@ export function SalesPage() {
       cancelled = true;
     };
   }, [DRAFT_ACTIVE_KEY, DRAFT_FLOW, DRAFT_KEY_PREFIX, DRAFT_LIST_KEY, userDraftScopeToken]);
+
+  const handleServerSnapshotChanged = useCallback((draftId) => {
+    setDraftContentRevision((prev) => prev + 1);
+    if (draftId === activeDraftId) {
+      setSaleFormRenderNonce((prev) => prev + 1);
+    }
+  }, [activeDraftId]);
+
+  useDraftReviewPolling({
+    flow: DRAFT_FLOW,
+    user,
+    draftsLoaded,
+    activeDraftId,
+    showForm: showNewSale,
+    setDraftTabs,
+    setShowForm: setShowNewSale,
+    listKey: DRAFT_LIST_KEY,
+    activeKey: DRAFT_ACTIVE_KEY,
+    draftKeyPrefix: DRAFT_KEY_PREFIX,
+    onServerSnapshotChanged: handleServerSnapshotChanged,
+  });
+
+  const activeDraftTab = useMemo(
+    () => draftTabs.find((tab) => tab.id === activeDraftId) || null,
+    [activeDraftId, draftTabs]
+  );
+
+  const activeDraftReview = activeDraftTab?.review || normalizeDraftReview(null);
+  const sellerSaleParamsLocked = isDraftReleasedWithRestrictions(activeDraftReview)
+    && !isErpDraftSupervisor(user?.role);
+
+  const showReleaseDraftButton = Boolean(
+    isErpDraftSupervisor(user?.role)
+    && activeDraftTab
+    && !isOwnErpDraft(activeDraftTab, user?.user_id)
+    && ["watching", "blocked"].includes(activeDraftReview.status)
+  );
+
+  const stopSupervisorWatch = useCallback(async (draftId) => {
+    if (!draftId || !isErpDraftSupervisor(user?.role)) return;
+    try {
+      await unwatchServerDraft(DRAFT_FLOW, draftId);
+    } catch (error) {
+      // keep UI responsive
+    }
+    if (supervisorWatchingDraftRef.current === draftId) {
+      supervisorWatchingDraftRef.current = null;
+    }
+  }, [DRAFT_FLOW, user?.role]);
+
+  const startSupervisorWatch = useCallback(async (draftId) => {
+    if (!draftId || !isErpDraftSupervisor(user?.role)) return;
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    if (!tab || isOwnErpDraft(tab, user?.user_id)) return;
+    try {
+      const updated = await watchServerDraft(DRAFT_FLOW, draftId);
+      setDraftTabs((prev) => prev.map((entry) => (
+        entry.id === draftId
+          ? { ...entry, review: normalizeDraftReview(updated?.review) }
+          : entry
+      )));
+      supervisorWatchingDraftRef.current = draftId;
+    } catch (error) {
+      // supervisor can still open locally if watch fails
+    }
+  }, [DRAFT_FLOW, user?.role, user?.user_id]);
+
+  const handleReleaseDraft = useCallback(async () => {
+    if (!activeDraftId) return;
+    try {
+      const updated = await releaseServerDraft(DRAFT_FLOW, activeDraftId);
+      setDraftTabs((prev) => prev.map((entry) => (
+        entry.id === activeDraftId
+          ? { ...entry, review: normalizeDraftReview(updated?.review) }
+          : entry
+      )));
+      supervisorWatchingDraftRef.current = null;
+      toast.success("Borrador liberado para el vendedor.");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo liberar el borrador");
+    }
+  }, [DRAFT_FLOW, activeDraftId]);
+
+  useEffect(() => {
+    if (!showNewSale && supervisorWatchingDraftRef.current) {
+      stopSupervisorWatch(supervisorWatchingDraftRef.current);
+    }
+  }, [showNewSale, stopSupervisorWatch]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!draftsLoaded) return;
@@ -413,7 +536,21 @@ export function SalesPage() {
 
     try {
       const draft = readDraft(activeDraftId);
-      if (!draft) return;
+      if (!draft || isDraftSnapshotEmpty(draft)) {
+        setSelectedCustomer(null);
+        setSelectedVehicle("");
+        setSelectedWarehouse("");
+        setCartItems([]);
+        setPaymentType("cash");
+        setGlobalDiscount(0);
+        setNotes("");
+        setApplyIVA(true);
+        setApplyRetention(false);
+        setRetentionRate(2);
+        setCurrency("NIO");
+        setAppliedDiscounts([]);
+        return;
+      }
 
       const customerId = draft.selectedCustomerId;
       if (customerId) {
@@ -441,7 +578,7 @@ export function SalesPage() {
     } catch (error) {
       // keep current state if draft parsing fails
     }
-  }, [activeDraftId, customers]);
+  }, [activeDraftId, customers, draftContentRevision]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !user) return;
@@ -461,7 +598,7 @@ export function SalesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, usersRes, branchesRes] = await Promise.all([
+      const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, usersRes, branchesRes, cashierRes] = await Promise.all([
         axios.get(`${API}/sales`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }),
         axios.get(`${API}/products`, { withCredentials: true }),
@@ -470,8 +607,17 @@ export function SalesPage() {
         axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/users`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/branches`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/caja/facturas`, {
+          withCredentials: true,
+          params: {
+            tab: "abiertas",
+            branch_id: user?.branch_id || undefined,
+            limit: 200,
+          },
+        }).catch(() => ({ data: { rows: [] } })),
       ]);
       setSales(salesRes.data);
+      setOpenCashierInvoices(Array.isArray(cashierRes?.data?.rows) ? cashierRes.data.rows : []);
       setCustomers(customersRes.data);
       setProducts(productsRes.data);
       setWarehouses(warehousesRes.data);
@@ -492,7 +638,7 @@ export function SalesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.branch_id]);
 
   const handleRefreshData = useCallback(async () => {
     setIsRefreshingData(true);
@@ -703,10 +849,22 @@ export function SalesPage() {
       totalDiscounts: totals.totalDiscounts,
       retention: totals.retention,
       retentionRate: draft?.retentionRate ?? 2,
+      sellerName: tab.ownerName || user?.name || null,
+      review: tab.review || normalizeDraftReview(null),
     };
   };
 
   const getDraftKey = (draftId) => `${DRAFT_KEY_PREFIX}${draftId}`;
+
+  const isDraftSnapshotEmpty = (draft) => {
+    if (!draft || typeof draft !== "object") return true;
+    if (draft.selectedCustomerId) return false;
+    if (Array.isArray(draft.cartItems) && draft.cartItems.length > 0) return false;
+    if (String(draft.notes || "").trim()) return false;
+    return true;
+  };
+
+  const createEmptyDraftSnapshot = () => ({ updatedAt: new Date().toISOString() });
 
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
@@ -715,12 +873,27 @@ export function SalesPage() {
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
     try {
-      await saveServerDraft(DRAFT_FLOW, draftId, {
+      const saved = await saveServerDraft(DRAFT_FLOW, draftId, {
         name: nameOverride || tab?.name || `Venta ${draftTabsRef.current.length || 1}`,
         snapshot,
       });
+      if (saved?.review) {
+        setDraftTabs((prev) => prev.map((entry) => (
+          entry.id === draftId
+            ? { ...entry, review: normalizeDraftReview(saved.review) }
+            : entry
+        )));
+      }
+      if (saved?.snapshot && typeof window !== "undefined") {
+        window.localStorage.setItem(getDraftKey(draftId), JSON.stringify(saved.snapshot));
+        setDraftContentRevision((prev) => prev + 1);
+      }
       markDraftSaved();
     } catch (error) {
+      if (error.response?.status === 423) {
+        toast.warning("Este borrador está en revisión por supervisión.");
+        setShowNewSale(false);
+      }
       markDraftSaveError();
       throw error;
     }
@@ -784,14 +957,58 @@ export function SalesPage() {
     }
     const id = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
     const name = `Venta ${draftTabs.length + 1}`;
-    const newTab = { id, name, updatedAt: new Date().toISOString() };
+    const newTab = {
+      id,
+      name,
+      updatedAt: new Date().toISOString(),
+      ownerUserId: user?.user_id || null,
+      ownerName: user?.name || null,
+      review: normalizeDraftReview(null),
+    };
     setDraftTabs(prev => [...prev, newTab]);
     setActiveDraftId(id);
     setShowNewSale(true);
+    setSaleFormRenderNonce((prev) => prev + 1);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(getDraftKey(id), JSON.stringify(createEmptyDraftSnapshot()));
+    }
     saveServerDraft(DRAFT_FLOW, id, { name, snapshot: {} }).catch(() => {
       // keep local draft if server is temporarily unavailable
     });
-  }, [DRAFT_FLOW, canCreateSales, draftTabs.length]);
+  }, [DRAFT_FLOW, canCreateSales, draftTabs.length, user?.name, user?.user_id]);
+
+  const handleSaveAndClearSale = useCallback(async () => {
+    if (!canCreateSales) {
+      toast.error("No tienes permiso para crear ventas");
+      return;
+    }
+    playSelectionFeedbackSound();
+
+    if (activeDraftId && typeof window !== "undefined") {
+      try {
+        const draftKey = getDraftKey(activeDraftId);
+        const raw = window.localStorage.getItem(draftKey);
+        if (raw) {
+          const snapshot = {
+            ...JSON.parse(raw),
+            updatedAt: new Date().toISOString(),
+          };
+          window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
+          updateDraftTabMeta(activeDraftId, snapshot);
+          await syncDraftToServer(activeDraftId, snapshot);
+          setSaveFlash(true);
+          window.setTimeout(() => setSaveFlash(false), 2000);
+        }
+      } catch (error) {
+        toast.error("No se pudo guardar el borrador");
+        return;
+      }
+    }
+
+    createDraftTab();
+    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+    toast.success("Borrador guardado. Formulario listo para nueva venta.");
+  }, [activeDraftId, canCreateSales, createDraftTab, syncDraftToServer]);
 
   useEffect(() => {
     if (!draftsLoaded || !showNewSale || !canCreateSales) return;
@@ -915,7 +1132,15 @@ export function SalesPage() {
     vehicles,
   ]);
 
-  const closeDraftTab = (draftId) => {
+  const closeDraftTab = (draftId, { force = false } = {}) => {
+    const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
+    if (
+      !force
+      && !canSellerDeleteDraft(tab, tab?.review, user?.user_id, user?.role)
+    ) {
+      toast.error("No puedes eliminar un borrador revisado por supervisión");
+      return;
+    }
     // Autoguardado silencioso, sin confirmación
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(getDraftKey(draftId));
@@ -967,41 +1192,6 @@ export function SalesPage() {
     }
     setShowNewSale(true);
   }, [activeDraftId, canCreateSales, createDraftTab, draftTabs, showNewSale]);
-
-  const saveActiveDraftNow = useCallback(() => {
-    if (!canCreateSales) {
-      toast.error("No tienes permiso para crear ventas");
-      return;
-    }
-    if (!activeDraftId) {
-      createDraftTab();
-      toast.success("Borrador creado y listo para editar");
-      return;
-    }
-    if (typeof window === "undefined") return;
-
-    const draftKey = getDraftKey(activeDraftId);
-    const raw = window.localStorage.getItem(draftKey);
-    if (!raw) {
-      toast.info("No hay datos nuevos para guardar");
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      const snapshot = {
-        ...parsed,
-        updatedAt: new Date().toISOString(),
-      };
-      window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
-      updateDraftTabMeta(activeDraftId, snapshot);
-      syncDraftToServer(activeDraftId, snapshot).catch(() => {
-        // preserve local draft if manual sync fails
-      });
-      toast.success("Borrador guardado");
-    } catch (error) {
-      toast.error("No se pudo guardar el borrador");
-    }
-  }, [activeDraftId, canCreateSales, createDraftTab, syncDraftToServer]);
 
   const clearEmbeddedSaleForm = useCallback(() => {
     if (!canCreateSales) {
@@ -1291,7 +1481,7 @@ export function SalesPage() {
       total,
       totalInUSD,
       totalInNIO,
-      currencySymbol: currency === "USD" ? "USD " : "C$",
+      currencySymbol: currency === "USD" ? "US$" : "C$",
       currencyCode: currency
     };
   };
@@ -1341,11 +1531,7 @@ export function SalesPage() {
         return;
       }
       
-      toast.success(`Venta ${response.data.invoice_number} creada exitosamente`);
-      
-      if (response.data.work_order_id) {
-        toast.info(`Orden de trabajo generada: ${response.data.work_order_id}`);
-      }
+      toast.success(`Factura ${response.data.invoice_number} enviada a caja para cobro`);
       
       if (paymentType === "stripe") {
         const checkoutRes = await axios.post(`${API}/payments/checkout`, {
@@ -1411,10 +1597,12 @@ export function SalesPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           discount: item.discount,
+          unit_price: item.unit_price,
           warehouse_id: item.warehouse_id || (payload.warehouse_id || selectedWarehouse),
           with_installation: item.with_installation || false,
         })),
         discount: payload.discount || 0,
+        supervisor_discount_preapproved: isDraftReleasedWithRestrictions(activeDraftReview),
         payment_type: payloadPaymentType,
         payment_method: payload.payment_method || payloadPaymentType,
         mixed_payment_methods: payloadMixedPaymentMethods,
@@ -1439,9 +1627,7 @@ export function SalesPage() {
         return;
       }
 
-      toast.success(`Venta ${response.data.invoice_number} creada exitosamente`);
-      setPrintSaleData(response.data);
-      setShowPrintPrompt(true);
+      toast.success(`Factura ${response.data.invoice_number} enviada a caja para cobro`);
       setPrintSaleData(response.data);
       setShowPrintPrompt(true);
       resetSaleForm();
@@ -1535,13 +1721,32 @@ export function SalesPage() {
     return matchesSearch && matchesPayment && matchesStatus && matchesSeller && matchesBranch;
   });
 
-  const openInvoicesInCash = filteredSales.filter((sale) => {
-    const invoiceState = String(sale.invoice_state || "").toLowerCase();
-    const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
-    if (invoiceState === "cancelled") return false;
-    if (invoiceState === "open") return true;
-    return Boolean(sale.cash_session_id) && paymentStatus !== "paid";
-  });
+  const openInvoicesInCash = useMemo(() => {
+    const salesById = new Map(
+      filteredSales.map((sale) => [String(sale.sale_id || ""), sale])
+    );
+    const cashierRows = openCashierInvoices.length
+      ? openCashierInvoices
+      : filteredSales.filter((sale) => {
+          const invoiceState = String(sale.invoice_state || "").toLowerCase();
+          const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
+          if (invoiceState === "cancelled") return false;
+          if (invoiceState === "open") return true;
+          return Boolean(sale.cash_session_id) && paymentStatus !== "paid";
+        });
+
+    return cashierRows
+      .map((row) => {
+        const saleId = String(row.sale_id || "");
+        const saleDetails = salesById.get(saleId) || {};
+        return {
+          ...saleDetails,
+          ...row,
+          sale_id: saleId || saleDetails.sale_id,
+        };
+      })
+      .filter((sale) => sale.sale_id);
+  }, [filteredSales, openCashierInvoices]);
 
   const closedInvoicesToday = filteredSales.filter((sale) => {
     const invoiceState = String(sale.invoice_state || "").toLowerCase();
@@ -1693,6 +1898,29 @@ export function SalesPage() {
       printWindow.print();
     } catch (error) {
       toast.error("Error al imprimir");
+    }
+  };
+
+  const openPaymentReceiptPdf = async (saleId) => {
+    if (!saleId) {
+      toast.error("ID de venta inválido");
+      return;
+    }
+    try {
+      const response = await axios.get(`${API}/print/payment-receipt-pdf/${saleId}`, {
+        withCredentials: true,
+        responseType: "blob",
+      });
+      const contentType = response.headers["content-type"] || "";
+      if (response.status !== 200 || !contentType.includes("pdf")) {
+        toast.error("Comprobante de abono no disponible");
+        return;
+      }
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      window.open(blobUrl, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo obtener el comprobante de abono");
     }
   };
 
@@ -1933,79 +2161,67 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
+              <ErpFormToolbar saveFlash={saveFlash}>
+                <ErpToolbarButton
+                  action="refresh"
+                  icon={RefreshCw}
+                  label="Actualizar datos"
                   onClick={() => {
                     playSelectionFeedbackSound();
                     handleRefreshData();
                   }}
                   disabled={isRefreshingData}
-                  className="ui-interactive"
                   title="Actualizar datos"
-                >
-                  <RefreshCw className={cn("h-3.5 w-3.5", isRefreshingData ? "animate-spin" : "")} />
-                  <span className="hidden sm:inline sm:ml-2">Actualizar datos</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  data-testid="new-sale-btn"
-                  onClick={() => {
-                    playSelectionFeedbackSound();
-                    createDraftTab();
-                  }}
+                  className={isRefreshingData ? "[&_svg]:animate-spin" : ""}
+                />
+                <ErpToolbarButton
+                  action="saveClear"
+                  icon={SaveAll}
+                  label="Guardar y Limpiar"
+                  testId="save-and-clear-sale-btn"
+                  onClick={handleSaveAndClearSale}
                   disabled={!canCreateSales}
-                  className="ui-interactive border-emerald-500/40 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/20"
-                  title="Nueva Venta"
-                >
-                  <FilePlus2 className="h-3.5 w-3.5 text-emerald-700 sm:mr-2" />
-                  <span className="hidden sm:inline">Nueva Venta</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    playSelectionFeedbackSound();
-                    saveActiveDraftNow();
-                  }}
-                  disabled={!canCreateSales}
-                  data-testid="save-sale-draft-btn"
-                  className="ui-interactive border-violet-500/40 bg-violet-500/10 text-violet-800 hover:bg-violet-500/20"
-                  title="Guardar borrador"
-                >
-                  <Save className="h-3.5 w-3.5 text-violet-700" />
-                  <span className="hidden sm:inline sm:ml-2">Guardar</span>
-                </Button>
-              </div>
+                  title="Guardar borrador y limpiar formulario"
+                />
+                {showReleaseDraftButton ? (
+                  <ErpToolbarButton
+                    action="save"
+                    icon={Unlock}
+                    label="Liberar"
+                    onClick={handleReleaseDraft}
+                    title="Liberar borrador para el vendedor"
+                  />
+                ) : null}
+              </ErpFormToolbar>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
+                  disabled={sellerSaleParamsLocked}
                   onCheckedChange={(checked) => {
+                    if (sellerSaleParamsLocked) {
+                      toast.error("No puedes modificar la moneda en un borrador revisado por supervisión");
+                      return;
+                    }
                     playSelectionFeedbackSound();
                     setCurrency(checked ? "USD" : "NIO");
                   }}
                   className="data-[state=unchecked]:bg-blue-500 data-[state=checked]:bg-emerald-500"
                   aria-label="Cambiar moneda entre córdobas y dólares"
                 />
-                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>USD</span>
+                <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>US$</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
+              <ErpToolbarButton
+                action="clear"
+                icon={Eraser}
+                label="Limpiar"
                 onClick={() => {
                   playSelectionFeedbackSound();
                   setShowClearSaleConfirm(true);
                 }}
                 disabled={!canCreateSales}
-                className="ui-interactive border-rose-500/40 bg-rose-500/10 text-rose-800 hover:bg-rose-500/20"
                 title="Limpiar Formulario"
-              >
-                <Eraser className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline sm:ml-2">Limpiar</span>
-              </Button>
+              />
             </div>
             <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
               <DialogContent className="max-w-sm">
@@ -2040,6 +2256,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, paymentMethod: paymentType, mixedPaymentMethods, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
+              draftReview={activeDraftReview}
               onOpenCatalogSearch={openCatalogFromSaleForm}
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
@@ -2075,12 +2292,12 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               currencyValue={currency}
               onCurrencyChange={setCurrency}
               hideCurrencyField={true}
-              submitLabel="Crear Venta"
+              submitLabel="Enviar Factura a Caja"
               onSubmit={async (payload) => {
                 try {
                   await createSaleWithPayload(payload);
                   if (activeDraftId) {
-                    closeDraftTab(activeDraftId);
+                    closeDraftTab(activeDraftId, { force: true });
                   }
                 } catch (err) {
                   toast.error(err?.response?.data?.detail || "Error al crear venta");
@@ -2208,99 +2425,37 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 {draftTabs.map((tab) => {
                   const meta = getDraftMeta(tab);
                   const isActive = activeDraftId === tab.id;
+                  const openDraft = async () => {
+                    if (!canSellerOpenDraft(tab, tab.review, user?.user_id, user?.role)) {
+                      toast.warning("Este borrador está en revisión por supervisión.");
+                      return;
+                    }
+                    if (supervisorWatchingDraftRef.current && supervisorWatchingDraftRef.current !== tab.id) {
+                      await stopSupervisorWatch(supervisorWatchingDraftRef.current);
+                    }
+                    if (!isOwnErpDraft(tab, user?.user_id)) {
+                      if (meta.sellerName) {
+                        toast.info(`Revisión silenciosa del borrador de ${meta.sellerName}`);
+                      }
+                      await startSupervisorWatch(tab.id);
+                    }
+                    setActiveDraftId(tab.id);
+                    updateDraftTabMeta(tab.id);
+                    setShowNewSale(true);
+                  };
                   return (
-                    <Card key={tab.id} className={`overflow-hidden transition ${isActive ? "border-primary" : ""}`}>
-                      <CardContent className="p-0">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          className="grid gap-3 md:grid-cols-[140px,1fr]"
-                          onClick={() => {
-                            setActiveDraftId(tab.id);
-                            updateDraftTabMeta(tab.id);
-                            setShowNewSale(true);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setActiveDraftId(tab.id);
-                              updateDraftTabMeta(tab.id);
-                              setShowNewSale(true);
-                            }
-                          }}
-                        >
-                          <div className="bg-muted/30 flex items-center justify-center min-h-[120px]">
-                            {meta.previewImage ? (
-                              <img
-                                src={meta.previewImage}
-                                alt={meta.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="text-xs text-muted-foreground">Sin imagen</div>
-                            )}
-                          </div>
-                          <div className="p-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-[140px]">
-                                <p className="text-sm font-semibold truncate">{meta.title}</p>
-                                <p className="text-[11px] text-muted-foreground truncate">{meta.subtitle}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs font-semibold">
-                                  {formatCurrency(meta.total || 0, meta.currency)}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground">{meta.itemsCount} ítems</p>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline">{isActive ? "Activo" : "Borrador"}</Badge>
-                              <Badge variant="secondary">{meta.currency}</Badge>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {meta.previewItems?.length ? meta.previewItems.join(" · ") : "Sin productos"}
-                            </p>
-                            {meta.previewVehicle ? (
-                              <p className="text-[11px] text-muted-foreground">Vehículo: {meta.previewVehicle}</p>
-                            ) : null}
-                            {(meta.totalDiscounts > 0 || meta.retention > 0) ? (
-                              <div className="space-y-1 rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
-                                {meta.totalDiscounts > 0 ? (
-                                  <p className="text-[11px] text-green-700">
-                                    Descuentos: -{formatCurrency(meta.totalDiscounts, meta.currency)}
-                                  </p>
-                                ) : null}
-                                {meta.retention > 0 ? (
-                                  <p className="text-[11px] text-orange-600">
-                                    Retención IR ({meta.retentionRate}%): -{formatCurrency(meta.retention, meta.currency)}
-                                  </p>
-                                ) : null}
-                              </div>
-                            ) : null}
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveDraftId(tab.id);
-                                updateDraftTabMeta(tab.id);
-                                setShowNewSale(true);
-                              }}>
-                                Abrir borrador
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  closeDraftTab(tab.id);
-                                }}
-                              >
-                                Eliminar
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <DraftBoardCard
+                      key={`${tab.id}-${draftContentRevision}`}
+                      tab={tab}
+                      meta={meta}
+                      isActive={isActive}
+                      currentUserId={user?.user_id}
+                      currentUserRole={user?.role}
+                      nowMs={now}
+                      openLabel="Abrir borrador"
+                      onOpen={openDraft}
+                      onDelete={() => closeDraftTab(tab.id)}
+                    />
                   );
                 })}
               </div>
@@ -2370,6 +2525,16 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                       </p>
 
                       <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => navigate(`/cashier?sale_id=${encodeURIComponent(sale.sale_id)}`)}
+                          data-testid={`go-cashier-${sale.sale_id}`}
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          Ir a Caja
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2451,22 +2616,15 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               <div className="grid gap-4">
                 {closedInvoicesToday.map((sale) => (
                   <Card key={`closed-${sale.sale_id}`} className="overflow-hidden">
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold">{sale.invoice_number || "Sin factura"}</p>
-                          <p className="text-xs text-muted-foreground">{sale.customer_name || "Sin cliente"}</p>
-                          <p className="text-xs text-muted-foreground">{sale.created_at ? formatDate(sale.created_at) : "—"}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">{formatCurrency(sale.total)}</p>
-                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/30">
-                            Cerrada
-                          </Badge>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Artículos: {getSaleItemsPreview(sale)}</p>
-                      <div className="flex flex-wrap gap-2">
+                    <CardContent className="p-3 sm:p-4 space-y-3">
+                      <OperationalJobCard
+                        variant="vendedor"
+                        sale={sale}
+                        vehicles={vehicles}
+                        totalLabel={formatCurrency(sale.total)}
+                        embedded
+                      />
+                      <div className="flex flex-wrap gap-2 pt-1">
                         <Button variant="ghost" size="icon" title="Imprimir" onClick={() => printSale(sale)}>
                           <Printer className="h-5 w-5" />
                         </Button>
@@ -2822,7 +2980,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             <p className="text-sm text-muted-foreground">
               ¿Cómo deseas imprimir la factura?
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 className="flex-1"
@@ -2846,6 +3004,20 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               >
                 PDF membretado
               </Button>
+              {(printSaleData?.payment_status === "partial" || Number(printSaleData?.amount_paid || 0) > 0) ? (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => {
+                    if (printSaleData?.sale_id) {
+                      openPaymentReceiptPdf(printSaleData.sale_id);
+                    }
+                    setShowPrintPrompt(false);
+                  }}
+                >
+                  Comprobante de abono
+                </Button>
+              ) : null}
             </div>
           </div>
         </DialogContent>

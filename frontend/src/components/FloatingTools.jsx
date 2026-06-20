@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { ArrowLeftRight } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 
 const DEFAULT_RATE = 36.5;
 
@@ -166,10 +167,7 @@ export function FloatingTools({ activeTool, onClose }) {
                 <span>Resultado</span>
                 <span>
                   {fxResult !== "" && fxResult !== null
-                    ? new Intl.NumberFormat("es-NI", {
-                        style: "currency",
-                        currency: fxTo,
-                      }).format(fxResult)
+                    ? formatCurrency(fxResult, fxTo)
                     : "-"}
                 </span>
               </div>
