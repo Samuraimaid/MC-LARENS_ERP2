@@ -1,0 +1,6 @@
+﻿FROM python:3.11-slim
+WORKDIR /app
+COPY backend/requirements/runtime.txt backend/requirements/
+RUN pip install --no-cache-dir -r backend/requirements/runtime.txt
+COPY . .
+CMD ["python", "-c", "from backend.server import app; print('docker-import-ok')"]

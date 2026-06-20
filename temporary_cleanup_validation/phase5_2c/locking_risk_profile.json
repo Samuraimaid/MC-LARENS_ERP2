@@ -1,0 +1,416 @@
+[
+  {
+    "package": "aiohappyeyeballs",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "apscheduler",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "black",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "boto3",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "botocore",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "distro",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "dnspython",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "ecdsa",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "email-validator",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "filelock",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "flake8",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "google-ai-generativelanguage",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "google-api-core",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "google-api-python-client",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "google-auth-httplib2",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "google-genai",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "google-generativeai",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "googleapis-common-protos",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "grpcio",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "grpcio-status",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "hf-xet",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "importlib-metadata",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "iniconfig",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "isort",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "jiter",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "jq",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "jsonschema-specifications",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "librt",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "litellm",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "markdown-it-py",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "mccabe",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "mdurl",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "mypy",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "mypy-extensions",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "numpy",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "openai",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "openpyxl",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pandas",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "pathspec",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pluggy",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pre-commit",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "propcache",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "proto-plus",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pyasn1-modules",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pycodestyle",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pycparser",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pydantic-core",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pyflakes",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pygments",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pyjwt",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pyparsing",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pytest",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "python-http-client",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "pytokens",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "referencing",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "regex",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "requests",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "requests-oauthlib",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "rpds-py",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "s3transfer",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "s5cmd",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "shellingham",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "six",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "tenacity",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "typer-slim",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "typing-inspection",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "uritemplate",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  },
+  {
+    "package": "urllib3",
+    "risk_tags": [
+      "high_conflict_risk"
+    ]
+  },
+  {
+    "package": "watchfiles",
+    "risk_tags": [
+      "docker_divergence"
+    ]
+  }
+]

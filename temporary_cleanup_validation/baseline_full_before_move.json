@@ -1,0 +1,54 @@
+﻿{
+    "import_probe":  {
+                         "status":  "error",
+                         "timing":  0.47
+                     },
+    "timings":  {
+                    "frontend_build":  -1,
+                    "frontend_install":  -1,
+                    "backend_pip":  -1
+                },
+    "build_output":  {
+                         "metrics":  {
+                                         "count":  137,
+                                         "size":  5.82
+                                     },
+                         "dir":  "build"
+                     },
+    "timestamp":  "2026-05-16 09:58:20",
+    "frontend_deps":  {
+                          "devDependencies":  18,
+                          "dependencies":  55
+                      },
+    "python_pkgs":  1,
+    "metrics":  {
+                    "venv":  {
+                                 "count":  792,
+                                 "size":  9.99
+                             },
+                    "frontend_node_modules":  {
+                                                  "count":  31750,
+                                                  "size":  223.49
+                                              },
+                    "frontend_build":  {
+                                           "count":  137,
+                                           "size":  5.82
+                                       },
+                    "backend_venv":  {
+                                         "count":  0,
+                                         "size":  0
+                                     },
+                    "frontend_dist":  {
+                                          "count":  0,
+                                          "size":  0
+                                      },
+                    "node_modules_root":  {
+                                              "count":  946,
+                                              "size":  7.96
+                                          }
+                },
+    "hashes":  {
+                   "frontend_package_lock":  "244E326C1EE370AB62D47C3C27EC8950F7988DE94A69302CCE8C8CEE0E2578E3",
+                   "backend_requirements":  "A824904C3B75CC66FB7921F03BBF7F22D8D7CB3ED8ADC1E5E47F50F2D94CF31B"
+               }
+}

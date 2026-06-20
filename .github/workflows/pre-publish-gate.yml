@@ -1,0 +1,49 @@
+name: Pre-Publish Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  pre-publish-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+
+      - name: Start containers
+        run: |
+          docker compose up -d --build
+
+      - name: Run pre-publish gate
+        shell: pwsh
+        run: |
+          ./scripts/pre_publish_gate.ps1 -BaseUrl http://127.0.0.1:8001
+
+      - name: Teardown containers
+        if: always()
+        run: |
+          docker compose down

@@ -1,0 +1,11 @@
+﻿{
+    "full_route_count":  230,
+    "clean_route_count":  230,
+    "full_route_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "clean_route_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "hashes_equal":  true,
+    "baseline_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "matches_baseline":  true,
+    "import_ok_full":  true,
+    "import_ok_clean":  true
+}

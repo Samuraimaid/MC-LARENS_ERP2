@@ -1,0 +1,21 @@
+{
+  "import_ok": true,
+  "get_stripe_checkout_symbols": {
+    "status": "HTTPException",
+    "code": 501
+  },
+  "create_stripe_checkout": {
+    "status": "HTTPException",
+    "code": 501
+  },
+  "send_email_notification": {
+    "status": "OK",
+    "return_type": "bool",
+    "value": true
+  },
+  "send_executive_summary": {
+    "status": "OK",
+    "return_type": "bool",
+    "value": false
+  }
+}

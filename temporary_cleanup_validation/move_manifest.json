@@ -1,0 +1,26 @@
+﻿{
+    "moves":  [
+                  {
+                      "exists_before":  true,
+                      "path":  "frontend/node_modules",
+                      "status":  "moved"
+                  },
+                  {
+                      "exists_before":  true,
+                      "path":  ".venv",
+                      "status":  "moved"
+                  },
+                  {
+                      "exists_before":  false,
+                      "path":  "backend/.venv",
+                      "status":  "skipped"
+                  },
+                  {
+                      "exists_before":  true,
+                      "path":  "node_modules",
+                      "status":  "moved"
+                  }
+              ],
+    "timestamp":  "20260516_095855",
+    "backup_path":  "temporary_cleanup_validation/dependency_backup_20260516_095855"
+}

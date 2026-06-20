@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    # Use host networking on Linux if you need host-level access; on Windows/macOS
+    # we rely on host.docker.internal to reach the host backend.
+    environment:
+      - NGINX_HOST=0.0.0.0

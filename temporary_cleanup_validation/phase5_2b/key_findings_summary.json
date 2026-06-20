@@ -1,0 +1,36 @@
+﻿{
+    "cleanroom_regenerability_test":  {
+                                          "exit_code":  0,
+                                          "probe_duration":  4.7256979,
+                                          "install_stderr_head":  {
+
+                                                                  },
+                                          "install_duration":  null,
+                                          "status":  "pass",
+                                          "venv_creation_duration":  220.7875584
+                                      },
+    "refined_dependency_integrity":  {
+                                         "third_party_imports_count":  1,
+                                         "optional_or_uncertain":  [
+                                                                       "emergentintegrations"
+                                                                   ],
+                                         "third_party_imports":  {
+
+                                                                 },
+                                         "imported_runtime_not_declared":  {
+
+                                                                           },
+                                         "declared_not_imported_runtime_count":  112,
+                                         "imported_runtime_not_installed":  {
+
+                                                                            }
+                                     },
+    "docker_consistency_check":  {
+                                     "alignment_status":  "diverged_or_prod_specific",
+                                     "in_prod_not_in_txt_count":  0,
+                                     "requirements_prod_txt_count":  69,
+                                     "in_txt_not_in_prod_count":  0,
+                                     "requirements_txt_count":  130,
+                                     "docker_requirements_source":  "requirements.txt"
+                                 }
+}

@@ -1,0 +1,16 @@
+{
+  "layer_counts": {
+    "runtime.in": 16,
+    "optional.in": 11,
+    "exports.in": 3,
+    "scheduler.in": 1,
+    "dev.in": 10,
+    "test.in": 3,
+    "unassigned": 86
+  },
+  "total_unique_packages": 130,
+  "overlaps": [],
+  "equals_requirements_txt": true,
+  "missing_in_layers": [],
+  "extra_in_layers": []
+}

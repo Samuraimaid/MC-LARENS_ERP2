@@ -1,0 +1,11 @@
+﻿{
+    "fullstack_import_ok":  true,
+    "hashes_equal":  true,
+    "cleanroom_route_count":  230,
+    "cleanroom_import_ok":  true,
+    "baseline_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "cleanroom_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "fullstack_hash":  "73588cf755302b4ca47a51c032caeaefa0918fa9cd6774bc6412bc532ee3ece5",
+    "fullstack_route_count":  230,
+    "matches_phase52d_baseline":  true
+}
