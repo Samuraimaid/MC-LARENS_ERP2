@@ -1,0 +1,24 @@
+﻿{
+    "backend":  {
+                    "status":  "failed",
+                    "errors":  "",
+                    "timing":  1.6380479
+                },
+    "fullyRegenerable":  false,
+    "frontend":  {
+                     "status":  "pass",
+                     "errors":  "",
+                     "timing":  36.666368299999995
+                 },
+    "docker":  {
+                   "status":  "pass",
+                   "errors":  "",
+                   "timing":  127.898005
+               },
+    "integrity":  {
+                      "status":  "checked",
+                      "drift":  [
+
+                                ]
+                  }
+}

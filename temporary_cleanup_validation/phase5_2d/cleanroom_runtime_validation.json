@@ -1,0 +1,700 @@
+﻿{
+    "install_layer":  "runtime-only",
+    "route_hash":  null,
+    "environment":  "cleanroom",
+    "missing_runtime_required_count":  0,
+    "extras_installed_count":  0,
+    "phase":  "5_2d",
+    "timestamp":  "2026-05-16 12:16:46",
+    "probe_pass":  false,
+    "probe_exit_code":  2,
+    "probe_output_lines":  [
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "Traceback (most recent call last):",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "Traceback (most recent call last):",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "Traceback (most recent call last):",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "Traceback (most recent call last):",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandError",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\", line 3, in \u003cmodule\u003e",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\", line 3, in \u003cmodule\u003e",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\", line 3, in \u003cmodule\u003e",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\", line 3, in \u003cmodule\u003e",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandErrorMessage",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "    from backend.server import app",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "    from backend.server import app",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "    from backend.server import app",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "    from backend.server import app",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandErrorMessage",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\backend\\server.py\", line 36, in \u003cmodule\u003e",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\backend\\server.py\", line 36, in \u003cmodule\u003e",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\backend\\server.py\", line 36, in \u003cmodule\u003e",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "  File \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\backend\\server.py\", line 36, in \u003cmodule\u003e",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandErrorMessage",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "    from reportlab.lib import colors",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "    from reportlab.lib import colors",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "    from reportlab.lib import colors",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "    from reportlab.lib import colors",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandErrorMessage",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               {
+                                   "Exception":  {
+                                                     "SerializedRemoteException":  null,
+                                                     "SerializedRemoteInvocationInfo":  null,
+                                                     "ErrorRecord":  {
+                                                                         "Exception":  {
+                                                                                           "Message":  "ModuleNotFoundError: No module named \u0027reportlab\u0027",
+                                                                                           "Data":  {
+
+                                                                                                    },
+                                                                                           "InnerException":  null,
+                                                                                           "TargetSite":  null,
+                                                                                           "StackTrace":  null,
+                                                                                           "HelpLink":  null,
+                                                                                           "Source":  null,
+                                                                                           "HResult":  -2146233087
+                                                                                       },
+                                                                         "TargetObject":  null,
+                                                                         "CategoryInfo":  {
+                                                                                              "Category":  0,
+                                                                                              "Activity":  "",
+                                                                                              "Reason":  "ParentContainsErrorRecordException",
+                                                                                              "TargetName":  "",
+                                                                                              "TargetType":  ""
+                                                                                          },
+                                                                         "FullyQualifiedErrorId":  "RuntimeException",
+                                                                         "ErrorDetails":  null,
+                                                                         "InvocationInfo":  null,
+                                                                         "ScriptStackTrace":  null,
+                                                                         "PipelineIterationInfo":  [
+
+                                                                                                   ]
+                                                                     },
+                                                     "WasThrownFromThrowStatement":  false,
+                                                     "Message":  "ModuleNotFoundError: No module named \u0027reportlab\u0027",
+                                                     "Data":  {
+
+                                                              },
+                                                     "InnerException":  null,
+                                                     "TargetSite":  null,
+                                                     "StackTrace":  null,
+                                                     "HelpLink":  null,
+                                                     "Source":  null,
+                                                     "HResult":  -2146233087
+                                                 },
+                                   "TargetObject":  "ModuleNotFoundError: No module named \u0027reportlab\u0027",
+                                   "CategoryInfo":  {
+                                                        "Category":  0,
+                                                        "Activity":  "",
+                                                        "Reason":  "RemoteException",
+                                                        "TargetName":  "ModuleNotFoundError: No module named \u0027reportlab\u0027",
+                                                        "TargetType":  "String"
+                                                    },
+                                   "FullyQualifiedErrorId":  "NativeCommandErrorMessage",
+                                   "ErrorDetails":  null,
+                                   "InvocationInfo":  {
+                                                          "MyCommand":  {
+                                                                            "Path":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Extension":  ".exe",
+                                                                            "Definition":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Source":  "C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe",
+                                                                            "Version":  {
+                                                                                            "Major":  3,
+                                                                                            "Minor":  11,
+                                                                                            "Build":  9150,
+                                                                                            "Revision":  1013,
+                                                                                            "MajorRevision":  0,
+                                                                                            "MinorRevision":  1013
+                                                                                        },
+                                                                            "Visibility":  0,
+                                                                            "OutputType":  [
+                                                                                               {
+                                                                                                   "Name":  "System.String",
+                                                                                                   "Type":  "string",
+                                                                                                   "TypeDefinitionAst":  null
+                                                                                               }
+                                                                                           ],
+                                                                            "Name":  "python.exe",
+                                                                            "CommandType":  32,
+                                                                            "ModuleName":  "",
+                                                                            "Module":  null,
+                                                                            "RemotingCapability":  1,
+                                                                            "Parameters":  null,
+                                                                            "ParameterSets":  null
+                                                                        },
+                                                          "BoundParameters":  {
+
+                                                                              },
+                                                          "UnboundArguments":  [
+
+                                                                               ],
+                                                          "ScriptLineNumber":  1,
+                                                          "OffsetInLine":  1,
+                                                          "HistoryId":  -1,
+                                                          "ScriptName":  "",
+                                                          "Line":  "\u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validation\\phase5_2d\\cleanroom_runtime_evidence_venv\\Scripts\\python.exe\" \"temporary_cleanup_validation\\phase5_2d\\backend_probe_fastapi.py\" 2\u003e\u00261",
+                                                          "PositionMessage":  "En línea: 1 Carácter: 1\r\n+ \u0026 \"C:\\Users\\DELL G5\\Desktop\\MC-LARENS_ERP2\\temporary_cleanup_validati ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                                                          "PSScriptRoot":  "",
+                                                          "PSCommandPath":  null,
+                                                          "InvocationName":  "\u0026",
+                                                          "PipelineLength":  0,
+                                                          "PipelinePosition":  0,
+                                                          "ExpectingInput":  false,
+                                                          "CommandOrigin":  1,
+                                                          "DisplayScriptPosition":  null
+                                                      },
+                                   "ScriptStackTrace":  "en \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1\r\nen \u003cScriptBlock\u003e, \u003csin archivo\u003e: línea 1",
+                                   "PipelineIterationInfo":  [
+                                                                 0,
+                                                                 0
+                                                             ],
+                                   "writeErrorStream":  true,
+                                   "PSMessageDetails":  null
+                               },
+                               "BACKEND_IMPORT_FAIL",
+                               "ERROR=ModuleNotFoundError(\"No module named \u0027reportlab\u0027\")"
+                           ],
+    "route_count":  null
+}

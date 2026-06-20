@@ -1,0 +1,38 @@
+﻿{
+    "runtime":  [
+                    {
+                        "backtrack":  false,
+                        "round":  1,
+                        "log_snippet":  {
+
+                                        },
+                        "hash":  "f2c1b78ed1a60a4b9b9c61bea4e61a24aba715bae58df86985b36d1cf2336b00"
+                    },
+                    {
+                        "backtrack":  false,
+                        "round":  2,
+                        "log_snippet":  {
+
+                                        },
+                        "hash":  "f2c1b78ed1a60a4b9b9c61bea4e61a24aba715bae58df86985b36d1cf2336b00"
+                    }
+                ],
+    "optional":  [
+                     {
+                         "backtrack":  false,
+                         "round":  1,
+                         "log_snippet":  {
+
+                                         },
+                         "hash":  "aefcf6e3662df67726b78991f2b4cb0183323637579b06d4f46a8e29626ebd12"
+                     },
+                     {
+                         "backtrack":  false,
+                         "round":  2,
+                         "log_snippet":  {
+
+                                         },
+                         "hash":  "aefcf6e3662df67726b78991f2b4cb0183323637579b06d4f46a8e29626ebd12"
+                     }
+                 ]
+}

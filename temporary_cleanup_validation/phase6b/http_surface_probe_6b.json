@@ -1,0 +1,23 @@
+﻿[
+    {
+        "url":  "http://127.0.0.1:8001/api/",
+        "reachable":  true,
+        "status_code":  200,
+        "error":  null,
+        "timestamp":  "2026-05-16 13:53:00"
+    },
+    {
+        "url":  "http://127.0.0.1:8001/api/auth/pin/users",
+        "reachable":  true,
+        "status_code":  200,
+        "error":  null,
+        "timestamp":  "2026-05-16 13:53:01"
+    },
+    {
+        "url":  "http://127.0.0.1:3000",
+        "reachable":  true,
+        "status_code":  200,
+        "error":  null,
+        "timestamp":  "2026-05-16 13:53:01"
+    }
+]

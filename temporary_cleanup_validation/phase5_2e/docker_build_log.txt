@@ -1,0 +1,100 @@
+﻿#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 838B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 ...
+
+#3 [auth] library/python:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 2.8s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/8] FROM docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834
+#5 resolve docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 6.65MB 4.9s
+#6 transferring context: 16.39MB 10.0s
+#6 transferring context: 56.04MB 15.0s
+#6 transferring context: 90.41MB 20.0s
+#6 transferring context: 123.54MB 25.1s
+#6 transferring context: 214.40MB 30.2s
+#6 transferring context: 284.08MB 35.2s
+#6 transferring context: 320.16MB 40.3s
+#6 transferring context: 337.91MB 45.4s
+#6 transferring context: 388.98MB 50.4s
+#6 transferring context: 427.47MB 55.4s
+#6 transferring context: 496.93MB 60.5s
+#6 transferring context: 545.40MB 65.5s
+#6 transferring context: 581.78MB 70.7s
+#6 transferring context: 630.00MB 75.8s
+#6 transferring context: 649.95MB 80.8s
+#6 transferring context: 677.76MB 85.8s
+#6 transferring context: 694.32MB 90.9s
+#6 transferring context: 762.86MB 96.0s
+#6 transferring context: 829.03MB 101.0s
+#6 transferring context: 856.66MB 106.1s
+#6 transferring context: 877.59MB 111.1s
+#6 transferring context: 888.75MB 116.2s
+#6 transferring context: 906.01MB 121.3s
+#6 transferring context: 930.53MB 126.3s
+#6 transferring context: 962.19MB 131.4s
+#6 transferring context: 971.13MB 136.4s
+#6 transferring context: 977.48MB 141.5s
+#6 transferring context: 1.01GB 146.5s
+#6 transferring context: 1.03GB 151.6s
+#6 transferring context: 1.05GB 156.7s
+#6 transferring context: 1.07GB 161.8s
+#6 transferring context: 1.09GB 166.9s
+#6 transferring context: 1.11GB 171.9s
+#6 transferring context: 1.12GB 177.0s
+#6 transferring context: 1.12GB 182.1s
+#6 transferring context: 1.14GB 187.2s
+#6 transferring context: 1.18GB 192.3s
+#6 transferring context: 1.21GB 197.3s
+#6 transferring context: 1.22GB 201.8s done
+#6 DONE 204.6s
+
+#7 [2/8] WORKDIR /app
+#7 CACHED
+
+#8 [3/8] COPY requirements.txt .
+#8 ERROR: failed to calculate checksum of ref o3mpenjxp1515c53ge2zi4obn::0v1hf1i7kufi5ihxbyory3fuo: "/requirements.txt": not found
+
+#9 [6/8] COPY . /app/backend
+#9 CACHED
+
+#10 [4/8] RUN pip install --no-cache-dir -r requirements.txt
+#10 CACHED
+
+#11 [5/8] RUN mkdir -p /app/backend
+#11 CACHED
+
+#12 [7/8] COPY entrypoint.sh /entrypoint.sh
+#12 ERROR: failed to calculate checksum of ref o3mpenjxp1515c53ge2zi4obn::0v1hf1i7kufi5ihxbyory3fuo: "/entrypoint.sh": not found
+------
+ > [3/8] COPY requirements.txt .:
+------
+------
+ > [7/8] COPY entrypoint.sh /entrypoint.sh:
+------
+Dockerfile:6
+--------------------
+   4 |     
+   5 |     # Copiar requirements e instalar dependencias
+   6 | >>> COPY requirements.txt .
+   7 |     RUN pip install --no-cache-dir -r requirements.txt
+   8 |     
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref o3mpenjxp1515c53ge2zi4obn::0v1hf1i7kufi5ihxbyory3fuo: "/requirements.txt": not found
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/8zlm1rx0r2vzs7xt8hpf685uz

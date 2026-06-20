@@ -1,0 +1,4 @@
+user_id,role,branch_id,warehouse_id
+user_xxxxxxxxxxxx,gerencia,branch_main,wh_main
+user_yyyyyyyyyyyy,recursos_humanos,branch_north,wh_topcar_calvario
+user_zzzzzzzzzzzz,supervisor,branch_south,wh_topcar_tigre

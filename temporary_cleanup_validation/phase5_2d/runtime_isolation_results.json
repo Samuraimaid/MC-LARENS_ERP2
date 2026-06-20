@@ -1,0 +1,6 @@
+﻿{
+    "optional_lock_stable":  true,
+    "runtime_lock_stable":  true,
+    "optional_hash_match":  true,
+    "cleanroom_import_ok":  false
+}

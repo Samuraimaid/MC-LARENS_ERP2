@@ -1,0 +1,37 @@
+﻿{
+    "compose_main_hash_match_backup":  true,
+    "compose_frontend_hash_match_backup":  true,
+    "compose_parity_pass":  true,
+    "backend_startup_pass":  true,
+    "frontend_startup_pass":  true,
+    "mongo_startup_pass":  true,
+    "healthcheck_parity_pass":  true,
+    "no_container_restart_loops":  true,
+    "container_count":  4,
+    "containers":  [
+                       {
+                           "name":  "mundo-backend",
+                           "status":  "Up 6 hours",
+                           "image":  "3bfe596ac0cd",
+                           "restart_count":  "0"
+                       },
+                       {
+                           "name":  "mundo-frontend",
+                           "status":  "Up 6 hours",
+                           "image":  "2495c772428d",
+                           "restart_count":  "0"
+                       },
+                       {
+                           "name":  "mc-larens-crm",
+                           "status":  "Up 21 seconds (healthy)",
+                           "image":  "whatsapp-crm-mc-larens-crm",
+                           "restart_count":  "170"
+                       },
+                       {
+                           "name":  "mclarens2-mongodb",
+                           "status":  "Up 6 hours",
+                           "image":  "mongo:7.0",
+                           "restart_count":  "0"
+                       }
+                   ]
+}

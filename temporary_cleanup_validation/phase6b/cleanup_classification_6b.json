@@ -1,0 +1,317 @@
+﻿{
+    "generated_at":  "2026-05-16T14:04:18.0671815-06:00",
+    "items":  [
+                  {
+                      "code":  " M",
+                      "path":  "CLEANUP_PHASE5_MICROPHASE1_REPORT.md",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "NEXT_CLEANUP_RECOMMENDATIONS.md",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "PHASE5_MICROPHASE1_EXECUTIVE_SUMMARY.md",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "VALIDATION_RESULTS.md",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "backend/routes/human_resources.py",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "backend/routes/inventory.py",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "backend/server.py",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "backend/services/weekly_business_sentinel.py",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  " M",
+                      "path":  "frontend/public/env.js",
+                      "tracked":  true,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "BACKEND_DEPENDENCY_AUDIT.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "BACKEND_REGENERABILITY_STATUS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "BACKEND_REPRODUCIBILITY_RECOVERY_PLAN.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "CLEAN_REBUILD_CONFIDENCE.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "DEPENDENCY_LOCK_STRATEGY.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "DEPENDENCY_OWNERSHIP_MATRIX.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "DEPENDENCY_REGENERATION_REPORT.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "DOCKER_REBUILD_STATUS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "DOMAIN_EXTRACTION_CHECKLIST.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "\"Docker Containers/\"",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "ENVIRONMENT_DRIFT_ANALYSIS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "EXPORT_BOUNDARY_VALIDATION.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "EXPORT_DOMAIN_INVENTORY.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "FUTURE_LOCKING_RISK_ANALYSIS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "INTEGRATIONS_BOUNDARY_VALIDATION.md",
+                      "tracked":  false,
+                      "category":  "MUST_KEEP"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "INTEGRATIONS_DOMAIN_INVENTORY.md",
+                      "tracked":  false,
+                      "category":  "MUST_KEEP"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "INTEGRATIONS_EXTRACTION_PLAN.md",
+                      "tracked":  false,
+                      "category":  "MUST_KEEP"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "INTEGRATIONS_PARITY_REPORT.md",
+                      "tracked":  false,
+                      "category":  "MUST_KEEP"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "INTEGRATIONS_ROLLBACK_PLAN.md",
+                      "tracked":  false,
+                      "category":  "MUST_KEEP"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "NEXT_DOMAIN_READINESS_ANALYSIS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "OPTIONAL_IMPORT_ANALYSIS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "PHASE6A_MICROCOMMIT_PLAN.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "PHASE_6A_EXTRACTION_PATTERN.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "POST6A_STABILIZATION_REPORT.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "REBUILD_VALIDATION_RESULTS.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "REQUIREMENTS_INTEGRITY_REPORT.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "REQUIREMENTS_LAYER_PROPOSAL.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "RUNTIME_CORE_DEPENDENCIES.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "SAFE_DEPENDENCY_ISOLATION_CANDIDATES.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "STORAGE_REGENERATION_DIFF.md",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "_tmp_export_runtime_smoke.py",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "backend/domains/",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "backend/requirements/",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "classify_task.ps1",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "cleanroom_probe.txt",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "fullstack_probe.txt",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "gen_baseline.ps1",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "generate_phase5_2c.py",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "run_refined_analysis.ps1",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "temp_runtime_check.py",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "temporary_cleanup_script_v2.py",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "temporary_cleanup_validation/",
+                      "tracked":  false,
+                      "category":  "REQUIRES_REVIEW"
+                  },
+                  {
+                      "code":  "??",
+                      "path":  "test_file.txt",
+                      "tracked":  false,
+                      "category":  "SAFE_TO_DISCARD"
+                  }
+              ]
+}

@@ -1,0 +1,185 @@
+{
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "principles": [
+      "Fusion over Imitation: Mix automotive grit with Swiss precision.",
+      "Emotion First: Confidence, Speed, Reliability.",
+      "Content is King: Data density must be legible but beautiful.",
+      "Zoom In: High-fidelity details on parts and status.",
+      "Negative Space: Use it to group functional areas, not just for aesthetics.",
+      "Contrast: High contrast for workshop visibility (dark mode is critical)."
+    ],
+    "anti_patterns": [
+      "Purple/Teal generic SaaS gradients.",
+      "Inter font for headings.",
+      "Center-aligned everything.",
+      "Low contrast text (must be readable in a greasy workshop)."
+    ]
+  },
+  "typography": {
+    "strategy": "The Performance Pro",
+    "fonts": {
+      "heading": {
+        "family": "Barlow Condensed",
+        "weights": ["600", "700", "800"],
+        "usage": "Page titles, KPI values, KDS ticket headers",
+        "fallback": "sans-serif"
+      },
+      "body": {
+        "family": "Public Sans",
+        "weights": ["400", "500", "600"],
+        "usage": "General UI text, descriptions, form labels",
+        "fallback": "sans-serif"
+      },
+      "mono": {
+        "family": "JetBrains Mono",
+        "weights": ["400", "500"],
+        "usage": "VINs, Part Numbers, Prices, Timestamps",
+        "fallback": "monospace"
+      }
+    },
+    "rules": [
+      "Headings > 32px must use tracking-tight.",
+      "Overlines/Labels must be Uppercase + tracking-widest + text-xs.",
+      "Data values (prices, stock) must use tabular-nums."
+    ]
+  },
+  "colors": {
+    "theme_strategy": "Browser Preference (Light/Dark)",
+    "palettes": {
+      "light": {
+        "background": "#FFFFFF",
+        "foreground": "#09090B",
+        "card": "#F4F4F5",
+        "card_foreground": "#09090B",
+        "primary": "#0055FF",
+        "primary_foreground": "#FFFFFF",
+        "secondary": "#F4F4F5",
+        "secondary_foreground": "#18181B",
+        "muted": "#F4F4F5",
+        "muted_foreground": "#71717A",
+        "accent": "#F4F4F5",
+        "accent_foreground": "#18181B",
+        "destructive": "#EF4444",
+        "destructive_foreground": "#FFFFFF",
+        "border": "#E4E4E7",
+        "input": "#E4E4E7",
+        "ring": "#0055FF"
+      },
+      "dark": {
+        "background": "#09090B",
+        "foreground": "#FAFAFA",
+        "card": "#18181B",
+        "card_foreground": "#FAFAFA",
+        "primary": "#3B82F6",
+        "primary_foreground": "#FFFFFF",
+        "secondary": "#27272A",
+        "secondary_foreground": "#FAFAFA",
+        "muted": "#27272A",
+        "muted_foreground": "#A1A1AA",
+        "accent": "#27272A",
+        "accent_foreground": "#FAFAFA",
+        "destructive": "#7F1D1D",
+        "destructive_foreground": "#FAFAFA",
+        "border": "#27272A",
+        "input": "#27272A",
+        "ring": "#3B82F6"
+      }
+    },
+    "semantic_colors": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6",
+      "kds_new": "#10B981",
+      "kds_prep": "#F59E0B",
+      "kds_late": "#EF4444",
+      "kds_done": "#6B7280"
+    }
+  },
+  "layout": {
+    "spacing_system": "Tailwind Scale (p-4, p-6, p-8, p-12)",
+    "grid_modes": {
+      "dashboard": {
+        "name": "Bento Grid Mode B (High Density)",
+        "columns": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4",
+        "gap": "gap-4",
+        "rules": "Every pixel utilized. No jagged bottoms. Use h-full."
+      },
+      "kds": {
+        "name": "Kitchen Display Grid",
+        "columns": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
+        "gap": "gap-2",
+        "rules": "Strict columns. Cards expand vertically. High contrast headers."
+      }
+    },
+    "containers": {
+      "card": "rounded-none border border-border bg-card text-card-foreground shadow-sm",
+      "kds_ticket": "rounded-md border-2 border-transparent bg-card shadow-md overflow-hidden"
+    }
+  },
+  "components": {
+    "buttons": {
+      "default": "rounded-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+      "ghost": "hover:bg-accent hover:text-accent-foreground",
+      "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "cards": {
+      "dashboard_metric": "p-6 flex flex-col justify-between h-full border-l-4 border-primary bg-card/50 backdrop-blur-sm",
+      "inventory_item": "flex gap-4 p-4 border-b border-border hover:bg-accent/50 transition-colors group"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-background/70 border-b border-white/10",
+    "borders": "1px solid border-border",
+    "shadows": "shadow-lg shadow-black/5",
+    "textures": "Subtle noise overlay on dashboard backgrounds to reduce digital flatness."
+  },
+  "images": {
+    "strategy": "Use high-quality Unsplash images. If tool fails, use these reliable IDs.",
+    "placeholders": [
+      {
+        "category": "mechanic",
+        "url": "https://images.unsplash.com/photo-1487754180477-nb3333055381?auto=format&fit=crop&w=800&q=80",
+        "alt": "Mechanic working on car engine"
+      },
+      {
+        "category": "warehouse",
+        "url": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80",
+        "alt": "Warehouse shelves with boxes"
+      },
+      {
+        "category": "car_parts",
+        "url": "https://images.unsplash.com/photo-1486262715619-01b8025d9701?auto=format&fit=crop&w=800&q=80",
+        "alt": "Car engine parts close up"
+      },
+      {
+        "category": "workshop",
+        "url": "https://images.unsplash.com/photo-1530046339160-71153320c072?auto=format&fit=crop&w=800&q=80",
+        "alt": "Automotive workshop interior"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS: Add '@fontsource/barlow-condensed', '@fontsource/public-sans', and '@fontsource/jetbrains-mono' to package.json.",
+    "2. CONFIGURE TAILWIND: Update tailwind.config.js to use these font families and the custom color palette.",
+    "3. CREATE LAYOUTS: Build a 'DashboardLayout' with a sidebar and a 'KDSLayout' (full screen, no sidebar).",
+    "4. BUILD COMPONENTS: Create 'KDSTicket', 'InventoryCard', 'MetricWidget' components using the design rules.",
+    "5. THEME TOGGLE: Implement a theme toggle that respects system preference but allows manual override.",
+    "6. DATA-TESTID: Ensure every interactive element has a data-testid attribute.",
+    "7. NO GRADIENTS: Do not use gradients for backgrounds. Use solid colors or subtle noise textures.",
+    "8. KDS SCREEN: This is a critical feature. It must look like a McDonald's screen - high contrast, big text, clear status indicators."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop' - no generic centered layouts.",
+    "Use 2-3x more spacing than typical.",
+    "Micro-animations on all interactions.",
+    "Dark mode is not just inverted light mode; it needs specific color tuning.",
+    "Use 'sonner' for toasts."
+  ]
+}

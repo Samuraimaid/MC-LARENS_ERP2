@@ -1,0 +1,11 @@
+/* App.css - Minimal overrides */
+.App {
+  min-height: 100vh;
+}
+
+/* Remove default styles */
+.App-header,
+.App-logo,
+.App-link {
+  display: none;
+}

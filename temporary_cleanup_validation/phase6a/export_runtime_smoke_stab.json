@@ -1,0 +1,7 @@
+{
+  "openpyxl_ok": true,
+  "workbook_ok": true,
+  "reportlab_ok": true,
+  "pdf_bytes_ok": true,
+  "errors": []
+}

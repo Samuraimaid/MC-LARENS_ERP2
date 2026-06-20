@@ -1,0 +1,86 @@
+# ============================================================
+# MUNDO DE ACCESORIOS ERP - Docker Compose (Alternativa)
+# ============================================================
+# Usar si prefieres Docker en lugar de instalación manual
+# Ejecutar: docker-compose up -d
+# ============================================================
+
+services:
+  # Base de datos MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: mclarens2-mongodb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mundo-network
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: mc-larenserp20-backend:updated-20260619c
+    container_name: mundo-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=mc-larens2_mundo_accesorios_erp
+      - ENABLE_TEST_ENDPOINTS=false
+      - ENABLE_TEST_PIN_SEEDING=false
+      - AUTOLOAD_CORE_SEED=true
+      - DEFAULT_PIN_USER_EMAIL=xinon@local
+      - DEFAULT_PIN_USER_PIN=0101
+      - DEFAULT_LOGIN_PIN_USER_PIN=01011990
+      # Seguridad: por defecto RRHH no puede cambiar/resetear PIN de terceros.
+      - ALLOW_RRHH_PIN_MANAGEMENT=false
+      # ADVERTENCIA: modificar CORS_ORIGINS puede romper el login (PIN) en el frontend.
+      - CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001,http://127.0.0.1:8001,http://localhost:8001
+      - AUTH_SESSION_DATA_URL=
+      - COOKIE_SECURE=false
+    depends_on:
+      - mongodb
+    networks:
+      mundo-network:
+        aliases:
+          - backend
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ""
+        VITE_AUTH_URL: /api/auth/login
+        VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN: "50005000"
+    image: mundo-frontend:updated-20260619c
+    container_name: mundo-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_BACKEND_URL=
+      - VITE_AUTH_URL=/api/auth/login
+      - VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN=50005000
+      - REACT_APP_BACKEND_URL=
+      - REACT_APP_AUTH_URL=/api/auth/login
+      - REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN=50005000
+    depends_on:
+      - backend
+    networks:
+      mundo-network:
+        aliases:
+          - frontend
+
+volumes:
+  mongodb_data:
+
+networks:
+  mundo-network:
+    driver: bridge
