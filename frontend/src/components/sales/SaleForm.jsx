@@ -46,12 +46,16 @@ import {
   Warehouse,
   Wrench,
   PackageSearch,
+  ScanBarcode,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
-  getVehicleOptionsByBrandYear,
+  formatVehicleIdentityHint,
+  getVehicleSelectOptionsByBrandYear,
   getVehicleYearsByBrand,
+  getCatalogVehiclePayload,
+  isPickupCatalogModel,
   isValidVehicleSelection,
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
@@ -69,6 +73,19 @@ import {
   normalizePaymentMethodList,
   paymentMethodsAllowDiscounts,
 } from "@/lib/paymentMethods";
+import PaymentPlanEditor from "@/components/sales/PaymentPlanEditor";
+import {
+  buildDefaultPlanLine,
+  buildMixedPaymentPlan,
+  buildPlanLinesForSubmit,
+  buildSinglePaymentPlan,
+  isPlanLineAmountEmpty,
+  rebalanceMixedPlanRemainders,
+  syncMixedPlanLines,
+  resolveCustomerCreditDays,
+  validatePlanAgainstTotal,
+  validatePlanLineUniqueness,
+} from "@/lib/plannedPaymentPlan";
 import {
   playCartQuantityUpSound,
   playCartQuantityDownSound,
@@ -79,6 +96,8 @@ import {
   playSelectionFeedbackSound,
 } from "@/lib/uiSounds";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
+import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
+import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
 import SaleFlowStepProgress from "@/components/erp/SaleFlowStepProgress";
 import EmptyCartPlaceholder from "@/components/erp/EmptyCartPlaceholder";
 import SavingsHighlightRow from "@/components/erp/SavingsHighlightRow";
@@ -92,6 +111,8 @@ import {
   getErpProductTone,
   isErpDraftSupervisor,
 } from "@/lib/erpDesignSystem";
+
+import { findProductsByScanCode, productMatchesSearch } from "@/lib/productLookup";
 import {
   clampSellerGlobalDiscount,
   getSellerCartLineLockState,
@@ -99,6 +120,9 @@ import {
   isDraftReleasedWithRestrictions,
   sellerGlobalDiscountExceeded,
 } from "@/lib/draftReview";
+import { computeSaleTotals } from "@/lib/saleTotals";
+import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
+import { scrollToAnchor } from "@/lib/scrollPageToTop";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -129,6 +153,26 @@ const clampGlobalDiscountValue = (value, mode = "percent") => {
   }
   return Math.max(0, Math.min(100, Math.round(numericValue)));
 };
+
+function SaleTotalsBreakdownRow({
+  label,
+  value,
+  currency,
+  prefix = "",
+  className = "",
+}) {
+  return (
+    <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4", className)}>
+      <span className="min-w-0 pr-2">{label}</span>
+      <ErpRollingCurrency
+        value={value}
+        currency={currency}
+        prefix={prefix}
+        className="shrink-0 text-right"
+      />
+    </div>
+  );
+}
 
 export default function SaleForm({
   customers = [],
@@ -162,6 +206,8 @@ export default function SaleForm({
   const sellerReleasedRestricted = isDraftReleasedWithRestrictions(draftReview) && !isSupervisorUser;
   const sellerParamsLocked = sellerReleasedRestricted;
   const sellerFlowLocked = sellerParamsLocked || (!isSupervisorUser && isDraftBlockedForSeller(draftReview));
+  const sellerPaymentPlanBlocked = !isSupervisorUser && isDraftBlockedForSeller(draftReview);
+  const sellerPaymentPlanStructureLocked = sellerReleasedRestricted;
 
   const notifySellerFlowLocked = useCallback(() => {
     toast.error("No puedes modificar cliente, vehículo ni opción para llevar en este borrador.");
@@ -184,6 +230,14 @@ export default function SaleForm({
       normalizeGlobalDiscountMode(initialData.globalDiscountMode || initialData.global_discount_mode)
     )
   );
+  const [globalDiscountDraft, setGlobalDiscountDraft] = useState(
+    String(
+      clampGlobalDiscountValue(
+        initialData.globalDiscount || 0,
+        normalizeGlobalDiscountMode(initialData.globalDiscountMode || initialData.global_discount_mode)
+      )
+    )
+  );
   const [paymentMethod, setPaymentMethod] = useState(initialData.paymentMethod || initialData.payment_type || "cash");
   const [notes, setNotes] = useState(initialData.notes || "");
   const [applyIVA, setApplyIVA] = useState(initialData.applyIVA ?? true);
@@ -193,9 +247,24 @@ export default function SaleForm({
   const [mixedPaymentMethods, setMixedPaymentMethods] = useState(
     normalizePaymentMethodList(initialData.mixedPaymentMethods || initialData.mixed_payment_methods || [])
   );
+  const initialPlanLines = (initialData.planned_payment_plan?.lines || initialData.paymentPlanLines || []).map((line) => ({
+    metodo: line.metodo || "cash",
+    moneda: line.moneda || "NIO",
+    monto_origen: line.monto_origen ?? "",
+  }));
+  const [paymentPlanLines, setPaymentPlanLines] = useState(
+    initialPlanLines.length ? initialPlanLines : [buildDefaultPlanLine(initialData.paymentMethod || "cash", initialData.currency || "NIO")],
+  );
+  const [planTotalChangedHint, setPlanTotalChangedHint] = useState(false);
+  const [paymentPlanSubmitAttention, setPaymentPlanSubmitAttention] = useState(false);
+  const [paymentPlanSubmitAttentionMessage, setPaymentPlanSubmitAttentionMessage] = useState("");
+  const paymentPlanSectionRef = useRef(null);
+  const prevPlanTargetRef = useRef(0);
+  const planAutoSyncSkipRef = useRef(true);
   const [currency, setCurrency] = useState(initialData.currency || "NIO");
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscounts, setAppliedDiscounts] = useState(initialData.appliedDiscounts || []);
   const [localCustomers, setLocalCustomers] = useState(customers);
@@ -240,6 +309,8 @@ export default function SaleForm({
   const [priceEditorMode, setPriceEditorMode] = useState("amount");
   const [priceEditorAmount, setPriceEditorAmount] = useState("");
   const [priceEditorPercent, setPriceEditorPercent] = useState("0");
+  const priceEditorAmountRef = useRef(null);
+  const priceEditorPercentRef = useRef(null);
   const [newCustomer, setNewCustomer] = useState({
     first_name: "",
     last_name: "",
@@ -258,6 +329,7 @@ export default function SaleForm({
     year: "",
     color: "",
     chasis: "",
+    vehicle_cab_variant: "",
   });
   const [newVehicle, setNewVehicle] = useState({
     plate_prefix: "M",
@@ -267,6 +339,7 @@ export default function SaleForm({
     year: "",
     color: "",
     chasis: "",
+    vehicle_cab_variant: "",
   });
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
@@ -501,7 +574,7 @@ export default function SaleForm({
     [newCustomer.brand]
   );
   const newCustomerModelOptions = useMemo(
-    () => getVehicleOptionsByBrandYear(newCustomer.brand, newCustomer.year),
+    () => getVehicleSelectOptionsByBrandYear(newCustomer.brand, newCustomer.year),
     [newCustomer.brand, newCustomer.year]
   );
 
@@ -511,8 +584,12 @@ export default function SaleForm({
   );
 
   const newVehicleModelOptions = useMemo(
-    () => getVehicleOptionsByBrandYear(newVehicle.brand, newVehicle.year),
+    () => getVehicleSelectOptionsByBrandYear(newVehicle.brand, newVehicle.year),
     [newVehicle.brand, newVehicle.year]
+  );
+  const showNewVehicleCabVariant = useMemo(
+    () => isPickupCatalogModel(newVehicle.brand, newVehicle.model),
+    [newVehicle.brand, newVehicle.model]
   );
 
   useEffect(() => {
@@ -528,16 +605,20 @@ export default function SaleForm({
     }
 
     if (!selectedCustomer) {
-      setVehicleFlowOption("carryout");
-      setSelectedVehicle("");
+      if (vehicleFlowOption !== "carryout" || selectedVehicle) {
+        setVehicleFlowOption("carryout");
+        setSelectedVehicle("");
+      }
       return;
     }
     if (customerVehicles.length === 0) {
-      if (hasRestorableVehicle) {
+      if (hasRestorableVehicle || isVehiclePickerVisible) {
         return;
       }
-      setVehicleFlowOption("carryout");
-      setSelectedVehicle("");
+      if (vehicleFlowOption !== "carryout" || selectedVehicle) {
+        setVehicleFlowOption("carryout");
+        setSelectedVehicle("");
+      }
       return;
     }
     if (normalizedSelectedVehicle && customerVehicles.some(v => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedSelectedVehicle)) {
@@ -615,7 +696,17 @@ export default function SaleForm({
       setMixedPaymentMethods(normalizePaymentMethodList(draft?.mixedPaymentMethods || draft?.mixed_payment_methods || []));
       const restoredGlobalDiscountMode = normalizeGlobalDiscountMode(draft?.globalDiscountMode || draft?.global_discount_mode);
       setGlobalDiscountMode(restoredGlobalDiscountMode);
-      setGlobalDiscount(clampGlobalDiscountValue(draft?.globalDiscount || 0, restoredGlobalDiscountMode));
+      const restoredGlobalDiscount = clampGlobalDiscountValue(draft?.globalDiscount || 0, restoredGlobalDiscountMode);
+      setGlobalDiscount(restoredGlobalDiscount);
+      setGlobalDiscountDraft(String(restoredGlobalDiscount));
+      const restoredPlanLines = (draft?.paymentPlanLines || draft?.planned_payment_plan?.lines || []).map((line) => ({
+        metodo: line.metodo || draft?.paymentMethod || "cash",
+        moneda: line.moneda || draft?.currency || "NIO",
+        monto_origen: line.monto_origen ?? "",
+      }));
+      if (restoredPlanLines.length) {
+        setPaymentPlanLines(restoredPlanLines);
+      }
       setNotes(draft?.notes || "");
       setApplyIVA(draft?.applyIVA ?? true);
         setApplyRetention(draft?.applyRetention ?? false);
@@ -626,7 +717,9 @@ export default function SaleForm({
       setProductSearch(draft?.productSearch || "");
       setAppliedDiscounts(draft?.appliedDiscounts || []);
       setVehicleFlowOption(draft?.vehicleFlowOption || "carryout");
-      if (draft?.vehicleFlowOption) {
+      if (typeof draft?.isVehiclePickerVisible === "boolean") {
+        setIsVehiclePickerVisible(draft.isVehiclePickerVisible);
+      } else if (draft?.vehicleFlowOption) {
         setIsVehiclePickerVisible(false);
       }
       setShowNewCustomer(Boolean(draft?.showNewCustomer));
@@ -917,6 +1010,7 @@ export default function SaleForm({
       year: "",
       color: "",
       chasis: "",
+      vehicle_cab_variant: "",
     });
     setNewCustomerTab("customer");
     setUseVinDecoder(false);
@@ -932,6 +1026,7 @@ export default function SaleForm({
       year: "",
       color: "",
       chasis: "",
+      vehicle_cab_variant: "",
     });
     setUseVehicleVinDecoder(false);
     setIsDecodingVehicleVin(false);
@@ -956,6 +1051,7 @@ export default function SaleForm({
         brand: decoded?.brand || prev.brand,
         model: decoded?.model || prev.model,
         year: decoded?.year ? String(decoded.year) : prev.year,
+        vehicle_cab_variant: decoded?.vehicle_cab_variant || prev.vehicle_cab_variant,
       }));
       toast.success("VIN decodificado");
     } catch (error) {
@@ -1017,6 +1113,10 @@ export default function SaleForm({
           toast.error("Marca, año y modelo deben seleccionarse desde la lista");
           return;
         }
+        if (isPickupCatalogModel(newCustomer.brand, newCustomer.model) && !newCustomer.vehicle_cab_variant) {
+          toast.error("Selecciona el tipo de cabina para esta camioneta");
+          return;
+        }
         const plateFormatted = newCustomer.plate_prefix === "M"
           ? `M ${newCustomer.plate_number}`
           : `${newCustomer.plate_prefix} ${newCustomer.plate_number}`;
@@ -1029,7 +1129,9 @@ export default function SaleForm({
           year: parseInt(newCustomer.year) || new Date().getFullYear(),
           color: newCustomer.color || null,
           vin: newCustomer.chasis || null,
-          vehicle_type: "sedan",
+          ...(getCatalogVehiclePayload(newCustomer.brand, newCustomer.model, {
+            vehicleCabVariant: newCustomer.vehicle_cab_variant,
+          }) || {}),
         };
 
         const vehicleResponse = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
@@ -1114,6 +1216,7 @@ export default function SaleForm({
         brand: decoded?.brand || prev.brand,
         model: decoded?.model || prev.model,
         year: decoded?.year ? String(decoded.year) : prev.year,
+        vehicle_cab_variant: decoded?.vehicle_cab_variant || prev.vehicle_cab_variant,
       }));
       toast.success("VIN decodificado");
     } catch (error) {
@@ -1140,6 +1243,10 @@ export default function SaleForm({
       toast.error("Marca, año y modelo deben seleccionarse desde la lista");
       return;
     }
+    if (showNewVehicleCabVariant && !newVehicle.vehicle_cab_variant) {
+      toast.error("Selecciona el tipo de cabina para esta camioneta");
+      return;
+    }
 
     try {
       const plateFormatted = newVehicle.plate_prefix === "M"
@@ -1154,7 +1261,9 @@ export default function SaleForm({
         year: parseInt(newVehicle.year, 10) || new Date().getFullYear(),
         color: newVehicle.color || null,
         vin: newVehicle.chasis || null,
-        vehicle_type: "sedan",
+        ...(getCatalogVehiclePayload(newVehicle.brand, newVehicle.model, {
+          vehicleCabVariant: newVehicle.vehicle_cab_variant,
+        }) || {}),
       };
 
       const response = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
@@ -1184,6 +1293,7 @@ export default function SaleForm({
           year: "",
           color: "",
           chasis: "",
+          vehicle_cab_variant: "",
         },
         useVehicleVinDecoder: false,
       });
@@ -1201,88 +1311,120 @@ export default function SaleForm({
     return priceUSD;
   };
 
-  const totals = (() => {
-    const lineBreakdown = normalizedCartItems.map((item) => {
-      const effectiveItemDiscount = discountsBlockedByPayment ? 0 : (item.discount || 0);
-      const unitPriceInCurrency = convertPrice(item.unit_price);
-      const originalUnitPrice = Number(item.original_unit_price || item.unit_price || 0);
-      const originalUnitPriceInCurrency = convertPrice(originalUnitPrice);
-      const currentLineBase = unitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
-      const originalLineBase = originalUnitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
-      const installType = item.installation_type || "optional";
-      const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
-      const installTotal = installType !== "not_available" && wantsInstall
-        ? convertPrice(item.installation_price || 0) * item.quantity
-        : 0;
-      const manualPriceDiscount = Math.max(0, originalLineBase - currentLineBase);
-      return {
-        item,
-        originalLineTotal: originalLineBase + installTotal,
-        manualPriceDiscount,
-      };
-    });
+  const totals = useMemo(() => computeSaleTotals({
+    cartItems: normalizedCartItems,
+    currency,
+    exchangeRate,
+    ivaRate,
+    globalDiscount,
+    globalDiscountMode,
+    appliedDiscounts,
+    paymentMethod: normalizedPaymentMethod,
+    mixedPaymentMethods: normalizedMixedPaymentMethods,
+    applyIVA,
+    applyRetention,
+    retentionRate,
+    hasSelectedVehicle,
+    isCompanyCustomerFlow,
+    supervisorDiscountPreapproved: sellerReleasedRestricted && globalDiscount > 0,
+  }), [
+    normalizedCartItems,
+    currency,
+    exchangeRate,
+    ivaRate,
+    globalDiscount,
+    globalDiscountMode,
+    appliedDiscounts,
+    normalizedPaymentMethod,
+    normalizedMixedPaymentMethods,
+    applyIVA,
+    applyRetention,
+    retentionRate,
+    hasSelectedVehicle,
+    isCompanyCustomerFlow,
+    sellerReleasedRestricted,
+  ]);
 
-    const subtotalWithoutDiscounts = lineBreakdown.reduce((sum, row) => sum + row.originalLineTotal, 0);
-    const manualPriceDiscountEntries = lineBreakdown
-      .filter((row) => row.manualPriceDiscount > 0.000001)
-      .map((row) => ({
-        productId: row.item.product_id,
-        productName: row.item.product_name || "Producto",
-        amount: row.manualPriceDiscount,
-      }));
-    const manualPriceDiscountTotal = manualPriceDiscountEntries.reduce((sum, row) => sum + row.amount, 0);
-    const subtotalAfterItemPriceDiscounts = subtotalWithoutDiscounts - manualPriceDiscountTotal;
-
-    let discountFromCodesRaw = 0;
-    appliedDiscounts.forEach(d => {
-      if (d.type === "percent") {
-        discountFromCodesRaw += subtotalAfterItemPriceDiscounts * (d.value / 100);
-      } else if (d.type === "fixed") {
-        const fixedInCurrency = currency === "USD" ? d.value / exchangeRate : d.value;
-        discountFromCodesRaw += fixedInCurrency;
+  useEffect(() => {
+    const nextTarget = Number(totals.total || 0);
+    if (prevPlanTargetRef.current === 0 && nextTarget > 0) {
+      prevPlanTargetRef.current = nextTarget;
+      return;
+    }
+    if (prevPlanTargetRef.current === nextTarget) return;
+    setPaymentPlanLines((prev) => {
+      const hasAmounts = prev.some((line) => !isPlanLineAmountEmpty(line));
+      if (!hasAmounts) return prev;
+      setPlanTotalChangedHint(true);
+      if (normalizedPaymentMethod === "mixed") {
+        return rebalanceMixedPlanRemainders(prev, exchangeRate, nextTarget);
       }
+      return prev;
     });
+    prevPlanTargetRef.current = nextTarget;
+  }, [totals.total, exchangeRate, normalizedPaymentMethod]);
 
-    const requestedGlobalDiscountRaw = Math.max(0, Number(globalDiscount) || 0);
-    const discountAmountRaw = globalDiscountMode === "fixed"
-      ? Math.min(requestedGlobalDiscountRaw, subtotalAfterItemPriceDiscounts)
-      : subtotalAfterItemPriceDiscounts * (requestedGlobalDiscountRaw / 100);
-    const totalDiscountsRaw = discountFromCodesRaw + discountAmountRaw;
-    const discountFromCodes = discountsBlockedByPayment ? 0 : discountFromCodesRaw;
-    const discountAmount = discountsBlockedByPayment ? 0 : discountAmountRaw;
-    const totalDiscounts = discountFromCodes + discountAmount;
-    const blockedDiscountsAmount = discountsBlockedByPayment ? totalDiscountsRaw : 0;
-    const subtotalForRetention = subtotalAfterItemPriceDiscounts - totalDiscounts;
-    const subtotalForRetentionNio = currency === "USD"
-      ? subtotalForRetention * exchangeRate
-      : subtotalForRetention;
-    const retentionThresholdMet = subtotalForRetentionNio >= 1000;
-    const shouldApplyRetention = isCompanyCustomerFlow && applyRetention && retentionThresholdMet;
-    const retention = shouldApplyRetention ? subtotalForRetention * (retentionRate / 100) : 0;
-    const tax = applyIVA ? subtotalForRetention * (ivaRate / 100) : 0;
-    const total = subtotalForRetention + tax - retention;
-    const globalDiscountEffectivePercent = subtotalAfterItemPriceDiscounts > 0
-      ? (discountAmountRaw / subtotalAfterItemPriceDiscounts) * 100
-      : 0;
-    return {
-      subtotalWithoutDiscounts,
-      subtotalAfterItemPriceDiscounts,
-      manualPriceDiscountEntries,
-      manualPriceDiscountTotal,
-      subtotalForRetention,
-      subtotalForRetentionNio,
-      retentionThresholdMet,
-      tax,
-      discountAmount,
-      globalDiscountEffectivePercent,
-      discountFromCodes,
-      totalDiscounts,
-      blockedDiscountsAmount,
-      discountsBlockedByPayment,
-      retention,
-      total,
-    };
-  })();
+  useEffect(() => {
+    const validation = validatePlanAgainstTotal(paymentPlanLines, exchangeRate, totals.total);
+    if (validation.ok) {
+      setPlanTotalChangedHint(false);
+      setPaymentPlanSubmitAttention(false);
+      setPaymentPlanSubmitAttentionMessage("");
+    }
+  }, [paymentPlanLines, exchangeRate, totals.total]);
+
+  const focusMixedPaymentPlanMismatch = (message) => {
+    setPlanTotalChangedHint(true);
+    setPaymentPlanSubmitAttention(true);
+    setPaymentPlanSubmitAttentionMessage(
+      message || "Ajusta el plan de cobro mixto para que cuadre con el total antes de enviar la factura a caja.",
+    );
+    scrollToAnchor({ anchorRef: paymentPlanSectionRef, behavior: "smooth", block: "center" });
+  };
+
+  const handleMixedMethodToggle = (method, nextChecked) => {
+    if (sellerParamsLocked) {
+      notifySellerParamsLocked();
+      return;
+    }
+    if (nextChecked) {
+      const nextMethods = Array.from(new Set([...normalizedMixedPaymentMethods, method]));
+      setMixedPaymentMethods(nextMethods);
+      playSelectionFeedbackSound();
+      persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
+      return;
+    }
+    const linesForMethod = paymentPlanLines.filter(
+      (line) => normalizePaymentMethodCode(line.metodo) === method,
+    );
+    if (linesForMethod.length > 1) {
+      toast.error("Quita las líneas adicionales de este método antes de desmarcarlo");
+      return;
+    }
+    const nextMethods = normalizedMixedPaymentMethods.filter((item) => item !== method);
+    const nextLines = paymentPlanLines.filter(
+      (line) => normalizePaymentMethodCode(line.metodo) !== method,
+    );
+    setMixedPaymentMethods(nextMethods);
+    setPaymentPlanLines(nextMethods.length ? nextLines : []);
+    playSelectionFeedbackSound();
+    persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
+  };
+
+  const handlePlanLineRemoved = (removedLine, nextLines) => {
+    if (normalizedPaymentMethod !== "mixed" || !removedLine) return;
+    const method = normalizePaymentMethodCode(removedLine.metodo);
+    const remainingForMethod = nextLines.filter(
+      (line) => normalizePaymentMethodCode(line.metodo) === method,
+    ).length;
+    if (remainingForMethod > 0) return;
+    const nextMethods = normalizedMixedPaymentMethods.filter((item) => item !== method);
+    setMixedPaymentMethods(nextMethods);
+    if (!nextMethods.length) {
+      setPaymentPlanLines([]);
+    }
+    persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
+  };
 
   const handleSubmit = async () => {
     const payloadPaymentMethod = normalizedPaymentMethod;
@@ -1290,6 +1432,67 @@ export default function SaleForm({
     if (normalizedPaymentMethod === "mixed" && payloadMixedPaymentMethods.length === 0) {
       toast.error("Selecciona al menos un método para el pago mixto");
       return;
+    }
+    let plannedPaymentPlan = null;
+    let payloadCreditDays = null;
+    if (payloadPaymentMethod === "credit") {
+      const approvedCreditDays = resolveCustomerCreditDays(selectedCustomer);
+      if (!approvedCreditDays) {
+        toast.error("Cliente sin crédito aprobado. Gerencia/supervisor debe configurar límite y plazo.");
+        return;
+      }
+      if (Number(selectedCustomer?.credit_limit || 0) <= 0) {
+        toast.error("Cliente sin límite de crédito aprobado.");
+        return;
+      }
+      payloadCreditDays = approvedCreditDays;
+    } else {
+      const finalizedPlanLines = buildPlanLinesForSubmit({
+        lines: paymentPlanLines,
+        paymentMethod: payloadPaymentMethod,
+        mixedMethods: payloadMixedPaymentMethods,
+        exchangeRate,
+        targetTotal: totals.total,
+        currency,
+        preserveMixedStructure: sellerReleasedRestricted,
+      });
+      const uniquenessValidation = validatePlanLineUniqueness(finalizedPlanLines);
+      if (!uniquenessValidation.ok) {
+        if (payloadPaymentMethod === "mixed") {
+          focusMixedPaymentPlanMismatch(uniquenessValidation.message);
+        } else {
+          toast.error(uniquenessValidation.message);
+        }
+        return;
+      }
+      const planValidation = validatePlanAgainstTotal(
+        finalizedPlanLines,
+        exchangeRate,
+        totals.total,
+      );
+      if (!planValidation.ok) {
+        if (payloadPaymentMethod === "mixed") {
+          focusMixedPaymentPlanMismatch(planValidation.message);
+        } else {
+          toast.error(planValidation.message);
+        }
+        return;
+      }
+      const planLinesForPayload = planValidation.adjustedLines || finalizedPlanLines;
+      plannedPaymentPlan = payloadPaymentMethod === "mixed"
+        ? buildMixedPaymentPlan({
+          methods: payloadMixedPaymentMethods,
+          lines: planLinesForPayload,
+          total: totals.total,
+          exchangeRate,
+          currency,
+        })
+        : buildSinglePaymentPlan({
+          method: payloadPaymentMethod,
+          total: totals.total,
+          currency,
+          exchangeRate,
+        });
     }
     const payloadDiscountPercent = discountsBlockedByPayment
       ? 0
@@ -1312,7 +1515,8 @@ export default function SaleForm({
       payment_type: payloadPaymentMethod,
       payment_method: payloadPaymentMethod,
       mixed_payment_methods: payloadMixedPaymentMethods,
-      credit_days: payloadPaymentMethod === "credit" ? 30 : null,
+      planned_payment_plan: plannedPaymentPlan,
+      credit_days: payloadCreditDays,
       currency,
       apply_iva: applyIVA,
       iva_rate: ivaRate,
@@ -1338,7 +1542,7 @@ export default function SaleForm({
         }
       }
     } catch (error) {
-      // Keep draft on error
+      throw error;
     }
   };
 
@@ -1351,6 +1555,11 @@ export default function SaleForm({
       cartItems: normalizedCartItems,
       paymentMethod: normalizedPaymentMethod,
       mixedPaymentMethods: normalizedPaymentMethod === "mixed" ? normalizedMixedPaymentMethods : [],
+      paymentPlanLines,
+      planned_payment_plan: normalizedPaymentMethod === "credit" ? null : {
+        mode: normalizedPaymentMethod,
+        lines: paymentPlanLines,
+      },
       globalDiscountMode,
       globalDiscount,
       notes,
@@ -1364,6 +1573,7 @@ export default function SaleForm({
       customerSearch,
       productSearch,
       vehicleFlowOption,
+      isVehiclePickerVisible,
       selectedVehicleData,
       showNewCustomer,
       showNewVehicleDialog,
@@ -1399,6 +1609,7 @@ export default function SaleForm({
     customerSearch,
     productSearch,
     vehicleFlowOption,
+    isVehiclePickerVisible,
     selectedVehicleData,
     showNewCustomer,
     showNewVehicleDialog,
@@ -1427,21 +1638,14 @@ export default function SaleForm({
     if (!draftKey || typeof window === "undefined") return false;
     if (!draftLoaded) return false;
     const snapshot = buildDraftSnapshot(overrides);
-    const snapshotEmpty = !snapshot?.selectedCustomerId
-      && (!snapshot?.cartItems || snapshot.cartItems.length === 0)
-      && !snapshot?.notes
-      && !snapshot?.customerSearch
-      && !snapshot?.productSearch
-      && !snapshot?.globalDiscount
-      && (snapshot?.globalDiscountMode || "percent") === "percent"
-      && (snapshot?.paymentMethod || "cash") === "cash"
-      && (!snapshot?.mixedPaymentMethods || snapshot.mixedPaymentMethods.length === 0)
-      && (!snapshot?.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
-      && !hasNestedDraftData(snapshot);
+    const snapshotEligible = isSaleDraftSaveEligible(snapshot);
 
-    if (snapshotEmpty) {
+    if (!snapshotEligible) {
       window.localStorage.removeItem(draftKey);
       draftSnapshotRef.current = null;
+      if (typeof onDraftClear === "function") {
+        onDraftClear();
+      }
       if (typeof onDraftSaveStateChange === "function") {
         onDraftSaveStateChange({ state: "saved", at: new Date().toISOString() });
       }
@@ -1467,7 +1671,32 @@ export default function SaleForm({
       }
       return false;
     }
-  }, [buildDraftSnapshot, draftKey, draftLoaded, hasNestedDraftData, onDraftPersist, onDraftSaveStateChange]);
+  }, [buildDraftSnapshot, draftKey, draftLoaded, onDraftClear, onDraftPersist, onDraftSaveStateChange]);
+
+  const handleOpenBarcodeScanner = useCallback(() => {
+    setShowBarcodeScanner(true);
+  }, []);
+
+  const handleBarcodeScan = useCallback((code) => {
+    const matches = findProductsByScanCode(products, code);
+    if (matches.length === 1) {
+      addToCart(matches[0]);
+      setShowBarcodeScanner(false);
+      toast.success(`Producto agregado: ${matches[0].name}`);
+      return;
+    }
+
+    setProductSearch(code);
+    persistDraftSnapshot({ productSearch: code });
+    setShowBarcodeScanner(false);
+
+    if (matches.length > 1) {
+      toast.info(`${matches.length} productos coinciden con "${code}". Elige uno de la lista.`);
+      return;
+    }
+
+    toast.warning(`No se encontró producto con el código "${code}"`);
+  }, [addToCart, persistDraftSnapshot, products]);
 
   useEffect(() => {
     if (!isCompanyCustomerFlow) return;
@@ -1485,12 +1714,12 @@ export default function SaleForm({
     totals.retentionThresholdMet,
   ]);
 
-  const applyGlobalDiscountChange = useCallback((nextValue) => {
+  const commitGlobalDiscountValue = useCallback((rawValue) => {
     if (sellerParamsLocked) {
       toast.error("No puedes modificar descuentos globales en un borrador liberado con cambios de supervisión");
       return;
     }
-    let normalizedValue = clampGlobalDiscountValue(nextValue, globalDiscountMode);
+    let normalizedValue = clampGlobalDiscountValue(rawValue, globalDiscountMode);
     if (!isSupervisorUser && isSellerRole) {
       const subtotalBase = totals.subtotalAfterItemPriceDiscounts || 0;
       if (sellerGlobalDiscountExceeded({
@@ -1511,8 +1740,67 @@ export default function SaleForm({
       }
     }
     setGlobalDiscount(normalizedValue);
+    setGlobalDiscountDraft(String(normalizedValue));
     persistDraftSnapshot({ globalDiscount: normalizedValue });
   }, [currency, exchangeRate, globalDiscountMode, isSellerRole, isSupervisorUser, persistDraftSnapshot, sellerParamsLocked, totals.subtotalAfterItemPriceDiscounts]);
+
+  const handleGlobalDiscountInputChange = useCallback((rawValue) => {
+    if (sellerParamsLocked) {
+      notifySellerParamsLocked();
+      return;
+    }
+    setGlobalDiscountDraft(String(rawValue ?? ""));
+  }, [notifySellerParamsLocked, sellerParamsLocked]);
+
+  const handlePaymentPlanLinesChange = useCallback((nextLines) => {
+    setPaymentPlanLines(nextLines);
+    persistDraftSnapshot({
+      paymentPlanLines: nextLines,
+      planned_payment_plan: normalizedPaymentMethod === "credit" ? null : {
+        mode: normalizedPaymentMethod,
+        lines: nextLines,
+      },
+    });
+  }, [normalizedPaymentMethod, persistDraftSnapshot]);
+
+  useEffect(() => {
+    planAutoSyncSkipRef.current = true;
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (normalizedPaymentMethod === "credit" || !draftLoaded) return;
+    if (planAutoSyncSkipRef.current) {
+      planAutoSyncSkipRef.current = false;
+      const hasRestoredAmounts = paymentPlanLines.some((line) => !isPlanLineAmountEmpty(line));
+      if (hasRestoredAmounts) return;
+    }
+    if (normalizedPaymentMethod === "mixed") {
+      const nextLines = syncMixedPlanLines(
+        paymentPlanLines,
+        normalizedMixedPaymentMethods,
+        exchangeRate,
+        totals.total,
+        currency,
+      );
+      handlePaymentPlanLinesChange(nextLines);
+      return;
+    }
+    const amount = currency === "USD"
+      ? Number((totals.total / (exchangeRate || 36.5)).toFixed(4))
+      : Number(totals.total || 0).toFixed(2);
+    handlePaymentPlanLinesChange([{
+      metodo: normalizedPaymentMethod,
+      moneda: currency,
+      monto_origen: amount,
+    }]);
+  }, [
+    currency,
+    draftLoaded,
+    exchangeRate,
+    normalizedMixedPaymentMethods.join("|"),
+    normalizedPaymentMethod,
+    totals.total,
+  ]);
 
   const applyGlobalDiscountModeChange = useCallback((nextModeValue) => {
     if (sellerParamsLocked) {
@@ -1523,6 +1811,7 @@ export default function SaleForm({
     const normalizedValue = clampGlobalDiscountValue(globalDiscount, nextMode);
     setGlobalDiscountMode(nextMode);
     setGlobalDiscount(normalizedValue);
+    setGlobalDiscountDraft(String(normalizedValue));
     playSelectionFeedbackSound();
     persistDraftSnapshot({
       globalDiscountMode: nextMode,
@@ -1772,6 +2061,19 @@ export default function SaleForm({
     playSelectionFeedbackSound();
   }, [convertPrice, isSupervisorUser]);
 
+  useEffect(() => {
+    if (!priceEditorOpen) return undefined;
+    const focusTimer = window.setTimeout(() => {
+      const input = priceEditorMode === "amount"
+        ? priceEditorAmountRef.current
+        : priceEditorPercentRef.current;
+      if (!input) return;
+      input.focus();
+      input.select();
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [priceEditorOpen, priceEditorMode, priceEditorItemId]);
+
   const closePriceEditor = useCallback(() => {
     setPriceEditorOpen(false);
     setPriceEditorItemId(null);
@@ -1828,6 +2130,9 @@ export default function SaleForm({
       return;
     }
 
+    const preservedOriginalUnitPrice = Number(
+      priceEditorItem.original_unit_price || priceEditorItem.unit_price || currentUnitPrice
+    );
     updateCartItem(
       priceEditorItem.product_id,
       "unit_price",
@@ -1835,6 +2140,7 @@ export default function SaleForm({
       {
         persist: true,
         patch: {
+          original_unit_price: preservedOriginalUnitPrice,
           price_edit_count: currentEditCount + 1,
           price_edit_history: [currentUnitPrice, ...currentHistory]
             .map((value) => Number(value))
@@ -1896,19 +2202,7 @@ export default function SaleForm({
     toast.error("No se pudo abrir catálogo porque no hay un borrador activo");
   }, [buildDraftSnapshot, draftKey, isQuotationFlow, onOpenCatalogSearch]);
 
-  const isSnapshotEmpty = (snapshot) => {
-    if (!snapshot) return true;
-    return !snapshot.selectedCustomerId
-      && (!snapshot.cartItems || snapshot.cartItems.length === 0)
-      && !snapshot.notes
-      && !snapshot.customerSearch
-      && !snapshot.productSearch
-      && !snapshot.globalDiscount
-      && (snapshot?.globalDiscountMode || "percent") === "percent"
-      && (snapshot?.paymentMethod || "cash") === "cash"
-      && (!snapshot.appliedDiscounts || snapshot.appliedDiscounts.length === 0)
-      && !hasNestedDraftData(snapshot);
-  };
+  const isSnapshotEmpty = (snapshot) => !isSaleDraftSaveEligible(snapshot);
 
   useEffect(() => {
     if (!draftKey || typeof window === "undefined") return undefined;
@@ -1917,7 +2211,7 @@ export default function SaleForm({
       if (window.localStorage.getItem(draftKey) === null) {
         return;
       }
-      if (draftSnapshotRef.current) {
+      if (draftSnapshotRef.current && isSaleDraftSaveEligible(draftSnapshotRef.current)) {
         window.localStorage.setItem(draftKey, JSON.stringify(draftSnapshotRef.current));
       }
     };
@@ -1935,11 +2229,7 @@ export default function SaleForm({
 
   const filteredProducts = useMemo(() => {
     if (!productSearch) return products;
-    const searchLower = productSearch.toLowerCase();
-    return products.filter(p =>
-      p.name?.toLowerCase().includes(searchLower) ||
-      p.sku?.toLowerCase().includes(searchLower)
-    );
+    return products.filter((product) => productMatchesSearch(product, productSearch));
   }, [products, productSearch]);
 
   const warehouseById = useMemo(
@@ -2026,8 +2316,6 @@ export default function SaleForm({
     }),
     [stepOneComplete, stepTwoComplete, normalizedCartItems.length]
   );
-
-  const saleFlowProgressKey = `${selectedCustomer?.customer_id ?? "none"}:${isVehiclePickerVisible ? "pick" : "set"}:${normalizedCartItems.length}`;
 
   const productsById = useMemo(
     () => new Map((products || []).map((product) => [String(product.product_id), product])),
@@ -2227,10 +2515,10 @@ export default function SaleForm({
     <div className="space-y-4">
       {sellerReleasedRestricted ? (
         <div className={ERP_SEMANTIC_TONES.restrictedBanner}>
-          Borrador liberado por supervisión. Cliente, vehículo, líneas existentes, método de pago y retención IR están bloqueados; solo puedes agregar productos nuevos.
+          Borrador liberado por supervisión. Cliente, vehículo, líneas existentes, método de pago y retención IR están bloqueados; puedes agregar productos nuevos y ajustar montos del plan de cobro acordado.
         </div>
       ) : null}
-      <SaleFlowStepProgress key={saleFlowProgressKey} steps={saleFlowSteps} />
+      <SaleFlowStepProgress steps={saleFlowSteps} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start">
       {productTransferAnimation ? (
         <div
@@ -2451,6 +2739,7 @@ export default function SaleForm({
                 const plate = v.plate || v.plate_number || v.number_plate || "Sin placa";
                 const vin = v.vin || v.chasis || v.chassis || "Sin chasis";
                 const color = v.color || v.vehicle_color || v.colour || "Sin color";
+                const catalogHint = formatVehicleIdentityHint(v.brand, v.year, v.model);
                 const vehicleOptionId = normalizeVehicleId(v.vehicle_id ?? v.id);
                 const isActiveVehicle = selectedVehicleOption === `vehicle:${vehicleOptionId}`;
                 return (
@@ -2470,6 +2759,9 @@ export default function SaleForm({
                       <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
                       {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
                     </p>
+                    {catalogHint ? (
+                      <p className="text-[11px] text-sky-800/90 mt-1">{catalogHint}</p>
+                    ) : null}
                     <p className="text-xs text-sky-800 mt-1">{plate}</p>
                     <p className="text-[11px] text-sky-700 mt-0.5">{vin} • {color}</p>
                   </button>
@@ -2603,7 +2895,7 @@ export default function SaleForm({
               <div className="relative flex-1">
                 <PackageSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nombre o SKU..."
+                  placeholder="Buscar por nombre, SKU o código escaneado..."
                   value={productSearch}
                   onChange={(e) => {
                     setProductSearch(e.target.value);
@@ -2614,8 +2906,21 @@ export default function SaleForm({
                   onWheel={handleProductSearchWheel}
                   onKeyDown={handleProductSearchKeyDown}
                   ref={productSearchRef}
-                  className="mb-0 pl-9"
+                  disabled={!stepTwoComplete}
+                  className="mb-0 pl-9 pr-12"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 text-sky-700 hover:bg-sky-500/10 hover:text-sky-800 dark:text-sky-300"
+                  onClick={handleOpenBarcodeScanner}
+                  disabled={!stepTwoComplete}
+                  title="Escanear código de barras o QR"
+                  aria-label="Escanear código de barras o QR"
+                >
+                  <ScanBarcode className="h-4 w-4" />
+                </Button>
               </div>
             <Button
               type="button"
@@ -3198,11 +3503,12 @@ export default function SaleForm({
                 <div className="space-y-1.5">
                   <Label>Monto en {currency}</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    ref={priceEditorAmountRef}
+                    type="text"
+                    inputMode="decimal"
                     value={priceEditorAmount}
                     onChange={(event) => setPriceEditorAmount(event.target.value)}
+                    onFocus={(event) => event.target.select()}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter") return;
                       event.preventDefault();
@@ -3215,10 +3521,12 @@ export default function SaleForm({
                 <div className="space-y-1.5">
                   <Label>Porcentaje (%)</Label>
                   <Input
-                    type="number"
-                    step="0.01"
+                    ref={priceEditorPercentRef}
+                    type="text"
+                    inputMode="decimal"
                     value={priceEditorPercent}
                     onChange={(event) => setPriceEditorPercent(event.target.value)}
+                    onFocus={(event) => event.target.select()}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter") return;
                       event.preventDefault();
@@ -3293,105 +3601,11 @@ export default function SaleForm({
           </DialogContent>
         </Dialog>
 
-        <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
-          <Label className="inline-flex items-center gap-1.5">
-            <CreditCard className="h-3.5 w-3.5" />
-            <span>{step5Label}</span>
+        <div className="space-y-3 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
+          <Label className="inline-flex items-center gap-1.5 text-sm font-medium">
+            <Tag className="h-3.5 w-3.5" />
+            <span>Parámetros comerciales</span>
           </Label>
-          <Select
-            value={normalizedPaymentMethod}
-            disabled={sellerParamsLocked}
-            onValueChange={(value) => {
-              if (sellerParamsLocked) {
-                notifySellerParamsLocked();
-                return;
-              }
-              const nextMethod = String(value || "cash");
-              setPaymentMethod(nextMethod);
-              playSelectionFeedbackSound();
-              const nextMixedPaymentMethods = nextMethod === "mixed" ? normalizedMixedPaymentMethods : [];
-              if (nextMethod !== "mixed") {
-                setMixedPaymentMethods([]);
-              }
-              persistDraftSnapshot({ paymentMethod: nextMethod, mixedPaymentMethods: nextMixedPaymentMethods });
-              if (nextMethod === "card") {
-                toast.info("Con tarjeta no aplican descuentos ni promociones");
-              }
-            }}
-          >
-            <SelectTrigger className="ui-interactive" disabled={sellerParamsLocked}>
-              <SelectValue placeholder="Seleccionar método de pago" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(paymentOptionMeta).map(([value, meta]) => {
-                const Icon = meta.icon;
-                return (
-                  <SelectItem key={value} value={value} className={`${meta.itemClassName} ui-interactive`}>
-                    <span className="inline-flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${meta.className}`} />
-                      <span>{meta.label}</span>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-          {normalizedPaymentMethod === "mixed" && (
-            <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-2.5 animate-fade-up-soft">
-              <p className="text-xs font-medium text-slate-700">Selecciona los métodos incluidos en el pago mixto</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {paymentMethodSelectionItems.map((method) => {
-                  const meta = paymentOptionMeta[method];
-                  const Icon = meta.icon;
-                  const checked = normalizedMixedPaymentMethods.includes(method);
-                  return (
-                    <label
-                      key={method}
-                      className={cn(
-                        "flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-800",
-                        sellerParamsLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer ui-interactive"
-                      )}
-                    >
-                      <Checkbox
-                        checked={checked}
-                        disabled={sellerParamsLocked}
-                        onCheckedChange={(value) => {
-                          if (sellerParamsLocked) {
-                            notifySellerParamsLocked();
-                            return;
-                          }
-                          const nextChecked = Boolean(value);
-                          const nextMethods = nextChecked
-                            ? Array.from(new Set([...normalizedMixedPaymentMethods, method]))
-                            : normalizedMixedPaymentMethods.filter((item) => item !== method);
-                          setMixedPaymentMethods(nextMethods);
-                          playSelectionFeedbackSound();
-                          persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
-                        }}
-                      />
-                      <Icon className={`h-4 w-4 ${meta.className}`} />
-                      <span>{meta.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-slate-600">Métodos elegidos: {paymentMethodSummaryLabel}</p>
-            </div>
-          )}
-          {sellerParamsLocked ? (
-            <p className="text-xs text-amber-800 dark:text-amber-300">
-              Método de pago definido por supervisión; no editable.
-            </p>
-          ) : discountsBlockedByPayment ? (
-            <p className="text-xs text-amber-700">
-              Este método bloquea descuentos y promociones en el cálculo final.
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Este método permite aplicar descuentos y promociones.
-            </p>
-          )}
-        </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
           <div
@@ -3471,20 +3685,17 @@ export default function SaleForm({
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Reducir descuento global"}
                 disabled={discountsBlockedByPayment || sellerParamsLocked || globalDiscount <= 0}
-                onClick={() => applyGlobalDiscountChange(globalDiscount - (globalDiscountMode === "fixed" ? 10 : 1))}
+                onClick={() => commitGlobalDiscountValue(globalDiscount - (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Minus className="h-3.5 w-3.5" />
               </Button>
               <Input
-                type="number"
-                min="0"
-                max={globalDiscountMode === "percent" ? "100" : undefined}
-                inputMode="numeric"
+                type="text"
+                inputMode="decimal"
                 disabled={discountsBlockedByPayment || sellerParamsLocked}
-                value={globalDiscount}
-                onChange={(e) => applyGlobalDiscountChange(e.target.value)}
-                onBlur={(e) => applyGlobalDiscountChange(e.target.value)}
-                step={globalDiscountMode === "fixed" ? "10" : "1"}
+                value={globalDiscountDraft}
+                onChange={(e) => handleGlobalDiscountInputChange(e.target.value)}
+                onBlur={(e) => commitGlobalDiscountValue(e.target.value)}
                 className="h-9 text-center font-mono text-sm font-semibold"
               />
               <Button
@@ -3499,7 +3710,7 @@ export default function SaleForm({
                 )}
                 title={discountsBlockedByPayment ? "Descuento bloqueado por método de pago" : "Aumentar descuento global"}
                 disabled={discountsBlockedByPayment || sellerParamsLocked || (globalDiscountMode === "percent" && globalDiscount >= 100)}
-                onClick={() => applyGlobalDiscountChange(globalDiscount + (globalDiscountMode === "fixed" ? 10 : 1))}
+                onClick={() => commitGlobalDiscountValue(globalDiscount + (globalDiscountMode === "fixed" ? 10 : 1))}
               >
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -3646,34 +3857,167 @@ export default function SaleForm({
           </Select>
         </div>
         ) : null}
+        </div>
+
+        <div
+          className={cn(
+            "space-y-1.5 rounded-md border p-2.5 transition-colors",
+            discountsBlockedByPayment
+              ? "border-rose-300 bg-rose-50/80"
+              : "border-dashed border-input/70 bg-background/60",
+          )}
+        >
+          <Label className="inline-flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5" />
+            <span>{step5Label}</span>
+          </Label>
+          <Select
+            value={normalizedPaymentMethod}
+            disabled={sellerParamsLocked}
+            onValueChange={(value) => {
+              if (sellerParamsLocked) {
+                notifySellerParamsLocked();
+                return;
+              }
+              const nextMethod = String(value || "cash");
+              setPaymentMethod(nextMethod);
+              playSelectionFeedbackSound();
+              const nextMixedPaymentMethods = nextMethod === "mixed" ? normalizedMixedPaymentMethods : [];
+              if (nextMethod !== "mixed") {
+                setMixedPaymentMethods([]);
+              }
+              persistDraftSnapshot({ paymentMethod: nextMethod, mixedPaymentMethods: nextMixedPaymentMethods });
+              if (nextMethod === "card") {
+                toast.info("Con tarjeta no aplican descuentos ni promociones");
+              }
+            }}
+          >
+            <SelectTrigger className="ui-interactive" disabled={sellerParamsLocked}>
+              <SelectValue placeholder="Seleccionar método de pago" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(paymentOptionMeta).map(([value, meta]) => {
+                const Icon = meta.icon;
+                return (
+                  <SelectItem key={value} value={value} className={`${meta.itemClassName} ui-interactive`}>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${meta.className}`} />
+                      <span>{meta.label}</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {normalizedPaymentMethod === "mixed" && (
+            <div className="space-y-2 rounded-md border border-slate-200 bg-white/80 p-2.5 animate-fade-up-soft">
+              <p className="text-xs font-medium text-slate-700">Selecciona los métodos incluidos en el pago mixto</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {paymentMethodSelectionItems.map((method) => {
+                  const meta = paymentOptionMeta[method];
+                  const Icon = meta.icon;
+                  const checked = normalizedMixedPaymentMethods.includes(method);
+                  return (
+                    <label
+                      key={method}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-800",
+                        sellerParamsLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer ui-interactive",
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={sellerParamsLocked}
+                        onCheckedChange={(value) => handleMixedMethodToggle(method, Boolean(value))}
+                      />
+                      <Icon className={`h-4 w-4 ${meta.className}`} />
+                      <span>{meta.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-600">Métodos elegidos: {paymentMethodSummaryLabel}</p>
+            </div>
+          )}
+          {sellerParamsLocked ? (
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              Método de pago definido por supervisión; no editable.
+            </p>
+          ) : discountsBlockedByPayment ? (
+            <p className="text-xs font-medium text-rose-800">
+              Este método bloquea descuentos y promociones en el cálculo final.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Este método permite aplicar descuentos y promociones.
+            </p>
+          )}
+        </div>
+
+        {normalizedPaymentMethod !== "credit" ? (
+          <div ref={paymentPlanSectionRef} className="scroll-mt-24">
+            <PaymentPlanEditor
+              paymentMethod={normalizedPaymentMethod}
+              mixedMethods={normalizedMixedPaymentMethods}
+              lines={paymentPlanLines}
+              onChangeLines={handlePaymentPlanLinesChange}
+              onRemoveLine={handlePlanLineRemoved}
+              exchangeRate={exchangeRate}
+              targetTotal={totals.total}
+              disabled={sellerPaymentPlanBlocked}
+              structureLocked={sellerPaymentPlanStructureLocked}
+              totalChangedHint={planTotalChangedHint}
+              submitAttention={paymentPlanSubmitAttention && normalizedPaymentMethod === "mixed"}
+              submitAttentionMessage={paymentPlanSubmitAttentionMessage}
+            />
+          </div>
+        ) : (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900">
+            Crédito: plazo aprobado del cliente{" "}
+            <span className="font-semibold">
+              {resolveCustomerCreditDays(selectedCustomer) || "sin configurar"}
+            </span>{" "}
+            días. Techo C${Number(selectedCustomer?.credit_limit || 0).toFixed(2)}. Solo gerencia/supervisor modifica estos términos.
+          </div>
+        )}
 
         {extraFields}
 
         <div className="border-t pt-4 space-y-1">
           {(totals.totalDiscounts > 0 || totals.manualPriceDiscountTotal > 0) && (
-            <div className="flex justify-between text-sm"><span>Subtotal sin descuentos:</span><ErpRollingCurrency value={totals.subtotalWithoutDiscounts} currency={currency} /></div>
+            <SaleTotalsBreakdownRow label="Subtotal sin descuentos:" value={totals.subtotalWithoutDiscounts} currency={currency} className="text-sm" />
           )}
           {totals.manualPriceDiscountEntries.length > 0 && totals.manualPriceDiscountEntries.map((entry) => (
-            <div key={`manual-discount-${entry.productId}`} className="flex justify-between text-sm text-green-600">
-              <span>Descuento Individual ({entry.productName}):</span>
-              <ErpRollingCurrency value={entry.amount} currency={currency} prefix="-" />
-            </div>
+            <SaleTotalsBreakdownRow
+              key={`manual-discount-${entry.productId}`}
+              label={`Descuento Individual (${entry.productName}):`}
+              value={entry.amount}
+              currency={currency}
+              prefix="-"
+              className="text-sm text-green-600"
+            />
           ))}
           {totals.discountFromCodes > 0 && (
-            <div className="flex justify-between text-sm text-green-600"><span>Descuento Códigos:</span><ErpRollingCurrency value={totals.discountFromCodes} currency={currency} prefix="-" /></div>
+            <SaleTotalsBreakdownRow label="Descuento Códigos:" value={totals.discountFromCodes} currency={currency} prefix="-" className="text-sm text-green-600" />
           )}
           {totals.discountAmount > 0 && (
-            <div className="flex justify-between text-sm text-green-600"><span>{globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}</span><ErpRollingCurrency value={totals.discountAmount} currency={currency} prefix="-" /></div>
+            <SaleTotalsBreakdownRow
+              label={globalDiscountMode === "fixed" ? "Descuento Global (Monto):" : "Descuento Global (%):"}
+              value={totals.discountAmount}
+              currency={currency}
+              prefix="-"
+              className="text-sm text-green-600"
+            />
           )}
           {totals.discountsBlockedByPayment && totals.blockedDiscountsAmount > 0 && (
-            <div className="flex justify-between text-sm text-amber-700"><span>Descuentos removidos por método:</span><ErpRollingCurrency value={totals.blockedDiscountsAmount} currency={currency} /></div>
+            <SaleTotalsBreakdownRow label="Descuentos removidos por método:" value={totals.blockedDiscountsAmount} currency={currency} className="text-sm text-amber-700" />
           )}
-          <div className="flex justify-between text-sm"><span>Subtotal:</span><ErpRollingCurrency value={totals.subtotalForRetention} currency={currency} /></div>
+          <SaleTotalsBreakdownRow label="Subtotal:" value={totals.subtotalForRetention} currency={currency} className="text-sm" />
           {applyRetention && totals.retention > 0 && (
-            <div className="flex justify-between text-sm text-orange-600"><span>Retención IR ({retentionRate}%):</span><ErpRollingCurrency value={totals.retention} currency={currency} prefix="-" /></div>
+            <SaleTotalsBreakdownRow label={`Retención IR (${retentionRate}%):`} value={totals.retention} currency={currency} prefix="-" className="text-sm text-orange-600" />
           )}
-          <div className="flex justify-between text-sm"><span>IVA ({ivaRate}%):</span><ErpRollingCurrency value={totals.tax} currency={currency} /></div>
-          <div className="flex justify-between text-lg font-bold"><span>Total:</span><ErpRollingCurrency value={totals.total} currency={currency} className="text-lg font-bold" /></div>
+          <SaleTotalsBreakdownRow label={`IVA (${ivaRate}%):`} value={totals.tax} currency={currency} className="text-sm" />
+          <SaleTotalsBreakdownRow label="Total:" value={totals.total} currency={currency} className="text-lg font-bold" />
           <SavingsHighlightRow
             amount={totals.totalDiscounts + totals.manualPriceDiscountTotal}
             currency={currency}
@@ -3791,7 +4135,7 @@ export default function SaleForm({
                 <SearchableSelect
                   value={newVehicle.brand}
                   onChange={(v) => {
-                    const nextVehicle = { ...newVehicle, brand: v, year: "", model: "" };
+                    const nextVehicle = { ...newVehicle, brand: v, year: "", model: "", vehicle_cab_variant: "" };
                     setNewVehicle(nextVehicle);
                     persistDraftSnapshot({ newVehicle: nextVehicle });
                   }}
@@ -3805,7 +4149,7 @@ export default function SaleForm({
                 <SearchableSelect
                   value={String(newVehicle.year || "")}
                   onChange={(v) => {
-                    const nextVehicle = { ...newVehicle, year: v, model: "" };
+                    const nextVehicle = { ...newVehicle, year: v, model: "", vehicle_cab_variant: "" };
                     setNewVehicle(nextVehicle);
                     persistDraftSnapshot({ newVehicle: nextVehicle });
                   }}
@@ -3820,7 +4164,7 @@ export default function SaleForm({
                 <SearchableSelect
                   value={newVehicle.model}
                   onChange={(v) => {
-                    const nextVehicle = { ...newVehicle, model: v };
+                    const nextVehicle = { ...newVehicle, model: v, vehicle_cab_variant: "" };
                     setNewVehicle(nextVehicle);
                     persistDraftSnapshot({ newVehicle: nextVehicle });
                   }}
@@ -3831,6 +4175,17 @@ export default function SaleForm({
                 />
               </div>
             </div>
+
+            {showNewVehicleCabVariant ? (
+              <VehicleCabVariantSelect
+                value={newVehicle.vehicle_cab_variant}
+                onChange={(value) => {
+                  const nextVehicle = { ...newVehicle, vehicle_cab_variant: value };
+                  setNewVehicle(nextVehicle);
+                  persistDraftSnapshot({ newVehicle: nextVehicle });
+                }}
+              />
+            ) : null}
 
             <div>
               <Label>Color</Label>
@@ -3984,6 +4339,14 @@ export default function SaleForm({
           </Button>
         </DialogContent>
       </Dialog>
+
+      <ProductBarcodeScannerDialog
+        open={showBarcodeScanner}
+        onOpenChange={setShowBarcodeScanner}
+        onScan={handleBarcodeScan}
+        title="Escanear producto"
+        description="Apunta al código de barras o QR. En móvil toca Activar cámara y permite el acceso."
+      />
     </div>
   );
 }

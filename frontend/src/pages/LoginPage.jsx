@@ -12,6 +12,7 @@ import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
 import { useDevice } from "../hooks/useDevice";
 import { formatCurrency } from "../lib/utils";
+import { getRoleHomePath } from "@/lib/roleHome";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -357,8 +358,7 @@ export function LoginPage() {
       ]).catch(() => null);
 
       const loggedRole = (response.data?.user || response.data)?.role;
-      const homePath = String(loggedRole || "").toLowerCase() === "cajero" ? "/cashier" : "/workbench";
-      window.location.href = homePath;
+      window.location.href = getRoleHomePath(loggedRole);
     } catch (error) {
       setAuthStatus("error");
       setShowResetWarning(true);

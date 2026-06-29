@@ -16,14 +16,28 @@ import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { 
   Package, Search, Clock, CheckCircle2, Play, User, 
-  Truck, Timer, TrendingUp, RefreshCw, FileText
+  Truck, Timer, TrendingUp, RefreshCw, FileText, Eraser, Trash2
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
   in_progress: { label: "En Proceso", color: "bg-blue-500", icon: Play },
-  completed: { label: "Completado", color: "bg-green-500", icon: CheckCircle2 }
+  completed: { label: "Completado", color: "bg-green-500", icon: CheckCircle2 },
+  cancelled: { label: "Anulado", color: "bg-slate-500", icon: Clock },
+};
+
+const DEFAULT_STATUS_CONFIG = {
+  label: "Desconocido",
+  color: "bg-gray-500",
+  icon: Clock,
+};
+
+const DEFAULT_PRIORITY_CONFIG = {
+  label: "Normal",
+  color: "bg-blue-400",
 };
 
 const PRIORITY_CONFIG = {
@@ -46,9 +60,15 @@ const DISPATCH_TYPE_BADGES = {
 };
 
 export function DispatchPage() {
+  const { user } = useAuth();
+  const userRole = String(user?.role || "").toLowerCase();
+  const canPurge = canPurgeOperationalQueue(userRole);
+
   const [dispatches, setDispatches] = useState([]);
   const [dispatchers, setDispatchers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState("");
+  const [clearing, setClearing] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedDispatch, setSelectedDispatch] = useState(null);
@@ -142,6 +162,62 @@ export function DispatchPage() {
     }
   };
 
+  const isPendingPurgeable = (dispatch) =>
+    dispatch.status === "pending" && !dispatch.started_at;
+
+  const handleDeleteDispatch = async (dispatchId) => {
+    if (!canPurge) {
+      toast.error("Solo gerencia, supervisores o programadores pueden eliminar despachos");
+      return;
+    }
+    if (!window.confirm("¿Eliminar este despacho pendiente de la cola?")) return;
+
+    setDeletingId(dispatchId);
+    try {
+      await axios.delete(`${API}/dispatch/${dispatchId}`, { withCredentials: true });
+      toast.success("Despacho eliminado");
+      if (selectedDispatch?.dispatch_id === dispatchId) {
+        setShowDetails(false);
+        setSelectedDispatch(null);
+      }
+      await fetchData();
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo eliminar el despacho");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
+  const handleClearQueue = async () => {
+    if (!canPurge) {
+      toast.error("Solo gerencia, supervisores o programadores pueden limpiar la cola");
+      return;
+    }
+    const pendingCount = dispatches.filter(isPendingPurgeable).length;
+    if (!pendingCount) {
+      toast.message("No hay despachos pendientes para limpiar");
+      return;
+    }
+    if (!window.confirm(`¿Limpiar los ${pendingCount} despachos pendientes? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setClearing(true);
+    try {
+      const res = await axios.post(
+        `${API}/dispatch/clear-queue`,
+        { branch_id: user?.branch_id || undefined, warehouse_id: user?.warehouse_id || undefined },
+        { withCredentials: true }
+      );
+      toast.success(`Cola limpiada (${res?.data?.removed ?? 0} despachos)`);
+      await fetchData();
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo limpiar la cola");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   const deliverItem = async (dispatchId, productId, dispatcherId) => {
     if (!dispatcherId) {
       toast.error("Selecciona un despachador");
@@ -182,10 +258,12 @@ export function DispatchPage() {
 
   const pendingCount = dispatches.filter(d => d.status === "pending").length;
   const inProgressCount = dispatches.filter(d => d.status === "in_progress").length;
-  const completedToday = dispatches.filter(d => 
-    d.status === "completed" && 
-    new Date(d.completed_at).toDateString() === new Date().toDateString()
-  ).length;
+  const completedToday = dispatches.filter((d) => {
+    if (d.status !== "completed" || !d.completed_at) return false;
+    const completedAt = new Date(d.completed_at);
+    return !Number.isNaN(completedAt.getTime()) &&
+      completedAt.toDateString() === new Date().toDateString();
+  }).length;
 
   const formatTime = (seconds) => {
     const totalSeconds = Math.max(0, Math.floor(seconds || 0));
@@ -204,10 +282,25 @@ export function DispatchPage() {
           <h1 className="font-heading text-3xl font-bold tracking-tight">Despacho de Bodega</h1>
           <p className="text-muted-foreground">Gestión de entregas y despachos</p>
         </div>
-        <Button onClick={fetchData} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualizar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canPurge ? (
+            <Button
+              onClick={handleClearQueue}
+              variant="outline"
+              size="sm"
+              className="gap-2 text-rose-700 border-rose-300 hover:bg-rose-50 dark:text-rose-300"
+              disabled={clearing || pendingCount === 0}
+              data-testid="dispatch-clear-queue"
+            >
+              <Eraser className="h-4 w-4" />
+              {clearing ? "Limpiando…" : "Limpiar cola"}
+            </Button>
+          ) : null}
+          <Button onClick={fetchData} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -275,6 +368,7 @@ export function DispatchPage() {
             <SelectItem value="pending">Pendientes</SelectItem>
             <SelectItem value="in_progress">En Proceso</SelectItem>
             <SelectItem value="completed">Completados</SelectItem>
+            <SelectItem value="cancelled">Anulados</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -312,8 +406,10 @@ export function DispatchPage() {
                 </TableRow>
               ) : (
                 filteredDispatches.map(dispatch => {
-                  const statusConfig = STATUS_CONFIG[dispatch.status];
-                  const priorityConfig = PRIORITY_CONFIG[dispatch.priority];
+                  const statusConfig =
+                    STATUS_CONFIG[dispatch.status] || DEFAULT_STATUS_CONFIG;
+                  const priorityConfig =
+                    PRIORITY_CONFIG[dispatch.priority] || DEFAULT_PRIORITY_CONFIG;
                   const deliveredCount = dispatch.items?.filter(i => i.delivered).length || 0;
                   const totalItems = dispatch.items?.length || 0;
                   const progress = totalItems > 0 ? (deliveredCount / totalItems) * 100 : 0;
@@ -376,11 +472,24 @@ export function DispatchPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
+                          {canPurge && isPendingPurgeable(dispatch) ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-rose-700 border-rose-300 hover:bg-rose-50 dark:text-rose-300"
+                              disabled={deletingId === dispatch.dispatch_id}
+                              onClick={() => handleDeleteDispatch(dispatch.dispatch_id)}
+                              data-testid={`delete-dispatch-${dispatch.dispatch_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
                           {dispatch.status === "pending" && (
                             <Button 
                               size="sm" 
                               onClick={() => startDispatch(dispatch.dispatch_id)}
                               className="bg-blue-600 hover:bg-blue-700"
+                              disabled={deletingId === dispatch.dispatch_id}
                             >
                               <Play className="h-4 w-4 mr-1" />
                               Iniciar
@@ -463,11 +572,15 @@ export function DispatchPage() {
               {/* Status and Timer */}
               <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Badge className={`${STATUS_CONFIG[selectedDispatch.status]?.color} text-white`}>
-                    {STATUS_CONFIG[selectedDispatch.status]?.label}
+                  <Badge
+                    className={`${(STATUS_CONFIG[selectedDispatch.status] || DEFAULT_STATUS_CONFIG).color} text-white`}
+                  >
+                    {(STATUS_CONFIG[selectedDispatch.status] || DEFAULT_STATUS_CONFIG).label}
                   </Badge>
-                  <Badge className={`${PRIORITY_CONFIG[selectedDispatch.priority]?.color} text-white`}>
-                    {PRIORITY_CONFIG[selectedDispatch.priority]?.label}
+                  <Badge
+                    className={`${(PRIORITY_CONFIG[selectedDispatch.priority] || DEFAULT_PRIORITY_CONFIG).color} text-white`}
+                  >
+                    {(PRIORITY_CONFIG[selectedDispatch.priority] || DEFAULT_PRIORITY_CONFIG).label}
                   </Badge>
                 </div>
                 {selectedDispatch.status === "in_progress" && (

@@ -15,6 +15,13 @@ services:
       - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
+      - ./backups/mongodb:/backup/host
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - mundo-network
 
@@ -43,8 +50,28 @@ services:
       - CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001,http://127.0.0.1:8001,http://localhost:8001
       - AUTH_SESSION_DATA_URL=
       - COOKIE_SECURE=false
+      - LABEL_PRINT_BRIDGE_URL=http://host.docker.internal:9265
+      - LABEL_PRINTER_NAME=Xprinter XP-460B
+      - LABEL_BRIDGE_TOKEN_FILE=/app/backend/data/label-bridge-token.txt
+      - POS_VOUCHER_BRIDGE_URL=http://host.docker.internal:9266
+      - POS_VOUCHER_PRINTER_NAME=POS-80 Voucher
+      - POS_BRIDGE_TOKEN_FILE=/app/backend/data/pos-voucher-bridge-token.txt
+    volumes:
+      - ./backend/data/vehicle-thumbnails:/app/backend/data/vehicle-thumbnails
+      - ./backend/data/label-bridge-token.txt:/app/backend/data/label-bridge-token.txt
+      - ./backend/data/pos-voucher-bridge-token.txt:/app/backend/data/pos-voucher-bridge-token.txt
+      - ./frontend/src/data/vehicleCatalog.json:/app/backend/data/vehicleCatalog.json
+      - ./backend/data/vehicle-descriptor-types.json:/app/backend/data/vehicle-descriptor-types.json
+      - ./backend/data/vehicle-catalog-history:/app/backend/data/vehicle-catalog-history
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       mundo-network:
         aliases:
@@ -64,6 +91,7 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+      - "3443:443"
     environment:
       - VITE_BACKEND_URL=
       - VITE_AUTH_URL=/api/auth/login
@@ -71,8 +99,18 @@ services:
       - REACT_APP_BACKEND_URL=
       - REACT_APP_AUTH_URL=/api/auth/login
       - REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN=50005000
+      - HTTPS_CERT_CN=localhost
+      - HTTPS_CERT_DNS=localhost
+      - HTTPS_CERT_IPS=${HTTPS_CERT_IPS:-127.0.0.1}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       mundo-network:
         aliases:

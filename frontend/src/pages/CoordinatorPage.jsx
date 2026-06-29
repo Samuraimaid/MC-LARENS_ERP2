@@ -8,20 +8,24 @@ import { cn, formatDate, WORK_ORDER_STATUS } from "@/lib/utils";
 import {
   getOrderId,
   OperationalAssignmentCard,
-  OperationalJobCard,
   resolveOperationalCardVariant,
 } from "@/components/erp/OperationalJobCard";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+
+import { expandOrdersToItemCards } from "@/lib/workOrderItemCards";
+import { getTechnicianAvailability } from "@/lib/technicianAvailability";
+import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
+import { TechnicianAssignSelect } from "@/components/kds/TechnicianAssignSelect";
+import { AttendanceSummaryBar } from "@/components/kds/AttendanceSummaryBar";
 import {
   ClipboardList,
-  LayoutGrid,
-  List,
+  Eraser,
   Palette,
   RefreshCw,
+  Trash2,
   User,
   UserCheck,
   Wrench,
@@ -52,30 +56,6 @@ const DEPARTMENT_META = {
   },
 };
 
-const SEMAPHORE_STYLES = {
-  green: {
-    label: "Sin trabajo",
-    dot: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.55)]",
-    bar: "bg-emerald-500",
-    badge: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200",
-    columnAccent: "border-emerald-400/45",
-  },
-  yellow: {
-    label: "Trabajando",
-    dot: "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.55)]",
-    bar: "bg-amber-400",
-    badge: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200",
-    columnAccent: "border-amber-400/50",
-  },
-  red: {
-    label: "2+ trabajos",
-    dot: "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.55)]",
-    bar: "bg-rose-500",
-    badge: "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-200",
-    columnAccent: "border-rose-400/55",
-  },
-};
-
 const PROFILE_CONFIG = {
   instalaciones: {
     key: "instalaciones",
@@ -95,23 +75,6 @@ const PROFILE_CONFIG = {
   },
 };
 
-function getWorkloadSemaphore(activeJobs) {
-  const jobs = Math.max(0, Number(activeJobs) || 0);
-  let level = "green";
-  if (jobs >= 2) {
-    level = "red";
-  } else if (jobs === 1) {
-    level = "yellow";
-  }
-  const percent = jobs === 0 ? 0 : jobs === 1 ? 50 : 100;
-  return {
-    level,
-    jobs,
-    percent,
-    ...SEMAPHORE_STYLES[level],
-  };
-}
-
 function userCanAccessProfile(role, profileKey) {
   const normalized = String(role || "").toLowerCase();
   if (["gerencia", "supervisor"].includes(normalized)) return true;
@@ -127,268 +90,22 @@ function resolveProfileRedirect(role) {
   return "/coordinator/instalaciones";
 }
 
-function WorkloadTrafficLight({ activeJobs, showBar = true }) {
-  const sem = getWorkloadSemaphore(activeJobs);
-  return (
-    <div className="space-y-1.5" title={`${sem.jobs} trabajo(s) activo(s) · ${sem.label}`}>
-      <div className="flex items-center gap-2">
-        <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", sem.dot)} aria-hidden />
-        <span className="text-[11px] text-muted-foreground">{sem.label}</span>
-        <span className="text-[11px] font-medium ml-auto tabular-nums">
-          {sem.jobs} activa{sem.jobs === 1 ? "" : "s"}
-        </span>
-      </div>
-      {showBar ? (
-        <div className="h-1.5 w-full rounded-full bg-muted/80 overflow-hidden">
-          <div
-            className={cn("h-full rounded-full transition-all duration-500", sem.bar)}
-            style={{ width: `${sem.percent}%` }}
-          />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function WorkloadLegend() {
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
-      <span className="font-medium text-foreground">Semáforo de carga</span>
+      <span className="font-medium text-foreground">Semáforo técnico</span>
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-emerald-500" />
-        Verde · sin trabajo (0)
+        Verde · libre (presente, sin trabajo)
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-amber-400" />
-        Amarillo · trabajando (1)
+        Amarillo · trabajando (1 trabajo)
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-rose-500" />
-        Rojo · 2 o más trabajos
+        Rojo · ausente, almuerzo, salió o 2+ trabajos
       </span>
-    </div>
-  );
-}
-
-function buildDragPayload(order, department) {
-  return JSON.stringify({
-    orderId: getOrderId(order, department),
-    department,
-    orderKind: department === "polarizados" ? "tint" : "work",
-  });
-}
-
-function KanbanColumn({
-  title,
-  subtitle,
-  count,
-  toneClass,
-  workload,
-  children,
-  dropTargetId,
-  isDropTarget,
-  isDragOver,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-}) {
-  const sem = workload ? getWorkloadSemaphore(workload.jobs) : null;
-
-  return (
-    <div
-      className={cn(
-        "flex w-72 shrink-0 flex-col rounded-lg border min-h-[420px] max-h-[72vh]",
-        toneClass,
-        sem?.columnAccent,
-        isDropTarget && isDragOver && "ring-2 ring-primary/50 bg-primary/5",
-        sem?.level === "red" && "shadow-sm shadow-rose-500/10"
-      )}
-      onDragOver={isDropTarget ? onDragOver : undefined}
-      onDragLeave={isDropTarget ? onDragLeave : undefined}
-      onDrop={isDropTarget ? onDrop : undefined}
-      data-drop-target={dropTargetId}
-      data-workload-level={sem?.level}
-    >
-      <div className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur px-3 py-3 rounded-t-lg">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0 flex items-center gap-2">
-            {sem ? <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", sem.dot)} aria-hidden /> : null}
-            <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{title}</p>
-              {subtitle ? <p className="text-xs text-muted-foreground truncate">{subtitle}</p> : null}
-            </div>
-          </div>
-          <Badge variant="secondary">{count}</Badge>
-        </div>
-        {workload ? (
-          <div className="mt-2">
-            <WorkloadTrafficLight activeJobs={workload.jobs} />
-          </div>
-        ) : null}
-        {isDropTarget ? (
-          <p className="text-[11px] text-muted-foreground mt-1">Soltar aquí para asignar</p>
-        ) : null}
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">{children}</div>
-    </div>
-  );
-}
-
-function DepartmentKanban({
-  department,
-  board,
-  vehicles,
-  cardVariant,
-  assigningId,
-  draggingPayload,
-  setDraggingPayload,
-  dropTargetId,
-  setDropTargetId,
-  onAssignToTechnician,
-}) {
-  const meta = DEPARTMENT_META[department];
-  const pending = board?.pending || [];
-  const technicians = useMemo(
-    () =>
-      [...(board?.technicians || [])].sort(
-        (a, b) =>
-          (a.active_jobs || 0) - (b.active_jobs || 0)
-          || String(a.name || "").localeCompare(String(b.name || ""), "es")
-      ),
-    [board?.technicians]
-  );
-
-  const handleDragStart = (order) => (event) => {
-    const payload = buildDragPayload(order, department);
-    event.dataTransfer.setData("application/json", payload);
-    event.dataTransfer.effectAllowed = "move";
-    setDraggingPayload(payload);
-  };
-
-  const handleDragEnd = () => {
-    setDraggingPayload("");
-    setDropTargetId("");
-  };
-
-  const handleColumnDragOver = (technicianId) => (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    setDropTargetId(technicianId);
-  };
-
-  const handleColumnDrop = (technicianId) => async (event) => {
-    event.preventDefault();
-    setDropTargetId("");
-    const raw = event.dataTransfer.getData("application/json") || draggingPayload;
-    if (!raw) return;
-    try {
-      const data = JSON.parse(raw);
-      if (data.department !== department) return;
-      const order =
-        pending.find((row) => getOrderId(row, department) === data.orderId)
-        || technicians
-          .flatMap((tech) => tech.orders || [])
-          .find((row) => getOrderId(row, department) === data.orderId);
-      if (!order) return;
-      await onAssignToTechnician(order, department, technicianId);
-    } catch {
-      toast.error("No se pudo procesar la asignación por arrastre");
-    } finally {
-      setDraggingPayload("");
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
-        Arrastra cada tarjeta desde <strong>Sin asignar</strong> hacia la columna del técnico.
-        Las columnas con semáforo <strong className="text-emerald-600 dark:text-emerald-400">verde</strong> tienen más capacidad disponible.
-      </p>
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        <KanbanColumn
-          title="Sin asignar"
-          subtitle="Cola de coordinación"
-          count={pending.length}
-          toneClass="border-dashed border-muted-foreground/30 bg-muted/20"
-          dropTargetId="pending"
-          isDropTarget={false}
-        >
-          {pending.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-8">Sin trabajos pendientes</p>
-          ) : (
-            pending.map((order) => {
-              const orderId = getOrderId(order, department);
-              return (
-                <OperationalJobCard
-                  key={orderId}
-                  variant={cardVariant}
-                  order={order}
-                  department={department}
-                  vehicles={vehicles}
-                  columnContext="pending"
-                  compact
-                  draggable={!(department !== "polarizados" && order.awaiting_warehouse_handoff)}
-                  isDragging={draggingPayload.includes(orderId)}
-                  onDragStart={
-                    department !== "polarizados" && order.awaiting_warehouse_handoff
-                      ? undefined
-                      : handleDragStart(order)
-                  }
-                  onDragEnd={handleDragEnd}
-                />
-              );
-            })
-          )}
-        </KanbanColumn>
-
-        {technicians.map((tech) => {
-          const techId = tech.user_id;
-          const orders = tech.orders || [];
-          const isAssigningHere = assigningId && orders.some((o) => getOrderId(o, department) === assigningId);
-          return (
-            <KanbanColumn
-              key={techId}
-              title={tech.name}
-              subtitle={`${tech.active_jobs || 0} activa${(tech.active_jobs || 0) === 1 ? "" : "s"}`}
-              count={orders.length}
-              toneClass={meta.column}
-              workload={{ jobs: tech.active_jobs || 0 }}
-              dropTargetId={techId}
-              isDropTarget
-              isDragOver={dropTargetId === techId}
-              onDragOver={handleColumnDragOver(techId)}
-              onDragLeave={() => setDropTargetId("")}
-              onDrop={handleColumnDrop(techId)}
-            >
-              {isAssigningHere ? (
-                <div className="text-xs text-muted-foreground text-center py-2 animate-pulse">Asignando…</div>
-              ) : null}
-              {orders.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8">Sin trabajos asignados</p>
-              ) : (
-                orders.map((order) => {
-                  const orderId = getOrderId(order, department);
-                  return (
-                    <OperationalJobCard
-                      key={orderId}
-                      variant={cardVariant}
-                      order={order}
-                      department={department}
-                      vehicles={vehicles}
-                      columnContext="assigned"
-                      compact
-                      draggable
-                      isDragging={draggingPayload.includes(orderId)}
-                      onDragStart={handleDragStart(order)}
-                      onDragEnd={handleDragEnd}
-                    />
-                  );
-                })
-              )}
-            </KanbanColumn>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -402,11 +119,16 @@ function AssignmentListCard({
   selectedTechnicianId,
   onSelectTechnician,
   onAssign,
+  onDelete,
   assigningId,
+  deletingId,
+  canPurgeQueue = false,
 }) {
   const orderId = getOrderId(order, department);
+  const cardKey = order.cardKey || orderId;
   const awaitingWarehouse = department !== "polarizados" && order.awaiting_warehouse_handoff;
-  const isAssigning = assigningId === orderId;
+  const isAssigning = assigningId === cardKey;
+  const isDeleting = deletingId === cardKey;
 
   return (
     <OperationalAssignmentCard
@@ -416,35 +138,35 @@ function AssignmentListCard({
       vehicles={vehicles}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Select value={selectedTechnicianId || ""} onValueChange={onSelectTechnician} disabled={isAssigning}>
-          <SelectTrigger className="w-full sm:flex-1">
-            <SelectValue placeholder="Seleccionar técnico" />
-          </SelectTrigger>
-          <SelectContent>
-            {[...team]
-              .sort((a, b) => (a.active_jobs || 0) - (b.active_jobs || 0))
-              .map((member) => {
-                const sem = getWorkloadSemaphore(member.active_jobs || 0);
-                return (
-                  <SelectItem key={member.user_id} value={member.user_id}>
-                    <span className="flex items-center gap-2">
-                      <span className={cn("h-2 w-2 rounded-full shrink-0", sem.dot)} />
-                      {member.name} · {member.active_jobs || 0} activa{(member.active_jobs || 0) === 1 ? "" : "s"}
-                    </span>
-                  </SelectItem>
-                );
-              })}
-          </SelectContent>
-        </Select>
+        <TechnicianAssignSelect
+          team={team}
+          value={selectedTechnicianId || ""}
+          onValueChange={onSelectTechnician}
+          disabled={isAssigning || isDeleting}
+          className="sm:flex-1"
+        />
         <Button
           size="sm"
           className="gap-2 w-full sm:w-auto"
-          disabled={!selectedTechnicianId || isAssigning || awaitingWarehouse}
+          disabled={!selectedTechnicianId || isAssigning || isDeleting || awaitingWarehouse}
           onClick={() => onAssign(order, department, selectedTechnicianId)}
         >
           <UserCheck className="h-4 w-4" />
           {isAssigning ? "Asignando…" : "Asignar"}
         </Button>
+        {canPurgeQueue ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 w-full sm:w-auto text-rose-700 border-rose-300 hover:bg-rose-50 dark:text-rose-300 dark:border-rose-500/40"
+            disabled={isAssigning || isDeleting}
+            onClick={() => onDelete(order, department)}
+            data-testid={`delete-job-${orderId}`}
+          >
+            <Trash2 className="h-4 w-4" />
+            {isDeleting ? "Eliminando…" : "Eliminar"}
+          </Button>
+        ) : null}
       </div>
     </OperationalAssignmentCard>
   );
@@ -466,6 +188,7 @@ export function CoordinatorPolarizadosPage() {
 export function CoordinatorPage({ profile = "instalaciones" }) {
   const { user } = useAuth();
   const userRole = String(user?.role || "").toLowerCase();
+  const canPurgeQueue = canPurgeOperationalQueue(userRole);
   const profileConfig = PROFILE_CONFIG[profile] || PROFILE_CONFIG.instalaciones;
 
   if (!userCanAccessProfile(userRole, profileConfig.key)) {
@@ -478,18 +201,14 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
   );
 
   const [activeTab, setActiveTab] = useState(visibleTabs[0] || "instalaciones");
-  const [viewMode, setViewMode] = useState(() => {
-    if (typeof window === "undefined") return "kanban";
-    return window.matchMedia("(max-width: 767px)").matches ? "list" : "kanban";
-  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [boardData, setBoardData] = useState({ instalaciones: null, electrico: null, polarizados: null });
   const [vehicles, setVehicles] = useState([]);
   const [selections, setSelections] = useState({});
   const [assigningId, setAssigningId] = useState("");
-  const [draggingPayload, setDraggingPayload] = useState("");
-  const [dropTargetId, setDropTargetId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  const [clearingDept, setClearingDept] = useState("");
   const [lastRefreshedAt, setLastRefreshedAt] = useState("");
 
   const loadBoard = useCallback(async ({ showSpinner = true } = {}) => {
@@ -543,6 +262,7 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
     }
 
     const orderId = getOrderId(order, department);
+    const cardKey = order.cardKey || orderId;
     const currentTechId =
       department === "polarizados"
         ? order.assigned_technician_id
@@ -561,15 +281,19 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
       (row) => String(row.user_id) === String(technicianId)
     );
     if (targetTech && !currentTechId) {
-      const sem = getWorkloadSemaphore(targetTech.active_jobs || 0);
-      if (sem.level === "red") {
+      const avail = getTechnicianAvailability(targetTech);
+      if (!avail.assignable) {
+        toast.error(`${targetTech.name} no está disponible (${avail.label})`);
+        return false;
+      }
+      if (avail.level === "yellow") {
         toast.warning(
-          `${targetTech.name} tiene ${sem.jobs} trabajos activos. Prioriza técnicos en verde (sin trabajo) o amarillo (1 trabajo).`
+          `${targetTech.name} ya tiene un trabajo activo. Prioriza técnicos en verde cuando sea posible.`
         );
       }
     }
 
-    setAssigningId(orderId);
+    setAssigningId(cardKey);
     try {
       if (department === "polarizados") {
         await axios.put(
@@ -589,7 +313,7 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
       );
       setSelections((prev) => {
         const next = { ...prev };
-        delete next[orderId];
+        delete next[cardKey];
         return next;
       });
       await loadBoard({ showSpinner: false });
@@ -600,6 +324,79 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
       return false;
     } finally {
       setAssigningId("");
+    }
+  };
+
+  const handleDeleteOrder = async (order, department) => {
+    if (!canPurgeQueue) {
+      toast.error("Solo gerencia, supervisores o programadores pueden eliminar trabajos");
+      return;
+    }
+    const orderId = getOrderId(order, department);
+    const cardKey = order.cardKey || orderId;
+    const label = department === "polarizados" ? "polarizado pendiente" : "trabajo pendiente";
+    if (!window.confirm(`¿Eliminar este ${label} de la cola?`)) return;
+
+    setDeletingId(cardKey);
+    try {
+      const endpoint =
+        department === "polarizados"
+          ? `${API}/tint-orders/${orderId}`
+          : `${API}/work-orders/${orderId}`;
+      await axios.delete(endpoint, { withCredentials: true });
+      toast.success(department === "polarizados" ? "Polarizado eliminado" : "Trabajo eliminado");
+      setSelections((prev) => {
+        const next = { ...prev };
+        delete next[cardKey];
+        return next;
+      });
+      await loadBoard({ showSpinner: false });
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "No se pudo eliminar el trabajo");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
+  const handleClearQueue = async (department) => {
+    if (!canPurgeQueue) {
+      toast.error("Solo gerencia, supervisores o programadores pueden limpiar la cola");
+      return;
+    }
+    const section = boardData[department] || {};
+    const pendingCount = section?.counts?.pending || 0;
+    if (!pendingCount) {
+      toast.message("No hay trabajos pendientes para limpiar");
+      return;
+    }
+    const deptLabel = DEPARTMENT_META[department]?.label || department;
+    if (
+      !window.confirm(
+        `¿Limpiar los ${pendingCount} trabajos pendientes de ${deptLabel}? Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+
+    setClearingDept(department);
+    try {
+      const res = await axios.post(
+        `${API}/coordinator/clear-queue`,
+        {
+          department,
+          profile: profileConfig.key,
+          branch_id: user?.branch_id || undefined,
+        },
+        { withCredentials: true }
+      );
+      toast.success(`Cola limpiada (${res?.data?.removed ?? 0} trabajos)`);
+      await loadBoard({ showSpinner: false });
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "No se pudo limpiar la cola");
+    } finally {
+      setClearingDept("");
     }
   };
 
@@ -641,28 +438,6 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-md border p-1 bg-muted/30">
-            <Button
-              type="button"
-              size="sm"
-              variant={viewMode === "kanban" ? "default" : "ghost"}
-              className="gap-2"
-              onClick={() => setViewMode("kanban")}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Tablero
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={viewMode === "list" ? "default" : "ghost"}
-              className="gap-2"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-              Lista
-            </Button>
-          </div>
           <Button
             variant="outline"
             size="sm"
@@ -729,28 +504,32 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
           </TabsList>
 
           {visibleTabs.map((dept) => {
-            const section = boardData[dept] || { pending: [], technicians: [] };
-            const team = [...(section.technicians || [])].sort(
-              (a, b) =>
-                (a.active_jobs || 0) - (b.active_jobs || 0)
-                || String(a.name || "").localeCompare(String(b.name || ""), "es")
-            );
+            const section = boardData[dept] || { pending: [], technicians: [], attendance_summary: {} };
+            const team = section.technicians || [];
+            const pendingCards = expandOrdersToItemCards(section.pending || [], dept);
             return (
-              <TabsContent key={dept} value={dept} className="mt-4">
-                {viewMode === "kanban" ? (
-                  <DepartmentKanban
-                    department={dept}
-                    board={section}
-                    vehicles={vehicles}
-                    cardVariant={cardVariant}
-                    assigningId={assigningId}
-                    draggingPayload={draggingPayload}
-                    setDraggingPayload={setDraggingPayload}
-                    dropTargetId={dropTargetId}
-                    setDropTargetId={setDropTargetId}
-                    onAssignToTechnician={handleAssignToTechnician}
-                  />
-                ) : section.pending.length === 0 ? (
+              <TabsContent key={dept} value={dept} className="mt-4 space-y-4">
+                <AttendanceSummaryBar summary={section.attendance_summary} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Asigne cada producto con el menú desplegable. El semáforo considera reloj marcador y carga de trabajo.
+                  </p>
+                  {canPurgeQueue ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-rose-700 border-rose-300 hover:bg-rose-50 dark:text-rose-300"
+                      disabled={clearingDept === dept || !(section?.counts?.pending)}
+                      onClick={() => handleClearQueue(dept)}
+                      data-testid={`clear-queue-${dept}`}
+                    >
+                      <Eraser className="h-4 w-4" />
+                      {clearingDept === dept ? "Limpiando…" : "Limpiar cola"}
+                    </Button>
+                  ) : null}
+                </div>
+
+                {pendingCards.length === 0 ? (
                   <Card>
                     <CardContent className="py-14 text-center text-muted-foreground">
                       No hay órdenes pendientes de asignación en {DEPARTMENT_META[dept].label}.
@@ -758,8 +537,8 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
                   </Card>
                 ) : (
                   <div className="grid gap-4 xl:grid-cols-2">
-                    {section.pending.map((order) => {
-                      const orderKey = getOrderId(order, dept);
+                    {pendingCards.map((order) => {
+                      const orderKey = order.cardKey || getOrderId(order, dept);
                       return (
                         <AssignmentListCard
                           key={orderKey}
@@ -773,60 +552,67 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
                             setSelections((prev) => ({ ...prev, [orderKey]: techId }))
                           }
                           onAssign={handleAssignToTechnician}
+                          onDelete={handleDeleteOrder}
                           assigningId={assigningId}
+                          deletingId={deletingId}
+                          canPurgeQueue={canPurgeQueue}
                         />
                       );
                     })}
                   </div>
                 )}
 
-                {viewMode === "kanban" ? (
-                  <Card className="mt-4">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Seguimiento por técnico
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {team.map((tech) => {
-                        const sem = getWorkloadSemaphore(tech.active_jobs || 0);
-                        return (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Seguimiento por técnico
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {team.map((tech) => {
+                      const avail = getTechnicianAvailability(tech);
+                      return (
                         <div
                           key={tech.user_id}
-                          className={cn("rounded-md border p-3 text-sm", sem.columnAccent)}
+                          className={cn("rounded-md border p-3 text-sm", avail.badge)}
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="font-medium">{tech.name}</span>
-                            <Badge variant="outline" className={sem.badge}>
-                              {sem.label}
+                            <span className="font-medium flex items-center gap-2">
+                              <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", avail.dot)} />
+                              {tech.name}
+                            </span>
+                            <Badge variant="outline" className={avail.badge}>
+                              {avail.label}
                             </Badge>
                           </div>
-                          <WorkloadTrafficLight activeJobs={tech.active_jobs || 0} />
-                          <div className="mt-3">
-                          {(tech.orders || []).length === 0 ? (
-                            <p className="text-xs text-muted-foreground">Sin trabajos en curso</p>
-                          ) : (
-                            <ul className="space-y-1 text-xs text-muted-foreground">
-                              {(tech.orders || []).map((order) => {
-                                const orderId = getOrderId(order, dept);
-                                const statusKey = String(order.status || "pending");
-                                return (
-                                  <li key={orderId} className="flex justify-between gap-2">
-                                    <span className="truncate">{order.invoice_number || orderId}</span>
-                                    <span>{WORK_ORDER_STATUS[statusKey] || statusKey}</span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
+                          <p className="text-[11px] text-muted-foreground mb-2">
+                            {avail.attendanceLabel}
+                            {avail.jobs > 0 ? ` · ${avail.jobs} activa${avail.jobs === 1 ? "" : "s"}` : ""}
+                          </p>
+                          <div>
+                            {(tech.orders || []).length === 0 ? (
+                              <p className="text-xs text-muted-foreground">Sin trabajos en curso</p>
+                            ) : (
+                              <ul className="space-y-1 text-xs text-muted-foreground">
+                                {(tech.orders || []).map((order) => {
+                                  const orderId = getOrderId(order, dept);
+                                  const statusKey = String(order.status || "pending");
+                                  return (
+                                    <li key={orderId} className="flex justify-between gap-2">
+                                      <span className="truncate">{order.invoice_number || orderId}</span>
+                                      <span>{WORK_ORDER_STATUS[statusKey] || statusKey}</span>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
                           </div>
                         </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                ) : null}
+                      );
+                    })}
+                  </CardContent>
+                </Card>
               </TabsContent>
             );
           })}

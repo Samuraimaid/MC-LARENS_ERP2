@@ -1,0 +1,49 @@
+
+@
+M
+
+a
+================================================
+              MUNDO DE ACCESORIOS               
+          VOUCHER DE VENTA (NO FISCAL)          
+================================================
+Factura: INV-20260627-0026
+Fecha: 2026-06-27
+Cliente: Mario Augusto Flores
+------------------------------------------------
+ARTICULO                    CNT  PRECIO    TOTAL
+Radio Android 10" Toyota Un.  1  252.00   252.00
+Camara de Reversa HD con Li.  1   45.00    45.00
+------------------------------------------------
+Subtotal:                                 297.00
+IVA:                                     1626.08
+TOTAL:                                  12466.58
+------------------------------------------------
+Pago: Efectivo
+================================================
+------------------------------------------------
+
+a
+
+E
+ESCANEAR EN CAJA
+
+E
+
+hd
+w
+
+H
+
+kI
+INV-20260627-0026
+INV-20260627-0026
+
+a
+           Valido hasta cobro en caja           
+              NO ES FACTURA FISCAL              
+
+
+
+
+V

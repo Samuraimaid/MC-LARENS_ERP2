@@ -16,16 +16,19 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
-  Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet
+  Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
+import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 
 export function InventoryPage() {
   const { hasPermission, user } = useAuth();
   const canViewInventory = hasPermission("inventory", "view");
   const canCreateInventory = hasPermission("inventory", "create");
   const canEditInventory = hasPermission("inventory", "edit");
+  const canViewInventoryLabels = hasPermission("inventory_labels", "view");
+  const canPrintInventoryLabels = hasPermission("inventory_labels", "create");
   const isWarehouseRole = ["bodega", "bodegas"].includes(String(user?.role || "").toLowerCase());
   const [inventory, setInventory] = useState([]);
   const [products, setProducts] = useState([]);
@@ -68,6 +71,12 @@ export function InventoryPage() {
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
+  const [labelDialog, setLabelDialog] = useState({
+    open: false,
+    product: null,
+    warehouseId: "",
+    quantity: 1,
+  });
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -80,6 +89,7 @@ export function InventoryPage() {
   // New product form with all fields
   const [newProduct, setNewProduct] = useState({
     sku: "",
+    barcode: "",
     name: "",
     description: "",
     category: "",
@@ -368,6 +378,7 @@ export function InventoryPage() {
   const resetProductForm = () => {
     setNewProduct({
       sku: "",
+      barcode: "",
       name: "",
       description: "",
       category: "",
@@ -431,6 +442,7 @@ export function InventoryPage() {
         low_stock_threshold: Math.max(1, parseInt(newProduct.low_stock_threshold, 10) || 5),
         initial_stock: Math.max(0, parseInt(newProduct.initial_stock, 10) || 0),
         initial_warehouse_id: newProduct.initial_warehouse_id || "",
+        barcode: String(newProduct.barcode || "").trim() || undefined,
         installation_type: newProduct.installation_type || "optional",
         hourly_rate: newProduct.hourly_rate ? parseFloat(newProduct.hourly_rate) : null,
         compatibility: newProduct.compatibility.brands.length > 0 || 
@@ -467,6 +479,7 @@ export function InventoryPage() {
       const tier3 = parseFloat(editingProduct.precio3) || roundTo2(tier1 * 1.1);
       const payload = {
         name: editingProduct.name,
+        barcode: String(editingProduct.barcode || "").trim() || null,
         description: editingProduct.description,
         price: tier1,
         precio1: tier1,
@@ -524,6 +537,23 @@ export function InventoryPage() {
     }
   };
 
+  const openLabelPrintDialog = (product, warehouseId, quantity = 1) => {
+    if (!canViewInventoryLabels) {
+      toast.error("No tienes permiso para etiquetas de inventario");
+      return;
+    }
+    if (!product?.product_id || !warehouseId) {
+      toast.error("Selecciona producto y bodega para imprimir etiquetas");
+      return;
+    }
+    setLabelDialog({
+      open: true,
+      product,
+      warehouseId,
+      quantity: Math.max(1, parseInt(quantity, 10) || 1),
+    });
+  };
+
   const executeAddStock = async () => {
     if (!canEditInventory) {
       toast.error("No tienes permiso para agregar inventario");
@@ -536,7 +566,7 @@ export function InventoryPage() {
     const qty = Math.max(1, parseInt(addStock.quantity, 10) || 0);
 
     try {
-      await axios.post(`${API}/inventory/add-stock`, null, {
+      const response = await axios.post(`${API}/inventory/add-stock`, null, {
         withCredentials: true,
         params: {
           product_id: addStock.product_id,
@@ -545,10 +575,22 @@ export function InventoryPage() {
         },
       });
       toast.success("Inventario agregado");
+      const stockProductId = addStock.product_id;
+      const stockWarehouseId = addStock.warehouse_id;
+      const addedProduct = products.find((entry) => entry.product_id === stockProductId);
+      const suggestedQty = response.data?.suggested_label_quantity || qty;
       setShowAddStock(false);
       setAddStock({ product_id: "", warehouse_id: "", quantity: 1 });
       fetchData();
       fetchKardex();
+      if (canViewInventoryLabels && addedProduct) {
+        toast.message(`Se agregaron ${qty} unidades. ¿Deseas imprimir ${suggestedQty} etiquetas?`, {
+          action: canPrintInventoryLabels ? {
+            label: "Imprimir",
+            onClick: () => openLabelPrintDialog(addedProduct, stockWarehouseId, suggestedQty),
+          } : undefined,
+        });
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al agregar inventario");
     }
@@ -1056,14 +1098,24 @@ export function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <Label>Nombre *</Label>
+                        <Label>Código de barras</Label>
                         <Input
-                          value={newProduct.name}
-                          onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                          placeholder="Nombre del producto"
-                          data-testid="product-name"
+                          value={newProduct.barcode}
+                          onChange={(e) => setNewProduct({ ...newProduct, barcode: e.target.value })}
+                          placeholder="EAN / UPC (opcional)"
+                          data-testid="product-barcode"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <Label>Nombre *</Label>
+                      <Input
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        placeholder="Nombre del producto"
+                        data-testid="product-name"
+                      />
                     </div>
                     
                     <div>
@@ -1723,6 +1775,16 @@ export function InventoryPage() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {canViewInventoryLabels ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Imprimir etiquetas"
+                              onClick={() => openLabelPrintDialog(product, item.warehouse_id, 1)}
+                            >
+                              <Barcode className="h-4 w-4" />
+                            </Button>
+                          ) : null}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2088,6 +2150,7 @@ export function InventoryPage() {
               )}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">SKU:</span> {showProductDetail.sku}</div>
+                <div><span className="text-muted-foreground">Código barras:</span> {showProductDetail.barcode || "-"}</div>
                 <div><span className="text-muted-foreground">Marca:</span> {showProductDetail.brand}</div>
                 <div><span className="text-muted-foreground">Categoría:</span> {getCategoryName(showProductDetail.category)}</div>
                 <div><span className="text-muted-foreground">Subcategoría:</span> {showProductDetail.subcategory || "-"}</div>
@@ -2136,10 +2199,39 @@ export function InventoryPage() {
                   </div>
                 </div>
               )}
+              {canViewInventoryLabels ? (
+                <div className="border-t pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const inventoryRow = inventory.find((entry) => entry.product_id === showProductDetail.product_id);
+                      openLabelPrintDialog(
+                        showProductDetail,
+                        inventoryRow?.warehouse_id || selectedWarehouse !== "all" ? selectedWarehouse : warehouses[0]?.warehouse_id,
+                        1
+                      );
+                    }}
+                  >
+                    <Barcode className="mr-2 h-4 w-4" />
+                    Imprimir etiquetas
+                  </Button>
+                </div>
+              ) : null}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <InventoryLabelPrintDialog
+        open={labelDialog.open}
+        onOpenChange={(open) => setLabelDialog((prev) => ({ ...prev, open }))}
+        product={labelDialog.product}
+        warehouseId={labelDialog.warehouseId}
+        warehouses={warehouses}
+        initialQuantity={labelDialog.quantity}
+        canPreview={canViewInventoryLabels}
+        canPrint={canPrintInventoryLabels}
+      />
 
       {/* WhatsApp send dialog */}
       <Dialog open={showWhatsApp} onOpenChange={() => setShowWhatsApp(false)}>
@@ -2236,6 +2328,14 @@ export function InventoryPage() {
                     onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Código de barras</Label>
+                <Input
+                  value={editingProduct.barcode || ""}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, barcode: e.target.value })}
+                  placeholder="EAN / UPC para etiquetas y escáner"
+                />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>

@@ -4,6 +4,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { Button } from "../ui/button";
 import { ArrowLeft, Sun, Moon, RefreshCw } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { KDSNav, getKdsScreenMeta } from "../kds/KDSNav";
+import { dispatchKdsRefresh } from "@/lib/kdsHelpers";
 
 export function KDSLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -11,9 +13,12 @@ export function KDSLayout() {
   const [refreshing, setRefreshing] = React.useState(false);
   const isAttendanceKiosk = location.pathname === "/attendance-clock";
 
+  const screenMeta = getKdsScreenMeta(location.pathname);
+
   const handleRefresh = () => {
     setRefreshing(true);
-    window.location.reload();
+    dispatchKdsRefresh();
+    window.setTimeout(() => setRefreshing(false), 600);
   };
 
   return (
@@ -30,9 +35,14 @@ export function KDSLayout() {
                 </Button>
               </Link>
             )}
-            <h1 className="font-heading text-2xl font-bold">
-              {isAttendanceKiosk ? "RELOJ MARCADOR" : "PANTALLA DE ÓRDENES"}
-            </h1>
+            <div>
+              <h1 className="font-heading text-2xl font-bold">
+                {isAttendanceKiosk ? "RELOJ MARCADOR" : screenMeta.title}
+              </h1>
+              {!isAttendanceKiosk && screenMeta.subtitle ? (
+                <p className="text-xs text-muted-foreground">{screenMeta.subtitle}</p>
+              ) : null}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -61,6 +71,12 @@ export function KDSLayout() {
           </div>
         </div>
       </header>
+
+      {!isAttendanceKiosk && (
+        <div className="px-4 pt-3">
+          <KDSNav />
+        </div>
+      )}
 
       {/* Content */}
       <main className="p-4">

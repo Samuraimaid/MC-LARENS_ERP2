@@ -1,0 +1,78 @@
+{
+  "run_tag": "20260624184252",
+  "ok": [
+    {
+      "phase": "auth",
+      "msg": "Gerencia: Xinon"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/summary OK (28 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/tools/audit-schedule OK (54 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/attendance/reports/biweekly OK (326 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/payroll-adjustments OK (18 ms)"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/sales OK (18 ms) keys=by_payment_type, by_salesperson, total_count, total_sales"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/installations OK (22 ms) keys=avg_quality, by_technician, total_installations, total_time_minutes"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/productivity OK (23 ms) keys=period, salespeople, summary, technicians"
+    },
+    {
+      "phase": "tint",
+      "msg": "/kds/tint-orders OK (16 ms, items=0)"
+    },
+    {
+      "phase": "tint",
+      "msg": "/tint-orders/materials/list OK (16 ms, items=3)"
+    },
+    {
+      "phase": "performance",
+      "msg": "/sales 64 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/inventory 110 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/products 19 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/vehicles 35 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "build frontend presente (1889 bytes index.html)"
+    }
+  ],
+  "failed": [
+    {
+      "phase": "payroll_unit",
+      "msg": "test_payroll_periods.py falló",
+      "detail": "C:\\Python314\\python.exe: No module named pytest\n"
+    }
+  ],
+  "warnings": [
+    {
+      "phase": "performance",
+      "msg": "vehicleCatalog.json grande: 1.75 MB"
+    }
+  ]
+}

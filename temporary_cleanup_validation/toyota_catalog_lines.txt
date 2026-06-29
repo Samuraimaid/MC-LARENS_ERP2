@@ -1,0 +1,610 @@
+TOYOTA CATALOG EXTRACTION
+Total unique descriptors: 122
+================================================================================
+
+1. 4Runner (N120) [1989-1995]
+   Engines (1):
+     - 3.0L [G]
+
+2. 4Runner (N180) [1995-2002]
+   Engines (2):
+     - 2.7L [G]
+     - 3.4L [G]
+
+3. 4Runner (N210) [2002-2009]
+   Engines (2):
+     - 4.0L [G]
+     - 4.7L [G]
+
+4. 4Runner (N280) [2009-2024]
+   Engines (1):
+     - 4.0L [G]
+
+5. 4Runner (N310) [2025-Presente]
+   Engines (1):
+     - 2.4L Turbo [G/H]
+
+6. 4Runner (N60) [1984-1989]
+   Engines (2):
+     - 2.4L [G]
+     - 3.0L [G]
+
+7. 86 / GT86 (ZN6) [2012-2021]
+   Engines (1):
+     - 2.0L [G]
+
+8. Alphard (1ra gen) [2002-2008]
+   Engines (2):
+     - 2.4L [G]
+     - 3.0L [G]
+
+9. Alphard (2da gen) [2008-2015]
+   Engines (3):
+     - 2.4L [H]
+     - 3.5L [G]
+     - híbrido [H]
+
+10. Alphard (3ra gen) [2015-2023]
+   Engines (3):
+     - 2.5L [H]
+     - 3.5L [G]
+     - híbrido [H]
+
+11. Alphard (4ta gen) [2023-Presente]
+   Engines (1):
+     - 2.5L híbrido [H]
+
+12. Avalon (XX10) [1994-1999]
+   Engines (1):
+     - 3.0L [G]
+
+13. Avalon (XX20) [2000-2004]
+   Engines (1):
+     - 3.0L [G]
+
+14. Avalon (XX30) [2005-2012]
+   Engines (1):
+     - 3.5L [G]
+
+15. Avalon (XX40) [2013-2018]
+   Engines (2):
+     - 3.5L [G]
+     - híbrido [H]
+
+16. Avalon (XX50) [2019-2022]
+   Engines (2):
+     - 3.5L [G]
+     - híbrido [H]
+
+17. C-HR [2016-Presente]
+   Engines (2):
+     - 2.0L [G]
+     - híbrido [H]
+
+18. Camry (V10) [1982-1986]
+   Engines (1):
+     - 1.8L 1S [G]
+
+19. Camry (V20) [1986-1992]
+   Engines (1):
+     - 2.0L 3S-FE [G]
+
+20. Camry (XV10) [1991-1996]
+   Engines (2):
+     - 2.2L 5S-FE [G]
+     - 3.0L V6 [G]
+
+21. Camry (XV20) [1996-2001]
+   Engines (2):
+     - 2.2L 5S-FE [G]
+     - 3.0L 1MZ-FE [G]
+
+22. Camry (XV30) [2001-2006]
+   Engines (2):
+     - 2.4L 2AZ-FE [G]
+     - 3.3L V6 [G]
+
+23. Camry (XV40) [2006-2011]
+   Engines (2):
+     - 2.4L [G]
+     - 3.5L V6 [G]
+
+24. Camry (XV50) [2011-2017]
+   Engines (3):
+     - 2.5L [G]
+     - 3.5L V6 [G]
+     - híbrido [H]
+
+25. Camry (XV70) [2017-2024]
+   Engines (3):
+     - 2.5L [G]
+     - 3.5L [G]
+     - híbrido [H]
+
+26. Camry (XV80) [2024-Presente]
+   Engines (1):
+     - híbrido [H]
+
+27. Celica (A60-T230) [1981-2006]
+   Engines (3):
+     - 1.8L [G]
+     - 2.0L [G]
+     - 2.2L [G]
+
+28. Coaster (B20/30) [1982-1993]
+   Engines (2):
+     - 2.4L [G]
+     - 3.4L [D]
+
+29. Coaster (B40/50) [1993-2016]
+   Engines (3):
+     - 2.7L [G]
+     - 4.1L [D]
+     - 4.2L [D]
+
+30. Coaster (B60/70) [2017-Presente]
+   Engines (2):
+     - 2.7L [G]
+     - 4.0L [D]
+
+31. Corolla (E100) [1991-1995]
+   Engines (2):
+     - 1.6L 4A-FE [G]
+     - 1.8L 7A-FE [G]
+
+32. Corolla (E110) [1995-2000]
+   Engines (2):
+     - 1.6L 4A-FE [G]
+     - 1.8L 1ZZ-FE [G]
+
+33. Corolla (E120) [2000-2006]
+   Engines (2):
+     - 1.8L 1ZZ-FE [G]
+     - 2.0L 1CD-FTV [D]
+
+34. Corolla (E140/150) [2006-2013]
+   Engines (2):
+     - 1.6L 1ZR-FE [G]
+     - 1.8L 2ZR-FE [G]
+
+35. Corolla (E170/180) [2013-2019]
+   Engines (2):
+     - 1.8L 2ZR-FE [G]
+     - 1.8L 2ZR-FXE [H]
+
+36. Corolla (E210) [2018-Presente]
+   Engines (3):
+     - 2.0L M20A-FKS [G]
+     - 1.8L 2ZR-FXE [H]
+     - 1.6L G16E-GTS [G]
+
+37. Corolla (E70) [1979-1983]
+   Engines (2):
+     - 1.3L 4K [G]
+     - 1.6L 2T [G]
+
+38. Corolla (E80) [1983-1987]
+   Engines (2):
+     - 1.3L 2E [G]
+     - 1.6L 4A-GE [G]
+
+39. Corolla (E90) [1987-1991]
+   Engines (2):
+     - 1.6L 4A-FE [G]
+     - 1.8L 1C [D]
+
+40. Corolla Cross (XG10) [2020-Presente]
+   Engines (3):
+     - 1.8L [G]
+     - 2.0L [G]
+     - híbrido [H]
+
+41. Crown [1980-Presente]
+   Engines (1):
+     - múltiples motores [G/H]
+
+42. Dyna (U100-U400) [1995-2011]
+   Engines (4):
+     - 2.7L [G]
+     - 4.1L [D]
+     - 4.6L [D]
+     - 5.3L [D]
+
+43. Dyna (U600-U800) [2011-Presente]
+   Engines (1):
+     - 4.0L Diesel [D/H]
+
+44. Dyna / ToyoAce (U60/U90) [1984-1995]
+   Engines (3):
+     - 2.0L [G]
+     - 3.0L [D]
+     - 3.4L [D]
+
+45. Echo [1999-2005]
+   Engines (1):
+     - 1.5L [G]
+
+46. Fortuner (AN150) [2015-Presente]
+   Engines (3):
+     - 2.7L [G]
+     - 2.4L [D]
+     - 2.8L [D]
+
+47. Fortuner (AN50) [2004-2015]
+   Engines (5):
+     - 2.7L [D]
+     - 4.0L [G]
+     - 2.5L [D]
+     - 3.0L [D]
+     - 3.0L 1KD-FTV [D]
+
+48. GR86 (ZN8) [2021-Presente]
+   Engines (1):
+     - 2.4L [G]
+
+49. Grand Hiace / Regius [1997-2002]
+   Engines (2):
+     - 3.4L [G]
+     - 3.0L [D]
+
+50. Granvia (moderno) [2019-Presente]
+   Engines (1):
+     - 3.5L [G]
+
+51. Granvia [1995-2002]
+   Engines (2):
+     - 2.7L [G]
+     - 3.0L [D]
+
+52. Hiace (H100
+   Engines (1):
+     - últimas versiones) [~2000-2004] - 3.0L 1KD-FTV [D]
+
+53. Hiace (H100) [1989-2004]
+   Engines (4):
+     - 2.0L [D]
+     - 2.4L [G]
+     - 2.8L [D]
+     - 3.0L [D]
+
+54. Hiace (H200) [2004-Presente]
+   Engines (6):
+     - 2.0L [D]
+     - 2.7L [G]
+     - 2.5L [D]
+     - 3.0L [D]
+     - 2.8L [D]
+     - 3.0L 1KD-FTV [D]
+
+55. Hiace (H300) [2019-Presente]
+   Engines (2):
+     - 3.5L V6 [G]
+     - 2.8L [D]
+
+56. Hiace (H50/60/70) [1982-1989]
+   Engines (3):
+     - 2.0L 3Y [G]
+     - 2.2L L [D]
+     - 2.4L 2L [D]
+
+57. Highlander (XU20) [2000-2007]
+   Engines (2):
+     - 2.4L [G]
+     - 3.0L V6 [G]
+
+58. Highlander (XU40) [2007-2013]
+   Engines (3):
+     - 2.7L [H]
+     - 3.5L [G]
+     - híbrido [H]
+
+59. Highlander (XU50) [2013-2019]
+   Engines (2):
+     - 3.5L [G]
+     - híbrido [H]
+
+60. Highlander (XU70) [2019-Presente]
+   Engines (2):
+     - 2.4L Turbo [G]
+     - híbrido [H]
+
+61. Hilux (AN10/20) [2004-2015]
+   Engines (5):
+     - 2.7L [D]
+     - 4.0L [G]
+     - 2.5L [D]
+     - 3.0L [D]
+     - 3.0L 1KD-FTV [D]
+
+62. Hilux (AN120) [2015-Presente]
+   Engines (3):
+     - 2.7L [G]
+     - 2.4L [D]
+     - 2.8L [D]
+
+63. Hilux (N140-170) [1997-2005]
+   Engines (3):
+     - 2.7L [D]
+     - 3.4L [G]
+     - 3.0L [D]
+
+64. Hilux (N140/N150/N160/N170) [1997-2005]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+65. Hilux (N30/40) [1979-1983]
+   Engines (2):
+     - 2.0L [G/D]
+     - 2.2L [G/D]
+
+66. Hilux (N50/60) [1983-1988]
+   Engines (2):
+     - 2.4L [G]
+     - 2.4L [D]
+
+67. Hilux (N80-110) [1988-1997]
+   Engines (3):
+     - 2.4L [D]
+     - 3.0L [G]
+     - 2.8L [D]
+
+68. Hilux GR Sport [2019-Presente]
+   Engines (1):
+     - 2.8L Diesel alto rendimiento [D]
+
+69. Hilux Vigo (nombre regional) [2004-2015]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+70. Hino Serie 300 (ligero) [2000-Presente]
+   Engines (1):
+     - 4.0L Diesel [D]
+
+71. Hino Serie 500 (mediano) [1980-Presente]
+   Engines (1):
+     - 7.7L Diesel [D]
+
+72. Hino Serie 700 (pesado) [1997-Presente]
+   Engines (1):
+     - 12.9L Diesel [D]
+
+73. Innova (AN40) [2004-2015]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+74. Kijang Innova (Asia) [2004-2015]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+75. Land Cruiser 100 (J100) [1998-2007]
+   Engines (2):
+     - 4.7L [G]
+     - 4.2L [D]
+
+76. Land Cruiser 200 (J200) [2007-2021]
+   Engines (3):
+     - 4.6L [D]
+     - 5.7L [G]
+     - 4.5L [D]
+
+77. Land Cruiser 300 (J300) [2021-Presente]
+   Engines (2):
+     - 3.4L Turbo [G]
+     - 3.3L [D]
+
+78. Land Cruiser 60 (J60) [1980-1990]
+   Engines (2):
+     - 4.0L [G/D]
+     - 4.2L [G/D]
+
+79. Land Cruiser 70 (J70) [1984-Presente]
+   Engines (3):
+     - 4.0L [G]
+     - 4.2L [D]
+     - 4.5L [D]
+
+80. Land Cruiser 80 (J80) [1990-1997]
+   Engines (3):
+     - 4.0L [D]
+     - 4.5L [G]
+     - 4.2L [D]
+
+81. Land Cruiser Prado (J120) [2002-2009]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+82. Land Cruiser Prado (J150) [2009-2015]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+83. LiteAce / TownAce (M30/R20) [1982-1991]
+   Engines (2):
+     - 1.5L [G]
+     - 2.0L [D]
+
+84. LiteAce / TownAce (M40/R40) [1992-2007]
+   Engines (2):
+     - 1.8L [G]
+     - 2.2L [D]
+
+85. LiteAce / TownAce (S400) [2008-Presente]
+   Engines (1):
+     - 1.5L [G]
+
+86. Matrix [2002-2014]
+   Engines (2):
+     - 1.8L [G]
+     - 2.4L [G]
+
+87. Prado (J120) [2002-2009]
+   Engines (3):
+     - 2.7L [D]
+     - 4.0L [G]
+     - 3.0L [D]
+
+88. Prado (J150) [2009-2023]
+   Engines (3):
+     - 2.7L [D]
+     - 4.0L [G]
+     - 2.8L [D]
+
+89. Prado (J250) [2024-Presente]
+   Engines (2):
+     - 2.4L Turbo [G/H]
+     - 2.8L [D]
+
+90. Prado (J70) [1984-1996]
+   Engines (2):
+     - 2.4L [G/D]
+     - 3.0L [G/D]
+
+91. Prado (J90) [1996-2002]
+   Engines (3):
+     - 2.7L [D]
+     - 3.4L [G]
+     - 3.0L [D]
+
+92. Prius (XW10) [1997-2003]
+   Engines (1):
+     - 1.5L híbrido [H]
+
+93. Prius (XW20) [2003-2009]
+   Engines (1):
+     - 1.5L híbrido [H]
+
+94. Prius (XW30) [2009-2015]
+   Engines (1):
+     - 1.8L híbrido [H]
+
+95. Prius (XW50) [2015-2022]
+   Engines (1):
+     - 1.8L híbrido [H]
+
+96. Prius (XW60) [2022-Presente]
+   Engines (1):
+     - 2.0L híbrido [H]
+
+97. RAV4 (XA10) [1994-2000]
+   Engines (1):
+     - 2.0L 3S-FE [G]
+
+98. RAV4 (XA20) [2000-2005]
+   Engines (2):
+     - 2.0L [G]
+     - 2.4L [G]
+
+99. RAV4 (XA30) [2005-2012]
+   Engines (2):
+     - 2.4L [G]
+     - 3.5L V6 [G]
+
+100. RAV4 (XA40) [2012-2018]
+   Engines (2):
+     - 2.5L [G]
+     - híbrido [H]
+
+101. RAV4 (XA50) [2018-Presente]
+   Engines (3):
+     - 2.0L [H]
+     - 2.5L [G]
+     - híbrido [H]
+
+102. Supra (A60) [1981-1986]
+   Engines (1):
+     - 2.8L [G]
+
+103. Supra (A70) [1986-1993]
+   Engines (1):
+     - 3.0L Turbo [G]
+
+104. Supra (A80) [1993-2002]
+   Engines (1):
+     - 3.0L 2JZ [G]
+
+105. Supra (A90/J29) [2019-Presente]
+   Engines (2):
+     - 2.0L [G]
+     - 3.0L Turbo [G]
+
+106. Tacoma (1ra gen) [1995-2004]
+   Engines (3):
+     - 2.4L [G]
+     - 2.7L [G]
+     - 3.4L [G]
+
+107. Tacoma (2da gen) [2005-2015]
+   Engines (2):
+     - 2.7L [G]
+     - 4.0L [G]
+
+108. Tacoma (3ra gen) [2015-2023]
+   Engines (2):
+     - 2.7L [G]
+     - 3.5L V6 [G]
+
+109. Tacoma (4ta gen) [2024-Presente]
+   Engines (1):
+     - 2.4L Turbo [G/H]
+
+110. Toyota Ambulancias (Hiace/Coaster derivados) [1980-Presente]
+   Engines (1):
+     - múltiples motores
+
+111. Toyota Dyna [2000-2010+]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+112. Toyota Mega Cruiser [1995-2001]
+   Engines (1):
+     - 4.1L Diesel [D]
+
+113. Toyota Pickup (Hilux USA) [1980-1995]
+   Engines (2):
+     - 2.4L [G]
+     - 3.0L [G]
+
+114. Toyota ToyoAce [2000-2010+]
+   Engines (1):
+     - 3.0L 1KD-FTV [D]
+
+115. Tundra (1ra gen) [1999-2006]
+   Engines (2):
+     - 3.4L [G]
+     - 4.7L [G]
+
+116. Tundra (2da gen) [2007-2021]
+   Engines (3):
+     - 4.0L [G]
+     - 4.6L [G]
+     - 5.7L [G]
+
+117. Tundra (3ra gen) [2021-Presente]
+   Engines (1):
+     - 3.4L Turbo [G/H]
+
+118. Vellfire (2008-Presente)
+   Engines (1):
+     - similar a Alphard [G/H]
+
+119. Yaris (XP10) [1999-2005]
+   Engines (3):
+     - 1.0L [G]
+     - 1.3L [G]
+     - 1.5L [G]
+
+120. Yaris (XP130) [2011-2019]
+   Engines (3):
+     - 1.3L [H]
+     - 1.5L [G]
+     - híbrido [H]
+
+121. Yaris (XP210) [2020-Presente]
+   Engines (2):
+     - 1.5L [G]
+     - híbrido [H]
+
+122. Yaris (XP90) [2005-2013]
+   Engines (3):
+     - 1.3L [G]
+     - 1.5L [G]
+     - 1.8L [G]

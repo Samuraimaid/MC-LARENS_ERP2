@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { THEME_SKINS } from "../lib/themeSkins";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
@@ -12,6 +13,7 @@ import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText, Plus, Save, FileText, Eye, ExternalLink, X } from "lucide-react";
+import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useRoles } from "../lib/useRoles";
@@ -78,7 +80,9 @@ export function SettingsPage() {
   const [vehicleSettings, setVehicleSettings] = useState({ brands: [], colors: [] });
   const [loadingVehicleSettings, setLoadingVehicleSettings] = useState(false);
   const [savingVehicleSettings, setSavingVehicleSettings] = useState(false);
-
+  const [vehicleThumbnailManifest, setVehicleThumbnailManifest] = useState({ catalog: [], assets: {} });
+  const [loadingVehicleThumbnails, setLoadingVehicleThumbnails] = useState(false);
+  const [uploadingThumbnailSlug, setUploadingThumbnailSlug] = useState("");
   const [brandInput, setBrandInput] = useState("");
   const [yearInput, setYearInput] = useState("");
   const [modelInput, setModelInput] = useState("");
@@ -267,8 +271,74 @@ export function SettingsPage() {
     }
   };
 
+  const fetchVehicleThumbnails = async () => {
+    if (!canManageVehicleSettings) return;
+    setLoadingVehicleThumbnails(true);
+    try {
+      const response = await axios.get(`${API}/settings/vehicle-thumbnails`, { withCredentials: true });
+      setVehicleThumbnailManifest(response.data || { catalog: [], assets: {} });
+    } catch (error) {
+      toast.error("No se pudo cargar las siluetas de vehículos");
+    } finally {
+      setLoadingVehicleThumbnails(false);
+    }
+  };
+
+  const buildThumbnailPreviewUrl = (slug, asset) => {
+    const version = asset?.updated_at || asset?.source || "bundled";
+    return `${API}/vehicle-thumbnails/${slug}.png?v=${encodeURIComponent(version)}`;
+  };
+
+  const uploadVehicleThumbnail = async (slug, file) => {
+    if (!file || !canManageVehicleSettings) return;
+    setUploadingThumbnailSlug(slug);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await axios.put(`${API}/settings/vehicle-thumbnails/${slug}`, formData, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const asset = response.data?.asset;
+      setVehicleThumbnailManifest((prev) => ({
+        ...prev,
+        assets: {
+          ...(prev.assets || {}),
+          [slug]: asset || prev.assets?.[slug],
+        },
+      }));
+      toast.success(`Silueta actualizada: ${asset?.label || slug}`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo actualizar la silueta");
+    } finally {
+      setUploadingThumbnailSlug("");
+    }
+  };
+
+  const resetVehicleThumbnail = async (slug) => {
+    if (!canManageVehicleSettings) return;
+    setUploadingThumbnailSlug(slug);
+    try {
+      const response = await axios.delete(`${API}/settings/vehicle-thumbnails/${slug}`, { withCredentials: true });
+      const asset = response.data?.asset;
+      setVehicleThumbnailManifest((prev) => ({
+        ...prev,
+        assets: {
+          ...(prev.assets || {}),
+          [slug]: asset || prev.assets?.[slug],
+        },
+      }));
+      toast.success("Silueta restablecida");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo restablecer la silueta");
+    } finally {
+      setUploadingThumbnailSlug("");
+    }
+  };
+
   useEffect(() => {
     fetchVehicleSettings();
+    fetchVehicleThumbnails();
   }, []);
 
   const fetchBillingSettings = async () => {
@@ -1601,6 +1671,79 @@ export function SettingsPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <VehicleCatalogSettingsPanel canManage={canManageVehicleSettings} />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Car className="h-5 w-5" />
+                Siluetas de vehículos
+              </CardTitle>
+              <CardDescription>
+                Miniaturas genéricas por tipo de vehículo para tarjetas de ventas, cotizaciones y flota.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!canManageVehicleSettings && (
+                <p className="text-sm text-amber-600">Solo gerencia puede actualizar siluetas.</p>
+              )}
+              {loadingVehicleThumbnails ? (
+                <p className="text-sm text-muted-foreground">Cargando siluetas...</p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {(vehicleThumbnailManifest.catalog || []).map((item) => {
+                    const slug = item.slug;
+                    const asset = vehicleThumbnailManifest.assets?.[slug] || {};
+                    const previewUrl = buildThumbnailPreviewUrl(slug, asset);
+                    const isUploading = uploadingThumbnailSlug === slug;
+                    return (
+                      <div key={slug} className="rounded-lg border p-3 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-sm">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{slug}</p>
+                          </div>
+                          <Badge variant={asset.source === "active" ? "default" : "secondary"}>
+                            {asset.source === "active" ? "Personalizada" : "Incluida"}
+                          </Badge>
+                        </div>
+                        <img
+                          src={previewUrl}
+                          alt={item.label}
+                          className="h-32 w-full rounded-md bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 object-contain object-center"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <Input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled={!canManageVehicleSettings || isUploading}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) uploadVehicleThumbnail(slug, file);
+                              event.target.value = "";
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!canManageVehicleSettings || isUploading || asset.source !== "active"}
+                            onClick={() => resetVehicleThumbnail(slug)}
+                          >
+                            Restablecer
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Cada modelo del catálogo maestro ya trae `vehicle_type_slug` pre-asignado; las tarjetas usan esa silueta sin recalcular.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -17,6 +17,7 @@ import {
   Package,
   Palette,
   Phone,
+  Trash2,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -114,6 +115,9 @@ export function getVehicleShortLabel(order, vehicle) {
 }
 
 function getAccessoriesList(order, department) {
+  if (Array.isArray(order?.displayItems) && order.displayItems.length > 0) {
+    return order.displayItems;
+  }
   if (department === "polarizados") return order?.windows || order?.items || [];
   return order?.accessories || order?.items || [];
 }
@@ -376,6 +380,9 @@ function CoordinatorInstalacionesBody({ order, department, columnContext, vehicl
         {isAssignedColumn && technicianName ? ` · Téc: ${technicianName}` : ""}
       </p>
       <p className="text-[11px] text-foreground/90 line-clamp-2 leading-snug">{installList}</p>
+      {order.splitLabel ? (
+        <p className="text-[10px] text-muted-foreground">Producto {order.splitLabel}</p>
+      ) : null}
       <TimeMetaRow
         invoicedAt={getInvoicedAt(order)}
         dispatchAt={getDispatchAt(order)}
@@ -603,6 +610,9 @@ function CajeroBody({
   onQuickCollect,
   quickCollectBusy = false,
   quickCollectSaleId = "",
+  canPurgeInvoice = false,
+  onPurgeInvoice = null,
+  purgeBusySaleId = "",
 }) {
   const waitingLabel = getElapsedLabel(sale?.created_at);
   const urgency = getCashierUrgencyState(sale);
@@ -616,6 +626,8 @@ function CajeroBody({
   const isMixedPayment = paymentKey === "mixed" || paymentKey === "mixto";
   const canQuickCollect = Boolean(onQuickCollect) && Number(sale?.amount_pending || 0) > 0 && !isMixedPayment;
   const isCollecting = quickCollectBusy && quickCollectSaleId === sale?.sale_id;
+  const isPurging = purgeBusySaleId === sale?.sale_id;
+  const showPurgeButton = canPurgeInvoice && typeof onPurgeInvoice === "function";
 
   return (
     <>
@@ -647,15 +659,34 @@ function CajeroBody({
             </p>
           ) : null}
         </div>
-        <div className="text-right shrink-0">
-          <div className="inline-flex items-center gap-1 text-muted-foreground mb-0.5">
-            <PaymentIcon className="h-3.5 w-3.5" title={paymentLabel} />
-            <span className="text-[10px]">{paymentLabel}</span>
+        <div className="text-right shrink-0 flex flex-col items-end gap-1">
+          {showPurgeButton ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-rose-700 hover:text-rose-800 hover:bg-rose-50"
+              disabled={Boolean(purgeBusySaleId)}
+              title="Eliminar factura de caja"
+              data-testid={`cashier-purge-invoice-${sale?.sale_id}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onPurgeInvoice(sale);
+              }}
+            >
+              <Trash2 className={cn("h-3.5 w-3.5", isPurging && "animate-pulse")} />
+            </Button>
+          ) : null}
+          <div>
+            <div className="inline-flex items-center gap-1 text-muted-foreground mb-0.5">
+              <PaymentIcon className="h-3.5 w-3.5" title={paymentLabel} />
+              <span className="text-[10px]">{paymentLabel}</span>
+            </div>
+            <p className="text-base font-bold tabular-nums text-primary">
+              {totalLabel || `C$${Number(sale?.amount_pending || 0).toFixed(2)}`}
+            </p>
+            <p className="text-[10px] text-muted-foreground">Pendiente</p>
           </div>
-          <p className="text-base font-bold tabular-nums text-primary">
-            {totalLabel || `C$${Number(sale?.amount_pending || 0).toFixed(2)}`}
-          </p>
-          <p className="text-[10px] text-muted-foreground">Pendiente</p>
         </div>
       </div>
       <p className="text-[11px] text-muted-foreground truncate">
@@ -772,6 +803,9 @@ function renderOperationalBody({
   onQuickCollect,
   quickCollectBusy,
   quickCollectSaleId,
+  canPurgeInvoice,
+  onPurgeInvoice,
+  purgeBusySaleId,
 }) {
   const vehicle = getVehicleRecord(order || sale, vehicles);
 
@@ -814,6 +848,9 @@ function renderOperationalBody({
         onQuickCollect={onQuickCollect}
         quickCollectBusy={quickCollectBusy}
         quickCollectSaleId={quickCollectSaleId}
+        canPurgeInvoice={canPurgeInvoice}
+        onPurgeInvoice={onPurgeInvoice}
+        purgeBusySaleId={purgeBusySaleId}
       />
     );
   }
@@ -838,6 +875,9 @@ export function OperationalJobCard({
   onQuickCollect = null,
   quickCollectBusy = false,
   quickCollectSaleId = "",
+  canPurgeInvoice = false,
+  onPurgeInvoice = null,
+  purgeBusySaleId = "",
   className,
 }) {
   const meta =
@@ -859,6 +899,9 @@ export function OperationalJobCard({
     onQuickCollect,
     quickCollectBusy,
     quickCollectSaleId,
+    canPurgeInvoice,
+    onPurgeInvoice,
+    purgeBusySaleId,
   });
 
   if (embedded) {
@@ -908,6 +951,9 @@ OperationalJobCard.propTypes = {
   onQuickCollect: PropTypes.func,
   quickCollectBusy: PropTypes.bool,
   quickCollectSaleId: PropTypes.string,
+  canPurgeInvoice: PropTypes.bool,
+  onPurgeInvoice: PropTypes.func,
+  purgeBusySaleId: PropTypes.string,
   className: PropTypes.string,
 };
 

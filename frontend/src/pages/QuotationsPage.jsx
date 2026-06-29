@@ -27,7 +27,7 @@ import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
 import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
-import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
+import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
 import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
@@ -41,11 +41,14 @@ import {
   watchServerDraft,
 } from "@/lib/serverDrafts";
 import { playSelectionFeedbackSound } from "@/lib/uiSounds";
+import { releaseWatchedDraftIfNeeded } from "@/lib/supervisorDraftRelease";
 import {
   normalizePaymentMethodCode,
   normalizePaymentMethodList,
-  paymentMethodsAllowDiscounts,
 } from "@/lib/paymentMethods";
+import { computeDraftSnapshotTotals } from "@/lib/saleTotals";
+import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
+import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { useAuth } from "@/context/AuthContext";
 import { User, CarFront } from "lucide-react";
 
@@ -111,6 +114,9 @@ export function QuotationsPage() {
   const [boardTab, setBoardTab] = useState("drafts");
   const [currency, setCurrency] = useState("NIO");
   const draftTabsRef = useRef([]);
+  const activeDraftIdRef = useRef(null);
+  const suppressAutoDraftRef = useRef(false);
+  const quoteFormAnchorRef = useRef(null);
   const draftSyncTimersRef = useRef(new Map());
   const supervisorWatchingDraftRef = useRef(null);
     const markDraftSaving = useCallback(() => {
@@ -175,8 +181,10 @@ export function QuotationsPage() {
   const [retentionRate, setRetentionRate] = useState(2);
   const [appliedDiscounts, setAppliedDiscounts] = useState([]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+    }
     try {
       const params = filterStatus !== "all" ? `?status=${filterStatus}` : "";
       const [quotesRes, customersRes, productsRes, inventoryRes, warehousesRes, vehiclesRes] = await Promise.allSettled([
@@ -209,21 +217,21 @@ export function QuotationsPage() {
     } catch (error) {
       toast.error("Error al cargar datos");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [filterStatus]);
 
   useEffect(() => {
     const refreshData = () => {
-      fetchData();
+      fetchData({ silent: true });
     };
 
     const intervalId = window.setInterval(refreshData, 30000);
-    window.addEventListener("focus", refreshData);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", refreshData);
     };
   }, [fetchData]);
 
@@ -238,53 +246,14 @@ export function QuotationsPage() {
   };
 
   const computeDraftTotals = (draft) => {
-    if (!draft) {
-      return { totalDiscounts: 0, retention: 0, total: 0 };
-    }
-    const currencyDraft = draft.currency || "NIO";
-    const rate = effectiveUsdNioRate;
-    const convertPrice = (priceUSD) => (currencyDraft === "NIO" ? priceUSD * rate : priceUSD);
-    const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
-    const paymentMethod = normalizePaymentMethodCode(draft.paymentMethod || draft.payment_method || draft.payment_type || "cash");
-    const mixedMethods = normalizePaymentMethodList(draft.mixedPaymentMethods || draft.mixed_payment_methods || []);
-    const discountsAllowed = paymentMethodsAllowDiscounts(paymentMethod, mixedMethods);
-
-    const subtotal = items.reduce((sum, item) => {
-      const priceInCurrency = convertPrice(item.unit_price || 0);
-      const effectiveItemDiscount = discountsAllowed ? (item.discount || 0) : 0;
-      let lineTotal = priceInCurrency * (item.quantity || 0) * (1 - effectiveItemDiscount / 100);
-      const installType = item.installation_type || "optional";
-      const wantsInstall = installType === "required" || Boolean(item.with_installation);
-      if (installType !== "not_available" && wantsInstall) {
-        const installPrice = convertPrice(item.installation_price || 0);
-        lineTotal += installPrice * (item.quantity || 0);
-      }
-      return sum + lineTotal;
-    }, 0);
-
-    let discountFromCodes = 0;
-    const applied = Array.isArray(draft.appliedDiscounts) ? draft.appliedDiscounts : [];
-    if (discountsAllowed) {
-      applied.forEach((d) => {
-        if (d.type === "percent") {
-          discountFromCodes += subtotal * (d.value / 100);
-        } else if (d.type === "fixed") {
-          const fixedInCurrency = currencyDraft === "USD" ? d.value / rate : d.value;
-          discountFromCodes += fixedInCurrency;
-        }
-      });
-    }
-
-    const globalDiscountAmount = discountsAllowed ? (subtotal * ((draft.globalDiscount || 0) / 100)) : 0;
-    const totalDiscounts = discountFromCodes + globalDiscountAmount;
-    const subtotalAfterDiscounts = subtotal - totalDiscounts;
-    const retention = draft.applyRetention ? subtotalAfterDiscounts * ((draft.retentionRate || 0) / 100) : 0;
-    const tax = draft.applyIVA === false ? 0 : subtotalAfterDiscounts * (effectiveIvaRate / 100);
-    return {
-      totalDiscounts,
-      retention,
-      total: subtotalAfterDiscounts + tax - retention,
-    };
+    const customer = customers.find(
+      (entry) => String(entry.customer_id ?? "") === String(draft?.selectedCustomerId ?? "")
+    ) || null;
+    return computeDraftSnapshotTotals(draft, {
+      exchangeRate: effectiveUsdNioRate,
+      ivaRate: effectiveIvaRate,
+      customer,
+    });
   };
 
   const computeDraftTotal = (draft) => computeDraftTotals(draft).total;
@@ -332,12 +301,16 @@ export function QuotationsPage() {
   };
 
   const getDraftPreview = (draft) => {
-    if (!draft) return { image: null, items: [], vehicle: null };
+    if (!draft) return { image: null, items: [], vehicle: null, previewVehicle: null };
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
     const vehicle = getVehicleById(draft.selectedVehicle);
-    const image = getVehicleThumbnail(vehicle || null);
     const previewNames = items.slice(0, 3).map((item) => item.product_name || "Producto");
-    return { image, items: previewNames, vehicle: getVehicleLabel(draft.selectedVehicle) };
+    return {
+      image: null,
+      previewVehicle: vehicle || null,
+      items: previewNames,
+      vehicle: getVehicleLabel(draft.selectedVehicle),
+    };
   };
 
   const getDraftMeta = (tab) => {
@@ -358,8 +331,9 @@ export function QuotationsPage() {
       previewItems: preview.items,
       previewImage: preview.image,
       previewVehicle: preview.vehicle,
+      previewVehicleRecord: preview.previewVehicle,
       applyIVA: draft?.applyIVA ?? true,
-      totalDiscounts: totals.totalDiscounts,
+      totalDiscounts: totals.displayTotalDiscounts,
       retention: totals.retention,
       retentionRate: draft?.retentionRate ?? 2,
       sellerName: tab.ownerName || user?.name || null,
@@ -391,7 +365,14 @@ export function QuotationsPage() {
       const usableTabs = Array.isArray(state.draftTabs)
         ? state.draftTabs.filter((tab) => {
             if (!tab?.id) return false;
-            return Boolean(window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`));
+            const raw = window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${tab.id}`);
+            if (!raw) return false;
+            try {
+              const draft = JSON.parse(raw);
+              return isSaleDraftSaveEligible(draft);
+            } catch (error) {
+              return false;
+            }
           })
         : [];
 
@@ -408,16 +389,28 @@ export function QuotationsPage() {
         const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
         if (cancelled) return;
         const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
-        const nextActiveDraftId = bundle.activeDraftId || (serverDrafts[0]?.id ?? null);
+        const eligibleServerDrafts = serverDrafts.filter((draft) => (
+          isSaleDraftSaveEligible(draft?.snapshot || {})
+        ));
+        serverDrafts
+          .filter((draft) => !isSaleDraftSaveEligible(draft?.snapshot || {}))
+          .forEach((draft) => {
+            if (draft?.id) {
+              deleteServerDraft(DRAFT_FLOW, draft.id).catch(() => {});
+            }
+          });
+        const nextActiveDraftId = bundle.activeDraftId && eligibleServerDrafts.some((d) => d.id === bundle.activeDraftId)
+          ? bundle.activeDraftId
+          : (eligibleServerDrafts[0]?.id ?? null);
 
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: serverDrafts,
+          drafts: eligibleServerDrafts,
           activeDraftId: nextActiveDraftId,
         });
-        setDraftTabs(serverDrafts.map((draft) => ({
+        setDraftTabs(eligibleServerDrafts.map((draft) => ({
           id: draft.id,
           name: draft.name,
           updatedAt: draft.updatedAt,
@@ -554,6 +547,10 @@ export function QuotationsPage() {
     draftTabsRef.current = draftTabs;
   }, [draftTabs]);
 
+  useEffect(() => {
+    activeDraftIdRef.current = activeDraftId;
+  }, [activeDraftId]);
+
   useEffect(() => () => {
     draftSyncTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     draftSyncTimersRef.current.clear();
@@ -583,13 +580,11 @@ export function QuotationsPage() {
 
   const getDraftKey = (draftId) => `${DRAFT_KEY_PREFIX}${draftId}`;
 
-  const isDraftSnapshotEmpty = (draft) => {
-    if (!draft || typeof draft !== "object") return true;
-    if (draft.selectedCustomerId) return false;
-    if (Array.isArray(draft.cartItems) && draft.cartItems.length > 0) return false;
-    if (String(draft.notes || "").trim()) return false;
-    return true;
-  };
+  const isDraftSnapshotEmpty = (draft) => !isSaleDraftSaveEligible(draft);
+
+  const visibleDraftTabs = useMemo(() => (
+    draftTabs.filter((tab) => isSaleDraftSaveEligible(readDraft(tab.id)))
+  ), [draftTabs, draftContentRevision]);
 
   const createEmptyDraftSnapshot = () => ({ updatedAt: new Date().toISOString(), validDays: 7 });
 
@@ -616,6 +611,10 @@ export function QuotationsPage() {
     emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "quotations" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
+    if (!isSaleDraftSaveEligible(snapshot)) {
+      markDraftSaved();
+      return;
+    }
     try {
       const saved = await saveServerDraft(DRAFT_FLOW, draftId, {
         name: nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`,
@@ -679,7 +678,7 @@ export function QuotationsPage() {
     if (typeof window === "undefined") return;
     try {
       const draft = snapshotOverride || readDraft(draftId);
-      if (!draft) return;
+      if (!draft || !isSaleDraftSaveEligible(draft)) return;
       const customerName = customers.find(c => c.customer_id === draft?.selectedCustomerId)?.name;
       let nextName = null;
       setDraftTabs(prev => prev.map(tab => {
@@ -708,13 +707,7 @@ export function QuotationsPage() {
     setActiveDraftId(id);
     setShowNewQuote(true);
     setQuoteFormRenderNonce((prev) => prev + 1);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(getDraftKey(id), JSON.stringify(createEmptyDraftSnapshot()));
-    }
-    saveServerDraft(DRAFT_FLOW, id, { name, snapshot: {} }).catch(() => {
-      // keep local draft if server is unavailable
-    });
-  }, [DRAFT_FLOW, draftTabs.length, user?.name, user?.user_id]);
+  }, [draftTabs.length, user?.name, user?.user_id]);
 
   const handleSaveAndClearQuote = useCallback(async () => {
     playSelectionFeedbackSound();
@@ -732,6 +725,22 @@ export function QuotationsPage() {
           window.localStorage.setItem(draftKey, JSON.stringify(snapshot));
           updateDraftTabMeta(activeDraftId, snapshot);
           await syncDraftToServer(activeDraftId, snapshot);
+          const releaseTab = draftTabsRef.current.find((entry) => entry.id === activeDraftId) || activeDraftTab;
+          const released = await releaseWatchedDraftIfNeeded({
+            flow: DRAFT_FLOW,
+            tab: releaseTab,
+            review: releaseTab?.review,
+            userRole: user?.role,
+            userId: user?.user_id,
+          });
+          if (released?.review) {
+            setDraftTabs((prev) => prev.map((entry) => (
+              entry.id === activeDraftId
+                ? { ...entry, review: normalizeDraftReview(released.review) }
+                : entry
+            )));
+            supervisorWatchingDraftRef.current = null;
+          }
           setSaveFlash(true);
           window.setTimeout(() => setSaveFlash(false), 2000);
         }
@@ -744,9 +753,9 @@ export function QuotationsPage() {
     createDraftTab();
     resetQuoteFormState();
     toast.success("Borrador guardado. Formulario listo para nueva cotización.");
-  }, [activeDraftId, createDraftTab, resetQuoteFormState, syncDraftToServer, validDays]);
+  }, [DRAFT_FLOW, activeDraftId, activeDraftTab, createDraftTab, resetQuoteFormState, syncDraftToServer, user?.role, user?.user_id, validDays]);
 
-  const closeDraftTab = (draftId, { force = false } = {}) => {
+  const closeDraftTab = (draftId, { force = false, createReplacement = false } = {}) => {
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     if (
       !force
@@ -755,21 +764,38 @@ export function QuotationsPage() {
       toast.error("No puedes eliminar un borrador revisado por supervisión");
       return;
     }
-    // Autoguardado silencioso, sin confirmación
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(getDraftKey(draftId));
     }
-    setDraftTabs(prev => prev.filter(tab => tab.id !== draftId));
-    if (activeDraftId === draftId) {
-      const remaining = draftTabs.filter(tab => tab.id !== draftId);
-      const next = remaining[remaining.length - 1]?.id || null;
-      setActiveDraftId(next);
-      if (!next) {
-        setShowNewQuote(false);
+
+    let nextActiveId;
+    setDraftTabs((prev) => {
+      const remaining = prev.filter((entry) => entry.id !== draftId);
+      if (activeDraftIdRef.current === draftId) {
+        nextActiveId = remaining[remaining.length - 1]?.id || null;
+      }
+      return remaining;
+    });
+
+    if (activeDraftIdRef.current === draftId) {
+      if (nextActiveId) {
+        setActiveDraftId(nextActiveId);
+        setQuoteFormRenderNonce((prev) => prev + 1);
+      } else if (createReplacement) {
+        suppressAutoDraftRef.current = true;
+        setActiveDraftId(null);
+        resetQuoteFormState();
+        createDraftTab();
+        window.setTimeout(() => {
+          suppressAutoDraftRef.current = false;
+        }, 0);
+      } else {
+        setActiveDraftId(null);
         resetQuoteFormState();
         setQuoteFormRenderNonce((prev) => prev + 1);
       }
     }
+
     deleteServerDraft(DRAFT_FLOW, draftId).catch(() => {
       // keep local draft state even if remote cleanup fails
     });
@@ -795,6 +821,7 @@ export function QuotationsPage() {
     updateDraftTabMeta(draftId);
     setShowNewQuote(true);
     setQuoteFormRenderNonce((prev) => prev + 1);
+    scrollPageToTop({ anchorRef: quoteFormAnchorRef });
   }, [startSupervisorWatch, stopSupervisorWatch, updateDraftTabMeta, user?.user_id]);
 
   const openActiveDraft = useCallback(() => {
@@ -844,6 +871,7 @@ export function QuotationsPage() {
 
   useEffect(() => {
     if (!draftsLoaded || !showNewQuote || activeDraftId) return;
+    if (suppressAutoDraftRef.current) return;
     createDraftTab();
   }, [activeDraftId, createDraftTab, draftsLoaded, showNewQuote]);
 
@@ -1135,9 +1163,8 @@ export function QuotationsPage() {
       const url = `${API}/print/quotation-pdf/${response.data.quotation_id}`;
       window.open(url, "_blank");
     }
-    setShowNewQuote(false);
-    resetQuoteFormState();
     fetchData();
+    return response.data;
   };
 
   const updateStatus = async (quotationId, status) => {
@@ -1340,7 +1367,7 @@ export function QuotationsPage() {
   return (
     <div className="p-6 space-y-6" data-testid="quotations-page">
       {showNewQuote ? (
-        <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+        <Card ref={quoteFormAnchorRef} className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
               <ErpFormToolbar saveFlash={saveFlash}>
@@ -1457,6 +1484,7 @@ export function QuotationsPage() {
               onOpenCatalogSearch={openCatalogFromQuoteForm}
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
+                if (!isSaleDraftSaveEligible(snapshot)) return;
                 markDraftSaving();
                 updateDraftTabMeta(activeDraftId, {
                   ...snapshot,
@@ -1479,11 +1507,7 @@ export function QuotationsPage() {
               }}
               onDraftClear={() => {
                 if (!activeDraftId) return;
-                syncDraftToServer(
-                  activeDraftId,
-                  {},
-                  draftTabsRef.current.find((tab) => tab.id === activeDraftId)?.name
-                ).catch(() => {
+                deleteServerDraft(DRAFT_FLOW, activeDraftId).catch(() => {
                   // keep local clear behavior if remote cleanup fails
                 });
               }}
@@ -1516,14 +1540,22 @@ export function QuotationsPage() {
               }
               submitLabel="Crear Cotización"
               onSubmit={async (payload) => {
+                const submittedDraftId = activeDraftIdRef.current;
                 try {
-                  await createQuotationWithPayload(payload);
-                  if (activeDraftId) {
-                    closeDraftTab(activeDraftId, { force: true });
+                  const createdQuote = await createQuotationWithPayload(payload);
+                  if (!createdQuote?.quotation_id) return;
+                  if (submittedDraftId) {
+                    closeDraftTab(submittedDraftId, { force: true, createReplacement: true });
+                  } else {
+                    resetQuoteFormState();
+                    createDraftTab();
                   }
-                  setShowNewQuote(false);
                 } catch (err) {
-                  toast.error(err?.response?.data?.detail || err?.message || "Error al crear cotización");
+                  const detail = err?.response?.data?.detail;
+                  const message = typeof detail === "string"
+                    ? detail
+                    : (detail?.message || err?.message || "Error al crear cotización");
+                  toast.error(message);
                 }
               }}
             />
@@ -1611,13 +1643,13 @@ export function QuotationsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">BORRADORES DE COTIZACIÓN</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {draftTabs.length === 0 ? (
+            {visibleDraftTabs.length === 0 ? (
               <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">
                 No hay borradores abiertos.
               </div>
             ) : (
               <div className="grid gap-4">
-                {draftTabs.map((tab) => {
+                {visibleDraftTabs.map((tab) => {
                   const meta = getDraftMeta(tab);
                   const isActive = activeDraftId === tab.id;
                   const openDraft = () => {
@@ -1672,14 +1704,10 @@ export function QuotationsPage() {
                   const vehicleLabel = getQuoteVehicleLabel(q);
                   const itemsPreview = getQuoteItemsPreview(q);
                   return (
-                    <Card key={quotationId || q.customer_name || index} className="overflow-hidden">
-                      <CardContent className="p-4 space-y-3">
+                    <Card key={quotationId || q.customer_name || index} className="relative overflow-hidden">
+                      <VehicleThumbnailWatermark vehicle={q.vehicle_id ? getVehicleById(q.vehicle_id) : null} />
+                      <CardContent className="relative p-4 space-y-3">
                         <div className="flex gap-3 items-start">
-                          <img
-                            src={getVehicleThumbnail(getVehicleById(q.vehicle_id))}
-                            alt="Vehículo"
-                            className="w-28 h-20 rounded-md object-cover bg-muted/30"
-                          />
                           <div className="flex-1 flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold">

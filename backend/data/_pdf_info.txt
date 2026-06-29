@@ -1,0 +1,3 @@
+mediabox=RectangleObject([0, 0, 141.7323, 283.4646])
+rotation=0
+pages=1

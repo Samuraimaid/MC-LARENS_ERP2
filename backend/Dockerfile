@@ -4,7 +4,10 @@ WORKDIR /app
 
 # Copiar requirements e instalar dependencias
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copiar código fuente
 RUN mkdir -p /app/backend
@@ -17,6 +20,10 @@ ENV PYTHONPATH=/app
 
 # Exponer puerto
 EXPOSE 8001
+
+# Healthcheck para políticas Docker / depends_on
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/', timeout=5)" || exit 1
 
 # Copiar entrypoint y dar permisos
 COPY entrypoint.sh /entrypoint.sh

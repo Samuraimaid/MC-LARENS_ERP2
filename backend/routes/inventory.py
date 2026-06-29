@@ -7,10 +7,20 @@ import csv
 from io import BytesIO, StringIO
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from backend.domains.export.dependencies import (
     get_reportlab_symbols as export_get_reportlab_symbols,
+)
+from backend.domains.inventory.label_printer import fetch_label_printer_status, send_tspl_to_label_printer
+from backend.domains.inventory.product_labels import (
+    PRINTER_PROFILES,
+    build_label_payload,
+    get_label_catalog,
+    render_labels_pdf,
+    render_labels_tspl,
+    resolve_product_barcode,
+    resolve_template,
 )
 
 
@@ -30,7 +40,14 @@ def _get_reportlab_symbols() -> tuple[Any, Any]:
     return letter, canvas
 
 
-def get_inventory_router(db, audit_service, require_auth, require_roles, InventoryUpdate):
+def get_inventory_router(
+    db,
+    audit_service,
+    require_auth,
+    require_roles,
+    InventoryUpdate,
+    require_inventory_label_permission=None,
+):
     router = APIRouter()
 
     WAREHOUSE_SPANISH_FALLBACK = {
@@ -564,6 +581,8 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
             "warehouse_id": warehouse_id,
             "quantity": updated_quantity,
             "added": qty_to_add,
+            "suggest_label_print": True,
+            "suggested_label_quantity": qty_to_add,
         }
 
     @router.post("/inventory/transfer")
@@ -877,5 +896,190 @@ def get_inventory_router(db, audit_service, require_auth, require_roles, Invento
         )
 
         return {"message": "Traslado rechazado"}
+
+    async def _load_label_context(product_id: str, warehouse_id: str, user: Any = None):
+        product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        warehouse = await db.warehouses.find_one({"warehouse_id": warehouse_id}, {"_id": 0})
+        if not warehouse:
+            raise HTTPException(status_code=404, detail="Bodega no encontrada")
+
+        brand_branch_id = str(getattr(user, "branch_id", None) or warehouse.get("branch_id") or "").strip()
+        branch = (
+            await db.branches.find_one({"branch_id": brand_branch_id}, {"_id": 0})
+            if brand_branch_id
+            else None
+        )
+        if not branch:
+            fallback_branch_id = warehouse.get("branch_id")
+            if fallback_branch_id:
+                branch = await db.branches.find_one({"branch_id": fallback_branch_id}, {"_id": 0})
+        return product, warehouse, branch or {}
+
+    @router.get("/inventory/labels/config")
+    async def get_inventory_label_config(request: Request):
+        if require_inventory_label_permission:
+            await require_inventory_label_permission(request, action="view")
+        else:
+            await require_auth(request)
+        catalog = get_label_catalog()
+        try:
+            printer_status = await fetch_label_printer_status()
+        except Exception:
+            printer_status = {"connected": False, "available": False, "bridge_reachable": False}
+        catalog["printer_status"] = printer_status
+        return catalog
+
+    @router.get("/inventory/labels/printer-status")
+    async def get_inventory_label_printer_status(request: Request):
+        if require_inventory_label_permission:
+            await require_inventory_label_permission(request, action="view")
+        else:
+            await require_auth(request)
+        return await fetch_label_printer_status()
+
+    @router.post("/inventory/labels/preview")
+    async def preview_inventory_labels(payload: Dict[str, Any], request: Request):
+        if require_inventory_label_permission:
+            user = await require_inventory_label_permission(request, action="view")
+        else:
+            user = await require_auth(request)
+
+        data = payload or {}
+        product_id = str(data.get("product_id") or "").strip()
+        warehouse_id = str(data.get("warehouse_id") or "").strip()
+        if not product_id or not warehouse_id:
+            raise HTTPException(status_code=400, detail="product_id y warehouse_id son requeridos")
+
+        product, warehouse, branch = await _load_label_context(product_id, warehouse_id, user=user)
+        template = resolve_template(
+            str(data.get("template_id") or "col_50x100"),
+            data.get("template_overrides") or {},
+        )
+        label = build_label_payload(
+            product=product,
+            branch=branch,
+            warehouse=warehouse,
+            template=template,
+            quantity=int(data.get("quantity") or 1),
+            show_price=bool(data.get("show_price", True)),
+        )
+        pdf_bytes = render_labels_pdf(label, logo_path=str(branch.get("logo_url") or ""))
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        return StreamingResponse(
+            BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="etiquetas_preview_{ts}.pdf"'},
+        )
+
+    @router.post("/inventory/labels/print")
+    async def print_inventory_labels(payload: Dict[str, Any], request: Request):
+        if require_inventory_label_permission:
+            user = await require_inventory_label_permission(request, action="create")
+        else:
+            user = await require_roles(request, ["gerencia", "supervisor", "jefe_tienda"])
+
+        data = payload or {}
+        product_id = str(data.get("product_id") or "").strip()
+        warehouse_id = str(data.get("warehouse_id") or "").strip()
+        output_format = str(data.get("output_format") or "pdf").strip().lower()
+        printer_id = str(data.get("printer_id") or "xprinter_xp460b").strip()
+
+        if not product_id or not warehouse_id:
+            raise HTTPException(status_code=400, detail="product_id y warehouse_id son requeridos")
+
+        product, warehouse, branch = await _load_label_context(product_id, warehouse_id, user=user)
+        template = resolve_template(
+            str(data.get("template_id") or "col_50x100"),
+            data.get("template_overrides") or {},
+        )
+        quantity = max(1, min(int(data.get("quantity") or 1), 500))
+        label = build_label_payload(
+            product=product,
+            branch=branch,
+            warehouse=warehouse,
+            template=template,
+            quantity=quantity,
+            show_price=bool(data.get("show_price", True)),
+        )
+
+        job_id = f"lbl_{uuid.uuid4().hex[:10]}"
+        await audit_service.log_audit_event(
+            action="inventory_label_print",
+            actor_id=user.user_id,
+            actor_name=user.name,
+            actor_role=user.role,
+            entity="inventory_label_job",
+            entity_id=job_id,
+            branch_id=branch.get("branch_id") or user.branch_id,
+            metadata={
+                "product_id": product_id,
+                "warehouse_id": warehouse_id,
+                "quantity": quantity,
+                "template_id": template.get("id"),
+                "printer_id": printer_id,
+                "output_format": output_format,
+                "barcode": resolve_product_barcode(product),
+            },
+        )
+
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        if output_format in {"usb", "direct", "usb_direct"}:
+            from backend.domains.inventory.product_labels import render_labels_tspl_bytes
+
+            tspl_bytes = render_labels_tspl_bytes(
+                label,
+                logo_path=str(branch.get("logo_url") or ""),
+                printer_id=printer_id,
+            )
+            try:
+                bridge_result = await send_tspl_to_label_printer(
+                    tspl_bytes,
+                    printer_name=PRINTER_PROFILES.get(printer_id, {}).get("driver"),
+                    copies=quantity,
+                )
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+            return JSONResponse(
+                {
+                    "ok": True,
+                    "job_id": job_id,
+                    "output_format": "usb_direct",
+                    "quantity": quantity,
+                    "template_id": template.get("id"),
+                    "printer_id": printer_id,
+                    "message": bridge_result.get("message") or "Etiquetas enviadas a la impresora USB",
+                    "bridge": bridge_result,
+                },
+                headers={"X-Label-Job-Id": job_id},
+            )
+
+        if output_format == "tspl":
+            from backend.domains.inventory.product_labels import render_labels_tspl_bytes
+
+            tspl_bytes = render_labels_tspl_bytes(
+                label,
+                logo_path=str(branch.get("logo_url") or ""),
+                printer_id=printer_id,
+            )
+            return StreamingResponse(
+                BytesIO(tspl_bytes),
+                media_type="application/octet-stream",
+                headers={
+                    "Content-Disposition": f'attachment; filename="etiquetas_{ts}.tspl"',
+                    "X-Label-Job-Id": job_id,
+                },
+            )
+
+        pdf_bytes = render_labels_pdf(label, logo_path=str(branch.get("logo_url") or ""))
+        return StreamingResponse(
+            BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="etiquetas_{ts}.pdf"',
+                "X-Label-Job-Id": job_id,
+            },
+        )
 
     return router

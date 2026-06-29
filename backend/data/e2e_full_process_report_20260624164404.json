@@ -1,0 +1,236 @@
+{
+  "run_tag": "20260624164404",
+  "phases": {
+    "auth": {
+      "ok": [
+        "Gerencia: Xinon"
+      ],
+      "failed": []
+    },
+    "preflight": {
+      "ok": [
+        "API root: MUNDO DE ACCESORIOS ERP API",
+        "Mundo de Accesorios (branch_main): inst=True tint=True",
+        "TopCar El Calvario (branch_north): inst=False tint=False",
+        "TopCar La Tigre (branch_south): inst=False tint=False",
+        "3 bodegas registradas"
+      ],
+      "failed": []
+    },
+    "catalog": {
+      "ok": [
+        "Clientes=40 Vehículos=120 Productos=26 Inventario=48",
+        "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001",
+        "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+      ],
+      "failed": []
+    },
+    "quotation": {
+      "ok": [
+        "Cotización creada: QUO-20260624-0001 total=18888.75",
+        "Cotización QUO-20260624-0001 aprobada",
+        "Cotización visible en listado"
+      ],
+      "failed": []
+    },
+    "inventory": {
+      "ok": [
+        "Ingreso +2 unidades: qty=16 suggest_labels=True"
+      ],
+      "failed": [
+        {
+          "phase": "inventory",
+          "msg": "Excepción en inventario",
+          "detail": "'charmap' codec can't encode character '\\u2192' in position 37: character maps to <undefined>"
+        }
+      ]
+    },
+    "kds": {
+      "ok": [
+        "KDS bodega: 28 registros",
+        "KDS instalaciones: 23 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 28, 'instalaciones': 23, 'electrico': 23, 'polarizados': 0}",
+        "  departamento 'bodega': 28 items",
+        "  departamento 'instalaciones': 23 items",
+        "  departamento 'polarizados': 0 items"
+      ],
+      "failed": []
+    },
+    "workflow": {
+      "ok": [
+        "e2e_full_workflow_live.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "kds-post-sale": {
+      "ok": [
+        "KDS bodega: 33 registros",
+        "KDS instalaciones: 28 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 33, 'instalaciones': 28, 'electrico': 28, 'polarizados': 0}",
+        "  departamento 'bodega': 33 items",
+        "  departamento 'instalaciones': 28 items",
+        "  departamento 'polarizados': 0 items"
+      ],
+      "failed": []
+    },
+    "cashier": {
+      "ok": [
+        "e2e_cashier_features.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "cancel-sale": {
+      "ok": [
+        "e2e_cancel_sale_flow.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "unit-tests": {
+      "ok": [],
+      "failed": [
+        {
+          "phase": "unit-tests",
+          "msg": "test_product_labels.py falló",
+          "detail": ""
+        }
+      ]
+    }
+  },
+  "ok": [
+    {
+      "phase": "auth",
+      "msg": "Gerencia: Xinon"
+    },
+    {
+      "phase": "preflight",
+      "msg": "API root: MUNDO DE ACCESORIOS ERP API"
+    },
+    {
+      "phase": "preflight",
+      "msg": "Mundo de Accesorios (branch_main): inst=True tint=True"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar El Calvario (branch_north): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar La Tigre (branch_south): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "3 bodegas registradas"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Clientes=40 Vehículos=120 Productos=26 Inventario=48"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización creada: QUO-20260624-0001 total=18888.75"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización QUO-20260624-0001 aprobada"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización visible en listado"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Ingreso +2 unidades: qty=16 suggest_labels=True"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS bodega: 28 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS instalaciones: 23 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS tablero: {'bodega': 28, 'instalaciones': 23, 'electrico': 23, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'bodega': 28 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'instalaciones': 23 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "workflow",
+      "msg": "e2e_full_workflow_live.py completado sin fallos"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS bodega: 33 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS instalaciones: 28 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS tablero: {'bodega': 33, 'instalaciones': 28, 'electrico': 28, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'bodega': 33 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'instalaciones': 28 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "cashier",
+      "msg": "e2e_cashier_features.py completado sin fallos"
+    },
+    {
+      "phase": "cancel-sale",
+      "msg": "e2e_cancel_sale_flow.py completado sin fallos"
+    }
+  ],
+  "failed": [
+    {
+      "phase": "inventory",
+      "msg": "Excepción en inventario",
+      "detail": "'charmap' codec can't encode character '\\u2192' in position 37: character maps to <undefined>"
+    },
+    {
+      "phase": "unit-tests",
+      "msg": "test_product_labels.py falló",
+      "detail": ""
+    }
+  ],
+  "fixed": []
+}

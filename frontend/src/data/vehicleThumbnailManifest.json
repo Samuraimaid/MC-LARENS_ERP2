@@ -1,0 +1,240 @@
+{
+  "version": 3,
+  "default_slug": "default",
+  "canvas": {
+    "width": 640,
+    "height": 360
+  },
+  "catalog": [
+    {
+      "slug": "hatchback",
+      "label": "Hatchback"
+    },
+    {
+      "slug": "sedan",
+      "label": "Sedan"
+    },
+    {
+      "slug": "convertible",
+      "label": "Convertible"
+    },
+    {
+      "slug": "suv",
+      "label": "SUV"
+    },
+    {
+      "slug": "station-wagon",
+      "label": "Station Wagon"
+    },
+    {
+      "slug": "camioneta-1-cabina",
+      "label": "Camioneta 1 cabina"
+    },
+    {
+      "slug": "camioneta-cabina-y-media",
+      "label": "Camioneta cabina y media"
+    },
+    {
+      "slug": "microbus-carga",
+      "label": "Microbús de Carga"
+    },
+    {
+      "slug": "microbus-pasajeros",
+      "label": "Microbus de Pasajeros"
+    },
+    {
+      "slug": "camion-carga",
+      "label": "Camion de Carga"
+    },
+    {
+      "slug": "cabezal",
+      "label": "Cabezal"
+    }
+  ],
+  "assets": {
+    "hatchback": {
+      "file": "hatchback.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 1,
+      "url": "/api/vehicle-thumbnails/hatchback.png"
+    },
+    "sedan": {
+      "file": "sedan.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 2,
+      "url": "/api/vehicle-thumbnails/sedan.png"
+    },
+    "convertible": {
+      "file": "convertible.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 3,
+      "url": "/api/vehicle-thumbnails/convertible.png"
+    },
+    "suv": {
+      "file": "suv.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 4,
+      "url": "/api/vehicle-thumbnails/suv.png"
+    },
+    "station-wagon": {
+      "file": "station-wagon.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 5,
+      "url": "/api/vehicle-thumbnails/station-wagon.png"
+    },
+    "microbus-pasajeros": {
+      "file": "microbus-pasajeros.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 6,
+      "url": "/api/vehicle-thumbnails/microbus-pasajeros.png"
+    },
+    "camioneta-1-cabina": {
+      "file": "camioneta-1-cabina.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 7,
+      "url": "/api/vehicle-thumbnails/camioneta-1-cabina.png"
+    },
+    "camioneta-cabina-y-media": {
+      "file": "camioneta-cabina-y-media.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 8,
+      "url": "/api/vehicle-thumbnails/camioneta-cabina-y-media.png"
+    },
+    "microbus-carga": {
+      "file": "microbus-carga.png",
+      "source": "sheet-b-grid",
+      "row": 8,
+      "col": 3,
+      "url": "/api/vehicle-thumbnails/microbus-carga.png"
+    },
+    "camion-carga": {
+      "file": "camion-carga.png",
+      "source": "sheet-b-grid",
+      "row": 8,
+      "col": 5,
+      "url": "/api/vehicle-thumbnails/camion-carga.png"
+    },
+    "cabezal": {
+      "file": "cabezal.png",
+      "source": "sheet-b-grid",
+      "row": 8,
+      "col": 8,
+      "url": "/api/vehicle-thumbnails/cabezal.png"
+    },
+    "default": {
+      "file": "default.png",
+      "source": "sheet-b-grid",
+      "row": 2,
+      "col": 2,
+      "url": "/api/vehicle-thumbnails/default.png"
+    }
+  },
+  "type_aliases": {
+    "hatchback": "hatchback",
+    "sedan": "sedan",
+    "sedán": "sedan",
+    "convertible": "convertible",
+    "cabrio": "convertible",
+    "cabriolet": "convertible",
+    "suv": "suv",
+    "crossover": "suv",
+    "station wagon": "station-wagon",
+    "wagon": "station-wagon",
+    "familiar": "station-wagon",
+    "break": "station-wagon",
+    "camioneta 1 cabina": "camioneta-1-cabina",
+    "camioneta una cabina": "camioneta-1-cabina",
+    "pickup 1 cabina": "camioneta-1-cabina",
+    "camioneta cabina y media": "camioneta-cabina-y-media",
+    "cabina y media": "camioneta-cabina-y-media",
+    "crew cab": "camioneta-cabina-y-media",
+    "camioneta doble cabina": "camioneta-cabina-y-media",
+    "microbus de carga": "microbus-carga",
+    "microbús de carga": "microbus-carga",
+    "van de carga": "microbus-carga",
+    "microbus de pasajeros": "microbus-pasajeros",
+    "microbús de pasajeros": "microbus-pasajeros",
+    "minibus": "microbus-pasajeros",
+    "minibús": "microbus-pasajeros",
+    "camion de carga": "camion-carga",
+    "camión de carga": "camion-carga",
+    "truck": "camion-carga",
+    "cabezal": "cabezal",
+    "tracto": "cabezal",
+    "tractocamion": "cabezal",
+    "tractocamión": "cabezal",
+    "pickup": "camioneta-1-cabina",
+    "camioneta": "camioneta-1-cabina",
+    "hatchback large": "hatchback",
+    "large car": "sedan",
+    "small sport utility vehicle": "suv"
+  },
+  "sources": {
+    "sheet-b-grid": {
+      "file": "sheet-truck-set.jpg",
+      "description": "Pack multi-fila (Adobe 2042059554): hatchback, sedan, coupe, SUV, vans y camiones",
+      "cells": {
+        "hatchback": [
+          2,
+          1
+        ],
+        "sedan": [
+          2,
+          2
+        ],
+        "convertible": [
+          2,
+          3
+        ],
+        "suv": [
+          2,
+          4
+        ],
+        "station-wagon": [
+          2,
+          5
+        ],
+        "microbus-pasajeros": [
+          2,
+          6
+        ],
+        "camioneta-1-cabina": [
+          2,
+          7
+        ],
+        "camioneta-cabina-y-media": [
+          2,
+          8
+        ],
+        "microbus-carga": [
+          8,
+          3
+        ],
+        "camion-carga": [
+          8,
+          5
+        ],
+        "cabezal": [
+          8,
+          8
+        ],
+        "default": [
+          2,
+          2
+        ]
+      }
+    },
+    "sheet-a": {
+      "file": "sheet-sedan-suv-set.jpg",
+      "description": "Respaldo legacy (4 siluetas)"
+    }
+  }
+}

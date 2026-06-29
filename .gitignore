@@ -98,6 +98,9 @@ frontend/node_modules/.cache/default-development/14.pack
 *.env.*
 
 # Local runtime data and secrets
+backend/data/label-bridge-token.txt
+backend/data/pos-voucher-bridge-token.txt
+$null
 cookies.txt
 users.json
 backend_logs.txt
@@ -110,7 +113,13 @@ index_probe*.html
 manifest_probe.json
 coverage.xml
 test_reports/
+backups/mongodb/*.archive.gz
+backups/mongodb/manifest_*.json
+!backups/mongodb/.gitkeep
 tmp_*
+
+# Uploaded vehicle silhouette overrides (bundled assets remain in repo)
+backend/data/vehicle-thumbnails/active/
 
 # IDE / agent session artifacts
 terminals/

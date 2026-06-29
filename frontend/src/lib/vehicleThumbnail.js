@@ -1,81 +1,170 @@
-const COLOR_MAP = {
-  blanco: "#f3f4f6",
-  negra: "#111827",
-  negro: "#111827",
-  gris: "#6b7280",
-  plateado: "#9ca3af",
-  plata: "#9ca3af",
-  azul: "#1d4ed8",
-  rojo: "#dc2626",
-  vino: "#7f1d1d",
-  verde: "#15803d",
-  amarillo: "#facc15",
-  dorado: "#d4af37",
-  naranja: "#ea580c",
-  cafe: "#78350f",
-  marron: "#78350f",
-  beige: "#d6d3d1",
+import manifest from "@/data/vehicleThumbnailManifest.json";
+import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
+import { API_BASE } from "@/lib/api";
+import { isPickupSlug, resolveCabVariantPayload } from "@/lib/vehicleCabVariant";
+
+const TYPE_ALIASES = manifest.type_aliases || {};
+const DEFAULT_SLUG = manifest.default_slug || "default";
+const KNOWN_SLUGS = new Set(Object.keys(manifest.assets || {}));
+
+const SLUG_LABELS = {
+  hatchback: "Hatchback",
+  sedan: "Sedán",
+  convertible: "Convertible",
+  suv: "SUV",
+  "station-wagon": "Station Wagon",
+  "camioneta-1-cabina": "Camioneta 1 Cabina",
+  "camioneta-cabina-y-media": "Camioneta Doble Cabina",
+  "microbus-carga": "Microbús de Carga",
+  "microbus-pasajeros": "Microbus de Pasajeros",
+  "camion-carga": "Camion de Carga",
+  cabezal: "Cabezal",
 };
 
-function normalizeColor(value = "") {
+const TEXT_RULES = [
+  [/\b(doble cabina|double cab|crew cab|cabina y media|crewman)\b/i, "camioneta-cabina-y-media"],
+  [/\b(1 cabina|una cabina|cabina simple|single cab)\b/i, "camioneta-1-cabina"],
+  [/\b(camioneta doble cabina)\b/i, "camioneta-cabina-y-media"],
+  [/\b(camioneta 1 cabina|pickup 1 cabina)\b/i, "camioneta-1-cabina"],
+  [/\b(microbus de pasajeros|microbús de pasajeros|minibus)\b/i, "microbus-pasajeros"],
+  [/\b(microbus de carga|microbús de carga|van de carga|cargo van)\b/i, "microbus-carga"],
+  [/\b(cabezal|tractocamion|tracto camion)\b/i, "cabezal"],
+  [/\b(camion de carga|camión de carga|box truck)\b/i, "camion-carga"],
+  [/\b(pickup doble cabina|pickup double cab)\b/i, "camioneta-cabina-y-media"],
+  [/\b(pickup cabina simple|pickup single cab)\b/i, "camioneta-1-cabina"],
+  [/\b(pickup|camioneta)\b/i, "camioneta-1-cabina"],
+  [/\b(convertible|cabrio|cabriolet)\b/i, "convertible"],
+  [/\b(station wagon|wagon|familiar|estate|break)\b/i, "station-wagon"],
+  [/\b(suv|crossover|sport utility)\b/i, "suv"],
+  [/\b(hatchback large|hatchback|hatch\/|hatch )\b/i, "hatchback"],
+  [/\b(sedan|sedán|saloon|large car)\b/i, "sedan"],
+  [/\b(minivan|microbus)\b/i, "microbus-pasajeros"],
+];
+
+export const VEHICLE_THUMBNAIL_CLASS =
+  "rounded-md bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 object-contain object-center";
+
+function normalizeText(value = "") {
   return String(value)
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
-function colorToHex(color) {
-  const normalized = normalizeColor(color);
-  if (!normalized) return "#6b7280";
+function hasVehicleIdentity(vehicle) {
+  if (!vehicle) return false;
+  return Boolean(String(vehicle.brand || "").trim() || String(vehicle.model || "").trim());
+}
 
-  for (const [name, hex] of Object.entries(COLOR_MAP)) {
-    if (normalized.includes(name)) return hex;
+function matchTextRules(text = "") {
+  const normalized = normalizeText(text);
+  if (!normalized) return null;
+
+  const parenthetical = [...normalized.matchAll(/\(([^)]+)\)/g)].map((match) => match[1]);
+  for (const group of parenthetical) {
+    for (const [pattern, slug] of TEXT_RULES) {
+      if (pattern.test(group)) return slug;
+    }
   }
 
-  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(normalized)) {
-    return normalized;
+  for (const [pattern, slug] of TEXT_RULES) {
+    if (pattern.test(normalized)) return slug;
+  }
+  return null;
+}
+
+export function inferVehicleTypeSlugFromText(...parts) {
+  const combined = parts.filter(Boolean).join(" ");
+  return matchTextRules(combined);
+}
+
+function resolveDescriptorTypeSlug(vehicle) {
+  const brand = String(vehicle?.brand || "").trim();
+  const descriptor = String(vehicle?.descriptor || "").trim();
+  if (!brand || !descriptor) return null;
+  const key = `${brand.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toUpperCase()}::${descriptor}`;
+  return vehicleDescriptorTypes.entries?.[key]?.default_silhouette_slug || null;
+}
+
+const CONFIDENCE_OPACITY = {
+  override: 1,
+  rules: 0.72,
+  web_sync: 0.6,
+  catalog: 0.85,
+  unknown: 0.65,
+};
+
+export function getWatermarkConfidenceMultiplier(vehicle) {
+  const source = String(vehicle?.classification_source || "unknown").trim().toLowerCase();
+  return CONFIDENCE_OPACITY[source] ?? CONFIDENCE_OPACITY.unknown;
+}
+
+export function resolveVehicleTypeSlug(vehicle) {
+  if (!hasVehicleIdentity(vehicle)) return null;
+
+  const presetSlug = normalizeText(
+    vehicle?.vehicle_type_slug || vehicle?.thumbnail_slug || ""
+  );
+  const cabVariant = vehicle?.vehicle_cab_variant;
+  if (cabVariant && isPickupSlug(presetSlug)) {
+    const cabResolved = resolveCabVariantPayload(presetSlug, cabVariant);
+    if (cabResolved?.vehicle_type_slug && KNOWN_SLUGS.has(cabResolved.vehicle_type_slug)) {
+      return cabResolved.vehicle_type_slug;
+    }
+  }
+  if (presetSlug && KNOWN_SLUGS.has(presetSlug)) {
+    return presetSlug;
+  }
+  if (presetSlug && TYPE_ALIASES[presetSlug]) {
+    return TYPE_ALIASES[presetSlug];
   }
 
-  return "#6b7280";
+  const rawType = normalizeText(
+    vehicle?.vehicle_type || vehicle?.type || vehicle?.body_type || vehicle?.body_class || ""
+  );
+
+  const fromType = rawType && TYPE_ALIASES[rawType] ? TYPE_ALIASES[rawType] : matchTextRules(rawType);
+  const fromDescriptor = resolveDescriptorTypeSlug(vehicle);
+  const fromModel = inferVehicleTypeSlugFromText(
+    vehicle?.brand,
+    vehicle?.model,
+    vehicle?.descriptor
+  );
+
+  if (fromDescriptor && (!fromType || (fromType === "sedan" && fromDescriptor !== "sedan"))) {
+    return fromDescriptor;
+  }
+  if (fromModel && (!fromType || (fromType === "sedan" && fromModel !== "sedan"))) {
+    return fromModel;
+  }
+  if (fromType) return fromType;
+
+  return null;
 }
 
-function toDataUri(svg) {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+export function getVehicleThumbnailTypeLabel(vehicle) {
+  const slug = resolveVehicleTypeSlug(vehicle);
+  return slug ? SLUG_LABELS[slug] || slug : null;
 }
 
-function buildVehicleSvg({ brand = "Vehículo", model = "", color = "" }) {
-  const fill = colorToHex(color);
-  const label = `${brand} ${model}`.trim().slice(0, 28) || "Vehículo";
-
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1f2937"/>
-    </linearGradient>
-  </defs>
-  <rect width="640" height="360" fill="url(#bg)"/>
-  <g transform="translate(60,95)">
-    <path d="M88 130h338c18 0 27-10 31-23l14-41c4-11 8-16 16-20l40-20c9-5 8-16-3-19l-50-13c-20-5-38-8-61-8H249c-34 0-50 8-66 24l-43 43H93c-9 0-16 7-16 16v45c0 8 5 16 11 16z" fill="${fill}"/>
-    <circle cx="180" cy="148" r="31" fill="#0b1220"/>
-    <circle cx="180" cy="148" r="16" fill="#9ca3af"/>
-    <circle cx="438" cy="148" r="31" fill="#0b1220"/>
-    <circle cx="438" cy="148" r="16" fill="#9ca3af"/>
-    <rect x="210" y="34" width="166" height="45" rx="8" fill="#94a3b8" opacity="0.48"/>
-    <rect x="386" y="44" width="60" height="35" rx="7" fill="#94a3b8" opacity="0.45"/>
-    <rect x="116" y="72" width="30" height="12" rx="4" fill="#f59e0b"/>
-  </g>
-  <text x="32" y="316" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">${label}</text>
-  <text x="32" y="342" fill="#93c5fd" font-family="Inter, Arial, sans-serif" font-size="18">Color: ${color || "No especificado"}</text>
-</svg>`;
-
-  return toDataUri(svg);
+function buildThumbnailUrl(slug, { version = "bundled", style = "card" } = {}) {
+  if (!slug) return null;
+  const safeSlug = KNOWN_SLUGS.has(slug) ? slug : DEFAULT_SLUG;
+  const params = new URLSearchParams();
+  if (style === "watermark") params.set("style", "watermark");
+  params.set("v", encodeURIComponent(version || "bundled"));
+  return `${API_BASE}/vehicle-thumbnails/${safeSlug}.png?${params.toString()}`;
 }
 
-export function getVehicleThumbnail(vehicle) {
-  if (!vehicle) return buildVehicleSvg({});
+export function getVehicleThumbnailType(vehicle) {
+  if (!hasVehicleIdentity(vehicle)) return null;
+  return resolveVehicleTypeSlug(vehicle);
+}
+
+export function getVehicleThumbnail(vehicle, options = {}) {
+  if (!hasVehicleIdentity(vehicle)) return null;
 
   const explicit =
     vehicle.thumbnail_url ||
@@ -87,9 +176,21 @@ export function getVehicleThumbnail(vehicle) {
 
   if (explicit && typeof explicit === "string") return explicit;
 
-  return buildVehicleSvg({
-    brand: vehicle.brand || "Vehículo",
-    model: vehicle.model || "",
-    color: vehicle.color || vehicle.vehicle_color || "",
+  const slug = resolveVehicleTypeSlug(vehicle);
+  if (!slug) return null;
+
+  const version =
+    options.version ||
+    vehicle.thumbnail_version ||
+    vehicle.vehicle_thumbnail_version ||
+    slug;
+
+  return buildThumbnailUrl(slug, {
+    version,
+    style: options.style || "card",
   });
+}
+
+export function getVehicleWatermarkUrl(vehicle, options = {}) {
+  return getVehicleThumbnail(vehicle, { ...options, style: "watermark" });
 }

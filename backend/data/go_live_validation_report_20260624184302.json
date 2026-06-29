@@ -1,0 +1,76 @@
+{
+  "run_tag": "20260624184302",
+  "ok": [
+    {
+      "phase": "auth",
+      "msg": "Gerencia: Xinon"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/summary OK (24 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/tools/audit-schedule OK (39 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/attendance/reports/biweekly OK (251 ms)"
+    },
+    {
+      "phase": "hr",
+      "msg": "/hr/payroll-adjustments OK (23 ms)"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/sales OK (23 ms) keys=by_payment_type, by_salesperson, total_count, total_sales"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/installations OK (19 ms) keys=avg_quality, by_technician, total_installations, total_time_minutes"
+    },
+    {
+      "phase": "reports",
+      "msg": "/reports/productivity OK (27 ms) keys=period, salespeople, summary, technicians"
+    },
+    {
+      "phase": "tint",
+      "msg": "/kds/tint-orders OK (21 ms, items=0)"
+    },
+    {
+      "phase": "tint",
+      "msg": "/tint-orders/materials/list OK (17 ms, items=3)"
+    },
+    {
+      "phase": "performance",
+      "msg": "/sales 68 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/inventory 148 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/products 51 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "/vehicles 58 ms"
+    },
+    {
+      "phase": "performance",
+      "msg": "build frontend presente (1889 bytes index.html)"
+    },
+    {
+      "phase": "payroll_unit",
+      "msg": "Quincenas 9/24 validadas (pytest)"
+    }
+  ],
+  "failed": [],
+  "warnings": [
+    {
+      "phase": "performance",
+      "msg": "vehicleCatalog.json grande: 1.75 MB"
+    }
+  ]
+}

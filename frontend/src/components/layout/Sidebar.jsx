@@ -42,6 +42,7 @@ import {
   Eye,
   PanelsTopLeft,
   LogOut,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -55,18 +56,21 @@ import { APP_ENV } from "../../lib/env";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["gerencia", "recursos_humanos"] },
   { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
-  { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "cajero", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "programador", "cajero"] },
   { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
   { name: "Despacho", href: "/dispatch", icon: PackageCheck, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
   { name: "Traslados de Productos", href: "/product-transfers", icon: ArrowRightLeft, roles: ["gerencia", "supervisor", "bodegas"] },
   { name: "Coord. Instalaciones", href: "/coordinator/instalaciones", icon: Wrench, roles: ["gerencia", "supervisor", "coordinador_instalaciones"] },
   { name: "Coord. Polarizados", href: "/coordinator/polarizados", icon: Palette, roles: ["gerencia", "supervisor", "coordinador_polarizados"] },
+  { name: "Kiosko Técnico", href: "/technician", icon: Smartphone, roles: ["instalaciones", "instalador", "electrico", "polarizador"] },
   { name: "Órdenes de Trabajo", href: "/work-orders", icon: Wrench, roles: ["gerencia", "supervisor", "instalaciones", "electrico"] },
   { name: "Mis Trabajos Realizados", href: "/my-completed-jobs", icon: ClipboardList, roles: ["gerencia", "supervisor", "instalaciones", "electrico", "polarizador", "coordinador_instalaciones", "coordinador_polarizados"] },
   { name: "Polarizados", href: "/tint-orders", icon: Palette, roles: ["gerencia", "supervisor", "instalaciones", "polarizador"] },
   { name: "Calendario", href: "/calendar", icon: Calendar, roles: ["gerencia", "supervisor", "instalaciones"] },
   { name: "Control de Calidad", href: "/quality-control", icon: ClipboardCheck, roles: ["gerencia", "supervisor", "coordinador_instalaciones"] },
-  { name: "KDS", href: "/kds", icon: Monitor, roles: ["all"] },
+  { name: "KDS Bodega", href: "/kds/bodega", icon: Monitor, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
+  { name: "KDS Instalaciones", href: "/kds/instalaciones", icon: Monitor, roles: ["gerencia", "supervisor", "instalaciones", "electrico", "coordinador_instalaciones"] },
+  { name: "KDS Polarizados", href: "/kds/polarizados", icon: Monitor, roles: ["gerencia", "supervisor", "polarizador", "coordinador_polarizados"] },
   { name: "Entregas", href: "/deliveries", icon: Truck, roles: ["gerencia", "supervisor", "transporte"] },
   { name: "Créditos", href: "/credits", icon: CreditCard, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Devoluciones", href: "/returns", icon: RotateCcw, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
@@ -118,12 +122,16 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
     "/approvals": "approvals",
     "/coordinator/instalaciones": "coordinator_instalaciones",
     "/coordinator/polarizados": "coordinator_polarizados",
+    "/technician": "work_orders",
     "/work-orders": "work_orders",
     "/my-completed-jobs": "technician_completed_jobs",
     "/tint-orders": "tint_orders",
     "/calendar": "calendar",
     "/quality-control": "quality_control",
     "/kds": "kds",
+    "/kds/bodega": "kds",
+    "/kds/instalaciones": "kds",
+    "/kds/polarizados": "kds",
     "/deliveries": "deliveries",
     "/credits": "credits",
     "/returns": "returns",
@@ -146,7 +154,7 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
       if (!canSeeDashboard) return false;
     }
 
-    if (item.href === "/kds" && user?.role === "cajero") return false;
+    if (item.href.startsWith("/kds") && user?.role === "cajero") return false;
     const roleAllowed = item.roles.includes("all") || hasRole(item.roles);
     if (!roleAllowed) return false;
     const permissionKey = routePermissionMap[item.href];

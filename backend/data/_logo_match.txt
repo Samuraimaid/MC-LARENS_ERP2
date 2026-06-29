@@ -1,0 +1,13 @@
+mundo_ref vs left_half diff=179.81
+mundo_ref vs right_half diff=154.68
+  -> mundo likely on RIGHT
+
+topcar_ref vs left_half diff=185.52
+topcar_ref vs right_half diff=155.73
+  -> topcar likely on RIGHT
+
+mundo-logo-label.png vs left_half diff=76.09
+mundo-logo-label.png vs right_half diff=2.62
+
+topcar-logo-label.png vs left_half diff=18.55
+topcar-logo-label.png vs right_half diff=82.60

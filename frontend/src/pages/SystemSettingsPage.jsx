@@ -13,11 +13,21 @@ import { Switch } from "../components/ui/switch";
 import { toast } from "sonner";
 import { 
   DollarSign, RefreshCw, Globe, Bell, Printer, 
-  CheckCircle2, ArrowRightLeft, Save, Download
+  CheckCircle2, ArrowRightLeft, Save, Download, AlertCircle, Barcode
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import {
+  fetchLabelPrinterSetup,
+  installLabelPrinterStartupTask,
+  printLabelPrinterTest,
+  refreshLabelPrinterStatus,
+} from "@/lib/labelPrinterSetup";
 
 export function SystemSettingsPage() {
+  const { hasPermission } = useAuth();
+  const canManageSystemSettings = hasPermission("system_settings", "view");
+  const canInstallLabelPrinter = hasPermission("system_settings", "create");
   const [currencies, setCurrencies] = useState({});
   const [rates, setRates] = useState({});
   const [systemCurrency, setSystemCurrency] = useState("USD");
@@ -34,6 +44,13 @@ export function SystemSettingsPage() {
   
   // Rate update form
   const [editingRate, setEditingRate] = useState({ from: "USD", to: "EUR", rate: "" });
+  const [labelPrinterSetup, setLabelPrinterSetup] = useState(null);
+  const [labelPrinterLoading, setLabelPrinterLoading] = useState(false);
+  const [labelPrinterInstalling, setLabelPrinterInstalling] = useState(false);
+  const [labelPrinterTesting, setLabelPrinterTesting] = useState(false);
+  const [stationName, setStationName] = useState("PC Bodega");
+  const [labelPrinterWarehouseId, setLabelPrinterWarehouseId] = useState("");
+  const [warehouses, setWarehouses] = useState([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -156,6 +173,102 @@ export function SystemSettingsPage() {
       fetchData();
     } catch (error) {
       toast.error("Error al actualizar tasa");
+    }
+  };
+
+  const loadLabelPrinterSetup = useCallback(async () => {
+    if (!canManageSystemSettings) return;
+    setLabelPrinterLoading(true);
+    try {
+      const data = await fetchLabelPrinterSetup();
+      setLabelPrinterSetup(data);
+      if (data?.stored?.station_name) {
+        setStationName(data.stored.station_name);
+      }
+      if (data?.stored?.warehouse_id) {
+        setLabelPrinterWarehouseId(data.stored.warehouse_id);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo cargar configuración de etiquetas");
+    } finally {
+      setLabelPrinterLoading(false);
+    }
+  }, [canManageSystemSettings]);
+
+  const loadWarehouses = useCallback(async () => {
+    if (!canManageSystemSettings) return;
+    try {
+      const response = await axios.get(`${API}/warehouses`, { withCredentials: true });
+      const rows = Array.isArray(response.data) ? response.data : response.data?.warehouses || [];
+      setWarehouses(rows);
+      setLabelPrinterWarehouseId((current) => current || rows[0]?.warehouse_id || "");
+    } catch (error) {
+      console.error("Error loading warehouses:", error);
+    }
+  }, [canManageSystemSettings]);
+
+  useEffect(() => {
+    loadLabelPrinterSetup();
+    loadWarehouses();
+  }, [loadLabelPrinterSetup, loadWarehouses]);
+
+  const handleRefreshLabelPrinter = async () => {
+    setLabelPrinterLoading(true);
+    try {
+      await refreshLabelPrinterStatus();
+      await loadLabelPrinterSetup();
+      toast.success("Estado de impresora actualizado");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo verificar la impresora");
+    } finally {
+      setLabelPrinterLoading(false);
+    }
+  };
+
+  const handleTestLabelPrint = async () => {
+    if (!canInstallLabelPrinter) {
+      toast.error("No tienes permiso para probar la impresora de bodega");
+      return;
+    }
+    setLabelPrinterTesting(true);
+    try {
+      const result = await printLabelPrinterTest({
+        station_name: stationName.trim() || "PC Bodega",
+        warehouse_id: labelPrinterWarehouseId || undefined,
+      });
+      await loadLabelPrinterSetup();
+      toast.success(result.message || "Etiqueta de prueba enviada");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo imprimir la etiqueta de prueba");
+    } finally {
+      setLabelPrinterTesting(false);
+    }
+  };
+
+  const handleInstallLabelStartupTask = async () => {
+    if (!canInstallLabelPrinter) {
+      toast.error("No tienes permiso para configurar la impresora de bodega");
+      return;
+    }
+    setLabelPrinterInstalling(true);
+    try {
+      const result = await installLabelPrinterStartupTask({
+        station_name: stationName.trim() || "PC Bodega",
+        warehouse_id: labelPrinterWarehouseId || undefined,
+      });
+      setLabelPrinterSetup((prev) => ({
+        ...(prev || {}),
+        setup: result.setup,
+        stored: result.stored,
+        steps: (prev?.steps || []).map((step) =>
+          step.id === "autostart" ? { ...step, complete: true } : step
+        ),
+      }));
+      toast.success(result.message || "Inicio automático configurado");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo registrar la tarea automática");
+    } finally {
+      setLabelPrinterInstalling(false);
     }
   };
 
@@ -457,6 +570,174 @@ export function SystemSettingsPage() {
 
         {/* Printer Tab */}
         <TabsContent value="printer" className="space-y-6">
+          {canManageSystemSettings ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Barcode className="h-5 w-5" />
+                  Impresora de Etiquetas (Bodega / Almacén)
+                </CardTitle>
+                <CardDescription>
+                  Instalación de Xprinter XP-460B con etiquetas 50×100 mm horizontales e inicio automático del puente USB
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border p-3">
+                    <div className="text-sm font-medium">Puente local</div>
+                    <div className="mt-2">
+                      {labelPrinterSetup?.setup?.bridge_reachable ? (
+                        <Badge className="bg-emerald-100 text-emerald-900 hover:bg-emerald-100">
+                          <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                          Activo
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900">
+                          <AlertCircle className="mr-1 h-3.5 w-3.5" />
+                          No detectado
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <div className="text-sm font-medium">Impresora USB</div>
+                    <div className="mt-2">
+                      {labelPrinterSetup?.setup?.connected ? (
+                        <Badge className="bg-emerald-100 text-emerald-900 hover:bg-emerald-100">
+                          <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                          {labelPrinterSetup?.setup?.printer_name || "Conectada"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900">
+                          <AlertCircle className="mr-1 h-3.5 w-3.5" />
+                          No conectada
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Bodega asociada</Label>
+                    <Select
+                      value={labelPrinterWarehouseId || undefined}
+                      onValueChange={(value) => {
+                        setLabelPrinterWarehouseId(value);
+                        const selected = warehouses.find((entry) => entry.warehouse_id === value);
+                        if (selected?.name) {
+                          setStationName(selected.name);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar bodega" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {warehouses.map((warehouse) => (
+                          <SelectItem key={warehouse.warehouse_id} value={warehouse.warehouse_id}>
+                            {warehouse.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nombre de estación / PC de bodega</Label>
+                    <Input
+                      value={stationName}
+                      onChange={(event) => setStationName(event.target.value)}
+                      placeholder="Ej: PC-Bodega-Central"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-lg border bg-muted/20 p-4">
+                  <h4 className="font-medium mb-3">Checklist de instalación</h4>
+                  <ol className="space-y-2 text-sm">
+                    {(labelPrinterSetup?.steps || []).map((step) => (
+                      <li key={step.id} className="flex items-start gap-2">
+                        {step.complete ? (
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />
+                        )}
+                        <span>{step.label}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {labelPrinterSetup?.setup?.port_issue === "virtual_file_port" ? (
+                  <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+                    <p className="font-medium">Puerto FILE detectado — no imprimirá físicamente</p>
+                    <p className="mt-1">
+                      Windows abre un cuadro para guardar archivo. En Propiedades de la impresora Xprinter XP-460B,
+                      pestaña <strong>Puertos</strong>, activa <strong>USB00x</strong> y desactiva <strong>FILE:</strong>.
+                    </p>
+                  </div>
+                ) : null}
+
+                {!labelPrinterSetup?.setup?.bridge_reachable ? (
+                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground">Paso previo en la PC del almacén</p>
+                    <p className="mt-1">
+                      Ejecuta una vez: <code>scripts/start-label-print-bridge.ps1</code>
+                    </p>
+                    <p className="mt-1">
+                      Luego vuelve aquí para registrar el inicio automático.
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefreshLabelPrinter}
+                    disabled={labelPrinterLoading}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${labelPrinterLoading ? "animate-spin" : ""}`} />
+                    Verificar conexión
+                  </Button>
+                  <Button
+                    onClick={handleInstallLabelStartupTask}
+                    disabled={
+                      !canInstallLabelPrinter
+                      || labelPrinterInstalling
+                      || !labelPrinterSetup?.setup?.bridge_reachable
+                      || labelPrinterSetup?.setup?.autostart_configured
+                    }
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    {labelPrinterSetup?.setup?.autostart_configured
+                      ? "Inicio automático ya configurado"
+                      : "Registrar inicio automático"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleTestLabelPrint}
+                    disabled={
+                      !canInstallLabelPrinter
+                      || labelPrinterTesting
+                      || !labelPrinterSetup?.setup?.bridge_reachable
+                      || !labelPrinterSetup?.setup?.connected
+                    }
+                  >
+                    <Barcode className="mr-2 h-4 w-4" />
+                    {labelPrinterTesting ? "Imprimiendo prueba..." : "Imprimir etiqueta de prueba"}
+                  </Button>
+                </div>
+
+                {labelPrinterSetup?.stored?.startup_task_installed_at ? (
+                  <p className="text-xs text-muted-foreground">
+                    Última configuración: {labelPrinterSetup.stored.installed_by_name || "Sistema"} ·{" "}
+                    {new Date(labelPrinterSetup.stored.startup_task_installed_at).toLocaleString()}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

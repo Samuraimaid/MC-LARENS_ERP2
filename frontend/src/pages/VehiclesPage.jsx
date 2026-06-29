@@ -15,14 +15,17 @@ import { cn } from "../lib/utils";
 import { toast } from "sonner";
 import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
-import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import {
-  getVehicleOptionsByBrandYear,
+  getVehicleSelectOptionsByBrandYear,
   getVehicleYearsByBrand,
+  getCatalogVehiclePayload,
+  isPickupCatalogModel,
   isValidVehicleSelection,
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
+import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
+import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
 
 export function VehiclesPage() {
   const [vehicles, setVehicles] = useState([]);
@@ -42,14 +45,19 @@ export function VehiclesPage() {
     model: "",
     year: "",
     color: "",
+    vehicle_cab_variant: "",
   });
 
   const navigate = useNavigate();
   const brandOptions = VEHICLE_CATALOG_BRANDS;
   const yearOptions = useMemo(() => getVehicleYearsByBrand(formData.brand), [formData.brand]);
   const modelOptions = useMemo(
-    () => getVehicleOptionsByBrandYear(formData.brand, formData.year),
+    () => getVehicleSelectOptionsByBrandYear(formData.brand, formData.year),
     [formData.brand, formData.year]
+  );
+  const showCabVariant = useMemo(
+    () => isPickupCatalogModel(formData.brand, formData.model),
+    [formData.brand, formData.model]
   );
 
   const normalize = (str = '') => {
@@ -90,14 +98,22 @@ export function VehiclesPage() {
       toast.error("Selecciona marca, año y modelo desde la lista");
       return;
     }
+    if (showCabVariant && !formData.vehicle_cab_variant) {
+      toast.error("Selecciona el tipo de cabina para esta camioneta");
+      return;
+    }
     try {
+      const catalogVehicle = getCatalogVehiclePayload(formData.brand, formData.model, {
+        vehicleCabVariant: formData.vehicle_cab_variant,
+      }) || {};
       await axios.post(`${API}/vehicles`, {
         ...formData,
         year: parseInt(formData.year),
+        ...catalogVehicle,
       }, { withCredentials: true });
       toast.success("Vehículo registrado");
       setShowNewVehicle(false);
-      setFormData({ customer_id: "", plate: "", vin: "", brand: "", model: "", year: "", color: "" });
+      setFormData({ customer_id: "", plate: "", vin: "", brand: "", model: "", year: "", color: "", vehicle_cab_variant: "" });
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al registrar");
@@ -242,7 +258,7 @@ export function VehiclesPage() {
                   <Label>Marca *</Label>
                   <SearchableSelect
                     value={formData.brand}
-                    onChange={(v) => setFormData({ ...formData, brand: v, year: "", model: "" })}
+                    onChange={(v) => setFormData({ ...formData, brand: v, year: "", model: "", vehicle_cab_variant: "" })}
                     options={brandOptions}
                     placeholder="Seleccionar marca"
                     searchPlaceholder="Buscar marca..."
@@ -252,7 +268,7 @@ export function VehiclesPage() {
                   <Label>Año *</Label>
                   <SearchableSelect
                     value={String(formData.year || "")}
-                    onChange={(v) => setFormData({ ...formData, year: v, model: "" })}
+                    onChange={(v) => setFormData({ ...formData, year: v, model: "", vehicle_cab_variant: "" })}
                     options={yearOptions}
                     placeholder="Seleccionar año"
                     searchPlaceholder="Buscar año..."
@@ -263,7 +279,7 @@ export function VehiclesPage() {
                   <Label>Modelo *</Label>
                   <SearchableSelect
                     value={formData.model}
-                    onChange={(v) => setFormData({ ...formData, model: v })}
+                    onChange={(v) => setFormData({ ...formData, model: v, vehicle_cab_variant: "" })}
                     options={modelOptions}
                     placeholder="Seleccionar modelo"
                     searchPlaceholder="Buscar modelo..."
@@ -271,6 +287,12 @@ export function VehiclesPage() {
                   />
                 </div>
               </div>
+              {showCabVariant && (
+                <VehicleCabVariantSelect
+                  value={formData.vehicle_cab_variant}
+                  onChange={(value) => setFormData({ ...formData, vehicle_cab_variant: value })}
+                />
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Color</Label>
@@ -379,13 +401,9 @@ export function VehiclesPage() {
                       : "border-emerald-200 bg-emerald-100 text-emerald-800";
 
               return (
-              <Card key={vehicle.vehicle_id} className={`group h-full overflow-hidden shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
-                <CardHeader className="gap-4 pb-4">
-                  <img
-                    src={getVehicleThumbnail(vehicle)}
-                    alt={`${vehicle.brand || "Vehículo"} ${vehicle.model || ""}`.trim()}
-                    className="mb-1 h-32 w-full rounded-md bg-muted/30 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                  />
+              <Card key={vehicle.vehicle_id} className={`group relative h-full overflow-hidden shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
+                <VehicleThumbnailWatermark vehicle={vehicle} />
+                <CardHeader className="relative gap-4 pb-4">
                   <CardTitle className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 flex-1 items-start gap-3">
                       <Badge variant="outline" className={`font-mono font-bold text-lg py-1 px-2 ${plateTone}`}>{vehicle.plate}</Badge>

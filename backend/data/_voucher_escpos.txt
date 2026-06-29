@@ -1,0 +1,64 @@
+
+@
+a
+
+E
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+
+E
+
+a
+==========================================
+================================================
+              MUNDO DE ACCESORIOS               
+          VOUCHER DE VENTA (NO FISCAL)          
+================================================
+Factura: INV-20260627-0026
+Fecha: 2026-06-27
+Cliente: Mario Augusto Flores
+------------------------------------------------
+Radio Android 10"   1 x  252.00
+                     Inst:NO   252.00
+Camara de Reversa   1 x   45.00
+                     Inst:NO    45.00
+------------------------------------------------
+Subtotal:                          297.00
+IVA:                              1626.08
+TOTAL:                           12466.58
+------------------------------------------------
+Pago: Efectivo
+Plan acordado:
+  Efectivo NIO 12466.58
+------------------------------------------------
+                ESCANEAR EN CAJA                
+               INV-20260627-0026                
+           Valido hasta cobro en caja           
+              NO ES FACTURA FISCAL              
+================================================
+------------------------------------------
+
+a
+
+E
+ESCANEAR EN CAJA
+
+E
+
+hd
+w
+
+H
+
+kI
+INV-20260627-0026
+INV-20260627-0026
+
+a
+Valido hasta cobro en caja
+NO ES FACTURA FISCAL
+
+
+
+
+V

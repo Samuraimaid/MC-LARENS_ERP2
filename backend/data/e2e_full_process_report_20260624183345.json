@@ -1,0 +1,244 @@
+{
+  "run_tag": "20260624183345",
+  "phases": {
+    "auth": {
+      "ok": [
+        "Gerencia: Xinon"
+      ],
+      "failed": []
+    },
+    "preflight": {
+      "ok": [
+        "API root: MUNDO DE ACCESORIOS ERP API",
+        "Mundo de Accesorios (branch_main): inst=True tint=True",
+        "TopCar El Calvario (branch_north): inst=False tint=False",
+        "TopCar La Tigre (branch_south): inst=False tint=False",
+        "3 bodegas registradas"
+      ],
+      "failed": []
+    },
+    "catalog": {
+      "ok": [
+        "Clientes=40 Vehículos=120 Productos=26 Inventario=49",
+        "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001",
+        "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+      ],
+      "failed": []
+    },
+    "quotation": {
+      "ok": [
+        "Cotización creada: QUO-20260624-0004 total=18888.75",
+        "Cotización QUO-20260624-0004 aprobada",
+        "Cotización visible en listado"
+      ],
+      "failed": []
+    },
+    "inventory": {
+      "ok": [
+        "Ingreso +2 unidades: qty=9 suggest_labels=True",
+        "Stock verificado: 7 -> 9",
+        "Transferencia wh_main -> wh_topcar_calvario: 1 unidad"
+      ],
+      "failed": []
+    },
+    "kds": {
+      "ok": [
+        "KDS bodega: 0 registros",
+        "KDS instalaciones: 0 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 0, 'instalaciones': 0, 'electrico': 99, 'polarizados': 0}",
+        "  departamento 'bodega': 0 items",
+        "  departamento 'instalaciones': 0 items",
+        "  departamento 'polarizados': 0 items"
+      ],
+      "failed": []
+    },
+    "workflow": {
+      "ok": [
+        "e2e_full_workflow_live.py completado sin fallos",
+        "Sale IDs desde e2e_workflow_report_20260624183347.json: 5"
+      ],
+      "failed": []
+    },
+    "kds-post-sale": {
+      "ok": [
+        "KDS bodega: 5 registros",
+        "KDS instalaciones: 12 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 5, 'instalaciones': 1, 'electrico': 99, 'polarizados': 0}",
+        "  departamento 'bodega': 5 items",
+        "  departamento 'instalaciones': 1 items",
+        "  departamento 'polarizados': 0 items",
+        "Órdenes instalación KDS para ventas E2E: 1",
+        "Despachos KDS bodega para ventas E2E: 5"
+      ],
+      "failed": []
+    },
+    "cashier": {
+      "ok": [
+        "e2e_cashier_features.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "cancel-sale": {
+      "ok": [
+        "e2e_cancel_sale_flow.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "unit-tests": {
+      "ok": [
+        "test_product_labels.py: todos pasaron"
+      ],
+      "failed": []
+    }
+  },
+  "ok": [
+    {
+      "phase": "auth",
+      "msg": "Gerencia: Xinon"
+    },
+    {
+      "phase": "preflight",
+      "msg": "API root: MUNDO DE ACCESORIOS ERP API"
+    },
+    {
+      "phase": "preflight",
+      "msg": "Mundo de Accesorios (branch_main): inst=True tint=True"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar El Calvario (branch_north): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar La Tigre (branch_south): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "3 bodegas registradas"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Clientes=40 Vehículos=120 Productos=26 Inventario=49"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización creada: QUO-20260624-0004 total=18888.75"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización QUO-20260624-0004 aprobada"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización visible en listado"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Ingreso +2 unidades: qty=9 suggest_labels=True"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Stock verificado: 7 -> 9"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Transferencia wh_main -> wh_topcar_calvario: 1 unidad"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS bodega: 0 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS instalaciones: 0 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS tablero: {'bodega': 0, 'instalaciones': 0, 'electrico': 99, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'bodega': 0 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'instalaciones': 0 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "workflow",
+      "msg": "e2e_full_workflow_live.py completado sin fallos"
+    },
+    {
+      "phase": "workflow",
+      "msg": "Sale IDs desde e2e_workflow_report_20260624183347.json: 5"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS bodega: 5 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS instalaciones: 12 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS tablero: {'bodega': 5, 'instalaciones': 1, 'electrico': 99, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'bodega': 5 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'instalaciones': 1 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "Órdenes instalación KDS para ventas E2E: 1"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "Despachos KDS bodega para ventas E2E: 5"
+    },
+    {
+      "phase": "cashier",
+      "msg": "e2e_cashier_features.py completado sin fallos"
+    },
+    {
+      "phase": "cancel-sale",
+      "msg": "e2e_cancel_sale_flow.py completado sin fallos"
+    },
+    {
+      "phase": "unit-tests",
+      "msg": "test_product_labels.py: todos pasaron"
+    }
+  ],
+  "failed": [],
+  "fixed": []
+}

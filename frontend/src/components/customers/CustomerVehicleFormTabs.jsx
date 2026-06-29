@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import SearchableSelect from "@/components/ui/searchable-select";
+import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
+import { isPickupCatalogModel } from "@/lib/vehicleCatalog";
 
 export default function CustomerVehicleFormTabs({
   formData,
@@ -64,6 +66,7 @@ export default function CustomerVehicleFormTabs({
   };
 
   const isCompany = formData.customer_type === "empresa";
+  const showCabVariant = isPickupCatalogModel(formData.brand, formData.model);
 
   return (
     <Tabs
@@ -302,7 +305,7 @@ export default function CustomerVehicleFormTabs({
             <Label>Marca *</Label>
             <SearchableSelect
               value={formData.brand}
-              onChange={(value) => updateForm({ brand: value, year: "", model: "" })}
+              onChange={(value) => updateForm({ brand: value, year: "", model: "", vehicle_cab_variant: "" })}
               options={vehicleBrands}
               placeholder="Seleccionar marca"
               searchPlaceholder="Buscar marca..."
@@ -313,7 +316,7 @@ export default function CustomerVehicleFormTabs({
             <Label>Año *</Label>
             <SearchableSelect
               value={String(formData.year || "")}
-              onChange={(value) => updateForm({ year: value, model: "" })}
+              onChange={(value) => updateForm({ year: value, model: "", vehicle_cab_variant: "" })}
               options={yearOptions}
               placeholder="Seleccionar año"
               searchPlaceholder="Buscar año..."
@@ -325,7 +328,7 @@ export default function CustomerVehicleFormTabs({
             <Label>Modelo *</Label>
             <SearchableSelect
               value={formData.model}
-              onChange={(value) => updateForm({ model: value })}
+              onChange={(value) => updateForm({ model: value, vehicle_cab_variant: "" })}
               options={modelOptions}
               placeholder="Seleccionar modelo"
               searchPlaceholder="Buscar modelo..."
@@ -333,6 +336,13 @@ export default function CustomerVehicleFormTabs({
             />
           </div>
         </div>
+
+        {showCabVariant ? (
+          <VehicleCabVariantSelect
+            value={formData.vehicle_cab_variant}
+            onChange={(value) => updateForm({ vehicle_cab_variant: value })}
+          />
+        ) : null}
 
         <div>
           <Label>Color</Label>

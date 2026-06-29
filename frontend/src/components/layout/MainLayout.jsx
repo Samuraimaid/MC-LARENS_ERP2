@@ -19,7 +19,11 @@ import { toast } from "sonner";
 import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, User, Users, RefreshCw, Unlock, X } from "lucide-react";
 import { useDevice } from "../../hooks/useDevice";
 import { BottomNav } from "./BottomNav";
-import { isCashierRole as isCashierRoleHelper } from "../../lib/roleHome";
+import {
+  isCashierKioskRole,
+  isSellerRole as isSellerRoleHelper,
+  usesRestrictedNavigation,
+} from "../../lib/roleHome";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -122,9 +126,9 @@ export function MainLayout() {
     ? new Date(buildTime).toLocaleString("es-NI", { dateStyle: "short", timeStyle: "short" })
     : "hora desconocida";
   const isMobile = viewportWidth < 1024;
-  const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
-  const isCashierRole = isCashierRoleHelper(user?.role);
-  const hideNavigationChrome = isSellerRole || isCashierRole;
+  const isSellerRole = isSellerRoleHelper(user?.role);
+  const isCashierKiosk = isCashierKioskRole(user?.role);
+  const hideNavigationChrome = usesRestrictedNavigation(user?.role);
   const isWorkbenchRoute = location.pathname === "/workbench";
   const workbenchTabSet = new Set(WORKBENCH_TAB_ITEMS.map((tab) => tab.key));
   const requestedWorkbenchTab = String(new URLSearchParams(location.search).get("tab") || "sales");
@@ -237,7 +241,7 @@ export function MainLayout() {
   }, [isSellerRole]);
 
   useEffect(() => {
-    if (isCashierRole) return undefined;
+    if (isCashierKiosk) return undefined;
 
     let disposed = false;
 
@@ -261,7 +265,7 @@ export function MainLayout() {
       disposed = true;
       window.clearInterval(intervalId);
     };
-  }, [isCashierRole]);
+  }, [isCashierKiosk]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -275,11 +279,11 @@ export function MainLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!isCashierRole) return;
+    if (!isCashierKiosk) return;
     if (location.pathname !== "/cashier") {
       navigate("/cashier", { replace: true });
     }
-  }, [isCashierRole, location.pathname, navigate]);
+  }, [isCashierKiosk, location.pathname, navigate]);
 
   useEffect(() => {
     if (!user) return;
@@ -678,7 +682,7 @@ export function MainLayout() {
                 >
                   {resolvedMode === "dark" ? <Sun className="h-4 w-4 icon-spring" /> : <Moon className="h-4 w-4 icon-spring" />}
                 </Button>
-                {isCashierRole ? (
+                {isCashierKiosk ? (
                   <Button
                     variant="ghost"
                     size="icon"

@@ -101,6 +101,13 @@ export const playSelectionFeedbackSound = () => {
   ], 170);
 };
 
+export const playBarcodeScanSound = () => {
+  playPattern([
+    { frequency: 1567.98, endFrequency: 1760, offset: 0, duration: 0.08, peak: 0.09, type: "sine" },
+    { frequency: 2093, endFrequency: 2349.32, offset: 0.045, duration: 0.1, peak: 0.08, type: "triangle" },
+  ], 180);
+};
+
 export const playCreationSuccessSound = () => {
   playPattern([
     { frequency: 1046.5, endFrequency: 1108.73, offset: 0, duration: 0.09, peak: 0.06, type: "triangle" },

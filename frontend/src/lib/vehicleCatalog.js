@@ -1,4 +1,6 @@
 import vehicleCatalogData from "@/data/vehicleCatalog.json";
+import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
+import { resolveCabVariantPayload } from "@/lib/vehicleCabVariant";
 
 const entries = Array.isArray(vehicleCatalogData?.entries) ? vehicleCatalogData.entries : [];
 const CATALOG_MIN_YEAR = 1980;
@@ -119,17 +121,78 @@ export function getVehicleYearsByBrand(brand) {
   return uniqueSorted(years).sort((a, b) => Number(b) - Number(a));
 }
 
+const buildVehicleSelectOption = (entry) => {
+  const descriptor = getDescriptor(entry);
+  const years = descriptor.match(/\[(.*?)\]/)?.[1]?.trim() || null;
+  const modelLine = descriptor.replace(/\s*\[.*?\]\s*/, "").trim() || entry.model || entry.label;
+  const hintParts = [
+    years ? `Años ${years}` : null,
+    entry.engine ? `Motor ${entry.engine}` : null,
+    entry.vehicle_type_label || null,
+  ].filter(Boolean);
+
+  return {
+    value: entry.label,
+    label: modelLine,
+    hint: hintParts.join(" · "),
+  };
+};
+
 export function getVehicleOptionsByBrandYear(brand, year) {
+  return getVehicleSelectOptionsByBrandYear(brand, year).map((option) => option.value);
+}
+
+export function getVehicleSelectOptionsByBrandYear(brand, year) {
   if (!brand || !year) return [];
   const normalizedBrand = normalizeText(brand);
 
-  const labels = entries
+  const options = entries
     .filter((entry) => normalizeText(entry.brand) === normalizedBrand)
     .filter((entry) => yearInEntryRange(entry, year))
-    .map((entry) => entry.label)
-    .filter(Boolean);
+    .map((entry) => buildVehicleSelectOption(entry))
+    .filter((option) => option.value);
 
-  return uniqueSorted(labels).sort((a, b) => a.localeCompare(b, "es"));
+  const seen = new Set();
+  return options
+    .filter((option) => {
+      if (seen.has(option.value)) return false;
+      seen.add(option.value);
+      return true;
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, "es"));
+}
+
+export function findCatalogEntryForVehicle(brand, year, model) {
+  if (!brand) return null;
+  const normalizedBrand = normalizeText(brand);
+  const normalizedModel = normalizeText(model || "");
+
+  const exactLabel = entries.find(
+    (entry) => normalizeText(entry.brand) === normalizedBrand && entry.label === model
+  );
+  if (exactLabel) return exactLabel;
+
+  const candidates = entries.filter((entry) => {
+    if (normalizeText(entry.brand) !== normalizedBrand) return false;
+    if (year && !yearInEntryRange(entry, year)) return false;
+    const entryModel = normalizeText(entry.model || "");
+    const descriptorModel = normalizeText(getDescriptor(entry).replace(/\s*\[.*?\]\s*/, ""));
+    return normalizedModel
+      && (entryModel === normalizedModel || descriptorModel.includes(normalizedModel));
+  });
+
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1 && model) {
+    const labelMatch = candidates.find((entry) => normalizeText(entry.label).includes(normalizedModel));
+    if (labelMatch) return labelMatch;
+  }
+  return candidates[0] || null;
+}
+
+export function formatVehicleIdentityHint(brand, year, model) {
+  const entry = findCatalogEntryForVehicle(brand, year, model);
+  if (!entry) return "";
+  return buildVehicleSelectOption(entry).hint;
 }
 
 export function isValidVehicleSelection(brand, year, model) {
@@ -152,4 +215,112 @@ export function normalizeVehicleBrand(brand) {
   const normalized = normalizeText(brand);
   const exact = VEHICLE_CATALOG_BRANDS.find((candidate) => normalizeText(candidate) === normalized);
   return exact || brand;
+}
+
+const TYPE_LABEL_BY_SLUG = {
+  hatchback: "Hatchback",
+  sedan: "Sedán",
+  convertible: "Convertible",
+  suv: "SUV",
+  "station-wagon": "Station Wagon",
+  "camioneta-1-cabina": "Camioneta 1 Cabina",
+  "camioneta-cabina-y-media": "Camioneta Doble Cabina",
+  "microbus-carga": "Microbús de Carga",
+  "microbus-pasajeros": "Microbus de Pasajeros",
+  "camion-carga": "Camion de Carga",
+  cabezal: "Cabezal",
+};
+
+const MODEL_TYPE_RULES = [
+  [/\b(doble cabina|double cab|crew cab|crewman)\b/i, "camioneta-cabina-y-media"],
+  [/\b(cabina simple|single cab|pickup cabina simple)\b/i, "camioneta-1-cabina"],
+  [/\b(pickup)\b/i, "camioneta-1-cabina"],
+  [/\b(hatchback|hatch\/|hatch )\b/i, "hatchback"],
+  [/\b(suv|crossover)\b/i, "suv"],
+  [/\b(wagon|familiar)\b/i, "station-wagon"],
+  [/\b(sedan|sedán)\b/i, "sedan"],
+  [/\b(minivan|microbus)\b/i, "microbus-pasajeros"],
+  [/\b(van)\b/i, "microbus-carga"],
+];
+
+function inferSlugFromCatalogText(...parts) {
+  const combined = parts.filter(Boolean).join(" ");
+  if (!combined) return null;
+  for (const [pattern, slug] of MODEL_TYPE_RULES) {
+    if (pattern.test(combined)) return slug;
+  }
+  return null;
+}
+
+function descriptorTypeKey(brand, descriptor) {
+  if (!brand || !descriptor) return null;
+  return `${normalizeText(brand)}::${descriptor}`;
+}
+
+export function getDescriptorTypeProfile(brand, modelOrDescriptor) {
+  if (!brand || !modelOrDescriptor) return null;
+  const normalizedBrand = normalizeText(brand);
+  const byLabel = entries.find(
+    (entry) => normalizeText(entry.brand) === normalizedBrand && entry.label === modelOrDescriptor
+  );
+  const descriptor = byLabel?.descriptor || modelOrDescriptor;
+  const key = descriptorTypeKey(brand, descriptor);
+  return vehicleDescriptorTypes.entries?.[key] || null;
+}
+
+export function getCatalogEntryForModel(brand, model) {
+  if (!brand || !model) return null;
+  const normalizedBrand = normalizeText(brand);
+  return (
+    entries.find(
+      (entry) => normalizeText(entry.brand) === normalizedBrand && entry.label === model
+    ) || null
+  );
+}
+
+export function getVehicleTypeSlugFromCatalog(brand, model) {
+  const match = getCatalogEntryForModel(brand, model);
+  if (!match) return null;
+  if (match.vehicle_type_slug) return match.vehicle_type_slug;
+  if (match.thumbnail_slug) return match.thumbnail_slug;
+  const profile = getDescriptorTypeProfile(brand, match.descriptor || "");
+  return profile?.default_silhouette_slug || null;
+}
+
+export function inferVehicleTypeFromCatalog(brand, model) {
+  const match = getCatalogEntryForModel(brand, model);
+  if (!match) return null;
+  if (match.vehicle_type_label) return match.vehicle_type_label;
+  const slug = getVehicleTypeSlugFromCatalog(brand, model);
+  if (slug) return TYPE_LABEL_BY_SLUG[slug] || null;
+  const slugFromText = inferSlugFromCatalogText(match.descriptor, model, brand);
+  return slugFromText ? TYPE_LABEL_BY_SLUG[slugFromText] || null : null;
+}
+
+export function isPickupCatalogModel(brand, model) {
+  const slug = getVehicleTypeSlugFromCatalog(brand, model);
+  return slug === "camioneta-1-cabina" || slug === "camioneta-cabina-y-media";
+}
+
+export function getCatalogVehiclePayload(brand, model, options = {}) {
+  const match = getCatalogEntryForModel(brand, model);
+  if (!match) return null;
+  const slug = getVehicleTypeSlugFromCatalog(brand, model);
+  const payload = {
+    descriptor: match.descriptor || undefined,
+    vehicle_type: inferVehicleTypeFromCatalog(brand, model) || undefined,
+    vehicle_type_slug: slug || undefined,
+    thumbnail_slug: slug || undefined,
+    classification_source: match.classification_source || undefined,
+  };
+
+  const cabVariant = options.vehicleCabVariant || options.vehicle_cab_variant;
+  if (cabVariant && isPickupCatalogModel(brand, model)) {
+    const cabPayload = resolveCabVariantPayload(slug, cabVariant);
+    if (cabPayload) {
+      return { ...payload, ...cabPayload };
+    }
+  }
+
+  return payload;
 }

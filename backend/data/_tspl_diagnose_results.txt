@@ -1,0 +1,3 @@
+minimal_text: {"ok": true, "printer_name": "Xprinter XP-460B", "bytes_sent": 137, "message": "Etiquetas enviadas a la impresora"}
+full_50x100: {"ok": true, "printer_name": "Xprinter XP-460B", "bytes_sent": 305, "message": "Etiquetas enviadas a la impresora"}
+direction1: {"ok": true, "printer_name": "Xprinter XP-460B", "bytes_sent": 154, "message": "Etiquetas enviadas a la impresora"}

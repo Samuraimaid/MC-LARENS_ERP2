@@ -663,7 +663,10 @@ def main() -> int:
                 f"login {row['pin_login']} | marcación {row['pin_marcacion']}"
             )
 
-    out_path = f"/tmp/e2e_workflow_report_{RUN_TAG}.json"
+    from pathlib import Path
+    report_dir = Path(__file__).resolve().parents[1] / "data"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    out_path = str(report_dir / f"e2e_workflow_report_{RUN_TAG}.json")
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(REPORT, fh, ensure_ascii=False, indent=2)
     print(f"\nReporte JSON: {out_path}")

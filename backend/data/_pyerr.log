@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File [35m"<string>"[0m, line [35m1[0m, in [35m<module>[0m
+    [1;31mimport reportlab[0m; print('reportlab ok')
+    [1;31m^^^^^^^^^^^^^^^^[0m
+[1;35mModuleNotFoundError[0m: [35mNo module named 'reportlab'[0m

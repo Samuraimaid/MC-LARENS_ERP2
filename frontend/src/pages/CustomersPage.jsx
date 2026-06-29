@@ -20,7 +20,7 @@ import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSo
 import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import {
-  getVehicleOptionsByBrandYear,
+  getVehicleSelectOptionsByBrandYear,
   getVehicleYearsByBrand,
   isValidVehicleSelection,
   VEHICLE_CATALOG_BRANDS,
@@ -117,7 +117,7 @@ export function CustomersPage() {
     [formData.brand]
   );
   const formBrandModelOptions = useMemo(
-    () => getVehicleOptionsByBrandYear(formData.brand, formData.year),
+    () => getVehicleSelectOptionsByBrandYear(formData.brand, formData.year),
     [formData.brand, formData.year]
   );
   const editYearOptions = useMemo(
@@ -125,7 +125,7 @@ export function CustomersPage() {
     [vehicleForm.brand]
   );
   const editBrandModelOptions = useMemo(
-    () => getVehicleOptionsByBrandYear(vehicleForm.brand, vehicleForm.year),
+    () => getVehicleSelectOptionsByBrandYear(vehicleForm.brand, vehicleForm.year),
     [vehicleForm.brand, vehicleForm.year]
   );
 

@@ -25,8 +25,12 @@ test('cashier workbench shows abonos tab and customer search', async ({ page }) 
   await page.waitForURL(/\/cashier/, { timeout: 30000 });
   await expect(page.getByTestId('cashier-page')).toBeVisible();
 
-  const abonosTab = page.getByRole('tab', { name: /Abonos \/ Clientes/i });
+  const abonosTab = page.getByRole('tab', { name: /^Abonos$/i });
   await expect(abonosTab).toBeVisible();
+  await abonosTab.click();
+
+  await expect(page.getByPlaceholder(/Cliente, teléfono, placa o factura/i)).toBeVisible();
+  await expect(page.getByText('Clientes con saldo')).toBeVisible();
 
   const screenshotPath = path.join(__dirname, '..', 'test-results', 'cashier-abonos-tab.png');
   await page.screenshot({ path: screenshotPath, fullPage: true });

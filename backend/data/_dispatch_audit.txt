@@ -1,0 +1,176 @@
+{
+  "count": 48,
+  "sample": [
+    {
+      "_id": null,
+      "dispatch_id": "DSP-E7571916",
+      "sale_id": "sale_22fc78ba62a0",
+      "invoice_number": "INV-20260624-0023",
+      "reference_number": "INV-20260624-0023",
+      "customer_name": "Juan Carlos Perez",
+      "customer_phone": "8811-0137",
+      "requested_by": "user_d4c80a62e8c1",
+      "requested_by_name": "Julia Alan",
+      "warehouse_id": "wh_main",
+      "branch_id": "branch_main",
+      "warehouse_name": "Bodega Central",
+      "items": [
+        {
+          "product_id": "prod_def_001",
+          "product_name": "Defensa Delantera Toyota Hilux 2016-2023",
+          "product_sku": "DEF-TOY-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        }
+      ],
+      "status": "pending",
+      "priority": "normal",
+      "delivery_required": false,
+      "notes": "Venta: INV-20260624-0023",
+      "dispatch_type": "sale",
+      "sample_id": null,
+      "created_at": "2026-06-24T16:45:49.359229+00:00",
+      "started_at": null,
+      "completed_at": null,
+      "total_time_minutes": null,
+      "dispatchers": []
+    },
+    {
+      "_id": null,
+      "dispatch_id": "DSP-03BD400F",
+      "sale_id": "sale_a1ff32ecb14f",
+      "invoice_number": "INV-20260624-0021",
+      "reference_number": "INV-20260624-0021",
+      "customer_name": "Carlos Enrique Ruiz",
+      "customer_phone": "8815-0685",
+      "requested_by": "user_d4c80a62e8c1",
+      "requested_by_name": "Julia Alan",
+      "warehouse_id": "wh_main",
+      "branch_id": "branch_main",
+      "warehouse_name": "Bodega Central",
+      "items": [
+        {
+          "product_id": "prod_snk_001",
+          "product_name": "Snorkel Universal 4x4",
+          "product_sku": "SNK-UNI-001",
+          "product_image": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_alf_001",
+          "product_name": "Alfombras de Goma Universal 4pcs",
+          "product_sku": "ALF-UNI-001",
+          "product_image": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_for_001",
+          "product_name": "Forro de Tim\u00f3n Cuero Negro",
+          "product_sku": "FOR-TIM-001",
+          "product_image": "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_rad_001",
+          "product_name": "Radio Android 10\" Toyota Universal",
+          "product_sku": "RAD-AND-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_rad_002",
+          "product_name": "Pioneer AVH-Z9250BT 7\"",
+          "product_sku": "RAD-PIO-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_sen_001",
+          "product_name": "Sensores de Parqueo 8pcs con Display",
+          "product_sku": "SEN-PAR-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_alr_001",
+          "product_name": "Alarma Viper 5906V con GPS",
+          "product_sku": "ALR-VIP-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_dvr_001",
+          "product_name": "DVR Dual C\u00e1mara Dashcam 4K",
+          "product_sku": "DVR-DUA-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_def_001",
+          "product_name": "Defensa Delantera Toyota Hilux 2016-2023",
+          "product_sku": "DEF-TOY-001",
+          "product_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        },
+        {
+          "product_id": "prod_bar_001",
+          "product_name": "Barra Antivuelco Universal Pickup",
+          "product_sku": "BAR-UNI-001",
+          "product_image": "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400",
+          "quantity": 1,
+          "delivered": false,
+          "delivered_by": null,
+          "delivered_at": null
+        }
+      ],
+      "status": "pending",
+      "priority": "normal",
+      "delivery_required": false,
+      "notes": "Venta: INV-20260624-0021",
+      "dispatch_type": "sale",
+      "sample_id": null,
+      "created_at": "2026-06-24T16:45:46.170045+00:00",
+      "started_at": null,
+      "completed_at": null,
+      "total_time_minutes": null,
+      "dispatchers": []
+    }
+  ],
+  "statuses": [
+    "cancelled",
+    "pending"
+  ],
+  "priorities": [
+    "normal"
+  ]
+}

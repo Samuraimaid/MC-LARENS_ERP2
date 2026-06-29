@@ -6,9 +6,16 @@ import json
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import requests
+
+from backend.scripts.e2e_sale_helpers import (
+    build_sale_create_payload,
+    compute_sale_total_nio,
+    round2,
+)
 
 API_BASE = "http://127.0.0.1:8001/api"
 PIN_GERENCIA = "01011990"
@@ -18,6 +25,7 @@ BRANCH_ID = "branch_main"
 WAREHOUSE_ID = "wh_main"
 EXCHANGE_RATE = 36.5
 RUN_TAG = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+REPORT_DIR = Path(__file__).resolve().parents[2] / "backend" / "data"
 
 REPORT: Dict[str, Any] = {"run_tag": RUN_TAG, "ok": [], "failed": []}
 
@@ -62,7 +70,7 @@ def open_cash_session(cajero: ApiClient) -> str:
         json_body={
             "caja_id": caja_id,
             "denominaciones": [],
-            "tipo_cambio_usd_nio": 36.5,
+            "tipo_cambio_usd_nio": EXCHANGE_RATE,
             "observaciones": f"E2E cashier features {RUN_TAG}",
         },
     )
@@ -74,19 +82,7 @@ def open_cash_session(cajero: ApiClient) -> str:
     return str(r.json().get("session_id"))
 
 
-def pick_open_invoice(cajero: ApiClient) -> Optional[Dict[str, Any]]:
-    r = cajero.get("/caja/facturas", params={"tab": "abiertas", "branch_id": BRANCH_ID, "limit": 50})
-    if r.status_code != 200:
-        raise RuntimeError(f"No se pudieron listar facturas: {r.status_code} {r.text[:300]}")
-    rows = r.json().get("rows") or []
-    for row in rows:
-        pending = float(row.get("amount_pending") or 0)
-        if pending > 20:
-            return row
-    return rows[0] if rows else None
-
-
-def bootstrap_open_invoices(ventas: ApiClient) -> Dict[str, Any]:
+def pick_catalog(ventas: ApiClient) -> Dict[str, Any]:
     products = ventas.get("/products").json()
     inventory = ventas.get("/inventory").json()
     customers = ventas.get("/customers").json()
@@ -98,20 +94,18 @@ def bootstrap_open_invoices(ventas: ApiClient) -> Dict[str, Any]:
         stock_by_product[pid] = stock_by_product.get(pid, 0) + float(row.get("quantity") or 0)
 
     product_candidates = []
-    for p in products if isinstance(products, list) else []:
-        if p.get("product_type") == "service":
+    for product in products if isinstance(products, list) else []:
+        if product.get("product_type") == "service":
             continue
-        pid = p.get("product_id")
+        pid = product.get("product_id")
         stock = stock_by_product.get(pid, 0)
-        if stock >= 1 and float(p.get("price") or 0) > 0:
-            product_candidates.append((stock, p))
+        if stock >= 1 and float(product.get("price") or 0) > 0:
+            product_candidates.append((stock, product))
     product_candidates.sort(key=lambda row: row[0], reverse=True)
     if not product_candidates:
         raise RuntimeError("No hay productos con stock para crear factura de prueba")
-    product_row = product_candidates[0][1]
-    qty = 1 if product_candidates[0][0] < 2 else 2
 
-    customer = (customers[0] if isinstance(customers, list) and customers else None)
+    customer = customers[0] if isinstance(customers, list) and customers else None
     if not customer:
         raise RuntimeError("No hay clientes para crear factura de prueba")
 
@@ -120,62 +114,64 @@ def bootstrap_open_invoices(ventas: ApiClient) -> Dict[str, Any]:
         match = next((v for v in vehicles if v.get("customer_id") == customer.get("customer_id")), None)
         vehicle_id = (match or vehicles[0]).get("vehicle_id") if (match or vehicles) else None
 
-    base_payload = {
-        "customer_id": customer["customer_id"],
+    return {
+        "customer": customer,
         "vehicle_id": vehicle_id,
-        "items": [{
-            "product_id": product_row["product_id"],
-            "quantity": qty,
-            "discount": 0,
-            "unit_price": product_row.get("price"),
-            "warehouse_id": WAREHOUSE_ID,
-            "with_installation": False,
-        }],
-        "discount": 0,
-        "payment_type": "cash",
-        "payment_method": "cash",
-        "apply_iva": True,
-        "currency": "NIO",
-        "exchange_rate": EXCHANGE_RATE,
-        "notes": f"E2E cashier bootstrap {RUN_TAG}",
+        "product": product_candidates[0][1],
+        "product_candidates": [row[1] for row in product_candidates[:12]],
     }
 
-    def create_sale(extra: Dict[str, Any]) -> Dict[str, Any]:
-        last_error = ""
-        for _, candidate in product_candidates[:12]:
-            payload = {
-                **base_payload,
-                "items": [{
-                    **base_payload["items"][0],
-                    "product_id": candidate["product_id"],
-                    "unit_price": candidate.get("price"),
-                    "quantity": 1,
-                }],
-                **extra,
-            }
-            r = ventas.post("/sales", json_body=payload)
-            if r.status_code == 200:
-                return r.json()
-            last_error = r.text[:400]
-        raise RuntimeError(f"No se pudo crear factura: {last_error}")
 
-    plain_sale = create_sale({
-        "idempotency_key": f"e2e_cash_plain_{RUN_TAG}",
-        "notes": f"E2E cashier bootstrap {RUN_TAG}",
-    })
-    discount_sale = create_sale({
-        "discount": 5,
-        "supervisor_discount_preapproved": True,
-        "notes": f"E2E cashier bootstrap discount {RUN_TAG}",
-        "idempotency_key": f"e2e_cash_disc_{RUN_TAG}",
-    })
+def create_sale_with_plan(ventas: ApiClient, catalog: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+    customer = catalog["customer"]
+    product = catalog["product"]
+    last_error = ""
+    for candidate in catalog.get("product_candidates") or [product]:
+        payload = build_sale_create_payload(
+            customer_id=customer["customer_id"],
+            vehicle_id=catalog.get("vehicle_id"),
+            product_id=candidate["product_id"],
+            unit_price=float(candidate.get("price") or 0),
+            warehouse_id=WAREHOUSE_ID,
+            exchange_rate=EXCHANGE_RATE,
+            **kwargs,
+        )
+        response = ventas.post("/sales", payload)
+        if response.status_code == 200:
+            return response.json()
+        last_error = response.text[:400]
+    raise RuntimeError(f"No se pudo crear factura: {last_error}")
+
+
+def bootstrap_open_invoices(ventas: ApiClient, catalog: Dict[str, Any]) -> Dict[str, Any]:
+    plain_sale = create_sale_with_plan(
+        ventas,
+        catalog,
+        payment_method="cash",
+        notes=f"E2E cashier bootstrap {RUN_TAG}",
+        idempotency_key=f"e2e_cash_plain_{RUN_TAG}",
+    )
+    discount_sale = create_sale_with_plan(
+        ventas,
+        catalog,
+        payment_method="cash",
+        discount_percent=5,
+        supervisor_discount_preapproved=True,
+        notes=f"E2E cashier bootstrap discount {RUN_TAG}",
+        idempotency_key=f"e2e_cash_disc_{RUN_TAG}",
+    )
     return {"plain": plain_sale, "discount": discount_sale}
 
 
-def pick_discount_invoice(cajero: ApiClient) -> Optional[Dict[str, Any]]:
-    rows = cajero.get("/caja/facturas", params={"tab": "abiertas", "branch_id": BRANCH_ID, "limit": 80}).json().get("rows") or []
+def pick_cash_open_invoice(cajero: ApiClient) -> Optional[Dict[str, Any]]:
+    rows = cajero.get(
+        "/caja/facturas",
+        params={"tab": "abiertas", "branch_id": BRANCH_ID, "limit": 80},
+    ).json().get("rows") or []
     for row in rows:
-        if float(row.get("discounts_applied_amount") or 0) > 0 and float(row.get("amount_pending") or 0) > 0:
+        method = str(row.get("payment_method") or row.get("payment_type") or "").lower()
+        pending = float(row.get("amount_pending") or 0)
+        if method == "cash" and pending > 20:
             return row
     return None
 
@@ -186,33 +182,43 @@ def main() -> int:
     ventas = ApiClient("ventas")
     cajero.login(PIN_CAJERO)
     gerencia.login(PIN_GERENCIA)
+    ventas.login(PIN_VENTAS)
 
     session_id = open_cash_session(cajero)
     ok(f"Sesión de caja activa: {session_id}")
 
-    invoice = pick_open_invoice(cajero)
-    if not invoice:
-        ventas.login(PIN_VENTAS)
-        created = bootstrap_open_invoices(ventas)
-        ok(f"Facturas de prueba creadas: {created['plain'].get('invoice_number')} y {created['discount'].get('invoice_number')}")
-        invoice = pick_open_invoice(cajero)
-    if not invoice:
-        fail("No hay facturas abiertas para probar abono parcial")
-        return 1
+    catalog = pick_catalog(ventas)
+    partial_sale = create_sale_with_plan(
+        ventas,
+        catalog,
+        payment_method="cash",
+        notes=f"E2E abono parcial dedicado {RUN_TAG}",
+        idempotency_key=f"e2e_partial_{RUN_TAG}",
+    )
+    ok(f"Factura cash para abono parcial: {partial_sale.get('invoice_number')}")
+
+    invoice = pick_cash_open_invoice(cajero)
+    if not invoice or str(invoice.get("sale_id")) != str(partial_sale.get("sale_id")):
+        invoice = {
+            "sale_id": partial_sale["sale_id"],
+            "customer_name": partial_sale.get("customer_name"),
+            "payment_method": "cash",
+            "amount_pending": partial_sale.get("net_to_collect") or partial_sale.get("total"),
+        }
 
     sale_id = str(invoice["sale_id"])
-    pending = float(invoice.get("amount_pending") or 0)
-    partial = round(max(min(pending * 0.4, pending - 1), 1), 2)
-    if partial <= 0:
-        partial = pending
+    pending = float(invoice.get("amount_pending") or partial_sale.get("net_to_collect") or partial_sale.get("total") or 0)
+    partial_amount = round2(max(min(pending * 0.4, pending - 1), 1))
+    payment_method = str(invoice.get("payment_method") or partial_sale.get("payment_method") or "cash")
 
     r_partial = cajero.post(
         f"/caja/facturas/{sale_id}/cobrar",
         json_body={
             "sesion_id": session_id,
-            "amount": partial,
-            "payment_method": "cash",
+            "amount": partial_amount,
+            "payment_method": payment_method,
             "notes": f"E2E abono parcial {RUN_TAG}",
+            "idempotency_key": f"partial_{RUN_TAG}",
         },
     )
     if r_partial.status_code != 200:
@@ -225,7 +231,22 @@ def main() -> int:
         else:
             fail("Abono parcial no dejó saldo pendiente como se esperaba", json.dumps(body)[:400])
 
-    search_term = str(invoice.get("customer_name") or "")[:8].strip()
+        r_final = cajero.post(
+            f"/caja/facturas/{sale_id}/cobrar",
+            json_body={
+                "sesion_id": session_id,
+                "amount": new_pending,
+                "payment_method": payment_method,
+                "notes": f"E2E saldo final {RUN_TAG}",
+                "idempotency_key": f"final_{RUN_TAG}",
+            },
+        )
+        if r_final.status_code != 200:
+            fail("Cobro final tras abono parcial", f"{r_final.status_code} {r_final.text[:400]}")
+        else:
+            ok("Saldo final cobrado tras abono parcial")
+
+    search_term = str(invoice.get("customer_name") or partial_sale.get("customer_name") or "")[:8].strip()
     r_clients = cajero.get(
         "/caja/clientes-pendientes",
         params={"search": search_term, "branch_id": BRANCH_ID, "limit": 20},
@@ -239,11 +260,21 @@ def main() -> int:
         else:
             fail("Búsqueda clientes pendientes sin resultados", f"search={search_term}")
 
-    ventas.login(PIN_VENTAS)
-    discount_seed = bootstrap_open_invoices(ventas)["discount"]
+    discount_seed = create_sale_with_plan(
+        ventas,
+        catalog,
+        payment_method="cash",
+        discount_percent=5,
+        supervisor_discount_preapproved=True,
+        notes=f"E2E cashier bootstrap discount {RUN_TAG}",
+        idempotency_key=f"e2e_cash_disc2_{RUN_TAG}",
+    )
     d_sale_id = str(discount_seed["sale_id"])
     discount_invoice = cajero.get("/caja/facturas", params={"tab": "abiertas", "search": d_sale_id, "limit": 5}).json()
-    discount_row = next((r for r in (discount_invoice.get("rows") or []) if r.get("sale_id") == d_sale_id), discount_seed)
+    discount_row = next(
+        (r for r in (discount_invoice.get("rows") or []) if r.get("sale_id") == d_sale_id),
+        discount_seed,
+    )
     justification = f"Solicitud E2E caja {RUN_TAG}: cliente paga con tarjeta y requiere mantener descuento negociado."
 
     r_req = cajero.post(
@@ -269,7 +300,12 @@ def main() -> int:
         else:
             fail("Estado de solicitud no quedó pending", r_status.text[:300])
 
-        pending_amount = float(discount_row.get("amount_pending") or discount_seed.get("amount_pending") or discount_seed.get("total") or 0)
+        pending_amount = float(
+            discount_row.get("amount_pending")
+            or discount_seed.get("amount_pending")
+            or discount_seed.get("total")
+            or 0,
+        )
         r_block = cajero.post(
             f"/caja/facturas/{d_sale_id}/cobrar",
             json_body={
@@ -318,9 +354,9 @@ def main() -> int:
             else:
                 fail("Cobro con tarjeta tras aprobación", f"{r_card.status_code} {r_card.text[:400]}")
 
-    report_path = f"/tmp/e2e_cashier_features_{RUN_TAG}.json"
-    with open(report_path, "w", encoding="utf-8") as fh:
-        json.dump(REPORT, fh, ensure_ascii=False, indent=2)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    report_path = REPORT_DIR / f"e2e_cashier_features_{RUN_TAG}.json"
+    report_path.write_text(json.dumps(REPORT, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Reporte: {report_path}")
     print(f"Resumen: {len(REPORT['ok'])} OK | {len(REPORT['failed'])} FAIL")
     return 0 if not REPORT["failed"] else 1

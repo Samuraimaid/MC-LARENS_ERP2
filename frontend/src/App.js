@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "./components/ui/sonner";
 import { APP_ENV } from "./lib/env";
-import { getRoleHomePath, isCashierRole } from "./lib/roleHome";
+import { canAccessCashier, getRoleHomePath, isCashierRole } from "./lib/roleHome";
 
 // Layouts
 import { MainLayout } from "./components/layout/MainLayout";
@@ -38,6 +38,12 @@ const DashboardPage = lazyNamedPage(() => import("./pages/DashboardPage"), "Dash
 const SalesPage = lazyNamedPage(() => import("./pages/SalesPage"), "SalesPage");
 const CashierPage = lazyNamedPage(() => import("./pages/CashierPage"), "CashierPage");
 const KDSPage = lazyNamedPage(() => import("./pages/KDSPage"), "KDSPage");
+const KDSWarehousePage = lazyNamedPage(() => import("./pages/kds/KDSWarehousePage"), "KDSWarehousePage");
+const KDSInstallationsPage = lazyNamedPage(
+  () => import("./pages/kds/KDSInstallationsPage"),
+  "KDSInstallationsPage"
+);
+const KDSTintPage = lazyNamedPage(() => import("./pages/kds/KDSTintPage"), "KDSTintPage");
 const InventoryPage = lazyNamedPage(() => import("./pages/InventoryPage"), "InventoryPage");
 const CatalogPage = lazyNamedPage(() => import("./pages/CatalogPage"), "CatalogPage");
 const WorkOrdersPage = lazyNamedPage(() => import("./pages/WorkOrdersPage"), "WorkOrdersPage");
@@ -129,6 +135,14 @@ function WorkbenchOnlyRoute() {
   return <WorkbenchPage />;
 }
 
+function CashierOnlyRoute() {
+  const { user } = useAuth();
+  if (!canAccessCashier(user?.role)) {
+    return <Navigate to={getRoleHomePath(user?.role)} replace />;
+  }
+  return <CashierPage />;
+}
+
 function RoleHomeRedirect() {
   const { user } = useAuth();
   return <Navigate to={getRoleHomePath(user?.role)} replace />;
@@ -159,7 +173,7 @@ function AppRouter() {
         <Route path="/dashboard" element={<DashboardOnlyRoute />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/sales/:saleId" element={<SalesPage />} />
-        <Route path="/cashier" element={<CashierPage />} />
+        <Route path="/cashier" element={<CashierOnlyRoute />} />
         <Route path="/quotations" element={<QuotationsPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/catalog" element={<CatalogPage />} />
@@ -205,6 +219,9 @@ function AppRouter() {
         }
       >
         <Route path="/kds" element={<KDSPage />} />
+        <Route path="/kds/bodega" element={<KDSWarehousePage />} />
+        <Route path="/kds/instalaciones" element={<KDSInstallationsPage />} />
+        <Route path="/kds/polarizados" element={<KDSTintPage />} />
       </Route>
 
       <Route element={<KDSLayout />}>

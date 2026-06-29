@@ -60,10 +60,10 @@ export function useDraftReviewPolling({
 
           const nextFingerprint = getDraftSnapshotFingerprint(draft.snapshot);
           const prevFingerprint = snapshotFingerprintRef.current.get(draft.id);
-          if (prevFingerprint && prevFingerprint !== nextFingerprint) {
-            if (nextReview.status === "blocked") {
-              toast.info("Supervisión actualizó el contenido de tu borrador.", { duration: 4000 });
-            }
+          const supervisorSnapshotUpdate = nextReview.status === "blocked"
+            || (nextReview.status === "released" && nextReview.supervisor_changed);
+          if (prevFingerprint && prevFingerprint !== nextFingerprint && supervisorSnapshotUpdate) {
+            toast.info("Supervisión actualizó el contenido de tu borrador.", { duration: 4000 });
             if (typeof onServerSnapshotChanged === "function") {
               onServerSnapshotChanged(draft.id, draft.snapshot);
             }

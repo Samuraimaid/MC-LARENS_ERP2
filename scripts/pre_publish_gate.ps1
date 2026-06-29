@@ -38,7 +38,7 @@ try {
   Push-Location $root
 
   Invoke-Step -Name "Validar contenedores clave en ejecución" -Action {
-    $required = @('mundo-backend', 'mundo-frontend', 'mundo-mongodb')
+    $required = @('mundo-backend', 'mundo-frontend', 'mclarens2-mongodb')
     $running = docker ps --format '{{.Names}}'
     foreach ($name in $required) {
       if (-not ($running -contains $name)) {

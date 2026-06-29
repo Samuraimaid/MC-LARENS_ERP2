@@ -8,7 +8,7 @@ import hashlib
 import secrets
 import uuid
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -56,6 +56,24 @@ from backend.domains.integrations import (
     create_stripe_checkout as integrations_create_stripe_checkout,
     get_stripe_checkout_symbols as integrations_get_stripe_checkout_symbols,
     send_email_notification as integrations_send_email_notification,
+)
+from backend.domains.hr.payroll_periods import (
+    SCHEME_PAYROLL_9_24,
+    format_quincena_label,
+    get_quincena_bounds,
+)
+from backend.domains.hr.attendance_status import build_technician_attendance_snapshot
+from backend.domains.operations.work_order_split import ensure_single_item_work_orders
+from backend.domains.vehicles.thumbnails import (
+    apply_reset_metadata as vehicle_apply_reset_metadata,
+    apply_upload_metadata as vehicle_apply_upload_metadata,
+    build_public_manifest as vehicle_build_public_manifest,
+    process_thumbnail_upload as vehicle_process_thumbnail_upload,
+    read_thumbnail_bytes as vehicle_read_thumbnail_bytes,
+    reset_active_thumbnail as vehicle_reset_active_thumbnail,
+    resolve_vehicle_payload as vehicle_resolve_vehicle_payload,
+    validate_slug as vehicle_validate_thumbnail_slug,
+    write_active_thumbnail as vehicle_write_active_thumbnail,
 )
 from backend.services.audit import AuditService
 from backend.services.cash import CashService
@@ -557,6 +575,7 @@ PERMISSIONS_CATALOG: Dict[str, Dict[str, Any]] = {
             "catalog": "Catálogo",
             "samples": "Muestras",
             "inventory": "Inventario",
+            "inventory_labels": "Etiquetas de inventario",
             "dispatch": "Despacho",
             "warehouses": "Bodegas",
             "promotions": "Promociones",
@@ -605,6 +624,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "catalog": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
     "samples": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
     "inventory": ["gerencia", "supervisor", "bodegas", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
+    "inventory_labels": ["gerencia", "supervisor", "jefe_tienda"],
     "dispatch": ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
     "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
     "promotions": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
@@ -638,7 +658,7 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
     "ventas": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
     "cajero": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
     "jefe_vendedores": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "catalog", "samples"},
-    "jefe_tienda": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "inventory", "dispatch", "catalog", "samples", "promotions"},
+    "jefe_tienda": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "inventory", "inventory_labels", "dispatch", "catalog", "samples", "promotions"},
     "bodegas": {"inventory", "dispatch"},
 }
 
@@ -687,6 +707,7 @@ PERMISSION_METHOD_TO_ACTION: Dict[str, str] = {
 }
 
 PERMISSION_ROUTE_MAP: List[tuple[str, str]] = [
+    ("/api/inventory/labels", "inventory_labels"),
     ("/api/notifications", "notifications"),
     ("/api/followups", "followups"),
     ("/api/sales", "sales"),
@@ -1879,6 +1900,23 @@ def _is_discount_allowed(method: str) -> bool:
     return normalized in {"cash", "transfer"}
 
 
+def _payment_methods_allow_discounts(
+    method: str,
+    mixed_methods: Optional[List[Any]] = None,
+) -> bool:
+    normalized = _normalize_method_name(method)
+    if normalized != "mixed":
+        return _is_discount_allowed(normalized)
+    selected = [
+        _normalize_method_name(item)
+        for item in (mixed_methods or [])
+        if str(item or "").strip()
+    ]
+    if not selected:
+        return False
+    return all(item in {"cash", "transfer"} for item in selected)
+
+
 async def _get_seller_global_discount_policy() -> Dict[str, Any]:
     default_policy = {
         "type": "seller_global_discount_policy",
@@ -2060,6 +2098,7 @@ def _build_sale_settlement(
     iva_rate_percent: float,
     retention_profile: str,
     retention_rate_hint: Optional[float],
+    discounts_allowed_by_method: Optional[bool] = None,
 ) -> Dict[str, Any]:
     warnings: List[str] = []
 
@@ -2074,7 +2113,12 @@ def _build_sale_settlement(
     discounts_from_percent = round(subtotal_base * (discount_percent / 100.0), 2)
     discounts_requested_total = round(discounts_from_percent + discounts_amount + promotions_amount, 2)
 
-    if _is_discount_allowed(method):
+    discounts_allowed = (
+        _is_discount_allowed(method)
+        if discounts_allowed_by_method is None
+        else bool(discounts_allowed_by_method)
+    )
+    if discounts_allowed:
         discounts_applied = min(discounts_requested_total, subtotal_base)
         discounts_removed = 0.0
         discounts_blocked = False
@@ -2144,6 +2188,229 @@ def _build_sale_settlement(
     }
 
 
+CASHIER_ACCESS_ROLES = frozenset({"gerencia", "supervisor", "programador", "cajero"})
+LETTER_INVOICE_ROLES = frozenset({"gerencia", "supervisor", "programador", "cajero"})
+CASHIER_API_ROLES = ["gerencia", "supervisor", "programador", "cajero"]
+
+
+def _is_cashier_role(role: Any) -> bool:
+    return str(role or "").strip().lower() in CASHIER_ACCESS_ROLES
+
+
+async def require_cashier_roles(request: Request) -> User:
+    return await require_roles(request, CASHIER_API_ROLES)
+
+
+def _sale_is_company_customer(customer: Optional[Dict[str, Any]]) -> bool:
+    if not customer:
+        return False
+    ctype = str(customer.get("customer_type") or "").lower()
+    return ctype in {"company", "empresa", "juridico", "jurídica", "juridica"}
+
+
+def _sum_code_discounts_amount(
+    subtotal_base: float,
+    applied_discounts: Any,
+    *,
+    currency: str = "NIO",
+    exchange_rate: float = 36.5,
+) -> float:
+    total = 0.0
+    if not isinstance(applied_discounts, list):
+        return 0.0
+    for entry in applied_discounts:
+        if not isinstance(entry, dict):
+            continue
+        dtype = str(entry.get("type") or "percent").lower()
+        try:
+            value = float(entry.get("value") or 0)
+        except (TypeError, ValueError):
+            continue
+        if dtype == "percent":
+            total += subtotal_base * (value / 100.0)
+        elif dtype == "fixed":
+            fixed = value / exchange_rate if _currency_code(currency) == "USD" else value
+            total += fixed
+    return round(total, 2)
+
+
+def _build_create_sale_settlement(
+    *,
+    sale_data: Any,
+    customer: Dict[str, Any],
+    subtotal_base: float,
+) -> Dict[str, Any]:
+    raw_currency = getattr(sale_data, "currency", "NIO")
+    sale_currency = _currency_code(raw_currency)
+    raw_exchange_rate = getattr(sale_data, "exchange_rate", None)
+    try:
+        exchange_rate = float(raw_exchange_rate) if raw_exchange_rate is not None else 36.5
+    except (TypeError, ValueError):
+        exchange_rate = 36.5
+
+    normalized_payment_method = _normalize_method_name(
+        getattr(sale_data, "payment_method", None) or getattr(sale_data, "payment_type", "cash")
+    )
+    apply_iva = getattr(sale_data, "apply_iva", None)
+    if apply_iva is None:
+        apply_iva = True
+
+    retention_profile = _extract_retention_profile_from_customer(customer)
+    apply_retention = bool(getattr(sale_data, "apply_retention", False))
+    retention_rate_hint = None
+    if apply_retention and _sale_is_company_customer(customer):
+        try:
+            hinted = float(getattr(sale_data, "retention_rate", 0) or 0)
+        except (TypeError, ValueError):
+            hinted = 0.0
+        if hinted in {0.01, 0.02}:
+            retention_rate_hint = hinted
+
+    print_format = getattr(sale_data, "print_format", None) or "thermal80"
+    if _sale_is_company_customer(customer) and (apply_retention or bool(apply_iva)):
+        print_format = "letter"
+
+    code_discounts = _sum_code_discounts_amount(
+        subtotal_base,
+        getattr(sale_data, "applied_discounts", []),
+        currency=sale_currency,
+        exchange_rate=exchange_rate,
+    )
+    return {
+        "currency": sale_currency,
+        "exchange_rate": exchange_rate,
+        "normalized_payment_method": normalized_payment_method,
+        "apply_iva": apply_iva,
+        "apply_retention": apply_retention,
+        "retention_profile": retention_profile,
+        "retention_rate_hint": retention_rate_hint,
+        "print_format": print_format,
+        "code_discounts": code_discounts,
+    }
+
+
+async def _finalize_create_sale_settlement(
+    *,
+    sale_data: Any,
+    customer: Dict[str, Any],
+    subtotal_base: float,
+) -> Dict[str, Any]:
+    prep = _build_create_sale_settlement(
+        sale_data=sale_data,
+        customer=customer,
+        subtotal_base=subtotal_base,
+    )
+    iva_rate_percent = await _get_billing_iva_rate()
+    custom_iva = getattr(sale_data, "iva_rate", None)
+    if custom_iva is not None:
+        try:
+            custom_val = float(custom_iva)
+            iva_rate_percent = custom_val * 100 if custom_val <= 1 else custom_val
+        except (TypeError, ValueError):
+            pass
+
+    settlement_retention_profile = (
+        prep["retention_profile"]
+        if prep.get("apply_retention")
+        else "exento"
+    )
+    settlement_retention_hint = (
+        prep["retention_rate_hint"]
+        if prep.get("apply_retention")
+        else None
+    )
+    mixed_methods_raw = getattr(sale_data, "mixed_payment_methods", None) or []
+    if not isinstance(mixed_methods_raw, list):
+        mixed_methods_raw = []
+    discounts_allowed_by_method = _payment_methods_allow_discounts(
+        prep["normalized_payment_method"],
+        mixed_methods_raw,
+    )
+    if bool(getattr(sale_data, "supervisor_discount_preapproved", False)):
+        discounts_allowed_by_method = True
+
+    settlement = _build_sale_settlement(
+        subtotal_base=round(subtotal_base, 2),
+        discount_percent=float(getattr(sale_data, "discount", 0) or 0),
+        discounts_amount=prep["code_discounts"],
+        promotions_amount=0.0,
+        payment_method=prep["normalized_payment_method"],
+        print_format=prep["print_format"],
+        apply_iva=prep["apply_iva"],
+        iva_rate_percent=iva_rate_percent,
+        retention_profile=settlement_retention_profile,
+        retention_rate_hint=settlement_retention_hint,
+        discounts_allowed_by_method=discounts_allowed_by_method,
+    )
+
+    expected_total = float(settlement["net_to_collect"])
+    submitted_total = getattr(sale_data, "total_amount", None)
+    if submitted_total is not None:
+        try:
+            submitted_value = float(submitted_total)
+            if abs(submitted_value - expected_total) > 0.05:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "TOTAL_MISMATCH",
+                        "message": "El total enviado no coincide con el cálculo del servidor",
+                        "expected_total": expected_total,
+                        "submitted_total": submitted_value,
+                        "settlement": settlement,
+                    },
+                )
+        except HTTPException:
+            raise
+        except (TypeError, ValueError):
+            pass
+
+    settlement["currency"] = prep["currency"]
+    settlement["exchange_rate"] = prep["exchange_rate"]
+    settlement["apply_iva"] = prep["apply_iva"]
+    settlement["applied_discounts"] = getattr(sale_data, "applied_discounts", []) or []
+    return settlement
+
+
+def _format_payment_method_label(method: Any) -> str:
+    key = str(method or "cash").lower()
+    labels = {
+        "cash": "Efectivo",
+        "card": "Tarjeta",
+        "tarjeta": "Tarjeta",
+        "credit": "Crédito",
+        "credito": "Crédito",
+        "transfer": "Transferencia",
+        "transferencia": "Transferencia",
+        "mixed": "Mixto",
+    }
+    return labels.get(key, key)
+
+
+async def _build_seller_voucher_lines(sale: Dict[str, Any]) -> List[str]:
+    from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_text_lines
+
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+    return build_seller_voucher_text_lines(sale, vehicle=cast(Optional[Dict[str, Any]], vehicle))
+
+
+async def _resolve_sale_for_print(sale_id: str) -> Dict[str, Any]:
+    logger.info("resolve_sale_for_print: lookup sale_id=%s", sale_id)
+    if not sale_id or str(sale_id).lower() in ("none", "null", ""):
+        latest = await db.sales.find({}).sort("created_at", -1).limit(1).to_list(length=1)
+        if latest and latest[0].get("sale_id"):
+            sale_id = str(latest[0].get("sale_id"))
+
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        sale = await db.sales.find_one({"invoice_number": sale_id}, {"_id": 0})
+
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    return cast(Dict[str, Any], sale)
+
+
 class CheckoutRequest(FlexibleModel):
     sale_id: str
     origin_url: str
@@ -2181,6 +2448,22 @@ class WorkOrderStatusUpdate(FlexibleModel):
     quality_score: Optional[float] = None
     quality_notes: Optional[str] = None
     notes: Optional[str] = None
+
+
+class CoordinatorClearQueueRequest(FlexibleModel):
+    department: str
+    profile: Optional[str] = None
+    branch_id: Optional[str] = None
+
+
+class DispatchClearQueueRequest(FlexibleModel):
+    warehouse_id: Optional[str] = None
+    branch_id: Optional[str] = None
+
+
+class CashierClearQueueRequest(FlexibleModel):
+    branch_id: Optional[str] = None
+    tab: Optional[str] = "cotizacion"
 
 
 class QualityControlCreate(FlexibleModel):
@@ -2697,6 +2980,16 @@ async def seed_default_pin_user() -> None:
         logger.exception("Failed to seed test PIN users for roles")
 
 
+@app.on_event("startup")
+async def start_vehicle_catalog_scheduler() -> None:
+    import asyncio
+
+    from backend.domains.vehicles.catalog_scheduler import catalog_sync_scheduler_loop
+
+    asyncio.create_task(catalog_sync_scheduler_loop())
+    logger.info("Vehicle catalog monthly sync scheduler started")
+
+
 async def _get_user_by_session(session_token: str) -> Optional[Dict[str, Any]]:
     session = await db.sessions.find_one({"session_token": session_token}, {"_id": 0})
     if not session:
@@ -3046,6 +3339,27 @@ def _cart_map_from_snapshot(snapshot: Dict[str, Any]) -> Dict[str, Dict[str, Any
     return cart_map
 
 
+def _normalize_payment_plan_snapshot(snapshot: Dict[str, Any]) -> str:
+    lines = snapshot.get("paymentPlanLines")
+    if not isinstance(lines, list):
+        planned = snapshot.get("planned_payment_plan")
+        if isinstance(planned, dict):
+            lines = planned.get("lines")
+    if not isinstance(lines, list):
+        lines = []
+    normalized: List[Dict[str, str]] = []
+    for line in lines:
+        if not isinstance(line, dict):
+            continue
+        normalized.append({
+            "metodo": str(line.get("metodo") or "").strip().lower(),
+            "moneda": str(line.get("moneda") or "NIO").strip().upper(),
+            "monto_origen": str(line.get("monto_origen") or "").strip(),
+        })
+    normalized.sort(key=lambda row: (row["metodo"], row["moneda"], row["monto_origen"]))
+    return json.dumps(normalized, sort_keys=True, default=str)
+
+
 def _draft_has_meaningful_supervisor_change(old_snapshot: Dict[str, Any], new_snapshot: Dict[str, Any]) -> bool:
     old_cart = _cart_map_from_snapshot(old_snapshot)
     new_cart = _cart_map_from_snapshot(new_snapshot)
@@ -3075,7 +3389,9 @@ def _draft_has_meaningful_supervisor_change(old_snapshot: Dict[str, Any], new_sn
         return True
     old_mixed = json.dumps(old_snapshot.get("mixedPaymentMethods") or [], sort_keys=True, default=str)
     new_mixed = json.dumps(new_snapshot.get("mixedPaymentMethods") or [], sort_keys=True, default=str)
-    return old_mixed != new_mixed
+    if old_mixed != new_mixed:
+        return True
+    return _normalize_payment_plan_snapshot(old_snapshot) != _normalize_payment_plan_snapshot(new_snapshot)
 
 
 def _cart_item_changed(old_item: Optional[Dict[str, Any]], new_item: Optional[Dict[str, Any]]) -> bool:
@@ -4824,6 +5140,12 @@ async def create_product(product_data: ProductCreate, request: Request):
         normalized_low_stock_threshold = 5
     doc["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
 
+    raw_barcode = str(doc.get("barcode") or "").strip()
+    if raw_barcode:
+        doc["barcode"] = raw_barcode
+    else:
+        doc.pop("barcode", None)
+
     await db.products.insert_one(doc)
 
     if initial_stock > 0:
@@ -4933,6 +5255,10 @@ async def update_product(product_id: str, updates: Dict[str, Any], request: Requ
             updates["low_stock_threshold"] = max(1, int(float(updates.get("low_stock_threshold", 5))))
         except Exception:
             updates["low_stock_threshold"] = 5
+
+    if "barcode" in updates:
+        raw_barcode = str(updates.get("barcode") or "").strip()
+        updates["barcode"] = raw_barcode or None
 
     before = await db.products.find_one({"product_id": product_id}, {"_id": 0})
     result = await db.products.update_one({"product_id": product_id}, {"$set": updates})
@@ -5866,6 +6192,41 @@ async def create_vehicle(vehicle_data: VehicleCreate, request: Request):
     await require_auth(request)
     vehicle = Vehicle(**vehicle_data.model_dump())
     doc = vehicle.model_dump()
+    from backend.domains.vehicles.type_resolver import infer_canonical_vehicle_type_label
+
+    from backend.domains.vehicles.descriptor_classifier import classify_descriptor
+
+    descriptor = str(doc.get("descriptor") or "").strip()
+    brand = str(doc.get("brand") or "").strip()
+    model = str(doc.get("model") or "").strip()
+    if not str(doc.get("vehicle_type_slug") or "").strip():
+        if brand and descriptor:
+            classified = classify_descriptor(brand, descriptor, model=model)
+            doc["vehicle_type_slug"] = classified.get("vehicle_type_slug")
+            doc["thumbnail_slug"] = classified.get("vehicle_type_slug")
+            if not str(doc.get("vehicle_type") or "").strip():
+                doc["vehicle_type"] = classified.get("vehicle_type_label")
+        elif brand and model:
+            classified = classify_descriptor(brand, model, model=model)
+            doc["vehicle_type_slug"] = classified.get("vehicle_type_slug")
+            doc["thumbnail_slug"] = classified.get("vehicle_type_slug")
+            if not str(doc.get("vehicle_type") or "").strip():
+                doc["vehicle_type"] = classified.get("vehicle_type_label")
+
+    if not str(doc.get("vehicle_type") or "").strip():
+        inferred = infer_canonical_vehicle_type_label(
+            "",
+            brand=brand,
+            model=model,
+            descriptor=descriptor,
+            body_class=str(doc.get("body_class") or doc.get("vpic_body_class") or ""),
+        )
+        if inferred:
+            doc["vehicle_type"] = inferred
+
+    from backend.domains.vehicles.vehicle_cab import apply_cab_to_vehicle_doc
+
+    doc = apply_cab_to_vehicle_doc(doc)
     # Ensure created_at exists and is ISO string
     created_at_val = doc.get("created_at")
     if not created_at_val:
@@ -5926,6 +6287,7 @@ async def decode_vehicle_vin(vin: str, request: Request):
     brand = (decoded.get("Make") or "").strip()
     model = (decoded.get("Model") or "").strip()
     model_year_raw = (decoded.get("ModelYear") or "").strip()
+    body_class = (decoded.get("BodyClass") or decoded.get("VehicleType") or "").strip()
 
     model_year: Optional[int] = None
     if model_year_raw and model_year_raw.isdigit():
@@ -5937,12 +6299,42 @@ async def decode_vehicle_vin(vin: str, request: Request):
             detail="No se encontraron datos para ese VIN.",
         )
 
+    from backend.domains.vehicles.type_resolver import (
+        infer_canonical_vehicle_type_label,
+        resolve_vehicle_thumbnail_slug,
+    )
+    from backend.domains.vehicles.vehicle_cab import infer_cab_variant_from_vpic, resolve_pickup_slug
+
+    vehicle_type_slug = resolve_vehicle_thumbnail_slug(
+        "",
+        brand=brand,
+        model=model,
+        body_class=body_class,
+        allow_default=False,
+    )
+    vehicle_type = infer_canonical_vehicle_type_label(
+        "",
+        brand=brand,
+        model=model,
+        body_class=body_class,
+    )
+    cab_variant = infer_cab_variant_from_vpic(body_class)
+    pickup_resolution = resolve_pickup_slug(vehicle_type_slug, cab_variant, body_class=body_class)
+    if pickup_resolution:
+        vehicle_type_slug = pickup_resolution.get("vehicle_type_slug") or vehicle_type_slug
+        vehicle_type = pickup_resolution.get("vehicle_type_label") or vehicle_type
+        cab_variant = pickup_resolution.get("vehicle_cab_variant") or cab_variant
+
     return {
         "vin": normalized_vin,
         "brand": brand.upper() if brand else "",
         "model": model,
         "year": model_year,
         "color": "No especificado",
+        "vehicle_type": vehicle_type,
+        "vehicle_type_slug": vehicle_type_slug,
+        "vehicle_cab_variant": cab_variant,
+        "body_class": body_class,
         "source": "vpic_nhtsa",
     }
 
@@ -6738,6 +7130,43 @@ def _can_transition_dispatch_status(current: str, next_status: str) -> bool:
     return next_status in transitions.get(current, set())
 
 
+def _dispatch_is_pending_purgeable(dispatch: Dict[str, Any]) -> bool:
+    status = _normalize_dispatch_status(dispatch.get("status"))
+    if status != "pending":
+        return False
+    if dispatch.get("started_at"):
+        return False
+    items = cast(List[Dict[str, Any]], dispatch.get("items") or [])
+    return not any(item.get("delivered") for item in items)
+
+
+async def _revert_linked_records_after_dispatch_purge(dispatch: Dict[str, Any]) -> None:
+    sale_id = dispatch.get("sale_id")
+    if sale_id:
+        await db.sales.update_one(
+            {"sale_id": sale_id},
+            {
+                "$unset": {"dispatch_id": ""},
+                "$set": {"warehouse_dispatch_status": "cancelled"},
+            },
+        )
+
+    sample_id = dispatch.get("sample_id")
+    if not sample_id:
+        return
+    dispatch_type = str(dispatch.get("dispatch_type") or "").strip().lower()
+    if dispatch_type == "sample_out":
+        await db.sample_requests.update_one(
+            {"sample_id": sample_id},
+            {"$unset": {"dispatch_out_id": ""}, "$set": {"status": "approved"}},
+        )
+    elif dispatch_type == "sample_return":
+        await db.sample_requests.update_one(
+            {"sample_id": sample_id},
+            {"$unset": {"dispatch_return_id": ""}, "$set": {"status": "delivered"}},
+        )
+
+
 def _resolve_sale_item_unit_price(user: User, product: Dict[str, Any], item: Dict[str, Any]) -> float:
     catalog_price = float(product.get("price") or 0.0)
     raw_unit_price = item.get("unit_price")
@@ -6832,10 +7261,35 @@ async def pick_available_technician(
     load_rows = await db.work_orders.aggregate(pipeline).to_list(500)
     load_map = {row.get("_id"): int(row.get("count", 0)) for row in load_rows if row.get("_id")}
 
-    def _sort_key(tech: Dict[str, Any]) -> Any:
-        return (load_map.get(tech.get("user_id"), 0), (tech.get("name") or "").lower())
+    async def _candidate_sort_key(tech: Dict[str, Any]) -> Any:
+        user_id = str(tech.get("user_id") or "")
+        active_jobs = load_map.get(user_id, 0)
+        attendance = await build_technician_attendance_snapshot(
+            db,
+            user_id,
+            active_jobs=active_jobs,
+        )
+        unavailable = 1 if not attendance.get("availability_assignable") else 0
+        return (
+            unavailable,
+            active_jobs,
+            (tech.get("name") or "").lower(),
+        )
 
-    return sorted(candidates, key=_sort_key)[0]
+    scored: List[Tuple[Any, Dict[str, Any]]] = []
+    for tech in candidates:
+        scored.append((await _candidate_sort_key(tech), tech))
+    scored.sort(key=lambda row: row[0])
+    for _, tech in scored:
+        user_id = str(tech.get("user_id") or "")
+        attendance = await build_technician_attendance_snapshot(
+            db,
+            user_id,
+            active_jobs=load_map.get(user_id, 0),
+        )
+        if attendance.get("availability_assignable"):
+            return tech
+    return scored[0][1] if scored else None
 
 
 async def create_dispatch_order_from_sale(
@@ -6966,53 +7420,76 @@ async def _create_work_order_for_department(
     department: str,
     items: List[Dict[str, Any]],
     vehicle_info: str,
-) -> Optional[str]:
+) -> List[str]:
+    """Create one work order per installable product in the department."""
     if not items:
-        return None
-    sale_id = sale_doc.get("sale_id")
-    existing = await db.work_orders.find_one(
-        {"sale_id": sale_id, "department": department},
-        {"_id": 0, "work_order_id": 1},
-    )
-    if existing and existing.get("work_order_id"):
-        return str(existing.get("work_order_id"))
+        return []
 
-    total_install_time = sum(int(i.get("installation_time_minutes") or 60) for i in items)
-    work_order_id = f"wo_{uuid.uuid4().hex[:8]}"
-    work_order_doc: Dict[str, Any] = {
-        "work_order_id": work_order_id,
-        "sale_id": sale_id,
-        "invoice_number": sale_doc.get("invoice_number"),
-        "customer_id": customer.get("customer_id"),
-        "customer_name": customer.get("name"),
-        "vehicle_id": sale_doc.get("vehicle_id"),
-        "vehicle_info": vehicle_info,
-        "branch_id": sale_doc.get("branch_id"),
-        "salesperson_id": sale_doc.get("salesperson_id"),
-        "salesperson_name": sale_doc.get("salesperson_name"),
-        "department": department,
-        "assignment_status": "pending_assignment",
-        "items": items,
-        "accessories": items,
-        "status": "pending",
-        "priority": "normal",
-        "estimated_time": total_install_time,
-        "actual_time": None,
-        "technician_id": None,
-        "technician_name": None,
-        "start_time": None,
-        "end_time": None,
-        "quality_score": None,
-        "notes": (
-            f"Orden {department} generada tras cobro de factura "
-            f"{sale_doc.get('invoice_number', 'N/A')}"
-        ),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "auto_generated": True,
-        "awaiting_warehouse_handoff": True,
-    }
-    await db.work_orders.insert_one(work_order_doc)
-    return work_order_id
+    sale_id = sale_doc.get("sale_id")
+    created_ids: List[str] = []
+    split_total = len(items)
+
+    for item_index, item in enumerate(items):
+        product_id = item.get("product_id")
+        existing_query: Dict[str, Any] = {
+            "sale_id": sale_id,
+            "department": department,
+            "item_index": item_index,
+        }
+        if product_id:
+            existing_query["items.product_id"] = product_id
+
+        existing = await db.work_orders.find_one(
+            existing_query,
+            {"_id": 0, "work_order_id": 1},
+        )
+        if existing and existing.get("work_order_id"):
+            created_ids.append(str(existing.get("work_order_id")))
+            continue
+
+        install_time = max(1, int(item.get("installation_time_minutes") or 60))
+        work_order_id = f"wo_{uuid.uuid4().hex[:8]}"
+        product_name = item.get("product_name") or "Producto"
+        work_order_doc: Dict[str, Any] = {
+            "work_order_id": work_order_id,
+            "sale_id": sale_id,
+            "invoice_number": sale_doc.get("invoice_number"),
+            "customer_id": customer.get("customer_id"),
+            "customer_name": customer.get("name"),
+            "vehicle_id": sale_doc.get("vehicle_id"),
+            "vehicle_info": vehicle_info,
+            "branch_id": sale_doc.get("branch_id"),
+            "salesperson_id": sale_doc.get("salesperson_id"),
+            "salesperson_name": sale_doc.get("salesperson_name"),
+            "department": department,
+            "assignment_status": "pending_assignment",
+            "items": [item],
+            "accessories": [item],
+            "item_index": item_index,
+            "split_total": split_total,
+            "split_parent": None,
+            "status": "pending",
+            "priority": "normal",
+            "estimated_time": install_time,
+            "actual_time": None,
+            "technician_id": None,
+            "technician_name": None,
+            "start_time": None,
+            "end_time": None,
+            "quality_score": None,
+            "notes": (
+                f"Orden {department} · {product_name} "
+                f"({item_index + 1}/{split_total}) tras cobro "
+                f"{sale_doc.get('invoice_number', 'N/A')}"
+            ),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "auto_generated": True,
+            "awaiting_warehouse_handoff": True,
+        }
+        await db.work_orders.insert_one(work_order_doc)
+        created_ids.append(work_order_id)
+
+    return created_ids
 
 
 async def _create_tint_order_from_sale(
@@ -7142,10 +7619,10 @@ async def trigger_sale_fulfillment_after_payment(sale_id: str) -> Dict[str, Any]
 
     for department in ("instalaciones", "electrico"):
         dept_items = grouped_items.get(department) or []
-        wo_id = await _create_work_order_for_department(
+        dept_wo_ids = await _create_work_order_for_department(
             sale, customer, department, dept_items, vehicle_info_str
         )
-        if wo_id:
+        for wo_id in dept_wo_ids:
             work_order_ids.append(wo_id)
             if not primary_work_order_id:
                 primary_work_order_id = wo_id
@@ -7527,9 +8004,6 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             install_price = product.get("installation_price", 0) * qty
             subtotal += install_price
 
-    iva_rate_percent = await _get_billing_iva_rate()
-    iva_rate_decimal = iva_rate_percent / 100.0
-    tax = subtotal * iva_rate_decimal
     raw_sale_currency = getattr(sale_data, "currency", "USD")
     sale_currency = _currency_code(raw_sale_currency)
     raw_sale_exchange_rate = getattr(sale_data, "exchange_rate", None)
@@ -7537,24 +8011,67 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         sale_exchange_rate = float(raw_sale_exchange_rate) if raw_sale_exchange_rate is not None else None
     except (TypeError, ValueError):
         sale_exchange_rate = None
+    settlement_subtotal = round(subtotal, 2)
+    if sale_currency == "NIO":
+        rate = sale_exchange_rate
+        if rate is None or rate <= 0:
+            rate = await _get_usd_to_nio_rate()
+        settlement_subtotal = round(subtotal * float(rate), 2)
+
     if not bool(getattr(sale_data, "supervisor_discount_preapproved", False)):
         await _enforce_seller_global_discount_limits(
             actor=user,
-            subtotal=subtotal,
+            subtotal=settlement_subtotal,
             discount_percent=sale_data.discount,
             currency=sale_currency,
             exchange_rate=sale_exchange_rate,
         )
-    total_discount = subtotal * (sale_data.discount / 100)
-    total = subtotal + tax - total_discount
+
+    settlement = await _finalize_create_sale_settlement(
+        sale_data=sale_data,
+        customer=customer,
+        subtotal_base=settlement_subtotal,
+    )
+    net_to_collect = float(settlement["net_to_collect"])
+
+    from backend.domains.sales.planned_payment_plan import (
+        normalize_planned_payment_plan,
+        resolve_customer_credit_days,
+    )
+
+    normalized_payment_type = _normalize_method_name(
+        sale_data.payment_type or sale_data.payment_method or "cash"
+    )
+    mixed_methods_raw = getattr(sale_data, "mixed_payment_methods", None) or []
+    if not isinstance(mixed_methods_raw, list):
+        mixed_methods_raw = []
+    planned_payment_plan: Optional[Dict[str, Any]] = None
+    resolved_credit_days: Optional[int] = None
 
     # Check credit limit for credit sales
-    if sale_data.payment_type == "credit":
-        available_credit = customer.get("credit_limit", 0) - customer.get(
-            "credit_balance", 0
+    if normalized_payment_type == "credit":
+        credit_limit = float(customer.get("credit_limit") or 0.0)
+        if credit_limit <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Cliente sin límite de crédito aprobado. Configure el perfil con gerencia/supervisor.",
+            )
+        resolved_credit_days = resolve_customer_credit_days(
+            customer,
+            getattr(sale_data, "credit_days", None),
         )
-        if total > available_credit:
+        available_credit = credit_limit - float(customer.get("credit_balance", 0) or 0.0)
+        if net_to_collect > available_credit:
             raise HTTPException(status_code=400, detail="Exceeds credit limit")
+    else:
+        planned_payment_plan = normalize_planned_payment_plan(
+            getattr(sale_data, "planned_payment_plan", None),
+            payment_method=normalized_payment_type,
+            mixed_methods=mixed_methods_raw,
+            net_to_collect=net_to_collect,
+            exchange_rate=float(sale_exchange_rate or settlement.get("exchange_rate") or 36.5),
+            currency=str(settlement.get("currency") or sale_currency or "NIO"),
+        )
 
     # Check manager authorization for "solo para llevar" products that want installation
     if items_requiring_manager_auth and not sale_data.manager_authorization_code:
@@ -7586,10 +8103,8 @@ async def create_sale(sale_data: SaleCreate, request: Request):
 
     invoice_number = await generate_invoice_number()
     credit_due_date = None
-    if sale_data.payment_type == "credit" and sale_data.credit_days:
-        credit_due_date = datetime.now(timezone.utc) + timedelta(
-            days=sale_data.credit_days
-        )
+    if normalized_payment_type == "credit" and resolved_credit_days:
+        credit_due_date = datetime.now(timezone.utc) + timedelta(days=resolved_credit_days)
 
     # Determine if sale needs work order
     needs_work_order = len(items_requiring_installation) > 0
@@ -7614,10 +8129,10 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         salesperson_name=user.name,
         items=[i.model_dump() for i in items],
         subtotal=round(subtotal, 2),
-        tax=round(tax, 2),
-        discount=round(total_discount, 2),
-        total=round(total, 2),
-        payment_type=sale_data.payment_type,
+        tax=round(float(settlement["iva_amount"]), 2),
+        discount=round(float(settlement["discounts_applied_amount"]), 2),
+        total=round(net_to_collect, 2),
+        payment_type=normalized_payment_type,
         payment_status="pending",
         payment_method=normalized_payment_method,
         sale_channel=sale_channel,
@@ -7627,19 +8142,19 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         delivery_status="pending" if sale_data.delivery_required else None,
         notes=sale_data.notes,
         has_installation=needs_work_order,
-        iva_rate=iva_rate_decimal,
-        iva_amount=round(tax, 2),
-        total_legal=round(total, 2),
-        discounts_applied_amount=round(total_discount, 2),
-        discounts_blocked_by_method=False,
-        retention_rate=0.0,
-        retention_amount=0.0,
-        net_to_collect=round(total, 2),
-        print_format="thermal80",
-        retention_receipt_required=False,
-        pos_bank_withholding_expected=0.0,
+        iva_rate=float(settlement["iva_rate"]),
+        iva_amount=round(float(settlement["iva_amount"]), 2),
+        total_legal=round(float(settlement["total_legal"]), 2),
+        discounts_applied_amount=round(float(settlement["discounts_applied_amount"]), 2),
+        discounts_blocked_by_method=bool(settlement["discounts_blocked_by_method"]),
+        retention_rate=float(settlement["retention_rate"]),
+        retention_amount=round(float(settlement["retention_amount"]), 2),
+        net_to_collect=round(net_to_collect, 2),
+        print_format=str(settlement["print_format"]),
+        retention_receipt_required=bool(settlement["retention_receipt_required"]),
+        pos_bank_withholding_expected=round(float(settlement["pos_bank_withholding_expected"]), 2),
         commercial_terms_locked=False,
-        settlement_warnings=[],
+        settlement_warnings=list(settlement.get("warnings") or []),
     )
 
     doc = sale.model_dump()
@@ -7654,7 +8169,17 @@ async def create_sale(sale_data: SaleCreate, request: Request):
     doc["vehicle_id"] = sale_data.vehicle_id
     doc["invoice_state"] = "open"
     doc["amount_paid"] = 0.0
-    doc["amount_pending"] = round(total, 2)
+    doc["amount_pending"] = round(net_to_collect, 2)
+    doc["currency"] = settlement.get("currency", sale_currency)
+    doc["exchange_rate"] = settlement.get("exchange_rate", sale_exchange_rate or 36.5)
+    doc["apply_iva"] = bool(settlement.get("apply_iva", True))
+    doc["applied_discounts"] = settlement.get("applied_discounts") or []
+    doc["planned_payment_plan"] = planned_payment_plan
+    doc["payment_plan_locked"] = bool(planned_payment_plan and planned_payment_plan.get("locked"))
+    doc["mixed_payment_methods"] = (
+        mixed_methods_raw if normalized_payment_type == "mixed" else []
+    )
+    doc["credit_days"] = resolved_credit_days
     doc["warehouse_dispatch_status"] = "awaiting_payment"
     doc["workflow_state"] = "awaiting_payment"
     doc["inventory_adjustments"] = inventory_updates
@@ -7890,6 +8415,87 @@ async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request
         "customer_id": payload.customer_id,
         **settlement,
     }
+
+
+class SalePaymentPlanUpdate(FlexibleModel):
+    planned_payment_plan: Dict[str, Any]
+    mixed_payment_methods: Optional[List[str]] = None
+    credit_days: Optional[int] = None
+    reason: Optional[str] = None
+
+
+@api_router.patch("/sales/{sale_id}/payment-plan")
+async def update_sale_payment_plan(
+    sale_id: str,
+    payload: SalePaymentPlanUpdate,
+    request: Request,
+):
+    user = await require_roles(request, ["gerencia", "supervisor"])
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    sale = cast(Dict[str, Any], sale)
+    if str(sale.get("payment_status") or "").lower() == "paid":
+        raise HTTPException(status_code=400, detail="No se puede editar el plan de una factura pagada")
+
+    from backend.domains.sales.planned_payment_plan import (
+        normalize_planned_payment_plan,
+        resolve_customer_credit_days,
+    )
+
+    customer = await db.customers.find_one({"customer_id": sale.get("customer_id")}, {"_id": 0}) or {}
+    payment_type = _normalize_method_name(sale.get("payment_type") or sale.get("payment_method") or "cash")
+    net_to_collect = _round2(float(sale.get("net_to_collect") or sale.get("total") or 0.0))
+    exchange_rate = float(sale.get("exchange_rate") or 36.5)
+    currency = str(sale.get("currency") or "NIO")
+
+    mixed_methods = payload.mixed_payment_methods or sale.get("mixed_payment_methods") or []
+    if payment_type == "credit":
+        credit_days = resolve_customer_credit_days(customer, payload.credit_days)
+        planned_payment_plan = None
+        set_values = {
+            "credit_days": credit_days,
+            "planned_payment_plan": None,
+            "payment_plan_locked": False,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": user.user_id,
+        }
+        if credit_days:
+            set_values["credit_due_date"] = (
+                datetime.now(timezone.utc) + timedelta(days=credit_days)
+            ).isoformat()
+    else:
+        planned_payment_plan = normalize_planned_payment_plan(
+            payload.planned_payment_plan,
+            payment_method=payment_type,
+            mixed_methods=mixed_methods,
+            net_to_collect=net_to_collect,
+            exchange_rate=exchange_rate,
+            currency=currency,
+        )
+        set_values = {
+            "planned_payment_plan": planned_payment_plan,
+            "payment_plan_locked": True,
+            "mixed_payment_methods": mixed_methods if payment_type == "mixed" else [],
+            "payment_method": payment_type,
+            "payment_type": payment_type,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": user.user_id,
+        }
+
+    await db.sales.update_one({"sale_id": sale_id}, {"$set": set_values})
+    await audit_service.log_audit_event(
+        action="sale_payment_plan_updated",
+        actor_id=user.user_id,
+        actor_name=user.name,
+        actor_role=user.role,
+        entity="sale",
+        entity_id=sale_id,
+        branch_id=user.branch_id,
+        metadata={"reason": payload.reason, "payment_type": payment_type},
+    )
+    updated = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    return cast(Dict[str, Any], updated or {**sale, **set_values})
 
 
 @api_router.patch("/sales/{sale_id}/commercial-terms")
@@ -8357,12 +8963,16 @@ def _cashier_invoice_summary(
         "pos_discount_authorized": bool(sale.get("pos_discount_authorized")),
         "pos_discount_request_status": sale.get("pos_discount_request_status"),
         "pos_discount_request_id": sale.get("pos_discount_request_id"),
+        "planned_payment_plan": sale.get("planned_payment_plan"),
+        "payment_plan_locked": bool(sale.get("payment_plan_locked")),
+        "mixed_payment_methods": sale.get("mixed_payment_methods") or [],
+        "credit_days": sale.get("credit_days"),
     }
 
 
 @api_router.get("/caja/facturas/{sale_id}/estado-autorizacion-descuento-tarjeta")
 async def get_cashier_pos_discount_auth_status(sale_id: str, request: Request):
-    await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    await require_cashier_roles(request)
     return await _get_pos_discount_card_request_status(sale_id)
 
 
@@ -8372,7 +8982,7 @@ async def request_cashier_pos_discount_authorization(
     payload: CajaPosDiscountRequestPayload,
     request: Request,
 ):
-    user = await require_roles(request, ["cajero", "supervisor", "gerencia"])
+    user = await require_cashier_roles(request)
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
@@ -8473,7 +9083,7 @@ async def search_cashier_pending_customers(
     branch_id: Optional[str] = None,
     limit: int = 50,
 ):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     effective_role = resolve_effective_role(user.role)
     safe_limit = max(1, min(int(limit or 50), 200))
     search_value = str(search or "").strip()
@@ -8628,56 +9238,137 @@ async def search_cashier_pending_customers(
     }
 
 
+@api_router.get("/caja/facturas/lookup")
+async def lookup_cashier_invoice_by_code(
+    request: Request,
+    code: str = "",
+):
+    """Localiza una factura pendiente por código de barras (INV-YYYYMMDD-####)."""
+    from backend.domains.sales.seller_voucher_escpos import (
+        is_valid_invoice_barcode,
+        normalize_invoice_scan_code,
+    )
+
+    user = await require_cashier_roles(request)
+    effective_role = resolve_effective_role(user.role)
+    scan_code = normalize_invoice_scan_code(code)
+    if not scan_code:
+        raise HTTPException(status_code=400, detail="Código de voucher requerido")
+    if not is_valid_invoice_barcode(scan_code):
+        raise HTTPException(
+            status_code=400,
+            detail="Código inválido. Escanea el código de barras del voucher (INV-YYYYMMDD-####)",
+        )
+
+    query: Dict[str, Any] = {
+        "invoice_number": scan_code,
+        "invoice_state": {"$ne": "cancelled"},
+    }
+    if effective_role in {"supervisor", "cajero", "programador"}:
+        query["branch_id"] = str(user.branch_id or "")
+
+    sale = await db.sales.find_one(query, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail=f"No se encontró factura {scan_code}")
+
+    payment_status = str(sale.get("payment_status") or "").lower()
+    payment_type = str(sale.get("payment_type") or "").lower()
+    if payment_status == "paid":
+        raise HTTPException(status_code=409, detail=f"La factura {scan_code} ya está pagada")
+    if payment_type in {"credit", "credito"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"La factura {scan_code} es a crédito. Usa la pestaña Crédito.",
+        )
+
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+    customer = None
+    if sale.get("customer_id"):
+        customer = await db.customers.find_one({"customer_id": sale["customer_id"]}, {"_id": 0})
+    branch = None
+    if sale.get("branch_id"):
+        branch = await db.branches.find_one({"branch_id": sale["branch_id"]}, {"_id": 0})
+
+    row = _cashier_invoice_summary(
+        cast(Dict[str, Any], sale),
+        cast(Optional[Dict[str, Any]], vehicle),
+        cast(Optional[Dict[str, Any]], customer),
+        cast(Optional[Dict[str, Any]], branch),
+    )
+    return {"ok": True, "code": scan_code, "row": row}
+
+
 @api_router.get("/caja/facturas")
 async def list_cashier_invoices(
     request: Request,
-    tab: str = "abiertas",
+    tab: str = "cotizacion",
     search: str = "",
     branch_id: Optional[str] = None,
     limit: int = 200,
 ):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero", "ventas", "jefe_vendedores", "jefe_tienda"])
+    user = await require_cashier_roles(request)
     effective_role = resolve_effective_role(user.role)
 
-    tab_value = str(tab or "abiertas").strip().lower()
+    tab_value = str(tab or "cotizacion").strip().lower()
     tab_aliases = {
-        "abiertas": "open",
-        "open": "open",
-        "cerradas": "closed",
-        "closed": "closed",
-        "anuladas": "cancelled",
-        "cancelled": "cancelled",
+        "cotizacion": "quote",
+        "cotización": "quote",
+        "quote": "quote",
+        "credito": "credit",
+        "crédito": "credit",
+        "credit": "credit",
+        "pagadas": "paid",
+        "paid": "paid",
+        "pagado": "paid",
+        "abonos": "partial",
+        "partial": "partial",
+        # legacy aliases
+        "abiertas": "quote",
+        "open": "quote",
+        "cerradas": "paid",
+        "closed": "paid",
     }
     target_state = tab_aliases.get(tab_value)
     if target_state is None:
-        raise HTTPException(status_code=400, detail="tab inválido. Usa abiertas, cerradas o anuladas")
+        raise HTTPException(
+            status_code=400,
+            detail="tab inválido. Usa cotizacion, credito, pagadas o abonos",
+        )
 
     safe_limit = max(1, min(int(limit or 200), 500))
 
     query: Dict[str, Any] = {}
-    if effective_role == "supervisor":
+    if effective_role in {"supervisor", "cajero", "programador"}:
         query["branch_id"] = str(user.branch_id or "")
-    elif effective_role == "cajero":
-        query["branch_id"] = str(user.branch_id or "")
-    elif effective_role == "ventas":
-        query["$or"] = [
-            {"salesperson_id": user.user_id},
-            {"seller_id": user.user_id},
-            {"created_by": user.user_id},
-        ]
     elif branch_id:
         query["branch_id"] = str(branch_id)
     else:
         query["branch_id"] = str(user.branch_id or "")
 
-    if target_state == "cancelled":
-        query["invoice_state"] = "cancelled"
-    elif target_state == "closed":
+    if target_state == "paid":
         query["invoice_state"] = {"$ne": "cancelled"}
         query["payment_status"] = "paid"
+    elif target_state == "credit":
+        query["invoice_state"] = {"$ne": "cancelled"}
+        query["payment_status"] = {"$in": ["pending", "partial"]}
+        query["payment_type"] = {"$in": ["credit", "credito"]}
+    elif target_state == "partial":
+        query["invoice_state"] = {"$ne": "cancelled"}
+        query["$or"] = [
+            {"payment_status": "partial"},
+            {
+                "$and": [
+                    {"amount_paid": {"$gt": 0}},
+                    {"amount_pending": {"$gt": 0}},
+                ]
+            },
+        ]
     else:
         query["invoice_state"] = {"$ne": "cancelled"}
         query["payment_status"] = {"$in": ["pending", "partial"]}
+        query["payment_type"] = {"$nin": ["credit", "credito"]}
 
     search_value = str(search or "").strip()
     if search_value:
@@ -8731,6 +9422,10 @@ async def list_cashier_invoices(
         "pos_discount_authorized": 1,
         "pos_discount_request_status": 1,
         "pos_discount_request_id": 1,
+        "planned_payment_plan": 1,
+        "payment_plan_locked": 1,
+        "mixed_payment_methods": 1,
+        "credit_days": 1,
     }
 
     docs = await db.sales.find(query, projection).sort("created_at", -1).to_list(safe_limit)
@@ -8794,7 +9489,7 @@ async def list_cashier_invoices(
 
 @api_router.post("/caja/facturas/{sale_id}/cobrar")
 async def collect_cashier_invoice(sale_id: str, payload: CashierInvoiceCollectRequest, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
 
     session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
     if not session:
@@ -8866,33 +9561,72 @@ async def collect_cashier_invoice(sale_id: str, payload: CashierInvoiceCollectRe
     return result
 
 
-@api_router.post("/caja/facturas/{sale_id}/anular")
-async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequest, request: Request):
-    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+def _cashier_invoice_is_purgeable(sale: Dict[str, Any], *, bulk: bool = False) -> bool:
+    if str(sale.get("invoice_state") or "").lower() == "cancelled":
+        return False
+    if str(sale.get("payment_status") or "").lower() == "paid":
+        return False
+    if bulk:
+        if str(sale.get("payment_status") or "").lower() != "pending":
+            return False
+        if float(sale.get("amount_paid") or 0) > 0.009:
+            return False
+    return True
 
-    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
-    if not sale:
-        raise HTTPException(status_code=404, detail="Sale not found")
-    sale = cast(Dict[str, Any], sale)
 
-    if not _can_collect_sale_for_user(user, sale):
-        raise HTTPException(status_code=403, detail="No autorizado para anular esta factura")
+def _cashier_open_invoice_query(
+    *,
+    tab: str = "cotizacion",
+    branch_id: str = "",
+) -> Dict[str, Any]:
+    tab_value = str(tab or "cotizacion").strip().lower()
+    tab_aliases = {
+        "cotizacion": "quote",
+        "cotización": "quote",
+        "quote": "quote",
+        "credito": "credit",
+        "crédito": "credit",
+        "credit": "credit",
+        "abiertas": "quote",
+        "open": "quote",
+    }
+    target_state = tab_aliases.get(tab_value, "quote")
+    query: Dict[str, Any] = {"invoice_state": {"$ne": "cancelled"}}
+    if branch_id:
+        query["branch_id"] = branch_id
+    if target_state == "credit":
+        query["payment_status"] = {"$in": ["pending", "partial"]}
+        query["payment_type"] = {"$in": ["credit", "credito"]}
+    else:
+        query["payment_status"] = {"$in": ["pending", "partial"]}
+        query["payment_type"] = {"$nin": ["credit", "credito"]}
+    return query
+
+
+async def _cancel_cashier_invoice_record(
+    sale: Dict[str, Any],
+    user: User,
+    *,
+    reason: str,
+    justification: str,
+    authorized_by: Optional[str] = None,
+) -> Dict[str, Any]:
+    sale_id = str(sale.get("sale_id") or "")
+    if not sale_id:
+        raise HTTPException(status_code=400, detail="Factura inválida")
     if str(sale.get("invoice_state") or "").lower() == "cancelled":
         raise HTTPException(status_code=400, detail="La factura ya está anulada")
     if str(sale.get("payment_status") or "").lower() == "paid":
         raise HTTPException(status_code=400, detail="No se puede anular una factura ya pagada")
 
-    reason = str(payload.motivo or "").strip()
-    justification = str(payload.justificacion_interna or "").strip()
-    if not reason:
+    reason_value = str(reason or "").strip()
+    justification_value = str(justification or "").strip()
+    if not reason_value:
         raise HTTPException(status_code=400, detail="Debe indicar el motivo de anulación")
-    if len(justification) < 20:
+    if len(justification_value) < 20:
         raise HTTPException(status_code=400, detail="La justificación interna debe tener al menos 20 caracteres")
 
-    authorized_by = str(payload.autorizado_por or "").strip()
-    if not authorized_by:
-        authorized_by = user.user_id
-
+    authorized_value = str(authorized_by or "").strip() or user.user_id
     now_iso = datetime.now(timezone.utc).isoformat()
     revert_result = await revert_sale_effects(db, sale_id, user)
     await _notify_cancelled_work_order(revert_result)
@@ -8902,9 +9636,9 @@ async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequ
         {
             "$set": {
                 "invoice_state": "cancelled",
-                "cancel_reason": reason,
-                "cancel_justification_internal": justification,
-                "cancel_authorized_by": authorized_by or user.user_id,
+                "cancel_reason": reason_value,
+                "cancel_justification_internal": justification_value,
+                "cancel_authorized_by": authorized_value,
                 "cancelled_by": user.user_id,
                 "cancelled_by_name": user.name,
                 "cancelled_at": now_iso,
@@ -8919,6 +9653,101 @@ async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequ
         "invoice_number": sale.get("invoice_number"),
         "invoice_state": "cancelled",
         "cancelled_at": now_iso,
+    }
+
+
+@api_router.post("/caja/facturas/{sale_id}/anular")
+async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequest, request: Request):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    sale = cast(Dict[str, Any], sale)
+
+    if not _can_collect_sale_for_user(user, sale):
+        raise HTTPException(status_code=403, detail="No autorizado para anular esta factura")
+
+    return await _cancel_cashier_invoice_record(
+        sale,
+        user,
+        reason=str(payload.motivo or ""),
+        justification=str(payload.justificacion_interna or ""),
+        authorized_by=str(payload.autorizado_por or "").strip() or None,
+    )
+
+
+@api_router.delete("/caja/facturas/{sale_id}")
+async def delete_cashier_invoice(sale_id: str, request: Request):
+    """Elimina (anula) una factura pendiente en caja — gerencia/supervisor/programador."""
+    user = await require_roles(request, QUEUE_PURGE_ROLES)
+
+    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    sale = cast(Dict[str, Any], sale)
+
+    if not _can_collect_sale_for_user(user, sale):
+        raise HTTPException(status_code=403, detail="No autorizado para eliminar esta factura")
+    if not _cashier_invoice_is_purgeable(sale, bulk=False):
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar facturas pendientes o con abono parcial no pagadas por completo",
+        )
+
+    role_label = str(user.role or "supervision")
+    justification = (
+        f"Eliminación administrativa en caja por {user.name or user.user_id} "
+        f"({role_label}). Factura {sale.get('invoice_number') or sale_id}."
+    )
+    return await _cancel_cashier_invoice_record(
+        sale,
+        user,
+        reason="Limpieza administrativa en caja",
+        justification=justification,
+        authorized_by=user.user_id,
+    )
+
+
+@api_router.post("/caja/facturas/clear-queue")
+async def clear_cashier_invoice_queue(request: Request, body: CashierClearQueueRequest):
+    """Anula todas las facturas pendientes sin abonos en la cola de caja."""
+    user = await require_roles(request, QUEUE_PURGE_ROLES)
+    effective_branch = str(body.branch_id or user.branch_id or "").strip()
+    tab = str(body.tab or "cotizacion").strip().lower()
+
+    query = _cashier_open_invoice_query(tab=tab, branch_id=effective_branch)
+    candidates = await db.sales.find(query, {"_id": 0}).to_list(500)
+
+    removed = 0
+    skipped = 0
+    for sale in candidates:
+        sale_dict = cast(Dict[str, Any], sale)
+        if not _cashier_invoice_is_purgeable(sale_dict, bulk=True):
+            skipped += 1
+            continue
+        role_label = str(user.role or "supervision")
+        justification = (
+            f"Limpieza masiva de cola en caja por {user.name or user.user_id} "
+            f"({role_label}). Factura {sale_dict.get('invoice_number') or sale_dict.get('sale_id')}."
+        )
+        try:
+            await _cancel_cashier_invoice_record(
+                sale_dict,
+                user,
+                reason="Limpieza masiva de cola en caja",
+                justification=justification,
+                authorized_by=user.user_id,
+            )
+            removed += 1
+        except HTTPException:
+            skipped += 1
+
+    return {
+        "message": "Cola de caja limpiada",
+        "tab": tab,
+        "removed": removed,
+        "skipped": skipped,
     }
 
 
@@ -9325,7 +10154,7 @@ async def approve_sale_cancel_request(request_id: str, request: Request):
 
 @api_router.post("/cashier/invoices/{sale_id}/collect")
 async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
 
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
@@ -9434,6 +10263,17 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
 
     if amount > pending:
         raise HTTPException(status_code=400, detail=f"El cobro excede el pendiente. Pendiente actual: C${pending:.2f}")
+
+    from backend.domains.sales.planned_payment_plan import validate_collect_against_plan
+
+    validate_collect_against_plan(
+        cast(Dict[str, Any], sale.get("planned_payment_plan") or {}),
+        pagos=payload.pagos,
+        amount=amount,
+        payment_method=method_to_use,
+        pending_amount=pending,
+        allow_card_override=pos_card_authorized,
+    )
 
     received = _round2(float(payload.received_amount or 0.0)) if payload.received_amount is not None else None
     change_amount = 0.0
@@ -9601,7 +10441,7 @@ def _build_retention_receipt_pdf_bytes(receipt: Dict[str, Any], sale: Dict[str, 
 
 @api_router.post("/invoices/{sale_id}/retention-receipt")
 async def create_retention_receipt(sale_id: str, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
@@ -10146,7 +10986,9 @@ async def get_coordinator_board(
                 {"_id": 0},
             ).sort([("awaiting_warehouse_handoff", 1), ("created_at", 1)]).to_list(300)
             for row in pending_rows:
-                pending.append({**row, "order_kind": "work"})
+                split_rows = await ensure_single_item_work_orders(db, row)
+                for split_row in split_rows:
+                    pending.append({**split_row, "order_kind": "work"})
 
             assigned_rows = await db.work_orders.find(
                 {
@@ -10163,14 +11005,36 @@ async def get_coordinator_board(
                 assigned_map.setdefault(tech_id, []).append({**row, "order_kind": "work"})
 
         technicians: List[Dict[str, Any]] = []
+        attendance_summary = {
+            "present": 0,
+            "lunch": 0,
+            "absent": 0,
+            "clocked_out": 0,
+            "available": 0,
+        }
         for member in roster:
             user_id = str(member.get("user_id") or "")
             orders = assigned_map.get(user_id, [])
+            active_jobs = len(orders)
+            attendance = await build_technician_attendance_snapshot(
+                db,
+                user_id,
+                active_jobs=active_jobs,
+            )
+            attendance_state = str(attendance.get("attendance_state") or "absent")
+            if attendance_state in attendance_summary:
+                attendance_summary[attendance_state] += 1
+            if (
+                attendance.get("availability_level") == "green"
+                and attendance_state == "present"
+            ):
+                attendance_summary["available"] += 1
             technicians.append(
                 {
                     **member,
+                    **attendance,
                     "orders": orders,
-                    "active_jobs": len(orders),
+                    "active_jobs": active_jobs,
                 }
             )
 
@@ -10184,6 +11048,7 @@ async def get_coordinator_board(
         board[dept] = {
             "pending": pending,
             "technicians": technicians,
+            "attendance_summary": attendance_summary,
             "counts": {
                 "pending": len(pending),
                 "assigned": assigned_total,
@@ -10195,6 +11060,115 @@ async def get_coordinator_board(
         "profile": profile,
         "departments": board,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+QUEUE_PURGE_ROLES = ["gerencia", "supervisor", "programador"]
+QUEUE_PURGE_DEPARTMENTS = {"instalaciones", "electrico", "polarizados"}
+
+
+@api_router.post("/coordinator/clear-queue")
+async def clear_coordinator_queue(
+    request: Request,
+    body: CoordinatorClearQueueRequest,
+):
+    user = await require_roles(request, QUEUE_PURGE_ROLES)
+    dept = str(body.department or "").strip().lower()
+    if dept not in QUEUE_PURGE_DEPARTMENTS:
+        raise HTTPException(status_code=400, detail="Departamento inválido para limpiar cola")
+
+    effective_branch = str(body.branch_id or user.branch_id or "").strip()
+    removed = 0
+
+    if dept == "polarizados":
+        tint_query: Dict[str, Any] = {
+            "assignment_status": "pending_assignment",
+            "status": {"$in": ["pending_assignment", "pending"]},
+            "assigned_technician_id": None,
+        }
+        if effective_branch:
+            tint_query["branch_id"] = effective_branch
+        result = await db.tint_orders.delete_many(tint_query)
+        removed = int(result.deleted_count or 0)
+    else:
+        wo_query: Dict[str, Any] = {
+            "department": dept,
+            "assignment_status": "pending_assignment",
+            "status": "pending",
+            "technician_id": None,
+        }
+        if effective_branch:
+            wo_query["branch_id"] = effective_branch
+        result = await db.work_orders.delete_many(wo_query)
+        removed = int(result.deleted_count or 0)
+
+    return {
+        "message": f"Cola de {dept} limpiada",
+        "department": dept,
+        "removed": removed,
+    }
+
+
+@api_router.delete("/work-orders/{work_order_id}")
+async def delete_pending_work_order(work_order_id: str, request: Request):
+    await require_roles(request, QUEUE_PURGE_ROLES)
+    wo = await db.work_orders.find_one({"work_order_id": work_order_id}, {"_id": 0})
+    if not wo:
+        raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
+
+    wo = cast(Dict[str, Any], wo)
+
+    if str(wo.get("assignment_status") or "") != "pending_assignment":
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar trabajos pendientes sin asignar",
+        )
+    if str(wo.get("status") or "") != "pending":
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar trabajos en estado pendiente",
+        )
+    if wo.get("technician_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar un trabajo ya asignado a un técnico",
+        )
+
+    await db.work_orders.delete_one({"work_order_id": work_order_id})
+    return {
+        "message": "Trabajo eliminado",
+        "work_order_id": work_order_id,
+    }
+
+
+@api_router.delete("/tint-orders/{tint_order_id}")
+async def delete_pending_tint_order(tint_order_id: str, request: Request):
+    await require_roles(request, QUEUE_PURGE_ROLES)
+    order = await db.tint_orders.find_one({"tint_order_id": tint_order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden de polarizado no encontrada")
+
+    order = cast(Dict[str, Any], order)
+    if str(order.get("assignment_status") or "") != "pending_assignment":
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar polarizados pendientes sin asignar",
+        )
+    if str(order.get("status") or "") not in {"pending_assignment", "pending"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar polarizados en estado pendiente",
+        )
+    if order.get("assigned_technician_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar un polarizado ya asignado",
+        )
+
+    await db.tint_orders.delete_one({"tint_order_id": tint_order_id})
+    return {
+        "message": "Orden de polarizado eliminada",
+        "tint_order_id": tint_order_id,
     }
 
 
@@ -10306,6 +11280,31 @@ async def update_work_order(
 
         tech = await db.users.find_one({"user_id": update.technician_id}, {"_id": 0})
         if tech:
+            active_pipeline = [
+                {
+                    "$match": {
+                        "technician_id": tech["user_id"],
+                        "status": {"$in": ["pending", "in_progress", "quality_check"]},
+                        "work_order_id": {"$ne": work_order_id},
+                    }
+                },
+                {"$count": "count"},
+            ]
+            active_rows = await db.work_orders.aggregate(active_pipeline).to_list(1)
+            active_jobs = int((active_rows[0] or {}).get("count") or 0) if active_rows else 0
+            attendance = await build_technician_attendance_snapshot(
+                db,
+                str(tech["user_id"]),
+                active_jobs=active_jobs,
+            )
+            if not attendance.get("availability_assignable"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"{tech.get('name', 'Técnico')} no está disponible: "
+                        f"{attendance.get('attendance_label', 'ausente')}"
+                    ),
+                )
             updates["technician_id"] = tech["user_id"]
             updates["technician_name"] = tech["name"]
             updates["assignment_status"] = "assigned"
@@ -10478,41 +11477,46 @@ def _serialize_completed_tint_order(order: Dict[str, Any], technician_id: str) -
     }
 
 
-@api_router.get("/technician/completed-jobs")
-async def get_technician_completed_jobs(
-    request: Request,
-    technician_id: Optional[str] = None,
+def _summarize_completed_jobs(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    today_prefix = _iso_date_prefix_today()
+    month_prefix = _iso_date_prefix_month()
+    work_order_jobs = [job for job in jobs if job.get("job_type") == "work_order"]
+    tint_jobs = [job for job in jobs if job.get("job_type") == "tint_order"]
+    return {
+        "today": sum(
+            1
+            for job in jobs
+            if str(job.get("completed_at") or "").startswith(today_prefix)
+        ),
+        "this_month": sum(
+            1
+            for job in jobs
+            if str(job.get("completed_at") or "").startswith(month_prefix)
+        ),
+        "total": len(jobs),
+        "work_orders": len(work_order_jobs),
+        "tint_orders": len(tint_jobs),
+        "tint_vehicles": len(tint_jobs),
+        "by_department": {
+            "instalaciones": sum(
+                1 for job in work_order_jobs if job.get("department") == "instalaciones"
+            ),
+            "electrico": sum(
+                1 for job in work_order_jobs if job.get("department") == "electrico"
+            ),
+            "polarizados": len(tint_jobs),
+        },
+    }
+
+
+async def _collect_technician_completed_jobs(
+    *,
+    actor: User,
+    actor_role: str,
+    target_user: User,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
-):
-    """Historial de trabajos completados para conteo de comisiones."""
-    user = await require_auth(request)
-    raw_role = str(user.role or "").strip().lower()
-
-    if raw_role not in TECHNICIAN_SELF_JOB_ROLES | TECHNICIAN_JOB_SUPERVISOR_ROLES:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para consultar trabajos realizados",
-        )
-
-    target_user = user
-    if technician_id:
-        if raw_role not in TECHNICIAN_JOB_SUPERVISOR_ROLES:
-            raise HTTPException(
-                status_code=403,
-                detail="Solo supervisores pueden consultar el historial de otro técnico",
-            )
-        tech_doc = await db.users.find_one({"user_id": technician_id}, {"_id": 0})
-        if not tech_doc:
-            raise HTTPException(status_code=404, detail="Técnico no encontrado")
-        if raw_role == "supervisor" and user.branch_id:
-            if tech_doc.get("branch_id") and tech_doc.get("branch_id") != user.branch_id:
-                raise HTTPException(
-                    status_code=403,
-                    detail="El técnico no pertenece a tu sucursal",
-                )
-        target_user = User(**tech_doc)
-
+) -> List[Dict[str, Any]]:
     target_role = str(target_user.role or "").strip().lower()
     target_id = target_user.user_id
     jobs: List[Dict[str, Any]] = []
@@ -10544,8 +11548,8 @@ async def get_technician_completed_jobs(
                 {"department": "instalaciones"},
                 {"department": {"$exists": False}},
             ]
-        if user.branch_id and raw_role != "gerencia":
-            wo_query["branch_id"] = user.branch_id
+        if actor.branch_id and actor_role != "gerencia":
+            wo_query["branch_id"] = actor.branch_id
         if date_from or date_to:
             end_filter: Dict[str, Any] = {}
             if date_from:
@@ -10567,8 +11571,8 @@ async def get_technician_completed_jobs(
             "assigned_technician_id": target_id,
             "status": "completed",
         }
-        if user.branch_id and raw_role != "gerencia":
-            tint_query["branch_id"] = user.branch_id
+        if actor.branch_id and actor_role != "gerencia":
+            tint_query["branch_id"] = actor.branch_id
         if date_from or date_to:
             completed_filter: Dict[str, Any] = {}
             if date_from:
@@ -10591,37 +11595,100 @@ async def get_technician_completed_jobs(
         key=lambda row: str(row.get("completed_at") or ""),
         reverse=True,
     )
+    return jobs
 
-    today_prefix = _iso_date_prefix_today()
-    month_prefix = _iso_date_prefix_month()
-    work_order_jobs = [job for job in jobs if job.get("job_type") == "work_order"]
-    tint_jobs = [job for job in jobs if job.get("job_type") == "tint_order"]
 
-    summary = {
-        "today": sum(
-            1
-            for job in jobs
-            if str(job.get("completed_at") or "").startswith(today_prefix)
-        ),
-        "this_month": sum(
-            1
-            for job in jobs
-            if str(job.get("completed_at") or "").startswith(month_prefix)
-        ),
-        "total": len(jobs),
-        "work_orders": len(work_order_jobs),
-        "tint_orders": len(tint_jobs),
-        "tint_vehicles": len(tint_jobs),
-        "by_department": {
-            "instalaciones": sum(
-                1 for job in work_order_jobs if job.get("department") == "instalaciones"
-            ),
-            "electrico": sum(
-                1 for job in work_order_jobs if job.get("department") == "electrico"
-            ),
-            "polarizados": len(tint_jobs),
-        },
-    }
+@api_router.get("/technician/completed-jobs")
+async def get_technician_completed_jobs(
+    request: Request,
+    technician_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    period: Optional[str] = None,
+):
+    """Historial de trabajos completados para conteo de comisiones."""
+    user = await require_auth(request)
+    raw_role = str(user.role or "").strip().lower()
+
+    if raw_role not in TECHNICIAN_SELF_JOB_ROLES | TECHNICIAN_JOB_SUPERVISOR_ROLES:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para consultar trabajos realizados",
+        )
+
+    period_key = str(period or "").strip().lower()
+    if period_key in {"current_quincena", "quincena_actual"}:
+        q_start, q_end = get_quincena_bounds(scheme=SCHEME_PAYROLL_9_24, offset=0)
+        date_from = q_start.isoformat()
+        date_to = q_end.isoformat()
+    elif period_key in {"previous_quincena", "quincena_anterior"}:
+        q_start, q_end = get_quincena_bounds(scheme=SCHEME_PAYROLL_9_24, offset=-1)
+        date_from = q_start.isoformat()
+        date_to = q_end.isoformat()
+    elif not date_from and not date_to:
+        q_start, q_end = get_quincena_bounds(scheme=SCHEME_PAYROLL_9_24, offset=0)
+        date_from = q_start.isoformat()
+        date_to = q_end.isoformat()
+
+    target_user = user
+    if technician_id:
+        if raw_role not in TECHNICIAN_JOB_SUPERVISOR_ROLES:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo supervisores pueden consultar el historial de otro técnico",
+            )
+        tech_doc = await db.users.find_one({"user_id": technician_id}, {"_id": 0})
+        if not tech_doc:
+            raise HTTPException(status_code=404, detail="Técnico no encontrado")
+        if raw_role == "supervisor" and user.branch_id:
+            if tech_doc.get("branch_id") and tech_doc.get("branch_id") != user.branch_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="El técnico no pertenece a tu sucursal",
+                )
+        target_user = User(**tech_doc)
+
+    target_role = str(target_user.role or "").strip().lower()
+    target_id = target_user.user_id
+
+    jobs = await _collect_technician_completed_jobs(
+        actor=user,
+        actor_role=raw_role,
+        target_user=target_user,
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+    curr_start, curr_end = get_quincena_bounds(scheme=SCHEME_PAYROLL_9_24, offset=0)
+    prev_start, prev_end = get_quincena_bounds(scheme=SCHEME_PAYROLL_9_24, offset=-1)
+    curr_jobs = await _collect_technician_completed_jobs(
+        actor=user,
+        actor_role=raw_role,
+        target_user=target_user,
+        date_from=curr_start.isoformat(),
+        date_to=curr_end.isoformat(),
+    )
+    prev_jobs = await _collect_technician_completed_jobs(
+        actor=user,
+        actor_role=raw_role,
+        target_user=target_user,
+        date_from=prev_start.isoformat(),
+        date_to=prev_end.isoformat(),
+    )
+
+    summary = _summarize_completed_jobs(jobs)
+    curr_summary = _summarize_completed_jobs(curr_jobs)
+    prev_summary = _summarize_completed_jobs(prev_jobs)
+    summary["quincena_scheme"] = SCHEME_PAYROLL_9_24
+    summary["quincena_start"] = curr_start.isoformat()
+    summary["quincena_end"] = curr_end.isoformat()
+    summary["quincena_label"] = format_quincena_label(curr_start, curr_end)
+    summary["quincena_total"] = curr_summary["total"]
+    summary["quincena_by_department"] = curr_summary["by_department"]
+    summary["previous_quincena_start"] = prev_start.isoformat()
+    summary["previous_quincena_end"] = prev_end.isoformat()
+    summary["previous_quincena_label"] = format_quincena_label(prev_start, prev_end)
+    summary["previous_quincena_total"] = prev_summary["total"]
 
     return {
         "technician_id": target_id,
@@ -10629,6 +11696,7 @@ async def get_technician_completed_jobs(
         "technician_role": target_role,
         "date_from": date_from,
         "date_to": date_to,
+        "period": period_key or None,
         "summary": summary,
         "jobs": jobs,
     }
@@ -11918,7 +12986,7 @@ async def get_active_cash_session(
     caja_id: Optional[str] = None,
 ):
     """Return the currently open cash session for the user's branch (optionally scoped by caja_id)."""
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     branch_id = str(user.branch_id or "")
     if not branch_id:
         raise HTTPException(status_code=400, detail="El usuario no tiene sucursal asignada")
@@ -11972,7 +13040,7 @@ async def get_active_cash_session(
 
 @api_router.post("/caja/apertura")
 async def open_cash_session(payload: CashOpenRequest, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     branch_id = str(user.branch_id or "")
     if not branch_id:
         raise HTTPException(status_code=400, detail="El usuario no tiene sucursal asignada")
@@ -12040,7 +13108,7 @@ async def open_cash_session(payload: CashOpenRequest, request: Request):
 
 @api_router.post("/caja/movimiento")
 async def create_cash_movement(payload: CashMovementCreate, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
@@ -12082,7 +13150,7 @@ async def create_cash_movement(payload: CashMovementCreate, request: Request):
 
 @api_router.get("/caja/arqueo/{sesion_id}")
 async def get_cash_arqueo(sesion_id: str, request: Request, include_theoretical: bool = False):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     session = await db.caja_sesiones.find_one({"session_id": sesion_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
@@ -12119,7 +13187,7 @@ async def get_cash_arqueo(sesion_id: str, request: Request, include_theoretical:
 
 @api_router.post("/caja/arqueo/preview-fisico")
 async def preview_blind_arqueo(payload: CashBlindArqueoRequest, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
@@ -12162,7 +13230,7 @@ async def preview_blind_arqueo(payload: CashBlindArqueoRequest, request: Request
 
 @api_router.post("/caja/egresos")
 async def create_cash_expense(payload: CashExpenseCreate, request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
@@ -12236,7 +13304,7 @@ async def create_cash_expense(payload: CashExpenseCreate, request: Request):
 
 @api_router.post("/caja/cierre")
 async def close_cash_session(payload: CashCloseRequest, request: Request, background_tasks: BackgroundTasks):
-    user = await require_roles(request, ["gerencia", "supervisor", "cajero"])
+    user = await require_cashier_roles(request)
     session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
@@ -13043,77 +14111,68 @@ async def test_thermal_printer(request: Request):
 @api_router.get("/print/thermal/{sale_id}")
 async def get_thermal_receipt(sale_id: str, request: Request):
     await require_auth(request)
+    sale = await _resolve_sale_for_print(sale_id)
+    lines = await _build_seller_voucher_lines(sale)
+    return Response(content="\n".join(lines), media_type="text/plain")
 
-    logger.info(f"get_thermal_receipt: lookup sale_id={sale_id}")
-    # Accept common falsy placeholders and fallback to latest sale
-    if not sale_id or str(sale_id).lower() in ("none", "null", ""):
-        logger.info("get_thermal_receipt: received empty sale_id, falling back to latest sale")
-        latest = await db.sales.find({}).sort("created_at", -1).limit(1).to_list(length=1)
-        if latest and latest[0].get("sale_id"):
-            sale_id = latest[0].get("sale_id")
-            logger.info(f"get_thermal_receipt: using fallback sale_id={sale_id}")
-    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
-    if not sale:
-        # Fallback searches to be resilient to differing stored formats
-        try:
-            # try invoice_number match
-            alt = await db.sales.find_one({"invoice_number": sale_id}, {"_id": 0})
-            if alt:
-                sale = alt
-        except Exception:
-            pass
 
-    if not sale:
-        # try loose substring match on sale_id (if stored differently)
-        try:
-            cursor = db.sales.find({}, {"_id": 0, "sale_id": 1}).limit(20)
-            candidates = await cursor.to_list(length=20)
-            for c in candidates:
-                sid = c.get("sale_id")
-                if sid and str(sale_id) in str(sid):
-                    sale = await db.sales.find_one({"sale_id": sid}, {"_id": 0})
-                    if sale:
-                        break
-        except Exception:
-            sale = None
+@api_router.get("/print/seller-voucher/{sale_id}")
+async def get_seller_voucher(sale_id: str, request: Request):
+    await require_auth(request)
+    sale = await _resolve_sale_for_print(sale_id)
+    lines = await _build_seller_voucher_lines(sale)
+    return Response(content="\n".join(lines), media_type="text/plain")
 
-    if not sale:
-        logger.info(f"get_thermal_receipt: sale {sale_id} not found after fallbacks")
-        raise HTTPException(status_code=404, detail="Sale not found")
 
-    sale = cast(Dict[str, Any], sale)
+@api_router.get("/print/seller-voucher/{sale_id}/preview-pdf")
+async def get_seller_voucher_preview_pdf(sale_id: str, request: Request):
+    await require_auth(request)
+    from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
 
-    # Generate 80mm thermal receipt format (text-based for thermal printers)
-    width = 48  # characters for 80mm
-    lines = []
+    sale = await _resolve_sale_for_print(sale_id)
+    lines = await _build_seller_voucher_lines(sale)
+    pdf_bytes = build_seller_voucher_preview_pdf(sale, text_lines=lines)
+    invoice = str(sale.get("invoice_number") or sale_id).replace("/", "-")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="voucher_{invoice}.pdf"'},
+    )
 
-    lines.append("=" * width)
-    lines.append("MUNDO DE ACCESORIOS".center(width))
-    lines.append("=" * width)
-    lines.append(f"Factura: {sale['invoice_number']}")
-    lines.append(f"Fecha: {sale['created_at'][:10]}")
-    lines.append(f"Cliente: {sale['customer_name']}")
-    lines.append("-" * width)
 
-    items = cast(List[Dict[str, Any]], sale.get("items", []))
-    for item in items:
-        name = item["product_name"][:20]
-        qty = item["quantity"]
-        price = item["subtotal"]
-        lines.append(f"{name:<20} {qty:>3} x ${price:>8.2f}")
+@api_router.post("/print/seller-voucher/{sale_id}/pos")
+async def print_seller_voucher_pos(sale_id: str, request: Request):
+    user = await require_auth(request)
+    role = str(user.role or "").lower()
+    if role not in {"ventas", "gerencia", "supervisor", "programador", "jefe_tienda"}:
+        raise HTTPException(status_code=403, detail="Solo ventas o supervisión puede imprimir voucher POS")
 
-    lines.append("-" * width)
-    lines.append(f"{'Subtotal:':<30} ${sale['subtotal']:>8.2f}")
-    lines.append(f"{'IVA 12%:':<30} ${sale['tax']:>8.2f}")
-    if sale["discount"] > 0:
-        lines.append(f"{'Descuento:':<30} -${sale['discount']:>7.2f}")
-    lines.append(f"{'TOTAL:':<30} ${sale['total']:>8.2f}")
-    lines.append("=" * width)
-    lines.append("¡Gracias por su compra!".center(width))
-    lines.append("")
+    from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_escpos
+    from backend.domains.sales.voucher_printer import send_escpos_to_pos_voucher_printer
 
-    content = "\n".join(lines)
-    return Response(content=content, media_type="text/plain")
+    sale = await _resolve_sale_for_print(sale_id)
+    lines = await _build_seller_voucher_lines(sale)
+    escpos = build_seller_voucher_escpos(sale, text_lines=lines)
+    try:
+        bridge_result = await send_escpos_to_pos_voucher_printer(escpos)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "ok": True,
+        "sale_id": sale.get("sale_id"),
+        "invoice_number": sale.get("invoice_number"),
+        "message": "Voucher enviado a impresora POS 80mm",
+        "bridge": bridge_result,
+    }
+
+
+@api_router.get("/print/pos-voucher-printer/status")
+async def get_pos_voucher_printer_status(request: Request):
+    await require_auth(request)
+    from backend.domains.sales.voucher_printer import fetch_pos_voucher_printer_status
+
+    return await fetch_pos_voucher_printer_status()
 
 
 @api_router.get("/print/work-order/{work_order_id}")
@@ -13154,11 +14213,23 @@ async def get_work_order_thermal(work_order_id: str, request: Request):
 
 @api_router.get("/print/invoice-pdf/{sale_id}")
 async def get_invoice_pdf(sale_id: str, request: Request):
-    await require_auth(request)
+    user = await require_auth(request)
+    if not _is_cashier_role(user.role):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo personal de caja/gerencia puede imprimir factura membretada",
+        )
 
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
+
+    payment_status = str(sale.get("payment_status") or "").lower()
+    if payment_status != "paid":
+        raise HTTPException(
+            status_code=403,
+            detail="La factura membretada solo está disponible después del cobro en caja",
+        )
 
     context = await _build_letter_invoice_context(cast(Dict[str, Any], sale))
 
@@ -16259,6 +17330,275 @@ async def update_appearance_settings(payload: AppearanceSettings, request: Reque
     return {"watermark_opacity": watermark_opacity}
 
 
+from backend.domains.inventory.label_printer import (
+    fetch_label_bridge_setup,
+    fetch_label_printer_status,
+    install_label_bridge_startup_task,
+    print_test_label,
+)
+from backend.domains.sales.voucher_printer import (
+    fetch_pos_voucher_bridge_setup,
+    fetch_pos_voucher_printer_status,
+    print_test_pos_voucher,
+)
+
+
+@api_router.get("/system-settings/label-printer/setup")
+async def get_label_printer_setup(request: Request):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "view"):
+        raise HTTPException(status_code=403, detail="No tienes permiso de configuración del sistema")
+
+    setup = await fetch_label_bridge_setup()
+    doc = await _get_system_settings_doc()
+    stored = (doc or {}).get("label_printer_setup") or {}
+    return {
+        "setup": setup,
+        "stored": stored,
+        "recommended_template_id": "col_50x100",
+        "steps": [
+            {
+                "id": "connect_usb",
+                "label": "Conectar Xprinter XP-460B por USB e instalar driver",
+                "complete": bool(setup.get("connected")),
+            },
+            {
+                "id": "bridge_running",
+                "label": "Iniciar puente local en la PC del almacén",
+                "complete": bool(setup.get("bridge_reachable")),
+            },
+            {
+                "id": "autostart",
+                "label": "Registrar inicio automático al iniciar sesión",
+                "complete": bool(setup.get("autostart_configured")),
+            },
+            {
+                "id": "test_print",
+                "label": "Imprimir etiqueta de prueba 50×100 mm",
+                "complete": bool(stored.get("last_test_print_at")),
+            },
+        ],
+    }
+
+
+@api_router.post("/system-settings/label-printer/install-startup-task")
+async def install_label_printer_startup_task(request: Request, payload: Optional[Dict[str, Any]] = None):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "create"):
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para configurar la impresora de etiquetas",
+        )
+
+    data = payload if isinstance(payload, dict) else {}
+    try:
+        result = await install_label_bridge_startup_task()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    station_name = str(data.get("station_name") or "").strip()
+    warehouse_id = str(data.get("warehouse_id") or "").strip()
+    if warehouse_id:
+        warehouse_doc = await db.warehouses.find_one(
+            {"warehouse_id": warehouse_id},
+            {"_id": 0, "warehouse_id": 1, "name": 1},
+        )
+        if warehouse_doc and not station_name:
+            station_name = str(warehouse_doc.get("name") or "").strip()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    label_printer_setup = {
+        "startup_task_installed_at": now_iso,
+        "installed_by_user_id": user.user_id,
+        "installed_by_name": user.name,
+        "station_name": station_name or None,
+        "warehouse_id": warehouse_id or None,
+        "task_name": (result.get("task_name") or "MCLarens-LabelPrintBridge"),
+        "bridge_url": (result.get("setup") or {}).get("bridge_url"),
+        "printer_name": (result.get("setup") or {}).get("printer_name"),
+        "bridge_auth_enabled": bool((result.get("setup") or {}).get("auth_enabled")),
+        "bridge_token_file": result.get("bridge_token_file"),
+    }
+    await db.settings.update_one(
+        {"type": "system"},
+        {"$set": {"type": "system", "label_printer_setup": label_printer_setup}},
+        upsert=True,
+    )
+    await audit_service.log_audit_event(
+        action="label_printer_startup_task_installed",
+        actor_id=user.user_id,
+        actor_name=user.name,
+        actor_role=user.role,
+        entity="label_printer_setup",
+        entity_id=label_printer_setup.get("task_name"),
+        branch_id=user.branch_id,
+        metadata=label_printer_setup,
+    )
+    return {
+        "ok": True,
+        "message": result.get("message") or "Inicio automático configurado",
+        "setup": result.get("setup") or await fetch_label_bridge_setup(),
+        "stored": label_printer_setup,
+    }
+
+
+@api_router.get("/system-settings/label-printer/status")
+async def get_label_printer_status_for_settings(request: Request):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "view"):
+        raise HTTPException(status_code=403, detail="No tienes permiso de configuración del sistema")
+    return await fetch_label_printer_status()
+
+
+@api_router.post("/system-settings/label-printer/test-print")
+async def test_label_printer_print(request: Request, payload: Optional[Dict[str, Any]] = None):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "create"):
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para probar la impresora de etiquetas",
+        )
+
+    data = payload if isinstance(payload, dict) else {}
+    station_name = str(data.get("station_name") or "PC Bodega").strip() or "PC Bodega"
+    warehouse_id = str(data.get("warehouse_id") or "").strip()
+    warehouse_doc: Dict[str, Any] = {"name": station_name}
+    if warehouse_id:
+        loaded_warehouse = await db.warehouses.find_one({"warehouse_id": warehouse_id}, {"_id": 0})
+        if loaded_warehouse:
+            warehouse_doc = loaded_warehouse
+            station_name = str(loaded_warehouse.get("name") or station_name).strip() or station_name
+
+    brand_branch_id = str(user.branch_id or warehouse_doc.get("branch_id") or "branch_main").strip()
+    branch_doc = await db.branches.find_one({"branch_id": brand_branch_id}, {"_id": 0}) or {}
+    try:
+        result = await print_test_label(
+            station_name=station_name,
+            branch=branch_doc,
+            warehouse=warehouse_doc,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    doc = await _get_system_settings_doc()
+    stored = dict((doc or {}).get("label_printer_setup") or {})
+    stored.update(
+        {
+            "last_test_print_at": now_iso,
+            "last_test_print_by": user.name,
+            "station_name": station_name,
+            "warehouse_id": warehouse_id or stored.get("warehouse_id"),
+        }
+    )
+    await db.settings.update_one(
+        {"type": "system"},
+        {"$set": {"type": "system", "label_printer_setup": stored}},
+        upsert=True,
+    )
+    await audit_service.log_audit_event(
+        action="label_printer_test_print",
+        actor_id=user.user_id,
+        actor_name=user.name,
+        actor_role=user.role,
+        entity="label_printer_setup",
+        entity_id=stored.get("task_name") or "label_printer_test",
+        branch_id=user.branch_id,
+        metadata={"station_name": station_name},
+    )
+    return result
+
+
+@api_router.get("/system-settings/pos-voucher-printer/setup")
+async def get_pos_voucher_printer_setup(request: Request):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "view"):
+        raise HTTPException(status_code=403, detail="No tienes permiso de configuración del sistema")
+
+    setup = await fetch_pos_voucher_bridge_setup()
+    doc = await _get_system_settings_doc()
+    stored = (doc or {}).get("pos_voucher_printer_setup") or {}
+    return {
+        "setup": setup,
+        "stored": stored,
+        "steps": [
+            {
+                "id": "install_network_printer",
+                "label": "Instalar impresora POS 80mm en red en Windows (nombre compartido para todos los vendedores)",
+                "complete": bool(setup.get("connected")),
+            },
+            {
+                "id": "bridge_running",
+                "label": "Iniciar puente POS en la PC de ventas/caja (puerto 9266)",
+                "complete": bool(setup.get("bridge_reachable")),
+            },
+            {
+                "id": "test_print",
+                "label": "Imprimir voucher de prueba con código de barras INV",
+                "complete": bool(stored.get("last_test_print_at")),
+            },
+        ],
+    }
+
+
+@api_router.get("/system-settings/pos-voucher-printer/status")
+async def get_pos_voucher_printer_status_for_settings(request: Request):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "view"):
+        raise HTTPException(status_code=403, detail="No tienes permiso de configuración del sistema")
+    return await fetch_pos_voucher_printer_status()
+
+
+@api_router.post("/system-settings/pos-voucher-printer/test-print")
+async def test_pos_voucher_printer_print(request: Request, payload: Optional[Dict[str, Any]] = None):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "system_settings", "create"):
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para probar la impresora POS de vouchers",
+        )
+
+    data = payload if isinstance(payload, dict) else {}
+    station_name = str(data.get("station_name") or "POS Ventas").strip() or "POS Ventas"
+    try:
+        result = await print_test_pos_voucher()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    doc = await _get_system_settings_doc()
+    stored = dict((doc or {}).get("pos_voucher_printer_setup") or {})
+    stored.update(
+        {
+            "last_test_print_at": now_iso,
+            "last_test_print_by": user.name,
+            "station_name": station_name,
+        }
+    )
+    await db.settings.update_one(
+        {"type": "system"},
+        {"$set": {"type": "system", "pos_voucher_printer_setup": stored}},
+        upsert=True,
+    )
+    await audit_service.log_audit_event(
+        action="pos_voucher_printer_test_print",
+        actor_id=user.user_id,
+        actor_name=user.name,
+        actor_role=user.role,
+        entity="pos_voucher_printer_setup",
+        entity_id="pos_voucher_test",
+        branch_id=user.branch_id,
+        metadata={"station_name": station_name},
+    )
+    return result
+
+
 @api_router.get("/settings/theme")
 async def get_theme_settings(request: Request):
     user = await require_auth(request)
@@ -16605,6 +17945,7 @@ async def update_billing_pdf_documents(payload: BillingPdfDocumentsUpdatePayload
 
 
 VEHICLE_SETTINGS_DOC_TYPE = "vehicle_catalog_settings"
+VEHICLE_THUMBNAIL_SETTINGS_DOC_TYPE = "vehicle_thumbnail_settings"
 ALLOWED_FUEL_CODES = {"G", "D", "H", "E", "G/D", "D/G"}
 BILLING_SETTINGS_DOC_TYPE = "billing_settings"
 DEFAULT_BILLING_IVA_RATE = 15.0
@@ -17224,6 +18565,258 @@ async def delete_vehicle_color(color_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Color not found")
     await _save_vehicle_settings_doc(doc)
     return {"message": "Color deleted"}
+
+
+async def _get_vehicle_thumbnail_settings_doc() -> Dict[str, Any]:
+    doc = await db.settings.find_one({"type": VEHICLE_THUMBNAIL_SETTINGS_DOC_TYPE}, {"_id": 0})
+    if not doc:
+        doc = {
+            "type": VEHICLE_THUMBNAIL_SETTINGS_DOC_TYPE,
+            "overrides": {},
+            "updated_at": _utc_now().isoformat(),
+        }
+    doc.setdefault("overrides", {})
+    return doc
+
+
+async def _save_vehicle_thumbnail_settings_doc(doc: Dict[str, Any]) -> None:
+    doc["type"] = VEHICLE_THUMBNAIL_SETTINGS_DOC_TYPE
+    doc["updated_at"] = _utc_now().isoformat()
+    await db.settings.update_one(
+        {"type": VEHICLE_THUMBNAIL_SETTINGS_DOC_TYPE},
+        {"$set": doc},
+        upsert=True,
+    )
+
+
+class VehicleThumbnailResolvePayload(BaseModel):
+    vehicle_type: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    descriptor: Optional[str] = None
+    vehicle_type_slug: Optional[str] = None
+
+
+class VehicleCatalogSyncPayload(BaseModel):
+    brands: Optional[List[str]] = None
+    max_brands: int = 10
+
+
+class VehicleCatalogApplySyncPayload(BaseModel):
+    proposals: List[Dict[str, Any]] = Field(default_factory=list)
+    max_add: int = 100
+
+
+class VehicleCatalogRollbackPayload(BaseModel):
+    version_id: str
+
+
+class VehicleCatalogBackfillPayload(BaseModel):
+    dry_run: bool = False
+    limit: int = 5000
+
+
+@api_router.get("/vehicle-catalog/audit")
+async def get_vehicle_catalog_audit(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_audit import audit_catalog_entries
+    from backend.domains.vehicles.catalog_sync import load_catalog_entries
+
+    entries = load_catalog_entries()
+    return audit_catalog_entries(entries)
+
+
+@api_router.get("/vehicle-catalog/sync/last")
+async def get_vehicle_catalog_sync_last(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_sync import load_last_sync_state
+
+    return load_last_sync_state()
+
+
+@api_router.post("/vehicle-catalog/sync")
+async def sync_vehicle_catalog_from_web(payload: VehicleCatalogSyncPayload, request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_sync import sync_catalog_from_web
+
+    state = await sync_catalog_from_web(payload.brands, max_brands=max(1, min(payload.max_brands, 30)))
+    return {
+        "message": "Sincronización web completada",
+        **state,
+    }
+
+
+@api_router.post("/vehicle-catalog/sync/apply")
+async def apply_vehicle_catalog_sync(payload: VehicleCatalogApplySyncPayload, request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_sync import apply_sync_proposals
+    from backend.domains.vehicles.catalog_types import rebuild_catalog_types
+
+    result = apply_sync_proposals(payload.proposals, max_add=max(1, min(payload.max_add, 500)))
+    rebuild_stats = rebuild_catalog_types()
+    return {
+        "message": "Propuestas aplicadas al catálogo",
+        **result,
+        "rebuild": rebuild_stats,
+    }
+
+
+@api_router.post("/vehicle-catalog/rebuild-types")
+async def rebuild_vehicle_catalog_types(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_types import rebuild_catalog_types
+
+    stats = rebuild_catalog_types()
+    return {
+        "message": "Siluetas re-asignadas en catálogo",
+        **stats,
+    }
+
+
+@api_router.get("/vehicle-catalog/summary")
+async def get_vehicle_catalog_summary(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_sync import build_catalog_summary
+
+    doc = await _get_vehicle_settings_doc()
+    return build_catalog_summary(doc.get("brands") or [])
+
+
+@api_router.get("/vehicle-catalog/versions")
+async def list_vehicle_catalog_versions(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_versioning import list_catalog_versions
+
+    return {"versions": list_catalog_versions()}
+
+
+@api_router.post("/vehicle-catalog/rollback")
+async def rollback_vehicle_catalog(payload: VehicleCatalogRollbackPayload, request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_types import rebuild_catalog_types
+    from backend.domains.vehicles.catalog_versioning import rollback_catalog_version
+
+    result = rollback_catalog_version(payload.version_id)
+    rebuild_stats = rebuild_catalog_types()
+    return {
+        "message": "Catálogo restaurado",
+        **result,
+        "rebuild": rebuild_stats,
+    }
+
+
+@api_router.post("/vehicle-catalog/backfill-fleet")
+async def backfill_vehicle_catalog_fleet(payload: VehicleCatalogBackfillPayload, request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.fleet_backfill import backfill_fleet_vehicle_slugs
+
+    stats = await backfill_fleet_vehicle_slugs(
+        db,
+        dry_run=payload.dry_run,
+        limit=max(1, min(payload.limit, 20000)),
+    )
+    return {
+        "message": "Backfill de flota completado" if not payload.dry_run else "Simulación de backfill completada",
+        **stats,
+    }
+
+
+@api_router.get("/vehicle-catalog/schedule")
+async def get_vehicle_catalog_schedule(request: Request):
+    await require_roles(request, ["gerencia"])
+    from backend.domains.vehicles.catalog_scheduler import get_schedule_state
+
+    return get_schedule_state()
+
+
+@api_router.get("/vehicle-thumbnails/manifest")
+async def get_vehicle_thumbnails_manifest():
+    doc = await _get_vehicle_thumbnail_settings_doc()
+    return vehicle_build_public_manifest(doc)
+
+
+@api_router.get("/vehicle-thumbnails/{slug}.png")
+async def get_vehicle_thumbnail_image(slug: str, style: Optional[str] = None):
+    safe_slug = vehicle_validate_thumbnail_slug(slug)
+    png_bytes, media_type, source = vehicle_read_thumbnail_bytes(safe_slug, style=style or "card")
+    doc = await _get_vehicle_thumbnail_settings_doc()
+    override = (doc.get("overrides") or {}).get(safe_slug) or {}
+    version = override.get("updated_at") or source
+    return FastAPIResponse(
+        content=png_bytes,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "ETag": f'"{safe_slug}-{version}"',
+        },
+    )
+
+
+@api_router.get("/settings/vehicle-thumbnails")
+async def get_vehicle_thumbnail_settings(request: Request):
+    await require_roles(request, ["gerencia"])
+    doc = await _get_vehicle_thumbnail_settings_doc()
+    return vehicle_build_public_manifest(doc)
+
+
+@api_router.put("/settings/vehicle-thumbnails/{slug}")
+async def upload_vehicle_thumbnail(slug: str, request: Request, file: UploadFile = File(...)):
+    await require_roles(request, ["gerencia"])
+    safe_slug = vehicle_validate_thumbnail_slug(slug)
+    if safe_slug == "default":
+        raise HTTPException(status_code=400, detail="La silueta predeterminada no se puede reemplazar directamente.")
+
+    filename = (file.filename or "").lower()
+    if not filename.endswith((".png", ".jpg", ".jpeg", ".webp")):
+        raise HTTPException(status_code=400, detail="Formato no soportado. Usa PNG, JPG o WEBP.")
+
+    raw_bytes = await file.read()
+    png_bytes = vehicle_process_thumbnail_upload(raw_bytes)
+    vehicle_write_active_thumbnail(safe_slug, png_bytes)
+
+    doc = await _get_vehicle_thumbnail_settings_doc()
+    doc = vehicle_apply_upload_metadata(doc, safe_slug)
+    await _save_vehicle_thumbnail_settings_doc(doc)
+
+    manifest = vehicle_build_public_manifest(doc)
+    asset = manifest["assets"][safe_slug]
+    return {
+        "message": "Silueta actualizada",
+        "slug": safe_slug,
+        "asset": asset,
+    }
+
+
+@api_router.delete("/settings/vehicle-thumbnails/{slug}")
+async def reset_vehicle_thumbnail(slug: str, request: Request):
+    await require_roles(request, ["gerencia"])
+    safe_slug = vehicle_validate_thumbnail_slug(slug)
+    if safe_slug == "default":
+        raise HTTPException(status_code=400, detail="La silueta predeterminada no se puede restablecer.")
+
+    removed = vehicle_reset_active_thumbnail(safe_slug)
+    doc = await _get_vehicle_thumbnail_settings_doc()
+    doc = vehicle_apply_reset_metadata(doc, safe_slug)
+    await _save_vehicle_thumbnail_settings_doc(doc)
+    manifest = vehicle_build_public_manifest(doc)
+    return {
+        "message": "Silueta restablecida al asset incluido" if removed else "No había reemplazo activo",
+        "slug": safe_slug,
+        "asset": manifest["assets"][safe_slug],
+    }
+
+
+@api_router.post("/settings/vehicle-thumbnails/resolve")
+async def resolve_vehicle_thumbnail(payload: VehicleThumbnailResolvePayload, request: Request):
+    await require_auth(request)
+    vehicle = {
+        "vehicle_type": payload.vehicle_type,
+        "brand": payload.brand,
+        "model": payload.model,
+        "descriptor": payload.descriptor,
+        "vehicle_type_slug": payload.vehicle_type_slug,
+    }
+    return vehicle_resolve_vehicle_payload(vehicle)
 
 
 # ============ WORK ORDER NOTIFICATIONS FOR TECHNICIANS ============
@@ -18108,6 +19701,70 @@ async def create_dispatch_from_sale(request: Request, sale_id: str):
     return {**dispatch_doc, "_id": None}
 
 
+@api_router.post("/dispatch/clear-queue")
+async def clear_dispatch_queue(request: Request, body: DispatchClearQueueRequest):
+    """Remove all pending dispatch orders (gerencia/supervisor/programador only)."""
+    user = await require_roles(request, QUEUE_PURGE_ROLES)
+    effective_branch = str(body.branch_id or user.branch_id or "").strip()
+    effective_warehouse = str(body.warehouse_id or user.warehouse_id or "").strip()
+
+    query: Dict[str, Any] = {"status": "pending", "started_at": None}
+    if effective_warehouse:
+        query["warehouse_id"] = effective_warehouse
+    elif effective_branch:
+        branch_warehouses = await db.warehouses.find(
+            {"branch_id": effective_branch},
+            {"_id": 0, "warehouse_id": 1},
+        ).to_list(200)
+        warehouse_ids = [
+            str(item.get("warehouse_id"))
+            for item in branch_warehouses
+            if item.get("warehouse_id")
+        ]
+        if warehouse_ids:
+            query["warehouse_id"] = {"$in": warehouse_ids}
+
+    candidates = await db.dispatch_orders.find(query, {"_id": 0}).to_list(500)
+    removed = 0
+    for dispatch in candidates:
+        if not _dispatch_is_pending_purgeable(dispatch):
+            continue
+        dispatch_id = str(dispatch.get("dispatch_id") or "")
+        if not dispatch_id:
+            continue
+        await _revert_linked_records_after_dispatch_purge(dispatch)
+        result = await db.dispatch_orders.delete_one({"dispatch_id": dispatch_id})
+        removed += int(result.deleted_count or 0)
+
+    return {
+        "message": "Cola de despacho limpiada",
+        "removed": removed,
+    }
+
+
+@api_router.delete("/dispatch/{dispatch_id}")
+async def delete_pending_dispatch_order(dispatch_id: str, request: Request):
+    """Delete a single pending dispatch order (gerencia/supervisor/programador only)."""
+    await require_roles(request, QUEUE_PURGE_ROLES)
+    dispatch = await db.dispatch_orders.find_one({"dispatch_id": dispatch_id}, {"_id": 0})
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Orden de despacho no encontrada")
+
+    dispatch = cast(Dict[str, Any], dispatch)
+    if not _dispatch_is_pending_purgeable(dispatch):
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar despachos pendientes sin iniciar",
+        )
+
+    await _revert_linked_records_after_dispatch_purge(dispatch)
+    await db.dispatch_orders.delete_one({"dispatch_id": dispatch_id})
+    return {
+        "message": "Despacho eliminado",
+        "dispatch_id": dispatch_id,
+    }
+
+
 @api_router.put("/dispatch/{dispatch_id}/start")
 async def start_dispatch(request: Request, dispatch_id: str):
     """Start working on a dispatch order"""
@@ -18911,12 +20568,24 @@ async def get_tint_materials(request: Request):
 from backend.routes.inventory import get_inventory_router
 from backend.routes.human_resources import get_human_resources_router
 
+async def require_inventory_label_permission(request: Request, action: str = "create"):
+    user = await require_auth(request)
+    effective = await get_effective_permissions_for_user(user)
+    if not get_permission_value(effective, "inventory_labels", action):
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para imprimir etiquetas de inventario",
+        )
+    return user
+
+
 inventory_router = get_inventory_router(
     db,
     audit_service,
     require_auth,
     require_roles,
     InventoryUpdate,
+    require_inventory_label_permission,
 )
 api_router.include_router(inventory_router)
 

@@ -1,0 +1,1 @@
+{"ok": true, "printer_name": "Xprinter XP-460B", "bytes_sent": 483, "message": "Etiquetas enviadas a la impresora"}

@@ -127,5 +127,52 @@ Use overwrite mode only if you want to replace existing rows by unique keys:
 $env:OVERWRITE='true'; python scripts/import_core_seed.py
 ```
 
+MongoDB backup and restore (daily automation)
+1. Create an on-demand backup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\mongodb_backup.ps1
+```
+
+2. Restore from the latest backup (destructive — replaces current DB):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\mongodb_restore.ps1 -UseLatest -Force
+```
+
+3. Schedule daily backups at 02:00:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_daily_mongodb_backup_task.ps1
+```
+
+Backups are stored under `backups/mongodb/` with 14-day retention by default.
+
+Sales-to-cashier smoke test (after ventas/caja changes)
+If a seller cannot send an invoice to caja after supervisor price edits, run:
+
+```powershell
+docker exec mundo-backend python backend/scripts/live_supervisor_price_sale_test.py
+docker exec mundo-backend python -m pytest backend/tests/test_sales_billing_parity.py -v
+```
+
+Expected: HTTP 200 on sale creation and invoice visible in caja tab `cotizacion` (`rows` in API response).
+Root cause and permanent fix are documented in `POLITICAS_CAMBIOS_CODIGO.md` (incident TOTAL_MISMATCH, 2026-06-27).
+
+POS voucher printer (80mm network, all sellers)
+1. Install the thermal printer in Windows with a fixed name (default: `POS-80 Voucher`).
+2. Start the local bridge on the sales/cashier PC:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-pos-voucher-print-bridge.ps1
+```
+
+3. Ensure `POS_VOUCHER_PRINTER_NAME` and `POS_VOUCHER_BRIDGE_URL` in `docker-compose.yml` match your environment.
+4. Test from System Settings or:
+
+```powershell
+docker exec mundo-backend python -m pytest backend/tests/test_seller_voucher_barcode.py -v
+```
+
 Contact
 If anything fails, open an issue or ask for help with the exact error and OS details.

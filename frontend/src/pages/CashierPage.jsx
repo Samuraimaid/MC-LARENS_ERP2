@@ -11,9 +11,15 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Textarea } from "../components/ui/textarea";
-import { ArrowDown, ArrowUp, Ban, CheckCircle2, ClipboardCheck, Download, FileText, Lock, Power, RefreshCw, RotateCcw, Search, ShieldAlert, Unlock, UserCircle2, Volume2, VolumeX, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, Barcode, CheckCircle2, ClipboardCheck, CreditCard, Download, FileText, Lock, Power, RefreshCw, Search, ShieldAlert, Trash2, Unlock, UserCircle2, Volume2, VolumeX, Wallet } from "lucide-react";
+import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { isValidVoucherScanCode, normalizeVoucherScanCode } from "@/lib/voucherPrinter";
+import { planToCollectForm } from "@/lib/plannedPaymentPlan";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { OperationalJobCard, getCashierUrgencyState } from "@/components/erp/OperationalJobCard";
+import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 
 const NIO_BILLS = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
@@ -237,6 +243,7 @@ export function CashierPage() {
   const { user } = useAuth();
   const isCashier = String(user?.role || "").toLowerCase() === "cajero";
   const canCancelInvoice = ["gerencia", "recursos_humanos"].includes(String(user?.role || "").toLowerCase());
+  const canPurgeCashierInvoices = canPurgeOperationalQueue(user?.role);
   const canViewManagement = useMemo(() => ["gerencia", "supervisor"].includes(user?.role), [user?.role]);
   const initialShift = useMemo(() => loadShiftState(), []);
 
@@ -251,8 +258,12 @@ export function CashierPage() {
   const [closingNotes, setClosingNotes] = useState("");
   const [openDenominations, setOpenDenominations] = useState(() => buildDefaultDenominations());
 
-  const [activeTab, setActiveTab] = useState("abiertas");
+  const [activeTab, setActiveTab] = useState("cotizacion");
   const [invoiceSearch, setInvoiceSearch] = useState("");
+  const [voucherScanInput, setVoucherScanInput] = useState("");
+  const [collectDialogOpen, setCollectDialogOpen] = useState(false);
+  const [collectDialogSale, setCollectDialogSale] = useState(null);
+  const voucherScanRef = useRef(null);
   const [invoiceRows, setInvoiceRows] = useState([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState("");
@@ -311,7 +322,9 @@ export function CashierPage() {
     collect: false,
     cancel: false,
     movement: false,
+    clearQueue: false,
   });
+  const [purgeBusySaleId, setPurgeBusySaleId] = useState("");
   const [previewSummary, setPreviewSummary] = useState(null);
   const [showPreviewPanel, setShowPreviewPanel] = useState(false);
   const [previewPanelPos, setPreviewPanelPos] = useState({ x: 24, y: 130 });
@@ -437,36 +450,27 @@ export function CashierPage() {
   const activePageToneClass = useMemo(() => {
     if (!isSessionOpenedHere) return "bg-background";
     const toneByTab = {
-      abiertas: "bg-blue-50 dark:bg-blue-950/30",
+      cotizacion: "bg-blue-50 dark:bg-blue-950/30",
+      credito: "bg-purple-50 dark:bg-purple-950/30",
+      pagadas: "bg-emerald-50 dark:bg-emerald-950/30",
       abonos: "bg-violet-50 dark:bg-violet-950/30",
-      cerradas: "bg-emerald-50 dark:bg-emerald-950/30",
-      anuladas: "bg-amber-50 dark:bg-amber-950/30",
-      devoluciones: "bg-red-50 dark:bg-red-950/30",
-      entrada: "bg-lime-50 dark:bg-lime-950/30",
-      salida: "bg-rose-50 dark:bg-rose-950/30",
     };
     return toneByTab[activeTab] || "bg-background";
   }, [activeTab, isSessionOpenedHere]);
 
-  const cashTabsListClass = "flex h-auto w-full gap-1.5 overflow-x-auto rounded-full border bg-card/95 p-1.5 touch-pan-x";
+  const cashTabsListClass = "flex h-auto w-full gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1 touch-pan-x";
   const cashTabTriggerBaseClass =
-    "group min-w-max shrink-0 inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm sm:text-base font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-md data-[state=active]:shadow-sm";
+    "group min-w-max shrink-0 inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all duration-150 hover:bg-background/80 data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:shadow-sm";
 
   const cashierTabToneClass = {
-    abiertas:
+    cotizacion:
       "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200/80 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:bg-blue-900/50 data-[state=active]:bg-blue-200 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-800/60 dark:data-[state=active]:text-blue-100",
+    credito:
+      "bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200/80 dark:border-purple-500/30 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/50 data-[state=active]:bg-purple-200 data-[state=active]:text-purple-900 dark:data-[state=active]:bg-purple-800/60 dark:data-[state=active]:text-purple-100",
+    pagadas:
+      "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200/80 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-900/50 data-[state=active]:bg-emerald-200 data-[state=active]:text-emerald-900 dark:data-[state=active]:bg-emerald-800/60 dark:data-[state=active]:text-emerald-100",
     abonos:
       "bg-violet-50 text-violet-700 hover:bg-violet-100 border-violet-200/80 dark:border-violet-500/30 dark:bg-violet-950/40 dark:text-violet-200 dark:hover:bg-violet-900/50 data-[state=active]:bg-violet-200 data-[state=active]:text-violet-900 dark:data-[state=active]:bg-violet-800/60 dark:data-[state=active]:text-violet-100",
-    cerradas:
-      "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200/80 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-900/50 data-[state=active]:bg-emerald-200 data-[state=active]:text-emerald-900 dark:data-[state=active]:bg-emerald-800/60 dark:data-[state=active]:text-emerald-100",
-    anuladas:
-      "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200/80 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-900/50 data-[state=active]:bg-amber-200 data-[state=active]:text-amber-900 dark:data-[state=active]:bg-amber-800/60 dark:data-[state=active]:text-amber-100",
-    devoluciones:
-      "bg-red-50 text-red-700 hover:bg-red-100 border-red-200/80 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-900/50 data-[state=active]:bg-red-200 data-[state=active]:text-red-900 dark:data-[state=active]:bg-red-800/60 dark:data-[state=active]:text-red-100",
-    entrada:
-      "bg-lime-50 text-lime-700 hover:bg-lime-100 border-lime-200/80 dark:border-lime-500/30 dark:bg-lime-950/40 dark:text-lime-200 dark:hover:bg-lime-900/50 data-[state=active]:bg-lime-200 data-[state=active]:text-lime-900 dark:data-[state=active]:bg-lime-800/60 dark:data-[state=active]:text-lime-100",
-    salida:
-      "bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200/80 dark:border-rose-500/30 dark:bg-rose-950/40 dark:text-rose-200 dark:hover:bg-rose-900/50 data-[state=active]:bg-rose-200 data-[state=active]:text-rose-900 dark:data-[state=active]:bg-rose-800/60 dark:data-[state=active]:text-rose-100",
   };
 
   const resolveUsdNioRate = async () => {
@@ -526,14 +530,14 @@ export function CashierPage() {
   }, [movementForm.denominaciones, movementForm.moneda]);
 
   const displayInvoiceRows = useMemo(() => {
-    if (activeTab !== "abiertas") return invoiceRows;
+    if (activeTab !== "cotizacion") return invoiceRows;
     return [...invoiceRows].sort(
       (a, b) => getCashierUrgencyState(b).minutes - getCashierUrgencyState(a).minutes,
     );
   }, [invoiceRows, activeTab]);
 
   const filteredInvoiceRows = useMemo(() => {
-    if (activeTab !== "abiertas") return displayInvoiceRows;
+    if (activeTab !== "cotizacion") return displayInvoiceRows;
     const hasActiveFilters = Object.values(invoiceFilters).some(Boolean);
     if (!hasActiveFilters) return displayInvoiceRows;
     return displayInvoiceRows.filter((row) => matchesInvoiceFilters(row, invoiceFilters));
@@ -558,6 +562,7 @@ export function CashierPage() {
   }, [selectedAbonoCustomer, selectedAbonoSaleId]);
 
   const activeCollectSale = useMemo(() => {
+    if (collectDialogOpen && collectDialogSale) return collectDialogSale;
     if (activeTab === "abonos" && selectedAbonoSale) {
       return {
         ...selectedAbonoSale,
@@ -566,17 +571,92 @@ export function CashierPage() {
       };
     }
     return selectedSale;
-  }, [activeTab, selectedAbonoSale, selectedAbonoCustomer, selectedSale]);
+  }, [activeTab, selectedAbonoSale, selectedAbonoCustomer, selectedSale, collectDialogOpen, collectDialogSale]);
 
-  const prefillCollectAmount = (sale) => {
+  const prefillCollectAmount = (sale, options = {}) => {
+    const { force = false } = options;
     if (!sale?.sale_id) return;
-    if (prefillCollectSaleRef.current === sale.sale_id) return;
+    if (!force && prefillCollectSaleRef.current === sale.sale_id) return;
     prefillCollectSaleRef.current = sale.sale_id;
     const pending = Number(sale.amount_pending || 0);
+    const planned = planToCollectForm(sale.planned_payment_plan, pending);
+    if (planned) {
+      setCollectForm((prev) => ({
+        ...prev,
+        ...planned,
+        received_amount: prev.received_amount,
+        reference: prev.reference,
+        notes: prev.notes,
+        force_remove_discount: prev.force_remove_discount,
+        justification: prev.justification,
+        card_type: prev.card_type,
+        bank_name: prev.bank_name,
+        transaction_number: prev.transaction_number,
+      }));
+      return;
+    }
+    const paymentMethod = mapSalePaymentMethod(sale);
     setCollectForm((prev) => ({
       ...prev,
       amount: pending > 0 ? String(pending) : "",
+      payment_method: paymentMethod,
+      mode: String(sale?.payment_type || sale?.payment_method || "").toLowerCase() === "mixed" ? "mixed" : "single",
     }));
+  };
+
+  const requestSaleEdit = async (sale, reason) => {
+    if (!sale?.sale_id) return;
+    const trimmed = String(reason || "").trim();
+    if (trimmed.length < 10) {
+      toast.error("Indica una razón de al menos 10 caracteres");
+      return;
+    }
+    try {
+      await axios.post(
+        `${API}/sales/${sale.sale_id}/requests/edit`,
+        { reason: trimmed },
+        { withCredentials: true },
+      );
+      toast.success("Solicitud de edición enviada a gerencia/supervisor");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo enviar la solicitud de edición");
+    }
+  };
+
+  const openCollectDialogForSale = (sale) => {
+    if (!sale?.sale_id) return;
+    if (!requireOpenedAndUnlockedSession()) return;
+    setActiveTab("cotizacion");
+    setSelectedSaleId(sale.sale_id);
+    setCollectDialogSale(sale);
+    prefillCollectAmount(sale, { force: true });
+    setCollectDialogOpen(true);
+  };
+
+  const handleVoucherScan = async (rawCode) => {
+    const code = normalizeVoucherScanCode(rawCode);
+    if (!code) return;
+    if (!isValidVoucherScanCode(code)) {
+      toast.error("Código inválido. Escanea el voucher (INV-YYYYMMDD-####)");
+      return;
+    }
+    try {
+      const res = await axios.get(`${API}/caja/facturas/lookup`, {
+        withCredentials: true,
+        params: { code },
+      });
+      const row = res?.data?.row;
+      if (!row?.sale_id) {
+        toast.error("Factura no encontrada");
+        return;
+      }
+      openCollectDialogForSale(row);
+      setVoucherScanInput("");
+      toast.success(`Factura ${row.invoice_number} lista para cobro`);
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "No se encontró la factura escaneada");
+    }
   };
 
   useEffect(() => {
@@ -685,7 +765,7 @@ export function CashierPage() {
       const status = String(res?.data?.status || "pending");
       setPosDiscountAuthStatus(status);
       toast.success("Solicitud enviada a gerencia/supervisor. Te avisaremos cuando aprueben.");
-      await loadInvoices("abiertas");
+      await loadInvoices("cotizacion");
       if (activeTab === "abonos") {
         await loadAbonoCustomers(abonoSearch);
       }
@@ -866,13 +946,13 @@ export function CashierPage() {
   useEffect(() => {
     if (preselectedSaleId) {
       pendingPreselectRef.current = preselectedSaleId;
-      setActiveTab("abiertas");
+      setActiveTab("cotizacion");
       setSelectedSaleId(preselectedSaleId);
     }
   }, [preselectedSaleId]);
 
   useEffect(() => {
-    if (["abiertas", "cerradas", "anuladas"].includes(activeTab)) {
+    if (["cotizacion", "credito", "pagadas"].includes(activeTab)) {
       loadInvoices(activeTab);
     }
     if (activeTab === "abonos" && isSessionOpenedHere) {
@@ -882,11 +962,11 @@ export function CashierPage() {
 
   useEffect(() => {
     if (!isSessionOpenedHere) return;
-    if (activeTab !== "abiertas") return;
+    if (activeTab !== "cotizacion") return;
 
     // Keep open invoices synced in near real-time for cashier users.
     const intervalId = window.setInterval(() => {
-      loadInvoices("abiertas", { showLoading: false });
+      loadInvoices("cotizacion", { showLoading: false });
     }, 5000);
 
     return () => {
@@ -895,7 +975,15 @@ export function CashierPage() {
   }, [activeTab, isSessionOpenedHere, user?.branch_id, invoiceSearch]);
 
   useEffect(() => {
-    if (!urgentSoundEnabled || activeTab !== "abiertas" || !isSessionOpenedHere) return;
+    if (!isSessionOpenedHere || isLocked || activeTab !== "cotizacion") return undefined;
+    const focusTimer = window.setTimeout(() => {
+      voucherScanRef.current?.focus?.();
+    }, 250);
+    return () => window.clearTimeout(focusTimer);
+  }, [activeTab, isSessionOpenedHere, isLocked, collectDialogOpen]);
+
+  useEffect(() => {
+    if (!urgentSoundEnabled || activeTab !== "cotizacion" || !isSessionOpenedHere) return;
     const criticalRows = invoiceRows.filter((row) => getCashierUrgencyState(row).level === "critical");
     const freshCritical = criticalRows.filter((row) => !urgentSoundPlayedRef.current.has(row.sale_id));
     if (!freshCritical.length) return;
@@ -1025,8 +1113,10 @@ export function CashierPage() {
           ? "Cobro total aplicado"
           : (isPartial ? "Abono parcial registrado" : "Cobro aplicado correctamente"),
       );
+      setCollectDialogOpen(false);
+      setCollectDialogSale(null);
       prefillCollectSaleRef.current = "";
-      await loadInvoices("abiertas");
+      await loadInvoices("cotizacion");
       if (activeTab === "abonos") {
         await loadAbonoCustomers(abonoSearch);
       }
@@ -1046,10 +1136,87 @@ export function CashierPage() {
       }
     } catch (error) {
       const detail = error?.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : (detail?.message || "No se pudo cobrar factura"));
+      if (detail?.error === "PAYMENT_PLAN_MISMATCH") {
+        toast.error(detail?.message || "El cobro no coincide con el plan acordado. Solicita edición a gerencia.");
+      } else {
+        toast.error(typeof detail === "string" ? detail : (detail?.message || "No se pudo cobrar factura"));
+      }
     } finally {
       setBusy((prev) => ({ ...prev, collect: false }));
       setQuickCollectSaleId("");
+    }
+  };
+
+  const isCashierInvoiceBulkPurgeable = (sale) => {
+    const paid = Number(sale?.amount_paid || 0);
+    const status = String(sale?.payment_status || "").toLowerCase();
+    return status === "pending" && paid <= 0.009;
+  };
+
+  const handleDeleteCashierInvoice = async (sale) => {
+    if (!canPurgeCashierInvoices) {
+      toast.error("Solo gerencia, supervisores o programadores pueden eliminar facturas en caja");
+      return;
+    }
+    if (!sale?.sale_id) return;
+    const label = sale.invoice_number || sale.sale_id;
+    const partial = Number(sale?.amount_paid || 0) > 0.009;
+    const confirmText = partial
+      ? `¿Eliminar ${label}? Tiene abonos parciales (C$${toMoney(sale.amount_paid)}).`
+      : `¿Eliminar ${label} de la cola de caja?`;
+    if (!window.confirm(confirmText)) return;
+
+    setPurgeBusySaleId(sale.sale_id);
+    try {
+      await axios.delete(`${API}/caja/facturas/${sale.sale_id}`, { withCredentials: true });
+      toast.success(`Factura ${label} eliminada de caja`);
+      if (selectedSaleId === sale.sale_id) {
+        setSelectedSaleId("");
+        setCollectDialogOpen(false);
+        setCollectDialogSale(null);
+      }
+      await loadInvoices(activeTab);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo eliminar la factura");
+    } finally {
+      setPurgeBusySaleId("");
+    }
+  };
+
+  const handleClearCashierQueue = async () => {
+    if (!canPurgeCashierInvoices) {
+      toast.error("Solo gerencia, supervisores o programadores pueden limpiar la cola de caja");
+      return;
+    }
+    const tabForClear = activeTab === "credito" ? "credito" : "cotizacion";
+    const purgeableCount = invoiceRows.filter(isCashierInvoiceBulkPurgeable).length;
+    if (!purgeableCount) {
+      toast.message("No hay facturas pendientes sin abonos para limpiar");
+      return;
+    }
+    if (!window.confirm(
+      `¿Limpiar ${purgeableCount} factura${purgeableCount === 1 ? "" : "s"} pendiente${purgeableCount === 1 ? "" : "s"} sin abonos en caja? Esta acción anula las facturas.`,
+    )) {
+      return;
+    }
+
+    setBusy((prev) => ({ ...prev, clearQueue: true }));
+    try {
+      const res = await axios.post(
+        `${API}/caja/facturas/clear-queue`,
+        { branch_id: user?.branch_id || undefined, tab: tabForClear },
+        { withCredentials: true },
+      );
+      const removed = Number(res?.data?.removed || 0);
+      toast.success(`Cola limpiada (${removed} factura${removed === 1 ? "" : "s"} eliminada${removed === 1 ? "" : "s"})`);
+      setSelectedSaleId("");
+      setCollectDialogOpen(false);
+      setCollectDialogSale(null);
+      await loadInvoices(tabForClear);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo limpiar la cola de caja");
+    } finally {
+      setBusy((prev) => ({ ...prev, clearQueue: false }));
     }
   };
 
@@ -1092,7 +1259,7 @@ export function CashierPage() {
       );
       toast.success("Factura anulada");
       setCancelForm({ motivo: "", justificacion_interna: "", autorizado_por: "" });
-      await loadInvoices("abiertas");
+      await loadInvoices("cotizacion");
     } catch (error) {
       toast.error(error?.response?.data?.detail || "No se pudo anular factura");
     } finally {
@@ -1217,22 +1384,46 @@ export function CashierPage() {
     }
   };
 
+  const collectPanelProps = {
+    collectForm,
+    setCollectForm,
+    authRequiredForCollect,
+    posDiscountAuthStatus,
+    posDiscountAuthBusy,
+    onRequestPosDiscountAuthorization: requestPosDiscountAuthorization,
+    onRequestSaleEdit: requestSaleEdit,
+    busyCollect: busy.collect,
+    canOperate: isSessionOpenedHere && !isLocked,
+    canCancelInvoice,
+    cancelForm,
+    setCancelForm,
+    cancelReasons,
+    onSubmitCancel: submitCancelInvoice,
+    busyCancel: busy.cancel,
+  };
+
   return (
-    <div className={`p-6 space-y-6 transition-colors ${activePageToneClass}`} data-testid="cashier-page">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+    <div className={cn("p-4 sm:p-6 space-y-4 transition-colors", activePageToneClass)} data-testid="cashier-page">
+      <div className="flex items-start justify-between gap-3 flex-wrap ui-fade-in-stagger">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Caja Operativa</h1>
-          <p className="text-muted-foreground">Versión cerrada con control de arqueo, cobros, anulaciones y flujo por pestañas</p>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">Caja</h1>
+          <p className="text-sm text-muted-foreground">Cobro, arqueo y control de turno</p>
         </div>
-        {!isCashier ? (
-          <div className="flex flex-col items-end gap-2 min-w-[260px]">
-            <Badge variant={isSessionOpenedHere ? "default" : "outline"} className="capitalize">Rol: {user?.role || "sin rol"}</Badge>
-            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm w-full" data-testid="cash-session-id-header">
-              <div className="text-xs text-muted-foreground">Session ID activo (no editable)</div>
-              <div className="font-semibold break-all">{sessionId || "Sin sesión activa"}</div>
-            </div>
-          </div>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {isSessionOpenedHere ? (
+            <Badge variant="default" className="animate-erp-pulse">Turno activo</Badge>
+          ) : (
+            <Badge variant="outline">Sin turno</Badge>
+          )}
+          {!isCashier ? (
+            <Badge variant="outline" className="capitalize">Rol: {user?.role || "sin rol"}</Badge>
+          ) : null}
+          {sessionId ? (
+            <span className="text-[11px] font-mono text-muted-foreground max-w-[220px] truncate" data-testid="cash-session-id-header" title={sessionId}>
+              {sessionId}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {!isSessionOpenedHere && (
@@ -1266,14 +1457,14 @@ export function CashierPage() {
         </Card>
       )}
 
-      <Card>
+      <Card className={cn(isSessionOpenedHere && "border-primary/30 shadow-sm ui-panel animate-fade-up-soft")}>
         {!isSessionOpenedHere ? (
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle>Apertura y control de sesión</CardTitle>
             <CardDescription>El turno se abre con conteo inicial y puede bloquearse/desbloquearse con PIN.</CardDescription>
           </CardHeader>
         ) : null}
-        <CardContent className={isSessionOpenedHere ? "pt-6" : "space-y-4"}>
+        <CardContent className={isSessionOpenedHere ? "py-3 space-y-2" : "space-y-4"}>
           {!isSessionOpenedHere ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1330,33 +1521,89 @@ export function CashierPage() {
             </>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2">
-                <Button
+              <ErpFormToolbar>
+                <ErpToolbarButton
+                  action="refresh"
+                  icon={ClipboardCheck}
+                  label="Arqueo"
                   onClick={previewFisico}
-                  disabled={busy.preview || !isSessionOpenedHere || isLocked}
-                  className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400"
-                >
-                  {busy.preview ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <ClipboardCheck className="h-4 w-4 mr-2" />}
-                  Preview físico
-                </Button>
-                <Button
+                  disabled={busy.preview || isLocked}
+                  title="Preview de arqueo físico"
+                  className={busy.preview ? "[&_svg]:animate-spin" : ""}
+                />
+                <ErpToolbarButton
+                  action="save"
+                  icon={Lock}
+                  label="Bloquear"
                   onClick={lockCashierSession}
                   disabled={!openedSessionId || isLocked}
-                  className="bg-amber-500 text-amber-950 hover:bg-amber-400 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Bloquear
-                </Button>
-                <Button
-                  variant="destructive"
+                  title="Bloquear sesión de caja"
+                />
+                <ErpToolbarButton
+                  action="clear"
+                  icon={Power}
+                  label="Cerrar turno"
                   onClick={closeCashSession}
-                  disabled={busy.close || !isSessionOpenedHere || isLocked}
-                  className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:text-red-950 dark:hover:bg-red-400"
-                >
-                  {busy.close ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Power className="h-4 w-4 mr-2" />}
-                  Cerrar sesión (arqueo)
-                </Button>
-              </div>
+                  disabled={busy.close || isLocked}
+                  title="Cerrar sesión con arqueo"
+                  className={busy.close ? "[&_svg]:animate-spin" : ""}
+                />
+                {canViewManagement ? (
+                  <>
+                    <ErpToolbarButton
+                      action="refresh"
+                      icon={FileText}
+                      label="Reporte"
+                      onClick={fetchManagementReport}
+                      disabled={busy.report || !sessionId}
+                      title="Cargar reporte gerencial"
+                    />
+                    <ErpToolbarButton
+                      action="save"
+                      icon={Download}
+                      label="Excel"
+                      onClick={downloadManagementExcel}
+                      disabled={busy.excel || !sessionId}
+                      title="Descargar Excel de cierre"
+                    />
+                  </>
+                ) : null}
+              </ErpFormToolbar>
+              <Accordion type="single" collapsible className="rounded-md border bg-muted/20 px-3">
+                <AccordionItem value="cash-movements" className="border-0">
+                  <AccordionTrigger className="py-2.5 text-xs font-medium hover:no-underline">
+                    Entradas y salidas de efectivo
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-1">
+                      <MovementCard
+                        title="Entrada de efectivo"
+                        movementForm={movementForm}
+                        setMovementForm={setMovementForm}
+                        movementRowsByCurrency={movementRowsByCurrency}
+                        updateMovementQty={updateMovementQty}
+                        busy={busy.movement}
+                        submitMovement={submitMovement}
+                        forceType="entrada"
+                        disabled={!isSessionOpenedHere || isLocked}
+                        compact
+                      />
+                      <MovementCard
+                        title="Salida de efectivo"
+                        movementForm={movementForm}
+                        setMovementForm={setMovementForm}
+                        movementRowsByCurrency={movementRowsByCurrency}
+                        updateMovementQty={updateMovementQty}
+                        busy={busy.movement}
+                        submitMovement={submitMovement}
+                        forceType="salida"
+                        disabled={!isSessionOpenedHere || isLocked}
+                        compact
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </>
           )}
 
@@ -1366,51 +1613,50 @@ export function CashierPage() {
       <div className="relative">
       <div className={isLocked ? "pointer-events-none select-none blur-[2px] opacity-50" : ""}>
       {isSessionOpenedHere ? (
+      <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+      <CardContent className="pt-4 pb-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
         <TabsList className={cashTabsListClass}>
-          <TabsTrigger value="abiertas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.abiertas)}>
+          <TabsTrigger value="pagadas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.pagadas)}>
+            <CheckCircle2 className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
+            Pagadas
+          </TabsTrigger>
+          <TabsTrigger value="cotizacion" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.cotizacion)}>
             <FileText className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Facturas abiertas ({openInvoiceStats.total}
+            Cotización ({openInvoiceStats.total}
             {openInvoiceStats.urgent > 0 ? ` · ${openInvoiceStats.urgent} urgente${openInvoiceStats.urgent === 1 ? "" : "s"}` : ""})
+          </TabsTrigger>
+          <TabsTrigger value="credito" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.credito)}>
+            <CreditCard className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
+            Crédito
           </TabsTrigger>
           <TabsTrigger value="abonos" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.abonos)}>
             <Wallet className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Abonos / Clientes
-          </TabsTrigger>
-          <TabsTrigger value="cerradas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.cerradas)}>
-            <CheckCircle2 className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Facturas cerradas
-          </TabsTrigger>
-          <TabsTrigger value="anuladas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.anuladas)}>
-            <Ban className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Anuladas
-          </TabsTrigger>
-          <TabsTrigger value="devoluciones" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.devoluciones)}>
-            <RotateCcw className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Devoluciones
-          </TabsTrigger>
-          <TabsTrigger value="entrada" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.entrada)}>
-            <ArrowDown className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Entrada de efectivo
-          </TabsTrigger>
-          <TabsTrigger value="salida" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.salida)}>
-            <ArrowUp className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Salida de efectivo
+            Abonos
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="abiertas" className="space-y-4">
-          <InvoiceToolbar
-            search={invoiceSearch}
-            onChangeSearch={setInvoiceSearch}
-            onRefresh={() => loadInvoices("abiertas")}
-            loading={invoicesLoading}
-            filters={invoiceFilters}
-            onToggleFilter={(key) => setInvoiceFilters((prev) => ({ ...prev, [key]: !prev[key] }))}
-            urgentSoundEnabled={urgentSoundEnabled}
-            onToggleUrgentSound={toggleUrgentSound}
-          />
-          <InvoiceLayout
+        <TabsContent value="cotizacion" className="mt-3">
+          <CashierInvoiceWorkspace
+            toolbarProps={{
+              search: invoiceSearch,
+              onChangeSearch: setInvoiceSearch,
+              onRefresh: () => loadInvoices("cotizacion"),
+              loading: invoicesLoading,
+              filters: invoiceFilters,
+              onToggleFilter: (key) => setInvoiceFilters((prev) => ({ ...prev, [key]: !prev[key] })),
+              urgentSoundEnabled,
+              onToggleUrgentSound: toggleUrgentSound,
+              showVoucherScan: isSessionOpenedHere && !isLocked,
+              voucherScanValue: voucherScanInput,
+              onVoucherScanChange: setVoucherScanInput,
+              onVoucherScanSubmit: handleVoucherScan,
+              voucherScanRef,
+              canPurgeInvoices: canPurgeCashierInvoices,
+              purgeableCount: invoiceRows.filter(isCashierInvoiceBulkPurgeable).length,
+              onClearQueue: handleClearCashierQueue,
+              clearingQueue: busy.clearQueue,
+            }}
             rows={filteredInvoiceRows}
             selectedSaleId={selectedSaleId}
             onSelect={setSelectedSaleId}
@@ -1418,251 +1664,110 @@ export function CashierPage() {
             emptyText={
               displayInvoiceRows.length && filteredInvoiceRows.length === 0
                 ? "Ninguna factura coincide con los filtros activos"
-                : "No hay facturas abiertas"
+                : "No hay cotizaciones pendientes de cobro"
             }
-            layout="horizontal"
             showBranchBadge={canViewManagement}
             onQuickCollect={handleQuickCollect}
             quickCollectBusy={busy.collect}
             quickCollectSaleId={quickCollectSaleId}
             canOperate={isSessionOpenedHere && !isLocked}
+            canPurgeInvoice={canPurgeCashierInvoices}
+            onPurgeInvoice={handleDeleteCashierInvoice}
+            purgeBusySaleId={purgeBusySaleId}
+            selectedSale={selectedSale}
+            collectPanelProps={{
+              ...collectPanelProps,
+              onSubmitCollect: () => submitCollect(),
+              onReload: () => loadInvoices("cotizacion"),
+              invoicesLoading,
+            }}
           />
-
-          {selectedSale && (
-            <CollectActionCard
-              sale={selectedSale}
-              collectForm={collectForm}
-              setCollectForm={setCollectForm}
-              authRequiredForCollect={authRequiredForCollect}
-              posDiscountAuthStatus={posDiscountAuthStatus}
-              posDiscountAuthBusy={posDiscountAuthBusy}
-              onRequestPosDiscountAuthorization={requestPosDiscountAuthorization}
-              onSubmitCollect={() => submitCollect()}
-              busyCollect={busy.collect}
-              canOperate={isSessionOpenedHere && !isLocked}
-              onReload={() => loadInvoices("abiertas")}
-              invoicesLoading={invoicesLoading}
-              canCancelInvoice={canCancelInvoice}
-              cancelForm={cancelForm}
-              setCancelForm={setCancelForm}
-              cancelReasons={cancelReasons}
-              onSubmitCancel={submitCancelInvoice}
-              busyCancel={busy.cancel}
-            />
-          )}
         </TabsContent>
 
-        <TabsContent value="abonos" className="space-y-4">
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex flex-wrap gap-2 items-center">
-                <Input
-                  className="max-w-md"
-                  placeholder="Buscar cliente por nombre, teléfono, placa o factura"
-                  value={abonoSearch}
-                  onChange={(e) => setAbonoSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") loadAbonoCustomers(abonoSearch);
-                  }}
-                />
-                <Button variant="outline" onClick={() => loadAbonoCustomers(abonoSearch)} disabled={abonosLoading}>
-                  {abonosLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-                  Buscar pendientes
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Cobros parciales y abonos a crédito. Puedes abonar menos del total pendiente.
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="abonos" className="mt-3">
+          <CashierAbonoWorkspace
+            search={abonoSearch}
+            onChangeSearch={setAbonoSearch}
+            onSearch={() => loadAbonoCustomers(abonoSearch)}
+            loading={abonosLoading}
+            customers={abonoCustomers}
+            selectedCustomerId={selectedAbonoCustomerId}
+            onSelectCustomer={(customer) => {
+              setSelectedAbonoCustomerId(customer.customer_id);
+              setSelectedAbonoSaleId(customer.pending_sales?.[0]?.sale_id || "");
+              prefillCollectSaleRef.current = "";
+            }}
+            selectedCustomer={selectedAbonoCustomer}
+            selectedSaleId={selectedAbonoSaleId}
+            onSelectSale={(saleId) => {
+              setSelectedAbonoSaleId(saleId);
+              prefillCollectSaleRef.current = "";
+            }}
+            selectedSale={selectedAbonoSale}
+            activeCollectSale={activeCollectSale}
+            collectPanelProps={{
+              ...collectPanelProps,
+              onSubmitCollect: () => submitCollect(),
+              onReload: () => loadAbonoCustomers(abonoSearch),
+              invoicesLoading: abonosLoading,
+              submitLabel: "Registrar abono",
+              showPartialHint: true,
+            }}
+          />
+        </TabsContent>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Clientes con saldo pendiente</CardTitle>
-                <CardDescription>{abonoCustomers.length} cliente{abonoCustomers.length === 1 ? "" : "s"} encontrado{abonoCustomers.length === 1 ? "" : "s"}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 max-h-[420px] overflow-y-auto">
-                {abonosLoading ? (
-                  <div className="text-sm text-muted-foreground">Buscando clientes...</div>
-                ) : abonoCustomers.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No hay clientes pendientes para la búsqueda actual.</div>
-                ) : (
-                  abonoCustomers.map((customer) => {
-                    const active = customer.customer_id === selectedAbonoCustomerId;
-                    return (
-                      <button
-                        key={customer.customer_id}
-                        type="button"
-                        className={cn(
-                          "w-full rounded-lg border p-3 text-left transition hover:bg-muted/40",
-                          active && "border-violet-400 bg-violet-50/70 dark:bg-violet-950/30",
-                        )}
-                        onClick={() => {
-                          setSelectedAbonoCustomerId(customer.customer_id);
-                          setSelectedAbonoSaleId(customer.pending_sales?.[0]?.sale_id || "");
-                          prefillCollectSaleRef.current = "";
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium flex items-center gap-2">
-                              <UserCircle2 className="h-4 w-4" />
-                              {customer.customer_name}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {customer.customer_phone || "Sin teléfono"}
-                              {" · "}
-                              {customer.pending_sales?.length || 0} cuenta{(customer.pending_sales?.length || 0) === 1 ? "" : "s"}
-                            </div>
-                          </div>
-                          <Badge variant="outline">C${toMoney(customer.pending_total)}</Badge>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
+        <TabsContent value="credito" className="mt-3">
+          <CashierInvoiceWorkspace
+            toolbarProps={{
+              search: invoiceSearch,
+              onChangeSearch: setInvoiceSearch,
+              onRefresh: () => loadInvoices("credito"),
+              loading: invoicesLoading,
+              filters: invoiceFilters,
+              onToggleFilter: (key) => setInvoiceFilters((prev) => ({ ...prev, [key]: !prev[key] })),
+            }}
+            rows={filteredInvoiceRows}
+            selectedSaleId={selectedSaleId}
+            onSelect={setSelectedSaleId}
+            loading={invoicesLoading}
+            emptyText="No hay facturas a crédito pendientes"
+            showBranchBadge={canViewManagement}
+            onQuickCollect={handleQuickCollect}
+            quickCollectBusy={busy.collect}
+            quickCollectSaleId={quickCollectSaleId}
+            canOperate={isSessionOpenedHere && !isLocked}
+            selectedSale={selectedSale}
+            collectPanelProps={{
+              ...collectPanelProps,
+              onSubmitCollect: () => submitCollect(),
+              onReload: () => loadInvoices("credito"),
+              invoicesLoading,
+            }}
+          />
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Cuentas del cliente</CardTitle>
-                <CardDescription>
-                  {selectedAbonoCustomer?.customer_name || "Selecciona un cliente"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 max-h-[420px] overflow-y-auto">
-                {!selectedAbonoCustomer ? (
-                  <div className="text-sm text-muted-foreground">Selecciona un cliente para ver sus facturas y créditos pendientes.</div>
-                ) : (
-                  (selectedAbonoCustomer.pending_sales || []).map((sale) => {
-                    const active = sale.sale_id === selectedAbonoSaleId;
-                    return (
-                      <button
-                        key={sale.sale_id}
-                        type="button"
-                        className={cn(
-                          "w-full rounded-lg border p-3 text-left transition hover:bg-muted/40",
-                          active && "border-violet-400 bg-violet-50/70 dark:bg-violet-950/30",
-                        )}
-                        onClick={() => {
-                          setSelectedAbonoSaleId(sale.sale_id);
-                          prefillCollectSaleRef.current = "";
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium">{sale.invoice_number}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {sale.account_kind === "credito" ? "Crédito" : "Pendiente"}
-                              {sale.vehicle_plate ? ` · ${sale.vehicle_plate}` : ""}
-                            </div>
-                          </div>
-                          <Badge variant={sale.account_kind === "credito" ? "secondary" : "outline"}>
-                            C${toMoney(sale.amount_pending)}
-                          </Badge>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
+        <TabsContent value="pagadas" className="mt-3 space-y-3">
+          <InvoiceToolbar
+            search={invoiceSearch}
+            onChangeSearch={setInvoiceSearch}
+            onRefresh={() => loadInvoices("pagadas")}
+            loading={invoicesLoading}
+            compact
+          />
+          <div className="rounded-lg border bg-muted/15 max-h-[min(60vh,560px)] overflow-y-auto p-2">
+            <InvoiceLayout
+              rows={invoiceRows}
+              selectedSaleId={selectedSaleId}
+              onSelect={setSelectedSaleId}
+              loading={invoicesLoading}
+              emptyText="No hay facturas pagadas"
+              layout="grid"
+            />
           </div>
-
-          {selectedAbonoSale && (
-            <CollectActionCard
-              sale={activeCollectSale}
-              collectForm={collectForm}
-              setCollectForm={setCollectForm}
-              authRequiredForCollect={authRequiredForCollect}
-              posDiscountAuthStatus={posDiscountAuthStatus}
-              posDiscountAuthBusy={posDiscountAuthBusy}
-              onRequestPosDiscountAuthorization={requestPosDiscountAuthorization}
-              onSubmitCollect={() => submitCollect()}
-              busyCollect={busy.collect}
-              canOperate={isSessionOpenedHere && !isLocked}
-              onReload={() => loadAbonoCustomers(abonoSearch)}
-              invoicesLoading={abonosLoading}
-              submitLabel="Registrar abono"
-              showPartialHint
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="cerradas" className="space-y-4">
-          <InvoiceToolbar
-            search={invoiceSearch}
-            onChangeSearch={setInvoiceSearch}
-            onRefresh={() => loadInvoices("cerradas")}
-            loading={invoicesLoading}
-          />
-          <InvoiceLayout
-            rows={invoiceRows}
-            selectedSaleId={selectedSaleId}
-            onSelect={setSelectedSaleId}
-            loading={invoicesLoading}
-            emptyText="No hay facturas cerradas"
-          />
-        </TabsContent>
-
-        <TabsContent value="anuladas" className="space-y-4">
-          <InvoiceToolbar
-            search={invoiceSearch}
-            onChangeSearch={setInvoiceSearch}
-            onRefresh={() => loadInvoices("anuladas")}
-            loading={invoicesLoading}
-          />
-          <InvoiceLayout
-            rows={invoiceRows}
-            selectedSaleId={selectedSaleId}
-            onSelect={setSelectedSaleId}
-            loading={invoicesLoading}
-            emptyText="No hay facturas anuladas"
-          />
-        </TabsContent>
-
-        <TabsContent value="devoluciones">
-          <Card>
-            <CardHeader>
-              <CardTitle>Devoluciones</CardTitle>
-              <CardDescription>Espacio reservado para flujo de devoluciones controladas por sesión.</CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Pendiente de integración fiscal/contable específica para devoluciones y notas de crédito.
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="entrada">
-          <MovementCard
-            title="Entrada de efectivo"
-            movementForm={movementForm}
-            setMovementForm={setMovementForm}
-            movementRowsByCurrency={movementRowsByCurrency}
-            updateMovementQty={updateMovementQty}
-            busy={busy.movement}
-            submitMovement={submitMovement}
-            forceType="entrada"
-            disabled={!isSessionOpenedHere || isLocked}
-          />
-        </TabsContent>
-
-        <TabsContent value="salida">
-          <MovementCard
-            title="Salida de efectivo"
-            movementForm={movementForm}
-            setMovementForm={setMovementForm}
-            movementRowsByCurrency={movementRowsByCurrency}
-            updateMovementQty={updateMovementQty}
-            busy={busy.movement}
-            submitMovement={submitMovement}
-            forceType="salida"
-            disabled={!isSessionOpenedHere || isLocked}
-          />
         </TabsContent>
       </Tabs>
+      </CardContent>
+      </Card>
       ) : (
         <Card className="border-dashed">
           <CardContent className="pt-6 text-sm text-muted-foreground">
@@ -1792,6 +1897,48 @@ export function CashierPage() {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={collectDialogOpen}
+        onOpenChange={(open) => {
+          setCollectDialogOpen(open);
+          if (!open) setCollectDialogSale(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cobro por escaneo de voucher</DialogTitle>
+            <DialogDescription>
+              {collectDialogSale?.invoice_number
+                ? `Factura ${collectDialogSale.invoice_number} · ${collectDialogSale.customer_name || "Cliente"}`
+                : "Confirma el cobro de la factura escaneada."}
+            </DialogDescription>
+          </DialogHeader>
+          {collectDialogSale ? (
+            <CollectActionCard
+              sale={collectDialogSale}
+              collectForm={collectForm}
+              setCollectForm={setCollectForm}
+              authRequiredForCollect={authRequiredForCollect}
+              posDiscountAuthStatus={posDiscountAuthStatus}
+              posDiscountAuthBusy={posDiscountAuthBusy}
+              onRequestPosDiscountAuthorization={requestPosDiscountAuthorization}
+              onRequestSaleEdit={requestSaleEdit}
+              onSubmitCollect={() => submitCollect({ saleOverride: collectDialogSale })}
+              busyCollect={busy.collect}
+              canOperate={isSessionOpenedHere && !isLocked}
+              onReload={() => loadInvoices("cotizacion")}
+              invoicesLoading={invoicesLoading}
+              canCancelInvoice={canCancelInvoice}
+              cancelForm={cancelForm}
+              setCancelForm={setCancelForm}
+              cancelReasons={cancelReasons}
+              onSubmitCancel={submitCancelInvoice}
+              busyCancel={busy.cancel}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1859,6 +2006,7 @@ function CollectActionCard({
   posDiscountAuthStatus = "none",
   posDiscountAuthBusy = false,
   onRequestPosDiscountAuthorization,
+  onRequestSaleEdit,
   onSubmitCollect,
   busyCollect,
   canOperate,
@@ -1872,24 +2020,68 @@ function CollectActionCard({
   cancelReasons = [],
   onSubmitCancel,
   busyCancel = false,
+  shell = "card",
 }) {
+  const paymentPlanLocked = Boolean(sale?.payment_plan_locked && sale?.planned_payment_plan?.lines?.length);
+  const [editReason, setEditReason] = useState("");
   const partialAmount = Number(collectForm.amount || 0);
   const pendingAmount = Number(sale?.amount_pending || 0);
   const isPartialPayment = partialAmount > 0 && pendingAmount > partialAmount + 0.009;
+  const isPanel = shell === "panel";
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cobro y acciones - {sale?.invoice_number}</CardTitle>
-        <CardDescription>
-          {sale?.customer_name || "Cliente"}
-          {sale?.vehicle_plate ? ` · ${sale.vehicle_plate}` : ""}
-          {" | "}Pendiente: C${toMoney(sale?.amount_pending)}
-          {showPartialHint ? " · Puedes abonar un monto menor al total" : ""}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const header = (
+    <div className={isPanel ? "space-y-1 border-b pb-3" : undefined}>
+      {isPanel ? (
+        <>
+          <p className="text-sm font-semibold tracking-tight">Cobro · {sale?.invoice_number}</p>
+          <p className="text-xs text-muted-foreground">
+            {sale?.customer_name || "Cliente"}
+            {sale?.vehicle_plate ? ` · ${sale.vehicle_plate}` : ""}
+            {" · "}Pendiente C${toMoney(sale?.amount_pending)}
+            {showPartialHint ? " · Abono parcial permitido" : ""}
+          </p>
+        </>
+      ) : (
+        <>
+          <CardTitle>Cobro y acciones - {sale?.invoice_number}</CardTitle>
+          <CardDescription>
+            {sale?.customer_name || "Cliente"}
+            {sale?.vehicle_plate ? ` · ${sale.vehicle_plate}` : ""}
+            {" | "}Pendiente: C${toMoney(sale?.amount_pending)}
+            {showPartialHint ? " · Puedes abonar un monto menor al total" : ""}
+          </CardDescription>
+        </>
+      )}
+    </div>
+  );
+
+  const body = (
+      <div className={cn("space-y-3", isPanel && "pt-3")}>
         <CashierLegalBreakdown sale={sale} />
+
+        {paymentPlanLocked ? (
+          <div className="rounded-md border border-sky-300 bg-sky-50 p-3 space-y-2 text-sm text-sky-950">
+            <p className="font-medium">Plan de cobro acordado por ventas (bloqueado)</p>
+            <div className="space-y-1 text-xs">
+              {(sale.planned_payment_plan?.lines || []).map((line, index) => (
+                <div key={`plan-lock-${index}`}>
+                  {(line.metodo || "cash").toUpperCase()} · {line.moneda} {Number(line.monto_origen || 0).toFixed(2)}
+                  {line.monto_cordobas ? ` (C$ ${Number(line.monto_cordobas).toFixed(2)})` : ""}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs">Si el cliente cambió condiciones, solicita edición. Solo gerencia/supervisor puede modificar la factura.</p>
+            <div className="flex flex-wrap gap-2 items-end">
+              <div className="grow space-y-1 min-w-[220px]">
+                <Label className="text-xs">Razón de solicitud de edición</Label>
+                <Input value={editReason} onChange={(e) => setEditReason(e.target.value)} placeholder="Mínimo 10 caracteres" />
+              </div>
+              <Button type="button" variant="outline" onClick={() => onRequestSaleEdit?.(sale, editReason)}>
+                Solicitar edición
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-2">
@@ -1897,6 +2089,7 @@ function CollectActionCard({
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm"
               value={collectForm.mode}
+              disabled={paymentPlanLocked}
               onChange={(e) => setCollectForm((prev) => ({ ...prev, mode: e.target.value }))}
             >
               <option value="single">Simple</option>
@@ -1913,6 +2106,7 @@ function CollectActionCard({
                   step="0.01"
                   max={pendingAmount || undefined}
                   value={collectForm.amount}
+                  disabled={paymentPlanLocked}
                   onChange={(e) => setCollectForm((p) => ({ ...p, amount: e.target.value }))}
                 />
               </div>
@@ -1921,6 +2115,7 @@ function CollectActionCard({
                 <select
                   className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                   value={collectForm.payment_method}
+                  disabled={paymentPlanLocked}
                   onChange={(e) => setCollectForm((p) => ({ ...p, payment_method: e.target.value }))}
                 >
                   <option value="cash">Efectivo</option>
@@ -1939,6 +2134,7 @@ function CollectActionCard({
                       <select
                         className="h-10 rounded-md border bg-background px-3 text-sm"
                         value={pago.metodo}
+                        disabled={paymentPlanLocked}
                         onChange={(e) => setCollectForm((prev) => ({
                           ...prev,
                           pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, metodo: e.target.value } : row)),
@@ -1951,6 +2147,7 @@ function CollectActionCard({
                       <select
                         className="h-10 rounded-md border bg-background px-3 text-sm"
                         value={pago.moneda}
+                        disabled={paymentPlanLocked}
                         onChange={(e) => setCollectForm((prev) => ({
                           ...prev,
                           pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, moneda: e.target.value } : row)),
@@ -1963,6 +2160,7 @@ function CollectActionCard({
                         type="number"
                         step="0.01"
                         value={pago.monto_origen}
+                        disabled={paymentPlanLocked}
                         onChange={(e) => setCollectForm((prev) => ({
                           ...prev,
                           pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, monto_origen: e.target.value } : row)),
@@ -1997,6 +2195,7 @@ function CollectActionCard({
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={paymentPlanLocked}
                     onClick={() => setCollectForm((prev) => ({
                       ...prev,
                       pagos: [...prev.pagos, buildDefaultPaymentRow()],
@@ -2113,8 +2312,12 @@ function CollectActionCard({
         </div>
 
         {canCancelInvoice && cancelForm && setCancelForm && onSubmitCancel && (
-          <div className="rounded-md border p-3 space-y-2">
-            <div className="font-medium">Anular factura</div>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="cancel-invoice" className="rounded-md border px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
+                Anular factura
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label>Motivo</Label>
@@ -2148,10 +2351,253 @@ function CollectActionCard({
               {busyCancel ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
               Anular factura
             </Button>
-          </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
-      </CardContent>
+      </div>
+  );
+
+  if (isPanel) {
+    return (
+      <div className="rounded-lg border border-primary/25 bg-card shadow-sm ui-panel p-3 sm:p-4">
+        {header}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>{header}</CardHeader>
+      <CardContent>{body}</CardContent>
     </Card>
+  );
+}
+
+function CashierCollectPlaceholder({ variant = "invoice" }) {
+  const isAbono = variant === "abono";
+  return (
+    <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground ui-panel min-h-[220px] flex flex-col items-center justify-center gap-2">
+      {isAbono ? <Wallet className="h-8 w-8 opacity-40" /> : <FileText className="h-8 w-8 opacity-40" />}
+      <p className="font-medium text-foreground/80">
+        {isAbono ? "Selecciona cliente y cuenta" : "Selecciona una factura"}
+      </p>
+      <p className="text-xs max-w-[240px]">
+        {isAbono
+          ? "Busca un cliente con saldo pendiente y elige la factura o crédito a abonar."
+          : "El panel de cobro aparece aquí. También puedes escanear el voucher para abrir el cobro directo."}
+      </p>
+    </div>
+  );
+}
+
+function AbonoListPanel({ title, subtitle, children, className }) {
+  return (
+    <div className={cn("flex min-h-0 flex-col rounded-lg border bg-card/60", className)}>
+      <div className="shrink-0 border-b px-3 py-2">
+        <p className="text-sm font-semibold tracking-tight">{title}</p>
+        {subtitle ? <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p> : null}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-2 space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function AbonoSelectRow({ active, onClick, primary, secondary, badge, badgeVariant = "outline" }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "w-full rounded-lg border p-2.5 text-left transition ui-interactive hover:bg-muted/40",
+        active && "border-violet-400 bg-violet-50/70 ring-1 ring-violet-400/30 dark:bg-violet-950/30",
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="font-medium text-sm truncate">{primary}</div>
+          {secondary ? <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{secondary}</div> : null}
+        </div>
+        {badge != null ? <Badge variant={badgeVariant} className="shrink-0 text-[11px]">{badge}</Badge> : null}
+      </div>
+    </button>
+  );
+}
+
+function CashierAbonoWorkspace({
+  search,
+  onChangeSearch,
+  onSearch,
+  loading,
+  customers,
+  selectedCustomerId,
+  onSelectCustomer,
+  selectedCustomer,
+  selectedSaleId,
+  onSelectSale,
+  selectedSale,
+  activeCollectSale,
+  collectPanelProps,
+}) {
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] gap-3 xl:gap-4 items-start">
+      <div className="min-w-0 space-y-2">
+        <div className="rounded-lg border bg-muted/20 p-2.5 space-y-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Input
+              className="max-w-[280px] h-9 text-sm"
+              placeholder="Cliente, teléfono, placa o factura"
+              value={search}
+              onChange={(e) => onChangeSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSearch();
+              }}
+            />
+            <Button variant="outline" size="sm" onClick={onSearch} disabled={loading}>
+              {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+              Buscar pendientes
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Cobros parciales y abonos a crédito. Puedes abonar menos del total pendiente.
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-muted/15 max-h-[min(48vh,500px)] overflow-hidden p-2 ui-panel">
+          <div className="grid h-full min-h-[280px] grid-cols-1 lg:grid-cols-2 gap-2">
+            <AbonoListPanel
+              title="Clientes con saldo"
+              subtitle={
+                loading
+                  ? "Buscando..."
+                  : `${customers.length} cliente${customers.length === 1 ? "" : "s"} encontrado${customers.length === 1 ? "" : "s"}`
+              }
+            >
+              {loading ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">Buscando clientes...</div>
+              ) : customers.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">
+                  No hay clientes pendientes para la búsqueda actual.
+                </div>
+              ) : (
+                customers.map((customer) => (
+                  <AbonoSelectRow
+                    key={customer.customer_id}
+                    active={customer.customer_id === selectedCustomerId}
+                    onClick={() => onSelectCustomer(customer)}
+                    primary={(
+                      <span className="inline-flex items-center gap-1.5">
+                        <UserCircle2 className="h-3.5 w-3.5 shrink-0" />
+                        {customer.customer_name}
+                      </span>
+                    )}
+                    secondary={`${customer.customer_phone || "Sin teléfono"} · ${customer.pending_sales?.length || 0} cuenta${(customer.pending_sales?.length || 0) === 1 ? "" : "s"}`}
+                    badge={`C$${toMoney(customer.pending_total)}`}
+                  />
+                ))
+              )}
+            </AbonoListPanel>
+
+            <AbonoListPanel
+              title="Cuentas del cliente"
+              subtitle={selectedCustomer?.customer_name || "Selecciona un cliente"}
+            >
+              {!selectedCustomer ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">
+                  Selecciona un cliente para ver sus facturas y créditos pendientes.
+                </div>
+              ) : (selectedCustomer.pending_sales || []).length === 0 ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">
+                  Este cliente no tiene cuentas pendientes.
+                </div>
+              ) : (
+                (selectedCustomer.pending_sales || []).map((sale) => (
+                  <AbonoSelectRow
+                    key={sale.sale_id}
+                    active={sale.sale_id === selectedSaleId}
+                    onClick={() => onSelectSale(sale.sale_id)}
+                    primary={sale.invoice_number}
+                    secondary={`${sale.account_kind === "credito" ? "Crédito" : "Pendiente"}${sale.vehicle_plate ? ` · ${sale.vehicle_plate}` : ""}`}
+                    badge={`C$${toMoney(sale.amount_pending)}`}
+                    badgeVariant={sale.account_kind === "credito" ? "secondary" : "outline"}
+                  />
+                ))
+              )}
+            </AbonoListPanel>
+          </div>
+        </div>
+      </div>
+
+      <aside className="min-w-0 xl:sticky xl:top-3 max-h-[min(72vh,680px)] overflow-y-auto">
+        {selectedSale && activeCollectSale ? (
+          <CollectActionCard
+            shell="panel"
+            sale={activeCollectSale}
+            {...collectPanelProps}
+          />
+        ) : (
+          <CashierCollectPlaceholder variant="abono" />
+        )}
+      </aside>
+    </div>
+  );
+}
+
+function CashierInvoiceWorkspace({
+  toolbarProps,
+  rows,
+  selectedSaleId,
+  onSelect,
+  loading,
+  emptyText,
+  showBranchBadge = false,
+  onQuickCollect,
+  quickCollectBusy,
+  quickCollectSaleId,
+  canOperate,
+  canPurgeInvoice = false,
+  onPurgeInvoice,
+  purgeBusySaleId = "",
+  selectedSale,
+  collectPanelProps,
+}) {
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] gap-3 xl:gap-4 items-start">
+      <div className="min-w-0 space-y-2">
+        <InvoiceToolbar {...toolbarProps} compact />
+        <div className="rounded-lg border bg-muted/15 max-h-[min(48vh,500px)] overflow-y-auto p-2 ui-panel">
+          <InvoiceLayout
+            rows={rows}
+            selectedSaleId={selectedSaleId}
+            onSelect={onSelect}
+            loading={loading}
+            emptyText={emptyText}
+            layout="grid"
+            showBranchBadge={showBranchBadge}
+            onQuickCollect={onQuickCollect}
+            quickCollectBusy={quickCollectBusy}
+            quickCollectSaleId={quickCollectSaleId}
+            canOperate={canOperate}
+            canPurgeInvoice={canPurgeInvoice}
+            onPurgeInvoice={onPurgeInvoice}
+            purgeBusySaleId={purgeBusySaleId}
+            dense
+          />
+        </div>
+      </div>
+      <aside className="min-w-0 xl:sticky xl:top-3 max-h-[min(72vh,680px)] overflow-y-auto">
+        {selectedSale ? (
+          <CollectActionCard
+            shell="panel"
+            sale={selectedSale}
+            {...collectPanelProps}
+          />
+        ) : (
+          <CashierCollectPlaceholder />
+        )}
+      </aside>
+    </div>
   );
 }
 
@@ -2171,18 +2617,64 @@ function InvoiceToolbar({
   onToggleFilter,
   urgentSoundEnabled = true,
   onToggleUrgentSound,
+  showVoucherScan = false,
+  voucherScanValue = "",
+  onVoucherScanChange,
+  onVoucherScanSubmit,
+  voucherScanRef,
+  canPurgeInvoices = false,
+  purgeableCount = 0,
+  onClearQueue,
+  clearingQueue = false,
+  compact = false,
 }) {
-  return (
-    <Card>
-      <CardContent className="pt-6 space-y-3">
+  const shellClass = compact
+    ? "rounded-lg border bg-muted/20 p-2.5 space-y-2"
+    : undefined;
+  const content = (
+    <>
+        {showVoucherScan ? (
+          <div className={cn(
+            "flex flex-wrap gap-2 items-center rounded-md border border-primary/30 bg-primary/5",
+            compact ? "p-2" : "p-3",
+          )}>
+            <Barcode className="h-5 w-5 text-primary shrink-0" />
+            <Input
+              ref={voucherScanRef}
+              className="max-w-md font-mono"
+              placeholder="Escanear voucher (INV-YYYYMMDD-####)"
+              value={voucherScanValue}
+              onChange={(e) => onVoucherScanChange?.(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onVoucherScanSubmit?.(voucherScanValue);
+                }
+              }}
+              data-testid="cashier-voucher-scan"
+            />
+            <Button
+              type="button"
+              onClick={() => onVoucherScanSubmit?.(voucherScanValue)}
+              disabled={!String(voucherScanValue || "").trim()}
+            >
+              Abrir cobro
+            </Button>
+            {!compact ? (
+              <span className="text-xs text-muted-foreground">
+                El lector USB escribe aquí y abre el diálogo de cobro al presionar Enter.
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-2 items-center">
           <Input
-            className="max-w-sm"
+            className={compact ? "max-w-[200px] h-9 text-sm" : "max-w-sm"}
             placeholder="Buscar por factura, cliente o sale_id"
             value={search}
             onChange={(e) => onChangeSearch(e.target.value)}
           />
-          <Button variant="outline" onClick={onRefresh} disabled={loading}>
+          <Button variant="outline" size={compact ? "sm" : "default"} onClick={onRefresh} disabled={loading}>
             {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
             Recargar
           </Button>
@@ -2195,6 +2687,21 @@ function InvoiceToolbar({
             {urgentSoundEnabled ? <Volume2 className="h-4 w-4 mr-2" /> : <VolumeX className="h-4 w-4 mr-2" />}
             {urgentSoundEnabled ? "Sonido ON" : "Sonido OFF"}
           </Button>
+          {canPurgeInvoices ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2 text-rose-700 border-rose-300 hover:bg-rose-50 dark:text-rose-300"
+              disabled={clearingQueue || purgeableCount === 0}
+              onClick={onClearQueue}
+              data-testid="cashier-clear-queue"
+            >
+              {clearingQueue ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Limpiar facturas en caja
+              {purgeableCount > 0 ? ` (${purgeableCount})` : ""}
+            </Button>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-muted-foreground mr-1">Filtros:</span>
@@ -2214,16 +2721,26 @@ function InvoiceToolbar({
             );
           })}
         </div>
-      </CardContent>
+    </>
+  );
+
+  if (compact) {
+    return <div className={shellClass}>{content}</div>;
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-3">{content}</CardContent>
     </Card>
   );
 }
 
-function invoiceCardShellClass(row, active, horizontal = false) {
+function invoiceCardShellClass(row, active, horizontal = false, dense = false) {
   return cn(
-    "rounded-lg border p-2 text-left transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+    "rounded-lg border text-left transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ui-interactive",
+    dense ? "p-1.5" : "p-2",
     getCashierUrgencyState(row).shellClass(active),
-    horizontal && "min-h-[240px] w-[340px] shrink-0",
+    horizontal && "min-h-[200px] w-[300px] shrink-0",
   );
 }
 
@@ -2239,14 +2756,19 @@ function InvoiceLayout({
   quickCollectBusy = false,
   quickCollectSaleId = "",
   canOperate = true,
+  canPurgeInvoice = false,
+  onPurgeInvoice = null,
+  purgeBusySaleId = "",
+  dense = false,
 }) {
   const isHorizontal = layout === "horizontal";
+  const gridClass = dense
+    ? "grid grid-cols-1 sm:grid-cols-2 gap-2"
+    : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3";
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="pt-6 text-sm text-muted-foreground">Cargando facturas...</CardContent>
-      </Card>
+      <div className="py-8 text-center text-sm text-muted-foreground">Cargando facturas...</div>
     );
   }
 
@@ -2255,7 +2777,7 @@ function InvoiceLayout({
       return (
         <div className="overflow-x-auto pb-2">
           <div className="flex min-w-max gap-3">
-            <div className="h-[170px] w-[350px] shrink-0 rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground flex items-center">
+            <div className="h-[140px] w-[280px] shrink-0 rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground flex items-center">
               {emptyText}
             </div>
           </div>
@@ -2264,9 +2786,7 @@ function InvoiceLayout({
     }
 
     return (
-      <Card>
-        <CardContent className="pt-6 text-sm text-muted-foreground">{emptyText}</CardContent>
-      </Card>
+      <div className="py-10 text-center text-sm text-muted-foreground">{emptyText}</div>
     );
   }
 
@@ -2288,7 +2808,7 @@ function InvoiceLayout({
                     onSelect(row.sale_id);
                   }
                 }}
-                className={invoiceCardShellClass(row, active, true)}
+                className={invoiceCardShellClass(row, active, true, dense)}
               >
                 <OperationalJobCard
                   variant="cajero"
@@ -2299,6 +2819,9 @@ function InvoiceLayout({
                   onQuickCollect={canOperate ? onQuickCollect : null}
                   quickCollectBusy={quickCollectBusy}
                   quickCollectSaleId={quickCollectSaleId}
+                  canPurgeInvoice={canPurgeInvoice}
+                  onPurgeInvoice={onPurgeInvoice}
+                  purgeBusySaleId={purgeBusySaleId}
                 />
               </div>
             );
@@ -2309,7 +2832,7 @@ function InvoiceLayout({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div className={gridClass}>
       {rows.map((row) => {
         const active = row.sale_id === selectedSaleId;
         return (
@@ -2324,7 +2847,7 @@ function InvoiceLayout({
                 onSelect(row.sale_id);
               }
             }}
-            className={invoiceCardShellClass(row, active)}
+            className={invoiceCardShellClass(row, active, false, dense)}
           >
             <OperationalJobCard
               variant="cajero"
@@ -2335,6 +2858,9 @@ function InvoiceLayout({
               onQuickCollect={canOperate ? onQuickCollect : null}
               quickCollectBusy={quickCollectBusy}
               quickCollectSaleId={quickCollectSaleId}
+              canPurgeInvoice={canPurgeInvoice}
+              onPurgeInvoice={onPurgeInvoice}
+              purgeBusySaleId={purgeBusySaleId}
             />
           </div>
         );
@@ -2353,16 +2879,19 @@ function MovementCard({
   submitMovement,
   forceType,
   disabled,
+  compact = false,
 }) {
   const currentType = movementForm.tipo !== forceType ? forceType : movementForm.tipo;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>Registro por denominaciones para mantener trazabilidad del efectivo.</CardDescription>
+    <Card className={compact ? "shadow-none border-muted/80" : ""}>
+      <CardHeader className={compact ? "py-3 px-4" : undefined}>
+        <CardTitle className={compact ? "text-base" : undefined}>{title}</CardTitle>
+        {!compact ? (
+          <CardDescription>Registro por denominaciones para mantener trazabilidad del efectivo.</CardDescription>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={compact ? "space-y-3 px-4 pb-4 pt-0" : "space-y-4"}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="space-y-2">
             <Label>Moneda</Label>

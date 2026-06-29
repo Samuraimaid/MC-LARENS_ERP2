@@ -1,0 +1,256 @@
+{
+  "run_tag": "20260624164433",
+  "phases": {
+    "auth": {
+      "ok": [
+        "Gerencia: Xinon"
+      ],
+      "failed": []
+    },
+    "preflight": {
+      "ok": [
+        "API root: MUNDO DE ACCESORIOS ERP API",
+        "Mundo de Accesorios (branch_main): inst=True tint=True",
+        "TopCar El Calvario (branch_north): inst=False tint=False",
+        "TopCar La Tigre (branch_south): inst=False tint=False",
+        "3 bodegas registradas"
+      ],
+      "failed": []
+    },
+    "catalog": {
+      "ok": [
+        "Clientes=40 Vehículos=120 Productos=26 Inventario=48",
+        "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001",
+        "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+      ],
+      "failed": []
+    },
+    "quotation": {
+      "ok": [
+        "Cotización creada: QUO-20260624-0002 total=18888.75",
+        "Cotización QUO-20260624-0002 aprobada",
+        "Cotización visible en listado"
+      ],
+      "failed": []
+    },
+    "inventory": {
+      "ok": [
+        "Ingreso +2 unidades: qty=18 suggest_labels=True",
+        "Stock verificado: 16 -> 18"
+      ],
+      "failed": [
+        {
+          "phase": "inventory",
+          "msg": "Excepción en inventario",
+          "detail": "'charmap' codec can't encode character '\\u2192' in position 38: character maps to <undefined>"
+        }
+      ]
+    },
+    "kds": {
+      "ok": [
+        "KDS bodega: 34 registros",
+        "KDS instalaciones: 28 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 34, 'instalaciones': 28, 'electrico': 28, 'polarizados': 0}",
+        "  departamento 'bodega': 34 items",
+        "  departamento 'instalaciones': 28 items",
+        "  departamento 'polarizados': 0 items"
+      ],
+      "failed": []
+    },
+    "workflow": {
+      "ok": [
+        "e2e_full_workflow_live.py completado sin fallos",
+        "Sale IDs desde e2e_workflow_report_20260624164435.json: 5"
+      ],
+      "failed": []
+    },
+    "kds-post-sale": {
+      "ok": [
+        "KDS bodega: 39 registros",
+        "KDS instalaciones: 33 registros",
+        "KDS polarizados: 0 registros",
+        "KDS tablero: {'bodega': 39, 'instalaciones': 33, 'electrico': 33, 'polarizados': 0}",
+        "  departamento 'bodega': 39 items",
+        "  departamento 'instalaciones': 33 items",
+        "  departamento 'polarizados': 0 items",
+        "Órdenes instalación KDS para ventas E2E: 10",
+        "Despachos KDS bodega para ventas E2E: 5"
+      ],
+      "failed": []
+    },
+    "cashier": {
+      "ok": [
+        "e2e_cashier_features.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "cancel-sale": {
+      "ok": [
+        "e2e_cancel_sale_flow.py completado sin fallos"
+      ],
+      "failed": []
+    },
+    "unit-tests": {
+      "ok": [],
+      "failed": [
+        {
+          "phase": "unit-tests",
+          "msg": "test_product_labels.py falló",
+          "detail": ": No module named 'fitz'\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mFAILED\u001b[0m backend/tests/test_product_labels.py::\u001b[1mtest_render_labels_tspl_contains_barcode_and_print\u001b[0m - ModuleNotFoundError: No module named 'fitz'\n\u001b[31mFAILED\u001b[0m backend/tests/test_product_labels.py::\u001b[1mtest_render_labels_tspl_roll_bitmap_layout\u001b[0m - ModuleNotFoundError: No module named 'fitz'\n\u001b[31m\u001b[31m\u001b[1m2 failed\u001b[0m, \u001b[32m6 passed\u001b[0m\u001b[31m in 1.00s\u001b[0m\u001b[0m\n"
+        }
+      ]
+    }
+  },
+  "ok": [
+    {
+      "phase": "auth",
+      "msg": "Gerencia: Xinon"
+    },
+    {
+      "phase": "preflight",
+      "msg": "API root: MUNDO DE ACCESORIOS ERP API"
+    },
+    {
+      "phase": "preflight",
+      "msg": "Mundo de Accesorios (branch_main): inst=True tint=True"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar El Calvario (branch_north): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "TopCar La Tigre (branch_south): inst=False tint=False"
+    },
+    {
+      "phase": "preflight",
+      "msg": "3 bodegas registradas"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Clientes=40 Vehículos=120 Productos=26 Inventario=48"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Cliente+vehículo: Juan Carlos Perez / seed_vehicle_0001"
+    },
+    {
+      "phase": "catalog",
+      "msg": "Producto stock: Defensa Delantera Toyota Hilux 2016-2023 (prod_def_001)"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización creada: QUO-20260624-0002 total=18888.75"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización QUO-20260624-0002 aprobada"
+    },
+    {
+      "phase": "quotation",
+      "msg": "Cotización visible en listado"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Ingreso +2 unidades: qty=18 suggest_labels=True"
+    },
+    {
+      "phase": "inventory",
+      "msg": "Stock verificado: 16 -> 18"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS bodega: 34 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS instalaciones: 28 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds",
+      "msg": "KDS tablero: {'bodega': 34, 'instalaciones': 28, 'electrico': 28, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'bodega': 34 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'instalaciones': 28 items"
+    },
+    {
+      "phase": "kds",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "workflow",
+      "msg": "e2e_full_workflow_live.py completado sin fallos"
+    },
+    {
+      "phase": "workflow",
+      "msg": "Sale IDs desde e2e_workflow_report_20260624164435.json: 5"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS bodega: 39 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS instalaciones: 33 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS polarizados: 0 registros"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "KDS tablero: {'bodega': 39, 'instalaciones': 33, 'electrico': 33, 'polarizados': 0}"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'bodega': 39 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'instalaciones': 33 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "  departamento 'polarizados': 0 items"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "Órdenes instalación KDS para ventas E2E: 10"
+    },
+    {
+      "phase": "kds-post-sale",
+      "msg": "Despachos KDS bodega para ventas E2E: 5"
+    },
+    {
+      "phase": "cashier",
+      "msg": "e2e_cashier_features.py completado sin fallos"
+    },
+    {
+      "phase": "cancel-sale",
+      "msg": "e2e_cancel_sale_flow.py completado sin fallos"
+    }
+  ],
+  "failed": [
+    {
+      "phase": "inventory",
+      "msg": "Excepción en inventario",
+      "detail": "'charmap' codec can't encode character '\\u2192' in position 38: character maps to <undefined>"
+    },
+    {
+      "phase": "unit-tests",
+      "msg": "test_product_labels.py falló",
+      "detail": ": No module named 'fitz'\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mFAILED\u001b[0m backend/tests/test_product_labels.py::\u001b[1mtest_render_labels_tspl_contains_barcode_and_print\u001b[0m - ModuleNotFoundError: No module named 'fitz'\n\u001b[31mFAILED\u001b[0m backend/tests/test_product_labels.py::\u001b[1mtest_render_labels_tspl_roll_bitmap_layout\u001b[0m - ModuleNotFoundError: No module named 'fitz'\n\u001b[31m\u001b[31m\u001b[1m2 failed\u001b[0m, \u001b[32m6 passed\u001b[0m\u001b[31m in 1.00s\u001b[0m\u001b[0m\n"
+    }
+  ],
+  "fixed": []
+}

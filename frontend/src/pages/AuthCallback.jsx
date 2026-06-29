@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Loader2 } from "lucide-react";
+import { getRoleHomePath } from "@/lib/roleHome";
 
 export function AuthCallback() {
   const navigate = useNavigate();
@@ -29,8 +30,7 @@ export function AuthCallback() {
         // Process the session
         const user = await processSession(sessionId);
         
-        const homePath = String(user?.role || "").toLowerCase() === "cajero" ? "/cashier" : "/workbench";
-        navigate(homePath, { replace: true, state: { user } });
+        navigate(getRoleHomePath(user?.role), { replace: true, state: { user } });
       } catch (error) {
         console.error("Auth callback error:", error);
         navigate("/login", { replace: true });

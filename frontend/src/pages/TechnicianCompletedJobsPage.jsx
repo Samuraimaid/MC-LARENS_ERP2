@@ -5,6 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 import { erpActionButtonClass } from "@/lib/erpDesignSystem";
+import {
+  formatQuincenaLabel,
+  getQuincenaIsoRange,
+} from "@/lib/payrollPeriods";
+import { TechnicianKioskNav } from "@/components/technician/TechnicianKioskNav";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -62,13 +67,6 @@ const DEPARTMENT_META = {
   },
 };
 
-function monthStartIso() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}-01`;
-}
-
 function todayIso() {
   const now = new Date();
   const y = now.getFullYear();
@@ -77,6 +75,19 @@ function todayIso() {
   return `${y}-${m}-${d}`;
 }
 
+function monthStartIso() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}-01`;
+}
+
+const PERIOD_PRESETS = {
+  current_quincena: () => getQuincenaIsoRange(new Date(), 0),
+  previous_quincena: () => getQuincenaIsoRange(new Date(), -1),
+  this_month: () => ({ dateFrom: monthStartIso(), dateTo: todayIso() }),
+};
+
 export function TechnicianCompletedJobsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -84,10 +95,13 @@ export function TechnicianCompletedJobsPage() {
   const [data, setData] = useState(null);
   const [technicians, setTechnicians] = useState([]);
   const [selectedTechnician, setSelectedTechnician] = useState("");
-  const [dateFrom, setDateFrom] = useState(monthStartIso());
-  const [dateTo, setDateTo] = useState(todayIso());
+  const initialQuincena = getQuincenaIsoRange(new Date(), 0);
+  const [dateFrom, setDateFrom] = useState(initialQuincena.dateFrom);
+  const [dateTo, setDateTo] = useState(initialQuincena.dateTo);
+  const [periodPreset, setPeriodPreset] = useState("current_quincena");
 
   const isSupervisor = SUPERVISOR_ROLES.includes(String(user?.role || "").toLowerCase());
+  const isTechnicianKiosk = TECHNICIAN_ROLES.includes(String(user?.role || "").toLowerCase());
 
   const fetchTechnicians = useCallback(async () => {
     if (!isSupervisor) return;
@@ -137,8 +151,33 @@ export function TechnicianCompletedJobsPage() {
   const summary = data?.summary || {};
   const jobs = data?.jobs || [];
 
+  const applyPreset = (presetKey) => {
+    const preset = PERIOD_PRESETS[presetKey];
+    if (!preset) return;
+    const { dateFrom: from, dateTo: to } = preset();
+    setPeriodPreset(presetKey);
+    setDateFrom(from);
+    setDateTo(to);
+  };
+
+  const quincenaLabel =
+    summary.quincena_label ||
+    (summary.quincena_start && summary.quincena_end
+      ? formatQuincenaLabel(
+          new Date(`${summary.quincena_start}T12:00:00`),
+          new Date(`${summary.quincena_end}T12:00:00`)
+        )
+      : null);
+
   const summaryCards = useMemo(() => {
     const cards = [
+      {
+        key: "quincena",
+        label: quincenaLabel ? `Quincena ${quincenaLabel}` : "Quincena actual",
+        value: summary.quincena_total ?? summary.total ?? 0,
+        tone: "border-violet-200 bg-violet-50/70 dark:border-violet-500/30 dark:bg-violet-500/10",
+        valueTone: "text-violet-700 dark:text-violet-300",
+      },
       {
         key: "today",
         label: "Hoy",
@@ -147,18 +186,20 @@ export function TechnicianCompletedJobsPage() {
         valueTone: "text-emerald-700 dark:text-emerald-300",
       },
       {
-        key: "month",
-        label: "Este mes",
-        value: summary.this_month ?? 0,
-        tone: "border-blue-200 bg-blue-50/70 dark:border-blue-500/30 dark:bg-blue-500/10",
-        valueTone: "text-blue-700 dark:text-blue-300",
+        key: "prev_quincena",
+        label: summary.previous_quincena_label
+          ? `Ant. ${summary.previous_quincena_label}`
+          : "Quincena anterior",
+        value: summary.previous_quincena_total ?? 0,
+        tone: "border-slate-200 bg-slate-50/70 dark:border-slate-500/30 dark:bg-slate-500/10",
+        valueTone: "text-slate-700 dark:text-slate-300",
       },
       {
         key: "total",
-        label: "En el período",
+        label: "En el filtro",
         value: summary.total ?? 0,
-        tone: "border-violet-200 bg-violet-50/70 dark:border-violet-500/30 dark:bg-violet-500/10",
-        valueTone: "text-violet-700 dark:text-violet-300",
+        tone: "border-blue-200 bg-blue-50/70 dark:border-blue-500/30 dark:bg-blue-500/10",
+        valueTone: "text-blue-700 dark:text-blue-300",
       },
     ];
 
@@ -173,7 +214,7 @@ export function TechnicianCompletedJobsPage() {
     }
 
     return cards;
-  }, [summary, user?.role]);
+  }, [summary, user?.role, quincenaLabel]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -183,7 +224,13 @@ export function TechnicianCompletedJobsPage() {
   const roleLabel = ROLES_LABEL[data?.technician_role] || data?.technician_role || user?.role;
 
   return (
-    <div className="space-y-6 p-4 md:p-6" data-testid="technician-completed-jobs-page">
+    <div
+      className={cn(
+        "space-y-6 p-4 md:p-6",
+        isTechnicianKiosk && "pb-24"
+      )}
+      data-testid="technician-completed-jobs-page"
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -191,7 +238,7 @@ export function TechnicianCompletedJobsPage() {
             Mis Trabajos Realizados
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Conteo de trabajos aprobados por control de calidad para seguimiento de comisiones.
+            Conteo de trabajos QC aprobados · quincena con corte día 9 y 24.
             {data?.technician_name ? (
               <span className="ml-1 font-medium text-foreground">
                 {data.technician_name}
@@ -219,14 +266,44 @@ export function TechnicianCompletedJobsPage() {
             Filtros
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={periodPreset === "current_quincena" ? "default" : "outline"}
+              onClick={() => applyPreset("current_quincena")}
+            >
+              Quincena actual
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={periodPreset === "previous_quincena" ? "default" : "outline"}
+              onClick={() => applyPreset("previous_quincena")}
+            >
+              Quincena anterior
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={periodPreset === "this_month" ? "default" : "outline"}
+              onClick={() => applyPreset("this_month")}
+            >
+              Este mes
+            </Button>
+          </div>
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
           <div className="space-y-1.5">
             <Label htmlFor="date-from">Desde</Label>
             <Input
               id="date-from"
               type="date"
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={(e) => {
+                setPeriodPreset("custom");
+                setDateFrom(e.target.value);
+              }}
             />
           </div>
           <div className="space-y-1.5">
@@ -235,7 +312,10 @@ export function TechnicianCompletedJobsPage() {
               id="date-to"
               type="date"
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={(e) => {
+                setPeriodPreset("custom");
+                setDateTo(e.target.value);
+              }}
             />
           </div>
           {isSupervisor ? (
@@ -261,6 +341,7 @@ export function TechnicianCompletedJobsPage() {
               </Select>
             </div>
           ) : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -373,6 +454,8 @@ export function TechnicianCompletedJobsPage() {
           )}
         </CardContent>
       </Card>
+
+      {isTechnicianKiosk ? <TechnicianKioskNav /> : null}
     </div>
   );
 }

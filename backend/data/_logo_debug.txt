@@ -1,0 +1,5 @@
+source=1668x624
+left_half_ink=0.1929
+right_half_ink=0.3241
+mundo-logo-label.png size=(834, 624) ink=0.3252
+topcar-logo-label.png size=(834, 609) ink=0.1986

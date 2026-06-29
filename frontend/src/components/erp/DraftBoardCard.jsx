@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErpRollingCurrency } from "@/components/erp/ErpRollingNumber";
 import { cn } from "@/lib/utils";
+import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import {
   ERP_SEMANTIC_TONES,
   formatErpRelativeTime,
@@ -51,7 +52,7 @@ export default function DraftBoardCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden transition",
+        "relative overflow-hidden transition",
         isBlocked
           ? ERP_SEMANTIC_TONES.draftBlocked
           : isReleasedRestricted
@@ -70,11 +71,12 @@ export default function DraftBoardCard({
             : undefined
       }
     >
-      <CardContent className="p-0">
+      <VehicleThumbnailWatermark vehicle={meta?.previewVehicleRecord} />
+      <CardContent className="relative p-0">
         <div
           role="button"
           tabIndex={isBlocked ? -1 : 0}
-          className="grid gap-3 md:grid-cols-[80px,1fr]"
+          className="block"
           onClick={handleOpen}
           onKeyDown={(e) => {
             if (isBlocked) return;
@@ -84,18 +86,6 @@ export default function DraftBoardCard({
             }
           }}
         >
-          <div className="hidden bg-muted/30 sm:flex items-center justify-center min-h-[88px] md:min-h-[96px]">
-            {meta?.previewImage ? (
-              <img
-                src={meta.previewImage}
-                alt={meta.title}
-                className="h-20 w-20 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="text-[10px] text-muted-foreground px-2 text-center">Sin imagen</div>
-            )}
-          </div>
-
           <div className="p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
