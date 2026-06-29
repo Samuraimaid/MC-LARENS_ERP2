@@ -1,0 +1,9 @@
+{
+  "published_at": "2026-06-29T15:15:58.8193228-06:00",
+  "db_name": "mc-larens2_mundo_accesorios_erp",
+  "archive": "mongodb_mc-larens2_mundo_accesorios_erp_20260629_151558.archive.gz",
+  "manifest": "manifest.json",
+  "bytes": 310430,
+  "github_repo": "https://github.com/Samuraimaid/MC-LARENS_ERP2",
+  "restore_script": "scripts/mongodb_restore.ps1"
+}

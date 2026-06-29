@@ -116,6 +116,8 @@ test_reports/
 backups/mongodb/*.archive.gz
 backups/mongodb/manifest_*.json
 !backups/mongodb/.gitkeep
+!backups/mongodb/published/
+!backups/mongodb/published/**
 tmp_*
 
 # Uploaded vehicle silhouette overrides (bundled assets remain in repo)

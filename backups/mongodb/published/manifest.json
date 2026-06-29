@@ -1,0 +1,8 @@
+﻿{
+    "created_at":  "2026-06-29T15:15:58.8193228-06:00",
+    "db_name":  "mc-larens2_mundo_accesorios_erp",
+    "archive":  "mongodb_mc-larens2_mundo_accesorios_erp_20260629_151558.archive.gz",
+    "bytes":  310430,
+    "mongo_container":  "mclarens2-mongodb",
+    "verified":  true
+}
