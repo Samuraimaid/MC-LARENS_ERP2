@@ -3,11 +3,17 @@ from __future__ import annotations
 import base64
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
 from .dependencies import get_reportlab_symbols
+from .pdf_document_settings import (
+    PETTY_CASH_CATEGORY_LABELS,
+    merge_pdf_document_sections,
+    normalize_pdf_document_sections,
+    pdf_section_enabled,
+)
 
 COLOR_PRIMARY = "#1E3A5F"
 COLOR_ACCENT = "#3B5BDB"
@@ -46,7 +52,9 @@ DEFAULT_PDF_DOCUMENT_SETTINGS: Dict[str, Any] = {
         "invoice_credit": "#DC2626",
         "payment_partial": "#EAB308",
         "invoice_pending": "#1E3A5F",
+        "petty_cash": "#7C3AED",
     },
+    "sections": normalize_pdf_document_sections(),
 }
 
 
@@ -92,7 +100,9 @@ def normalize_pdf_document_settings(raw: Optional[Dict[str, Any]] = None) -> Dic
             "invoice_pending": _normalize_hex_color(
                 incoming_colors.get("invoice_pending"), default_colors["invoice_pending"]
             ),
+            "petty_cash": _normalize_hex_color(incoming_colors.get("petty_cash"), default_colors["petty_cash"]),
         },
+        "sections": normalize_pdf_document_sections(data.get("sections")),
     }
 
 
@@ -141,6 +151,11 @@ def resolve_invoice_theme(sale: Optional[Dict[str, Any]], pdf_settings: Dict[str
 def resolve_quotation_theme(pdf_settings: Dict[str, Any]) -> Dict[str, str]:
     colors_cfg = (pdf_settings or {}).get("theme_colors") or DEFAULT_PDF_DOCUMENT_SETTINGS["theme_colors"]
     return build_document_theme(colors_cfg.get("quotation", "#2563EB"), "Cotización")
+
+
+def resolve_petty_cash_theme(pdf_settings: Dict[str, Any]) -> Dict[str, str]:
+    colors_cfg = (pdf_settings or {}).get("theme_colors") or DEFAULT_PDF_DOCUMENT_SETTINGS["theme_colors"]
+    return build_document_theme(colors_cfg.get("petty_cash", "#7C3AED"), "Comprobante caja chica")
 
 
 def _currency_symbol(currencies: Dict[str, Any], code: str) -> str:
@@ -394,9 +409,13 @@ def _prepare_pdf_page(
     pdf_settings: Dict[str, Any],
     logger: Any,
     logo_cache: Dict[str, Any],
+    doc_type: str = "invoice",
 ) -> Optional[Any]:
     settings = normalize_pdf_document_settings(pdf_settings)
-    if settings.get("watermark_enabled"):
+    watermark_visible = bool(settings.get("watermark_enabled")) and pdf_section_enabled(
+        settings, doc_type, "watermark"
+    )
+    if watermark_visible:
         wm_path = _resolve_watermark_logo_path(company, settings)
         if wm_path and "watermark" not in logo_cache:
             logo_cache["watermark"] = load_watermark_image(
@@ -577,6 +596,10 @@ def draw_invoice_letter_pdf(
     safe_items = [item for item in (items if isinstance(items, list) else list(items or [])) if item]
     breakdown = _compute_discount_breakdown(safe_items, totals)
     settings = normalize_pdf_document_settings(pdf_settings)
+    doc_type = "invoice"
+    def _sec(key: str, fallback: bool = True) -> bool:
+        return pdf_section_enabled(settings, doc_type, key, fallback=fallback)
+
     theme = document_theme or build_document_theme(COLOR_PRIMARY, "Factura")
     logo_cache: Dict[str, Any] = {}
 
@@ -585,12 +608,12 @@ def draw_invoice_letter_pdf(
 
     def _new_page() -> float:
         _prepare_pdf_page(
-            p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache
+            p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
         )
         return height - 72
 
     _prepare_pdf_page(
-        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache
+        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
     )
 
     header_height = 118
@@ -600,24 +623,28 @@ def draw_invoice_letter_pdf(
     p.setFillColor(colors.HexColor(theme.get("header_bg", COLOR_HEADER)))
     p.rect(0, header_bottom, width, header_height, stroke=0, fill=1)
 
-    logo = logo_cache.get("header") or load_logo_image(_resolve_header_logo_path(company), logger)
+    logo = logo_cache.get("header") if _sec("header_logo") else None
+    if logo is None and _sec("header_logo"):
+        logo = load_logo_image(_resolve_header_logo_path(company), logger)
     brand_x = margin_x
     if logo:
         p.drawImage(logo, margin_x, height - 96, width=88, height=42, preserveAspectRatio=True, mask="auto")
         brand_x = margin_x + 98
 
-    p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
-    p.setFont("Helvetica-Bold", 17)
-    p.drawString(brand_x, height - 58, company.get("name", "MUNDO DE ACCESORIOS"))
-    p.setFont("Helvetica", 9)
-    p.setFillColor(colors.HexColor(theme.get("muted", COLOR_MUTED)))
-    tagline = company.get("tagline") or "Accesorios y servicios automotrices"
-    if tagline.lower() == "sistema erp":
-        tagline = "Accesorios y servicios automotrices"
-    p.drawString(brand_x, height - 72, tagline)
+    if _sec("company_name"):
+        p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
+        p.setFont("Helvetica-Bold", 17)
+        p.drawString(brand_x, height - 58, company.get("name", "MUNDO DE ACCESORIOS"))
+    if _sec("company_tagline"):
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor(theme.get("muted", COLOR_MUTED)))
+        tagline = company.get("tagline") or "Accesorios y servicios automotrices"
+        if tagline.lower() == "sistema erp":
+            tagline = "Accesorios y servicios automotrices"
+        p.drawString(brand_x, height - 72, tagline)
 
     info_y = height - 86
-    if salesperson_name:
+    if salesperson_name and _sec("salesperson"):
         p.setFillColor(colors.HexColor(theme.get("text", COLOR_TEXT)))
         p.setFont("Helvetica-Bold", 8.5)
         p.drawString(brand_x, info_y, f"Vendedor: {salesperson_name}")
@@ -629,73 +656,103 @@ def draw_invoice_letter_pdf(
         x=brand_x,
         y=info_y,
         theme=theme,
-        enabled=bool(settings.get("show_status_badge")),
+        enabled=bool(settings.get("show_status_badge")) and _sec("status_badge"),
         align="left",
     )
 
     right_block_x = width - margin_x
-    p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
-    p.setFont("Helvetica-Bold", 10)
-    p.drawRightString(right_block_x, height - 50, "Factura N°")
-    p.setFont("Helvetica-Bold", 13)
-    p.drawRightString(right_block_x, height - 68, str(invoice_number or "—"))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawRightString(right_block_x, height - 86, "Fecha")
-    p.setFont("Helvetica", 10)
-    p.drawRightString(right_block_x, height - 100, _format_date_es(invoice_date))
+    if _sec("document_number"):
+        p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
+        p.setFont("Helvetica-Bold", 10)
+        p.drawRightString(right_block_x, height - 50, "Factura N°")
+        p.setFont("Helvetica-Bold", 13)
+        p.drawRightString(right_block_x, height - 68, str(invoice_number or "—"))
+    if _sec("date"):
+        p.setFont("Helvetica-Bold", 9)
+        p.drawRightString(right_block_x, height - 86, "Fecha")
+        p.setFont("Helvetica", 10)
+        p.drawRightString(right_block_x, height - 100, _format_date_es(invoice_date))
 
     y = height - 142
 
-    # Cliente y vehículo arriba
-    panel_height = 104
+    show_customer = _sec("customer")
+    show_vehicle = _sec("vehicle") or _sec("plate") or _sec("vin") or _sec("vehicle_color")
+    panel_height = 104 if (show_customer or show_vehicle) else 0
     half_width = (content_width - 12) / 2
-    _draw_rounded_panel(
-        p, colors, margin_x, y - panel_height, half_width, panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
-    )
-    _draw_rounded_panel(
-        p,
-        colors,
-        margin_x + half_width + 12,
-        y - panel_height,
-        half_width,
-        panel_height,
-        fill=theme.get("panel_bg", COLOR_PANEL),
-    )
-
-    p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(margin_x + 12, y - 16, "DATOS DEL CLIENTE")
-    p.drawString(margin_x + half_width + 24, y - 16, "DATOS DEL VEHÍCULO")
-
-    client_y = y - 30
-    client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Nombre:", customer.get("name", ""))
-    client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "RUC:", customer.get("tax_id", "") or "—")
-    client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Teléfono:", customer.get("phone", "") or "—")
-    client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Correo:", customer.get("email", "") or "—")
-    _draw_label_value(p, colors, margin_x + 12, client_y, "Dirección:", customer.get("address", "") or "—")
-
-    vehicle_y = y - 30
-    if vehicle:
-        vehicle_label = " ".join(
-            part
-            for part in [
-                str(vehicle.get("brand") or "").strip(),
-                str(vehicle.get("model") or "").strip(),
-                str(vehicle.get("year") or "").strip(),
-            ]
-            if part
-        ).strip() or "—"
-        vehicle_y = _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Vehículo:", vehicle_label)
-        vehicle_y = _draw_label_value(
-            p, colors, margin_x + half_width + 24, vehicle_y, "Placa:", vehicle.get("plate", "") or "—"
+    if show_customer:
+        _draw_rounded_panel(
+            p, colors, margin_x, y - panel_height, half_width, panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
         )
-        vin = vehicle.get("vin") or vehicle.get("chasis")
-        vehicle_y = _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Chasis:", vin or "—")
-        _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Color:", vehicle.get("color", "") or "—")
-    else:
-        _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Vehículo:", "Sin vehículo asociado")
+    if show_vehicle:
+        vehicle_panel_x = margin_x if not show_customer else margin_x + half_width + 12
+        vehicle_panel_width = content_width if not show_customer else half_width
+        _draw_rounded_panel(
+            p,
+            colors,
+            vehicle_panel_x,
+            y - panel_height,
+            vehicle_panel_width,
+            panel_height,
+            fill=theme.get("panel_bg", COLOR_PANEL),
+        )
 
-    y = y - panel_height - 20
+    if show_customer:
+        p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(margin_x + 12, y - 16, "DATOS DEL CLIENTE")
+        client_y = y - 30
+        client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Nombre:", customer.get("name", ""))
+        if _sec("customer_tax_id"):
+            client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "RUC:", customer.get("tax_id", "") or "—")
+        if _sec("customer_phone"):
+            client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Teléfono:", customer.get("phone", "") or "—")
+        if _sec("customer_email"):
+            client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Correo:", customer.get("email", "") or "—")
+        if _sec("customer_address"):
+            _draw_label_value(p, colors, margin_x + 12, client_y, "Dirección:", customer.get("address", "") or "—")
+
+    if show_vehicle:
+        vehicle_panel_x = margin_x if not show_customer else margin_x + half_width + 24
+        p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(vehicle_panel_x, y - 16, "DATOS DEL VEHÍCULO")
+        vehicle_y = y - 30
+        if vehicle:
+            if _sec("vehicle"):
+                vehicle_label = " ".join(
+                    part
+                    for part in [
+                        str(vehicle.get("brand") or "").strip(),
+                        str(vehicle.get("model") or "").strip(),
+                        str(vehicle.get("year") or "").strip(),
+                    ]
+                    if part
+                ).strip() or "—"
+                vehicle_y = _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Vehículo:", vehicle_label)
+            if _sec("plate"):
+                vehicle_y = _draw_label_value(
+                    p, colors, vehicle_panel_x, vehicle_y, "Placa:", vehicle.get("plate", "") or "—"
+                )
+            if _sec("vin"):
+                vin = vehicle.get("vin") or vehicle.get("chasis")
+                vehicle_y = _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Chasis:", vin or "—")
+            if _sec("vehicle_color"):
+                _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Color:", vehicle.get("color", "") or "—")
+        else:
+            _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Vehículo:", "Sin vehículo asociado")
+
+    y = y - panel_height - (20 if panel_height else 0)
+
+    if not _sec("items"):
+        if _sec("notes") and notes:
+            p.setFillColor(colors.HexColor(COLOR_TEXT))
+            p.setFont("Helvetica-Bold", 9)
+            p.drawString(margin_x, y, "Notas")
+            p.setFont("Helvetica", 9)
+            p.drawString(margin_x, y - 14, _truncate(notes, 120))
+        if _sec("company_footer"):
+            _draw_company_footer(p, colors, company, width, 42)
+        return
 
     # Encabezado de tabla
     p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
@@ -750,36 +807,38 @@ def draw_invoice_letter_pdf(
             y -= 16
             index += 1
 
-    _draw_items_group("PRODUCTOS INSTALADOS", installed_items)
-    _draw_items_group("PRODUCTOS PARA LLEVAR", carry_items)
+    if _sec("items_installed_group"):
+        _draw_items_group("PRODUCTOS INSTALADOS", installed_items)
+    if _sec("items_carry_group"):
+        _draw_items_group("PRODUCTOS PARA LLEVAR", carry_items)
     if not installed_items and not carry_items:
         p.drawString(margin_x + 6, y, "Sin productos registrados")
         y -= 16
 
     y -= 8
 
-    # Totales
     totals_box_width = 230
     totals_x = width - margin_x - totals_box_width
-    totals_lines = [
-        ("Subtotal bruto:", breakdown["gross_before_line"]),
-    ]
-    if breakdown["line_discount_total"] > 0:
+    totals_lines: List[Tuple[str, float]] = []
+    if _sec("breakdown") and _sec("breakdown_gross_subtotal"):
+        totals_lines.append(("Subtotal bruto:", breakdown["gross_before_line"]))
+    if _sec("breakdown") and _sec("breakdown_line_discount") and breakdown["line_discount_total"] > 0:
         totals_lines.append(("Descuento por línea:", -breakdown["line_discount_total"]))
-    totals_lines.append(("Subtotal:", breakdown["subtotal"]))
-    if breakdown["global_discount"] > 0:
+    if _sec("breakdown") and _sec("breakdown_subtotal"):
+        totals_lines.append(("Subtotal:", breakdown["subtotal"]))
+    if _sec("breakdown") and _sec("breakdown_global_discount") and breakdown["global_discount"] > 0:
         label = "Descuento global"
         if breakdown["global_percent"] > 0:
             label += f" ({breakdown['global_percent']:.1f}%)"
         totals_lines.append((f"{label}:", -breakdown["global_discount"]))
 
     iva_amount = float(totals.get("tax") or totals.get("iva_amount") or 0)
-    if apply_iva and iva_amount > 0:
+    if _sec("breakdown") and _sec("breakdown_iva") and apply_iva and iva_amount > 0:
         iva_label = f"IVA ({float(iva_rate or 0):.0f}%):" if iva_rate else "IVA:"
         totals_lines.append((iva_label, iva_amount))
 
     retention_amount = float(totals.get("retention_amount") or 0)
-    if retention_amount > 0:
+    if _sec("breakdown") and _sec("breakdown_retention") and retention_amount > 0:
         retention_rate = float(totals.get("retention_rate") or 0)
         if retention_rate <= 1:
             retention_rate *= 100
@@ -792,14 +851,22 @@ def draw_invoice_letter_pdf(
     }
     if not merged_payment_info.get("method_summary") and payment_method:
         merged_payment_info["method_summary"] = payment_method
-    payment_detail_rows = _build_payment_detail_rows(merged_payment_info, currencies, currency)
+    payment_detail_rows = (
+        _build_payment_detail_rows(merged_payment_info, currencies, currency)
+        if _sec("payment_details")
+        else []
+    )
 
-    box_height = 24 + len(totals_lines) * 14 + len(payment_detail_rows) * 14 + 34
-    if y - box_height < 90:
-        p.showPage()
-        y = _new_page() - 18
+    show_total = _sec("breakdown") and _sec("breakdown_total")
+    show_totals_box = bool(totals_lines or payment_detail_rows or show_total)
     box_top = y
-    _draw_rounded_panel(p, colors, totals_x, box_top - box_height, totals_box_width, box_height, fill="#FFFFFF")
+    if show_totals_box:
+        box_height = 24 + len(totals_lines) * 14 + len(payment_detail_rows) * 14 + (34 if show_total else 0)
+        if y - box_height < 90:
+            p.showPage()
+            y = _new_page() - 18
+            box_top = y
+        _draw_rounded_panel(p, colors, totals_x, box_top - box_height, totals_box_width, box_height, fill="#FFFFFF")
 
     line_y = box_top - 18
     p.setFont("Helvetica", 9)
@@ -841,15 +908,16 @@ def draw_invoice_letter_pdf(
             p.drawRightString(width - margin_x - 12, line_y, amount_text)
         line_y -= 14
 
-    total_value = float(totals.get("total_legal") or totals.get("total") or 0)
-    p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
-    p.rect(totals_x + 8, line_y - 10, totals_box_width - 16, 22, stroke=0, fill=1)
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(totals_x + 16, line_y - 2, "TOTAL")
-    p.drawRightString(width - margin_x - 12, line_y - 2, _format_money(currencies, total_value, currency))
+    if show_total:
+        total_value = float(totals.get("total_legal") or totals.get("total") or 0)
+        p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+        p.rect(totals_x + 8, line_y - 10, totals_box_width - 16, 22, stroke=0, fill=1)
+        p.setFillColor(colors.white)
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(totals_x + 16, line_y - 2, "TOTAL")
+        p.drawRightString(width - margin_x - 12, line_y - 2, _format_money(currencies, total_value, currency))
 
-    if notes:
+    if notes and _sec("notes"):
         notes_y = box_top - box_height - 20
         if notes_y < 80:
             p.showPage()
@@ -861,7 +929,8 @@ def draw_invoice_letter_pdf(
         p.setFont("Helvetica", 9)
         p.drawString(margin_x, notes_y - 14, _truncate(notes, 120))
 
-    _draw_company_footer(p, colors, company, width, 42)
+    if _sec("company_footer"):
+        _draw_company_footer(p, colors, company, width, 42)
 
 
 def draw_document_pdf(
@@ -897,6 +966,10 @@ def draw_document_pdf(
     safe_items = [item for item in (items if isinstance(items, list) else list(items or [])) if item]
     breakdown = _compute_discount_breakdown(safe_items, totals)
     settings = normalize_pdf_document_settings(pdf_settings)
+    doc_type = "quotation"
+    def _sec(key: str, fallback: bool = True) -> bool:
+        return pdf_section_enabled(settings, doc_type, key, fallback=fallback)
+
     theme = document_theme or resolve_quotation_theme(settings)
     logo_cache: Dict[str, Any] = {}
 
@@ -904,83 +977,113 @@ def draw_document_pdf(
     content_width = width - (margin_x * 2)
 
     _prepare_pdf_page(
-        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache
+        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
     )
 
     p.setFillColor(colors.HexColor(theme.get("header_bg", COLOR_HEADER)))
     p.rect(0, height - 100, width, 100, stroke=0, fill=1)
 
-    logo = logo_cache.get("header") or load_logo_image(_resolve_header_logo_path(company), logger)
+    logo = logo_cache.get("header") if _sec("header_logo") else None
+    if logo is None and _sec("header_logo"):
+        logo = load_logo_image(_resolve_header_logo_path(company), logger)
     brand_x = margin_x
     if logo:
         p.drawImage(logo, margin_x, height - 86, width=84, height=38, preserveAspectRatio=True, mask="auto")
         brand_x = margin_x + 94
 
-    p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(brand_x, height - 54, company.get("name", "MUNDO DE ACCESORIOS"))
+    if _sec("company_name"):
+        p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(brand_x, height - 54, company.get("name", "MUNDO DE ACCESORIOS"))
 
     right_x = width - margin_x
-    p.setFont("Helvetica-Bold", 10)
-    p.drawRightString(right_x, height - 46, f"{spanish_title} N°")
-    p.setFont("Helvetica-Bold", 12)
-    p.drawRightString(right_x, height - 64, str(doc_number or "—"))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawRightString(right_x, height - 82, "Fecha")
-    p.setFont("Helvetica", 10)
-    p.drawRightString(right_x, height - 96, _format_date_es(doc_date))
+    if _sec("document_number"):
+        p.setFont("Helvetica-Bold", 10)
+        p.drawRightString(right_x, height - 46, f"{spanish_title} N°")
+        p.setFont("Helvetica-Bold", 12)
+        p.drawRightString(right_x, height - 64, str(doc_number or "—"))
+    if _sec("date"):
+        p.setFont("Helvetica-Bold", 9)
+        p.drawRightString(right_x, height - 82, "Fecha")
+        p.setFont("Helvetica", 10)
+        p.drawRightString(right_x, height - 96, _format_date_es(doc_date))
     _draw_status_badge(
         p,
         colors,
         x=margin_x + 12,
         y=height - 72,
         theme=theme,
-        enabled=bool(settings.get("show_status_badge")),
+        enabled=bool(settings.get("show_status_badge")) and _sec("status_badge"),
         align="left",
     )
 
     y = height - 118
-    panel_height = 84
+    show_customer = _sec("customer")
+    show_vehicle = _sec("vehicle") or _sec("plate")
+    panel_height = 84 if (show_customer or show_vehicle) else 0
     half_width = (content_width - 12) / 2
-    _draw_rounded_panel(
-        p, colors, margin_x, y - panel_height, half_width, panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
-    )
-    _draw_rounded_panel(
-        p,
-        colors,
-        margin_x + half_width + 12,
-        y - panel_height,
-        half_width,
-        panel_height,
-        fill=theme.get("panel_bg", COLOR_PANEL),
-    )
+    if show_customer:
+        _draw_rounded_panel(
+            p, colors, margin_x, y - panel_height, half_width, panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
+        )
+    if show_vehicle:
+        vehicle_panel_x = margin_x if not show_customer else margin_x + half_width + 12
+        vehicle_panel_width = content_width if not show_customer else half_width
+        _draw_rounded_panel(
+            p,
+            colors,
+            vehicle_panel_x,
+            y - panel_height,
+            vehicle_panel_width,
+            panel_height,
+            fill=theme.get("panel_bg", COLOR_PANEL),
+        )
 
-    p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(margin_x + 12, y - 16, "CLIENTE")
-    p.drawString(margin_x + half_width + 24, y - 16, "VEHÍCULO")
+    if show_customer:
+        p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(margin_x + 12, y - 16, "CLIENTE")
+        client_y = y - 30
+        client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Nombre:", customer.get("name", ""))
+        if _sec("customer_phone"):
+            _draw_label_value(p, colors, margin_x + 12, client_y, "Teléfono:", customer.get("phone", "") or "—")
 
-    client_y = y - 30
-    client_y = _draw_label_value(p, colors, margin_x + 12, client_y, "Nombre:", customer.get("name", ""))
-    _draw_label_value(p, colors, margin_x + 12, client_y, "Teléfono:", customer.get("phone", "") or "—")
+    if show_vehicle:
+        vehicle_panel_x = margin_x if not show_customer else margin_x + half_width + 24
+        p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(vehicle_panel_x, y - 16, "VEHÍCULO")
+        vehicle_y = y - 30
+        if vehicle:
+            if _sec("vehicle"):
+                vehicle_label = " ".join(
+                    part
+                    for part in [
+                        str(vehicle.get("brand") or "").strip(),
+                        str(vehicle.get("model") or "").strip(),
+                        str(vehicle.get("year") or "").strip(),
+                    ]
+                    if part
+                ).strip() or "—"
+                vehicle_y = _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Vehículo:", vehicle_label)
+            if _sec("plate"):
+                _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Placa:", vehicle.get("plate", "") or "—")
+        else:
+            _draw_label_value(p, colors, vehicle_panel_x, vehicle_y, "Vehículo:", "Sin vehículo")
 
-    vehicle_y = y - 30
-    if vehicle:
-        vehicle_label = " ".join(
-            part
-            for part in [
-                str(vehicle.get("brand") or "").strip(),
-                str(vehicle.get("model") or "").strip(),
-                str(vehicle.get("year") or "").strip(),
-            ]
-            if part
-        ).strip() or "—"
-        vehicle_y = _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Vehículo:", vehicle_label)
-        _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Placa:", vehicle.get("plate", "") or "—")
-    else:
-        _draw_label_value(p, colors, margin_x + half_width + 24, vehicle_y, "Vehículo:", "Sin vehículo")
+    y -= panel_height + (20 if panel_height else 0)
 
-    y -= panel_height + 20
+    if not _sec("items"):
+        if _sec("notes") and notes:
+            p.setFillColor(colors.HexColor(COLOR_TEXT))
+            p.setFont("Helvetica-Bold", 9)
+            p.drawString(margin_x, y - 16, "Notas")
+            p.setFont("Helvetica", 9)
+            p.drawString(margin_x, y - 30, _truncate(notes, 120))
+        if _sec("company_footer"):
+            _draw_company_footer(p, colors, company, width, 42)
+        return
+
     p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
     p.rect(margin_x, y - 4, content_width, 18, stroke=0, fill=1)
     p.setFillColor(colors.white)
@@ -997,7 +1100,7 @@ def draw_document_pdf(
         if y < 130:
             p.showPage()
             _prepare_pdf_page(
-                p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache
+                p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
             )
             y = height - 72
         p.setFillColor(colors.HexColor(COLOR_TEXT))
@@ -1009,44 +1112,47 @@ def draw_document_pdf(
         y -= 15
 
     totals_x = width - margin_x - 220
-    box_height = 110
-    if y - box_height < 80:
-        p.showPage()
-        y = height - 90
-    _draw_rounded_panel(p, colors, totals_x, y - box_height, 220, box_height)
-    line_y = y - 18
-    p.setFont("Helvetica", 9)
-    rows = [
-        ("Subtotal:", breakdown["subtotal"]),
-    ]
-    if breakdown["global_discount"] > 0:
+    rows: List[Tuple[str, float]] = []
+    if _sec("breakdown") and _sec("breakdown_subtotal"):
+        rows.append(("Subtotal:", breakdown["subtotal"]))
+    if _sec("breakdown") and _sec("breakdown_global_discount") and breakdown["global_discount"] > 0:
         rows.append(("Descuento:", -breakdown["global_discount"]))
-    if apply_iva:
+    if _sec("breakdown") and _sec("breakdown_iva") and apply_iva:
         rows.append((f"IVA ({float(iva_rate or 0):.0f}%):", float(totals.get("tax") or 0)))
-    for label, amount in rows:
-        p.setFillColor(colors.HexColor(COLOR_MUTED))
-        p.drawString(totals_x + 12, line_y, label)
-        p.setFillColor(colors.HexColor(COLOR_TEXT))
-        display_amount = abs(amount) if amount < 0 else amount
-        prefix = "-" if amount < 0 else ""
-        p.drawRightString(width - margin_x - 12, line_y, f"{prefix}{_format_money(currencies, display_amount, currency)}")
-        line_y -= 14
+    show_total = _sec("breakdown") and _sec("breakdown_total")
+    if rows or show_total:
+        box_height = 24 + len(rows) * 14 + (34 if show_total else 0)
+        if y - box_height < 80:
+            p.showPage()
+            y = height - 90
+        _draw_rounded_panel(p, colors, totals_x, y - box_height, 220, box_height)
+        line_y = y - 18
+        p.setFont("Helvetica", 9)
+        for label, amount in rows:
+            p.setFillColor(colors.HexColor(COLOR_MUTED))
+            p.drawString(totals_x + 12, line_y, label)
+            p.setFillColor(colors.HexColor(COLOR_TEXT))
+            display_amount = abs(amount) if amount < 0 else amount
+            prefix = "-" if amount < 0 else ""
+            p.drawRightString(width - margin_x - 12, line_y, f"{prefix}{_format_money(currencies, display_amount, currency)}")
+            line_y -= 14
+        if show_total:
+            p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
+            p.rect(totals_x + 8, line_y - 10, 204, 20, stroke=0, fill=1)
+            p.setFillColor(colors.white)
+            p.setFont("Helvetica-Bold", 10)
+            p.drawString(totals_x + 16, line_y - 2, "TOTAL")
+            p.drawRightString(width - margin_x - 12, line_y - 2, _format_money(currencies, totals.get("total", 0), currency))
 
-    p.setFillColor(colors.HexColor(theme.get("accent", COLOR_ACCENT)))
-    p.rect(totals_x + 8, line_y - 10, 204, 20, stroke=0, fill=1)
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(totals_x + 16, line_y - 2, "TOTAL")
-    p.drawRightString(width - margin_x - 12, line_y - 2, _format_money(currencies, totals.get("total", 0), currency))
-
-    if notes:
+    if notes and _sec("notes"):
         p.setFillColor(colors.HexColor(COLOR_TEXT))
         p.setFont("Helvetica-Bold", 9)
-        p.drawString(margin_x, y - box_height - 16, "Notas")
+        p.drawString(margin_x, y - 130, "Notas")
         p.setFont("Helvetica", 9)
-        p.drawString(margin_x, y - box_height - 30, _truncate(notes, 120))
+        p.drawString(margin_x, y - 144, _truncate(notes, 120))
 
-    _draw_company_footer(p, colors, company, width, 42)
+    if _sec("company_footer"):
+        _draw_company_footer(p, colors, company, width, 42)
 
 
 def draw_payment_receipt_pdf(
@@ -1064,13 +1170,17 @@ def draw_payment_receipt_pdf(
     colors, letter, _, _ = get_reportlab_symbols()
     width, height = letter
     settings = normalize_pdf_document_settings(pdf_settings)
+    doc_type = "payment_receipt"
+    def _sec(key: str, fallback: bool = True) -> bool:
+        return pdf_section_enabled(settings, doc_type, key, fallback=fallback)
+
     theme = document_theme or build_document_theme(
         (settings.get("theme_colors") or {}).get("payment_partial", "#EAB308"),
         "Comprobante de abono",
     )
     logo_cache: Dict[str, Any] = {}
     _prepare_pdf_page(
-        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache
+        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
     )
 
     margin_x = 42
@@ -1084,43 +1194,144 @@ def draw_payment_receipt_pdf(
     p.setFillColor(colors.HexColor(theme.get("header_bg", COLOR_HEADER)))
     p.rect(0, height - 96, width, 96, stroke=0, fill=1)
     p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
-    p.setFont("Helvetica-Bold", 18)
-    p.drawString(margin_x, height - 52, "Comprobante de abono")
-    p.setFont("Helvetica", 10)
-    p.drawString(margin_x, height - 68, company.get("name", "MUNDO DE ACCESORIOS"))
+    if _sec("document_title"):
+        p.setFont("Helvetica-Bold", 18)
+        p.drawString(margin_x, height - 52, "Comprobante de abono")
+    if _sec("company_name"):
+        p.setFont("Helvetica", 10)
+        p.drawString(margin_x, height - 68, company.get("name", "MUNDO DE ACCESORIOS"))
     _draw_status_badge(
         p,
         colors,
         x=width - margin_x,
         y=height - 58,
         theme=theme,
-        enabled=True,
+        enabled=bool(settings.get("show_status_badge")) and _sec("status_badge"),
         align="right",
     )
 
     y = height - 120
-    panel_height = 132
+    line_specs = [
+        ("invoice_number", "Factura:", str(sale.get("invoice_number") or "—")),
+        ("customer", "Cliente:", customer.get("name", "")),
+        ("payment_date", "Fecha de abono:", _format_date_es(payment_row.get("created_at") or sale.get("updated_at"))),
+        (
+            "payment_method",
+            "Forma de pago:",
+            _payment_method_summary(
+                payment_row.get("payment_method") or sale.get("payment_method"),
+                sale.get("mixed_payment_methods"),
+            ),
+        ),
+        ("amount_this_payment", "Monto de este abono:", _format_money(currencies, amount, currency)),
+        ("amount_paid_total", "Total abonado:", _format_money(currencies, paid_total, currency)),
+        ("amount_pending", "Saldo pendiente:", _format_money(currencies, pending_total, currency)),
+        ("invoice_total", "Total factura:", _format_money(currencies, invoice_total, currency)),
+    ]
+    visible_lines = [(label, value) for key, label, value in line_specs if _sec(key)]
+    panel_height = max(40, 20 + len(visible_lines) * 13)
+    if visible_lines:
+        _draw_rounded_panel(
+            p, colors, margin_x, y - panel_height, width - (margin_x * 2), panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
+        )
+        line_y = y - 20
+        for label, value in visible_lines:
+            line_y = _draw_label_value(p, colors, margin_x + 14, line_y, label, value, label_width=118)
+
+    if _sec("disclaimer"):
+        p.setFillColor(colors.HexColor(COLOR_MUTED))
+        p.setFont("Helvetica", 8.5)
+        p.drawCentredString(width / 2, 58, "Documento generado automáticamente por ERP.")
+    if _sec("company_footer"):
+        _draw_company_footer(p, colors, company, width, 42)
+
+
+def _petty_cash_category_label(category: Any) -> str:
+    key = str(category or "otros").strip().lower()
+    return PETTY_CASH_CATEGORY_LABELS.get(key, key.replace("_", " ").title())
+
+
+def draw_petty_cash_voucher_pdf(
+    p: Any,
+    *,
+    expense: Dict[str, Any],
+    company: Dict[str, Any],
+    currencies: Dict[str, Any],
+    logger: Any,
+    pdf_settings: Optional[Dict[str, Any]] = None,
+    document_theme: Optional[Dict[str, str]] = None,
+) -> None:
+    colors, letter, _, _ = get_reportlab_symbols()
+    width, height = letter
+    settings = normalize_pdf_document_settings(pdf_settings)
+    doc_type = "petty_cash"
+    def _sec(key: str, fallback: bool = True) -> bool:
+        return pdf_section_enabled(settings, doc_type, key, fallback=fallback)
+
+    theme = document_theme or resolve_petty_cash_theme(settings)
+    logo_cache: Dict[str, Any] = {}
+    _prepare_pdf_page(
+        p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
+    )
+
+    margin_x = 42
+    currency = str(expense.get("currency") or "NIO")
+    amount = float(expense.get("amount") or 0)
+
+    p.setFillColor(colors.HexColor(theme.get("header_bg", COLOR_HEADER)))
+    p.rect(0, height - 96, width, 96, stroke=0, fill=1)
+    p.setFillColor(colors.HexColor(theme.get("primary", COLOR_PRIMARY)))
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(margin_x, height - 52, "Comprobante de caja chica")
+    if _sec("company_name"):
+        p.setFont("Helvetica", 10)
+        p.drawString(margin_x, height - 68, company.get("name", "MUNDO DE ACCESORIOS"))
+    _draw_status_badge(
+        p,
+        colors,
+        x=width - margin_x,
+        y=height - 58,
+        theme=theme,
+        enabled=bool(settings.get("show_status_badge")) and _sec("status_badge"),
+        align="right",
+    )
+
+    y = height - 120
+    line_specs = [
+        ("voucher_number", "Comprobante N°:", str(expense.get("voucher_number") or expense.get("id") or "—")),
+        ("date", "Fecha:", _format_date_es(expense.get("created_at") or expense.get("date"))),
+        ("branch", "Sucursal:", str(expense.get("branch_name") or expense.get("branch_id") or "—")),
+        ("beneficiary", "Beneficiario:", str(expense.get("beneficiary") or expense.get("employee_name") or "—")),
+        ("category", "Categoría:", _petty_cash_category_label(expense.get("category"))),
+        ("description", "Concepto:", str(expense.get("description") or expense.get("concept") or "—")),
+        ("amount", "Monto:", _format_money(currencies, amount, currency)),
+        (
+            "payment_method",
+            "Forma de pago:",
+            _payment_method_summary(expense.get("payment_method"), expense.get("mixed_payment_methods")),
+        ),
+        ("authorized_by", "Autorizado por:", str(expense.get("authorized_by") or expense.get("approved_by") or "—")),
+        ("received_by", "Recibido por:", str(expense.get("received_by") or expense.get("beneficiary") or "—")),
+    ]
+    visible_lines = [(label, value) for key, label, value in line_specs if _sec(key)]
+    panel_height = max(52, 24 + len(visible_lines) * 13)
     _draw_rounded_panel(
         p, colors, margin_x, y - panel_height, width - (margin_x * 2), panel_height, fill=theme.get("panel_bg", COLOR_PANEL)
     )
-    lines = [
-        ("Factura:", str(sale.get("invoice_number") or "—")),
-        ("Cliente:", customer.get("name", "")),
-        ("Fecha de abono:", _format_date_es(payment_row.get("created_at") or sale.get("updated_at"))),
-        ("Forma de pago:", _payment_method_summary(payment_row.get("payment_method") or sale.get("payment_method"), sale.get("mixed_payment_methods"))),
-        ("Monto de este abono:", _format_money(currencies, amount, currency)),
-        ("Total abonado:", _format_money(currencies, paid_total, currency)),
-        ("Saldo pendiente:", _format_money(currencies, pending_total, currency)),
-        ("Total factura:", _format_money(currencies, invoice_total, currency)),
-    ]
     line_y = y - 20
-    for label, value in lines:
+    for label, value in visible_lines:
         line_y = _draw_label_value(p, colors, margin_x + 14, line_y, label, value, label_width=118)
 
-    p.setFillColor(colors.HexColor(COLOR_MUTED))
-    p.setFont("Helvetica", 8.5)
-    p.drawCentredString(width / 2, 58, "Documento generado automáticamente por ERP.")
-    _draw_company_footer(p, colors, company, width, 42)
+    notes = str(expense.get("notes") or "").strip()
+    if notes and _sec("notes"):
+        p.setFillColor(colors.HexColor(COLOR_TEXT))
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(margin_x, y - panel_height - 20, "Notas")
+        p.setFont("Helvetica", 9)
+        p.drawString(margin_x, y - panel_height - 34, _truncate(notes, 120))
+
+    if _sec("company_footer"):
+        _draw_company_footer(p, colors, company, width, 42)
 
 
 def build_preview_pdf_bytes(
@@ -1169,7 +1380,56 @@ def build_preview_pdf_bytes(
     p = canvas.Canvas(buffer, pagesize=letter)
 
     kind = str(preview_kind or "invoice_paid").strip().lower()
-    if kind == "quotation":
+    if kind == "payment_receipt":
+        sample_sale = {
+            "invoice_number": "INV-PREVIEW-001",
+            "currency": "NIO",
+            "amount_paid": 1200,
+            "amount_pending": 525,
+            "total": 1725,
+            "total_legal": 1725,
+            "payment_method": "transfer",
+            "updated_at": "2026-06-20T12:00:00",
+        }
+        sample_payment = {"amount": 400, "payment_method": "transfer", "created_at": "2026-06-20T12:00:00"}
+        draw_payment_receipt_pdf(
+            p,
+            sale=sample_sale,
+            company=company,
+            customer=sample_customer,
+            payment=sample_payment,
+            currencies=currencies,
+            logger=logger,
+            pdf_settings=settings,
+            document_theme=build_document_theme(
+                (settings.get("theme_colors") or {}).get("payment_partial", "#EAB308"),
+                "Comprobante de abono",
+            ),
+        )
+    elif kind == "petty_cash":
+        draw_petty_cash_voucher_pdf(
+            p,
+            expense={
+                "voucher_number": "CC-PREVIEW-001",
+                "created_at": "2026-06-20T12:00:00",
+                "branch_name": company.get("name", "Sucursal principal"),
+                "beneficiary": "Juan Pérez",
+                "category": "insumos_limpieza",
+                "description": "Insumos de limpieza para taller",
+                "amount": 850,
+                "currency": "NIO",
+                "payment_method": "cash",
+                "authorized_by": "Gerencia",
+                "received_by": "Juan Pérez",
+                "notes": "Vista previa de comprobante de caja chica.",
+            },
+            company=company,
+            currencies=currencies,
+            logger=logger,
+            pdf_settings=settings,
+            document_theme=resolve_petty_cash_theme(settings),
+        )
+    elif kind == "quotation":
         theme = resolve_quotation_theme(settings)
         draw_document_pdf(
             p,

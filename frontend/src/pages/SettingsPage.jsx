@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -12,19 +13,25 @@ import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText, Plus, Save, FileText, Eye, ExternalLink, X } from "lucide-react";
+import {
+  Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
+  Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
+} from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
+import { SystemSettingsContent } from "./SystemSettingsPage";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useRoles } from "../lib/useRoles";
-
-const PDF_PREVIEW_OPTIONS = [
-  { id: "invoice_paid", label: "Factura pagada" },
-  { id: "invoice_pending", label: "Factura pendiente" },
-  { id: "invoice_credit", label: "Factura a crédito" },
-  { id: "payment_partial", label: "Abono / pago parcial" },
-  { id: "quotation", label: "Cotización" },
-];
+import {
+  BILLING_SUBTAB_OPTIONS,
+  PDF_DOCUMENT_TYPE_OPTIONS,
+  PDF_PREVIEW_OPTIONS,
+  PDF_THEME_COLOR_OPTIONS,
+  SETTINGS_TAB_OPTIONS,
+  buildDefaultPdfDocumentSettings,
+  sectionOptionsForDocType,
+} from "@/lib/pdfDocumentSections";
+import { PETTY_CASH_CATEGORY_OPTIONS } from "@/lib/pettyCash";
 
 const WATERMARK_LOGO_AUTO = "auto";
 
@@ -45,38 +52,121 @@ const watermarkLogoPresetToPayload = (value) => {
   return normalized === WATERMARK_LOGO_AUTO ? "" : normalized;
 };
 
-const DEFAULT_PDF_DOCUMENT_SETTINGS = {
-  watermark_enabled: true,
-  watermark_opacity: 0.11,
-  watermark_scale: 0.62,
-  watermark_logo_url: "",
-  show_status_badge: true,
-  theme_colors: {
-    invoice_paid: "#16A34A",
-    quotation: "#2563EB",
-    invoice_credit: "#DC2626",
-    payment_partial: "#EAB308",
-    invoice_pending: "#1E3A5F",
+const DEFAULT_PDF_DOCUMENT_SETTINGS = buildDefaultPdfDocumentSettings();
+
+const SETTINGS_TAB_ICONS = {
+  Settings2,
+  ReceiptText,
+  Car,
+  DollarSign,
+  Bell,
+  Printer,
+};
+
+const VALID_SETTINGS_TABS = SETTINGS_TAB_OPTIONS.map((tab) => tab.id);
+const VALID_BILLING_TABS = BILLING_SUBTAB_OPTIONS.map((tab) => tab.id);
+
+const DEFAULT_SELLER_VOUCHER_SETTINGS = {
+  body_font_size: 6,
+  title_font_size: 7,
+  chars_per_line: 64,
+  top_feed_lines: 8,
+  left_margin_chars: 2,
+  barcode_module_width: 4,
+  barcode_pdf_bar_width: 0.66,
+  texts: {
+    company_name: "MUNDO DE ACCESORIOS",
+    subtitle: "VOUCHER DE VENTA (NO FISCAL)",
+    scan_label: "ESCANEAR EN CAJA",
+    footer_valid: "Valido hasta cobro en caja",
+    footer_disclaimer: "NO ES FACTURA FISCAL",
+  },
+  sections: {
+    header_rules: true,
+    company_name: true,
+    subtitle: true,
+    invoice_number: true,
+    date: true,
+    customer: true,
+    vehicle: true,
+    plate: true,
+    items: true,
+    breakdown: true,
+    breakdown_gross_subtotal: true,
+    breakdown_line_discount: true,
+    breakdown_price_discount: true,
+    breakdown_code_discount: true,
+    breakdown_global_discount: true,
+    breakdown_blocked_discount: true,
+    breakdown_subtotal: true,
+    breakdown_retention: true,
+    breakdown_iva: true,
+    breakdown_total: true,
+    payment_plan: true,
+    barcode: true,
+    scan_label: true,
+    footer_valid: true,
+    footer_disclaimer: true,
   },
 };
 
-const PDF_THEME_COLOR_OPTIONS = [
-  { key: "invoice_paid", label: "Factura pagada", hint: "Verde — cobro completado" },
-  { key: "quotation", label: "Cotización", hint: "Azul — presupuestos" },
-  { key: "invoice_credit", label: "Factura a crédito", hint: "Rojo — venta financiada" },
-  { key: "payment_partial", label: "Abono / pago parcial", hint: "Amarillo — saldo pendiente" },
-  { key: "invoice_pending", label: "Factura pendiente", hint: "Neutro — sin cobro aún" },
+const SELLER_VOUCHER_SECTION_OPTIONS = [
+  { key: "header_rules", label: "Líneas decorativas (=)" },
+  { key: "company_name", label: "Nombre de empresa" },
+  { key: "subtitle", label: "Subtítulo del voucher" },
+  { key: "invoice_number", label: "Número de factura" },
+  { key: "date", label: "Fecha de venta" },
+  { key: "customer", label: "Cliente" },
+  { key: "vehicle", label: "Vehículo" },
+  { key: "plate", label: "Placa" },
+  { key: "items", label: "Detalle de productos" },
+  { key: "breakdown", label: "Desglose (bloque completo)" },
+  { key: "payment_plan", label: "Plan de pago acordado" },
+  { key: "scan_label", label: "Texto de escaneo" },
+  { key: "barcode", label: "Código de barras" },
+  { key: "footer_valid", label: "Pie: válido hasta cobro" },
+  { key: "footer_disclaimer", label: "Pie: no es factura fiscal" },
+];
+
+const SELLER_VOUCHER_BREAKDOWN_SECTION_OPTIONS = [
+  { key: "breakdown_gross_subtotal", label: "Subtotal sin descuentos" },
+  { key: "breakdown_line_discount", label: "Descuento línea %" },
+  { key: "breakdown_price_discount", label: "Descuento precio" },
+  { key: "breakdown_code_discount", label: "Descuento código" },
+  { key: "breakdown_global_discount", label: "Descuento global" },
+  { key: "breakdown_blocked_discount", label: "Descuentos removidos por método" },
+  { key: "breakdown_subtotal", label: "Subtotal" },
+  { key: "breakdown_retention", label: "Retención IR" },
+  { key: "breakdown_iva", label: "IVA" },
+  { key: "breakdown_total", label: "TOTAL" },
+];
+
+const SELLER_VOUCHER_TEXT_FIELDS = [
+  { key: "company_name", label: "Nombre de empresa" },
+  { key: "subtitle", label: "Subtítulo" },
+  { key: "scan_label", label: "Texto de escaneo (ej. ESCANEAR EN CAJA)" },
+  { key: "footer_valid", label: "Pie — válido hasta cobro" },
+  { key: "footer_disclaimer", label: "Pie — aviso legal" },
 ];
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const rolesMap = useRoles();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity } = useTheme();
   const canManageVehicleSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageAppearanceSettings = (user?.role || "").toLowerCase() === "gerencia";
+  const canManageSystemSettings = hasPermission("system_settings", "view");
   const [profilePin, setProfilePin] = useState("");
   const [savingProfilePin, setSavingProfilePin] = useState(false);
-  const [activeTab, setActiveTab] = useState("general");
+  const [backingUp, setBackingUp] = useState(false);
+  const activeTab = VALID_SETTINGS_TABS.includes(searchParams.get("tab") || "")
+    ? searchParams.get("tab")
+    : "general";
+  const activeBillingTab = VALID_BILLING_TABS.includes(searchParams.get("billingTab") || "")
+    ? searchParams.get("billingTab")
+    : "exchange";
+  const [selectedPdfDocType, setSelectedPdfDocType] = useState("invoice");
   const [vehicleSettings, setVehicleSettings] = useState({ brands: [], colors: [] });
   const [loadingVehicleSettings, setLoadingVehicleSettings] = useState(false);
   const [savingVehicleSettings, setSavingVehicleSettings] = useState(false);
@@ -102,7 +192,22 @@ export function SettingsPage() {
     pdf_documents: DEFAULT_PDF_DOCUMENT_SETTINGS,
   });
   const [pdfDocumentsSettings, setPdfDocumentsSettings] = useState(DEFAULT_PDF_DOCUMENT_SETTINGS);
+  const [sellerVoucherSettings, setSellerVoucherSettings] = useState(DEFAULT_SELLER_VOUCHER_SETTINGS);
+  const [pettyCashSettings, setPettyCashSettings] = useState({
+    fund_amount: 5000,
+    currency: "NIO",
+    monthly_cap: 15000,
+    low_balance_threshold_pct: 20,
+    requires_approval_above: 500,
+    voucher_prefix: "CC",
+    allowed_categories: PETTY_CASH_CATEGORY_OPTIONS.map((item) => item.id),
+  });
+  const [branches, setBranches] = useState([]);
+  const [selectedBillingBranchId, setSelectedBillingBranchId] = useState(user?.branch_id || "branch_main");
   const [previewingPdfKind, setPreviewingPdfKind] = useState("");
+  const [previewingSellerVoucher, setPreviewingSellerVoucher] = useState(false);
+  const [embeddedSellerVoucherPreviewUrl, setEmbeddedSellerVoucherPreviewUrl] = useState("");
+  const embeddedSellerVoucherPreviewUrlRef = useRef("");
   const [embeddedPreviewKind, setEmbeddedPreviewKind] = useState("invoice_pending");
   const [embeddedPdfPreviewUrl, setEmbeddedPdfPreviewUrl] = useState("");
   const [embeddedPdfPreviewLabel, setEmbeddedPdfPreviewLabel] = useState("");
@@ -116,6 +221,55 @@ export function SettingsPage() {
   const [watermarkOpacityPercent, setWatermarkOpacityPercent] = useState(() => String(Math.round(watermarkOpacity * 100)));
   const [savingAppearanceSettings, setSavingAppearanceSettings] = useState(false);
   const canManageBillingSettings = ["gerencia", "recursos_humanos"].includes((user?.role || "").toLowerCase());
+
+  const handleSettingsTabChange = (nextTab) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", nextTab);
+    if (nextTab !== "billing") {
+      params.delete("billingTab");
+    } else if (!params.get("billingTab")) {
+      params.set("billingTab", "exchange");
+    }
+    setSearchParams(params, { replace: true });
+  };
+
+  const handleBillingTabChange = (nextBillingTab) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", "billing");
+    params.set("billingTab", nextBillingTab);
+    setSearchParams(params, { replace: true });
+  };
+
+  const downloadExcelBackup = async () => {
+    setBackingUp(true);
+    try {
+      const response = await axios.get(`${API}/backup/excel`, {
+        withCredentials: true,
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `erp_full_backup_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Respaldo Excel descargado");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo descargar respaldo");
+    } finally {
+      setBackingUp(false);
+    }
+  };
+  const selectedBillingBranch = useMemo(
+    () => branches.find((branch) => branch.branch_id === selectedBillingBranchId) || null,
+    [branches, selectedBillingBranchId]
+  );
+  const billingBranchQuery = () => (selectedBillingBranchId ? { branch_id: selectedBillingBranchId } : {});
 
   const selectedBrand = useMemo(
     () => vehicleSettings.brands.find((brand) => brand.id === selectedBrandId) || null,
@@ -341,11 +495,39 @@ export function SettingsPage() {
     fetchVehicleThumbnails();
   }, []);
 
+  useEffect(() => {
+    if (!user?.branch_id) return;
+    setSelectedBillingBranchId((current) => current || user.branch_id);
+  }, [user?.branch_id]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${API}/branches`, { withCredentials: true });
+      const rows = Array.isArray(response.data) ? response.data : [];
+      setBranches(rows);
+      if (!selectedBillingBranchId && rows.length > 0) {
+        const preferred = rows.find((row) => row.branch_id === user?.branch_id) || rows[0];
+        setSelectedBillingBranchId(preferred.branch_id);
+      }
+    } catch (error) {
+      toast.error("No se pudieron cargar las sucursales");
+    }
+  };
+
+  useEffect(() => {
+    if (canManageBillingSettings) {
+      fetchBranches();
+    }
+  }, [canManageBillingSettings]);
+
   const fetchBillingSettings = async () => {
     if (!canManageBillingSettings) return;
     setLoadingBillingSettings(true);
     try {
-      const response = await axios.get(`${API}/settings/billing`, { withCredentials: true });
+      const response = await axios.get(`${API}/settings/billing`, {
+        withCredentials: true,
+        params: billingBranchQuery(),
+      });
       const payload = response.data || {};
       const exchange = payload.exchange || {};
       const cancelReasons = Array.isArray(payload.cancel_reasons) ? payload.cancel_reasons : [];
@@ -356,6 +538,15 @@ export function SettingsPage() {
           ...DEFAULT_PDF_DOCUMENT_SETTINGS.theme_colors,
           ...((payload.pdf_documents || {}).theme_colors || {}),
         },
+        sections: Object.fromEntries(
+          Object.keys(DEFAULT_PDF_DOCUMENT_SETTINGS.sections).map((docType) => [
+            docType,
+            {
+              ...DEFAULT_PDF_DOCUMENT_SETTINGS.sections[docType],
+              ...((payload.pdf_documents || {}).sections || {})[docType],
+            },
+          ])
+        ),
       };
       setBillingSettings({
         exchange: {
@@ -367,13 +558,51 @@ export function SettingsPage() {
         iva_rate: Number(payload.iva_rate || 15),
         cancel_reasons: cancelReasons,
         pdf_documents: pdfDocuments,
+        seller_voucher: {
+          ...DEFAULT_SELLER_VOUCHER_SETTINGS,
+          ...(payload.seller_voucher || {}),
+          texts: {
+            ...DEFAULT_SELLER_VOUCHER_SETTINGS.texts,
+            ...((payload.seller_voucher || {}).texts || {}),
+          },
+          sections: {
+            ...DEFAULT_SELLER_VOUCHER_SETTINGS.sections,
+            ...((payload.seller_voucher || {}).sections || {}),
+          },
+        },
       });
       setPdfDocumentsSettings({
         ...pdfDocuments,
         watermark_logo_url: normalizeWatermarkLogoPreset(pdfDocuments.watermark_logo_url),
       });
+      setSellerVoucherSettings({
+        ...DEFAULT_SELLER_VOUCHER_SETTINGS,
+        ...(payload.seller_voucher || {}),
+        texts: {
+          ...DEFAULT_SELLER_VOUCHER_SETTINGS.texts,
+          ...((payload.seller_voucher || {}).texts || {}),
+        },
+        sections: {
+          ...DEFAULT_SELLER_VOUCHER_SETTINGS.sections,
+          ...((payload.seller_voucher || {}).sections || {}),
+        },
+      });
       setNewOfficialRate(String(exchange.official_rate || 36.5));
       setNewIvaRate(String(payload.iva_rate || 15));
+      try {
+        const pettyResponse = await axios.get(`${API}/settings/petty-cash`, {
+          withCredentials: true,
+          params: billingBranchQuery(),
+        });
+        setPettyCashSettings({
+          ...pettyCashSettings,
+          ...(pettyResponse.data?.petty_cash_settings || {}),
+          allowed_categories: pettyResponse.data?.petty_cash_settings?.allowed_categories
+            || PETTY_CASH_CATEGORY_OPTIONS.map((item) => item.id),
+        });
+      } catch (pettyError) {
+        console.error("No se pudo cargar configuración de caja chica", pettyError);
+      }
     } catch (error) {
       toast.error("No se pudo cargar configuración de facturación");
     } finally {
@@ -382,8 +611,9 @@ export function SettingsPage() {
   };
 
   useEffect(() => {
+    if (!canManageBillingSettings || !selectedBillingBranchId) return;
     fetchBillingSettings();
-  }, [canManageBillingSettings]);
+  }, [canManageBillingSettings, selectedBillingBranchId]);
 
   const saveOfficialRate = async () => {
     const numeric = Number(newOfficialRate || 0);
@@ -393,7 +623,11 @@ export function SettingsPage() {
     }
     setSavingBillingSettings(true);
     try {
-      await axios.put(`${API}/settings/billing/exchange`, { official_rate: numeric }, { withCredentials: true });
+      await axios.put(
+        `${API}/settings/billing/exchange`,
+        { official_rate: numeric },
+        { withCredentials: true, params: billingBranchQuery() }
+      );
       toast.success("Tasa oficial actualizada");
       await fetchBillingSettings();
     } catch (error) {
@@ -405,6 +639,19 @@ export function SettingsPage() {
 
   const updatePdfDocumentsField = (field, value) => {
     setPdfDocumentsSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updatePdfDocumentsSection = (docType, key, checked) => {
+    setPdfDocumentsSettings((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [docType]: {
+          ...(prev.sections?.[docType] || DEFAULT_PDF_DOCUMENT_SETTINGS.sections[docType]),
+          [key]: checked,
+        },
+      },
+    }));
   };
 
   const updatePdfThemeColor = (key, value) => {
@@ -421,6 +668,7 @@ export function SettingsPage() {
     watermark_logo_url: watermarkLogoPresetToPayload(pdfDocumentsSettings.watermark_logo_url),
     show_status_badge: Boolean(pdfDocumentsSettings.show_status_badge),
     theme_colors: pdfDocumentsSettings.theme_colors,
+    sections: pdfDocumentsSettings.sections,
   });
 
   const revokeEmbeddedPdfPreview = () => {
@@ -436,6 +684,9 @@ export function SettingsPage() {
     if (embeddedPdfPreviewUrlRef.current) {
       window.URL.revokeObjectURL(embeddedPdfPreviewUrlRef.current);
     }
+    if (embeddedSellerVoucherPreviewUrlRef.current) {
+      window.URL.revokeObjectURL(embeddedSellerVoucherPreviewUrlRef.current);
+    }
   }, []);
 
   const fetchPdfPreviewBlob = async (kind, { useDraft = true } = {}) => {
@@ -443,10 +694,10 @@ export function SettingsPage() {
       ? await axios.post(
           `${API}/settings/billing/pdf-documents/preview`,
           { kind, pdf_documents: buildPdfPreviewDraftPayload() },
-          { withCredentials: true, responseType: "blob" }
+          { withCredentials: true, responseType: "blob", params: billingBranchQuery() }
         )
       : await axios.get(`${API}/settings/billing/pdf-documents/preview`, {
-          params: { kind },
+          params: { kind, ...billingBranchQuery() },
           withCredentials: true,
           responseType: "blob",
         });
@@ -490,6 +741,112 @@ export function SettingsPage() {
     }
   };
 
+  const buildSellerVoucherDraftPayload = () => ({
+    body_font_size: Number(sellerVoucherSettings.body_font_size),
+    title_font_size: Number(sellerVoucherSettings.title_font_size),
+    chars_per_line: Number(sellerVoucherSettings.chars_per_line),
+    top_feed_lines: Number(sellerVoucherSettings.top_feed_lines),
+    left_margin_chars: Number(sellerVoucherSettings.left_margin_chars),
+    barcode_module_width: Number(sellerVoucherSettings.barcode_module_width),
+    barcode_pdf_bar_width: Number(sellerVoucherSettings.barcode_pdf_bar_width),
+    texts: sellerVoucherSettings.texts,
+    sections: sellerVoucherSettings.sections,
+  });
+
+  const updateSellerVoucherField = (field, value) => {
+    setSellerVoucherSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateSellerVoucherText = (key, value) => {
+    setSellerVoucherSettings((prev) => ({
+      ...prev,
+      texts: { ...prev.texts, [key]: value },
+    }));
+  };
+
+  const updateSellerVoucherSection = (key, checked) => {
+    setSellerVoucherSettings((prev) => ({
+      ...prev,
+      sections: { ...prev.sections, [key]: checked },
+    }));
+  };
+
+  const revokeEmbeddedSellerVoucherPreview = () => {
+    if (embeddedSellerVoucherPreviewUrlRef.current) {
+      window.URL.revokeObjectURL(embeddedSellerVoucherPreviewUrlRef.current);
+      embeddedSellerVoucherPreviewUrlRef.current = "";
+    }
+    setEmbeddedSellerVoucherPreviewUrl("");
+  };
+
+  const showEmbeddedSellerVoucherPreview = async () => {
+    setPreviewingSellerVoucher(true);
+    try {
+      revokeEmbeddedSellerVoucherPreview();
+      const response = await axios.post(
+        `${API}/settings/billing/seller-voucher/preview`,
+        { seller_voucher: buildSellerVoucherDraftPayload() },
+        { withCredentials: true, responseType: "blob", params: billingBranchQuery() }
+      );
+      const contentType = response.headers["content-type"] || "";
+      if (response.status !== 200 || !contentType.includes("pdf")) {
+        throw new Error("No se pudo generar la vista previa del voucher");
+      }
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      embeddedSellerVoucherPreviewUrlRef.current = blobUrl;
+      setEmbeddedSellerVoucherPreviewUrl(blobUrl);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || error?.message || "Error al generar vista previa del voucher");
+    } finally {
+      setPreviewingSellerVoucher(false);
+    }
+  };
+
+  const updatePettyCashField = (field, value) => {
+    setPettyCashSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const savePettyCashSettings = async () => {
+    setSavingBillingSettings(true);
+    try {
+      const response = await axios.put(
+        `${API}/settings/petty-cash`,
+        pettyCashSettings,
+        { withCredentials: true, params: billingBranchQuery() }
+      );
+      setPettyCashSettings(response.data?.petty_cash_settings || pettyCashSettings);
+      toast.success("Configuración de caja chica guardada");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo guardar caja chica");
+    } finally {
+      setSavingBillingSettings(false);
+    }
+  };
+
+  const saveSellerVoucherSettings = async () => {
+    setSavingBillingSettings(true);
+    try {
+      const response = await axios.put(
+        `${API}/settings/billing/seller-voucher`,
+        buildSellerVoucherDraftPayload(),
+        { withCredentials: true, params: billingBranchQuery() }
+      );
+      const saved = response.data?.seller_voucher || sellerVoucherSettings;
+      setSellerVoucherSettings({
+        ...DEFAULT_SELLER_VOUCHER_SETTINGS,
+        ...saved,
+        texts: { ...DEFAULT_SELLER_VOUCHER_SETTINGS.texts, ...(saved.texts || {}) },
+        sections: { ...DEFAULT_SELLER_VOUCHER_SETTINGS.sections, ...(saved.sections || {}) },
+      });
+      setBillingSettings((prev) => ({ ...prev, seller_voucher: saved }));
+      toast.success("Configuración de voucher POS actualizada");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo guardar la configuración del voucher");
+    } finally {
+      setSavingBillingSettings(false);
+    }
+  };
+
   const savePdfDocumentsSettings = async () => {
     setSavingBillingSettings(true);
     try {
@@ -502,11 +859,31 @@ export function SettingsPage() {
           watermark_logo_url: watermarkLogoPresetToPayload(pdfDocumentsSettings.watermark_logo_url),
           show_status_badge: Boolean(pdfDocumentsSettings.show_status_badge),
           theme_colors: pdfDocumentsSettings.theme_colors,
+          sections: pdfDocumentsSettings.sections,
         },
-        { withCredentials: true }
+        { withCredentials: true, params: billingBranchQuery() }
       );
-      const saved = response.data?.pdf_documents || pdfDocumentsSettings;
-      setPdfDocumentsSettings(saved);
+      const saved = {
+        ...DEFAULT_PDF_DOCUMENT_SETTINGS,
+        ...(response.data?.pdf_documents || pdfDocumentsSettings),
+        theme_colors: {
+          ...DEFAULT_PDF_DOCUMENT_SETTINGS.theme_colors,
+          ...((response.data?.pdf_documents || pdfDocumentsSettings).theme_colors || {}),
+        },
+        sections: Object.fromEntries(
+          Object.keys(DEFAULT_PDF_DOCUMENT_SETTINGS.sections).map((docType) => [
+            docType,
+            {
+              ...DEFAULT_PDF_DOCUMENT_SETTINGS.sections[docType],
+              ...((response.data?.pdf_documents || pdfDocumentsSettings).sections || {})[docType],
+            },
+          ])
+        ),
+      };
+      setPdfDocumentsSettings({
+        ...saved,
+        watermark_logo_url: normalizeWatermarkLogoPreset(saved.watermark_logo_url),
+      });
       setBillingSettings((prev) => ({ ...prev, pdf_documents: saved }));
       toast.success("Apariencia de documentos PDF actualizada");
     } catch (error) {
@@ -524,7 +901,11 @@ export function SettingsPage() {
     }
     setSavingBillingSettings(true);
     try {
-      await axios.put(`${API}/settings/billing/iva`, { iva_rate: numeric }, { withCredentials: true });
+      await axios.put(
+        `${API}/settings/billing/iva`,
+        { iva_rate: numeric },
+        { withCredentials: true, params: billingBranchQuery() }
+      );
       toast.success("IVA actualizado");
       await fetchBillingSettings();
     } catch (error) {
@@ -550,7 +931,7 @@ export function SettingsPage() {
           end_at: newRule.end_at || null,
           active: Boolean(newRule.active),
         },
-        { withCredentials: true }
+        { withCredentials: true, params: billingBranchQuery() }
       );
       toast.success("Regla de tasa agregada");
       setNewRule({ name: "", cadence: "daily", rate: newOfficialRate || "36.5", start_at: "", end_at: "", active: true });
@@ -575,7 +956,7 @@ export function SettingsPage() {
           end_at: rule.end_at || null,
           active: !Boolean(rule.active),
         },
-        { withCredentials: true }
+        { withCredentials: true, params: billingBranchQuery() }
       );
       await fetchBillingSettings();
     } catch (error) {
@@ -589,7 +970,10 @@ export function SettingsPage() {
     if (!window.confirm("¿Eliminar esta regla de tasa?")) return;
     setSavingBillingSettings(true);
     try {
-      await axios.delete(`${API}/settings/billing/exchange/rules/${ruleId}`, { withCredentials: true });
+      await axios.delete(`${API}/settings/billing/exchange/rules/${ruleId}`, {
+        withCredentials: true,
+        params: billingBranchQuery(),
+      });
       toast.success("Regla eliminada");
       await fetchBillingSettings();
     } catch (error) {
@@ -606,7 +990,7 @@ export function SettingsPage() {
       await axios.post(
         `${API}/settings/billing/cancel-reasons`,
         { reason: newCancelReason.trim(), active: true },
-        { withCredentials: true }
+        { withCredentials: true, params: billingBranchQuery() }
       );
       setNewCancelReason("");
       toast.success("Motivo agregado");
@@ -630,7 +1014,7 @@ export function SettingsPage() {
           active: Boolean(reasonRow.active),
           sort_order: reasonRow.sort_order,
         },
-        { withCredentials: true }
+        { withCredentials: true, params: billingBranchQuery() }
       );
       toast.success("Motivo actualizado");
       await fetchBillingSettings();
@@ -645,7 +1029,10 @@ export function SettingsPage() {
     if (!window.confirm("¿Eliminar este motivo de anulación?")) return;
     setSavingBillingSettings(true);
     try {
-      await axios.delete(`${API}/settings/billing/cancel-reasons/${reasonId}`, { withCredentials: true });
+      await axios.delete(`${API}/settings/billing/cancel-reasons/${reasonId}`, {
+        withCredentials: true,
+        params: billingBranchQuery(),
+      });
       toast.success("Motivo eliminado");
       await fetchBillingSettings();
     } catch (error) {
@@ -867,16 +1254,35 @@ export function SettingsPage() {
   return (
     <div className="p-6 space-y-6" data-testid="settings-page">
       {/* Header */}
-      <div>
-        <h1 className="font-heading text-3xl font-bold tracking-tight">Configuración</h1>
-        <p className="text-muted-foreground">Ajustes del sistema y preferencias</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Centro de configuración</h1>
+          <p className="text-muted-foreground">Apariencia, facturación, vehículos, monedas e impresoras en un solo lugar</p>
+        </div>
+        {canManageSystemSettings ? (
+          <Button onClick={downloadExcelBackup} disabled={backingUp} data-testid="download-backup-btn-settings">
+            {backingUp ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Descargar respaldo
+          </Button>
+        ) : null}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="billing">Facturación</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehículos</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleSettingsTabChange} className="space-y-4 animate-fade-up-soft">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-6">
+          {SETTINGS_TAB_OPTIONS.map((tab) => {
+            const Icon = SETTINGS_TAB_ICONS[tab.icon];
+            const hidden =
+              (tab.id === "billing" && !canManageBillingSettings)
+              || (tab.id === "vehicles" && !canManageVehicleSettings)
+              || (["monedas", "notificaciones", "impresoras"].includes(tab.id) && !canManageSystemSettings);
+            if (hidden) return null;
+            return (
+              <TabsTrigger key={tab.id} value={tab.id} className="gap-2 rounded-full">
+                {Icon ? <Icon className="h-4 w-4" /> : null}
+                {tab.label}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -1161,7 +1567,7 @@ export function SettingsPage() {
                 Facturación
               </CardTitle>
               <CardDescription>
-                Configura tasa oficial, IVA, apariencia de PDFs, programación de tasas y motivos de anulación.
+                Cada sucursal tiene su propia configuración de facturas, cotizaciones, crédito, abonos y voucher POS.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1171,6 +1577,42 @@ export function SettingsPage() {
                 <p className="text-sm text-muted-foreground">Cargando configuración de facturación...</p>
               ) : (
                 <>
+                  <div className="space-y-3 rounded-md border bg-muted/20 p-4">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <div className="min-w-[260px] flex-1 space-y-2">
+                        <Label>Sucursal a configurar</Label>
+                        <Select value={selectedBillingBranchId} onValueChange={setSelectedBillingBranchId}>
+                          <SelectTrigger><SelectValue placeholder="Seleccionar sucursal" /></SelectTrigger>
+                          <SelectContent>
+                            {branches.map((branch) => (
+                              <SelectItem key={branch.branch_id} value={branch.branch_id}>
+                                {branch.name || branch.branch_id}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {selectedBillingBranch?.name
+                          ? `Editando: ${selectedBillingBranch.name}`
+                          : `ID: ${selectedBillingBranchId}`}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Los PDFs impresos usan la configuración de la sucursal donde se creó la venta o cotización.
+                    </p>
+                  </div>
+
+                  <Tabs value={activeBillingTab} onValueChange={handleBillingTabChange} className="space-y-4">
+                    <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-muted/20 p-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                      {BILLING_SUBTAB_OPTIONS.map((tab) => (
+                        <TabsTrigger key={tab.id} value={tab.id} className="rounded-full text-sm">
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                    <TabsContent value="exchange" className="space-y-4 mt-0">
                   <div className="space-y-3 rounded-md border p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1285,12 +1727,14 @@ export function SettingsPage() {
                       )}
                     </div>
                   </div>
+                    </TabsContent>
 
+                    <TabsContent value="pdf" className="space-y-4 mt-0">
                   <div className="space-y-4 rounded-md border p-4">
                     <div className="flex items-start gap-3">
                       <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
                       <div>
-                        <h3 className="font-medium">Documentos PDF (facturas y cotizaciones)</h3>
+                        <h3 className="font-medium">Documentos PDF</h3>
                         <p className="text-xs text-muted-foreground">
                           Usa los mismos logos del ERP (formularios). Si no eliges uno, se aplica el logo de la sucursal.
                         </p>
@@ -1467,12 +1911,296 @@ export function SettingsPage() {
                       </div>
                     </div>
 
+                    <div className="space-y-3 rounded-md border border-dashed bg-muted/10 p-4">
+                      <div className="flex flex-wrap items-end justify-between gap-3">
+                        <div className="space-y-2">
+                          <Label>Tipo de documento a personalizar</Label>
+                          <Select value={selectedPdfDocType} onValueChange={setSelectedPdfDocType}>
+                            <SelectTrigger className="w-[min(100%,320px)]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PDF_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {selectedPdfDocType === "petty_cash" ? (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Wallet className="h-4 w-4" />
+                            Insumos, viáticos, adelantos, bonos y alimentación
+                          </div>
+                        ) : null}
+                      </div>
+                      <Label className="text-xs text-muted-foreground">Secciones visibles en el PDF</Label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {sectionOptionsForDocType(selectedPdfDocType)
+                          .filter((option) => !option.isBreakdownChild)
+                          .map((option) => (
+                            <div key={option.key} className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
+                              <span className="text-sm">{option.label}</span>
+                              <Switch
+                                checked={Boolean(pdfDocumentsSettings.sections?.[selectedPdfDocType]?.[option.key])}
+                                onCheckedChange={(checked) => updatePdfDocumentsSection(selectedPdfDocType, option.key, checked)}
+                              />
+                            </div>
+                          ))}
+                      </div>
+                      {pdfDocumentsSettings.sections?.[selectedPdfDocType]?.breakdown ? (
+                        <div className="space-y-2 rounded-md border border-dashed p-3">
+                          <Label className="text-xs text-muted-foreground">Líneas del desglose</Label>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {sectionOptionsForDocType(selectedPdfDocType)
+                              .filter((option) => option.isBreakdownChild)
+                              .map((option) => (
+                                <div key={option.key} className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
+                                  <span className="text-sm">{option.label}</span>
+                                  <Switch
+                                    checked={Boolean(pdfDocumentsSettings.sections?.[selectedPdfDocType]?.[option.key])}
+                                    onCheckedChange={(checked) => updatePdfDocumentsSection(selectedPdfDocType, option.key, checked)}
+                                  />
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
                     <Button onClick={savePdfDocumentsSettings} disabled={savingBillingSettings}>
                       <Save className="h-4 w-4 mr-2" />
-                      Guardar apariencia PDF
+                      Guardar documentos PDF
                     </Button>
                   </div>
+                    </TabsContent>
 
+                    <TabsContent value="petty-cash" className="space-y-4 mt-0">
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="flex items-start gap-3">
+                      <Wallet className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">Fondo de caja chica por sucursal</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Define fondo autorizado, tope mensual, umbral de alerta y montos que requieren aprobación de gerencia.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Fondo autorizado (NIO)</Label>
+                        <Input type="number" step="0.01" value={pettyCashSettings.fund_amount} onChange={(e) => updatePettyCashField("fund_amount", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tope mensual de gasto</Label>
+                        <Input type="number" step="0.01" value={pettyCashSettings.monthly_cap} onChange={(e) => updatePettyCashField("monthly_cap", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Alerta saldo bajo (% del fondo)</Label>
+                        <Input type="number" step="1" value={pettyCashSettings.low_balance_threshold_pct} onChange={(e) => updatePettyCashField("low_balance_threshold_pct", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Aprobación requerida sobre (NIO)</Label>
+                        <Input type="number" step="0.01" value={pettyCashSettings.requires_approval_above} onChange={(e) => updatePettyCashField("requires_approval_above", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Prefijo de comprobante</Label>
+                        <Input value={pettyCashSettings.voucher_prefix || "CC"} onChange={(e) => updatePettyCashField("voucher_prefix", e.target.value.toUpperCase())} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Categorías permitidas</Label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {PETTY_CASH_CATEGORY_OPTIONS.map((option) => (
+                          <div key={option.id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                            <span className="text-sm">{option.label}</span>
+                            <Switch
+                              checked={pettyCashSettings.allowed_categories?.includes(option.id)}
+                              onCheckedChange={(checked) => {
+                                setPettyCashSettings((prev) => ({
+                                  ...prev,
+                                  allowed_categories: checked
+                                    ? [...new Set([...(prev.allowed_categories || []), option.id])]
+                                    : (prev.allowed_categories || []).filter((id) => id !== option.id),
+                                }));
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <Button onClick={savePettyCashSettings} disabled={savingBillingSettings}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Guardar caja chica
+                    </Button>
+                  </div>
+                    </TabsContent>
+
+                    <TabsContent value="voucher" className="space-y-4 mt-0">
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="flex items-start gap-3">
+                      <ReceiptText className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">Voucher POS 80mm (ventas / caja)</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Ajusta fuente, márgenes, textos y secciones del ticket térmico. Usa margen superior y margen izquierdo si la impresora recorta líneas o columnas.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Tamaño de fuente cuerpo ({sellerVoucherSettings.body_font_size} pt)</Label>
+                        <Input
+                          type="range"
+                          min="5"
+                          max="10"
+                          step="1"
+                          value={Number(sellerVoucherSettings.body_font_size || 6)}
+                          onChange={(e) => updateSellerVoucherField("body_font_size", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tamaño de fuente títulos ({sellerVoucherSettings.title_font_size} pt)</Label>
+                        <Input
+                          type="range"
+                          min="6"
+                          max="12"
+                          step="1"
+                          value={Number(sellerVoucherSettings.title_font_size || 7)}
+                          onChange={(e) => updateSellerVoucherField("title_font_size", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Avance superior antes de imprimir ({sellerVoucherSettings.top_feed_lines} líneas)</Label>
+                        <Input
+                          type="range"
+                          min="0"
+                          max="20"
+                          step="1"
+                          value={Number(sellerVoucherSettings.top_feed_lines || 8)}
+                          onChange={(e) => updateSellerVoucherField("top_feed_lines", Number(e.target.value))}
+                        />
+                        <p className="text-xs text-muted-foreground">Corrige encabezado recortado en impresoras térmicas.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Margen izquierdo ({sellerVoucherSettings.left_margin_chars} espacios)</Label>
+                        <Input
+                          type="range"
+                          min="0"
+                          max="8"
+                          step="1"
+                          value={Number(sellerVoucherSettings.left_margin_chars || 2)}
+                          onChange={(e) => updateSellerVoucherField("left_margin_chars", Number(e.target.value))}
+                        />
+                        <p className="text-xs text-muted-foreground">Evita que se corten las primeras columnas del texto.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Ancho código de barras ESC/POS ({sellerVoucherSettings.barcode_module_width})</Label>
+                        <Input
+                          type="range"
+                          min="2"
+                          max="6"
+                          step="1"
+                          value={Number(sellerVoucherSettings.barcode_module_width || 4)}
+                          onChange={(e) => updateSellerVoucherField("barcode_module_width", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Caracteres por línea ({sellerVoucherSettings.chars_per_line})</Label>
+                        <Input
+                          type="range"
+                          min="32"
+                          max="64"
+                          step="2"
+                          value={Number(sellerVoucherSettings.chars_per_line || 64)}
+                          onChange={(e) => updateSellerVoucherField("chars_per_line", Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Textos personalizables</Label>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {SELLER_VOUCHER_TEXT_FIELDS.map((field) => (
+                          <div key={field.key} className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">{field.label}</Label>
+                            <Input
+                              value={sellerVoucherSettings.texts?.[field.key] || ""}
+                              onChange={(e) => updateSellerVoucherText(field.key, e.target.value)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Secciones visibles en el voucher</Label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {SELLER_VOUCHER_SECTION_OPTIONS.map((option) => (
+                          <div key={option.key} className="flex items-center justify-between rounded-md border px-3 py-2">
+                            <span className="text-sm">{option.label}</span>
+                            <Switch
+                              checked={Boolean(sellerVoucherSettings.sections?.[option.key])}
+                              onCheckedChange={(checked) => updateSellerVoucherSection(option.key, checked)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      {sellerVoucherSettings.sections?.breakdown ? (
+                        <div className="space-y-2 rounded-md border border-dashed bg-muted/10 p-3">
+                          <Label className="text-xs text-muted-foreground">Líneas del desglose</Label>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {SELLER_VOUCHER_BREAKDOWN_SECTION_OPTIONS.map((option) => (
+                              <div
+                                key={option.key}
+                                className="flex items-center justify-between rounded-md border bg-background px-3 py-2"
+                              >
+                                <span className="text-sm">{option.label}</span>
+                                <Switch
+                                  checked={Boolean(sellerVoucherSettings.sections?.[option.key])}
+                                  onCheckedChange={(checked) => updateSellerVoucherSection(option.key, checked)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-3 rounded-md border bg-muted/20 p-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button onClick={showEmbeddedSellerVoucherPreview} disabled={previewingSellerVoucher}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {previewingSellerVoucher ? "Generando..." : "Vista previa voucher"}
+                        </Button>
+                        <Button onClick={saveSellerVoucherSettings} disabled={savingBillingSettings}>
+                          <Save className="h-4 w-4 mr-2" />
+                          Guardar voucher POS
+                        </Button>
+                      </div>
+                      {embeddedSellerVoucherPreviewUrl ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium">Vista previa del voucher POS</p>
+                            <Button variant="ghost" size="sm" onClick={revokeEmbeddedSellerVoucherPreview}>
+                              <X className="h-4 w-4 mr-1" />
+                              Cerrar
+                            </Button>
+                          </div>
+                          <div className="overflow-hidden rounded-md border bg-white shadow-sm">
+                            <iframe
+                              title="Vista previa voucher POS"
+                              src={embeddedSellerVoucherPreviewUrl}
+                              className="h-[min(72vh,760px)] w-full"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                    </TabsContent>
+
+                    <TabsContent value="cancel" className="space-y-4 mt-0">
                   <div className="space-y-3 rounded-md border p-4">
                     <h3 className="font-medium">Motivos de anulación</h3>
                     <div className="flex gap-2">
@@ -1491,10 +2219,30 @@ export function SettingsPage() {
                       ))}
                     </div>
                   </div>
+                    </TabsContent>
+                  </Tabs>
                 </>
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="monedas" className="space-y-6">
+          <div className="rounded-md border bg-background p-2 sm:p-4 ui-panel">
+            <SystemSettingsContent forcedSection="monedas" showPageHeader={false} showBackupButton={false} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notificaciones" className="space-y-6">
+          <div className="rounded-md border bg-background p-2 sm:p-4 ui-panel">
+            <SystemSettingsContent forcedSection="notificaciones" showPageHeader={false} showBackupButton={false} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="impresoras" className="space-y-6">
+          <div className="rounded-md border bg-background p-2 sm:p-4 ui-panel">
+            <SystemSettingsContent forcedSection="impresoras" showPageHeader={false} showBackupButton={false} />
+          </div>
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-6">

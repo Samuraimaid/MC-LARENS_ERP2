@@ -35,6 +35,7 @@ class TestSellerVoucherBarcode:
         payload = build_seller_voucher_escpos(sale, text_lines=["Factura: INV-20260627-0009"])
         assert b"INV-20260627-0009" in payload
         assert b"\x1d\x6b\x49" in payload
+        assert b"\x1d\x77\x04" in payload
 
     def test_lookup_requires_valid_invoice_format(self):
         cajero = _pin_session(CAJERO_PIN)

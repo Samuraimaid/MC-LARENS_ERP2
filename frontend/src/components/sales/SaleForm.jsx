@@ -290,6 +290,7 @@ export default function SaleForm({
   const stepThreeSectionRef = useRef(null);
   const stepFourSectionRef = useRef(null);
   const didStepThreeAutoScrollRef = useRef(false);
+  const recentlyCreatedVehicleIdRef = useRef("");
   const productTransferTimerRef = useRef(null);
   const cartFlashTimerRef = useRef(null);
   const longPressTimerRef = useRef(null);
@@ -537,6 +538,23 @@ export default function SaleForm({
     window.setTimeout(() => setVehiclePulseActive(false), 2000);
   }, []);
 
+  const applyNewlyCreatedVehicleSelection = useCallback((vehicleId, vehicleRecord = null) => {
+    const normalizedId = normalizeVehicleId(vehicleId);
+    if (!normalizedId) return;
+    recentlyCreatedVehicleIdRef.current = normalizedId;
+    setVehicleFlowOption("registered");
+    setSelectedVehicle(normalizedId);
+    setIsVehiclePickerVisible(false);
+    if (vehicleRecord && typeof vehicleRecord === "object") {
+      setLocalVehicles((prev) => {
+        const exists = prev.some((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedId);
+        if (exists) return prev;
+        return [...prev, vehicleRecord];
+      });
+    }
+    triggerVehiclePulse();
+  }, [normalizeVehicleId, triggerVehiclePulse]);
+
   const isCompanyCustomer = useCallback((customer) => {
     const type = String(customer?.customer_type || "").toLowerCase();
     return type === "empresa" || type === "company" || type === "juridica" || type === "juridico";
@@ -599,6 +617,23 @@ export default function SaleForm({
     }
     const normalizedSelectedVehicle = normalizeVehicleId(selectedVehicle);
     const hasRestorableVehicle = Boolean(normalizedSelectedVehicle);
+    const pendingCreatedVehicle = normalizeVehicleId(recentlyCreatedVehicleIdRef.current);
+
+    if (
+      pendingCreatedVehicle
+      && normalizedSelectedVehicle === pendingCreatedVehicle
+    ) {
+      if (vehicleFlowOption !== "registered") {
+        setVehicleFlowOption("registered");
+      }
+      if (isVehiclePickerVisible) {
+        setIsVehiclePickerVisible(false);
+      }
+      if (customerVehicles.some((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === pendingCreatedVehicle)) {
+        recentlyCreatedVehicleIdRef.current = "";
+      }
+      return;
+    }
 
     if (hasRestorableVehicle && localVehicles.length === 0) {
       return;
@@ -630,7 +665,7 @@ export default function SaleForm({
     if (isVehiclePickerVisible) {
       return;
     }
-    if (vehicleFlowOption === "registered") {
+    if (vehicleFlowOption === "registered" && !normalizedSelectedVehicle) {
       setVehicleFlowOption("carryout");
     }
   }, [draftLoaded, pendingCustomerId, selectedCustomer, customerVehicles, isVehiclePickerVisible, localVehicles.length, normalizeVehicleId, selectedVehicle, vehicleFlowOption]);
@@ -716,7 +751,9 @@ export default function SaleForm({
       setCustomerSearch(draft?.customerSearch || "");
       setProductSearch(draft?.productSearch || "");
       setAppliedDiscounts(draft?.appliedDiscounts || []);
-      setVehicleFlowOption(draft?.vehicleFlowOption || "carryout");
+      setVehicleFlowOption(
+        draft?.vehicleFlowOption || (draft?.selectedVehicle ? "registered" : "carryout"),
+      );
       if (typeof draft?.isVehiclePickerVisible === "boolean") {
         setIsVehiclePickerVisible(draft.isVehiclePickerVisible);
       } else if (draft?.vehicleFlowOption) {
@@ -1139,15 +1176,12 @@ export default function SaleForm({
         toast.success("Vehículo registrado");
         playCreationSuccessSound();
 
+        if (createdVehicleId) {
+          applyNewlyCreatedVehicleSelection(createdVehicleId, vehicleResponse?.data);
+        }
+
         const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
         setLocalVehicles(vehiclesRes.data);
-
-        if (createdVehicleId) {
-          setVehicleFlowOption("registered");
-          setSelectedVehicle(normalizeVehicleId(createdVehicleId));
-          setIsVehiclePickerVisible(false);
-          triggerVehiclePulse();
-        }
       }
 
       const customersRes = await axios.get(`${API}/customers`, { withCredentials: true });
@@ -1169,6 +1203,7 @@ export default function SaleForm({
         selectedCustomerId: customerId,
         vehicleFlowOption: createdVehicleId ? "registered" : "carryout",
         selectedVehicle: createdVehicleId ? normalizeVehicleId(createdVehicleId) : "",
+        isVehiclePickerVisible: createdVehicleId ? false : true,
         showNewCustomer: false,
         newCustomerTab: "customer",
         newCustomer: {
@@ -1269,21 +1304,22 @@ export default function SaleForm({
       const response = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
       const createdVehicleId = response?.data?.vehicle_id;
 
+      if (createdVehicleId) {
+        applyNewlyCreatedVehicleSelection(createdVehicleId, response?.data);
+      }
+
       const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
       setLocalVehicles(vehiclesRes.data);
       if (typeof onDataRefresh === "function") {
         onDataRefresh();
       }
 
-      setVehicleFlowOption("registered");
-      if (createdVehicleId) {
-        setSelectedVehicle(normalizeVehicleId(createdVehicleId));
-      }
       setShowNewVehicleDialog(false);
       resetNewVehicleForm();
       persistDraftSnapshot({
         vehicleFlowOption: "registered",
         selectedVehicle: normalizeVehicleId(createdVehicleId),
+        isVehiclePickerVisible: false,
         showNewVehicleDialog: false,
         newVehicle: {
           plate_prefix: "M",
@@ -1298,7 +1334,6 @@ export default function SaleForm({
         useVehicleVinDecoder: false,
       });
       toast.success("Vehículo registrado para el cliente");
-      triggerVehiclePulse();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo registrar el vehículo");
     }
@@ -1508,6 +1543,8 @@ export default function SaleForm({
         quantity: i.quantity,
         discount: discountsBlockedByPayment ? 0 : i.discount,
         unit_price: i.unit_price,
+        original_unit_price: i.original_unit_price ?? i.unit_price,
+        installation_price: i.installation_price || 0,
         product_name: i.product_name,
         with_installation: hasSelectedVehicle && (i.installation_type === "required" || Boolean(i.with_installation)),
       })),
@@ -1907,6 +1944,13 @@ export default function SaleForm({
       return;
     }
     const normalizedVehicleId = normalizeVehicleId(nextVehicleId);
+    const pendingCreatedVehicle = normalizeVehicleId(recentlyCreatedVehicleIdRef.current);
+    if (
+      nextFlowOption === "carryout"
+      || (normalizedVehicleId && normalizedVehicleId !== pendingCreatedVehicle)
+    ) {
+      recentlyCreatedVehicleIdRef.current = "";
+    }
     const nextCartItems = nextFlowOption === "carryout"
       ? normalizedCartItems.map((item) => ({ ...item, with_installation: false }))
       : normalizedCartItems;

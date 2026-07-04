@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -24,7 +25,7 @@ import {
   refreshLabelPrinterStatus,
 } from "@/lib/labelPrinterSetup";
 
-export function SystemSettingsPage() {
+export function SystemSettingsContent({ forcedSection = null, showPageHeader = true, showBackupButton = true } = {}) {
   const { hasPermission } = useAuth();
   const canManageSystemSettings = hasPermission("system_settings", "view");
   const canInstallLabelPrinter = hasPermission("system_settings", "create");
@@ -320,38 +321,51 @@ export function SystemSettingsPage() {
     );
   }
 
-  return (
-    <div className="p-6 space-y-6" data-testid="system-settings-page">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Configuración del Sistema</h1>
-          <p className="text-muted-foreground">Monedas, notificaciones e impresora</p>
-        </div>
-        <Button onClick={downloadExcelBackup} disabled={backingUp} data-testid="download-backup-btn-system">
-          {backingUp ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4 mr-2" />
-          )}
-          Descargar Respaldo
-        </Button>
-      </div>
+  const sectionMap = {
+    monedas: "currency",
+    notificaciones: "notifications",
+    impresoras: "printer",
+  };
+  const resolvedSection = forcedSection ? sectionMap[forcedSection] || forcedSection : "currency";
 
-      <Tabs defaultValue="currency" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="currency" className="gap-2">
-            <DollarSign className="h-4 w-4" />
-            Monedas
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            Notificaciones
-          </TabsTrigger>
-          <TabsTrigger value="printer" className="gap-2">
-            <Printer className="h-4 w-4" />
-            Impresora
-          </TabsTrigger>
-        </TabsList>
+  return (
+    <div className={showPageHeader ? "p-6 space-y-6" : "space-y-6"} data-testid="system-settings-page">
+      {showPageHeader ? (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="font-heading text-3xl font-bold tracking-tight">Configuración del Sistema</h1>
+            <p className="text-muted-foreground">Monedas, notificaciones e impresora</p>
+          </div>
+          {showBackupButton ? (
+            <Button onClick={downloadExcelBackup} disabled={backingUp} data-testid="download-backup-btn-system">
+              {backingUp ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Descargar Respaldo
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Tabs value={resolvedSection} className="space-y-6 animate-fade-up-soft">
+        {!forcedSection ? (
+          <TabsList className="flex h-auto w-full flex-wrap gap-2 rounded-md border bg-card p-1.5">
+            <TabsTrigger value="currency" className="gap-2 rounded-full">
+              <DollarSign className="h-4 w-4" />
+              Monedas
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 rounded-full">
+              <Bell className="h-4 w-4" />
+              Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="printer" className="gap-2 rounded-full">
+              <Printer className="h-4 w-4" />
+              Impresora
+            </TabsTrigger>
+          </TabsList>
+        ) : null}
 
         {/* Currency Tab */}
         <TabsContent value="currency" className="space-y-6">
@@ -800,4 +814,8 @@ export function SystemSettingsPage() {
       </Tabs>
     </div>
   );
+}
+
+export function SystemSettingsPage() {
+  return <Navigate to="/settings?tab=monedas" replace />;
 }

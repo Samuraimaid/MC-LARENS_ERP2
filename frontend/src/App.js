@@ -69,6 +69,7 @@ const ReturnsPage = lazyNamedPage(() => import("./pages/ReturnsPage"), "ReturnsP
 const CalendarPage = lazyNamedPage(() => import("./pages/CalendarPage"), "CalendarPage");
 const WarrantiesPage = lazyNamedPage(() => import("./pages/WarrantiesPage"), "WarrantiesPage");
 const SystemSettingsPage = lazyNamedPage(() => import("./pages/SystemSettingsPage"), "SystemSettingsPage");
+const AccountingPage = lazyNamedPage(() => import("./pages/AccountingPage"), "AccountingPage");
 const QualityControlPage = lazyNamedPage(() => import("./pages/QualityControlPage"), "QualityControlPage");
 const BranchesPage = lazyNamedPage(() => import("./pages/BranchesPage"), "BranchesPage");
 const WarehousesPage = lazyNamedPage(() => import("./pages/WarehousesPage"), "WarehousesPage");
@@ -208,6 +209,7 @@ function AppRouter() {
         <Route path="/users" element={<UsersAdminPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/system-settings" element={<SystemSettingsPage />} />
+        <Route path="/accounting" element={<AccountingPage />} />
       </Route>
 
       {/* KDS Layout (fullscreen) */}

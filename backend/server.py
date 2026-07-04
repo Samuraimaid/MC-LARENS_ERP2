@@ -605,6 +605,7 @@ PERMISSIONS_CATALOG: Dict[str, Dict[str, Any]] = {
             "users": "Usuarios",
             "settings": "Configuración",
             "system_settings": "Sistema",
+            "accounting": "Contabilidad",
         },
     },
 }
@@ -652,6 +653,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "users": ["gerencia"],
     "settings": ["gerencia"],
     "system_settings": ["gerencia"],
+    "accounting": ["gerencia", "recursos_humanos", "supervisor"],
 }
 
 ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
@@ -669,6 +671,10 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
         "settings": {"view": True, "create": True, "edit": True, "delete": True},
         "system_settings": {"view": True, "create": True, "edit": True, "delete": True},
         "branches": {"view": True, "create": True, "edit": True, "delete": True},
+        "accounting": {"view": True, "create": True, "edit": True, "delete": True},
+    },
+    "recursos_humanos": {
+        "accounting": {"view": True, "create": True, "edit": True},
     },
     "programador": {
         "users": {"view": True, "create": True, "edit": True, "delete": True},
@@ -739,6 +745,9 @@ PERMISSION_ROUTE_MAP: List[tuple[str, str]] = [
     ("/api/users", "users"),
     ("/api/settings", "settings"),
     ("/api/system-settings", "system_settings"),
+    ("/api/settings/petty-cash", "accounting"),
+    ("/api/accounting", "accounting"),
+    ("/api/petty-cash", "accounting"),
 ]
 
 PERMISSION_ENFORCEMENT_EXACT_PATHS = {
@@ -1578,6 +1587,14 @@ class BillingPdfThemeColorsPayload(FlexibleModel):
     invoice_credit: Optional[str] = None
     payment_partial: Optional[str] = None
     invoice_pending: Optional[str] = None
+    petty_cash: Optional[str] = None
+
+
+class BillingPdfDocumentsSectionsPayload(FlexibleModel):
+    invoice: Optional[Dict[str, Optional[bool]]] = None
+    quotation: Optional[Dict[str, Optional[bool]]] = None
+    payment_receipt: Optional[Dict[str, Optional[bool]]] = None
+    petty_cash: Optional[Dict[str, Optional[bool]]] = None
 
 
 class BillingPdfDocumentsUpdatePayload(FlexibleModel):
@@ -1587,11 +1604,64 @@ class BillingPdfDocumentsUpdatePayload(FlexibleModel):
     watermark_logo_url: Optional[str] = None
     show_status_badge: Optional[bool] = None
     theme_colors: Optional[BillingPdfThemeColorsPayload] = None
+    sections: Optional[BillingPdfDocumentsSectionsPayload] = None
 
 
 class BillingPdfPreviewPayload(FlexibleModel):
     kind: str = "invoice_paid"
     pdf_documents: Optional[BillingPdfDocumentsUpdatePayload] = None
+
+
+class BillingSellerVoucherTextsPayload(FlexibleModel):
+    company_name: Optional[str] = None
+    subtitle: Optional[str] = None
+    scan_label: Optional[str] = None
+    footer_valid: Optional[str] = None
+    footer_disclaimer: Optional[str] = None
+
+
+class BillingSellerVoucherSectionsPayload(FlexibleModel):
+    header_rules: Optional[bool] = None
+    company_name: Optional[bool] = None
+    subtitle: Optional[bool] = None
+    invoice_number: Optional[bool] = None
+    date: Optional[bool] = None
+    customer: Optional[bool] = None
+    vehicle: Optional[bool] = None
+    plate: Optional[bool] = None
+    items: Optional[bool] = None
+    breakdown: Optional[bool] = None
+    breakdown_gross_subtotal: Optional[bool] = None
+    breakdown_line_discount: Optional[bool] = None
+    breakdown_price_discount: Optional[bool] = None
+    breakdown_code_discount: Optional[bool] = None
+    breakdown_global_discount: Optional[bool] = None
+    breakdown_blocked_discount: Optional[bool] = None
+    breakdown_subtotal: Optional[bool] = None
+    breakdown_retention: Optional[bool] = None
+    breakdown_iva: Optional[bool] = None
+    breakdown_total: Optional[bool] = None
+    payment_plan: Optional[bool] = None
+    barcode: Optional[bool] = None
+    scan_label: Optional[bool] = None
+    footer_valid: Optional[bool] = None
+    footer_disclaimer: Optional[bool] = None
+
+
+class BillingSellerVoucherUpdatePayload(FlexibleModel):
+    body_font_size: Optional[int] = None
+    title_font_size: Optional[int] = None
+    chars_per_line: Optional[int] = None
+    top_feed_lines: Optional[int] = None
+    left_margin_chars: Optional[int] = None
+    barcode_module_width: Optional[int] = None
+    barcode_pdf_bar_width: Optional[float] = None
+    texts: Optional[BillingSellerVoucherTextsPayload] = None
+    sections: Optional[BillingSellerVoucherSectionsPayload] = None
+
+
+class BillingSellerVoucherPreviewPayload(FlexibleModel):
+    seller_voucher: Optional[BillingSellerVoucherUpdatePayload] = None
 
 
 class SaleRequestPayload(FlexibleModel):
@@ -1615,10 +1685,12 @@ class SaleItem(FlexibleModel):
     product_name: str
     quantity: int
     unit_price: float
+    original_unit_price: Optional[float] = None
     discount: float = 0.0
     subtotal: float = 0.0
     warehouse_id: Optional[str] = None
     installation_type: Optional[str] = None
+    installation_price: Optional[float] = None
     with_installation: bool = False
     display_note: Optional[str] = None
 
@@ -2300,7 +2372,7 @@ async def _finalize_create_sale_settlement(
         customer=customer,
         subtotal_base=subtotal_base,
     )
-    iva_rate_percent = await _get_billing_iva_rate()
+    iva_rate_percent = await _get_billing_iva_rate(getattr(sale_data, "branch_id", None))
     custom_iva = getattr(sale_data, "iva_rate", None)
     if custom_iva is not None:
         try:
@@ -2386,13 +2458,25 @@ def _format_payment_method_label(method: Any) -> str:
     return labels.get(key, key)
 
 
+async def _get_seller_voucher_settings(branch_id: Optional[str] = None) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import normalize_seller_voucher_settings
+
+    doc = await _get_billing_settings_doc(branch_id)
+    return normalize_seller_voucher_settings(doc.get("seller_voucher"))
+
+
 async def _build_seller_voucher_lines(sale: Dict[str, Any]) -> List[str]:
     from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_text_lines
 
     vehicle = None
     if sale.get("vehicle_id"):
         vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
-    return build_seller_voucher_text_lines(sale, vehicle=cast(Optional[Dict[str, Any]], vehicle))
+    settings = await _get_seller_voucher_settings(sale.get("branch_id"))
+    return build_seller_voucher_text_lines(
+        sale,
+        vehicle=cast(Optional[Dict[str, Any]], vehicle),
+        voucher_settings=settings,
+    )
 
 
 async def _resolve_sale_for_print(sale_id: str) -> Dict[str, Any]:
@@ -6697,7 +6781,7 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
         subtotal += item_subtotal
 
     apply_iva = quot_data.apply_iva if quot_data.apply_iva is not None else True
-    iva_rate = float(quot_data.iva_rate) if quot_data.iva_rate is not None else await _get_billing_iva_rate()
+    iva_rate = float(quot_data.iva_rate) if quot_data.iva_rate is not None else await _get_billing_iva_rate(user.branch_id)
     tax = subtotal * (iva_rate / 100) if apply_iva else 0
     effective_discount_percent = quot_data.discount if discounts_allowed_by_method else 0.0
     await _enforce_seller_global_discount_limits(
@@ -7981,16 +8065,26 @@ async def create_sale(sale_data: SaleCreate, request: Request):
                 }
             )
 
+        original_price = item.get("original_unit_price")
+        try:
+            original_price_value = float(original_price) if original_price is not None else price
+        except (TypeError, ValueError):
+            original_price_value = price
+        if original_price_value <= 0:
+            original_price_value = price
+
         items.append(
             SaleItem(
                 product_id=product["product_id"],
                 product_name=product["name"],
                 quantity=qty,
                 unit_price=price,
+                original_unit_price=original_price_value,
                 discount=discount,
                 subtotal=item_subtotal,
                 warehouse_id=warehouse_id,
                 installation_type=install_type,
+                installation_price=float(product.get("installation_price") or 0),
                 with_installation=wants_installation or install_type == "required",
                 display_note=display_note,
             )
@@ -8387,7 +8481,7 @@ async def get_sale(sale_id: str, request: Request):
 
 @api_router.post("/sales/preview-settlement")
 async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request: Request):
-    await require_roles(request, ["gerencia", "supervisor", "ventas", "cajero"])
+    user = await require_roles(request, ["gerencia", "supervisor", "ventas", "cajero"])
 
     customer: Optional[Dict[str, Any]] = None
     if payload.customer_id:
@@ -8396,7 +8490,7 @@ async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request
     subtotal_base = float(payload.subtotal) if payload.subtotal is not None else _compute_items_subtotal(payload.items)
     retention_profile = payload.retention_profile or _extract_retention_profile_from_customer(customer)
 
-    iva_rate_percent = await _get_billing_iva_rate()
+    iva_rate_percent = await _get_billing_iva_rate(user.branch_id)
 
     settlement = _build_sale_settlement(
         subtotal_base=subtotal_base,
@@ -8519,7 +8613,7 @@ async def update_sale_commercial_terms(
 
     customer = await db.customers.find_one({"customer_id": sale.get("customer_id")}, {"_id": 0})
     retention_profile = payload.retention_profile or _extract_retention_profile_from_customer(customer)
-    iva_rate_percent = await _get_billing_iva_rate()
+    iva_rate_percent = await _get_billing_iva_rate(sale.get("branch_id"))
 
     subtotal_base = float(sale.get("subtotal") or 0.0)
     discounts_amount = float(sale.get("discount") or 0.0)
@@ -8712,7 +8806,7 @@ async def _enforce_pos_discount_policy(
 
     subtotal_base = _round2(sale.get("subtotal") or 0.0)
     retention_profile = _normalize_retention_profile(sale.get("retention_profile") or "general")
-    iva_rate_percent = await _get_billing_iva_rate()
+    iva_rate_percent = await _get_billing_iva_rate(sale.get("branch_id"))
     settlement = _build_sale_settlement(
         subtotal_base=subtotal_base,
         discount_percent=0.0,
@@ -12428,7 +12522,7 @@ async def _get_usd_to_nio_rate_with_source(rate_override: Optional[float] = None
         return float(rate_override), "override"
 
     try:
-        billing = await _get_billing_settings_doc()
+        billing = await _get_billing_settings_doc(_normalize_billing_branch_id(None))
         exchange_doc = billing.get("exchange") or {}
         selected_rate, selected_source = _select_effective_billing_rate(exchange_doc, _utc_now())
         if selected_rate and selected_rate > 0:
@@ -13894,8 +13988,8 @@ def _load_logo_image(logo_url: Optional[str]) -> Optional[Any]:
     return export_load_logo_image(logo_url, logger)
 
 
-async def _get_billing_pdf_settings() -> Dict[str, Any]:
-    doc = await _get_billing_settings_doc()
+async def _get_billing_pdf_settings(branch_id: Optional[str] = None) -> Dict[str, Any]:
+    doc = await _get_billing_settings_doc(branch_id)
     return export_normalize_pdf_document_settings(doc.get("pdf_documents"))
 
 
@@ -13915,8 +14009,9 @@ async def _draw_document_pdf(
     notes: Optional[str] = None,
     pdf_settings: Optional[Dict[str, Any]] = None,
     document_theme: Optional[Dict[str, str]] = None,
+    branch_id: Optional[str] = None,
 ):
-    settings = pdf_settings or await _get_billing_pdf_settings()
+    settings = pdf_settings or await _get_billing_pdf_settings(branch_id)
     theme = document_theme
     if theme is None:
         title_key = str(doc_title or "").strip().lower()
@@ -14043,7 +14138,7 @@ async def _draw_invoice_letter_pdf(
     context: Dict[str, Any],
     pdf_settings: Optional[Dict[str, Any]] = None,
 ) -> None:
-    settings = pdf_settings or await _get_billing_pdf_settings()
+    settings = pdf_settings or await _get_billing_pdf_settings(sale.get("branch_id"))
     document_theme = export_resolve_invoice_theme(sale, settings)
     sale_payment_meta = {
         "payment_status": sale.get("payment_status"),
@@ -14131,7 +14226,12 @@ async def get_seller_voucher_preview_pdf(sale_id: str, request: Request):
 
     sale = await _resolve_sale_for_print(sale_id)
     lines = await _build_seller_voucher_lines(sale)
-    pdf_bytes = build_seller_voucher_preview_pdf(sale, text_lines=lines)
+    voucher_settings = await _get_seller_voucher_settings(sale.get("branch_id"))
+    pdf_bytes = build_seller_voucher_preview_pdf(
+        sale,
+        text_lines=lines,
+        voucher_settings=voucher_settings,
+    )
     invoice = str(sale.get("invoice_number") or sale_id).replace("/", "-")
     return Response(
         content=pdf_bytes,
@@ -14152,7 +14252,12 @@ async def print_seller_voucher_pos(sale_id: str, request: Request):
 
     sale = await _resolve_sale_for_print(sale_id)
     lines = await _build_seller_voucher_lines(sale)
-    escpos = build_seller_voucher_escpos(sale, text_lines=lines)
+    voucher_settings = await _get_seller_voucher_settings(sale.get("branch_id"))
+    escpos = build_seller_voucher_escpos(
+        sale,
+        text_lines=lines,
+        voucher_settings=voucher_settings,
+    )
     try:
         bridge_result = await send_escpos_to_pos_voucher_printer(escpos)
     except RuntimeError as exc:
@@ -14268,7 +14373,7 @@ async def get_payment_receipt_pdf(sale_id: str, request: Request):
     context = await _build_letter_invoice_context(sale)
     payments = list(sale.get("payments") or [])
     latest_payment = payments[-1] if payments else None
-    settings = await _get_billing_pdf_settings()
+    settings = await _get_billing_pdf_settings(sale.get("branch_id"))
     theme = export_resolve_invoice_theme(sale, settings)
 
     buffer = BytesIO()
@@ -14367,6 +14472,7 @@ async def get_quotation_pdf(quotation_id: str, request: Request):
         apply_iva,
         totals,
         notes=quotation.get("notes"),
+        branch_id=quotation.get("branch_id"),
     )
 
     p.save()
@@ -17632,9 +17738,10 @@ async def update_theme_settings(payload: ThemeSettings, request: Request):
 
 
 @api_router.get("/settings/billing")
-async def get_billing_settings(request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
-    doc = await _get_billing_settings_doc()
+async def get_billing_settings(request: Request, branch_id: str = ""):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     exchange_doc = doc.get("exchange") or {}
     effective_rate, source = _select_effective_billing_rate(exchange_doc, _utc_now())
     reasons = sorted(
@@ -17642,6 +17749,7 @@ async def get_billing_settings(request: Request):
         key=lambda r: (int(r.get("sort_order") or 9999), str(r.get("reason") or "")),
     )
     return {
+        "branch_id": resolved_branch_id,
         "exchange": {
             "official_rate": float(exchange_doc.get("official_rate") or 36.5),
             "rules": list(exchange_doc.get("rules") or []),
@@ -17651,58 +17759,74 @@ async def get_billing_settings(request: Request):
         "iva_rate": float(doc.get("iva_rate") or DEFAULT_BILLING_IVA_RATE),
         "cancel_reasons": reasons,
         "pdf_documents": export_normalize_pdf_document_settings(doc.get("pdf_documents")),
+        "seller_voucher": _normalize_seller_voucher_settings(doc.get("seller_voucher")),
         "updated_at": doc.get("updated_at"),
     }
 
 
 @api_router.get("/settings/billing/cancel-reasons/public")
 async def get_public_cancel_reasons(request: Request):
-    await require_auth(request)
-    doc = await _get_billing_settings_doc()
+    user = await require_auth(request)
+    doc = await _get_billing_settings_doc(user.branch_id)
     reasons = [r for r in list(doc.get("cancel_reasons") or []) if bool(r.get("active", True))]
     reasons.sort(key=lambda r: (int(r.get("sort_order") or 9999), str(r.get("reason") or "")))
-    return {"reasons": reasons}
+    return {"reasons": reasons, "branch_id": _normalize_billing_branch_id(user.branch_id)}
 
 
 @api_router.get("/settings/billing/iva/public")
 async def get_public_billing_iva(request: Request):
-    await require_auth(request)
-    iva_rate = await _get_billing_iva_rate()
-    return {"iva_rate": iva_rate}
+    user = await require_auth(request)
+    iva_rate = await _get_billing_iva_rate(user.branch_id)
+    return {"iva_rate": iva_rate, "branch_id": _normalize_billing_branch_id(user.branch_id)}
 
 
 @api_router.put("/settings/billing/exchange")
-async def update_billing_exchange(payload: BillingExchangeUpdatePayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def update_billing_exchange(
+    payload: BillingExchangeUpdatePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     rate = float(payload.official_rate or 0)
     if rate <= 0:
         raise HTTPException(status_code=400, detail="La tasa oficial debe ser mayor a cero")
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     exchange_doc = doc.setdefault("exchange", {})
     exchange_doc["official_rate"] = rate
-    await _save_billing_settings_doc(doc)
-    return {"message": "Tasa oficial actualizada", "official_rate": rate}
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {"message": "Tasa oficial actualizada", "official_rate": rate, "branch_id": resolved_branch_id}
 
 
 @api_router.put("/settings/billing/iva")
-async def update_billing_iva(payload: BillingIvaUpdatePayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def update_billing_iva(
+    payload: BillingIvaUpdatePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     iva_rate = float(payload.iva_rate or 0)
     if iva_rate <= 0:
         raise HTTPException(status_code=400, detail="El IVA debe ser mayor a cero")
     if iva_rate > 100:
         raise HTTPException(status_code=400, detail="El IVA no puede ser mayor a 100")
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     doc["iva_rate"] = iva_rate
-    await _save_billing_settings_doc(doc)
-    return {"message": "IVA actualizado", "iva_rate": iva_rate}
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {"message": "IVA actualizado", "iva_rate": iva_rate, "branch_id": resolved_branch_id}
 
 
 @api_router.post("/settings/billing/exchange/rules")
-async def create_billing_exchange_rule(payload: BillingExchangeRulePayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def create_billing_exchange_rule(
+    payload: BillingExchangeRulePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     cadence = str(payload.cadence or "").strip().lower()
     if cadence not in ALLOWED_BILLING_CADENCE:
         raise HTTPException(status_code=400, detail="Cadencia inválida")
@@ -17720,25 +17844,31 @@ async def create_billing_exchange_rule(payload: BillingExchangeRulePayload, requ
         "created_at": _utc_now().isoformat(),
     }
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     exchange_doc = doc.setdefault("exchange", {})
     rules = list(exchange_doc.get("rules") or [])
     rules.append(rule)
     exchange_doc["rules"] = rules
-    await _save_billing_settings_doc(doc)
-    return rule
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {**rule, "branch_id": resolved_branch_id}
 
 
 @api_router.put("/settings/billing/exchange/rules/{rule_id}")
-async def update_billing_exchange_rule(rule_id: str, payload: BillingExchangeRulePayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def update_billing_exchange_rule(
+    rule_id: str,
+    payload: BillingExchangeRulePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     cadence = str(payload.cadence or "").strip().lower()
     if cadence not in ALLOWED_BILLING_CADENCE:
         raise HTTPException(status_code=400, detail="Cadencia inválida")
     if float(payload.rate or 0) <= 0:
         raise HTTPException(status_code=400, detail="La tasa de regla debe ser mayor a cero")
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     exchange_doc = doc.setdefault("exchange", {})
     rules = list(exchange_doc.get("rules") or [])
     target = next((r for r in rules if str(r.get("id")) == rule_id), None)
@@ -17756,32 +17886,38 @@ async def update_billing_exchange_rule(rule_id: str, payload: BillingExchangeRul
             "updated_at": _utc_now().isoformat(),
         }
     )
-    await _save_billing_settings_doc(doc)
-    return target
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {**target, "branch_id": resolved_branch_id}
 
 
 @api_router.delete("/settings/billing/exchange/rules/{rule_id}")
-async def delete_billing_exchange_rule(rule_id: str, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
-    doc = await _get_billing_settings_doc()
+async def delete_billing_exchange_rule(rule_id: str, request: Request, branch_id: str = ""):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     exchange_doc = doc.setdefault("exchange", {})
     rules = list(exchange_doc.get("rules") or [])
     before = len(rules)
     exchange_doc["rules"] = [r for r in rules if str(r.get("id")) != rule_id]
     if len(exchange_doc["rules"]) == before:
         raise HTTPException(status_code=404, detail="Regla no encontrada")
-    await _save_billing_settings_doc(doc)
-    return {"message": "Regla eliminada"}
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {"message": "Regla eliminada", "branch_id": resolved_branch_id}
 
 
 @api_router.post("/settings/billing/cancel-reasons")
-async def create_billing_cancel_reason(payload: BillingCancelReasonPayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def create_billing_cancel_reason(
+    payload: BillingCancelReasonPayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     reason = _clean_vehicle_setting_text(payload.reason)
     if not reason:
         raise HTTPException(status_code=400, detail="Motivo requerido")
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     reasons = list(doc.get("cancel_reasons") or [])
     if any(_canonical_vehicle_setting_text(r.get("reason")) == _canonical_vehicle_setting_text(reason) for r in reasons):
         raise HTTPException(status_code=409, detail="Motivo ya existe")
@@ -17795,18 +17931,24 @@ async def create_billing_cancel_reason(payload: BillingCancelReasonPayload, requ
     reasons.append(reason_doc)
     reasons.sort(key=lambda r: (int(r.get("sort_order") or 9999), str(r.get("reason") or "")))
     doc["cancel_reasons"] = reasons
-    await _save_billing_settings_doc(doc)
-    return reason_doc
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {**reason_doc, "branch_id": resolved_branch_id}
 
 
 @api_router.put("/settings/billing/cancel-reasons/{reason_id}")
-async def update_billing_cancel_reason(reason_id: str, payload: BillingCancelReasonPayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
+async def update_billing_cancel_reason(
+    reason_id: str,
+    payload: BillingCancelReasonPayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     reason = _clean_vehicle_setting_text(payload.reason)
     if not reason:
         raise HTTPException(status_code=400, detail="Motivo requerido")
 
-    doc = await _get_billing_settings_doc()
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     reasons = list(doc.get("cancel_reasons") or [])
     target = next((r for r in reasons if str(r.get("id")) == reason_id), None)
     if not target:
@@ -17822,45 +17964,52 @@ async def update_billing_cancel_reason(reason_id: str, payload: BillingCancelRea
         target["sort_order"] = int(payload.sort_order)
     reasons.sort(key=lambda r: (int(r.get("sort_order") or 9999), str(r.get("reason") or "")))
     doc["cancel_reasons"] = reasons
-    await _save_billing_settings_doc(doc)
-    return target
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {**target, "branch_id": resolved_branch_id}
 
 
 @api_router.delete("/settings/billing/cancel-reasons/{reason_id}")
-async def delete_billing_cancel_reason(reason_id: str, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
-    doc = await _get_billing_settings_doc()
+async def delete_billing_cancel_reason(reason_id: str, request: Request, branch_id: str = ""):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     reasons = list(doc.get("cancel_reasons") or [])
     before = len(reasons)
     reasons = [r for r in reasons if str(r.get("id")) != reason_id]
     if len(reasons) == before:
         raise HTTPException(status_code=404, detail="Motivo no encontrado")
     doc["cancel_reasons"] = reasons
-    await _save_billing_settings_doc(doc)
-    return {"message": "Motivo eliminado"}
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {"message": "Motivo eliminado", "branch_id": resolved_branch_id}
 
 
 def _merge_pdf_documents_settings(
     current: Dict[str, Any],
     payload: Optional[BillingPdfDocumentsUpdatePayload],
 ) -> Dict[str, Any]:
+    from backend.domains.export.pdf_document_settings import merge_pdf_document_sections
+
     if payload is None:
         return export_normalize_pdf_document_settings(current)
     incoming_colors = payload.theme_colors.model_dump(exclude_none=True) if payload.theme_colors else {}
     merged_colors = {**current.get("theme_colors", {}), **incoming_colors}
+    payload_data = payload.model_dump(exclude_none=True, exclude={"theme_colors", "sections"})
     merged = {
         **current,
-        **payload.model_dump(exclude_none=True, exclude={"theme_colors"}),
+        **payload_data,
         "theme_colors": merged_colors,
     }
+    if payload.sections is not None:
+        merged["sections"] = merge_pdf_document_sections(
+            current.get("sections"),
+            payload.sections.model_dump(exclude_none=True),
+        )
     return export_normalize_pdf_document_settings(merged)
 
 
-async def _build_preview_company_for_user(user: Any) -> Dict[str, Any]:
-    branch = None
-    user_branch_id = getattr(user, "branch_id", None)
-    if user_branch_id:
-        branch = await db.branches.find_one({"branch_id": user_branch_id}, {"_id": 0})
+async def _build_preview_company_for_branch(branch_id: str) -> Dict[str, Any]:
+    resolved_branch_id = _normalize_billing_branch_id(branch_id)
+    branch = await db.branches.find_one({"branch_id": resolved_branch_id}, {"_id": 0})
     return {
         "name": (branch or {}).get("company_name") or os.environ.get("COMPANY_NAME", "MUNDO DE ACCESORIOS"),
         "tagline": os.environ.get("COMPANY_TAGLINE", "Accesorios y servicios automotrices"),
@@ -17874,7 +18023,7 @@ async def _build_preview_company_for_user(user: Any) -> Dict[str, Any]:
         "phone": (branch or {}).get("company_phone") or (branch or {}).get("phone") or "",
         "email": (branch or {}).get("company_email") or "",
         "logo_url": (branch or {}).get("logo_url") or "",
-        "branch_id": user_branch_id or (branch or {}).get("branch_id") or "",
+        "branch_id": resolved_branch_id,
     }
 
 
@@ -17888,10 +18037,11 @@ def _pdf_preview_response(pdf_bytes: bytes, kind: str) -> FastAPIResponse:
 
 
 @api_router.get("/settings/billing/pdf-documents/preview")
-async def preview_billing_pdf_documents(request: Request, kind: str = "invoice_paid"):
+async def preview_billing_pdf_documents(request: Request, kind: str = "invoice_paid", branch_id: str = ""):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
-    settings = await _get_billing_pdf_settings()
-    company = await _build_preview_company_for_user(user)
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    settings = await _get_billing_pdf_settings(resolved_branch_id)
+    company = await _build_preview_company_for_branch(resolved_branch_id)
     pdf_bytes = export_build_preview_pdf_bytes(
         preview_kind=kind,
         company=company,
@@ -17903,11 +18053,16 @@ async def preview_billing_pdf_documents(request: Request, kind: str = "invoice_p
 
 
 @api_router.post("/settings/billing/pdf-documents/preview")
-async def preview_billing_pdf_documents_draft(payload: BillingPdfPreviewPayload, request: Request):
+async def preview_billing_pdf_documents_draft(
+    payload: BillingPdfPreviewPayload,
+    request: Request,
+    branch_id: str = "",
+):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
-    saved_settings = await _get_billing_pdf_settings()
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    saved_settings = await _get_billing_pdf_settings(resolved_branch_id)
     settings = _merge_pdf_documents_settings(saved_settings, payload.pdf_documents)
-    company = await _build_preview_company_for_user(user)
+    company = await _build_preview_company_for_branch(resolved_branch_id)
     pdf_bytes = export_build_preview_pdf_bytes(
         preview_kind=payload.kind,
         company=company,
@@ -17932,16 +18087,129 @@ async def get_pdf_logo_presets(request: Request):
 
 
 @api_router.put("/settings/billing/pdf-documents")
-async def update_billing_pdf_documents(payload: BillingPdfDocumentsUpdatePayload, request: Request):
-    await require_roles(request, ["gerencia", "recursos_humanos"])
-    doc = await _get_billing_settings_doc()
+async def update_billing_pdf_documents(
+    payload: BillingPdfDocumentsUpdatePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    doc = await _get_billing_settings_doc(resolved_branch_id)
     current = export_normalize_pdf_document_settings(doc.get("pdf_documents"))
     doc["pdf_documents"] = _merge_pdf_documents_settings(current, payload)
-    await _save_billing_settings_doc(doc)
+    await _save_billing_settings_doc(doc, resolved_branch_id)
     return {
         "message": "Configuración de documentos PDF actualizada",
+        "branch_id": resolved_branch_id,
         "pdf_documents": doc["pdf_documents"],
     }
+
+
+def _normalize_billing_branch_id(branch_id: Any = None) -> str:
+    from backend.domains.billing.branch_settings import normalize_billing_branch_id
+
+    return normalize_billing_branch_id(branch_id)
+
+
+async def _resolve_billing_branch_for_settings(user: Any, requested_branch_id: Optional[str] = None) -> str:
+    role = str(getattr(user, "role", "") or "").lower()
+    requested = str(requested_branch_id or "").strip()
+    user_branch = _normalize_billing_branch_id(getattr(user, "branch_id", None))
+
+    if role in {"gerencia", "recursos_humanos"}:
+        target = requested or user_branch
+        exists = await db.branches.find_one({"branch_id": target}, {"_id": 0, "branch_id": 1})
+        if exists:
+            return target
+        if requested:
+            raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+        return user_branch
+
+    if requested and requested != user_branch:
+        raise HTTPException(status_code=403, detail="No puedes configurar otra sucursal")
+    return user_branch
+
+
+def _normalize_seller_voucher_settings(raw: Any = None) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import normalize_seller_voucher_settings
+
+    return normalize_seller_voucher_settings(raw)
+
+
+def _merge_seller_voucher_settings(
+    current: Dict[str, Any],
+    payload: Optional[BillingSellerVoucherUpdatePayload],
+) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import merge_seller_voucher_settings
+
+    incoming = payload.model_dump(exclude_none=True) if payload else {}
+    texts_payload = incoming.pop("texts", None)
+    sections_payload = incoming.pop("sections", None)
+    if isinstance(texts_payload, dict):
+        incoming["texts"] = texts_payload
+    if isinstance(sections_payload, dict):
+        incoming["sections"] = sections_payload
+    return merge_seller_voucher_settings(current, incoming)
+
+
+@api_router.get("/settings/billing/seller-voucher")
+async def get_billing_seller_voucher_settings(request: Request, branch_id: str = ""):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    return {
+        "branch_id": resolved_branch_id,
+        "seller_voucher": await _get_seller_voucher_settings(resolved_branch_id),
+    }
+
+
+@api_router.put("/settings/billing/seller-voucher")
+async def update_billing_seller_voucher_settings(
+    payload: BillingSellerVoucherUpdatePayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    doc = await _get_billing_settings_doc(resolved_branch_id)
+    current = _normalize_seller_voucher_settings(doc.get("seller_voucher"))
+    doc["seller_voucher"] = _merge_seller_voucher_settings(current, payload)
+    await _save_billing_settings_doc(doc, resolved_branch_id)
+    return {
+        "message": "Configuración de voucher POS actualizada",
+        "branch_id": resolved_branch_id,
+        "seller_voucher": doc["seller_voucher"],
+    }
+
+
+@api_router.get("/settings/billing/seller-voucher/preview")
+async def preview_billing_seller_voucher_settings(request: Request, branch_id: str = ""):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
+    from backend.domains.sales.voucher_settings import sample_sale_for_voucher_preview
+
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    settings = await _get_seller_voucher_settings(resolved_branch_id)
+    sample = sample_sale_for_voucher_preview()
+    pdf_bytes = build_seller_voucher_preview_pdf(sample, voucher_settings=settings)
+    return _pdf_preview_response(pdf_bytes, "seller_voucher")
+
+
+@api_router.post("/settings/billing/seller-voucher/preview")
+async def preview_billing_seller_voucher_settings_draft(
+    payload: BillingSellerVoucherPreviewPayload,
+    request: Request,
+    branch_id: str = "",
+):
+    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
+    from backend.domains.sales.voucher_settings import sample_sale_for_voucher_preview
+
+    resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    saved_settings = await _get_seller_voucher_settings(resolved_branch_id)
+    settings = _merge_seller_voucher_settings(saved_settings, payload.seller_voucher)
+    sample = sample_sale_for_voucher_preview()
+    pdf_bytes = build_seller_voucher_preview_pdf(sample, voucher_settings=settings)
+    return _pdf_preview_response(pdf_bytes, "seller_voucher")
 
 
 VEHICLE_SETTINGS_DOC_TYPE = "vehicle_catalog_settings"
@@ -17969,34 +18237,39 @@ def _billing_default_cancel_reasons() -> List[Dict[str, Any]]:
     ]
 
 
-async def _get_billing_settings_doc() -> Dict[str, Any]:
-    doc = await db.settings.find_one({"type": BILLING_SETTINGS_DOC_TYPE}, {"_id": 0})
-    if not doc:
-        doc = {
-            "type": BILLING_SETTINGS_DOC_TYPE,
-            "exchange": {
-                "official_rate": 36.5,
-                "rules": [],
-            },
-            "iva_rate": DEFAULT_BILLING_IVA_RATE,
-            "cancel_reasons": _billing_default_cancel_reasons(),
-            "updated_at": _utc_now().isoformat(),
-        }
-    exchange = doc.setdefault("exchange", {})
-    exchange.setdefault("official_rate", 36.5)
-    exchange.setdefault("rules", [])
-    doc.setdefault("iva_rate", DEFAULT_BILLING_IVA_RATE)
-    doc.setdefault("cancel_reasons", _billing_default_cancel_reasons())
-    doc.setdefault(
-        "pdf_documents",
-        export_normalize_pdf_document_settings(export_default_pdf_document_settings),
+async def _get_billing_settings_doc(branch_id: Optional[str] = None) -> Dict[str, Any]:
+    from backend.domains.billing.branch_settings import (
+        billing_legacy_settings_query,
+        billing_settings_query,
+        finalize_billing_settings_doc,
+        seed_billing_settings_doc,
     )
-    return doc
+
+    resolved_branch_id = _normalize_billing_branch_id(branch_id)
+    doc = await db.settings.find_one(billing_settings_query(resolved_branch_id), {"_id": 0})
+    if not doc:
+        legacy = await db.settings.find_one(billing_legacy_settings_query(), {"_id": 0})
+        doc = seed_billing_settings_doc(
+            branch_id=resolved_branch_id,
+            legacy=legacy,
+            default_pdf_documents=export_default_pdf_document_settings,
+            normalize_pdf_documents=export_normalize_pdf_document_settings,
+            normalize_seller_voucher_settings=_normalize_seller_voucher_settings,
+            default_cancel_reasons=_billing_default_cancel_reasons(),
+            utc_now_iso=_utc_now().isoformat(),
+        )
+    return finalize_billing_settings_doc(
+        doc,
+        default_pdf_documents=export_default_pdf_document_settings,
+        normalize_pdf_documents=export_normalize_pdf_document_settings,
+        normalize_seller_voucher_settings=_normalize_seller_voucher_settings,
+        default_cancel_reasons=_billing_default_cancel_reasons(),
+    )
 
 
-async def _get_billing_iva_rate() -> float:
+async def _get_billing_iva_rate(branch_id: Optional[str] = None) -> float:
     try:
-        doc = await _get_billing_settings_doc()
+        doc = await _get_billing_settings_doc(branch_id)
         iva_rate = float(doc.get("iva_rate") or DEFAULT_BILLING_IVA_RATE)
         if iva_rate > 0:
             return iva_rate
@@ -18005,11 +18278,15 @@ async def _get_billing_iva_rate() -> float:
     return DEFAULT_BILLING_IVA_RATE
 
 
-async def _save_billing_settings_doc(doc: Dict[str, Any]) -> None:
+async def _save_billing_settings_doc(doc: Dict[str, Any], branch_id: Optional[str] = None) -> None:
+    from backend.domains.billing.branch_settings import billing_settings_query
+
+    resolved_branch_id = _normalize_billing_branch_id(branch_id or doc.get("branch_id"))
     doc["type"] = BILLING_SETTINGS_DOC_TYPE
+    doc["branch_id"] = resolved_branch_id
     doc["updated_at"] = _utc_now().isoformat()
     await db.settings.update_one(
-        {"type": BILLING_SETTINGS_DOC_TYPE},
+        billing_settings_query(resolved_branch_id),
         {"$set": doc},
         upsert=True,
     )
@@ -20597,6 +20874,21 @@ human_resources_router = get_human_resources_router(
     verify_pin_hash,
 )
 api_router.include_router(human_resources_router)
+
+from backend.routes.petty_cash_accounting import get_petty_cash_accounting_router
+
+petty_cash_accounting_router = get_petty_cash_accounting_router(
+    db,
+    require_auth,
+    require_roles,
+    require_cashier_roles,
+    _get_billing_pdf_settings,
+    _build_preview_company_for_branch,
+    CURRENCIES,
+    logger,
+    FlexibleModel,
+)
+api_router.include_router(petty_cash_accounting_router)
 
 app.include_router(api_router)
 
