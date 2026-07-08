@@ -2,6 +2,7 @@ import React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { filterSearchableOptions } from "@/lib/searchableSelectFilter";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,6 +23,18 @@ function normalizeOption(option) {
   };
 }
 
+function moveCommandSelection(commandRoot, direction) {
+  if (!commandRoot) return;
+  const key = direction > 0 ? "ArrowDown" : "ArrowUp";
+  commandRoot.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key,
+      bubbles: true,
+      cancelable: true,
+    })
+  );
+}
+
 export default function SearchableSelect({
   value,
   onChange,
@@ -33,18 +46,49 @@ export default function SearchableSelect({
   className,
 }) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const commandRef = React.useRef(null);
+  const listRef = React.useRef(null);
 
   const normalizedOptions = React.useMemo(
     () => options.map(normalizeOption).filter(Boolean),
     [options]
   );
 
+  const visibleOptions = React.useMemo(
+    () => filterSearchableOptions(normalizedOptions, search),
+    [normalizedOptions, search]
+  );
+
   const selectedValue = value ? String(value) : "";
   const selectedOption = normalizedOptions.find((option) => option.value === selectedValue) || null;
   const triggerLabel = selectedOption?.label || selectedValue;
 
+  const handleOpenChange = (nextOpen) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setSearch("");
+    }
+  };
+
+  React.useEffect(() => {
+    const list = listRef.current;
+    if (!list || !open) return undefined;
+
+    const handleWheel = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const delta = event.deltaY || event.deltaX;
+      if (!delta) return;
+      moveCommandSelection(commandRef.current, delta > 0 ? 1 : -1);
+    };
+
+    list.addEventListener("wheel", handleWheel, { passive: false });
+    return () => list.removeEventListener("wheel", handleWheel);
+  }, [open, visibleOptions.length]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -69,17 +113,23 @@ export default function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+        <Command ref={commandRef} shouldFilter={false} loop={false}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList ref={listRef}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {normalizedOptions.map((option) => (
+              {visibleOptions.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.searchText}
+                  value={option.value}
+                  keywords={[option.label, option.hint].filter(Boolean)}
                   onSelect={() => {
                     onChange(option.value);
+                    setSearch("");
                     setOpen(false);
                   }}
                   title={option.hint || option.label}

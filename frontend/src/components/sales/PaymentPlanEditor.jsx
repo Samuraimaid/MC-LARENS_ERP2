@@ -40,6 +40,7 @@ export default function PaymentPlanEditor({
   onChangeLines,
   onRemoveLine,
   exchangeRate = 36.5,
+  sellExchangeRate = null,
   targetTotal = 0,
   disabled = false,
   structureLocked = false,
@@ -48,6 +49,7 @@ export default function PaymentPlanEditor({
   submitAttentionMessage = "",
 }) {
   const isMixed = paymentMethod === "mixed";
+  const pricingRate = Number(sellExchangeRate || exchangeRate) || 36.5;
   const plannedTotal = useMemo(() => computePlanTotalNio(lines, exchangeRate), [lines, exchangeRate]);
   const roundingTolerance = useMemo(
     () => computePlanRoundingTolerance(lines, exchangeRate),
@@ -168,7 +170,8 @@ export default function PaymentPlanEditor({
             </p>
           </div>
           <div className="text-right text-xs">
-            <div>Tasa de Cambio: <span className="font-mono">{Number(exchangeRate || 0).toFixed(4)}</span></div>
+            <div>TC compra (pagos US$): <span className="font-mono">{Number(exchangeRate || 0).toFixed(4)}</span></div>
+            <div>TC venta (precios): <span className="font-mono">{Number(pricingRate || 0).toFixed(4)}</span></div>
             <div>Importe: <span className="font-semibold">C$ {Number(targetTotal || 0).toFixed(2)}</span></div>
           </div>
         </div>
@@ -199,7 +202,8 @@ export default function PaymentPlanEditor({
           </p>
         </div>
         <div className="text-right text-xs">
-          <div>Tasa de Cambio: <span className="font-mono">{Number(exchangeRate || 0).toFixed(4)}</span></div>
+          <div>TC compra (pagos US$): <span className="font-mono">{Number(exchangeRate || 0).toFixed(4)}</span></div>
+          <div>TC venta (precios): <span className="font-mono">{Number(pricingRate || 0).toFixed(4)}</span></div>
           <div>Importe: <span className="font-semibold">C$ {Number(targetTotal || 0).toFixed(2)}</span></div>
         </div>
       </div>

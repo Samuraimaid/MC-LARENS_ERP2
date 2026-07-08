@@ -11,6 +11,8 @@ export const isCompanyCustomerType = (customer) => {
   return type === "empresa" || type === "company" || type === "juridica" || type === "juridico";
 };
 
+export const defaultApplyIvaForCustomer = (customer) => isCompanyCustomerType(customer);
+
 export const normalizeCartItemForTotals = (item) => {
   const originalRaw = Number(item?.original_unit_price);
   const unitPrice = Number(item?.unit_price || 0);
@@ -26,27 +28,29 @@ export const normalizeCartItemForTotals = (item) => {
   };
 };
 
-const convertPrice = (priceUSD, currency, exchangeRate) => (
-  currency === "NIO" ? priceUSD * exchangeRate : priceUSD
+const convertPrice = (priceUSD, currency, sellRate) => (
+  currency === "NIO" ? priceUSD * sellRate : priceUSD
 );
 
 export const computeSaleTotals = ({
   cartItems = [],
   currency = "NIO",
   exchangeRate = 36.5,
+  sellRate = null,
   ivaRate = 15,
   globalDiscount = 0,
   globalDiscountMode = "percent",
   appliedDiscounts = [],
   paymentMethod = "cash",
   mixedPaymentMethods = [],
-  applyIVA = true,
+  applyIVA = false,
   applyRetention = false,
   retentionRate = 2,
   hasSelectedVehicle = false,
   isCompanyCustomerFlow = false,
   supervisorDiscountPreapproved = false,
 }) => {
+  const pricingRate = Number(sellRate || exchangeRate) || 36.5;
   const normalizedMethod = normalizePaymentMethodCode(paymentMethod);
   const normalizedMixed = normalizePaymentMethodList(mixedPaymentMethods);
   const discountsBlockedByPayment = supervisorDiscountPreapproved
@@ -57,14 +61,14 @@ export const computeSaleTotals = ({
 
   const lineBreakdown = normalizedItems.map((item) => {
     const effectiveItemDiscount = discountsBlockedByPayment ? 0 : (item.discount || 0);
-    const unitPriceInCurrency = convertPrice(item.unit_price, currency, exchangeRate);
-    const originalUnitPriceInCurrency = convertPrice(item.original_unit_price, currency, exchangeRate);
+    const unitPriceInCurrency = convertPrice(item.unit_price, currency, pricingRate);
+    const originalUnitPriceInCurrency = convertPrice(item.original_unit_price, currency, pricingRate);
     const currentLineBase = unitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
     const originalLineBase = originalUnitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
     const installType = item.installation_type || "optional";
     const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
     const installTotal = installType !== "not_available" && wantsInstall
-      ? convertPrice(item.installation_price || 0, currency, exchangeRate) * item.quantity
+      ? convertPrice(item.installation_price || 0, currency, pricingRate) * item.quantity
       : 0;
     const manualPriceDiscount = Math.max(0, originalLineBase - currentLineBase);
     return {
@@ -90,7 +94,7 @@ export const computeSaleTotals = ({
     if (discount.type === "percent") {
       discountFromCodesRaw += subtotalAfterItemPriceDiscounts * (discount.value / 100);
     } else if (discount.type === "fixed") {
-      const fixedInCurrency = currency === "USD" ? discount.value / exchangeRate : discount.value;
+      const fixedInCurrency = currency === "USD" ? discount.value / pricingRate : discount.value;
       discountFromCodesRaw += fixedInCurrency;
     }
   });
@@ -107,7 +111,7 @@ export const computeSaleTotals = ({
   const blockedDiscountsAmount = discountsBlockedByPayment ? totalDiscountsRaw : 0;
   const subtotalForRetention = subtotalAfterItemPriceDiscounts - totalDiscounts;
   const subtotalForRetentionNio = currency === "USD"
-    ? subtotalForRetention * exchangeRate
+    ? subtotalForRetention * pricingRate
     : subtotalForRetention;
   const retentionThresholdMet = subtotalForRetentionNio >= 1000;
   const shouldApplyRetention = isCompanyCustomerFlow && applyRetention && retentionThresholdMet;
@@ -178,7 +182,7 @@ export const computeDraftSnapshotTotals = (draft, {
       : (Array.isArray(draft.applied_discounts) ? draft.applied_discounts : []),
     paymentMethod,
     mixedPaymentMethods: mixedMethods,
-    applyIVA: draft.applyIVA ?? draft.apply_iva ?? true,
+    applyIVA: draft.applyIVA ?? draft.apply_iva ?? defaultApplyIvaForCustomer(customer),
     applyRetention: draft.applyRetention ?? draft.apply_retention ?? false,
     retentionRate: (() => {
       const rawRate = draft.retentionRate ?? draft.retention_rate ?? draft.retentionRateHint ?? draft.retention_rate_hint;

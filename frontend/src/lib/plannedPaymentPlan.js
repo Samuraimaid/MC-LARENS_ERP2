@@ -15,9 +15,9 @@ export function formatPlanLineAmount(amount) {
   return value.toFixed(PLAN_AMOUNT_DECIMALS);
 }
 
-export function computePlanRoundingTolerance(lines = [], exchangeRate = 36.5) {
+export function computePlanRoundingTolerance(lines = [], exchangeRate = 36.5, buyRate = null) {
   const rows = Array.isArray(lines) ? lines : [];
-  const rate = Number(exchangeRate) || 36.5;
+  const rate = resolvePaymentExchangeRate(exchangeRate, buyRate);
   const hasUsdAmount = rows.some((line) => (
     String(line?.moneda || "NIO").toUpperCase() === "USD" && !isPlanLineAmountEmpty(line)
   ));
@@ -57,18 +57,25 @@ export function buildDefaultPlanLine(method = "cash", currency = "NIO") {
   };
 }
 
-export function computeLineAmountNio(line, exchangeRate = 36.5) {
+export function resolvePaymentExchangeRate(exchangeRate = 36.5, buyRate = null) {
+  const paymentRate = Number(buyRate || exchangeRate) || 36.5;
+  return paymentRate;
+}
+
+export function computeLineAmountNio(line, exchangeRate = 36.5, buyRate = null) {
   const currency = String(line?.moneda || "NIO").toUpperCase();
   const amount = Number(line?.monto_origen || 0);
   if (!Number.isFinite(amount) || amount <= 0) return 0;
-  if (currency === "USD") return round2(amount * (Number(exchangeRate) || 36.5));
+  if (currency === "USD") {
+    return round2(amount * resolvePaymentExchangeRate(exchangeRate, buyRate));
+  }
   return round2(amount);
 }
 
-export function computePlanTotalNio(lines = [], exchangeRate = 36.5) {
+export function computePlanTotalNio(lines = [], exchangeRate = 36.5, buyRate = null) {
   return round2(
     (Array.isArray(lines) ? lines : []).reduce(
-      (sum, line) => sum + computeLineAmountNio(line, exchangeRate),
+      (sum, line) => sum + computeLineAmountNio(line, exchangeRate, buyRate),
       0,
     ),
   );
@@ -81,17 +88,17 @@ export function isPlanLineAmountEmpty(line) {
   return !Number.isFinite(amount) || amount <= 0;
 }
 
-function formatRemainderForCurrency(remainingNio, currency, exchangeRate) {
+function formatRemainderForCurrency(remainingNio, currency, exchangeRate, buyRate = null) {
   if (remainingNio <= 0) return "";
   const code = String(currency || "NIO").toUpperCase();
   if (code === "USD") {
-    return formatPlanLineAmount(remainingNio / (Number(exchangeRate) || 36.5));
+    return formatPlanLineAmount(remainingNio / resolvePaymentExchangeRate(exchangeRate, buyRate));
   }
   return formatPlanLineAmount(remainingNio);
 }
 
 /** Convierte monto_origen al cambiar moneda de la línea (NIO <-> USD). */
-export function convertPlanLineAmountCurrency(line, nextCurrency, exchangeRate = 36.5) {
+export function convertPlanLineAmountCurrency(line, nextCurrency, exchangeRate = 36.5, buyRate = null) {
   const to = String(nextCurrency || "NIO").toUpperCase() === "USD" ? "USD" : "NIO";
   const from = String(line?.moneda || "NIO").toUpperCase() === "USD" ? "USD" : "NIO";
   if (from === to) {
@@ -104,15 +111,15 @@ export function convertPlanLineAmountCurrency(line, nextCurrency, exchangeRate =
   }
 
   const amount = Number(raw);
-  const rate = Number(exchangeRate) || 36.5;
+  const paymentRate = resolvePaymentExchangeRate(exchangeRate, buyRate);
   if (!Number.isFinite(amount) || amount <= 0) {
     return { ...line, moneda: to };
   }
 
   if (from === "NIO" && to === "USD") {
-    return { ...line, moneda: "USD", monto_origen: formatPlanLineAmount(amount / rate) };
+    return { ...line, moneda: "USD", monto_origen: formatPlanLineAmount(amount / paymentRate) };
   }
-  return { ...line, moneda: "NIO", monto_origen: formatPlanLineAmount(amount * rate) };
+  return { ...line, moneda: "NIO", monto_origen: formatPlanLineAmount(amount * paymentRate) };
 }
 
 /** Aplica patch a una línea del plan mixto con conversión y rebalanceo. */

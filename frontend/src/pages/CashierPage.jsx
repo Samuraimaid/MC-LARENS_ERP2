@@ -16,17 +16,59 @@ import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { isValidVoucherScanCode, normalizeVoucherScanCode } from "@/lib/voucherPrinter";
 import { planToCollectForm } from "@/lib/plannedPaymentPlan";
-import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
+import {
+  fetchUsdNioDualRates,
+  DEFAULT_USD_NIO_BUY_RATE,
+  DEFAULT_USD_NIO_SELL_RATE,
+} from "@/lib/exchangeRate";
 import { OperationalJobCard, getCashierUrgencyState } from "@/components/erp/OperationalJobCard";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import {
+  buildDualCurrencyPagos,
+  CASHIER_QUICK_BILLS_NIO,
+  computeDualCurrencyTotals,
+  computeTotalCashChangeNio,
+  dualCurrencyAmountFromPlan,
+  formatCashierMoney,
+  formatUsdMoney,
+  isCashOrTransferMethod,
+  isCashSingleCollect,
+} from "@/lib/cashierCollect";
 
 const NIO_BILLS = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
 const NIO_COINS = [10, 5, 1, 0.5, 0.25, 0.1, 0.05];
 const USD_BILLS = [100, 50, 20, 10, 5, 1];
 const USD_COINS = [1, 0.5, 0.25, 0.1, 0.05, 0.01];
 const CASHIER_SHIFT_KEY = "cashier.shift.state.v2";
+
+function resolveSalePrintFormat(sale, collectResponse) {
+  if (collectResponse?.print_format) return collectResponse.print_format;
+  if (sale?.print_format) return sale.print_format;
+  const iva = Number(sale?.iva_amount || sale?.tax || 0);
+  return iva > 0.009 ? "letter" : "thermal80";
+}
+
+async function printInvoiceAfterCollect(sale, collectResponse) {
+  const saleId = sale?.sale_id;
+  if (!saleId) return;
+  const fullyPaid = String(collectResponse?.sale_payment_status || "").toLowerCase() === "paid";
+  if (!fullyPaid) return;
+
+  const printFormat = resolveSalePrintFormat(sale, collectResponse);
+  try {
+    if (printFormat === "letter") {
+      window.open(`${API}/print/invoice-pdf/${saleId}`, "_blank");
+      return;
+    }
+    await axios.post(`${API}/print/thermal-invoice/${saleId}/pos`, {}, { withCredentials: true });
+    toast.success("Comprobante termico enviado a impresora");
+  } catch (error) {
+    const detail = error?.response?.data?.detail;
+    toast.error(typeof detail === "string" ? detail : "No se pudo imprimir el comprobante");
+  }
+}
 const CASHIER_URGENT_SOUND_KEY = "cashier.urgent.sound.enabled";
 const CARD_BANKS = [
   "BAC",
@@ -155,9 +197,120 @@ function toMoney(value) {
   return Number(value || 0).toFixed(2);
 }
 
-function CashierLegalBreakdown({ sale }) {
+function CashierInvoiceItems({ sale, compact = false }) {
+  const items = Array.isArray(sale?.items_detail) ? sale.items_detail : [];
+  const itemCount = Number(sale?.item_count || items.length || 0);
+  const hasInstallation = Number(sale?.installation_item_count || 0) > 0 || Boolean(sale?.has_installation);
+
+  if (!itemCount && !sale?.items_preview) {
+    return (
+      <p className={cn("text-muted-foreground", compact ? "text-xs" : "text-sm")}>
+        Sin artículos registrados en esta factura
+      </p>
+    );
+  }
+
+  const displayItems = items.length
+    ? items
+    : [{ name: sale?.items_preview || "Artículos", quantity: itemCount }];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className={cn(
+            "font-semibold uppercase tracking-wide text-muted-foreground",
+            compact ? "text-[10px]" : "text-xs",
+          )}
+        >
+          Artículos de la factura
+        </p>
+        {itemCount > 0 ? (
+          <span className={cn("text-muted-foreground tabular-nums", compact ? "text-[10px]" : "text-xs")}>
+            {itemCount} artículo{itemCount === 1 ? "" : "s"}
+          </span>
+        ) : null}
+      </div>
+      <ul className={cn("space-y-1.5", compact ? "text-xs" : "text-sm")}>
+        {displayItems.map((item, idx) => {
+          const qty = Number(item.quantity || 1);
+          const unitPrice = Number(item.unit_price || 0);
+          const originalUnit = Number(item.original_unit_price || unitPrice);
+          const hasOriginalDiscount = originalUnit > unitPrice + 0.009;
+          const priceDiscount = Number(item.price_discount || 0);
+          const linePctDiscount = Number(item.line_pct_discount || 0);
+          const discountPct = Number(item.discount_pct || 0);
+          const installationLine = Number(item.installation_line_total || 0);
+          const lineNet = Number(item.line_net_total || item.line_total || 0);
+
+          return (
+            <li
+              key={`${item.name}-${idx}`}
+              className="rounded-md border border-border/60 bg-background/70 px-2.5 py-2 space-y-1.5"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium leading-snug break-words">{item.name}</p>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                    {qty > 1 ? <span>Cant. {qty}</span> : null}
+                    {item.with_installation ? (
+                      <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-normal">
+                        Con instalación
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+                {lineNet > 0 ? (
+                  <span className="shrink-0 tabular-nums font-semibold">{formatCashierMoney(lineNet)}</span>
+                ) : null}
+              </div>
+
+              <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                <p className="tabular-nums">
+                  {hasOriginalDiscount ? (
+                    <>
+                      <span className="line-through">{formatCashierMoney(originalUnit)}</span>
+                      {" "}
+                      <span className="text-foreground font-medium">{formatCashierMoney(unitPrice)}</span>
+                      {" c/u"}
+                    </>
+                  ) : (
+                    <span className="text-foreground font-medium">{formatCashierMoney(unitPrice)} c/u</span>
+                  )}
+                </p>
+                {priceDiscount > 0.009 ? (
+                  <p className="text-violet-600 dark:text-violet-400 tabular-nums">
+                    Descuento precio: -{formatCashierMoney(priceDiscount)}
+                  </p>
+                ) : null}
+                {linePctDiscount > 0.009 ? (
+                  <p className="text-violet-600 dark:text-violet-400 tabular-nums">
+                    Descuento línea {discountPct % 1 === 0 ? discountPct.toFixed(0) : discountPct.toFixed(1)}%: -{formatCashierMoney(linePctDiscount)}
+                  </p>
+                ) : null}
+                {installationLine > 0.009 ? (
+                  <p className="tabular-nums">
+                    Instalación: {formatCashierMoney(installationLine)}
+                  </p>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {hasInstallation ? (
+        <p className="text-[10px] text-amber-800 dark:text-amber-200">
+          Esta factura incluye artículos con instalación.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function CashierLegalBreakdown({ sale, compact = false }) {
   if (!sale) return null;
 
+  const itemCount = Number(sale.item_count || sale.items_detail?.length || 0);
   const retention = Number(sale.retention_amount || 0);
   const discount = Number(sale.discounts_applied_amount || 0);
   const rows = [
@@ -179,32 +332,130 @@ function CashierLegalBreakdown({ sale }) {
     { key: "pending", label: "Pendiente", value: sale.amount_pending, highlight: true },
   ];
 
-  return (
-    <div className="rounded-md border bg-muted/20 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-        Desglose legal
-      </p>
-      <div className="space-y-1.5">
-        {rows.map((row) => (
-          <div
-            key={row.key}
-            className={`flex items-center justify-between text-sm ${
-              row.highlight ? "border-t pt-2 mt-1 font-semibold text-primary" : ""
-            }`}
+  const table = (
+    <div className="space-y-1.5">
+      {rows.map((row) => (
+        <div
+          key={row.key}
+          className={cn(
+            "flex items-center justify-between",
+            compact ? "text-xs" : "text-sm",
+            row.highlight && "border-t pt-2 mt-1 font-semibold text-primary",
+          )}
+        >
+          <span className={row.strong || row.highlight ? "font-medium text-foreground" : "text-muted-foreground"}>
+            {row.label}
+          </span>
+          <span
+            className={cn(
+              "tabular-nums",
+              row.negative && "text-violet-600 dark:text-violet-400",
+              row.highlight && "text-primary",
+              row.strong && "font-semibold",
+            )}
           >
-            <span className={row.strong || row.highlight ? "font-medium text-foreground" : "text-muted-foreground"}>
-              {row.label}
-            </span>
-            <span
-              className={`tabular-nums ${
-                row.negative ? "text-violet-600 dark:text-violet-400" : row.highlight ? "text-primary" : ""
-              } ${row.strong ? "font-semibold" : ""}`}
-            >
-              {row.negative ? "-" : ""}C${toMoney(Math.abs(Number(row.value || 0)))}
-            </span>
-          </div>
-        ))}
+            {row.negative ? "-" : ""}
+            {formatCashierMoney(Math.abs(Number(row.value || 0)))}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const breakdownContent = (
+    <div className="space-y-4">
+      <CashierInvoiceItems sale={sale} compact={compact} />
+      <div className="space-y-2 border-t pt-3">
+        <p
+          className={cn(
+            "font-semibold uppercase tracking-wide text-muted-foreground",
+            compact ? "text-[10px]" : "text-xs",
+          )}
+        >
+          Totales legales
+        </p>
+        {table}
       </div>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <Accordion type="single" collapsible>
+        <AccordionItem value="legal-breakdown" className="rounded-md border bg-muted/15 px-3">
+          <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+            Ver artículos y desglose{itemCount > 0 ? ` (${itemCount})` : ""}
+          </AccordionTrigger>
+          <AccordionContent className="pb-3">{breakdownContent}</AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    );
+  }
+
+  return (
+    <div className="rounded-md border bg-muted/20 p-3 space-y-4">
+      <CashierInvoiceItems sale={sale} compact={compact} />
+      <div className="space-y-2 border-t pt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Desglose legal
+        </p>
+        {table}
+      </div>
+    </div>
+  );
+}
+
+function CashierAmountHero({ sale, amountToCollect, cashChange, showCashChange }) {
+  const pending = Number(sale?.amount_pending || 0);
+  const paid = Number(sale?.amount_paid || 0);
+
+  return (
+    <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-background to-background p-4 space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            A cobrar ahora
+          </p>
+          <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-primary sm:text-5xl">
+            {formatCashierMoney(amountToCollect)}
+          </p>
+        </div>
+        <div className="text-right text-xs text-muted-foreground space-y-0.5">
+          <p>Pendiente total <span className="font-semibold text-foreground tabular-nums">{formatCashierMoney(pending)}</span></p>
+          {paid > 0 ? (
+            <p>Ya pagado <span className="font-medium text-foreground tabular-nums">{formatCashierMoney(paid)}</span></p>
+          ) : null}
+        </div>
+      </div>
+
+      {showCashChange ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="rounded-lg border bg-background/80 px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Recibido</p>
+            <p className="text-2xl font-semibold tabular-nums">{formatCashierMoney(cashChange.received)}</p>
+          </div>
+          <div
+            className={cn(
+              "rounded-lg border px-3 py-2.5",
+              cashChange.isValid
+                ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
+                : "border-amber-300 bg-amber-50 dark:bg-amber-950/30",
+            )}
+          >
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Cambio</p>
+            <p
+              className={cn(
+                "text-2xl font-bold tabular-nums",
+                cashChange.isValid ? "text-emerald-700 dark:text-emerald-300" : "text-amber-800 dark:text-amber-200",
+              )}
+            >
+              {cashChange.isValid
+                ? formatCashierMoney(cashChange.change)
+                : `Faltan ${formatCashierMoney(cashChange.shortfall)}`}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -253,7 +504,8 @@ export function CashierPage() {
   const [unlockPin, setUnlockPin] = useState("");
   const [lockOverlayTone, setLockOverlayTone] = useState("warning");
 
-  const [tipoCambio, setTipoCambio] = useState(String(DEFAULT_USD_NIO_RATE));
+  const [tipoCambio, setTipoCambio] = useState(String(DEFAULT_USD_NIO_BUY_RATE));
+  const [sellTipoCambio, setSellTipoCambio] = useState(String(DEFAULT_USD_NIO_SELL_RATE));
   const [openingNotes, setOpeningNotes] = useState("");
   const [closingNotes, setClosingNotes] = useState("");
   const [openDenominations, setOpenDenominations] = useState(() => buildDefaultDenominations());
@@ -282,6 +534,10 @@ export function CashierPage() {
     mode: "single",
     amount: "",
     received_amount: "",
+    nio_amount: "",
+    usd_amount: "",
+    received_nio: "",
+    received_usd: "",
     payment_method: "cash",
     reference: "",
     notes: "",
@@ -406,9 +662,14 @@ export function CashierPage() {
   useEffect(() => {
     let mounted = true;
     const loadRateFromManagementSource = async () => {
-      const rate = await fetchEffectiveUsdNioRate({ withCredentials: true, fallback: DEFAULT_USD_NIO_RATE });
+      const rates = await fetchUsdNioDualRates({
+        withCredentials: true,
+        fallbackBuy: DEFAULT_USD_NIO_BUY_RATE,
+        fallbackSell: DEFAULT_USD_NIO_SELL_RATE,
+      });
       if (mounted) {
-        setTipoCambio(String(rate));
+        setTipoCambio(String(rates.buyRate));
+        setSellTipoCambio(String(rates.sellRate));
       }
     };
     loadRateFromManagementSource();
@@ -458,9 +719,9 @@ export function CashierPage() {
     return toneByTab[activeTab] || "bg-background";
   }, [activeTab, isSessionOpenedHere]);
 
-  const cashTabsListClass = "flex h-auto w-full gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1 touch-pan-x";
+  const cashTabsListClass = "flex h-auto min-w-0 flex-1 gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1 touch-pan-x";
   const cashTabTriggerBaseClass =
-    "group min-w-max shrink-0 inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all duration-150 hover:bg-background/80 data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:shadow-sm";
+    "group min-w-max shrink-0 inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-2.5 py-1 text-xs font-semibold transition-all duration-150 hover:bg-background/80 data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:shadow-sm";
 
   const cashierTabToneClass = {
     cotizacion:
@@ -474,12 +735,14 @@ export function CashierPage() {
   };
 
   const resolveUsdNioRate = async () => {
-    const rate = await fetchEffectiveUsdNioRate({
+    const rates = await fetchUsdNioDualRates({
       withCredentials: true,
-      fallback: Number(tipoCambio || DEFAULT_USD_NIO_RATE),
+      fallbackBuy: Number(tipoCambio || DEFAULT_USD_NIO_BUY_RATE),
+      fallbackSell: Number(sellTipoCambio || DEFAULT_USD_NIO_SELL_RATE),
     });
-    setTipoCambio(String(rate));
-    return rate;
+    setTipoCambio(String(rates.buyRate));
+    setSellTipoCambio(String(rates.sellRate));
+    return rates.buyRate;
   };
 
   const updateOpenQty = (targetRow, value) => {
@@ -580,11 +843,15 @@ export function CashierPage() {
     prefillCollectSaleRef.current = sale.sale_id;
     const pending = Number(sale.amount_pending || 0);
     const planned = planToCollectForm(sale.planned_payment_plan, pending);
+    const dualAmounts = dualCurrencyAmountFromPlan(sale.planned_payment_plan, pending);
     if (planned) {
       setCollectForm((prev) => ({
         ...prev,
         ...planned,
-        received_amount: prev.received_amount,
+        ...dualAmounts,
+        received_amount: "",
+        received_nio: "",
+        received_usd: "",
         reference: prev.reference,
         notes: prev.notes,
         force_remove_discount: prev.force_remove_discount,
@@ -599,6 +866,11 @@ export function CashierPage() {
     setCollectForm((prev) => ({
       ...prev,
       amount: pending > 0 ? String(pending) : "",
+      nio_amount: pending > 0 ? String(pending) : "",
+      usd_amount: "",
+      received_amount: "",
+      received_nio: "",
+      received_usd: "",
       payment_method: paymentMethod,
       mode: String(sale?.payment_type || sale?.payment_method || "").toLowerCase() === "mixed" ? "mixed" : "single",
     }));
@@ -813,7 +1085,10 @@ export function CashierPage() {
       setServerActiveSession(res?.data || null);
       toast.success(`Caja abierta. ID de sesión: ${newSessionId}`);
     } catch (error) {
-      const detail = String(error?.response?.data?.detail || "");
+      const rawDetail = error?.response?.data?.detail;
+      const detail = typeof rawDetail === "string"
+        ? rawDetail
+        : (rawDetail?.message || rawDetail?.detail || "");
       const duplicateSession = detail.toLowerCase().includes("sesión de caja abierta")
         || detail.toLowerCase().includes("sesion de caja abierta");
       if (duplicateSession) {
@@ -1029,11 +1304,26 @@ export function CashierPage() {
       return;
     }
 
-    const amount = quick
-      ? Number(sale.amount_pending || 0)
-      : Number(collectForm.amount || 0);
+    const exchangeRate = Number(tipoCambio || DEFAULT_USD_NIO_BUY_RATE);
+    const buyRate = exchangeRate;
+    const pendingDue = Number(sale.amount_pending || 0);
     const paymentMethod = quick ? mapSalePaymentMethod(sale) : collectForm.payment_method;
-    const mode = quick ? "single" : collectForm.mode;
+    const nioAmount = quick ? pendingDue : Number(collectForm.nio_amount || 0);
+    const usdAmount = quick ? 0 : Number(collectForm.usd_amount || 0);
+    const dualTotals = computeDualCurrencyTotals({
+      pendingNio: pendingDue,
+      nioAmount,
+      usdAmount,
+      exchangeRate,
+      buyRate,
+    });
+    const amount = quick
+      ? pendingDue
+      : (nioAmount > 0 || usdAmount > 0 ? dualTotals.covered : Number(collectForm.amount || 0));
+    const useDualCurrency = !quick && isCashOrTransferMethod(paymentMethod);
+    const mode = quick
+      ? "single"
+      : (useDualCurrency && nioAmount > 0 && usdAmount > 0 ? "mixed" : collectForm.mode);
     const discount = Number(sale.discounts_applied_amount || 0);
     const cardInMixed = mode === "mixed" && collectForm.pagos.some((p) => isCardMethod(p.metodo));
     const cardSingle = mode === "single" && isCardMethod(paymentMethod);
@@ -1058,40 +1348,92 @@ export function CashierPage() {
       }
     }
 
+    let pagos = [];
+    let receivedAmount = null;
+    if (useDualCurrency && (nioAmount > 0 || usdAmount > 0)) {
+      pagos = buildDualCurrencyPagos({
+        method: paymentMethod,
+        nioAmount,
+        usdAmount,
+        receivedNio: collectForm.received_nio,
+        receivedUsd: collectForm.received_usd,
+        exchangeRate,
+        buyRate,
+        reference: collectForm.reference,
+      });
+      if (usdAmount <= 0.009) {
+        receivedAmount = collectForm.received_nio || collectForm.received_amount
+          ? Number(collectForm.received_nio || collectForm.received_amount)
+          : null;
+        pagos = [];
+      }
+    } else if (mode === "mixed") {
+      pagos = collectForm.pagos
+        .filter((p) => Number(p.monto_origen || 0) > 0)
+        .map((p) => ({
+          metodo: p.metodo,
+          moneda: p.moneda,
+          monto_origen: Number(p.monto_origen || 0),
+          tasa_cambio: p.moneda === "USD" ? exchangeRate : null,
+          received_amount: p.received_amount ? Number(p.received_amount) : null,
+          referencia_bancaria: p.referencia_bancaria || null,
+          card_type: p.card_type || null,
+          bank_name: p.bank_name || null,
+          transaction_number: p.transaction_number || null,
+        }));
+    }
+
     const payload = {
       sesion_id: sessionId,
       amount,
       payment_method: paymentMethod,
       reference: quick ? "" : collectForm.reference,
       notes: quick ? "Cobro rápido desde tarjeta" : collectForm.notes,
-      received_amount: quick ? null : (collectForm.received_amount ? Number(collectForm.received_amount) : null),
+      received_amount: quick ? null : receivedAmount,
       force_remove_discount: Boolean(collectForm.force_remove_discount),
       card_type: mode === "single" && cardSingle ? collectForm.card_type : null,
       bank_name: mode === "single" && cardSingle ? collectForm.bank_name : null,
       transaction_number: mode === "single" && cardSingle ? collectForm.transaction_number : null,
-      pagos: mode === "mixed"
-        ? collectForm.pagos
-            .filter((p) => Number(p.monto_origen || 0) > 0)
-            .map((p) => ({
-              metodo: p.metodo,
-              moneda: p.moneda,
-              monto_origen: Number(p.monto_origen || 0),
-              referencia_bancaria: p.referencia_bancaria || null,
-              card_type: p.card_type || null,
-              bank_name: p.bank_name || null,
-              transaction_number: p.transaction_number || null,
-            }))
-        : [],
+      pagos: useDualCurrency && pagos.length > 0 ? pagos : (mode === "mixed" ? pagos : []),
     };
 
-    if (mode === "single" && payload.amount <= 0) {
+    if (payload.amount <= 0) {
       toast.error("El monto debe ser mayor a 0");
       return;
+    }
+
+    const isPartialCollect = amount < pendingDue - 0.009;
+    if (!quick && useDualCurrency && !isPartialCollect) {
+      if (!dualTotals.isComplete) {
+        toast.error(`El cobro no cubre el pendiente. Faltan ${formatCashierMoney(dualTotals.remainingNio)}`);
+        return;
+      }
+      if (dualTotals.isOver) {
+        toast.error(`El cobro excede el pendiente por ${formatCashierMoney(dualTotals.overageNio)}`);
+        return;
+      }
     }
 
     if (mode === "mixed" && payload.pagos.length === 0) {
       toast.error("Agrega al menos una línea de pago mixto");
       return;
+    }
+
+    if (!quick && useDualCurrency && (collectForm.received_nio || collectForm.received_usd || collectForm.received_amount)) {
+      const cashTotals = computeTotalCashChangeNio({
+        nioAmount,
+        usdAmount,
+        receivedNio: collectForm.received_nio || collectForm.received_amount,
+        receivedUsd: collectForm.received_usd,
+        exchangeRate,
+      });
+      if (!cashTotals.isValid) {
+        const shortfall = cashTotals.nio.shortfall > 0
+          ? formatCashierMoney(cashTotals.nio.shortfall)
+          : formatUsdMoney(cashTotals.usd.shortfallUsd);
+        toast.error(`El efectivo recibido no cubre el cobro. Faltan ${shortfall}`);
+        return;
+      }
     }
 
     if (needsAuth) {
@@ -1106,13 +1448,18 @@ export function CashierPage() {
     if (quick) setQuickCollectSaleId(sale.sale_id);
     setBusy((prev) => ({ ...prev, collect: true }));
     try {
-      await axios.post(`${API}/caja/facturas/${sale.sale_id}/cobrar`, payload, { withCredentials: true });
+      const response = await axios.post(`${API}/caja/facturas/${sale.sale_id}/cobrar`, payload, { withCredentials: true });
       const isPartial = amount < Number(sale.amount_pending || 0) - 0.009;
+      const changeAmount = Number(response.data?.change_amount || 0);
+      const successMessage = quick
+        ? "Cobro total aplicado"
+        : (isPartial ? "Abono parcial registrado" : "Cobro aplicado correctamente");
       toast.success(
-        quick
-          ? "Cobro total aplicado"
-          : (isPartial ? "Abono parcial registrado" : "Cobro aplicado correctamente"),
+        changeAmount > 0.009
+          ? `${successMessage}. Cambio: ${formatCashierMoney(changeAmount)}`
+          : successMessage,
       );
+      await printInvoiceAfterCollect(sale, response.data);
       setCollectDialogOpen(false);
       setCollectDialogSale(null);
       prefillCollectSaleRef.current = "";
@@ -1125,6 +1472,10 @@ export function CashierPage() {
           ...prev,
           amount: "",
           received_amount: "",
+          nio_amount: "",
+          usd_amount: "",
+          received_nio: "",
+          received_usd: "",
           reference: "",
           notes: "",
           force_remove_discount: false,
@@ -1387,6 +1738,7 @@ export function CashierPage() {
   const collectPanelProps = {
     collectForm,
     setCollectForm,
+    exchangeRate: Number(tipoCambio || DEFAULT_USD_NIO_BUY_RATE),
     authRequiredForCollect,
     posDiscountAuthStatus,
     posDiscountAuthBusy,
@@ -1457,20 +1809,20 @@ export function CashierPage() {
         </Card>
       )}
 
-      <Card className={cn(isSessionOpenedHere && "border-primary/30 shadow-sm ui-panel animate-fade-up-soft")}>
-        {!isSessionOpenedHere ? (
-          <CardHeader className="pb-3">
-            <CardTitle>Apertura y control de sesión</CardTitle>
-            <CardDescription>El turno se abre con conteo inicial y puede bloquearse/desbloquearse con PIN.</CardDescription>
-          </CardHeader>
-        ) : null}
-        <CardContent className={isSessionOpenedHere ? "py-3 space-y-2" : "space-y-4"}>
-          {!isSessionOpenedHere ? (
+      {!isSessionOpenedHere ? (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Apertura y control de sesión</CardTitle>
+          <CardDescription>El turno se abre con conteo inicial y puede bloquearse/desbloquearse con PIN.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Tipo de cambio USD/NIO</Label>
+                  <Label>TC compra (pagos US$)</Label>
                   <Input type="number" step="0.01" value={tipoCambio} readOnly disabled />
+                  <p className="text-xs text-muted-foreground">TC venta (precios): {sellTipoCambio}</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Observación apertura</Label>
@@ -1519,9 +1871,19 @@ export function CashierPage() {
                 </Button>
               </div>
             </>
-          ) : (
-            <>
-              <ErpFormToolbar>
+          }
+        </CardContent>
+      </Card>
+      ) : null}
+
+      <div className="relative">
+      <div className={isLocked ? "pointer-events-none select-none blur-[2px] opacity-50" : ""}>
+      {isSessionOpenedHere ? (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
+        <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+          <CardContent className="py-2.5 space-y-2">
+            <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+              <ErpFormToolbar className="shrink-0">
                 <ErpToolbarButton
                   action="refresh"
                   icon={ClipboardCheck}
@@ -1569,74 +1931,67 @@ export function CashierPage() {
                   </>
                 ) : null}
               </ErpFormToolbar>
-              <Accordion type="single" collapsible className="rounded-md border bg-muted/20 px-3">
-                <AccordionItem value="cash-movements" className="border-0">
-                  <AccordionTrigger className="py-2.5 text-xs font-medium hover:no-underline">
-                    Entradas y salidas de efectivo
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-1">
-                      <MovementCard
-                        title="Entrada de efectivo"
-                        movementForm={movementForm}
-                        setMovementForm={setMovementForm}
-                        movementRowsByCurrency={movementRowsByCurrency}
-                        updateMovementQty={updateMovementQty}
-                        busy={busy.movement}
-                        submitMovement={submitMovement}
-                        forceType="entrada"
-                        disabled={!isSessionOpenedHere || isLocked}
-                        compact
-                      />
-                      <MovementCard
-                        title="Salida de efectivo"
-                        movementForm={movementForm}
-                        setMovementForm={setMovementForm}
-                        movementRowsByCurrency={movementRowsByCurrency}
-                        updateMovementQty={updateMovementQty}
-                        busy={busy.movement}
-                        submitMovement={submitMovement}
-                        forceType="salida"
-                        disabled={!isSessionOpenedHere || isLocked}
-                        compact
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </>
-          )}
+              <TabsList className={cashTabsListClass}>
+                <TabsTrigger value="pagadas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.pagadas)}>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Pagadas
+                </TabsTrigger>
+                <TabsTrigger value="cotizacion" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.cotizacion)}>
+                  <FileText className="h-3.5 w-3.5" />
+                  Cotización ({openInvoiceStats.total}
+                  {openInvoiceStats.urgent > 0 ? ` · ${openInvoiceStats.urgent} urg.` : ""})
+                </TabsTrigger>
+                <TabsTrigger value="credito" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.credito)}>
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Crédito
+                </TabsTrigger>
+                <TabsTrigger value="abonos" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.abonos)}>
+                  <Wallet className="h-3.5 w-3.5" />
+                  Abonos
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <Accordion type="single" collapsible className="rounded-md border bg-muted/20 px-3">
+              <AccordionItem value="cash-movements" className="border-0">
+                <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+                  Entradas y salidas de efectivo
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-1">
+                    <MovementCard
+                      title="Entrada de efectivo"
+                      movementForm={movementForm}
+                      setMovementForm={setMovementForm}
+                      movementRowsByCurrency={movementRowsByCurrency}
+                      updateMovementQty={updateMovementQty}
+                      busy={busy.movement}
+                      submitMovement={submitMovement}
+                      forceType="entrada"
+                      disabled={!isSessionOpenedHere || isLocked}
+                      compact
+                    />
+                    <MovementCard
+                      title="Salida de efectivo"
+                      movementForm={movementForm}
+                      setMovementForm={setMovementForm}
+                      movementRowsByCurrency={movementRowsByCurrency}
+                      updateMovementQty={updateMovementQty}
+                      busy={busy.movement}
+                      submitMovement={submitMovement}
+                      forceType="salida"
+                      disabled={!isSessionOpenedHere || isLocked}
+                      compact
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
 
-        </CardContent>
-      </Card>
-
-      <div className="relative">
-      <div className={isLocked ? "pointer-events-none select-none blur-[2px] opacity-50" : ""}>
-      {isSessionOpenedHere ? (
-      <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
-      <CardContent className="pt-4 pb-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
-        <TabsList className={cashTabsListClass}>
-          <TabsTrigger value="pagadas" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.pagadas)}>
-            <CheckCircle2 className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Pagadas
-          </TabsTrigger>
-          <TabsTrigger value="cotizacion" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.cotizacion)}>
-            <FileText className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Cotización ({openInvoiceStats.total}
-            {openInvoiceStats.urgent > 0 ? ` · ${openInvoiceStats.urgent} urgente${openInvoiceStats.urgent === 1 ? "" : "s"}` : ""})
-          </TabsTrigger>
-          <TabsTrigger value="credito" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.credito)}>
-            <CreditCard className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Crédito
-          </TabsTrigger>
-          <TabsTrigger value="abonos" className={cn(cashTabTriggerBaseClass, cashierTabToneClass.abonos)}>
-            <Wallet className="h-4 w-4 transition-transform duration-150 group-hover:scale-110 group-data-[state=active]:scale-110" />
-            Abonos
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cotizacion" className="mt-3">
+        <Card className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
+          <CardContent className="pt-3 pb-4">
+        <TabsContent value="cotizacion" className="mt-0">
           <CashierInvoiceWorkspace
             toolbarProps={{
               search: invoiceSearch,
@@ -1684,7 +2039,7 @@ export function CashierPage() {
           />
         </TabsContent>
 
-        <TabsContent value="abonos" className="mt-3">
+        <TabsContent value="abonos" className="mt-0">
           <CashierAbonoWorkspace
             search={abonoSearch}
             onChangeSearch={setAbonoSearch}
@@ -1716,7 +2071,7 @@ export function CashierPage() {
           />
         </TabsContent>
 
-        <TabsContent value="credito" className="mt-3">
+        <TabsContent value="credito" className="mt-0">
           <CashierInvoiceWorkspace
             toolbarProps={{
               search: invoiceSearch,
@@ -1746,7 +2101,7 @@ export function CashierPage() {
           />
         </TabsContent>
 
-        <TabsContent value="pagadas" className="mt-3 space-y-3">
+        <TabsContent value="pagadas" className="mt-0 space-y-3">
           <InvoiceToolbar
             search={invoiceSearch}
             onChangeSearch={setInvoiceSearch}
@@ -1765,9 +2120,9 @@ export function CashierPage() {
             />
           </div>
         </TabsContent>
+          </CardContent>
+        </Card>
       </Tabs>
-      </CardContent>
-      </Card>
       ) : (
         <Card className="border-dashed">
           <CardContent className="pt-6 text-sm text-muted-foreground">
@@ -1943,6 +2298,204 @@ export function CashierPage() {
   );
 }
 
+function paymentMethodLabel(method) {
+  const key = String(method || "").toLowerCase();
+  if (["transfer", "transferencia"].includes(key)) return "Transferencia";
+  if (["card", "tarjeta"].includes(key)) return "Tarjeta";
+  return "Efectivo";
+}
+
+function CashierAgreedPaymentSummary({ sale, exchangeRate }) {
+  const lines = Array.isArray(sale?.planned_payment_plan?.lines) ? sale.planned_payment_plan.lines : [];
+  const method = paymentMethodLabel(sale?.payment_method || sale?.payment_type || "cash");
+
+  if (!lines.length) {
+    return (
+      <div className="rounded-lg border bg-muted/15 px-3 py-2.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Forma de pago acordada</p>
+        <p className="mt-1 text-sm font-medium">{method}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-sky-300/50 bg-sky-50/70 dark:bg-sky-950/20 px-3 py-2.5 space-y-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-900/80 dark:text-sky-200">
+        Forma de pago acordada
+      </p>
+      <div className="space-y-1.5">
+        {lines.map((line, index) => {
+          const currency = String(line?.moneda || "NIO").toUpperCase();
+          const amount = Number(line?.monto_origen || 0);
+          const nioEq = currency === "USD" ? amount * Number(exchangeRate || 36.5) : amount;
+          return (
+            <div key={`plan-line-${index}`} className="flex items-center justify-between gap-2 text-sm">
+              <span className="font-medium">
+                {paymentMethodLabel(line?.metodo)} · {currency === "USD" ? formatUsdMoney(amount) : formatCashierMoney(amount)}
+              </span>
+              {currency === "USD" ? (
+                <span className="text-xs text-muted-foreground tabular-nums">= {formatCashierMoney(nioEq)}</span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CashierDualCurrencyPayment({
+  pendingNio,
+  exchangeRate,
+  method,
+  nioAmount,
+  usdAmount,
+  receivedNio,
+  receivedUsd,
+  onChange,
+  amountsLocked = false,
+  showPartialHint = false,
+}) {
+  const totals = useMemo(
+    () => computeDualCurrencyTotals({ pendingNio, nioAmount, usdAmount, exchangeRate }),
+    [pendingNio, nioAmount, usdAmount, exchangeRate],
+  );
+  const cashTotals = useMemo(
+    () => computeTotalCashChangeNio({
+      nioAmount,
+      usdAmount,
+      receivedNio,
+      receivedUsd,
+      exchangeRate,
+    }),
+    [nioAmount, usdAmount, receivedNio, receivedUsd, exchangeRate],
+  );
+  const showNioReceived = Number(nioAmount || 0) > 0;
+  const showUsdReceived = Number(usdAmount || 0) > 0;
+  const methodLabel = paymentMethodLabel(method);
+
+  const applyRemainderNio = () => {
+    onChange({ nio_amount: totals.remainingNio > 0 ? String(totals.remainingNio) : "" });
+  };
+
+  const applyRemainderUsd = () => {
+    onChange({ usd_amount: totals.remainingUsd > 0 ? String(totals.remainingUsd) : "" });
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border border-emerald-300/40 bg-emerald-50/40 dark:bg-emerald-950/20 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">
+          Registrar {methodLabel.toLowerCase()}
+        </p>
+        <span className="text-[11px] text-muted-foreground tabular-nums">
+          TC US$1 = {formatCashierMoney(exchangeRate)}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-2 rounded-md border bg-background/80 p-3">
+          <Label className="text-sm">Córdobas (C$)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            className="h-11 text-lg font-semibold tabular-nums"
+            value={nioAmount}
+            readOnly={amountsLocked}
+            disabled={amountsLocked}
+            onChange={(e) => onChange({ nio_amount: e.target.value })}
+            placeholder="0.00"
+          />
+          {!amountsLocked ? (
+            <Button type="button" size="sm" variant="outline" onClick={applyRemainderNio}>
+              Usar resto en córdobas ({formatCashierMoney(totals.remainingNio)})
+            </Button>
+          ) : null}
+          {showNioReceived ? (
+            <div className="space-y-1.5 pt-1">
+              <Label className="text-xs">Recibido en córdobas</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                className="h-10 text-lg font-semibold tabular-nums"
+                value={receivedNio}
+                onChange={(e) => onChange({ received_nio: e.target.value })}
+                placeholder={formatCashierMoney(nioAmount)}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-2 rounded-md border bg-background/80 p-3">
+          <Label className="text-sm">Dólares (US$)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            className="h-11 text-lg font-semibold tabular-nums"
+            value={usdAmount}
+            readOnly={amountsLocked}
+            disabled={amountsLocked}
+            onChange={(e) => onChange({ usd_amount: e.target.value })}
+            placeholder="0.00"
+          />
+          {!amountsLocked ? (
+            <Button type="button" size="sm" variant="outline" onClick={applyRemainderUsd}>
+              Usar resto en dólares ({formatUsdMoney(totals.remainingUsd)})
+            </Button>
+          ) : null}
+          {showUsdReceived ? (
+            <div className="space-y-1.5 pt-1">
+              <Label className="text-xs">Recibido en dólares</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                className="h-10 text-lg font-semibold tabular-nums"
+                value={receivedUsd}
+                onChange={(e) => onChange({ received_usd: e.target.value })}
+                placeholder={formatUsdMoney(usdAmount)}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="rounded-md border bg-background/80 px-3 py-2.5 space-y-1 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground">Total cubierto</span>
+          <span className="font-semibold tabular-nums">{formatCashierMoney(totals.covered)}</span>
+        </div>
+        {!totals.isComplete && !showPartialHint ? (
+          <div className="flex items-center justify-between gap-2 text-amber-800 dark:text-amber-200">
+            <span>Restante</span>
+            <span className="font-semibold tabular-nums">
+              {formatCashierMoney(totals.remainingNio)}
+              {totals.remainingUsd > 0 ? ` · ${formatUsdMoney(totals.remainingUsd)}` : ""}
+            </span>
+          </div>
+        ) : null}
+        {totals.isComplete ? (
+          <p className="text-emerald-700 dark:text-emerald-300 text-xs font-medium">Monto completo para este cobro</p>
+        ) : null}
+        {cashTotals.totalChangeNio > 0.009 ? (
+          <div className="flex items-center justify-between gap-2 border-t pt-2 text-emerald-800 dark:text-emerald-200">
+            <span className="font-medium">Cambio total (en córdobas)</span>
+            <span className="text-xl font-bold tabular-nums">{formatCashierMoney(cashTotals.totalChangeNio)}</span>
+          </div>
+        ) : null}
+        {showUsdReceived && cashTotals.usd.changeNio > 0.009 ? (
+          <p className="text-[11px] text-muted-foreground tabular-nums">
+            Incluye cambio por dólares: {formatUsdMoney(cashTotals.usd.changeUsd)} = {formatCashierMoney(cashTotals.usd.changeNio)}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function CardPaymentFields({
   cardType,
   bankName,
@@ -2002,6 +2555,7 @@ function CollectActionCard({
   sale,
   collectForm,
   setCollectForm,
+  exchangeRate = DEFAULT_USD_NIO_BUY_RATE,
   authRequiredForCollect,
   posDiscountAuthStatus = "none",
   posDiscountAuthBusy = false,
@@ -2024,10 +2578,34 @@ function CollectActionCard({
 }) {
   const paymentPlanLocked = Boolean(sale?.payment_plan_locked && sale?.planned_payment_plan?.lines?.length);
   const [editReason, setEditReason] = useState("");
-  const partialAmount = Number(collectForm.amount || 0);
   const pendingAmount = Number(sale?.amount_pending || 0);
-  const isPartialPayment = partialAmount > 0 && pendingAmount > partialAmount + 0.009;
+  const nioAmount = Number(collectForm.nio_amount || 0);
+  const usdAmount = Number(collectForm.usd_amount || 0);
+  const dualTotals = useMemo(
+    () => computeDualCurrencyTotals({
+      pendingNio: pendingAmount,
+      nioAmount,
+      usdAmount,
+      exchangeRate,
+    }),
+    [pendingAmount, nioAmount, usdAmount, exchangeRate],
+  );
+  const amountToCollect = dualTotals.covered > 0 ? dualTotals.covered : pendingAmount;
+  const isPartialPayment = amountToCollect > 0 && pendingAmount > amountToCollect + 0.009;
   const isPanel = shell === "panel";
+  const paymentMethod = collectForm.payment_method || mapSalePaymentMethod(sale);
+  const useDualCurrency = isCashOrTransferMethod(paymentMethod);
+  const showCardSection = isCardMethod(paymentMethod);
+  const cashTotals = useMemo(
+    () => computeTotalCashChangeNio({
+      nioAmount,
+      usdAmount,
+      receivedNio: collectForm.received_nio || collectForm.received_amount,
+      receivedUsd: collectForm.received_usd,
+      exchangeRate,
+    }),
+    [nioAmount, usdAmount, collectForm.received_nio, collectForm.received_amount, collectForm.received_usd, exchangeRate],
+  );
 
   const header = (
     <div className={isPanel ? "space-y-1 border-b pb-3" : undefined}>
@@ -2056,20 +2634,27 @@ function CollectActionCard({
   );
 
   const body = (
-      <div className={cn("space-y-3", isPanel && "pt-3")}>
-        <CashierLegalBreakdown sale={sale} />
+      <div className={cn("space-y-4", isPanel && "pt-3")}>
+        <CashierAmountHero
+          sale={sale}
+          amountToCollect={amountToCollect}
+          cashChange={{
+            received: cashTotals.nio.received + cashTotals.usd.received,
+            due: amountToCollect,
+            change: cashTotals.totalChangeNio,
+            shortfall: 0,
+            isValid: cashTotals.isValid,
+            isExact: cashTotals.totalChangeNio <= 0.009,
+          }}
+          showCashChange={useDualCurrency && cashTotals.totalChangeNio > 0.009}
+        />
+
+        <CashierLegalBreakdown sale={sale} compact={isPanel} />
+
+        <CashierAgreedPaymentSummary sale={sale} exchangeRate={exchangeRate} />
 
         {paymentPlanLocked ? (
           <div className="rounded-md border border-sky-300 bg-sky-50 p-3 space-y-2 text-sm text-sky-950">
-            <p className="font-medium">Plan de cobro acordado por ventas (bloqueado)</p>
-            <div className="space-y-1 text-xs">
-              {(sale.planned_payment_plan?.lines || []).map((line, index) => (
-                <div key={`plan-lock-${index}`}>
-                  {(line.metodo || "cash").toUpperCase()} · {line.moneda} {Number(line.monto_origen || 0).toFixed(2)}
-                  {line.monto_cordobas ? ` (C$ ${Number(line.monto_cordobas).toFixed(2)})` : ""}
-                </div>
-              ))}
-            </div>
             <p className="text-xs">Si el cliente cambió condiciones, solicita edición. Solo gerencia/supervisor puede modificar la factura.</p>
             <div className="flex flex-wrap gap-2 items-end">
               <div className="grow space-y-1 min-w-[220px]">
@@ -2083,142 +2668,22 @@ function CollectActionCard({
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-2">
-            <Label>Modo de cobro</Label>
-            <select
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              value={collectForm.mode}
-              disabled={paymentPlanLocked}
-              onChange={(e) => setCollectForm((prev) => ({ ...prev, mode: e.target.value }))}
-            >
-              <option value="single">Simple</option>
-              <option value="mixed">Mixto</option>
-            </select>
-          </div>
+        {useDualCurrency ? (
+          <CashierDualCurrencyPayment
+            pendingNio={pendingAmount}
+            exchangeRate={exchangeRate}
+            method={paymentMethod}
+            nioAmount={collectForm.nio_amount}
+            usdAmount={collectForm.usd_amount}
+            receivedNio={collectForm.received_nio}
+            receivedUsd={collectForm.received_usd}
+            amountsLocked={paymentPlanLocked}
+            showPartialHint={showPartialHint}
+            onChange={(patch) => setCollectForm((prev) => ({ ...prev, ...patch }))}
+          />
+        ) : null}
 
-          {collectForm.mode === "single" ? (
-            <>
-              <div className="space-y-2">
-                <Label>Monto C$ {showPartialHint ? "(abono parcial permitido)" : ""}</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  max={pendingAmount || undefined}
-                  value={collectForm.amount}
-                  disabled={paymentPlanLocked}
-                  onChange={(e) => setCollectForm((p) => ({ ...p, amount: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Método</Label>
-                <select
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                  value={collectForm.payment_method}
-                  disabled={paymentPlanLocked}
-                  onChange={(e) => setCollectForm((p) => ({ ...p, payment_method: e.target.value }))}
-                >
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia</option>
-                  <option value="card">Tarjeta</option>
-                </select>
-              </div>
-            </>
-          ) : (
-            <div className="md:col-span-2 space-y-2">
-              <Label>Pagos mixtos</Label>
-              <div className="space-y-3 rounded-md border p-3">
-                {collectForm.pagos.map((pago, idx) => (
-                  <div key={`mix-${idx}`} className="space-y-2">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                      <select
-                        className="h-10 rounded-md border bg-background px-3 text-sm"
-                        value={pago.metodo}
-                        disabled={paymentPlanLocked}
-                        onChange={(e) => setCollectForm((prev) => ({
-                          ...prev,
-                          pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, metodo: e.target.value } : row)),
-                        }))}
-                      >
-                        <option value="cash">Efectivo</option>
-                        <option value="transfer">Transferencia</option>
-                        <option value="card">Tarjeta</option>
-                      </select>
-                      <select
-                        className="h-10 rounded-md border bg-background px-3 text-sm"
-                        value={pago.moneda}
-                        disabled={paymentPlanLocked}
-                        onChange={(e) => setCollectForm((prev) => ({
-                          ...prev,
-                          pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, moneda: e.target.value } : row)),
-                        }))}
-                      >
-                        <option value="NIO">NIO</option>
-                        <option value="USD">USD</option>
-                      </select>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={pago.monto_origen}
-                        disabled={paymentPlanLocked}
-                        onChange={(e) => setCollectForm((prev) => ({
-                          ...prev,
-                          pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, monto_origen: e.target.value } : row)),
-                        }))}
-                        placeholder="Monto"
-                      />
-                      <Input
-                        value={pago.referencia_bancaria}
-                        onChange={(e) => setCollectForm((prev) => ({
-                          ...prev,
-                          pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, referencia_bancaria: e.target.value } : row)),
-                        }))}
-                        placeholder="Referencia"
-                      />
-                    </div>
-                    {isCardMethod(pago.metodo) && (
-                      <CardPaymentFields
-                        cardType={pago.card_type}
-                        bankName={pago.bank_name}
-                        transactionNumber={pago.transaction_number}
-                        reference={pago.referencia_bancaria}
-                        referenceKey="referencia_bancaria"
-                        onChange={(patch) => setCollectForm((prev) => ({
-                          ...prev,
-                          pagos: prev.pagos.map((row, rowIdx) => (rowIdx === idx ? { ...row, ...patch } : row)),
-                        }))}
-                      />
-                    )}
-                  </div>
-                ))}
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={paymentPlanLocked}
-                    onClick={() => setCollectForm((prev) => ({
-                      ...prev,
-                      pagos: [...prev.pagos, buildDefaultPaymentRow()],
-                    }))}
-                  >
-                    Agregar línea
-                  </Button>
-                  {collectForm.pagos.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setCollectForm((prev) => ({ ...prev, pagos: prev.pagos.slice(0, -1) }))}
-                    >
-                      Quitar última
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {collectForm.mode === "single" && isCardMethod(collectForm.payment_method) && (
+        {showCardSection ? (
           <CardPaymentFields
             cardType={collectForm.card_type}
             bankName={collectForm.bank_name}
@@ -2226,28 +2691,29 @@ function CollectActionCard({
             reference={collectForm.reference}
             onChange={(patch) => setCollectForm((prev) => ({ ...prev, ...patch }))}
           />
-        )}
+        ) : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-2">
-            <Label>Monto recibido (solo efectivo simple)</Label>
-            <Input type="number" step="0.01" value={collectForm.received_amount} onChange={(e) => setCollectForm((p) => ({ ...p, received_amount: e.target.value }))} />
-          </div>
-          {collectForm.mode === "single" && !isCardMethod(collectForm.payment_method) && (
+        <div className="space-y-3 rounded-lg border bg-muted/10 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Referencia y notas
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {useDualCurrency ? (
+              <div className="space-y-2">
+                <Label>Referencia</Label>
+                <Input value={collectForm.reference} onChange={(e) => setCollectForm((p) => ({ ...p, reference: e.target.value }))} />
+              </div>
+            ) : null}
             <div className="space-y-2">
-              <Label>Referencia</Label>
-              <Input value={collectForm.reference} onChange={(e) => setCollectForm((p) => ({ ...p, reference: e.target.value }))} />
+              <Label>Observaciones</Label>
+              <Input value={collectForm.notes} onChange={(e) => setCollectForm((p) => ({ ...p, notes: e.target.value }))} />
             </div>
-          )}
-          <div className="space-y-2">
-            <Label>Observaciones</Label>
-            <Input value={collectForm.notes} onChange={(e) => setCollectForm((p) => ({ ...p, notes: e.target.value }))} />
           </div>
         </div>
 
         {isPartialPayment && (
           <div className="rounded-md border border-violet-300 bg-violet-50 px-3 py-2 text-sm text-violet-900">
-            Abono parcial: quedará pendiente C${toMoney(pendingAmount - partialAmount)} después de este cobro.
+            Abono parcial: quedará pendiente C${toMoney(pendingAmount - amountToCollect)} después de este cobro.
           </div>
         )}
 
@@ -2301,8 +2767,8 @@ function CollectActionCard({
           </div>
         )}
 
-        <div className="flex gap-2">
-          <Button onClick={onSubmitCollect} disabled={busyCollect || !canOperate}>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button size="lg" className="min-w-[180px] text-base" onClick={onSubmitCollect} disabled={busyCollect || !canOperate}>
             {busyCollect ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
             {submitLabel}
           </Button>
@@ -2441,7 +2907,7 @@ function CashierAbonoWorkspace({
   collectPanelProps,
 }) {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] gap-3 xl:gap-4 items-start">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(340px,42%)] gap-3 xl:gap-4 items-start">
       <div className="min-w-0 space-y-2">
         <div className="rounded-lg border bg-muted/20 p-2.5 space-y-2">
           <div className="flex flex-wrap gap-2 items-center">
@@ -2563,7 +3029,7 @@ function CashierInvoiceWorkspace({
   collectPanelProps,
 }) {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] gap-3 xl:gap-4 items-start">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(340px,42%)] gap-3 xl:gap-4 items-start">
       <div className="min-w-0 space-y-2">
         <InvoiceToolbar {...toolbarProps} compact />
         <div className="rounded-lg border bg-muted/15 max-h-[min(48vh,500px)] overflow-y-auto p-2 ui-panel">

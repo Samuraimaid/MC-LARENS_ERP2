@@ -149,6 +149,97 @@ const SELLER_VOUCHER_TEXT_FIELDS = [
   { key: "footer_disclaimer", label: "Pie — aviso legal" },
 ];
 
+const DEFAULT_THERMAL_INVOICE_SETTINGS = {
+  body_font_size: 6,
+  title_font_size: 7,
+  chars_per_line: 64,
+  top_feed_lines: 8,
+  left_margin_chars: 2,
+  barcode_module_width: 4,
+  barcode_pdf_bar_width: 0.66,
+  texts: {
+    company_name: "MUNDO DE ACCESORIOS",
+    subtitle: "COMPROBANTE DE COBRO (NO FISCAL)",
+    payment_header: "COBRO REALIZADO",
+    footer_paid: "COMPROBANTE PAGADO",
+    footer_disclaimer: "NO ES FACTURA FISCAL",
+  },
+  sections: {
+    header_rules: true,
+    company_name: true,
+    subtitle: true,
+    invoice_number: true,
+    date: true,
+    customer: true,
+    vehicle: true,
+    plate: true,
+    items: true,
+    breakdown: true,
+    breakdown_gross_subtotal: true,
+    breakdown_line_discount: true,
+    breakdown_price_discount: true,
+    breakdown_code_discount: true,
+    breakdown_global_discount: true,
+    breakdown_blocked_discount: true,
+    breakdown_subtotal: true,
+    breakdown_retention: true,
+    breakdown_iva: false,
+    breakdown_total: true,
+    payment_header: true,
+    payment_method: true,
+    amount_collected: true,
+    received_amount: true,
+    change_amount: true,
+    cashier_name: true,
+    collected_date: true,
+    footer_paid: true,
+    footer_disclaimer: true,
+  },
+};
+
+const THERMAL_INVOICE_SECTION_OPTIONS = [
+  { key: "header_rules", label: "Líneas decorativas (=)" },
+  { key: "company_name", label: "Nombre de empresa" },
+  { key: "subtitle", label: "Subtítulo del comprobante" },
+  { key: "invoice_number", label: "Número de factura" },
+  { key: "date", label: "Fecha de venta" },
+  { key: "customer", label: "Cliente" },
+  { key: "vehicle", label: "Vehículo" },
+  { key: "plate", label: "Placa" },
+  { key: "items", label: "Detalle de productos" },
+  { key: "breakdown", label: "Desglose (bloque completo)" },
+  { key: "payment_header", label: "Encabezado de cobro" },
+  { key: "payment_method", label: "Forma de pago" },
+  { key: "amount_collected", label: "Monto cobrado" },
+  { key: "received_amount", label: "Monto recibido" },
+  { key: "change_amount", label: "Cambio entregado" },
+  { key: "cashier_name", label: "Nombre del cajero" },
+  { key: "collected_date", label: "Fecha/hora de cobro" },
+  { key: "footer_paid", label: "Pie: comprobante pagado" },
+  { key: "footer_disclaimer", label: "Pie: aviso legal" },
+];
+
+const THERMAL_INVOICE_BREAKDOWN_SECTION_OPTIONS = [
+  { key: "breakdown_gross_subtotal", label: "Subtotal sin descuentos" },
+  { key: "breakdown_line_discount", label: "Descuento línea %" },
+  { key: "breakdown_price_discount", label: "Descuento precio" },
+  { key: "breakdown_code_discount", label: "Descuento código" },
+  { key: "breakdown_global_discount", label: "Descuento global" },
+  { key: "breakdown_blocked_discount", label: "Descuentos removidos por método" },
+  { key: "breakdown_subtotal", label: "Subtotal" },
+  { key: "breakdown_retention", label: "Retención IR" },
+  { key: "breakdown_iva", label: "IVA" },
+  { key: "breakdown_total", label: "TOTAL" },
+];
+
+const THERMAL_INVOICE_TEXT_FIELDS = [
+  { key: "company_name", label: "Nombre de empresa" },
+  { key: "subtitle", label: "Subtítulo" },
+  { key: "payment_header", label: "Encabezado de cobro" },
+  { key: "footer_paid", label: "Pie — comprobante pagado" },
+  { key: "footer_disclaimer", label: "Pie — aviso legal" },
+];
+
 export function SettingsPage() {
   const { user, hasPermission } = useAuth();
   const rolesMap = useRoles();
@@ -193,6 +284,10 @@ export function SettingsPage() {
   });
   const [pdfDocumentsSettings, setPdfDocumentsSettings] = useState(DEFAULT_PDF_DOCUMENT_SETTINGS);
   const [sellerVoucherSettings, setSellerVoucherSettings] = useState(DEFAULT_SELLER_VOUCHER_SETTINGS);
+  const [thermalInvoiceSettings, setThermalInvoiceSettings] = useState(DEFAULT_THERMAL_INVOICE_SETTINGS);
+  const [previewingThermalInvoice, setPreviewingThermalInvoice] = useState(false);
+  const [embeddedThermalInvoicePreviewUrl, setEmbeddedThermalInvoicePreviewUrl] = useState("");
+  const embeddedThermalInvoicePreviewUrlRef = useRef("");
   const [pettyCashSettings, setPettyCashSettings] = useState({
     fund_amount: 5000,
     currency: "NIO",
@@ -587,6 +682,18 @@ export function SettingsPage() {
           ...((payload.seller_voucher || {}).sections || {}),
         },
       });
+      setThermalInvoiceSettings({
+        ...DEFAULT_THERMAL_INVOICE_SETTINGS,
+        ...(payload.thermal_invoice || {}),
+        texts: {
+          ...DEFAULT_THERMAL_INVOICE_SETTINGS.texts,
+          ...((payload.thermal_invoice || {}).texts || {}),
+        },
+        sections: {
+          ...DEFAULT_THERMAL_INVOICE_SETTINGS.sections,
+          ...((payload.thermal_invoice || {}).sections || {}),
+        },
+      });
       setNewOfficialRate(String(exchange.official_rate || 36.5));
       setNewIvaRate(String(payload.iva_rate || 15));
       try {
@@ -753,6 +860,18 @@ export function SettingsPage() {
     sections: sellerVoucherSettings.sections,
   });
 
+  const buildThermalInvoiceDraftPayload = () => ({
+    body_font_size: Number(thermalInvoiceSettings.body_font_size),
+    title_font_size: Number(thermalInvoiceSettings.title_font_size),
+    chars_per_line: Number(thermalInvoiceSettings.chars_per_line),
+    top_feed_lines: Number(thermalInvoiceSettings.top_feed_lines),
+    left_margin_chars: Number(thermalInvoiceSettings.left_margin_chars),
+    barcode_module_width: Number(thermalInvoiceSettings.barcode_module_width),
+    barcode_pdf_bar_width: Number(thermalInvoiceSettings.barcode_pdf_bar_width),
+    texts: thermalInvoiceSettings.texts,
+    sections: thermalInvoiceSettings.sections,
+  });
+
   const updateSellerVoucherField = (field, value) => {
     setSellerVoucherSettings((prev) => ({ ...prev, [field]: value }));
   };
@@ -766,6 +885,24 @@ export function SettingsPage() {
 
   const updateSellerVoucherSection = (key, checked) => {
     setSellerVoucherSettings((prev) => ({
+      ...prev,
+      sections: { ...prev.sections, [key]: checked },
+    }));
+  };
+
+  const updateThermalInvoiceField = (field, value) => {
+    setThermalInvoiceSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateThermalInvoiceText = (key, value) => {
+    setThermalInvoiceSettings((prev) => ({
+      ...prev,
+      texts: { ...prev.texts, [key]: value },
+    }));
+  };
+
+  const updateThermalInvoiceSection = (key, checked) => {
+    setThermalInvoiceSettings((prev) => ({
       ...prev,
       sections: { ...prev.sections, [key]: checked },
     }));
@@ -823,23 +960,64 @@ export function SettingsPage() {
     }
   };
 
+  const revokeEmbeddedThermalInvoicePreview = () => {
+    if (embeddedThermalInvoicePreviewUrlRef.current) {
+      window.URL.revokeObjectURL(embeddedThermalInvoicePreviewUrlRef.current);
+      embeddedThermalInvoicePreviewUrlRef.current = "";
+    }
+    setEmbeddedThermalInvoicePreviewUrl("");
+  };
+
+  const showEmbeddedThermalInvoicePreview = async () => {
+    setPreviewingThermalInvoice(true);
+    try {
+      revokeEmbeddedThermalInvoicePreview();
+      const response = await axios.post(
+        `${API}/settings/billing/seller-voucher/preview`,
+        { kind: "thermal_invoice", thermal_invoice: buildThermalInvoiceDraftPayload() },
+        { withCredentials: true, responseType: "blob", params: billingBranchQuery() }
+      );
+      const contentType = response.headers["content-type"] || "";
+      if (response.status !== 200 || !contentType.includes("pdf")) {
+        throw new Error("No se pudo generar la vista previa de la factura termica");
+      }
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      embeddedThermalInvoicePreviewUrlRef.current = blobUrl;
+      setEmbeddedThermalInvoicePreviewUrl(blobUrl);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || error?.message || "Error al generar vista previa termica");
+    } finally {
+      setPreviewingThermalInvoice(false);
+    }
+  };
+
   const saveSellerVoucherSettings = async () => {
     setSavingBillingSettings(true);
     try {
       const response = await axios.put(
         `${API}/settings/billing/seller-voucher`,
-        buildSellerVoucherDraftPayload(),
+        {
+          ...buildSellerVoucherDraftPayload(),
+          thermal_invoice: buildThermalInvoiceDraftPayload(),
+        },
         { withCredentials: true, params: billingBranchQuery() }
       );
       const saved = response.data?.seller_voucher || sellerVoucherSettings;
+      const savedThermal = response.data?.thermal_invoice || thermalInvoiceSettings;
       setSellerVoucherSettings({
         ...DEFAULT_SELLER_VOUCHER_SETTINGS,
         ...saved,
         texts: { ...DEFAULT_SELLER_VOUCHER_SETTINGS.texts, ...(saved.texts || {}) },
         sections: { ...DEFAULT_SELLER_VOUCHER_SETTINGS.sections, ...(saved.sections || {}) },
       });
-      setBillingSettings((prev) => ({ ...prev, seller_voucher: saved }));
-      toast.success("Configuración de voucher POS actualizada");
+      setThermalInvoiceSettings({
+        ...DEFAULT_THERMAL_INVOICE_SETTINGS,
+        ...savedThermal,
+        texts: { ...DEFAULT_THERMAL_INVOICE_SETTINGS.texts, ...(savedThermal.texts || {}) },
+        sections: { ...DEFAULT_THERMAL_INVOICE_SETTINGS.sections, ...(savedThermal.sections || {}) },
+      });
+      setBillingSettings((prev) => ({ ...prev, seller_voucher: saved, thermal_invoice: savedThermal }));
+      toast.success("Configuracion de voucher POS y factura termica actualizada");
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo guardar la configuración del voucher");
     } finally {
@@ -2042,7 +2220,7 @@ export function SettingsPage() {
                       <div>
                         <h3 className="font-medium">Voucher POS 80mm (ventas / caja)</h3>
                         <p className="text-xs text-muted-foreground">
-                          Ajusta fuente, márgenes, textos y secciones del ticket térmico. Usa margen superior y margen izquierdo si la impresora recorta líneas o columnas.
+                          Ajusta fuente, márgenes, textos y secciones del ticket térmico. Usa margen superior y margen izquierdo si la impresora recorta líneas o columnas. Vehículo, placa y líneas de descuento solo aparecen cuando la venta incluye esos datos.
                         </p>
                       </div>
                     </div>
@@ -2191,6 +2369,130 @@ export function SettingsPage() {
                             <iframe
                               title="Vista previa voucher POS"
                               src={embeddedSellerVoucherPreviewUrl}
+                              className="h-[min(72vh,760px)] w-full"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="flex items-start gap-3">
+                      <ReceiptText className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">Factura termica 80mm (post-cobro, sin IVA)</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Comprobante impreso automaticamente al cobrar ventas sin IVA. Incluye monto recibido, cambio y datos del cajero en el mismo ticket.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Avance superior ({thermalInvoiceSettings.top_feed_lines} lineas)</Label>
+                        <Input
+                          type="range"
+                          min="0"
+                          max="20"
+                          step="1"
+                          value={Number(thermalInvoiceSettings.top_feed_lines || 8)}
+                          onChange={(e) => updateThermalInvoiceField("top_feed_lines", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Margen izquierdo ({thermalInvoiceSettings.left_margin_chars} espacios)</Label>
+                        <Input
+                          type="range"
+                          min="0"
+                          max="8"
+                          step="1"
+                          value={Number(thermalInvoiceSettings.left_margin_chars || 2)}
+                          onChange={(e) => updateThermalInvoiceField("left_margin_chars", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Caracteres por linea ({thermalInvoiceSettings.chars_per_line})</Label>
+                        <Input
+                          type="range"
+                          min="32"
+                          max="64"
+                          step="2"
+                          value={Number(thermalInvoiceSettings.chars_per_line || 64)}
+                          onChange={(e) => updateThermalInvoiceField("chars_per_line", Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Textos personalizables</Label>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {THERMAL_INVOICE_TEXT_FIELDS.map((field) => (
+                          <div key={field.key} className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">{field.label}</Label>
+                            <Input
+                              value={thermalInvoiceSettings.texts?.[field.key] || ""}
+                              onChange={(e) => updateThermalInvoiceText(field.key, e.target.value)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Secciones visibles en factura termica</Label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {THERMAL_INVOICE_SECTION_OPTIONS.map((option) => (
+                          <div key={option.key} className="flex items-center justify-between rounded-md border px-3 py-2">
+                            <span className="text-sm">{option.label}</span>
+                            <Switch
+                              checked={Boolean(thermalInvoiceSettings.sections?.[option.key])}
+                              onCheckedChange={(checked) => updateThermalInvoiceSection(option.key, checked)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      {thermalInvoiceSettings.sections?.breakdown ? (
+                        <div className="space-y-2 rounded-md border border-dashed bg-muted/10 p-3">
+                          <Label className="text-xs text-muted-foreground">Lineas del desglose</Label>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {THERMAL_INVOICE_BREAKDOWN_SECTION_OPTIONS.map((option) => (
+                              <div
+                                key={option.key}
+                                className="flex items-center justify-between rounded-md border bg-background px-3 py-2"
+                              >
+                                <span className="text-sm">{option.label}</span>
+                                <Switch
+                                  checked={Boolean(thermalInvoiceSettings.sections?.[option.key])}
+                                  onCheckedChange={(checked) => updateThermalInvoiceSection(option.key, checked)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-3 rounded-md border bg-muted/20 p-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button onClick={showEmbeddedThermalInvoicePreview} disabled={previewingThermalInvoice}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {previewingThermalInvoice ? "Generando..." : "Vista previa factura termica"}
+                        </Button>
+                      </div>
+                      {embeddedThermalInvoicePreviewUrl ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium">Vista previa factura termica</p>
+                            <Button variant="ghost" size="sm" onClick={revokeEmbeddedThermalInvoicePreview}>
+                              <X className="h-4 w-4 mr-1" />
+                              Cerrar
+                            </Button>
+                          </div>
+                          <div className="overflow-hidden rounded-md border bg-white shadow-sm">
+                            <iframe
+                              title="Vista previa factura termica"
+                              src={embeddedThermalInvoicePreviewUrl}
                               className="h-[min(72vh,760px)] w-full"
                             />
                           </div>

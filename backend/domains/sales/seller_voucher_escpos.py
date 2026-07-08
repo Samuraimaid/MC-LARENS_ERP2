@@ -77,6 +77,17 @@ def _apply_left_margin(text: str, margin_chars: int) -> str:
     return (" " * margin) + text
 
 
+def _manual_center_text(text: str, *, width: int) -> str:
+    """Space-pad centering for POS drivers that drop ESC/POS align commands."""
+    stripped = _clip_line(str(text or "").strip(), width)
+    if not stripped:
+        return ""
+    if len(stripped) >= width:
+        return stripped
+    pad = max(0, (width - len(stripped)) // 2)
+    return (" " * pad) + stripped
+
+
 def normalize_invoice_scan_code(raw: str) -> str:
     value = str(raw or "").strip().upper()
     value = value.replace(" ", "")
@@ -594,10 +605,11 @@ def _render_escpos_line(line: VoucherLine, *, settings: Optional[Dict[str, Any]]
     max_width = max(8, int(resolved.get("chars_per_line") or VOUCHER_WIDTH) - margin)
     plain = _clip_line(line.text, max_width)
     if line.centered:
-        centered_text = plain.strip()
+        centered_text = _manual_center_text(plain, width=max_width)
         if not centered_text:
             return b"\n"
-        return _escpos_align(1) + centered_text.encode("ascii", "replace") + b"\n" + _escpos_align(0)
+        text = _apply_left_margin(centered_text, margin)
+        return text.encode("ascii", "replace") + b"\n"
     text = _apply_left_margin(plain, margin)
     return text.encode("ascii", "replace") + b"\n"
 
@@ -686,13 +698,16 @@ def _append_voucher_footer(
     chunks.append(_render_escpos_line(VoucherLine("-" * max(8, width - margin)), settings=resolved))
     if show_scan:
         scan_text = _clip_line(texts["scan_label"], max(8, width - margin)).strip()
-        chunks.append(_escpos_align(1))
-        chunks.append(scan_text.encode("ascii", "replace") + b"\n")
-        chunks.append(_escpos_align(0))
+        chunks.append(
+            _render_escpos_line(
+                VoucherLine(scan_text, centered=True),
+                settings=resolved,
+            )
+        )
     if show_barcode and invoice_number:
         chunks.append(_escpos_code128(invoice_number, module_width=module_width))
-        chunks.append(_apply_left_margin(invoice_number, margin).encode("ascii", "replace") + b"\n")
-    chunks.append(_escpos_align(0))
+        centered_invoice = _manual_center_text(invoice_number, width=max(8, width - margin))
+        chunks.append(_apply_left_margin(centered_invoice, margin).encode("ascii", "replace") + b"\n")
     if show_footer_valid:
         chunks.append(
             _render_escpos_line(

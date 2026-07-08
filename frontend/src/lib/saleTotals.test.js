@@ -1,7 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { computeDraftSnapshotTotals, computeSaleTotals } from "./saleTotals";
+import {
+  computeDraftSnapshotTotals,
+  computeSaleTotals,
+  defaultApplyIvaForCustomer,
+} from "./saleTotals";
+
+describe("defaultApplyIvaForCustomer", () => {
+  it("defaults natural clients to no IVA", () => {
+    expect(defaultApplyIvaForCustomer({ customer_type: "natural" })).toBe(false);
+  });
+
+  it("defaults company clients to IVA", () => {
+    expect(defaultApplyIvaForCustomer({ customer_type: "empresa" })).toBe(true);
+  });
+});
 
 describe("computeSaleTotals", () => {
+  it("excludes IVA by default for natural flow totals", () => {
+    const totals = computeSaleTotals({
+      cartItems: [{
+        product_id: "p1",
+        quantity: 1,
+        unit_price: 100,
+        original_unit_price: 100,
+      }],
+      currency: "USD",
+      exchangeRate: 37.15,
+      sellRate: 37.15,
+      applyIVA: false,
+      ivaRate: 15,
+    });
+    expect(totals.tax).toBe(0);
+    expect(totals.total).toBe(100);
+  });
   it("includes manual supervisor price edits in display discounts", () => {
     const totals = computeSaleTotals({
       cartItems: [{
@@ -15,6 +46,7 @@ describe("computeSaleTotals", () => {
       currency: "USD",
       exchangeRate: 36.5,
       ivaRate: 15,
+      applyIVA: true,
     });
 
     expect(totals.manualPriceDiscountTotal).toBe(4);
@@ -35,6 +67,7 @@ describe("computeSaleTotals", () => {
       globalDiscount: 25,
       globalDiscountMode: "fixed",
       ivaRate: 15,
+      applyIVA: true,
     });
 
     expect(totals.discountAmount).toBe(25);
@@ -68,6 +101,7 @@ describe("computeSaleTotals", () => {
       globalDiscount: draft.globalDiscount,
       globalDiscountMode: draft.globalDiscountMode,
       paymentMethod: draft.paymentMethod,
+      applyIVA: draft.applyIVA,
     });
     const draftTotals = computeDraftSnapshotTotals(draft, {
       exchangeRate: 36.5,

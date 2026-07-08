@@ -559,6 +559,7 @@ PERMISSIONS_CATALOG: Dict[str, Dict[str, Any]] = {
             "credits": "Créditos",
             "returns": "Devoluciones",
             "approvals": "Aprobaciones",
+            "cashier": "Caja / POS",
         },
     },
     "clientes": {
@@ -618,6 +619,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "quotations": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "credits": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "returns": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
+    "cashier": ["gerencia", "supervisor", "programador", "cajero"],
     "approvals": ["gerencia", "supervisor"],
     "customers": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "vehicles": ["gerencia", "supervisor", "ventas", "cajero", "instalaciones", "jefe_vendedores", "jefe_tienda"],
@@ -658,7 +660,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
 
 ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
     "ventas": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
-    "cajero": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
+    "cajero": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "cashier"},
     "jefe_vendedores": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "catalog", "samples"},
     "jefe_tienda": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "inventory", "inventory_labels", "dispatch", "catalog", "samples", "promotions"},
     "bodegas": {"inventory", "dispatch"},
@@ -713,6 +715,7 @@ PERMISSION_METHOD_TO_ACTION: Dict[str, str] = {
 }
 
 PERMISSION_ROUTE_MAP: List[tuple[str, str]] = [
+    ("/api/caja", "cashier"),
     ("/api/inventory/labels", "inventory_labels"),
     ("/api/notifications", "notifications"),
     ("/api/followups", "followups"),
@@ -759,11 +762,16 @@ PERMISSION_ENFORCEMENT_EXACT_PATHS = {
     "/api/auth/logout",
     "/api/auth/me",
     "/api/permissions/me",
+    "/api/settings/appearance/public",
+    "/api/settings/billing/cancel-reasons/public",
+    "/api/settings/billing/iva/public",
 }
 
 PERMISSION_ENFORCEMENT_EXEMPT_PREFIXES = [
     "/api/auth/",
     "/api/test/",
+    "/api/currencies/",
+    "/api/drafts/",
 ]
 
 SESSION_LOCK_EXEMPT_PATHS = {
@@ -1553,7 +1561,14 @@ class VehicleSettingsColorPayload(FlexibleModel):
 
 
 class BillingExchangeUpdatePayload(FlexibleModel):
-    official_rate: float
+    official_rate: Optional[float] = None
+    buy_rate: Optional[float] = None
+    sell_rate: Optional[float] = None
+
+
+class UsdNioDualRateUpdatePayload(FlexibleModel):
+    buy_rate: Optional[float] = None
+    sell_rate: Optional[float] = None
 
 
 class BillingIvaUpdatePayload(FlexibleModel):
@@ -1648,6 +1663,58 @@ class BillingSellerVoucherSectionsPayload(FlexibleModel):
     footer_disclaimer: Optional[bool] = None
 
 
+class BillingThermalInvoiceTextsPayload(FlexibleModel):
+    company_name: Optional[str] = None
+    subtitle: Optional[str] = None
+    payment_header: Optional[str] = None
+    footer_paid: Optional[str] = None
+    footer_disclaimer: Optional[str] = None
+
+
+class BillingThermalInvoiceSectionsPayload(FlexibleModel):
+    header_rules: Optional[bool] = None
+    company_name: Optional[bool] = None
+    subtitle: Optional[bool] = None
+    invoice_number: Optional[bool] = None
+    date: Optional[bool] = None
+    customer: Optional[bool] = None
+    vehicle: Optional[bool] = None
+    plate: Optional[bool] = None
+    items: Optional[bool] = None
+    breakdown: Optional[bool] = None
+    breakdown_gross_subtotal: Optional[bool] = None
+    breakdown_line_discount: Optional[bool] = None
+    breakdown_price_discount: Optional[bool] = None
+    breakdown_code_discount: Optional[bool] = None
+    breakdown_global_discount: Optional[bool] = None
+    breakdown_blocked_discount: Optional[bool] = None
+    breakdown_subtotal: Optional[bool] = None
+    breakdown_retention: Optional[bool] = None
+    breakdown_iva: Optional[bool] = None
+    breakdown_total: Optional[bool] = None
+    payment_header: Optional[bool] = None
+    payment_method: Optional[bool] = None
+    amount_collected: Optional[bool] = None
+    received_amount: Optional[bool] = None
+    change_amount: Optional[bool] = None
+    cashier_name: Optional[bool] = None
+    collected_date: Optional[bool] = None
+    footer_paid: Optional[bool] = None
+    footer_disclaimer: Optional[bool] = None
+
+
+class BillingThermalInvoiceUpdatePayload(FlexibleModel):
+    body_font_size: Optional[int] = None
+    title_font_size: Optional[int] = None
+    chars_per_line: Optional[int] = None
+    top_feed_lines: Optional[int] = None
+    left_margin_chars: Optional[int] = None
+    barcode_module_width: Optional[int] = None
+    barcode_pdf_bar_width: Optional[float] = None
+    texts: Optional[BillingThermalInvoiceTextsPayload] = None
+    sections: Optional[BillingThermalInvoiceSectionsPayload] = None
+
+
 class BillingSellerVoucherUpdatePayload(FlexibleModel):
     body_font_size: Optional[int] = None
     title_font_size: Optional[int] = None
@@ -1658,10 +1725,13 @@ class BillingSellerVoucherUpdatePayload(FlexibleModel):
     barcode_pdf_bar_width: Optional[float] = None
     texts: Optional[BillingSellerVoucherTextsPayload] = None
     sections: Optional[BillingSellerVoucherSectionsPayload] = None
+    thermal_invoice: Optional[BillingThermalInvoiceUpdatePayload] = None
 
 
 class BillingSellerVoucherPreviewPayload(FlexibleModel):
+    kind: Optional[str] = "seller_voucher"
     seller_voucher: Optional[BillingSellerVoucherUpdatePayload] = None
+    thermal_invoice: Optional[BillingThermalInvoiceUpdatePayload] = None
 
 
 class SaleRequestPayload(FlexibleModel):
@@ -1752,6 +1822,7 @@ class SaleCreate(FlexibleModel):
     cash_session_id: Optional[str] = None
     payment_method: Optional[str] = None
     idempotency_key: Optional[str] = None
+    draft_id: Optional[str] = None
     supervisor_discount_preapproved: bool = False
 
 
@@ -1808,6 +1879,7 @@ class MixedPaymentItem(FlexibleModel):
     monto_origen: float
     tasa_cambio: Optional[float] = None
     monto_cordobas: Optional[float] = None
+    received_amount: Optional[float] = None
     referencia_bancaria: Optional[str] = None
     notas_auditoria: Optional[str] = None
     card_type: Optional[str] = None
@@ -2065,12 +2137,12 @@ async def _enforce_seller_global_discount_limits(
         discount_amount_nio = requested_discount_amount
         rate = float(exchange_rate or 0.0)
         if rate <= 0:
-            rate = await _get_usd_to_nio_rate()
+            rate = await _get_usd_nio_sell_rate()
         max_in_currency = max_amount_nio
     else:
         rate = float(exchange_rate or 0.0)
         if rate <= 0:
-            rate = await _get_usd_to_nio_rate()
+            rate = await _get_usd_nio_sell_rate()
         discount_amount_nio = requested_discount_amount * rate
         max_in_currency = (max_amount_nio / rate) if rate > 0 else 0.0
 
@@ -2227,6 +2299,15 @@ def _build_sale_settlement(
     total_legal = round(subtotal_after_discount + iva_amount, 2)
     net_to_collect = round(total_legal - retention_amount, 2)
 
+    if retention_required:
+        fmt = "letter"
+    elif iva_amount > 0.009:
+        fmt = "letter"
+        if _normalize_print_format(print_format) == "thermal80":
+            warnings.append("Se usara factura carta porque la venta incluye IVA.")
+    else:
+        fmt = "thermal80"
+
     card_withholding_expected = round(total_legal * 0.015, 2) if _is_card_method(method) else 0.0
 
     if discounts_applied > 0:
@@ -2280,6 +2361,15 @@ def _sale_is_company_customer(customer: Optional[Dict[str, Any]]) -> bool:
     return ctype in {"company", "empresa", "juridico", "jurídica", "juridica"}
 
 
+def _resolve_apply_iva_for_sale(
+    customer: Optional[Dict[str, Any]],
+    apply_iva_override: Optional[bool],
+) -> bool:
+    from backend.domains.sales.customer_tax_rules import resolve_apply_iva_for_sale
+
+    return resolve_apply_iva_for_sale(customer, apply_iva_override)
+
+
 def _sum_code_discounts_amount(
     subtotal_base: float,
     applied_discounts: Any,
@@ -2323,9 +2413,10 @@ def _build_create_sale_settlement(
     normalized_payment_method = _normalize_method_name(
         getattr(sale_data, "payment_method", None) or getattr(sale_data, "payment_type", "cash")
     )
-    apply_iva = getattr(sale_data, "apply_iva", None)
-    if apply_iva is None:
-        apply_iva = True
+    apply_iva = _resolve_apply_iva_for_sale(
+        customer,
+        getattr(sale_data, "apply_iva", None),
+    )
 
     retention_profile = _extract_retention_profile_from_customer(customer)
     apply_retention = bool(getattr(sale_data, "apply_retention", False))
@@ -2339,8 +2430,6 @@ def _build_create_sale_settlement(
             retention_rate_hint = hinted
 
     print_format = getattr(sale_data, "print_format", None) or "thermal80"
-    if _sale_is_company_customer(customer) and (apply_retention or bool(apply_iva)):
-        print_format = "letter"
 
     code_discounts = _sum_code_discounts_amount(
         subtotal_base,
@@ -2463,6 +2552,127 @@ async def _get_seller_voucher_settings(branch_id: Optional[str] = None) -> Dict[
 
     doc = await _get_billing_settings_doc(branch_id)
     return normalize_seller_voucher_settings(doc.get("seller_voucher"))
+
+
+async def _get_thermal_invoice_settings(branch_id: Optional[str] = None) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import normalize_thermal_invoice_settings
+
+    doc = await _get_billing_settings_doc(branch_id)
+    return normalize_thermal_invoice_settings(doc.get("thermal_invoice"))
+
+
+def _sale_has_iva(sale: Dict[str, Any]) -> bool:
+    iva_amount = float(sale.get("iva_amount") or sale.get("tax") or 0.0)
+    if iva_amount > 0.009:
+        return True
+    if sale.get("apply_iva") is False:
+        return False
+    try:
+        iva_rate = float(sale.get("iva_rate") or 0.0)
+        if iva_rate <= 1:
+            iva_rate *= 100
+    except (TypeError, ValueError):
+        iva_rate = 0.0
+    return iva_rate > 0.009 and bool(sale.get("apply_iva", True))
+
+
+def _sale_print_format(sale: Dict[str, Any]) -> str:
+    stored = _normalize_print_format(sale.get("print_format"))
+    if float(sale.get("retention_amount") or 0.0) > 0.009:
+        return "letter"
+    if _sale_has_iva(sale):
+        return "letter"
+    return "thermal80"
+
+
+def _build_last_payment_summary_from_collect(
+    *,
+    method_to_use: str,
+    amount: float,
+    received: Optional[float],
+    change_amount: float,
+    user: User,
+    now_iso: str,
+    mixed_rows: List[Dict[str, Any]],
+    payload_pagos: Optional[List[Any]],
+) -> Dict[str, Any]:
+    total_received = received
+    if mixed_rows and payload_pagos:
+        mixed_received = 0.0
+        has_received = False
+        for row_idx, row in enumerate(mixed_rows):
+            row_payload = payload_pagos[row_idx] if row_idx < len(payload_pagos) else None
+            if row_payload is None or row_payload.received_amount is None:
+                continue
+            has_received = True
+            row_received = _round2(float(row_payload.received_amount))
+            row_currency = _currency_code(row_payload.moneda)
+            row_rate = _round4(float(row.get("exchange_rate") or 1.0))
+            if row_currency == "USD":
+                mixed_received += _round2(row_received * row_rate)
+            else:
+                mixed_received += row_received
+        if has_received:
+            total_received = _round2(mixed_received)
+    return {
+        "payment_method": method_to_use,
+        "amount_collected": _round2(amount),
+        "received_amount": total_received,
+        "change_amount": _round2(change_amount),
+        "cashier_name": user.name,
+        "cashier_id": user.user_id,
+        "collected_at": now_iso,
+    }
+
+
+async def _enrich_sale_payment_info(sale: Dict[str, Any]) -> Dict[str, Any]:
+    info = _build_sale_payment_info(sale)
+    summary = sale.get("last_payment_summary") if isinstance(sale.get("last_payment_summary"), dict) else {}
+    if summary:
+        info.update(
+            {
+                "received_amount": summary.get("received_amount"),
+                "change_amount": summary.get("change_amount"),
+                "cashier_name": summary.get("cashier_name"),
+                "collected_at": summary.get("collected_at"),
+            }
+        )
+        return info
+
+    sale_id = str(sale.get("sale_id") or "")
+    if not sale_id:
+        return info
+
+    latest = await db.invoice_payments.find_one(
+        {"sale_id": sale_id, "status": "paid"},
+        {"_id": 0},
+        sort=[("created_at", -1)],
+    )
+    if not latest:
+        return info
+
+    received_total = 0.0
+    change_total = 0.0
+    has_received = False
+    payment_rows = await db.invoice_payments.find(
+        {"sale_id": sale_id, "status": "paid", "created_at": latest.get("created_at")},
+        {"_id": 0, "received_amount": 1, "change_amount": 1},
+    ).to_list(50)
+    for row in payment_rows:
+        if row.get("received_amount") is not None:
+            has_received = True
+            received_total += _round2(float(row.get("received_amount") or 0))
+        change_total += _round2(float(row.get("change_amount") or 0))
+
+    info.update(
+        {
+            "received_amount": _round2(received_total) if has_received else None,
+            "change_amount": _round2(change_total),
+            "cashier_name": latest.get("cashier_name"),
+            "collected_at": latest.get("created_at"),
+        }
+    )
+    return info
 
 
 async def _build_seller_voucher_lines(sale: Dict[str, Any]) -> List[str]:
@@ -3815,6 +4025,79 @@ async def delete_user_draft(flow: str, draft_id: str, request: Request):
         )
 
     return {"status": "deleted", "active_draft_id": next_active_id}
+
+
+async def _consume_sale_draft_after_submission(
+    *,
+    draft_id: Optional[str],
+    user: User,
+    sale_id: Optional[str] = None,
+) -> None:
+    cleaned_draft_id = str(draft_id or "").strip()
+    if not cleaned_draft_id:
+        return
+
+    normalized_flow = _normalize_draft_flow("sale")
+    existing = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id},
+        {"_id": 0},
+    )
+    if not existing:
+        return
+    if not _can_access_draft(user, existing):
+        raise HTTPException(status_code=403, detail="No tienes permiso para convertir este borrador")
+
+    owner_user_id = str(existing.get("owner_user_id") or existing.get("user_id") or "").strip()
+    await db.user_drafts.delete_one(
+        {"flow": normalized_flow, "draft_id": cleaned_draft_id}
+    )
+
+    if not owner_user_id:
+        return
+
+    state_doc = await db.user_draft_state.find_one(
+        {"user_id": owner_user_id, "flow": normalized_flow},
+        {"_id": 0, "active_draft_id": 1},
+    )
+    current_active_id = str((state_doc or {}).get("active_draft_id") or "").strip() or None
+    if current_active_id != cleaned_draft_id:
+        return
+
+    next_draft = await db.user_drafts.find_one(
+        {"flow": normalized_flow, "owner_user_id": owner_user_id},
+        {"_id": 0, "draft_id": 1},
+        sort=[("updated_at", -1)],
+    )
+    next_active_id = str((next_draft or {}).get("draft_id") or "").strip() or None
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.user_draft_state.update_one(
+        {"user_id": owner_user_id, "flow": normalized_flow},
+        {
+            "$set": {
+                "user_id": owner_user_id,
+                "flow": normalized_flow,
+                "active_draft_id": next_active_id,
+                "updated_at": now_iso,
+            },
+            "$setOnInsert": {"created_at": now_iso},
+        },
+        upsert=True,
+    )
+
+    await audit_service.log_audit_event(
+        action="draft_consumed_by_sale",
+        actor_id=user.user_id,
+        actor_name=user.name,
+        actor_role=user.role,
+        entity="draft",
+        entity_id=cleaned_draft_id,
+        branch_id=str(user.branch_id or ""),
+        metadata={
+            "flow": normalized_flow,
+            "owner_user_id": owner_user_id,
+            "sale_id": sale_id,
+        },
+    )
 
 
 async def _get_accessible_draft_doc(flow: str, draft_id: str, user: User) -> Dict[str, Any]:
@@ -7901,7 +8184,10 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         if active_session and active_session.get("session_id"):
             selected_cash_session_id = str(active_session.get("session_id"))
 
+    draft_id = str(getattr(sale_data, "draft_id", "") or "").strip()
     idempotency_key = str(sale_data.idempotency_key or "").strip()
+    if not idempotency_key and draft_id:
+        idempotency_key = f"draft:{draft_id}"
     if idempotency_key:
         existing_sale = await db.sales.find_one(
             {
@@ -8065,6 +8351,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
                 }
             )
 
+        catalog_price = float(product.get("price") or 0.0)
         original_price = item.get("original_unit_price")
         try:
             original_price_value = float(original_price) if original_price is not None else price
@@ -8072,6 +8359,8 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             original_price_value = price
         if original_price_value <= 0:
             original_price_value = price
+        if original_price_value <= price + 0.0001 and catalog_price > price + 0.0001:
+            original_price_value = catalog_price
 
         items.append(
             SaleItem(
@@ -8109,7 +8398,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
     if sale_currency == "NIO":
         rate = sale_exchange_rate
         if rate is None or rate <= 0:
-            rate = await _get_usd_to_nio_rate()
+            rate = await _get_usd_nio_sell_rate()
         settlement_subtotal = round(subtotal * float(rate), 2)
 
     if not bool(getattr(sale_data, "supervisor_discount_preapproved", False)):
@@ -8459,6 +8748,12 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             {"quotation_id": sale_data.quotation_id}, {"$set": {"status": "converted"}}
         )
 
+    await _consume_sale_draft_after_submission(
+        draft_id=draft_id,
+        user=user,
+        sale_id=doc.get("sale_id"),
+    )
+
     return {
         **doc,
         "work_order_created": False,
@@ -8466,6 +8761,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         "dispatch_created": False,
         "dispatch_id": None,
         "awaiting_cashier_payment": True,
+        "draft_consumed": bool(draft_id),
     }
 
 
@@ -8941,16 +9237,103 @@ def _sale_effective_state(sale: Dict[str, Any]) -> str:
     return "open"
 
 
+def _cashier_convert_item_amount(value: float, currency: str, exchange_rate: float) -> float:
+    amount = _coerce_float(value)
+    if _currency_code(currency) == "NIO":
+        return _round2(amount * float(exchange_rate or 36.5))
+    return _round2(amount)
+
+
+def _cashier_settlement_subtotal(sale: Dict[str, Any]) -> float:
+    total_legal = _coerce_float(sale.get("total_legal") or sale.get("total") or 0.0)
+    iva_amount = _coerce_float(sale.get("iva_amount") or sale.get("tax") or 0.0)
+    if total_legal > 0:
+        return _round2(max(total_legal - iva_amount, 0.0))
+    currency = _currency_code(sale.get("currency") or "NIO")
+    rate = float(sale.get("exchange_rate") or 36.5)
+    raw_subtotal = _coerce_float(sale.get("subtotal") or 0.0)
+    if currency == "NIO":
+        return _round2(raw_subtotal * rate)
+    return _round2(raw_subtotal)
+
+
+def _cashier_sale_item_detail(
+    item: Dict[str, Any],
+    *,
+    currency: str = "NIO",
+    exchange_rate: float = 36.5,
+) -> Dict[str, Any]:
+    qty = max(1, int(item.get("quantity") or 1))
+    name = str(item.get("product_name") or item.get("description") or "Producto")
+    disc_pct = float(item.get("discount") or 0)
+    unit_price = _cashier_convert_item_amount(
+        _coerce_float(item.get("unit_price")),
+        currency,
+        exchange_rate,
+    )
+    original_unit_price = _cashier_convert_item_amount(
+        _coerce_float(item.get("original_unit_price") or item.get("unit_price")),
+        currency,
+        exchange_rate,
+    )
+    if original_unit_price < unit_price:
+        original_unit_price = unit_price
+    with_installation = bool(
+        item.get("with_installation") or str(item.get("installation_type") or "") == "required"
+    )
+    installation_unit_price = (
+        _cashier_convert_item_amount(
+            _coerce_float(item.get("installation_price")),
+            currency,
+            exchange_rate,
+        )
+        if with_installation
+        else 0.0
+    )
+    installation_line_total = _round2(installation_unit_price * qty)
+    line_pct_discount = _round2(original_unit_price * qty * (disc_pct / 100.0))
+    price_discount = _round2(
+        max(0.0, (original_unit_price - unit_price) * qty * (1 - disc_pct / 100.0))
+    )
+    product_line_total = _round2(unit_price * qty)
+    line_net_total = _round2(product_line_total + installation_line_total)
+    return {
+        "name": name,
+        "quantity": qty,
+        "unit_price": unit_price,
+        "original_unit_price": original_unit_price,
+        "discount_pct": _round2(disc_pct),
+        "price_discount": price_discount,
+        "line_pct_discount": line_pct_discount,
+        "line_total": product_line_total,
+        "installation_unit_price": installation_unit_price,
+        "installation_line_total": installation_line_total,
+        "line_net_total": line_net_total,
+        "with_installation": with_installation,
+        "has_price_discount": price_discount > 0.009,
+        "has_line_pct_discount": line_pct_discount > 0.009,
+    }
+
+
 def _sale_items_preview_for_cashier(sale: Dict[str, Any], limit: int = 3) -> Dict[str, Any]:
     items = cast(List[Dict[str, Any]], sale.get("items") or [])
+    currency = _currency_code(sale.get("currency") or "NIO")
+    exchange_rate = float(sale.get("exchange_rate") or 36.5)
     preview_names: List[str] = []
     items_detail: List[Dict[str, Any]] = []
     installation_count = 0
+    line_discount_total = 0.0
     for item in items:
-        qty = max(1, int(item.get("quantity") or 1))
-        name = str(item.get("product_name") or item.get("description") or "Producto")
-        items_detail.append({"name": name, "quantity": qty})
-        if item.get("with_installation") or str(item.get("installation_type") or "") == "required":
+        row = _cashier_sale_item_detail(
+            item,
+            currency=currency,
+            exchange_rate=exchange_rate,
+        )
+        items_detail.append(row)
+        line_discount_total = _round2(
+            line_discount_total + float(row.get("price_discount") or 0.0) + float(row.get("line_pct_discount") or 0.0)
+        )
+        if row.get("with_installation"):
             installation_count += 1
     for item in items[:limit]:
         qty = max(1, int(item.get("quantity") or 1))
@@ -8965,6 +9348,7 @@ def _sale_items_preview_for_cashier(sale: Dict[str, Any], limit: int = 3) -> Dic
         "item_count": total,
         "items_preview": preview or "Sin artículos",
         "items_detail": items_detail,
+        "line_discount_total": line_discount_total,
         "installation_item_count": installation_count,
         "has_installation": installation_count > 0 or bool(sale.get("has_installation")),
     }
@@ -9041,7 +9425,7 @@ def _cashier_invoice_summary(
         "warehouse_dispatch_completed_at": dispatch_completed_at,
         "needs_warehouse_dispatch": needs_warehouse_dispatch,
         **items_meta,
-        "subtotal": _round2(float(sale.get("subtotal") or 0.0)),
+        "subtotal": _cashier_settlement_subtotal(sale),
         "discount": _round2(float(sale.get("discount") or 0.0)),
         "discounts_applied_amount": _round2(float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0)),
         "iva_amount": _round2(float(sale.get("iva_amount") or sale.get("tax") or 0.0)),
@@ -9337,27 +9721,31 @@ async def lookup_cashier_invoice_by_code(
     request: Request,
     code: str = "",
 ):
-    """Localiza una factura pendiente por código de barras (INV-YYYYMMDD-####)."""
-    from backend.domains.sales.seller_voucher_escpos import (
-        is_valid_invoice_barcode,
-        normalize_invoice_scan_code,
-    )
+    """Localiza una factura pendiente por barcode, QR JSON o sale_id."""
+    from backend.domains.sales.invoice_traceability import parse_invoice_scan_input
+    from backend.domains.sales.seller_voucher_escpos import is_valid_invoice_barcode
 
     user = await require_cashier_roles(request)
     effective_role = resolve_effective_role(user.role)
-    scan_code = normalize_invoice_scan_code(code)
-    if not scan_code:
-        raise HTTPException(status_code=400, detail="Código de voucher requerido")
-    if not is_valid_invoice_barcode(scan_code):
+    parsed = parse_invoice_scan_input(code)
+    if not parsed.get("valid"):
         raise HTTPException(
             status_code=400,
-            detail="Código inválido. Escanea el código de barras del voucher (INV-YYYYMMDD-####)",
+            detail="Código inválido. Escanea barcode INV-YYYYMMDD-#### o QR de factura",
         )
 
-    query: Dict[str, Any] = {
-        "invoice_number": scan_code,
-        "invoice_state": {"$ne": "cancelled"},
-    }
+    scan_code = str(parsed.get("invoice_number") or "").strip()
+    sale_id = str(parsed.get("sale_id") or "").strip()
+    if scan_code and not is_valid_invoice_barcode(scan_code):
+        raise HTTPException(status_code=400, detail="Formato de factura inválido")
+
+    query: Dict[str, Any] = {"invoice_state": {"$ne": "cancelled"}}
+    if sale_id:
+        query["sale_id"] = sale_id
+    elif scan_code:
+        query["invoice_number"] = scan_code
+    else:
+        raise HTTPException(status_code=400, detail="Código de voucher requerido")
     if effective_role in {"supervisor", "cajero", "programador"}:
         query["branch_id"] = str(user.branch_id or "")
 
@@ -9391,7 +9779,8 @@ async def lookup_cashier_invoice_by_code(
         cast(Optional[Dict[str, Any]], customer),
         cast(Optional[Dict[str, Any]], branch),
     )
-    return {"ok": True, "code": scan_code, "row": row}
+    resolved_code = str(sale.get("invoice_number") or scan_code or sale_id)
+    return {"ok": True, "code": resolved_code, "scan_type": parsed.get("scan_type"), "row": row}
 
 
 @api_router.get("/caja/facturas")
@@ -10292,7 +10681,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     paid_so_far = _round2(sum(float(p.get("amount") or 0.0) for p in paid_so_far_docs))
     pending = _round2(due - paid_so_far)
 
-    usd_to_nio_rate = await _get_usd_to_nio_rate()
+    usd_to_nio_rate = await _get_usd_nio_buy_rate()
 
     mixed_rows: List[Dict[str, Any]] = []
     mixed_warning: Optional[str] = None
@@ -10376,6 +10765,38 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
             raise HTTPException(status_code=400, detail="received_amount no puede ser menor al monto cobrado")
         if received is not None:
             change_amount = _round2(received - amount)
+    elif payload.pagos:
+        mixed_change_total = 0.0
+        for idx, row_payload in enumerate(payload.pagos):
+            pay_method = _normalize_method_name(row_payload.metodo)
+            if pay_method != "cash":
+                continue
+            row_received = (
+                _round2(float(row_payload.received_amount))
+                if row_payload.received_amount is not None
+                else None
+            )
+            if row_received is None:
+                continue
+            row_currency = _currency_code(row_payload.moneda)
+            row_origin = _round2(float(row_payload.monto_origen or 0.0))
+            row_rate = (
+                _round4(float(row_payload.tasa_cambio))
+                if row_payload.tasa_cambio and row_payload.tasa_cambio > 0
+                else (_round4(usd_to_nio_rate) if row_currency == "USD" else 1.0)
+            )
+            if row_origin <= 0:
+                continue
+            if row_received < row_origin:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"received_amount no puede ser menor al monto cobrado en pago mixto #{idx + 1}",
+                )
+            if row_currency == "USD":
+                mixed_change_total += _round2((row_received - row_origin) * row_rate)
+            else:
+                mixed_change_total += _round2(row_received - row_origin)
+        change_amount = _round2(mixed_change_total)
 
     now_iso = datetime.now(timezone.utc).isoformat()
     payment_doc = {
@@ -10405,7 +10826,20 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
 
     docs_to_insert: List[Dict[str, Any]] = []
     if mixed_rows:
-        for row in mixed_rows:
+        for row_idx, row in enumerate(mixed_rows):
+            row_payload = payload.pagos[row_idx] if row_idx < len(payload.pagos) else None
+            row_received = None
+            row_change = 0.0
+            if row_payload and row_payload.received_amount is not None:
+                row_received = _round2(float(row_payload.received_amount))
+                row_origin = _round2(float(row_payload.monto_origen or 0.0))
+                row_currency = _currency_code(row_payload.moneda)
+                row_rate = _round4(float(row.get("exchange_rate") or 1.0))
+                if row_origin > 0 and row_received >= row_origin:
+                    if row_currency == "USD":
+                        row_change = _round2((row_received - row_origin) * row_rate)
+                    else:
+                        row_change = _round2(row_received - row_origin)
             row_doc = {
                 "payment_id": f"ipay_{uuid.uuid4().hex[:10]}",
                 "sale_id": sale_id,
@@ -10415,8 +10849,8 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
                 "payment_method": row.get("payment_method"),
                 "reference": row.get("reference"),
                 "notes": payload.notes,
-                "received_amount": None,
-                "change_amount": 0.0,
+                "received_amount": row_received,
+                "change_amount": row_change,
                 "cashier_id": user.user_id,
                 "cashier_name": user.name,
                 "idempotency_key": idempotency_key or None,
@@ -10445,6 +10879,17 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     new_pending = _round2(due - new_paid)
     new_status = "paid" if new_pending <= 0.0001 else "partial"
 
+    last_payment_summary = _build_last_payment_summary_from_collect(
+        method_to_use=method_to_use,
+        amount=amount,
+        received=received,
+        change_amount=change_amount,
+        user=user,
+        now_iso=now_iso,
+        mixed_rows=mixed_rows,
+        payload_pagos=payload.pagos,
+    )
+
     update_sale_set: Dict[str, Any] = {
         "payment_status": new_status,
         "payment_method": sale.get("payment_method") or method_to_use,
@@ -10453,6 +10898,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         "amount_pending": max(new_pending, 0.0),
         "collected_at": now_iso,
         "collected_by": user.user_id,
+        "last_payment_summary": last_payment_summary,
     }
     if new_status == "paid":
         update_sale_set["invoice_state"] = "closed"
@@ -10479,6 +10925,8 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         "amount_pending": max(new_pending, 0.0),
         "amount_pending_usd_suggested": pending_usd_suggested,
         "usd_to_nio_rate": usd_to_nio_rate,
+        "print_format": _sale_print_format({**sale, **update_sale_set}),
+        "last_payment_summary": last_payment_summary,
         "mixed_payments": [
             {
                 k: v
@@ -12517,16 +12965,27 @@ def _validate_session_access(user: User, session_doc: Dict[str, Any]) -> None:
     raise HTTPException(status_code=403, detail="Forbidden")
 
 
-async def _get_usd_to_nio_rate_with_source(rate_override: Optional[float] = None) -> Tuple[float, str]:
+async def _resolve_usd_nio_dual_rates(
+    *,
+    rate_override: Optional[float] = None,
+) -> Dict[str, Any]:
+    from backend.domains.billing.exchange_rates import resolve_usd_nio_rates
+
     if rate_override and rate_override > 0:
-        return float(rate_override), "override"
+        override = float(rate_override)
+        return {
+            "buy_rate": override,
+            "sell_rate": override,
+            "buy_source": "override",
+            "sell_source": "override",
+            "effective_rate": override,
+            "effective_source": "override",
+        }
 
     try:
         billing = await _get_billing_settings_doc(_normalize_billing_branch_id(None))
         exchange_doc = billing.get("exchange") or {}
-        selected_rate, selected_source = _select_effective_billing_rate(exchange_doc, _utc_now())
-        if selected_rate and selected_rate > 0:
-            return float(selected_rate), selected_source
+        return resolve_usd_nio_rates(exchange_doc, _utc_now(), rule_matcher=_rule_matches_now)
     except Exception:
         pass
 
@@ -12535,7 +12994,16 @@ async def _get_usd_to_nio_rate_with_source(rate_override: Optional[float] = None
     )
     if rate_doc and rate_doc.get("rate"):
         try:
-            return float(rate_doc.get("rate")), "database"
+            db_rate = float(rate_doc.get("rate"))
+            if db_rate > 0:
+                return {
+                    "buy_rate": db_rate,
+                    "sell_rate": db_rate,
+                    "buy_source": "database",
+                    "sell_source": "database",
+                    "effective_rate": db_rate,
+                    "effective_source": "database",
+                }
         except Exception:
             pass
 
@@ -12546,11 +13014,55 @@ async def _get_usd_to_nio_rate_with_source(rate_override: Optional[float] = None
         try:
             inverse = float(inverse_doc.get("rate"))
             if inverse > 0:
-                return 1.0 / inverse, "inverse"
+                db_rate = 1.0 / inverse
+                return {
+                    "buy_rate": db_rate,
+                    "sell_rate": db_rate,
+                    "buy_source": "inverse",
+                    "sell_source": "inverse",
+                    "effective_rate": db_rate,
+                    "effective_source": "inverse",
+                }
         except Exception:
             pass
 
-    return 36.5, "default"
+    from backend.domains.billing.exchange_rates import (
+        DEFAULT_USD_NIO_BUY_RATE,
+        DEFAULT_USD_NIO_SELL_RATE,
+    )
+
+    return {
+        "buy_rate": DEFAULT_USD_NIO_BUY_RATE,
+        "sell_rate": DEFAULT_USD_NIO_SELL_RATE,
+        "buy_source": "default",
+        "sell_source": "default",
+        "effective_rate": DEFAULT_USD_NIO_SELL_RATE,
+        "effective_source": "default",
+    }
+
+
+async def _get_usd_nio_buy_rate_with_source(rate_override: Optional[float] = None) -> Tuple[float, str]:
+    rates = await _resolve_usd_nio_dual_rates(rate_override=rate_override)
+    return float(rates["buy_rate"]), str(rates["buy_source"])
+
+
+async def _get_usd_nio_sell_rate_with_source(rate_override: Optional[float] = None) -> Tuple[float, str]:
+    rates = await _resolve_usd_nio_dual_rates(rate_override=rate_override)
+    return float(rates["sell_rate"]), str(rates["sell_source"])
+
+
+async def _get_usd_to_nio_rate_with_source(rate_override: Optional[float] = None) -> Tuple[float, str]:
+    return await _get_usd_nio_sell_rate_with_source(rate_override)
+
+
+async def _get_usd_nio_buy_rate(rate_override: Optional[float] = None) -> float:
+    rate, _ = await _get_usd_nio_buy_rate_with_source(rate_override)
+    return rate
+
+
+async def _get_usd_nio_sell_rate(rate_override: Optional[float] = None) -> float:
+    rate, _ = await _get_usd_nio_sell_rate_with_source(rate_override)
+    return rate
 
 
 async def _get_usd_to_nio_rate(rate_override: Optional[float] = None) -> float:
@@ -12616,7 +13128,7 @@ async def _compute_cash_theoretical(session_doc: Dict[str, Any], as_of: Optional
         opened_at = datetime.now(timezone.utc)
 
     as_of_dt = as_of or datetime.now(timezone.utc)
-    usd_to_nio_rate = await _get_usd_to_nio_rate(session_doc.get("usd_to_nio_rate"))
+    usd_to_nio_rate = await _get_usd_nio_buy_rate(session_doc.get("usd_to_nio_rate"))
 
     opening_nio_equiv = float(session_doc.get("opening_total_nio_equiv") or 0.0)
     opening_totals = cast(Dict[str, Any], session_doc.get("opening_totals") or {})
@@ -12641,6 +13153,7 @@ async def _compute_cash_theoretical(session_doc: Dict[str, Any], as_of: Optional
             "currency": 1,
             "amount": 1,
             "amount_origin": 1,
+            "exchange_rate": 1,
             "notes_auditoria": 1,
         },
     ).to_list(10000)
@@ -12668,7 +13181,9 @@ async def _compute_cash_theoretical(session_doc: Dict[str, Any], as_of: Optional
                     origin_amount = p.get("amount") or 0.0
                 else:
                     amount_nio = float(p.get("amount") or 0.0)
-                    origin_amount = amount_nio / usd_to_nio_rate if usd_to_nio_rate > 0 else 0.0
+                    row_rate = float(p.get("exchange_rate") or 0.0)
+                    effective_rate = row_rate if row_rate > 0 else usd_to_nio_rate
+                    origin_amount = amount_nio / effective_rate if effective_rate > 0 else 0.0
 
             amount_origin = _round2(float(origin_amount or 0.0))
             method_currency_summary[method][currency] = _round2(method_currency_summary[method].get(currency, 0.0) + amount_origin)
@@ -13154,7 +13669,7 @@ async def open_cash_session(payload: CashOpenRequest, request: Request):
     if already_open:
         raise HTTPException(status_code=400, detail="Ya existe una sesión de caja abierta para esta caja")
 
-    usd_to_nio_rate = await _get_usd_to_nio_rate(payload.tipo_cambio_usd_nio)
+    usd_to_nio_rate = await _get_usd_nio_buy_rate(payload.tipo_cambio_usd_nio)
     normalized = await _normalize_denominations(payload.denominaciones, usd_to_nio_rate)
     now = datetime.now(timezone.utc)
     session_id = f"caja_{uuid.uuid4().hex[:10]}"
@@ -13289,7 +13804,7 @@ async def preview_blind_arqueo(payload: CashBlindArqueoRequest, request: Request
     if session.get("estado") != "abierta":
         raise HTTPException(status_code=400, detail="La sesión de caja no está abierta")
 
-    usd_to_nio_rate = await _get_usd_to_nio_rate(payload.tipo_cambio_usd_nio or session.get("usd_to_nio_rate"))
+    usd_to_nio_rate = await _get_usd_nio_buy_rate(payload.tipo_cambio_usd_nio or session.get("usd_to_nio_rate"))
     normalized = await _normalize_denominations(payload.conteo_fisico, usd_to_nio_rate)
     theoretical = await _compute_cash_theoretical(session, as_of=datetime.now(timezone.utc))
 
@@ -13407,7 +13922,7 @@ async def close_cash_session(payload: CashCloseRequest, request: Request, backgr
         raise HTTPException(status_code=400, detail="La sesión de caja ya está cerrada")
 
     now = datetime.now(timezone.utc)
-    usd_to_nio_rate = await _get_usd_to_nio_rate(payload.tipo_cambio_usd_nio or session.get("usd_to_nio_rate"))
+    usd_to_nio_rate = await _get_usd_nio_buy_rate(payload.tipo_cambio_usd_nio or session.get("usd_to_nio_rate"))
     normalized = await _normalize_denominations(payload.conteo_fisico, usd_to_nio_rate)
     theoretical = await _compute_cash_theoretical(session, as_of=now)
 
@@ -14110,10 +14625,11 @@ async def _build_letter_invoice_context(sale: Dict[str, Any]) -> Dict[str, Any]:
         },
         "vehicle": vehicle,
         "currency": sale.get("currency", "NIO"),
+        "exchange_rate": float(sale.get("exchange_rate") or 36.5),
         "iva_rate": iva_rate_percent,
         "apply_iva": bool(sale.get("apply_iva", True)),
         "totals": {
-            "subtotal": sale.get("subtotal", 0),
+            "subtotal": _cashier_settlement_subtotal(sale),
             "tax": sale.get("tax", sale.get("iva_amount", 0)),
             "total": sale.get("total", 0),
             "total_legal": sale.get("total_legal", sale.get("total", 0)),
@@ -14127,9 +14643,37 @@ async def _build_letter_invoice_context(sale: Dict[str, Any]) -> Dict[str, Any]:
             sale.get("payment_method") or sale.get("payment_type"),
             sale.get("mixed_payment_methods") or sale.get("mixedPaymentMethods") or [],
         ),
-        "payment_info": _build_sale_payment_info(sale),
+        "payment_info": await _enrich_sale_payment_info(sale),
         "notes": sale.get("notes"),
     }
+
+
+async def _build_thermal_invoice_lines(sale: Dict[str, Any]) -> List[str]:
+    from backend.domains.sales.thermal_invoice_escpos import build_thermal_invoice_text_lines
+
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+    settings = await _get_thermal_invoice_settings(sale.get("branch_id"))
+    return build_thermal_invoice_text_lines(
+        sale,
+        vehicle=cast(Optional[Dict[str, Any]], vehicle),
+        voucher_settings=settings,
+    )
+
+
+def _assert_thermal_invoice_printable(sale: Dict[str, Any]) -> None:
+    payment_status = str(sale.get("payment_status") or "").lower()
+    if payment_status != "paid":
+        raise HTTPException(
+            status_code=403,
+            detail="El comprobante termico solo esta disponible despues del cobro total en caja",
+        )
+    if _sale_has_iva(sale):
+        raise HTTPException(
+            status_code=400,
+            detail="Las ventas con IVA deben imprimirse en formato carta",
+        )
 
 
 async def _draw_invoice_letter_pdf(
@@ -14167,6 +14711,8 @@ async def _draw_invoice_letter_pdf(
         document_theme=document_theme,
         sale_payment_meta=sale_payment_meta,
         payment_info=payment_info,
+        exchange_rate=float(context.get("exchange_rate") or sale.get("exchange_rate") or 36.5),
+        sale_id=str(sale.get("sale_id") or ""),
     )
 
 
@@ -14225,10 +14771,14 @@ async def get_seller_voucher_preview_pdf(sale_id: str, request: Request):
     from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
 
     sale = await _resolve_sale_for_print(sale_id)
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
     lines = await _build_seller_voucher_lines(sale)
     voucher_settings = await _get_seller_voucher_settings(sale.get("branch_id"))
     pdf_bytes = build_seller_voucher_preview_pdf(
         sale,
+        vehicle=cast(Optional[Dict[str, Any]], vehicle),
         text_lines=lines,
         voucher_settings=voucher_settings,
     )
@@ -14238,6 +14788,81 @@ async def get_seller_voucher_preview_pdf(sale_id: str, request: Request):
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="voucher_{invoice}.pdf"'},
     )
+
+
+@api_router.get("/print/thermal-invoice/{sale_id}")
+async def get_thermal_invoice_receipt(sale_id: str, request: Request):
+    user = await require_auth(request)
+    if not _is_cashier_role(user.role):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo personal de caja/gerencia puede imprimir comprobante termico",
+        )
+    sale = await _resolve_sale_for_print(sale_id)
+    _assert_thermal_invoice_printable(sale)
+    lines = await _build_thermal_invoice_lines(sale)
+    return Response(content="\n".join(lines), media_type="text/plain")
+
+
+@api_router.get("/print/thermal-invoice/{sale_id}/preview-pdf")
+async def get_thermal_invoice_preview_pdf(sale_id: str, request: Request):
+    await require_auth(request)
+    from backend.domains.sales.thermal_invoice_escpos import build_thermal_invoice_preview_pdf
+
+    sale = await _resolve_sale_for_print(sale_id)
+    _assert_thermal_invoice_printable(sale)
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+    lines = await _build_thermal_invoice_lines(sale)
+    voucher_settings = await _get_thermal_invoice_settings(sale.get("branch_id"))
+    pdf_bytes = build_thermal_invoice_preview_pdf(
+        sale,
+        vehicle=cast(Optional[Dict[str, Any]], vehicle),
+        text_lines=lines,
+        voucher_settings=voucher_settings,
+    )
+    invoice = str(sale.get("invoice_number") or sale_id).replace("/", "-")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="thermal_invoice_{invoice}.pdf"'},
+    )
+
+
+@api_router.post("/print/thermal-invoice/{sale_id}/pos")
+async def print_thermal_invoice_pos(sale_id: str, request: Request):
+    user = await require_auth(request)
+    if not _is_cashier_role(user.role):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo personal de caja/gerencia puede imprimir comprobante termico",
+        )
+
+    from backend.domains.sales.thermal_invoice_escpos import build_thermal_invoice_escpos
+    from backend.domains.sales.voucher_printer import send_escpos_to_pos_voucher_printer
+
+    sale = await _resolve_sale_for_print(sale_id)
+    _assert_thermal_invoice_printable(sale)
+    lines = await _build_thermal_invoice_lines(sale)
+    voucher_settings = await _get_thermal_invoice_settings(sale.get("branch_id"))
+    escpos = build_thermal_invoice_escpos(
+        sale,
+        text_lines=lines,
+        voucher_settings=voucher_settings,
+    )
+    try:
+        bridge_result = await send_escpos_to_pos_voucher_printer(escpos)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "ok": True,
+        "sale_id": sale.get("sale_id"),
+        "invoice_number": sale.get("invoice_number"),
+        "message": "Comprobante termico enviado a impresora POS 80mm",
+        "bridge": bridge_result,
+    }
 
 
 @api_router.post("/print/seller-voucher/{sale_id}/pos")
@@ -14334,6 +14959,11 @@ async def get_invoice_pdf(sale_id: str, request: Request):
         raise HTTPException(
             status_code=403,
             detail="La factura membretada solo está disponible después del cobro en caja",
+        )
+    if not _sale_has_iva(cast(Dict[str, Any], sale)):
+        raise HTTPException(
+            status_code=400,
+            detail="Las ventas sin IVA deben imprimirse en comprobante termico 80mm",
         )
 
     context = await _build_letter_invoice_context(cast(Dict[str, Any], sale))
@@ -16247,9 +16877,23 @@ class WarrantyClaim(BaseModel):
     claim_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     issue_description: str
     status: str = "pending"  # pending, approved, in_repair, completed, denied
+    claim_type: str = "replacement"
+    warehouse_id: Optional[str] = None
+    quantity: int = 1
+    inventory_effect: Optional[Dict[str, Any]] = None
     resolution: Optional[str] = None
     work_order_id: Optional[str] = None
     notes: Optional[str] = None
+
+
+class WarrantyClaimCreatePayload(FlexibleModel):
+    sale_id: str
+    product_id: str
+    issue_description: str
+    vehicle_id: Optional[str] = None
+    claim_type: str = "replacement"
+    warehouse_id: Optional[str] = None
+    quantity: int = 1
 
 
 @api_router.get("/warranties/vehicle/{vehicle_id}")
@@ -16322,34 +16966,96 @@ async def get_vehicle_warranty_history(vehicle_id: str, request: Request):
     }
 
 
+@api_router.get("/warranties/lookup")
+async def lookup_warranty_invoice(request: Request, code: str = ""):
+    """Busca factura pagada por barcode, QR o sale_id y lista productos en garantía."""
+    from backend.domains.sales.invoice_traceability import parse_invoice_scan_input
+    from backend.domains.warranties.claims_from_invoice import build_invoice_warranty_lookup
+
+    user = await require_roles(request, ["gerencia", "supervisor", "instalaciones", "bodegas"])
+    parsed = parse_invoice_scan_input(code)
+    if not parsed.get("valid"):
+        raise HTTPException(status_code=400, detail="Código de factura inválido")
+
+    query: Dict[str, Any] = {"invoice_state": {"$ne": "cancelled"}}
+    sale_id = str(parsed.get("sale_id") or "").strip()
+    invoice_number = str(parsed.get("invoice_number") or "").strip()
+    if sale_id:
+        query["sale_id"] = sale_id
+    elif invoice_number:
+        query["invoice_number"] = invoice_number
+    else:
+        raise HTTPException(status_code=400, detail="Código de factura requerido")
+
+    if user.role in {"supervisor", "cajero", "programador", "bodegas"} and user.branch_id:
+        query["branch_id"] = str(user.branch_id)
+
+    sale = await db.sales.find_one(query, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+    if str(sale.get("payment_status") or "").lower() != "paid":
+        raise HTTPException(status_code=409, detail="La factura debe estar pagada para reclamos de garantía")
+
+    payload = await build_invoice_warranty_lookup(db, sale=cast(Dict[str, Any], sale))
+    payload["scan_type"] = parsed.get("scan_type")
+    payload["lookup_code"] = code
+    return payload
+
+
 @api_router.post("/warranties/claim")
 async def create_warranty_claim(
     request: Request,
-    vehicle_id: str,
-    sale_id: str,
-    product_id: str,
-    issue_description: str,
+    payload: Optional[WarrantyClaimCreatePayload] = None,
+    vehicle_id: str = "",
+    sale_id: str = "",
+    product_id: str = "",
+    issue_description: str = "",
 ):
-    await require_auth(request)
+    user = await require_roles(request, ["gerencia", "supervisor", "instalaciones", "bodegas"])
 
-    vehicle = await db.vehicles.find_one({"vehicle_id": vehicle_id}, {"_id": 0})
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
+    if payload:
+        resolved_sale_id = payload.sale_id
+        resolved_product_id = payload.product_id
+        resolved_issue = payload.issue_description
+        resolved_vehicle_id = payload.vehicle_id
+        claim_type = str(payload.claim_type or "replacement").strip().lower()
+        warehouse_id = payload.warehouse_id
+        quantity = int(payload.quantity or 1)
+    else:
+        resolved_sale_id = sale_id
+        resolved_product_id = product_id
+        resolved_issue = issue_description
+        resolved_vehicle_id = vehicle_id or None
+        claim_type = "replacement"
+        warehouse_id = None
+        quantity = 1
 
-    customer = await db.customers.find_one(
-        {"customer_id": vehicle["customer_id"]}, {"_id": 0}
-    )
-    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
+    if not resolved_sale_id or not resolved_product_id or not resolved_issue:
+        raise HTTPException(status_code=400, detail="sale_id, product_id e issue_description son requeridos")
+
+    sale = await db.sales.find_one({"sale_id": resolved_sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
     sale = cast(Dict[str, Any], sale)
 
     sale_items = cast(List[Dict[str, Any]], sale.get("items", []))
-    sale_item = next((i for i in sale_items if i["product_id"] == product_id), None)
+    sale_item = next((i for i in sale_items if i["product_id"] == resolved_product_id), None)
     if not sale_item:
         raise HTTPException(status_code=400, detail="Product not in this sale")
 
-    product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+    vehicle = None
+    if resolved_vehicle_id:
+        vehicle = await db.vehicles.find_one({"vehicle_id": resolved_vehicle_id}, {"_id": 0})
+    elif sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+
+    customer = None
+    customer_id = sale.get("customer_id") or (vehicle or {}).get("customer_id")
+    if customer_id:
+        customer = await db.customers.find_one({"customer_id": customer_id}, {"_id": 0})
+
+    product = await db.products.find_one({"product_id": resolved_product_id}, {"_id": 0})
     warranty_months = product.get("warranty_months", 12) if product else 12
 
     purchase_date = (
@@ -16362,22 +17068,49 @@ async def create_warranty_claim(
     if warranty_end < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Warranty has expired")
 
-    vehicle_info = (
-        f"{vehicle['brand']} {vehicle['model']} {vehicle['year']} - {vehicle['plate']}"
-    )
+    vehicle_info = "Sin vehículo"
+    claim_vehicle_id = str(resolved_vehicle_id or sale.get("vehicle_id") or "")
+    if vehicle:
+        vehicle_info = (
+            f"{vehicle.get('brand', '')} {vehicle.get('model', '')} {vehicle.get('year', '')} - "
+            f"{vehicle.get('plate') or vehicle.get('plate_number') or ''}"
+        ).strip()
+
+    effective_warehouse = warehouse_id or sale_item.get("warehouse_id") or user.warehouse_id
+    claim_id = f"wcl_{uuid.uuid4().hex[:8]}"
+    inventory_effect = None
+    if claim_type in {"replacement", "devolucion", "cambio"} and effective_warehouse:
+        from backend.domains.warranties.claims_from_invoice import apply_warranty_inventory_effects
+
+        inventory_effect = await apply_warranty_inventory_effects(
+            db,
+            audit_service,
+            claim_type=claim_type,
+            product_id=resolved_product_id,
+            warehouse_id=str(effective_warehouse),
+            quantity=quantity,
+            claim_id=claim_id,
+            actor=user,
+            branch_id=str(user.branch_id or sale.get("branch_id") or ""),
+        )
 
     claim = WarrantyClaim(
-        vehicle_id=vehicle_id,
-        customer_id=vehicle["customer_id"],
-        customer_name=customer["name"] if customer else "Unknown",
+        claim_id=claim_id,
+        vehicle_id=claim_vehicle_id,
+        customer_id=str(customer_id or ""),
+        customer_name=customer.get("name") if customer else sale.get("customer_name", "Unknown"),
         vehicle_info=vehicle_info,
-        sale_id=sale_id,
-        invoice_number=sale["invoice_number"],
-        product_id=product_id,
-        product_name=sale_item["product_name"],
+        sale_id=resolved_sale_id,
+        invoice_number=sale.get("invoice_number", ""),
+        product_id=resolved_product_id,
+        product_name=sale_item.get("product_name", ""),
         purchase_date=purchase_date.isoformat(),
         warranty_end_date=warranty_end.isoformat(),
-        issue_description=issue_description,
+        issue_description=resolved_issue,
+        claim_type=claim_type,
+        warehouse_id=str(effective_warehouse) if effective_warehouse else None,
+        quantity=quantity,
+        inventory_effect=inventory_effect,
     )
 
     doc = claim.model_dump()
@@ -16386,6 +17119,22 @@ async def create_warranty_claim(
     doc.pop("_id", None)
 
     return doc
+
+
+@api_router.post("/qa/run-full-simulation-suite")
+async def run_full_simulation_suite_endpoint(request: Request):
+    """Ejecuta simulación E2E: 5 naturales + 5 empresas con pagos mixtos y tasas duales."""
+    import asyncio
+
+    await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.qa.full_simulation_suite import run_full_simulation_suite
+
+    base_url = str(request.base_url).rstrip("/")
+    if not base_url.endswith("/api"):
+        base_url = f"{base_url}/api"
+
+    report = await asyncio.to_thread(run_full_simulation_suite, base_url)
+    return report
 
 
 @api_router.get("/warranties/claims")
@@ -17190,12 +17939,66 @@ async def get_exchange_rates(base: str = "USD"):
 
 @api_router.get("/currencies/usd-nio-effective")
 async def get_effective_usd_nio_rate():
-    """Get the effective USD -> NIO exchange rate used system-wide."""
-    rate, source = await _get_usd_to_nio_rate_with_source()
+    """Get the effective USD -> NIO sell rate used for pricing."""
+    rate, source = await _get_usd_nio_sell_rate_with_source()
     return {
         "pair": "USD_NIO",
         "rate": rate,
         "source": source,
+        "sell_rate": rate,
+    }
+
+
+@api_router.get("/currencies/usd-nio-dual")
+async def get_usd_nio_dual_rates():
+    """Get buy (compra) and sell (venta) USD/NIO rates."""
+    rates = await _resolve_usd_nio_dual_rates()
+    return {
+        "pair": "USD_NIO",
+        "buy_rate": rates["buy_rate"],
+        "sell_rate": rates["sell_rate"],
+        "rate": rates["effective_rate"],
+        "buy_source": rates["buy_source"],
+        "sell_source": rates["sell_source"],
+        "source": rates["effective_source"],
+    }
+
+
+@api_router.put("/currencies/usd-nio-dual")
+async def update_usd_nio_dual_rates(payload: UsdNioDualRateUpdatePayload, request: Request):
+    """Update buy and/or sell USD/NIO rates (gerencia only)."""
+    from backend.domains.billing.exchange_rates import normalize_usd_nio_exchange_doc
+
+    await require_roles(request, ["gerencia"])
+    if payload.buy_rate is None and payload.sell_rate is None:
+        raise HTTPException(status_code=400, detail="Debe enviar buy_rate y/o sell_rate")
+
+    doc = await _get_billing_settings_doc(_normalize_billing_branch_id(None))
+    exchange_doc = normalize_usd_nio_exchange_doc(doc.setdefault("exchange", {}))
+
+    if payload.buy_rate is not None:
+        buy_rate = float(payload.buy_rate or 0)
+        if buy_rate <= 0:
+            raise HTTPException(status_code=400, detail="La tasa de compra debe ser mayor a cero")
+        exchange_doc["buy_rate"] = buy_rate
+
+    if payload.sell_rate is not None:
+        sell_rate = float(payload.sell_rate or 0)
+        if sell_rate <= 0:
+            raise HTTPException(status_code=400, detail="La tasa de venta debe ser mayor a cero")
+        exchange_doc["sell_rate"] = sell_rate
+        exchange_doc["official_rate"] = sell_rate
+
+    doc["exchange"] = exchange_doc
+    await _save_billing_settings_doc(doc, _normalize_billing_branch_id(None))
+
+    rates = await _resolve_usd_nio_dual_rates()
+    return {
+        "message": "Tasas USD/NIO actualizadas",
+        "buy_rate": rates["buy_rate"],
+        "sell_rate": rates["sell_rate"],
+        "buy_source": rates["buy_source"],
+        "sell_source": rates["sell_source"],
     }
 
 
@@ -17234,12 +18037,12 @@ async def convert_currency(amount: float, from_currency: str, to_currency: str):
             "rate": 1,
         }
 
-    # Centralized effective path for USD<->NIO, shared with cashier/sales/dashboard.
+    # USD/NIO uses dual rates: sell for pricing, buy for payment conversion.
     if from_currency == "USD" and to_currency == "NIO":
-        rate = await _get_usd_to_nio_rate()
+        rate = await _get_usd_nio_sell_rate()
     elif from_currency == "NIO" and to_currency == "USD":
-        usd_to_nio = await _get_usd_to_nio_rate()
-        rate = 1 / usd_to_nio if usd_to_nio > 0 else 0
+        buy_rate = await _get_usd_nio_buy_rate()
+        rate = 1 / buy_rate if buy_rate > 0 else 0
     else:
         # Get rate
         rate_doc = await db.exchange_rates.find_one(
@@ -17742,8 +18545,10 @@ async def get_billing_settings(request: Request, branch_id: str = ""):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
     resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     doc = await _get_billing_settings_doc(resolved_branch_id)
-    exchange_doc = doc.get("exchange") or {}
-    effective_rate, source = _select_effective_billing_rate(exchange_doc, _utc_now())
+    from backend.domains.billing.exchange_rates import normalize_usd_nio_exchange_doc, resolve_usd_nio_rates
+
+    exchange_doc = normalize_usd_nio_exchange_doc(doc.get("exchange") or {})
+    resolved_rates = resolve_usd_nio_rates(exchange_doc, _utc_now(), rule_matcher=_rule_matches_now)
     reasons = sorted(
         list(doc.get("cancel_reasons") or []),
         key=lambda r: (int(r.get("sort_order") or 9999), str(r.get("reason") or "")),
@@ -17751,15 +18556,20 @@ async def get_billing_settings(request: Request, branch_id: str = ""):
     return {
         "branch_id": resolved_branch_id,
         "exchange": {
-            "official_rate": float(exchange_doc.get("official_rate") or 36.5),
+            "official_rate": float(exchange_doc.get("official_rate") or resolved_rates["sell_rate"]),
+            "buy_rate": float(resolved_rates["buy_rate"]),
+            "sell_rate": float(resolved_rates["sell_rate"]),
             "rules": list(exchange_doc.get("rules") or []),
-            "effective_rate": effective_rate,
-            "effective_source": source,
+            "effective_rate": float(resolved_rates["effective_rate"]),
+            "effective_source": resolved_rates["sell_source"],
+            "buy_source": resolved_rates["buy_source"],
+            "sell_source": resolved_rates["sell_source"],
         },
         "iva_rate": float(doc.get("iva_rate") or DEFAULT_BILLING_IVA_RATE),
         "cancel_reasons": reasons,
         "pdf_documents": export_normalize_pdf_document_settings(doc.get("pdf_documents")),
         "seller_voucher": _normalize_seller_voucher_settings(doc.get("seller_voucher")),
+        "thermal_invoice": _normalize_thermal_invoice_settings(doc.get("thermal_invoice")),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -17786,17 +18596,51 @@ async def update_billing_exchange(
     request: Request,
     branch_id: str = "",
 ):
+    from backend.domains.billing.exchange_rates import normalize_usd_nio_exchange_doc
+
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
     resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
-    rate = float(payload.official_rate or 0)
-    if rate <= 0:
-        raise HTTPException(status_code=400, detail="La tasa oficial debe ser mayor a cero")
 
     doc = await _get_billing_settings_doc(resolved_branch_id)
-    exchange_doc = doc.setdefault("exchange", {})
-    exchange_doc["official_rate"] = rate
+    exchange_doc = normalize_usd_nio_exchange_doc(doc.setdefault("exchange", {}))
+
+    if payload.buy_rate is not None:
+        buy_rate = float(payload.buy_rate or 0)
+        if buy_rate <= 0:
+            raise HTTPException(status_code=400, detail="La tasa de compra debe ser mayor a cero")
+        exchange_doc["buy_rate"] = buy_rate
+
+    if payload.sell_rate is not None:
+        sell_rate = float(payload.sell_rate or 0)
+        if sell_rate <= 0:
+            raise HTTPException(status_code=400, detail="La tasa de venta debe ser mayor a cero")
+        exchange_doc["sell_rate"] = sell_rate
+        exchange_doc["official_rate"] = sell_rate
+
+    if payload.official_rate is not None:
+        official_rate = float(payload.official_rate or 0)
+        if official_rate <= 0:
+            raise HTTPException(status_code=400, detail="La tasa oficial debe ser mayor a cero")
+        exchange_doc["official_rate"] = official_rate
+        if payload.sell_rate is None:
+            exchange_doc["sell_rate"] = official_rate
+
+    if (
+        payload.official_rate is None
+        and payload.buy_rate is None
+        and payload.sell_rate is None
+    ):
+        raise HTTPException(status_code=400, detail="Debe enviar buy_rate, sell_rate u official_rate")
+
+    doc["exchange"] = exchange_doc
     await _save_billing_settings_doc(doc, resolved_branch_id)
-    return {"message": "Tasa oficial actualizada", "official_rate": rate, "branch_id": resolved_branch_id}
+    return {
+        "message": "Tasas de cambio actualizadas",
+        "buy_rate": exchange_doc["buy_rate"],
+        "sell_rate": exchange_doc["sell_rate"],
+        "official_rate": exchange_doc["official_rate"],
+        "branch_id": resolved_branch_id,
+    }
 
 
 @api_router.put("/settings/billing/iva")
@@ -18143,6 +18987,7 @@ def _merge_seller_voucher_settings(
     from backend.domains.sales.voucher_settings import merge_seller_voucher_settings
 
     incoming = payload.model_dump(exclude_none=True) if payload else {}
+    incoming.pop("thermal_invoice", None)
     texts_payload = incoming.pop("texts", None)
     sections_payload = incoming.pop("sections", None)
     if isinstance(texts_payload, dict):
@@ -18152,6 +18997,28 @@ def _merge_seller_voucher_settings(
     return merge_seller_voucher_settings(current, incoming)
 
 
+def _normalize_thermal_invoice_settings(raw: Any = None) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import normalize_thermal_invoice_settings
+
+    return normalize_thermal_invoice_settings(raw)
+
+
+def _merge_thermal_invoice_settings(
+    current: Dict[str, Any],
+    payload: Optional[BillingThermalInvoiceUpdatePayload],
+) -> Dict[str, Any]:
+    from backend.domains.sales.voucher_settings import merge_thermal_invoice_settings
+
+    incoming = payload.model_dump(exclude_none=True) if payload else {}
+    texts_payload = incoming.pop("texts", None)
+    sections_payload = incoming.pop("sections", None)
+    if isinstance(texts_payload, dict):
+        incoming["texts"] = texts_payload
+    if isinstance(sections_payload, dict):
+        incoming["sections"] = sections_payload
+    return merge_thermal_invoice_settings(current, incoming)
+
+
 @api_router.get("/settings/billing/seller-voucher")
 async def get_billing_seller_voucher_settings(request: Request, branch_id: str = ""):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
@@ -18159,6 +19026,7 @@ async def get_billing_seller_voucher_settings(request: Request, branch_id: str =
     return {
         "branch_id": resolved_branch_id,
         "seller_voucher": await _get_seller_voucher_settings(resolved_branch_id),
+        "thermal_invoice": await _get_thermal_invoice_settings(resolved_branch_id),
     }
 
 
@@ -18173,11 +19041,15 @@ async def update_billing_seller_voucher_settings(
     doc = await _get_billing_settings_doc(resolved_branch_id)
     current = _normalize_seller_voucher_settings(doc.get("seller_voucher"))
     doc["seller_voucher"] = _merge_seller_voucher_settings(current, payload)
+    if payload.thermal_invoice is not None:
+        thermal_current = _normalize_thermal_invoice_settings(doc.get("thermal_invoice"))
+        doc["thermal_invoice"] = _merge_thermal_invoice_settings(thermal_current, payload.thermal_invoice)
     await _save_billing_settings_doc(doc, resolved_branch_id)
     return {
-        "message": "Configuración de voucher POS actualizada",
+        "message": "Configuracion de voucher POS y factura termica actualizada",
         "branch_id": resolved_branch_id,
         "seller_voucher": doc["seller_voucher"],
+        "thermal_invoice": doc.get("thermal_invoice") or await _get_thermal_invoice_settings(resolved_branch_id),
     }
 
 
@@ -18185,12 +19057,20 @@ async def update_billing_seller_voucher_settings(
 async def preview_billing_seller_voucher_settings(request: Request, branch_id: str = ""):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
     from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
-    from backend.domains.sales.voucher_settings import sample_sale_for_voucher_preview
+    from backend.domains.sales.voucher_settings import (
+        sample_sale_for_voucher_preview,
+        sample_vehicle_for_voucher_preview,
+    )
 
     resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
     settings = await _get_seller_voucher_settings(resolved_branch_id)
     sample = sample_sale_for_voucher_preview()
-    pdf_bytes = build_seller_voucher_preview_pdf(sample, voucher_settings=settings)
+    vehicle = sample_vehicle_for_voucher_preview()
+    pdf_bytes = build_seller_voucher_preview_pdf(
+        sample,
+        vehicle=vehicle,
+        voucher_settings=settings,
+    )
     return _pdf_preview_response(pdf_bytes, "seller_voucher")
 
 
@@ -18202,13 +19082,36 @@ async def preview_billing_seller_voucher_settings_draft(
 ):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
     from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_preview_pdf
-    from backend.domains.sales.voucher_settings import sample_sale_for_voucher_preview
+    from backend.domains.sales.thermal_invoice_escpos import build_thermal_invoice_preview_pdf
+    from backend.domains.sales.voucher_settings import (
+        sample_sale_for_thermal_invoice_preview,
+        sample_sale_for_voucher_preview,
+        sample_vehicle_for_voucher_preview,
+    )
 
     resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
+    preview_kind = str(payload.kind or request.query_params.get("kind") or "seller_voucher")
+    if preview_kind == "thermal_invoice":
+        saved_settings = await _get_thermal_invoice_settings(resolved_branch_id)
+        settings = _merge_thermal_invoice_settings(saved_settings, payload.thermal_invoice)
+        sample = sample_sale_for_thermal_invoice_preview()
+        vehicle = sample_vehicle_for_voucher_preview()
+        pdf_bytes = build_thermal_invoice_preview_pdf(
+            sample,
+            vehicle=vehicle,
+            voucher_settings=settings,
+        )
+        return _pdf_preview_response(pdf_bytes, "thermal_invoice")
+
     saved_settings = await _get_seller_voucher_settings(resolved_branch_id)
     settings = _merge_seller_voucher_settings(saved_settings, payload.seller_voucher)
     sample = sample_sale_for_voucher_preview()
-    pdf_bytes = build_seller_voucher_preview_pdf(sample, voucher_settings=settings)
+    vehicle = sample_vehicle_for_voucher_preview()
+    pdf_bytes = build_seller_voucher_preview_pdf(
+        sample,
+        vehicle=vehicle,
+        voucher_settings=settings,
+    )
     return _pdf_preview_response(pdf_bytes, "seller_voucher")
 
 

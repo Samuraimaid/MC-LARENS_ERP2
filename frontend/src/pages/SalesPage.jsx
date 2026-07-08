@@ -31,7 +31,12 @@ import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/dra
 import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
-import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
+import {
+  fetchUsdNioDualRates,
+  DEFAULT_USD_NIO_BUY_RATE,
+  DEFAULT_USD_NIO_SELL_RATE,
+} from "@/lib/exchangeRate";
+import { defaultApplyIvaForCustomer, isCompanyCustomerType } from "@/lib/saleTotals";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
 import {
   deleteServerDraft,
@@ -224,13 +229,14 @@ export function SalesPage() {
   const [notes, setNotes] = useState("");
   
   // IVA and currency
-  const [applyIVA, setApplyIVA] = useState(true);
+  const [applyIVA, setApplyIVA] = useState(false);
   const [applyRetention, setApplyRetention] = useState(false);
   const [retentionRate, setRetentionRate] = useState(2);
   
   const [ivaRate, setIvaRate] = useState(DEFAULT_IVA_RATE);
   const [currency, setCurrency] = useState("NIO");
-  const [exchangeRate, setExchangeRate] = useState(DEFAULT_USD_NIO_RATE); // USD -> NIO
+  const [exchangeRate, setExchangeRate] = useState(DEFAULT_USD_NIO_SELL_RATE);
+  const [buyExchangeRate, setBuyExchangeRate] = useState(DEFAULT_USD_NIO_BUY_RATE);
   const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
   
   // Discount codes
@@ -333,12 +339,17 @@ export function SalesPage() {
   useEffect(() => {
     let mounted = true;
     const refreshRate = async () => {
-      const [rate, iva] = await Promise.all([
-        fetchEffectiveUsdNioRate({ withCredentials: true, fallback: DEFAULT_USD_NIO_RATE }),
+      const [rates, iva] = await Promise.all([
+        fetchUsdNioDualRates({
+          withCredentials: true,
+          fallbackBuy: DEFAULT_USD_NIO_BUY_RATE,
+          fallbackSell: DEFAULT_USD_NIO_SELL_RATE,
+        }),
         fetchEffectiveIvaRate({ withCredentials: true, fallback: DEFAULT_IVA_RATE }),
       ]);
       if (mounted) {
-        setExchangeRate(rate);
+        setExchangeRate(rates.sellRate);
+        setBuyExchangeRate(rates.buyRate);
         setEffectiveIvaRate(iva);
         setIvaRate(iva);
       }
@@ -582,7 +593,7 @@ export function SalesPage() {
         setPaymentType("cash");
         setGlobalDiscount(0);
         setNotes("");
-        setApplyIVA(true);
+        setApplyIVA(false);
         setApplyRetention(false);
         setRetentionRate(2);
         setCurrency("NIO");
@@ -591,12 +602,13 @@ export function SalesPage() {
       }
 
       const customerId = draft.selectedCustomerId;
+      let restoredCustomer = null;
       if (customerId) {
-        const customer = customers.find(
+        restoredCustomer = customers.find(
           (c) => String(c.customer_id ?? "") === String(customerId)
-        );
-        if (customer) {
-          setSelectedCustomer(customer);
+        ) || null;
+        if (restoredCustomer) {
+          setSelectedCustomer(restoredCustomer);
         }
       } else {
         setSelectedCustomer(null);
@@ -608,7 +620,7 @@ export function SalesPage() {
       setPaymentType(draft.paymentMethod || draft.payment_type || "cash");
       setGlobalDiscount(draft.globalDiscount || 0);
       setNotes(draft.notes || "");
-      setApplyIVA(draft.applyIVA ?? true);
+      setApplyIVA(draft.applyIVA ?? defaultApplyIvaForCustomer(restoredCustomer));
       setApplyRetention(draft.applyRetention ?? false);
       setRetentionRate(draft.retentionRate ?? 2);
       setCurrency(draft.currency || "NIO");
@@ -903,6 +915,15 @@ export function SalesPage() {
     }
   }, [DRAFT_FLOW, markDraftSaved, markDraftSaveError, markDraftSaving]);
 
+  const cancelScheduledDraftSync = useCallback((draftId) => {
+    if (!draftId || typeof window === "undefined") return;
+    const existingTimer = draftSyncTimersRef.current.get(draftId);
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
+      draftSyncTimersRef.current.delete(draftId);
+    }
+  }, []);
+
   const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId || typeof window === "undefined") return;
     const existingTimer = draftSyncTimersRef.current.get(draftId);
@@ -1147,49 +1168,144 @@ export function SalesPage() {
     vehicles,
   ]);
 
-  const closeDraftTab = (draftId, { force = false, createReplacement = false } = {}) => {
+  const removeDraftFromState = useCallback(async (draftId, { skipServerDelete = false } = {}) => {
+    if (!draftId) return;
+    cancelScheduledDraftSync(draftId);
+    if (supervisorWatchingDraftRef.current === draftId) {
+      await stopSupervisorWatch(draftId);
+    }
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(getDraftKey(draftId));
+    }
+    setDraftTabs((prev) => prev.filter((entry) => entry.id !== draftId));
+    if (!skipServerDelete) {
+      try {
+        await deleteServerDraft(DRAFT_FLOW, draftId);
+      } catch (error) {
+        // backend may have already consumed the draft when the sale was created
+      }
+    }
+  }, [DRAFT_FLOW, stopSupervisorWatch]);
+
+  const beginFreshSaleForm = useCallback(() => {
+    suppressAutoDraftRef.current = true;
+    setActiveDraftId(null);
+    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+    setSaleFormRenderNonce((prev) => prev + 1);
+    setDraftContentRevision((prev) => prev + 1);
+    createDraftTab();
+    window.setTimeout(() => {
+      suppressAutoDraftRef.current = false;
+    }, 0);
+  }, [createDraftTab]);
+
+  const finalizeSaleAfterSubmit = useCallback(async (submittedDraftId) => {
+    if (submittedDraftId) {
+      await removeDraftFromState(submittedDraftId, { skipServerDelete: true });
+    }
+
+    suppressAutoDraftRef.current = true;
+    setActiveDraftId(null);
+    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+    setSaleFormRenderNonce((prev) => prev + 1);
+    setDraftContentRevision((prev) => prev + 1);
+
+    let syncedTabs = [];
+    try {
+      const bundle = await fetchServerDraftBundle(DRAFT_FLOW);
+      const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
+      const eligibleServerDrafts = serverDrafts.filter((draft) => (
+        isSaleDraftSaveEligible(draft?.snapshot || {})
+        && draft.id !== submittedDraftId
+      ));
+      syncedTabs = eligibleServerDrafts.map((draft) => ({
+        id: draft.id,
+        name: draft.name,
+        updatedAt: draft.updatedAt,
+        ownerUserId: draft.owner_user_id || null,
+        ownerName: draft.owner_name || null,
+        review: normalizeDraftReview(draft.review),
+      }));
+      mirrorServerDraftsToLocalStorage({
+        listKey: DRAFT_LIST_KEY,
+        activeKey: DRAFT_ACTIVE_KEY,
+        draftKeyPrefix: DRAFT_KEY_PREFIX,
+        drafts: eligibleServerDrafts,
+        activeDraftId: null,
+        allowEmptyOverwrite: true,
+      });
+    } catch (error) {
+      syncedTabs = draftTabsRef.current.filter((entry) => entry.id !== submittedDraftId);
+    }
+
+    const freshId = `sale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    const freshTab = {
+      id: freshId,
+      name: `Venta ${syncedTabs.length + 1}`,
+      updatedAt: new Date().toISOString(),
+      ownerUserId: user?.user_id || null,
+      ownerName: user?.name || null,
+      review: normalizeDraftReview(null),
+    };
+    const nextTabs = [...syncedTabs, freshTab];
+    setDraftTabs(nextTabs);
+    setActiveDraftId(freshId);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(nextTabs));
+      window.localStorage.setItem(DRAFT_ACTIVE_KEY, freshId);
+      window.localStorage.removeItem(getDraftKey(freshId));
+    }
+
+    window.setTimeout(() => {
+      suppressAutoDraftRef.current = false;
+    }, 0);
+  }, [
+    DRAFT_ACTIVE_KEY,
+    DRAFT_FLOW,
+    DRAFT_KEY_PREFIX,
+    DRAFT_LIST_KEY,
+    removeDraftFromState,
+    user?.name,
+    user?.user_id,
+  ]);
+
+  const closeDraftTab = async (draftId, { force = false, createReplacement = false } = {}) => {
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     if (
       !force
       && !canSellerDeleteDraft(tab, tab?.review, user?.user_id, user?.role)
     ) {
       toast.error("No puedes eliminar un borrador revisado por supervisión");
-      return;
-    }
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(getDraftKey(draftId));
+      return false;
     }
 
-    let nextActiveId;
-    setDraftTabs((prev) => {
-      const remaining = prev.filter((entry) => entry.id !== draftId);
-      if (activeDraftIdRef.current === draftId) {
-        nextActiveId = remaining[remaining.length - 1]?.id || null;
-      }
-      return remaining;
-    });
+    const wasActiveDraft = activeDraftIdRef.current === draftId;
+    const shouldResetForm = wasActiveDraft || (force && createReplacement);
 
-    if (activeDraftIdRef.current === draftId) {
-      if (nextActiveId) {
-        setActiveDraftId(nextActiveId);
-        setSaleFormRenderNonce((prev) => prev + 1);
-      } else if (createReplacement) {
-        suppressAutoDraftRef.current = true;
-        setActiveDraftId(null);
-        resetSaleForm({ keepVisible: true, skipAutoDraft: true });
-        createDraftTab();
-        window.setTimeout(() => {
-          suppressAutoDraftRef.current = false;
-        }, 0);
-      } else {
-        setActiveDraftId(null);
-        resetSaleForm({ keepVisible: true, skipAutoDraft: true });
-      }
+    await removeDraftFromState(draftId);
+
+    if (!shouldResetForm) {
+      return true;
     }
 
-    deleteServerDraft(DRAFT_FLOW, draftId).catch(() => {
-      // keep UI responsive even if remote cleanup fails
-    });
+    const remaining = draftTabsRef.current.filter((entry) => entry.id !== draftId);
+    const nextActiveId = remaining[remaining.length - 1]?.id || null;
+
+    if (nextActiveId) {
+      setActiveDraftId(nextActiveId);
+      setSaleFormRenderNonce((prev) => prev + 1);
+      return true;
+    }
+
+    if (createReplacement) {
+      beginFreshSaleForm();
+      return true;
+    }
+
+    setActiveDraftId(null);
+    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
+    setSaleFormRenderNonce((prev) => prev + 1);
+    return true;
   };
 
   const openDraftTab = useCallback(async (tab) => {
@@ -1611,7 +1727,7 @@ export function SalesPage() {
   };
 
   // Helper to create a sale using payload from SaleForm component
-  const createSaleWithPayload = async (payload, authCode = null) => {
+  const createSaleWithPayload = async (payload, authCode = null, draftId = null) => {
     if (!canCreateSales) {
       throw new Error("No tienes permiso para crear ventas");
     }
@@ -1651,9 +1767,12 @@ export function SalesPage() {
         vehicle_id: payload.vehicle_id || null,
         items: payload.items.map(item => ({
           product_id: item.product_id,
+          product_name: item.product_name,
           quantity: item.quantity,
           discount: item.discount,
           unit_price: item.unit_price,
+          original_unit_price: item.original_unit_price ?? item.unit_price,
+          installation_price: item.installation_price || 0,
           warehouse_id: item.warehouse_id || (payload.warehouse_id || selectedWarehouse),
           with_installation: item.with_installation || false,
         })),
@@ -1677,6 +1796,8 @@ export function SalesPage() {
         discount_codes: discountsAllowed ? (payload.discount_codes || []) : [],
         total_amount: payload.total_amount ?? totalsLocal.total,
         notes: payload.notes || null,
+        draft_id: draftId || null,
+        idempotency_key: draftId ? `draft:${draftId}` : null,
       };
 
       const response = await axios.post(`${API}/sales`, saleData, { withCredentials: true });
@@ -1684,13 +1805,13 @@ export function SalesPage() {
       if (response.data.requires_manager_auth) {
         setAuthProducts(response.data.products || []);
         setShowAuthDialog(true);
-        return;
+        return null;
       }
 
       toast.success(`Factura ${response.data.invoice_number} enviada a caja para cobro`);
       setPrintSaleData(response.data);
       setShowPrintPrompt(true);
-      fetchData();
+      await fetchData({ silent: true });
       return response.data;
     } catch (error) {
       if (error.response?.data?.requires_manager_auth) {
@@ -1740,12 +1861,19 @@ export function SalesPage() {
     setCustomerSearch("");
     setProductSearch("");
     setAppliedDiscounts([]);
-    setApplyIVA(true);
+    setApplyIVA(false);
     setApplyRetention(false);
     setRetentionRate(2);
     setIvaRate(effectiveIvaRate);
     setCurrency("NIO");
   };
+
+  useEffect(() => {
+    if (!selectedCustomer) return;
+    if (isCompanyCustomerType(selectedCustomer)) {
+      setApplyIVA(true);
+    }
+  }, [selectedCustomer]);
 
   const requestManagerAuth = async () => {
     try {
@@ -2357,6 +2485,8 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               inventory={inventory}
               vehicles={vehicles}
               initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, paymentMethod: paymentType, mixedPaymentMethods, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
+              exchangeRate={exchangeRate}
+              buyExchangeRate={buyExchangeRate}
               defaultIvaRate={effectiveIvaRate}
               draftKey={activeDraftId ? getDraftKey(activeDraftId) : null}
               draftReview={activeDraftReview}
@@ -2395,15 +2525,12 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               submitLabel="Enviar Factura a Caja"
               onSubmit={async (payload) => {
                 const submittedDraftId = activeDraftIdRef.current;
+                cancelScheduledDraftSync(submittedDraftId);
                 try {
-                  const createdSale = await createSaleWithPayload(payload);
-                  if (!createdSale?.sale_id) return;
-                  if (submittedDraftId) {
-                    closeDraftTab(submittedDraftId, { force: true, createReplacement: true });
-                  } else {
-                    resetSaleForm({ keepVisible: true, skipAutoDraft: true });
-                    createDraftTab();
-                  }
+                  const createdSale = await createSaleWithPayload(payload, null, submittedDraftId);
+                  if (!createdSale?.sale_id) return false;
+                  await finalizeSaleAfterSubmit(submittedDraftId);
+                  return { ok: true, sale_id: createdSale.sale_id };
                 } catch (err) {
                   const detail = err?.response?.data?.detail;
                   let message = "Error al crear venta";
@@ -2421,6 +2548,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                     message = detail.message;
                   }
                   toast.error(message);
+                  return false;
                 }
               }}
             />

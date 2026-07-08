@@ -173,6 +173,50 @@ def _format_money(currencies: Dict[str, Any], amount: float, currency: str) -> s
         return f"{symbol}{amount}"
 
 
+def _normalize_pdf_currency(code: Any) -> str:
+    text = str(code or "NIO").strip().upper()
+    if text in {"USD", "US$"}:
+        return "USD"
+    return "NIO"
+
+
+def _pdf_convert_amount(value: Any, currency: str, exchange_rate: float) -> float:
+    amount = float(value or 0)
+    if _normalize_pdf_currency(currency) == "NIO":
+        return round(amount * float(exchange_rate or 36.5), 2)
+    return round(amount, 2)
+
+
+def _pdf_normalize_items_for_currency(
+    items: List[Dict[str, Any]],
+    currency: str,
+    exchange_rate: float,
+) -> List[Dict[str, Any]]:
+    if _normalize_pdf_currency(currency) != "NIO":
+        return list(items)
+    normalized: List[Dict[str, Any]] = []
+    for raw in items:
+        item = dict(raw)
+        for key in ("unit_price", "original_unit_price", "subtotal", "installation_price"):
+            if item.get(key) is not None:
+                item[key] = _pdf_convert_amount(item[key], currency, exchange_rate)
+        normalized.append(item)
+    return normalized
+
+
+def _pdf_settlement_subtotal(
+    sale_totals: Dict[str, Any],
+    currency: str,
+    exchange_rate: float,
+) -> float:
+    total_legal = float(sale_totals.get("total_legal") or sale_totals.get("total") or 0)
+    iva_amount = float(sale_totals.get("tax") or sale_totals.get("iva_amount") or 0)
+    if total_legal > 0:
+        return round(max(total_legal - iva_amount, 0), 2)
+    raw_subtotal = float(sale_totals.get("subtotal") or 0)
+    return _pdf_convert_amount(raw_subtotal, currency, exchange_rate)
+
+
 def _safe_date(value: Optional[str]) -> str:
     if not value:
         return ""
@@ -202,6 +246,74 @@ def _item_fulfillment_label(item: Dict[str, Any]) -> str:
     if install_type == "required" or wants_install:
         return "Instalación"
     return "Para llevar"
+
+
+def _item_display_name(item: Dict[str, Any]) -> str:
+    base = str(item.get("product_name") or "Producto").strip()
+    if _item_fulfillment_label(item) == "Instalación":
+        install_price = float(item.get("installation_price") or 0)
+        if install_price > 0.009:
+            return f"{base} (+ Instalación)"
+        return f"{base} (+ Instalación incluida)"
+    return base
+
+
+def _draw_invoice_traceability_block(
+    p: Any,
+    *,
+    sale_id: str,
+    invoice_number: str,
+    margin_x: float,
+    width: float,
+    y: float,
+    logger: Any = None,
+) -> float:
+    """Draw Code128 + QR for invoice lookup. Returns new y position."""
+    from backend.domains.sales.invoice_traceability import build_invoice_qr_payload
+    from reportlab.graphics.barcode import code128
+
+    try:
+        from reportlab.graphics.barcode.qr import QrCodeWidget
+        from reportlab.graphics import renderPDF
+        from reportlab.graphics.shapes import Drawing
+    except Exception:
+        QrCodeWidget = None  # type: ignore
+        renderPDF = None  # type: ignore
+        Drawing = None  # type: ignore
+
+    scan_code = str(invoice_number or "").strip().upper()
+    qr_payload = build_invoice_qr_payload(
+        sale_id=str(sale_id or ""),
+        invoice_number=scan_code,
+    )
+    block_bottom = max(52.0, y - 92.0)
+
+    if scan_code:
+        barcode = code128.Code128(scan_code, barHeight=14, barWidth=0.45)
+        barcode_x = margin_x + 8
+        barcode.drawOn(p, barcode_x, block_bottom + 34)
+        p.setFont("Helvetica", 7.5)
+        p.drawString(barcode_x, block_bottom + 24, scan_code)
+
+    if QrCodeWidget and renderPDF and Drawing:
+        try:
+            qr_widget = QrCodeWidget(qr_payload)
+            bounds = qr_widget.getBounds()
+            qr_w = bounds[2] - bounds[0] or 1
+            qr_h = bounds[3] - bounds[1] or 1
+            target = 72.0
+            drawing = Drawing(target, target, transform=[target / qr_w, 0, 0, target / qr_h, 0, 0])
+            drawing.add(qr_widget)
+            renderPDF.draw(drawing, p, width - margin_x - target - 8, block_bottom + 8)
+        except Exception:
+            if logger:
+                logger.exception("Failed to render invoice QR on letter PDF")
+
+    colors, _, _, _ = get_reportlab_symbols()
+    p.setFont("Helvetica", 7)
+    p.setFillColor(colors.HexColor(COLOR_MUTED))
+    p.drawString(margin_x + 8, block_bottom + 8, "Escanee para garantias / reclamos")
+    return block_bottom - 8
 
 
 def _line_gross_amount(item: Dict[str, Any]) -> float:
@@ -375,6 +487,22 @@ def _build_payment_detail_rows(
     elif payment_status == "paid":
         rows.append(("Estado de cobro: Pagado en su totalidad", None, "success"))
 
+    received_amount = info.get("received_amount")
+    if received_amount is not None:
+        received_value = float(received_amount or 0)
+        if received_value > 0:
+            rows.append(("Recibido:", received_value, "text"))
+
+    change_amount = info.get("change_amount")
+    if change_amount is not None:
+        change_value = float(change_amount or 0)
+        if change_value > 0.009:
+            rows.append(("Cambio:", change_value, "accent"))
+
+    cashier_name = str(info.get("cashier_name") or "").strip()
+    if cashier_name:
+        rows.append((f"Cajero: {cashier_name}", None, "muted"))
+
     total_legal = float(info.get("total_legal") or 0)
     net_to_collect = float(info.get("net_to_collect") or total_legal)
     if total_legal > 0 and abs(net_to_collect - total_legal) > 0.009:
@@ -543,18 +671,20 @@ def _draw_company_footer(
 def _compute_discount_breakdown(
     items: List[Dict[str, Any]],
     sale_totals: Dict[str, Any],
+    *,
+    currency: str = "NIO",
+    exchange_rate: float = 36.5,
 ) -> Dict[str, float]:
     line_discount_total = round(sum(_line_discount_amount(item) for item in items), 2)
     gross_before_line = round(sum(_line_gross_amount(item) for item in items), 2)
-    subtotal = round(float(sale_totals.get("subtotal") or 0), 2)
-    global_discount = round(
-        float(
-            sale_totals.get("global_discount")
-            or sale_totals.get("discount")
-            or sale_totals.get("discounts_applied_amount")
-            or 0
-        ),
-        2,
+    subtotal = _pdf_settlement_subtotal(sale_totals, currency, exchange_rate)
+    global_discount = _pdf_convert_amount(
+        sale_totals.get("global_discount")
+        or sale_totals.get("discount")
+        or sale_totals.get("discounts_applied_amount")
+        or 0,
+        currency,
+        exchange_rate,
     )
     global_percent = 0.0
     if subtotal > 0 and global_discount > 0:
@@ -590,11 +720,26 @@ def draw_invoice_letter_pdf(
     document_theme: Optional[Dict[str, str]] = None,
     sale_payment_meta: Optional[Dict[str, Any]] = None,
     payment_info: Optional[Dict[str, Any]] = None,
+    exchange_rate: float = 36.5,
+    sale_id: str = "",
 ) -> None:
     colors, letter, _, _ = get_reportlab_symbols()
     width, height = letter
-    safe_items = [item for item in (items if isinstance(items, list) else list(items or [])) if item]
-    breakdown = _compute_discount_breakdown(safe_items, totals)
+    safe_items = [
+        item
+        for item in _pdf_normalize_items_for_currency(
+            [item for item in (items if isinstance(items, list) else list(items or [])) if item],
+            currency,
+            exchange_rate,
+        )
+        if item
+    ]
+    breakdown = _compute_discount_breakdown(
+        safe_items,
+        totals,
+        currency=currency,
+        exchange_rate=exchange_rate,
+    )
     settings = normalize_pdf_document_settings(pdf_settings)
     doc_type = "invoice"
     def _sec(key: str, fallback: bool = True) -> bool:
@@ -798,7 +943,7 @@ def draw_invoice_letter_pdf(
             p.setFont("Helvetica", 8.5)
             discount_pct = float(item.get("discount") or 0)
             p.drawString(margin_x + 6, y, str(index))
-            p.drawString(margin_x + 24, y, _truncate(item.get("product_name", ""), 30))
+            p.drawString(margin_x + 24, y, _truncate(_item_display_name(item), 30))
             p.drawString(margin_x + 210, y, _item_fulfillment_label(item))
             p.drawRightString(margin_x + 300, y, _format_money(currencies, item.get("unit_price", 0), currency))
             p.drawRightString(margin_x + 348, y, f"{int(float(item.get('quantity') or 0))}")
@@ -833,9 +978,12 @@ def draw_invoice_letter_pdf(
         totals_lines.append((f"{label}:", -breakdown["global_discount"]))
 
     iva_amount = float(totals.get("tax") or totals.get("iva_amount") or 0)
-    if _sec("breakdown") and _sec("breakdown_iva") and apply_iva and iva_amount > 0:
-        iva_label = f"IVA ({float(iva_rate or 0):.0f}%):" if iva_rate else "IVA:"
-        totals_lines.append((iva_label, iva_amount))
+    if _sec("breakdown") and _sec("breakdown_iva"):
+        if apply_iva and iva_amount > 0:
+            iva_label = f"IVA ({float(iva_rate or 0):.0f}%):" if iva_rate else "IVA:"
+            totals_lines.append((iva_label, iva_amount))
+        elif not apply_iva:
+            totals_lines.append(("IVA (0%):", 0.0))
 
     retention_amount = float(totals.get("retention_amount") or 0)
     if _sec("breakdown") and _sec("breakdown_retention") and retention_amount > 0:
@@ -929,6 +1077,22 @@ def draw_invoice_letter_pdf(
         p.setFont("Helvetica", 9)
         p.drawString(margin_x, notes_y - 14, _truncate(notes, 120))
 
+    trace_y = 96 if _sec("company_footer") else 72
+    scan_code = str(invoice_number or "").strip()
+    if scan_code:
+        if y < trace_y + 100:
+            p.showPage()
+            y = _new_page() - 18
+        _draw_invoice_traceability_block(
+            p,
+            sale_id=str(sale_id or ""),
+            invoice_number=scan_code,
+            margin_x=margin_x,
+            width=width,
+            y=y,
+            logger=logger,
+        )
+
     if _sec("company_footer"):
         _draw_company_footer(p, colors, company, width, 42)
 
@@ -951,6 +1115,7 @@ def draw_document_pdf(
     notes: Optional[str] = None,
     pdf_settings: Optional[Dict[str, Any]] = None,
     document_theme: Optional[Dict[str, str]] = None,
+    exchange_rate: float = 36.5,
 ) -> None:
     """Cotizaciones y documentos genéricos en carta (español)."""
     title_map = {
@@ -963,8 +1128,21 @@ def draw_document_pdf(
 
     colors, letter, _, _ = get_reportlab_symbols()
     width, height = letter
-    safe_items = [item for item in (items if isinstance(items, list) else list(items or [])) if item]
-    breakdown = _compute_discount_breakdown(safe_items, totals)
+    safe_items = [
+        item
+        for item in _pdf_normalize_items_for_currency(
+            [item for item in (items if isinstance(items, list) else list(items or [])) if item],
+            currency,
+            exchange_rate,
+        )
+        if item
+    ]
+    breakdown = _compute_discount_breakdown(
+        safe_items,
+        totals,
+        currency=currency,
+        exchange_rate=exchange_rate,
+    )
     settings = normalize_pdf_document_settings(pdf_settings)
     doc_type = "quotation"
     def _sec(key: str, fallback: bool = True) -> bool:

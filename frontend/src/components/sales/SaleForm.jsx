@@ -120,7 +120,7 @@ import {
   isDraftReleasedWithRestrictions,
   sellerGlobalDiscountExceeded,
 } from "@/lib/draftReview";
-import { computeSaleTotals } from "@/lib/saleTotals";
+import { computeSaleTotals, defaultApplyIvaForCustomer } from "@/lib/saleTotals";
 import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollToAnchor } from "@/lib/scrollPageToTop";
 
@@ -184,6 +184,7 @@ export default function SaleForm({
   onSubmit,
   submitLabel = "Crear",
   exchangeRate = 36.5,
+  buyExchangeRate = null,
   defaultIvaRate = 15,
   draftKey = null,
   extraFields = null,
@@ -240,7 +241,9 @@ export default function SaleForm({
   );
   const [paymentMethod, setPaymentMethod] = useState(initialData.paymentMethod || initialData.payment_type || "cash");
   const [notes, setNotes] = useState(initialData.notes || "");
-  const [applyIVA, setApplyIVA] = useState(initialData.applyIVA ?? true);
+  const [applyIVA, setApplyIVA] = useState(
+    initialData.applyIVA ?? defaultApplyIvaForCustomer(initialData.selectedCustomer),
+  );
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
@@ -743,7 +746,12 @@ export default function SaleForm({
         setPaymentPlanLines(restoredPlanLines);
       }
       setNotes(draft?.notes || "");
-      setApplyIVA(draft?.applyIVA ?? true);
+      const restoredCustomer = customers.find(
+        (c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""),
+      );
+      setApplyIVA(
+        draft?.applyIVA ?? defaultApplyIvaForCustomer(restoredCustomer || selectedCustomer),
+      );
         setApplyRetention(draft?.applyRetention ?? false);
         setRetentionRate(draft?.retentionRate ?? 2);
       setIvaRate(defaultIvaRate);
@@ -1339,6 +1347,8 @@ export default function SaleForm({
     }
   };
 
+  const paymentExchangeRate = Number(buyExchangeRate || exchangeRate) || 36.5;
+
   const convertPrice = (priceUSD) => {
     if (currency === "NIO") {
       return priceUSD * exchangeRate;
@@ -1350,6 +1360,7 @@ export default function SaleForm({
     cartItems: normalizedCartItems,
     currency,
     exchangeRate,
+    sellRate: exchangeRate,
     ivaRate,
     globalDiscount,
     globalDiscountMode,
@@ -1392,21 +1403,21 @@ export default function SaleForm({
       if (!hasAmounts) return prev;
       setPlanTotalChangedHint(true);
       if (normalizedPaymentMethod === "mixed") {
-        return rebalanceMixedPlanRemainders(prev, exchangeRate, nextTarget);
+        return rebalanceMixedPlanRemainders(prev, paymentExchangeRate, nextTarget);
       }
       return prev;
     });
     prevPlanTargetRef.current = nextTarget;
-  }, [totals.total, exchangeRate, normalizedPaymentMethod]);
+  }, [totals.total, paymentExchangeRate, normalizedPaymentMethod]);
 
   useEffect(() => {
-    const validation = validatePlanAgainstTotal(paymentPlanLines, exchangeRate, totals.total);
+    const validation = validatePlanAgainstTotal(paymentPlanLines, paymentExchangeRate, totals.total);
     if (validation.ok) {
       setPlanTotalChangedHint(false);
       setPaymentPlanSubmitAttention(false);
       setPaymentPlanSubmitAttentionMessage("");
     }
-  }, [paymentPlanLines, exchangeRate, totals.total]);
+  }, [paymentPlanLines, paymentExchangeRate, totals.total]);
 
   const focusMixedPaymentPlanMismatch = (message) => {
     setPlanTotalChangedHint(true);
@@ -1486,7 +1497,7 @@ export default function SaleForm({
         lines: paymentPlanLines,
         paymentMethod: payloadPaymentMethod,
         mixedMethods: payloadMixedPaymentMethods,
-        exchangeRate,
+        exchangeRate: paymentExchangeRate,
         targetTotal: totals.total,
         currency,
         preserveMixedStructure: sellerReleasedRestricted,
@@ -1502,7 +1513,7 @@ export default function SaleForm({
       }
       const planValidation = validatePlanAgainstTotal(
         finalizedPlanLines,
-        exchangeRate,
+        paymentExchangeRate,
         totals.total,
       );
       if (!planValidation.ok) {
@@ -1519,14 +1530,14 @@ export default function SaleForm({
           methods: payloadMixedPaymentMethods,
           lines: planLinesForPayload,
           total: totals.total,
-          exchangeRate,
+          exchangeRate: paymentExchangeRate,
           currency,
         })
         : buildSinglePaymentPlan({
           method: payloadPaymentMethod,
           total: totals.total,
           currency,
-          exchangeRate,
+          exchangeRate: paymentExchangeRate,
         });
     }
     const payloadDiscountPercent = discountsBlockedByPayment
@@ -1569,9 +1580,11 @@ export default function SaleForm({
     };
     try {
       const result = onSubmit && onSubmit(payload);
+      let submissionResult = result;
       if (result && typeof result.then === "function") {
-        await result;
+        submissionResult = await result;
       }
+      if (submissionResult?.ok !== true) return;
       if (draftKey && typeof window !== "undefined") {
         window.localStorage.removeItem(draftKey);
         if (typeof onDraftClear === "function") {
@@ -1888,12 +1901,14 @@ export default function SaleForm({
     if (shouldResetCart) {
       resetSaleFlowForCustomerChange();
     }
+    const nextApplyIva = defaultApplyIvaForCustomer(customer);
     setSelectedCustomer(customer);
     setPendingCustomerId(null);
     setCustomerSearch("");
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
     setIsVehiclePickerVisible(true);
+    setApplyIVA(nextApplyIva);
     playSelectionFeedbackSound();
     persistDraftSnapshot({
       selectedCustomerId: customer?.customer_id || null,
@@ -1903,6 +1918,7 @@ export default function SaleForm({
       cartItems: shouldResetCart ? [] : normalizedCartItems,
       appliedDiscounts: shouldResetCart ? [] : appliedDiscounts,
       productSearch: "",
+      applyIVA: nextApplyIva,
     });
   }, [
     appliedDiscounts,
@@ -4006,7 +4022,8 @@ export default function SaleForm({
               lines={paymentPlanLines}
               onChangeLines={handlePaymentPlanLinesChange}
               onRemoveLine={handlePlanLineRemoved}
-              exchangeRate={exchangeRate}
+              exchangeRate={paymentExchangeRate}
+              sellExchangeRate={exchangeRate}
               targetTotal={totals.total}
               disabled={sellerPaymentPlanBlocked}
               structureLocked={sellerPaymentPlanStructureLocked}

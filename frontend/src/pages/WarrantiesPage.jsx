@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner";
 import { 
   Search, RefreshCw, Shield, Car, Package, 
-  CheckCircle2, Clock, Plus, XCircle
+  CheckCircle2, Clock, Plus, XCircle, Barcode, FileText
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 
@@ -39,6 +39,10 @@ export function WarrantiesPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [issueDescription, setIssueDescription] = useState("");
   const [showVehicleDetail, setShowVehicleDetail] = useState(null);
+  const [scanCode, setScanCode] = useState("");
+  const [invoiceLookup, setInvoiceLookup] = useState(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [claimType, setClaimType] = useState("replacement");
 
   const fetchClaims = useCallback(async () => {
     setLoading(true);
@@ -81,6 +85,61 @@ export function WarrantiesPage() {
 
 
 
+  const lookupInvoiceByScan = async (rawCode = scanCode) => {
+    const code = String(rawCode || "").trim();
+    if (!code) {
+      toast.error("Ingresa o escanea un código de factura");
+      return;
+    }
+    setScanLoading(true);
+    try {
+      const res = await axios.get(`${API}/warranties/lookup`, {
+        params: { code },
+        withCredentials: true,
+      });
+      setInvoiceLookup(res.data);
+      setSelectedProduct(null);
+      setIssueDescription("");
+      toast.success(`Factura ${res.data?.invoice_number || ""} localizada`);
+    } catch (error) {
+      setInvoiceLookup(null);
+      toast.error(error.response?.data?.detail || "No se encontró la factura");
+    } finally {
+      setScanLoading(false);
+    }
+  };
+
+  const createClaimFromLookup = async (productRow) => {
+    if (!invoiceLookup || !productRow) return;
+    if (!issueDescription.trim()) {
+      toast.error("Describe el problema antes de registrar el reclamo");
+      return;
+    }
+    try {
+      await axios.post(
+        `${API}/warranties/claim`,
+        {
+          sale_id: invoiceLookup.sale_id,
+          product_id: productRow.product_id,
+          vehicle_id: invoiceLookup.vehicle?.vehicle_id || null,
+          issue_description: issueDescription,
+          claim_type: claimType,
+          warehouse_id: productRow.warehouse_id || null,
+          quantity: 1,
+        },
+        { withCredentials: true },
+      );
+      toast.success("Reclamo registrado con ajuste de inventario");
+      setIssueDescription("");
+      setSelectedProduct(null);
+      setInvoiceLookup(null);
+      setScanCode("");
+      fetchClaims();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al crear reclamo");
+    }
+  };
+
   const createClaim = async () => {
     if (!selectedProduct || !issueDescription) {
       toast.error("Selecciona un producto y describe el problema");
@@ -90,16 +149,16 @@ export function WarrantiesPage() {
     try {
       await axios.post(
         `${API}/warranties/claim`,
-        null,
-        { 
-          params: {
-            vehicle_id: selectedVehicle.vehicle_id,
-            sale_id: selectedProduct.sale_id,
-            product_id: selectedProduct.product_id,
-            issue_description: issueDescription
-          },
-          withCredentials: true 
-        }
+        {
+          sale_id: selectedProduct.sale_id,
+          product_id: selectedProduct.product_id,
+          vehicle_id: selectedVehicle?.vehicle_id || null,
+          issue_description: issueDescription,
+          claim_type: claimType,
+          warehouse_id: selectedProduct.warehouse_id || null,
+          quantity: 1,
+        },
+        { withCredentials: true },
       );
       
       toast.success("Reclamo de garantía creado");
@@ -280,6 +339,92 @@ export function WarrantiesPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Barcode className="h-5 w-5" />
+            Búsqueda rápida por escáner
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-2 md:flex-row">
+            <Input
+              value={scanCode}
+              onChange={(e) => setScanCode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") lookupInvoiceByScan(e.currentTarget.value);
+              }}
+              placeholder="Escanea barcode o QR (INV-YYYYMMDD-#### / JSON / URL)"
+              data-testid="warranty-scan-input"
+            />
+            <Button onClick={() => lookupInvoiceByScan()} disabled={scanLoading}>
+              <Search className="h-4 w-4 mr-2" />
+              {scanLoading ? "Buscando..." : "Buscar factura"}
+            </Button>
+          </div>
+
+          {invoiceLookup ? (
+            <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {invoiceLookup.invoice_number}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Cliente: {invoiceLookup.customer?.name || "—"} · Venta: {formatDate(invoiceLookup.created_at)}
+                  </p>
+                </div>
+                <Badge variant="outline">{invoiceLookup.eligible_count} productos en garantía</Badge>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tipo de reclamo</Label>
+                <Select value={claimType} onValueChange={setClaimType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="replacement">Cambio físico (reemplazo)</SelectItem>
+                    <SelectItem value="repair">Reparación (sin stock)</SelectItem>
+                    <SelectItem value="devolucion">Devolución</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descripción del problema</Label>
+                <Textarea
+                  value={issueDescription}
+                  onChange={(e) => setIssueDescription(e.target.value)}
+                  placeholder="Detalle del defecto o falla..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="divide-y rounded-md border bg-background">
+                {(invoiceLookup.eligible_items || []).map((item) => (
+                  <div key={`${item.sale_id}-${item.product_id}`} className="flex flex-wrap items-center justify-between gap-2 p-3">
+                    <div>
+                      <p className="font-medium">{item.product_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.installation_note ? `${item.installation_note} · ` : ""}
+                        Garantía: {item.warranty_months} meses · {item.days_remaining} días restantes
+                      </p>
+                    </div>
+                    <Button size="sm" onClick={() => createClaimFromLookup(item)}>
+                      <Shield className="h-4 w-4 mr-1" />
+                      Registrar reclamo
+                    </Button>
+                  </div>
+                ))}
+                {(invoiceLookup.eligible_items || []).length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">No hay productos con garantía vigente en esta factura.</p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">

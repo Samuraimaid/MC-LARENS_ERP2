@@ -190,3 +190,51 @@ class TestSellerVoucherLayout:
         company = next(line for line in rendered if "MUNDO DE ACCESORIOS" in line.text)
         assert company.text == company.text.strip()
         assert company.centered is True
+
+    def test_escpos_uses_manual_centering_for_titles(self):
+        payload = build_seller_voucher_escpos(_sample_sale())
+        assert b"\x1b\x61\x01" not in payload
+        text = payload.decode("ascii", errors="ignore")
+        assert "MUNDO DE ACCESORIOS" in text
+        assert "VOUCHER DE VENTA" in text
+        assert "ESCANEAR EN CAJA" in text
+
+    def test_sample_preview_includes_vehicle_and_plate(self):
+        from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_text_lines
+        from backend.domains.sales.voucher_settings import (
+            sample_sale_for_voucher_preview,
+            sample_vehicle_for_voucher_preview,
+        )
+
+        joined = "\n".join(
+            build_seller_voucher_text_lines(
+                sample_sale_for_voucher_preview(),
+                vehicle=sample_vehicle_for_voucher_preview(),
+            )
+        )
+        assert "Vehiculo: TOYOTA Corolla 2020" in joined
+        assert "Placa: M 123 456" in joined
+
+    def test_manual_price_discount_appears_when_original_unit_price_preserved(self):
+        sale = {
+            **_sample_sale(),
+            "subtotal": 9000.0,
+            "iva_amount": 1350.0,
+            "total": 10350.0,
+            "net_to_collect": 10350.0,
+            "discounts_applied_amount": 0,
+            "applied_discounts": [],
+            "items": [
+                {
+                    "product_name": "Radio Android Toyota",
+                    "quantity": 1,
+                    "unit_price": 200.0,
+                    "original_unit_price": 252.0,
+                    "discount": 0,
+                    "with_installation": False,
+                },
+            ],
+        }
+        joined = "\n".join(build_seller_voucher_text_lines(sale))
+        assert "Subtotal sin descuentos:" in joined
+        assert "Descuento precio (Radio Android Toyo):" in joined
