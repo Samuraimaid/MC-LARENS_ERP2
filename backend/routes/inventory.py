@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import uuid
 import csv
 from io import BytesIO, StringIO
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field
 
 from backend.domains.export.dependencies import (
     get_reportlab_symbols as export_get_reportlab_symbols,
@@ -38,6 +39,25 @@ def _get_pandas() -> Any:
 def _get_reportlab_symbols() -> tuple[Any, Any]:
     _, letter, _, canvas = export_get_reportlab_symbols()
     return letter, canvas
+
+
+class BlindReceiptItem(BaseModel):
+    product_id: str
+    quantity: int
+
+
+class BlindReceiptPayload(BaseModel):
+    warehouse_id: str
+    items: List[BlindReceiptItem] = Field(default_factory=list)
+
+
+class TransferRequestPayload(BaseModel):
+    product_id: str
+    from_warehouse_id: str
+    to_warehouse_id: str
+    quantity: int = 1
+    reason: str = ""
+    sale_pending: Optional[bool] = None
 
 
 def get_inventory_router(
@@ -585,6 +605,119 @@ def get_inventory_router(
             "suggested_label_quantity": qty_to_add,
         }
 
+    @router.post("/inventory/purchase-receipt")
+    async def receive_blind_product_intake(request: Request, payload: BlindReceiptPayload):
+        """Blind product intake: physical quantity only, no supplier or cost data."""
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+
+        warehouse_id = (payload.warehouse_id or "").strip()
+        if not warehouse_id:
+            raise HTTPException(status_code=400, detail="warehouse_id es requerido")
+
+        if not payload.items:
+            raise HTTPException(status_code=400, detail="Debe incluir al menos un ítem")
+
+        warehouse = await db.warehouses.find_one({"warehouse_id": warehouse_id}, {"_id": 0})
+        if not warehouse:
+            raise HTTPException(status_code=404, detail="Bodega no encontrada")
+
+        if user.role == "bodegas":
+            if not user.warehouse_id:
+                raise HTTPException(status_code=400, detail="Usuario de bodega sin bodega asignada")
+            if warehouse_id != user.warehouse_id:
+                raise HTTPException(status_code=403, detail="Solo puedes registrar ingresos en tu bodega asignada")
+
+        receipt_id = f"ir_{uuid.uuid4().hex[:10]}"
+        now_iso = datetime.now(timezone.utc).isoformat()
+        processed_items: List[Dict[str, Any]] = []
+
+        for line in payload.items:
+            product_id = (line.product_id or "").strip()
+            if not product_id:
+                raise HTTPException(status_code=400, detail="product_id es requerido en cada ítem")
+
+            try:
+                qty_to_add = int(line.quantity)
+            except (TypeError, ValueError):
+                qty_to_add = 0
+            if qty_to_add <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"La cantidad debe ser mayor a cero para el producto {product_id}",
+                )
+
+            product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+            if not product:
+                raise HTTPException(status_code=404, detail=f"Producto no encontrado: {product_id}")
+
+            inventory_filter = {"product_id": product_id, "warehouse_id": warehouse_id}
+            existing = await db.inventory.find_one(inventory_filter)
+            if existing:
+                await db.inventory.update_one(
+                    inventory_filter,
+                    {
+                        "$inc": {"quantity": qty_to_add},
+                        "$set": {"last_updated": now_iso},
+                    },
+                )
+                inventory_id = existing.get("inventory_id")
+                updated_quantity = int(existing.get("quantity") or 0) + qty_to_add
+            else:
+                inventory_id = f"inv_{uuid.uuid4().hex[:8]}"
+                updated_quantity = qty_to_add
+                await db.inventory.insert_one(
+                    {
+                        "inventory_id": inventory_id,
+                        "product_id": product_id,
+                        "warehouse_id": warehouse_id,
+                        "quantity": updated_quantity,
+                        "min_stock": 5,
+                        "last_updated": now_iso,
+                    }
+                )
+
+            await audit_service.log_inventory_movement(
+                product_id=product_id,
+                warehouse_id=warehouse_id,
+                quantity_change=qty_to_add,
+                reason="inventory_blind_receipt",
+                actor=user,
+                branch_id=user.branch_id,
+                reference_id=receipt_id,
+                metadata={"inventory_id": inventory_id},
+            )
+
+            processed_items.append(
+                {
+                    "product_id": product_id,
+                    "quantity": qty_to_add,
+                    "inventory_id": inventory_id,
+                    "updated_quantity": updated_quantity,
+                }
+            )
+
+        await audit_service.log_audit_event(
+            action="inventory_blind_receipt",
+            actor_id=user.user_id,
+            actor_name=user.name,
+            actor_role=user.role,
+            entity="inventory_receipt",
+            entity_id=receipt_id,
+            branch_id=user.branch_id,
+            metadata={
+                "warehouse_id": warehouse_id,
+                "items": processed_items,
+                "processed_by_user_id": user.user_id,
+            },
+        )
+
+        return {
+            "receipt_id": receipt_id,
+            "warehouse_id": warehouse_id,
+            "items": processed_items,
+            "message": "Ingreso de productos registrado",
+        }
+
     @router.post("/inventory/transfer")
     async def transfer_inventory(
         request: Request,
@@ -684,14 +817,44 @@ def get_inventory_router(
     @router.post("/inventory/transfer-request")
     async def request_inventory_transfer(
         request: Request,
-        product_id: str,
-        from_warehouse_id: str,
-        to_warehouse_id: str,
+        payload: Optional[TransferRequestPayload] = None,
+        product_id: Optional[str] = None,
+        from_warehouse_id: Optional[str] = None,
+        to_warehouse_id: Optional[str] = None,
         quantity: int = 1,
         reason: str = "",
     ):
-        """Request a transfer that requires supervisor approval"""
+        """Request a transfer that requires supervisor approval (JSON body or query params)."""
         user = await require_auth(request)
+
+        if payload is None:
+            if not product_id or not from_warehouse_id or not to_warehouse_id:
+                try:
+                    raw_body = await request.json()
+                except Exception:
+                    raw_body = None
+                if isinstance(raw_body, dict) and raw_body:
+                    payload = TransferRequestPayload(**raw_body)
+
+        if payload is not None:
+            product_id = payload.product_id
+            from_warehouse_id = payload.from_warehouse_id
+            to_warehouse_id = payload.to_warehouse_id
+            quantity = payload.quantity
+            reason = payload.reason or reason
+
+        if not product_id or not from_warehouse_id or not to_warehouse_id:
+            raise HTTPException(
+                status_code=422,
+                detail="product_id, from_warehouse_id y to_warehouse_id son requeridos",
+            )
+
+        try:
+            transfer_quantity = int(quantity)
+        except (TypeError, ValueError):
+            transfer_quantity = 0
+        if transfer_quantity <= 0:
+            raise HTTPException(status_code=400, detail="La cantidad debe ser mayor a cero")
 
         # Create transfer request
         transfer_request = {
@@ -699,13 +862,15 @@ def get_inventory_router(
             "product_id": product_id,
             "from_warehouse_id": from_warehouse_id,
             "to_warehouse_id": to_warehouse_id,
-            "quantity": quantity,
+            "quantity": transfer_quantity,
             "reason": reason,
             "requested_by": user.user_id,
             "requested_by_name": user.name,
             "status": "pending",  # pending, approved, rejected
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
+        if payload is not None and payload.sale_pending is not None:
+            transfer_request["sale_pending"] = bool(payload.sale_pending)
 
         await db.transfer_requests.insert_one(transfer_request)
         transfer_request.pop("_id", None)
@@ -722,7 +887,7 @@ def get_inventory_router(
                 "product_id": product_id,
                 "from_warehouse_id": from_warehouse_id,
                 "to_warehouse_id": to_warehouse_id,
-                "quantity": quantity,
+                "quantity": transfer_quantity,
                 "reason": reason,
             },
         )
@@ -732,35 +897,92 @@ def get_inventory_router(
             "request_id": transfer_request["request_id"],
         }
 
+    async def _load_transfer_request_or_404(request_id: str) -> Dict[str, Any]:
+        transfer_req = await db.transfer_requests.find_one({"request_id": request_id}, {"_id": 0})
+        if not transfer_req:
+            raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+        return transfer_req
+
+    def _user_can_operate_transfer_warehouse(user, warehouse_id: str, *, elevated_roles: set[str]) -> bool:
+        if user.role in elevated_roles:
+            return True
+        if user.role in {"bodegas", "jefe_tienda"} and user.warehouse_id:
+            return user.warehouse_id == warehouse_id
+        return False
+
     @router.get("/inventory/transfer-requests")
-    async def get_transfer_requests(request: Request, status: Optional[str] = None):
-        """Get all transfer requests (for supervisor/gerencia)"""
-        await require_roles(request, ["gerencia", "supervisor"])
+    async def get_transfer_requests(
+        request: Request,
+        status: Optional[str] = None,
+        warehouse_id: Optional[str] = None,
+        direction: Optional[str] = None,
+    ):
+        """List transfer requests for supervisors and warehouse operators."""
+        user = await require_roles(
+            request,
+            ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
+        )
 
         query: dict[str, Any] = {}
         if status:
             query["status"] = status
 
-        requests = (
+        if user.role in {"gerencia", "supervisor"}:
+            if warehouse_id:
+                if direction == "inbound":
+                    query["to_warehouse_id"] = warehouse_id
+                elif direction == "outbound":
+                    query["from_warehouse_id"] = warehouse_id
+                else:
+                    query["$or"] = [
+                        {"from_warehouse_id": warehouse_id},
+                        {"to_warehouse_id": warehouse_id},
+                    ]
+        elif user.warehouse_id:
+            wh = user.warehouse_id
+            if direction == "inbound":
+                query["to_warehouse_id"] = wh
+            elif direction == "outbound":
+                query["from_warehouse_id"] = wh
+            else:
+                query["$or"] = [
+                    {"from_warehouse_id": wh},
+                    {"to_warehouse_id": wh},
+                ]
+        elif user.branch_id:
+            branch_warehouses = await db.warehouses.find(
+                {"branch_id": user.branch_id},
+                {"_id": 0, "warehouse_id": 1},
+            ).to_list(50)
+            warehouse_ids = [w.get("warehouse_id") for w in branch_warehouses if w.get("warehouse_id")]
+            if warehouse_ids:
+                if direction == "inbound":
+                    query["to_warehouse_id"] = {"$in": warehouse_ids}
+                elif direction == "outbound":
+                    query["from_warehouse_id"] = {"$in": warehouse_ids}
+                else:
+                    query["$or"] = [
+                        {"from_warehouse_id": {"$in": warehouse_ids}},
+                        {"to_warehouse_id": {"$in": warehouse_ids}},
+                    ]
+
+        transfer_list = (
             await db.transfer_requests.find(query, {"_id": 0})
             .sort("created_at", -1)
             .to_list(100)
         )
-        return requests
+        return transfer_list
 
     @router.put("/inventory/transfer-requests/{request_id}/approve")
     async def approve_transfer_request(request_id: str, request: Request):
-        """Approve a transfer request and execute the transfer"""
+        """Approve a transfer request without moving stock (awaiting origin dispatch)."""
         user = await require_roles(request, ["gerencia", "supervisor"])
 
-        transfer_req = await db.transfer_requests.find_one({"request_id": request_id})
-        if not transfer_req:
-            raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+        transfer_req = await _load_transfer_request_or_404(request_id)
 
         if transfer_req["status"] != "pending":
             raise HTTPException(status_code=400, detail="Solicitud ya procesada")
 
-        # Execute the transfer
         source = await db.inventory.find_one(
             {
                 "product_id": transfer_req["product_id"],
@@ -772,65 +994,7 @@ def get_inventory_router(
                 status_code=400, detail="Stock insuficiente en bodega origen"
             )
 
-        # Update source
-        await db.inventory.update_one(
-            {
-                "product_id": transfer_req["product_id"],
-                "warehouse_id": transfer_req["from_warehouse_id"],
-            },
-            {"$inc": {"quantity": -transfer_req["quantity"]}},
-        )
-
-        await audit_service.log_inventory_movement(
-            product_id=transfer_req["product_id"],
-            warehouse_id=transfer_req["from_warehouse_id"],
-            quantity_change=-int(transfer_req["quantity"]),
-            reason="transfer_request_out",
-            actor=user,
-            branch_id=user.branch_id,
-            reference_id=request_id,
-            metadata={"to_warehouse": transfer_req["to_warehouse_id"]},
-        )
-
-        # Update destination
-        dest = await db.inventory.find_one(
-            {
-                "product_id": transfer_req["product_id"],
-                "warehouse_id": transfer_req["to_warehouse_id"],
-            }
-        )
-        if dest:
-            await db.inventory.update_one(
-                {
-                    "product_id": transfer_req["product_id"],
-                    "warehouse_id": transfer_req["to_warehouse_id"],
-                },
-                {"$inc": {"quantity": transfer_req["quantity"]}},
-            )
-        else:
-            await db.inventory.insert_one(
-                {
-                    "inventory_id": f"inv_{uuid.uuid4().hex[:8]}",
-                    "product_id": transfer_req["product_id"],
-                    "warehouse_id": transfer_req["to_warehouse_id"],
-                    "quantity": transfer_req["quantity"],
-                    "min_stock": 5,
-                    "last_updated": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-
-        await audit_service.log_inventory_movement(
-            product_id=transfer_req["product_id"],
-            warehouse_id=transfer_req["to_warehouse_id"],
-            quantity_change=int(transfer_req["quantity"]),
-            reason="transfer_request_in",
-            actor=user,
-            branch_id=user.branch_id,
-            reference_id=request_id,
-            metadata={"from_warehouse": transfer_req["from_warehouse_id"]},
-        )
-
-        # Update request status
+        now_iso = datetime.now(timezone.utc).isoformat()
         await db.transfer_requests.update_one(
             {"request_id": request_id},
             {
@@ -838,7 +1002,7 @@ def get_inventory_router(
                     "status": "approved",
                     "approved_by": user.user_id,
                     "approved_by_name": user.name,
-                    "approved_at": datetime.now(timezone.utc).isoformat(),
+                    "approved_at": now_iso,
                 }
             },
         )
@@ -859,7 +1023,191 @@ def get_inventory_router(
             },
         )
 
-        return {"message": "Traslado aprobado y ejecutado"}
+        return {
+            "message": "Traslado aprobado. Pendiente de despacho desde bodega origen.",
+            "request_id": request_id,
+            "status": "approved",
+        }
+
+    @router.put("/inventory/transfer-requests/{request_id}/ship")
+    async def ship_transfer_request(request_id: str, request: Request):
+        """Dispatch approved transfer: deduct origin stock and mark as in transit."""
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+
+        transfer_req = await _load_transfer_request_or_404(request_id)
+        if transfer_req["status"] != "approved":
+            raise HTTPException(status_code=400, detail="Solo se pueden despachar traslados aprobados")
+
+        from_wh = transfer_req["from_warehouse_id"]
+        if not _user_can_operate_transfer_warehouse(
+            user,
+            from_wh,
+            elevated_roles={"gerencia", "supervisor"},
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Solo la bodega de origen puede despachar este traslado",
+            )
+
+        qty = int(transfer_req["quantity"])
+        source = await db.inventory.find_one(
+            {"product_id": transfer_req["product_id"], "warehouse_id": from_wh}
+        )
+        if not source or int(source.get("quantity") or 0) < qty:
+            raise HTTPException(status_code=400, detail="Stock insuficiente en bodega origen")
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        await db.inventory.update_one(
+            {"product_id": transfer_req["product_id"], "warehouse_id": from_wh},
+            {
+                "$inc": {"quantity": -qty},
+                "$set": {"last_updated": now_iso},
+            },
+        )
+
+        await audit_service.log_inventory_movement(
+            product_id=transfer_req["product_id"],
+            warehouse_id=from_wh,
+            quantity_change=-qty,
+            reason="transfer_shipped",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=request_id,
+            metadata={
+                "to_warehouse_id": transfer_req["to_warehouse_id"],
+                "in_transit": True,
+            },
+        )
+
+        await db.transfer_requests.update_one(
+            {"request_id": request_id},
+            {
+                "$set": {
+                    "status": "shipped",
+                    "shipped_by": user.user_id,
+                    "shipped_by_name": user.name,
+                    "shipped_at": now_iso,
+                }
+            },
+        )
+
+        await audit_service.log_audit_event(
+            action="inventory_transfer_shipped",
+            actor_id=user.user_id,
+            actor_name=user.name,
+            actor_role=user.role,
+            entity="transfer_request",
+            entity_id=request_id,
+            branch_id=user.branch_id,
+            metadata={
+                "product_id": transfer_req["product_id"],
+                "from_warehouse_id": from_wh,
+                "to_warehouse_id": transfer_req["to_warehouse_id"],
+                "quantity": qty,
+            },
+        )
+
+        return {
+            "message": "Mercancía despachada. En tránsito hacia bodega destino.",
+            "request_id": request_id,
+            "status": "shipped",
+        }
+
+    @router.put("/inventory/transfer-requests/{request_id}/receive")
+    async def receive_transfer_request(request_id: str, request: Request):
+        """Receive in-transit transfer: increment destination stock and finalize."""
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+
+        transfer_req = await _load_transfer_request_or_404(request_id)
+        if transfer_req["status"] != "shipped":
+            raise HTTPException(
+                status_code=400,
+                detail="Solo se pueden recibir traslados en estado despachado/en tránsito",
+            )
+
+        to_wh = transfer_req["to_warehouse_id"]
+        if not _user_can_operate_transfer_warehouse(
+            user,
+            to_wh,
+            elevated_roles={"gerencia", "supervisor"},
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Solo la bodega de destino puede confirmar la recepción",
+            )
+
+        qty = int(transfer_req["quantity"])
+        now_iso = datetime.now(timezone.utc).isoformat()
+        dest = await db.inventory.find_one(
+            {"product_id": transfer_req["product_id"], "warehouse_id": to_wh}
+        )
+        if dest:
+            await db.inventory.update_one(
+                {"product_id": transfer_req["product_id"], "warehouse_id": to_wh},
+                {
+                    "$inc": {"quantity": qty},
+                    "$set": {"last_updated": now_iso},
+                },
+            )
+        else:
+            await db.inventory.insert_one(
+                {
+                    "inventory_id": f"inv_{uuid.uuid4().hex[:8]}",
+                    "product_id": transfer_req["product_id"],
+                    "warehouse_id": to_wh,
+                    "quantity": qty,
+                    "min_stock": 5,
+                    "last_updated": now_iso,
+                }
+            )
+
+        await audit_service.log_inventory_movement(
+            product_id=transfer_req["product_id"],
+            warehouse_id=to_wh,
+            quantity_change=qty,
+            reason="transfer_received",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=request_id,
+            metadata={
+                "from_warehouse_id": transfer_req["from_warehouse_id"],
+                "in_transit": False,
+            },
+        )
+
+        await db.transfer_requests.update_one(
+            {"request_id": request_id},
+            {
+                "$set": {
+                    "status": "received",
+                    "received_by": user.user_id,
+                    "received_by_name": user.name,
+                    "received_at": now_iso,
+                }
+            },
+        )
+
+        await audit_service.log_audit_event(
+            action="inventory_transfer_received",
+            actor_id=user.user_id,
+            actor_name=user.name,
+            actor_role=user.role,
+            entity="transfer_request",
+            entity_id=request_id,
+            branch_id=user.branch_id,
+            metadata={
+                "product_id": transfer_req["product_id"],
+                "from_warehouse_id": transfer_req["from_warehouse_id"],
+                "to_warehouse_id": to_wh,
+                "quantity": qty,
+            },
+        )
+
+        return {
+            "message": "Recepción confirmada. Inventario actualizado en bodega destino.",
+            "request_id": request_id,
+            "status": "received",
+        }
 
     @router.put("/inventory/transfer-requests/{request_id}/reject")
     async def reject_transfer_request(request_id: str, request: Request, reason: str = ""):

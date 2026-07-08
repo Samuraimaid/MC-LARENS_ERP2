@@ -16,7 +16,8 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
-  Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode
+  Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
+  Truck, Trash2
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -30,6 +31,10 @@ export function InventoryPage() {
   const canViewInventoryLabels = hasPermission("inventory_labels", "view");
   const canPrintInventoryLabels = hasPermission("inventory_labels", "create");
   const isWarehouseRole = ["bodega", "bodegas"].includes(String(user?.role || "").toLowerCase());
+  const userRole = String(user?.role || "").toLowerCase();
+  const canManageLogistics = ["gerencia", "supervisor", "jefe_tienda", "bodegas"].includes(userRole);
+  const canApproveTransfers = ["gerencia", "supervisor"].includes(userRole);
+  const canOperateTransfers = canManageLogistics && canEditInventory;
   const [inventory, setInventory] = useState([]);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -133,6 +138,13 @@ export function InventoryPage() {
     warehouse_id: "",
     quantity: 1,
   });
+
+  const [intakeForm, setIntakeForm] = useState({
+    warehouse_id: "",
+    lines: [{ line_id: "line_1", product_id: "", quantity: 1 }],
+  });
+  const [intakeProductSearch, setIntakeProductSearch] = useState("");
+  const [intakeSubmitting, setIntakeSubmitting] = useState(false);
 
   // Image URL input
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -244,6 +256,25 @@ export function InventoryPage() {
     fetchOperationalRequests();
   }, [fetchOperationalRequests]);
 
+  useEffect(() => {
+    if (!canManageLogistics) return;
+    if (isWarehouseRole && user?.warehouse_id) {
+      setIntakeForm((prev) => (
+        prev.warehouse_id ? prev : { ...prev, warehouse_id: user.warehouse_id }
+      ));
+    }
+  }, [canManageLogistics, isWarehouseRole, user?.warehouse_id]);
+
+  const logisticsWarehouses = warehouses.filter((warehouse) => {
+    if (isWarehouseRole && user?.warehouse_id) {
+      return warehouse.warehouse_id === user.warehouse_id;
+    }
+    if (user?.branch_id) {
+      return warehouse.branch_id === user.branch_id;
+    }
+    return true;
+  });
+
   const buildKardexParams = () => {
     const params = new URLSearchParams();
     if (kardexProductId !== "all") params.append("product_id", kardexProductId);
@@ -353,7 +384,7 @@ export function InventoryPage() {
   const approveTransferRequest = async (requestId) => {
     try {
       await axios.put(`${API}/inventory/transfer-requests/${requestId}/approve`, null, { withCredentials: true });
-      toast.success("Traslado aprobado");
+      toast.success("Traslado aprobado. Pendiente de despacho desde bodega origen.");
       fetchOperationalRequests();
       fetchKardex();
       fetchData();
@@ -372,6 +403,125 @@ export function InventoryPage() {
       fetchOperationalRequests();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al rechazar traslado");
+    }
+  };
+
+  const shipTransferRequest = async (requestId) => {
+    try {
+      await axios.put(`${API}/inventory/transfer-requests/${requestId}/ship`, null, { withCredentials: true });
+      toast.success("Mercancía despachada. En tránsito hacia bodega destino.");
+      fetchOperationalRequests();
+      fetchKardex();
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al despachar traslado");
+    }
+  };
+
+  const receiveTransferRequest = async (requestId) => {
+    try {
+      await axios.put(`${API}/inventory/transfer-requests/${requestId}/receive`, null, { withCredentials: true });
+      toast.success("Recepción confirmada. Inventario actualizado.");
+      fetchOperationalRequests();
+      fetchKardex();
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al confirmar recepción");
+    }
+  };
+
+  const addIntakeLine = () => {
+    setIntakeForm((prev) => ({
+      ...prev,
+      lines: [
+        ...prev.lines,
+        {
+          line_id: `line_${Date.now()}`,
+          product_id: "",
+          quantity: 1,
+        },
+      ],
+    }));
+  };
+
+  const removeIntakeLine = (lineId) => {
+    setIntakeForm((prev) => {
+      if (prev.lines.length <= 1) return prev;
+      return {
+        ...prev,
+        lines: prev.lines.filter((line) => line.line_id !== lineId),
+      };
+    });
+  };
+
+  const updateIntakeLine = (lineId, field, value) => {
+    setIntakeForm((prev) => ({
+      ...prev,
+      lines: prev.lines.map((line) => (
+        line.line_id === lineId ? { ...line, [field]: value } : line
+      )),
+    }));
+  };
+
+  const resetIntakeForm = () => {
+    setIntakeForm({
+      warehouse_id: isWarehouseRole && user?.warehouse_id ? user.warehouse_id : "",
+      lines: [{ line_id: `line_${Date.now()}`, product_id: "", quantity: 1 }],
+    });
+    setIntakeProductSearch("");
+  };
+
+  const submitBlindIntake = async () => {
+    if (!canOperateTransfers) {
+      toast.error("No tienes permiso para registrar ingresos de productos");
+      return;
+    }
+    const warehouseId = intakeForm.warehouse_id;
+    if (!warehouseId) {
+      toast.error("Selecciona la bodega de destino");
+      return;
+    }
+
+    const items = [];
+    for (const line of intakeForm.lines) {
+      const productId = (line.product_id || "").trim();
+      const quantity = Number(line.quantity || 0);
+      if (!productId) {
+        toast.error("Selecciona un producto en cada línea");
+        return;
+      }
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        toast.error("La cantidad recibida debe ser mayor a cero");
+        return;
+      }
+      items.push({ product_id: productId, quantity });
+    }
+
+    setIntakeSubmitting(true);
+    try {
+      const response = await axios.post(
+        `${API}/inventory/purchase-receipt`,
+        {
+          warehouse_id: warehouseId,
+          items,
+        },
+        { withCredentials: true },
+      );
+      const data = response.data || {};
+      const summary = (data.items || [])
+        .map((item) => `${getProductLabelById(item.product_id)}: +${item.quantity} uds (total ${item.updated_quantity})`)
+        .join(" · ");
+      toast.success(
+        `Ingreso ${data.receipt_id || ""} registrado. ${summary}`,
+        { duration: 8000 },
+      );
+      resetIntakeForm();
+      fetchData();
+      fetchKardex();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al registrar ingreso de productos");
+    } finally {
+      setIntakeSubmitting(false);
     }
   };
 
@@ -758,6 +908,10 @@ export function InventoryPage() {
       transfer_in: "Transferencia entrada",
       transfer_request_out: "Solicitud traslado salida",
       transfer_request_in: "Solicitud traslado entrada",
+      transfer_shipped: "Traslado despachado",
+      transfer_received: "Traslado recibido",
+      inventory_blind_receipt: "Ingreso de productos",
+      manual_add_stock: "Ingreso manual stock",
       warranty_replacement_out: "Garantía reposición salida",
       return_approved_in: "Devolución aprobada",
       sample_dispatch_out: "Muestra entregada",
@@ -787,6 +941,53 @@ export function InventoryPage() {
     const warehouse = warehouses.find((w) => w.warehouse_id === warehouseId);
     return warehouse?.name || warehouseId || "-";
   };
+
+  const getTransferStatusLabel = (status) => {
+    const map = {
+      pending: "Pendiente",
+      approved: "Aprobado",
+      shipped: "En tránsito",
+      received: "Recibido",
+      rejected: "Rechazado",
+    };
+    return map[status] || status || "-";
+  };
+
+  const getTransferStatusVariant = (status) => {
+    if (status === "pending") return "secondary";
+    if (status === "approved") return "outline";
+    if (status === "shipped") return "default";
+    if (status === "received") return "default";
+    if (status === "rejected") return "destructive";
+    return "secondary";
+  };
+
+  const canShipTransfer = (req) => {
+    if (!canOperateTransfers || req.status !== "approved") return false;
+    if (["gerencia", "supervisor"].includes(userRole)) return true;
+    return user?.warehouse_id && req.from_warehouse_id === user.warehouse_id;
+  };
+
+  const canReceiveTransfer = (req) => {
+    if (!canOperateTransfers || req.status !== "shipped") return false;
+    if (["gerencia", "supervisor"].includes(userRole)) return true;
+    return user?.warehouse_id && req.to_warehouse_id === user.warehouse_id;
+  };
+
+  const inTransitTransfers = transferRequests.filter((req) => req.status === "shipped");
+  const approvedTransfers = transferRequests.filter((req) => req.status === "approved");
+  const pendingTransfers = transferRequests.filter((req) => req.status === "pending");
+
+  const intakeProductsFiltered = products
+    .filter((product) => {
+      const term = intakeProductSearch.trim().toLowerCase();
+      if (!term) return true;
+      return (
+        (product.name || "").toLowerCase().includes(term) ||
+        (product.sku || "").toLowerCase().includes(term)
+      );
+    })
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" }));
 
   const getBranchLabelById = (branchId) => {
     if (!branchId) return "Sin sucursal";
@@ -1587,8 +1788,14 @@ export function InventoryPage() {
       </div>
 
       <Tabs defaultValue="inventory" className="space-y-4">
-        <TabsList className="grid w-full max-w-sm grid-cols-2">
+        <TabsList className="grid w-full max-w-4xl grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="inventory">Inventario</TabsTrigger>
+          {canManageLogistics ? (
+            <TabsTrigger value="intake">Ingreso de Productos</TabsTrigger>
+          ) : null}
+          {canManageLogistics ? (
+            <TabsTrigger value="transit">Traslados</TabsTrigger>
+          ) : null}
           <TabsTrigger value="kardex">Kardex</TabsTrigger>
         </TabsList>
 
@@ -1804,6 +2011,235 @@ export function InventoryPage() {
       </Card>
       </TabsContent>
 
+      {canManageLogistics ? (
+      <TabsContent value="intake" className="space-y-4 mt-0">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Ingreso de Productos
+            </CardTitle>
+            <CardDescription>
+              Registro ciego de mercancía física: solo producto y cantidad. Sin costos ni proveedores.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="max-w-md">
+              <Label>Bodega de destino</Label>
+              <Select
+                value={intakeForm.warehouse_id}
+                onValueChange={(value) => setIntakeForm((prev) => ({ ...prev, warehouse_id: value }))}
+              >
+                <SelectTrigger data-testid="intake-warehouse-select">
+                  <SelectValue placeholder="Seleccionar bodega" />
+                </SelectTrigger>
+                <SelectContent>
+                  {logisticsWarehouses.map((warehouse) => (
+                    <SelectItem key={warehouse.warehouse_id} value={warehouse.warehouse_id}>
+                      {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-base">Líneas de producto</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addIntakeLine}>
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar línea
+              </Button>
+            </div>
+
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar producto..."
+                value={intakeProductSearch}
+                onChange={(e) => setIntakeProductSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-3">
+              {intakeForm.lines.map((line, index) => (
+                <div key={line.line_id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Línea {index + 1}</span>
+                    {intakeForm.lines.length > 1 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeIntakeLine(line.line_id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="md:col-span-2">
+                      <Label>Producto</Label>
+                      <Select
+                        value={line.product_id}
+                        onValueChange={(value) => updateIntakeLine(line.line_id, "product_id", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar producto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {intakeProductsFiltered.map((product) => (
+                            <SelectItem key={product.product_id} value={product.product_id}>
+                              {product.name} ({product.sku || "sin-sku"})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Cantidad</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={line.quantity}
+                        onChange={(e) => updateIntakeLine(line.line_id, "quantity", parseInt(e.target.value, 10) || 1)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button
+                onClick={submitBlindIntake}
+                disabled={!canOperateTransfers || intakeSubmitting}
+                data-testid="submit-blind-intake-btn"
+              >
+                {intakeSubmitting ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Procesando...</>
+                ) : (
+                  <><Package className="h-4 w-4 mr-2" /> Registrar Ingreso</>
+                )}
+              </Button>
+              <Button type="button" variant="outline" onClick={resetIntakeForm}>
+                Limpiar formulario
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      ) : null}
+
+      {canManageLogistics ? (
+      <TabsContent value="transit" className="space-y-4 mt-0">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Pendientes de Aprobación</CardTitle>
+              <CardDescription>Solicitudes que requieren visto bueno de supervisor/gerencia.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-72 overflow-auto">
+                {pendingTransfers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin solicitudes pendientes</p>
+                ) : (
+                  pendingTransfers.map((req) => (
+                    <div key={req.request_id} className="border rounded-md p-3 text-sm space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{getProductLabelById(req.product_id)}</span>
+                        <Badge variant={getTransferStatusVariant(req.status)}>{getTransferStatusLabel(req.status)}</Badge>
+                      </div>
+                      <div className="text-muted-foreground">
+                        {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
+                      </div>
+                      {canApproveTransfers ? (
+                        <div className="flex gap-2 pt-1">
+                          <Button size="sm" onClick={() => approveTransferRequest(req.request_id)}>Aprobar</Button>
+                          <Button size="sm" variant="outline" onClick={() => rejectTransferRequest(req.request_id)}>Rechazar</Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Aprobados — Pendiente de Despacho</CardTitle>
+              <CardDescription>La bodega origen debe despachar para poner la mercancía en tránsito.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-72 overflow-auto">
+                {approvedTransfers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin traslados aprobados pendientes de despacho</p>
+                ) : (
+                  approvedTransfers.map((req) => (
+                    <div key={req.request_id} className="border rounded-md p-3 text-sm space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{getProductLabelById(req.product_id)}</span>
+                        <Badge variant={getTransferStatusVariant(req.status)}>{getTransferStatusLabel(req.status)}</Badge>
+                      </div>
+                      <div className="text-muted-foreground">
+                        {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
+                      </div>
+                      {canShipTransfer(req) ? (
+                        <Button size="sm" className="mt-1" onClick={() => shipTransferRequest(req.request_id)}>
+                          <Truck className="h-4 w-4 mr-1" />
+                          Despachar
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">En Tránsito — Confirmar Recepción</CardTitle>
+            <CardDescription>
+              Mercancía despachada desde origen. La bodega destino debe confirmar ingreso físico.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-96 overflow-auto">
+              {inTransitTransfers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay traslados en tránsito hacia tus bodegas</p>
+              ) : (
+                inTransitTransfers.map((req) => (
+                  <div key={req.request_id} className="border rounded-md p-3 text-sm space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{getProductLabelById(req.product_id)}</span>
+                      <Badge variant={getTransferStatusVariant(req.status)}>{getTransferStatusLabel(req.status)}</Badge>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Despachado: {formatDateTime(req.shipped_at)} {req.shipped_by_name ? `· ${req.shipped_by_name}` : ""}
+                    </div>
+                    {canReceiveTransfer(req) ? (
+                      <Button size="sm" onClick={() => receiveTransferRequest(req.request_id)} data-testid={`receive-transfer-${req.request_id}`}>
+                        <Package className="h-4 w-4 mr-1" />
+                        Confirmar Recepción
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Pendiente de confirmación en bodega destino</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      ) : null}
+
       <TabsContent value="kardex" className="space-y-4 mt-0">
 
       <Card>
@@ -1858,6 +2294,9 @@ export function InventoryPage() {
                 <SelectItem value="transfer_in">Transferencia entrada</SelectItem>
                 <SelectItem value="transfer_request_out">Solicitud traslado salida</SelectItem>
                 <SelectItem value="transfer_request_in">Solicitud traslado entrada</SelectItem>
+                <SelectItem value="transfer_shipped">Traslado despachado</SelectItem>
+                <SelectItem value="transfer_received">Traslado recibido</SelectItem>
+                <SelectItem value="inventory_blind_receipt">Ingreso de productos</SelectItem>
                 <SelectItem value="return_approved_in">Devolución aprobada</SelectItem>
                 <SelectItem value="sample_dispatch_out">Muestra entregada</SelectItem>
                 <SelectItem value="sample_dispatch_return">Muestra devuelta</SelectItem>
@@ -2050,7 +2489,7 @@ export function InventoryPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Solicitudes de Traslado</CardTitle>
-                <CardDescription>Aprobación/rechazo operativo desde el mismo módulo.</CardDescription>
+                <CardDescription>Flujo en dos pasos: aprobación, despacho origen y recepción destino.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-64 overflow-auto">
@@ -2061,20 +2500,30 @@ export function InventoryPage() {
                       <div key={req.request_id} className="border rounded-md p-2 text-sm space-y-1">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium">{getProductLabelById(req.product_id)}</span>
-                          <Badge variant={req.status === "pending" ? "secondary" : req.status === "approved" ? "default" : "destructive"}>
-                            {req.status || "-"}
+                          <Badge variant={getTransferStatusVariant(req.status)}>
+                            {getTransferStatusLabel(req.status)}
                           </Badge>
                         </div>
                         <div className="text-muted-foreground">
-                          {getWarehouseLabelById(req.source_warehouse_id)} → {getWarehouseLabelById(req.target_warehouse_id)} · cant. {req.quantity}
+                          {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
                         </div>
                         <div className="text-xs text-muted-foreground">{formatDateTime(req.created_at)}</div>
-                        {req.status === "pending" && canEditInventory && (
+                        {req.status === "pending" && canApproveTransfers && (
                           <div className="flex gap-2 pt-1">
                             <Button size="sm" onClick={() => approveTransferRequest(req.request_id)}>Aprobar</Button>
                             <Button size="sm" variant="outline" onClick={() => rejectTransferRequest(req.request_id)}>Rechazar</Button>
                           </div>
                         )}
+                        {canShipTransfer(req) ? (
+                          <Button size="sm" variant="outline" onClick={() => shipTransferRequest(req.request_id)}>
+                            Despachar
+                          </Button>
+                        ) : null}
+                        {canReceiveTransfer(req) ? (
+                          <Button size="sm" onClick={() => receiveTransferRequest(req.request_id)}>
+                            Confirmar Recepción
+                          </Button>
+                        ) : null}
                       </div>
                     ))
                   )}

@@ -17137,6 +17137,22 @@ async def run_full_simulation_suite_endpoint(request: Request):
     return report
 
 
+@api_router.post("/qa/run-logistic-simulation-suite")
+async def run_logistic_simulation_suite_endpoint(request: Request):
+    """Ejecuta simulación logística: ingreso ciego + traslado en 3 pasos."""
+    import asyncio
+
+    await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.qa.logistic_simulation_suite import run_logistic_simulation_suite
+
+    base_url = str(request.base_url).rstrip("/")
+    if not base_url.endswith("/api"):
+        base_url = f"{base_url}/api"
+
+    report = await asyncio.to_thread(run_logistic_simulation_suite, base_url)
+    return report
+
+
 @api_router.get("/warranties/claims")
 async def get_warranty_claims(request: Request, status: Optional[str] = None):
     await require_roles(request, ["gerencia", "supervisor", "instalaciones"])
