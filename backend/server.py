@@ -57,6 +57,7 @@ from backend.domains.integrations import (
     get_stripe_checkout_symbols as integrations_get_stripe_checkout_symbols,
     send_email_notification as integrations_send_email_notification,
 )
+from backend.domains.hr.payroll_engine import normalize_hr_employee_fields
 from backend.domains.hr.payroll_periods import (
     SCHEME_PAYROLL_9_24,
     format_quincena_label,
@@ -4609,6 +4610,7 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
         "warehouse_id": warehouse_id if warehouse_id not in ("", "none") else None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    update_data.update(normalize_hr_employee_fields(data))
 
     result = await db.users.update_one({"user_id": user_id}, {"$set": update_data})
     if result.matched_count == 0:
@@ -4768,6 +4770,7 @@ async def create_pin_user(payload: Dict[str, Any], request: Request):
     doc["login_pin_hash"] = hash_pin(login_pin_value)
     doc["login_pin_index"] = login_index
     doc["login_pin_last_set_at"] = now_iso
+    doc.update(normalize_hr_employee_fields(data))
 
     await db.users.insert_one(doc)
     # Return sanitized document
@@ -17192,6 +17195,52 @@ async def run_full_workshop_simulation_suite_endpoint(request: Request):
         base_url = f"{base_url}/api"
 
     report = await asyncio.to_thread(run_workshop_simulation_suite, base_url)
+    return report
+
+
+QA_DEBUG_COLLECTIONS = frozenset({
+    "sales",
+    "work_orders",
+    "hr_payroll_adjustments",
+    "hr_timeclock_events",
+    "petty_cash_expenses",
+})
+
+
+@api_router.post("/qa/debug/upsert-document")
+async def qa_debug_upsert_document(payload: Dict[str, Any], request: Request):
+    """Inyecta documentos controlados para suites QA (solo gerencia/programador)."""
+    await require_roles(request, ["gerencia", "programador"])
+    data = payload or {}
+    collection = str(data.get("collection") or "").strip()
+    document = data.get("document")
+    upsert_key = str(data.get("upsert_key") or "").strip()
+    if collection not in QA_DEBUG_COLLECTIONS:
+        raise HTTPException(status_code=400, detail="Colección no permitida para QA debug")
+    if not isinstance(document, dict) or not document:
+        raise HTTPException(status_code=400, detail="document es requerido")
+    if not upsert_key or upsert_key not in document:
+        raise HTTPException(status_code=400, detail="upsert_key inválido")
+    target = getattr(db, collection, None)
+    if target is None:
+        raise HTTPException(status_code=400, detail="Colección no disponible")
+    await target.update_one({upsert_key: document[upsert_key]}, {"$set": document}, upsert=True)
+    return {"message": "Documento upserted", "collection": collection, "key": document[upsert_key]}
+
+
+@api_router.post("/qa/run-full-hr-simulation-suite")
+async def run_full_hr_simulation_suite_endpoint(request: Request):
+    """Ejecuta simulación E2E RRHH: nómina multi-sucursal, INSS, comprobantes y aislamiento supervisor."""
+    import asyncio
+
+    await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.qa.hr_simulation_suite import run_hr_simulation_suite
+
+    base_url = str(request.base_url).rstrip("/")
+    if not base_url.endswith("/api"):
+        base_url = f"{base_url}/api"
+
+    report = await asyncio.to_thread(run_hr_simulation_suite, base_url)
     return report
 
 

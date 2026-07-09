@@ -15,6 +15,17 @@ from fastapi.responses import Response, StreamingResponse
 from backend.domains.export.dependencies import (
     get_reportlab_symbols as export_get_reportlab_symbols,
 )
+from backend.domains.hr.pay_stub_pdf import draw_pay_stub_pdf
+from backend.domains.hr.payroll_engine import (
+    INSS_LABORAL_RATE,
+    build_payroll_snapshot,
+    resolve_processing_period,
+)
+from backend.domains.hr.payroll_periods import (
+    format_pay_schedule_label,
+    get_branch_payroll_scheme,
+    get_period_bounds_for_branch,
+)
 
 
 def _get_pandas() -> Any:
@@ -43,6 +54,8 @@ def get_human_resources_router(
     router = APIRouter(prefix="/hr", tags=["human-resources"])
 
     HR_ALLOWED_ROLES = ["gerencia", "recursos_humanos", "supervisor", "programador"]
+    HR_GLOBAL_ACCESS_ROLES = {"gerencia", "recursos_humanos", "programador"}
+    HR_BRANCH_SCOPED_ROLES = {"supervisor", "jefe_tienda"}
     TECHNICIAN_ROLES = {"instalaciones", "tecnico", "bodegas", "polarizador", "electrico"}
     CLOCK_EVENTS = {"clock_in", "lunch_out", "lunch_in", "clock_out"}
     PIN_LENGTH = 4
@@ -81,6 +94,48 @@ def get_human_resources_router(
 
     def now_local() -> datetime:
         return datetime.now(ATTENDANCE_TIMEZONE)
+
+    def _actor_role_key(actor: Any) -> str:
+        return str(getattr(actor, "role", "") or "").strip().lower()
+
+    def _actor_has_global_hr_access(actor: Any) -> bool:
+        return _actor_role_key(actor) in HR_GLOBAL_ACCESS_ROLES
+
+    def _resolve_hr_branch_scope(actor: Any, requested_branch_id: Optional[str] = None) -> Optional[str]:
+        role = _actor_role_key(actor)
+        actor_branch = str(getattr(actor, "branch_id", "") or "").strip() or None
+        if role in HR_GLOBAL_ACCESS_ROLES:
+            return requested_branch_id or None
+        if role in HR_BRANCH_SCOPED_ROLES:
+            if requested_branch_id and actor_branch and requested_branch_id != actor_branch:
+                raise HTTPException(
+                    status_code=403,
+                    detail="No puedes consultar datos de otra sucursal",
+                )
+            return actor_branch
+        return requested_branch_id
+
+    async def _ensure_user_branch_access(actor: Any, user_doc: Dict[str, Any]) -> None:
+        if _actor_has_global_hr_access(actor):
+            return
+        role = _actor_role_key(actor)
+        if role not in HR_BRANCH_SCOPED_ROLES:
+            return
+        actor_branch = str(getattr(actor, "branch_id", "") or "").strip()
+        user_branch = str(user_doc.get("branch_id") or "").strip()
+        if actor_branch and user_branch and actor_branch != user_branch:
+            raise HTTPException(
+                status_code=403,
+                detail="El empleado no pertenece a tu sucursal",
+            )
+
+    async def _get_branch_name_map() -> Dict[str, str]:
+        docs = await db.branches.find({}, {"_id": 0, "branch_id": 1, "name": 1}).to_list(100)
+        return {
+            str(item.get("branch_id")): str(item.get("name") or item.get("branch_id"))
+            for item in docs
+            if item.get("branch_id")
+        }
 
     def expected_clock_event_for_index(index: int) -> Optional[str]:
         if 0 <= index < len(ORDERED_CLOCK_EVENTS):
@@ -600,13 +655,21 @@ def get_human_resources_router(
     async def hr_timeclock_events(
         request: Request,
         user_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
         start: Optional[str] = None,
         end: Optional[str] = None,
         limit: int = 300,
     ):
-        await require_roles(request, HR_ALLOWED_ROLES)
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        enforced_branch = _resolve_hr_branch_scope(actor, branch_id)
         query: Dict[str, Any] = {}
+        if enforced_branch:
+            query["branch_id"] = enforced_branch
         if user_id:
+            if enforced_branch:
+                target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "branch_id": 1})
+                if target:
+                    await _ensure_user_branch_access(actor, target)
             query["user_id"] = user_id
         if start or end:
             query["created_at"] = {}
@@ -758,9 +821,21 @@ def get_human_resources_router(
         return await db.hr_attendance_settings_audit.find({}, {"_id": 0}).sort("changed_at", -1).to_list(limit)
 
     @router.get("/attendance/incidents")
-    async def get_attendance_incidents(request: Request, limit: int = 200):
-        await require_roles(request, HR_ALLOWED_ROLES)
-        return await db.hr_attendance_incidents.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    async def get_attendance_incidents(
+        request: Request,
+        branch_id: Optional[str] = None,
+        limit: int = 200,
+    ):
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        enforced_branch = _resolve_hr_branch_scope(actor, branch_id)
+        query: Dict[str, Any] = {}
+        if enforced_branch:
+            branch_users = await db.users.find(
+                {"branch_id": enforced_branch, "is_pin_user": True},
+                {"_id": 0, "user_id": 1},
+            ).to_list(3000)
+            query["user_id"] = {"$in": [item.get("user_id") for item in branch_users if item.get("user_id")]}
+        return await db.hr_attendance_incidents.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
 
     @router.get("/attendance/reports/biweekly")
     async def get_attendance_biweekly_report(
@@ -770,7 +845,8 @@ def get_human_resources_router(
         branch_id: Optional[str] = None,
         include_test_users: bool = False,
     ):
-        await require_roles(request, HR_ALLOWED_ROLES)
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        branch_id = _resolve_hr_branch_scope(actor, branch_id)
 
         def is_test_user(user_doc: Dict[str, Any]) -> bool:
             name = str(user_doc.get("name") or "").strip().lower()
@@ -949,12 +1025,10 @@ def get_human_resources_router(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Fechas inválidas")
         else:
-            if now_local_dt.day <= 15:
-                start_local_date = now_local_dt.date().replace(day=1)
-                end_local_date = now_local_dt.date().replace(day=15)
-            else:
-                start_local_date = now_local_dt.date().replace(day=16)
-                end_local_date = now_local_dt.date()
+            start_local_date, end_local_date = get_period_bounds_for_branch(
+                branch_id,
+                now_local_dt.date(),
+            )
 
         start_local = datetime.combine(start_local_date, time(0, 0), tzinfo=ATTENDANCE_TIMEZONE)
         end_local = datetime.combine(end_local_date + timedelta(days=1), time(0, 0), tzinfo=ATTENDANCE_TIMEZONE)
@@ -1078,6 +1152,9 @@ def get_human_resources_router(
         return {
             "start_date": start_local_date.isoformat(),
             "end_date": end_local_date.isoformat(),
+            "branch_id": branch_id,
+            "payroll_scheme": get_branch_payroll_scheme(branch_id),
+            "pay_schedule_label": format_pay_schedule_label(branch_id),
             "previous_start_date": previous_start_date.isoformat(),
             "previous_end_date": previous_end_date.isoformat(),
             "summary": {
@@ -1425,13 +1502,24 @@ def get_human_resources_router(
     async def get_payroll_adjustments(
         request: Request,
         user_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
         adjustment_type: Optional[str] = None,
         limit: int = 400,
     ):
-        await require_roles(request, HR_ALLOWED_ROLES)
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        enforced_branch = _resolve_hr_branch_scope(actor, branch_id)
         query: Dict[str, Any] = {}
         if user_id:
+            target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "branch_id": 1})
+            if target:
+                await _ensure_user_branch_access(actor, target)
             query["user_id"] = user_id
+        elif enforced_branch:
+            branch_users = await db.users.find(
+                {"branch_id": enforced_branch, "is_pin_user": True},
+                {"_id": 0, "user_id": 1},
+            ).to_list(3000)
+            query["user_id"] = {"$in": [item.get("user_id") for item in branch_users if item.get("user_id")]}
         if adjustment_type:
             query["adjustment_type"] = adjustment_type
         return await db.hr_payroll_adjustments.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
@@ -1739,6 +1827,250 @@ def get_human_resources_router(
 
         result.sort(key=lambda item: (not item.get("overdue"), item.get("technician_name") or ""))
         return result
+
+    @router.get("/payroll/policies")
+    async def get_payroll_policies(request: Request, branch_id: Optional[str] = None):
+        await require_roles(request, HR_ALLOWED_ROLES)
+        branches = await db.branches.find({}, {"_id": 0, "branch_id": 1, "name": 1}).to_list(50)
+        rows = []
+        for branch in branches:
+            bid = str(branch.get("branch_id") or "")
+            if branch_id and bid != branch_id:
+                continue
+            rows.append(
+                {
+                    "branch_id": bid,
+                    "branch_name": branch.get("name") or bid,
+                    "payroll_scheme": get_branch_payroll_scheme(bid),
+                    "pay_schedule_label": format_pay_schedule_label(bid),
+                    "inss_laboral_rate": INSS_LABORAL_RATE,
+                    "attendance_bonus_amount": float(os.environ.get("HR_ATTENDANCE_BONUS_AMOUNT", "500")),
+                }
+            )
+        return rows
+
+    async def _payroll_attendance_metrics(
+        *,
+        user_id: str,
+        period_start: date,
+        period_end: date,
+    ) -> Dict[str, Any]:
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "branch_id": 1})
+        settings = await get_effective_attendance_settings((user or {}).get("branch_id"))
+        start_local = datetime.combine(period_start, time(0, 0), tzinfo=ATTENDANCE_TIMEZONE)
+        end_local = datetime.combine(period_end + timedelta(days=1), time(0, 0), tzinfo=ATTENDANCE_TIMEZONE)
+        events = await db.hr_timeclock_events.find(
+            {
+                "user_id": user_id,
+                "created_at": {
+                    "$gte": start_local.astimezone(timezone.utc).isoformat(),
+                    "$lt": end_local.astimezone(timezone.utc).isoformat(),
+                },
+            },
+            {"_id": 0},
+        ).sort("created_at", 1).to_list(5000)
+
+        events_by_day: Dict[str, List[Dict[str, Any]]] = {}
+        for item in events:
+            created_at = parse_iso(item.get("created_at"))
+            if not created_at:
+                continue
+            day_key = created_at.astimezone(ATTENDANCE_TIMEZONE).date().isoformat()
+            events_by_day.setdefault(day_key, []).append(item)
+
+        tardies = 0
+        absences = 0
+        late_minutes = 0
+        lunch_over_minutes = 0
+        range_days = (period_end - period_start).days + 1
+        for day_offset in range(range_days):
+            current_date = period_start + timedelta(days=day_offset)
+            if current_date.weekday() == 6:
+                continue
+            day_key = current_date.isoformat()
+            day_events = events_by_day.get(day_key, [])
+            first_clock_in = None
+            first_lunch_out = None
+            first_lunch_in = None
+            for event in day_events:
+                e_type = event.get("event_type")
+                e_dt = parse_iso(event.get("created_at"))
+                if not e_dt:
+                    continue
+                e_local = e_dt.astimezone(ATTENDANCE_TIMEZONE)
+                if e_type == "clock_in" and first_clock_in is None:
+                    first_clock_in = e_local
+                if e_type == "lunch_out" and first_lunch_out is None:
+                    first_lunch_out = e_local
+                if e_type == "lunch_in" and first_lunch_in is None:
+                    first_lunch_in = e_local
+            if not first_clock_in:
+                absences += 1
+                continue
+            entry_start = parse_hhmm(str(settings.get("entry_start") or "08:00"), "08:00")
+            tolerance_minutes = int(settings.get("entry_tolerance_minutes") or 10)
+            late_after = datetime.combine(current_date, entry_start, tzinfo=ATTENDANCE_TIMEZONE) + timedelta(
+                minutes=max(0, tolerance_minutes)
+            )
+            if first_clock_in > late_after:
+                tardies += 1
+                late_minutes += int((first_clock_in - late_after).total_seconds() // 60)
+            if first_lunch_out and first_lunch_in and first_lunch_in > first_lunch_out:
+                lunch_window = int((first_lunch_in - first_lunch_out).total_seconds() // 60)
+                allowed = int(settings.get("lunch_break_minutes") or 40)
+                if lunch_window > allowed:
+                    lunch_over_minutes += lunch_window - allowed
+        return {
+            "tardies": tardies,
+            "absences": absences,
+            "late_minutes": late_minutes,
+            "lunch_over_minutes": lunch_over_minutes,
+        }
+
+    async def _metrics_fn(
+        *,
+        db: Any,
+        user_id: str,
+        period_start: date,
+        period_end: date,
+    ) -> Dict[str, Any]:
+        return await _payroll_attendance_metrics(
+            user_id=user_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
+
+    @router.post("/pay-stubs")
+    async def process_pay_stub(payload: Dict[str, Any], request: Request):
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        data = payload or {}
+        user_id = str(data.get("user_id") or "").strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id es requerido")
+
+        user_doc = await db.users.find_one({"user_id": user_id, "is_pin_user": True}, {"_id": 0})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="Empleado no encontrado")
+        await _ensure_user_branch_access(actor, user_doc)
+
+        reference_date = None
+        if data.get("reference_date"):
+            try:
+                reference_date = datetime.fromisoformat(str(data["reference_date"])[:10]).date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail="reference_date inválida")
+
+        period_start_raw = data.get("period_start")
+        period_end_raw = data.get("period_end")
+        period_start = period_end = None
+        if period_start_raw and period_end_raw:
+            try:
+                period_start = datetime.fromisoformat(str(period_start_raw)[:10]).date()
+                period_end = datetime.fromisoformat(str(period_end_raw)[:10]).date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail="period_start/period_end inválidas")
+
+        offset = int(data.get("period_offset") or 0)
+        period_start, period_end = resolve_processing_period(
+            user_doc,
+            reference_date=reference_date,
+            period_start=period_start,
+            period_end=period_end,
+            offset=offset,
+        )
+
+        existing = await db.hr_pay_stubs.find_one(
+            {
+                "user_id": user_id,
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+            },
+            {"_id": 0},
+        )
+        if existing and not bool(data.get("force_reprocess")):
+            return {"message": "Comprobante ya procesado", "pay_stub": existing}
+
+        branch_names = await _get_branch_name_map()
+        snapshot = await build_payroll_snapshot(
+            db,
+            user_doc,
+            period_start=period_start,
+            period_end=period_end,
+            attendance_metrics_fn=_metrics_fn,
+            branch_name=branch_names.get(str(user_doc.get("branch_id") or ""), ""),
+        )
+        snapshot["processed_by"] = actor.user_id
+        snapshot["processed_at"] = now_iso()
+        await db.hr_pay_stubs.update_one(
+            {
+                "user_id": user_id,
+                "period_start": snapshot["period_start"],
+                "period_end": snapshot["period_end"],
+            },
+            {"$set": snapshot},
+            upsert=True,
+        )
+        return {"message": "Nómina procesada", "pay_stub": snapshot}
+
+    @router.get("/pay-stubs")
+    async def list_pay_stubs(
+        request: Request,
+        user_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
+        limit: int = 200,
+    ):
+        actor = await require_roles(request, HR_ALLOWED_ROLES)
+        enforced_branch = _resolve_hr_branch_scope(actor, branch_id)
+        query: Dict[str, Any] = {}
+        if user_id:
+            target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "branch_id": 1})
+            if target:
+                await _ensure_user_branch_access(actor, target)
+            query["user_id"] = user_id
+        if enforced_branch:
+            query["branch_id"] = enforced_branch
+        return await db.hr_pay_stubs.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
+
+    @router.get("/pay-stubs/mine")
+    async def list_my_pay_stubs(request: Request, limit: int = 50):
+        current_user = await require_auth(request)
+        return await db.hr_pay_stubs.find(
+            {"user_id": current_user.user_id},
+            {"_id": 0},
+        ).sort("created_at", -1).to_list(limit)
+
+    @router.get("/pay-stubs/{stub_id}")
+    async def get_pay_stub(stub_id: str, request: Request):
+        actor = await require_auth(request)
+        stub = await db.hr_pay_stubs.find_one({"stub_id": stub_id}, {"_id": 0})
+        if not stub:
+            raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+        if stub.get("user_id") != actor.user_id:
+            await require_roles(request, HR_ALLOWED_ROLES)
+            target = await db.users.find_one({"user_id": stub.get("user_id")}, {"_id": 0, "branch_id": 1})
+            if target:
+                await _ensure_user_branch_access(actor, target)
+        return stub
+
+    @router.get("/pay-stubs/{stub_id}/pdf")
+    async def download_pay_stub_pdf(stub_id: str, request: Request):
+        actor = await require_auth(request)
+        stub = await db.hr_pay_stubs.find_one({"stub_id": stub_id}, {"_id": 0})
+        if not stub:
+            raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+        if stub.get("user_id") != actor.user_id:
+            await require_roles(request, HR_ALLOWED_ROLES)
+            target = await db.users.find_one({"user_id": stub.get("user_id")}, {"_id": 0, "branch_id": 1})
+            if target:
+                await _ensure_user_branch_access(actor, target)
+        letter, canvas = _get_reportlab_symbols()
+        pdf_bytes = draw_pay_stub_pdf(stub, letter=letter, canvas=canvas)
+        filename = f"colilla_{stub_id}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @router.get("/summary")
     async def get_hr_summary(request: Request):

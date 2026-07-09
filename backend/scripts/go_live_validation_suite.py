@@ -60,14 +60,27 @@ class ApiClient:
         return resp, elapsed_ms
 
 
+def _biweekly_range_params() -> Dict[str, str]:
+    today = date.today()
+    if today.day <= 15:
+        start = today.replace(day=1)
+        end = today.replace(day=15)
+    else:
+        start = today.replace(day=16)
+        end = today
+    return {"start_date": start.isoformat(), "end_date": end.isoformat()}
+
+
 def phase_hr(client: ApiClient) -> bool:
     phase = "hr"
     ok = True
+    biweekly_params = _biweekly_range_params()
     checks = [
         ("/hr/summary", None),
         ("/hr/tools/audit-schedule", None),
-        ("/hr/attendance/reports/biweekly", {"reference_date": date.today().isoformat()}),
+        ("/hr/attendance/reports/biweekly", biweekly_params),
         ("/hr/payroll-adjustments", {"limit": 5}),
+        ("/hr/pay-stubs", {"limit": 5}),
     ]
     for path, params in checks:
         try:

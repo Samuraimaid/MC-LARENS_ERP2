@@ -50,6 +50,15 @@ export function HumanResourcesPage() {
   const [biweeklySummary, setBiweeklySummary] = useState(null);
   const [selectedBiweeklyRow, setSelectedBiweeklyRow] = useState(null);
   const [myOverview, setMyOverview] = useState(null);
+  const [payrollAdjustments, setPayrollAdjustments] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [payStubs, setPayStubs] = useState([]);
+  const [myPayStubs, setMyPayStubs] = useState([]);
+  const [payStubForm, setPayStubForm] = useState({
+    user_id: "",
+    period_start: "",
+    period_end: "",
+  });
 
   const [attendanceSettingsForm, setAttendanceSettingsForm] = useState({
     scope: "global",
@@ -152,8 +161,12 @@ export function HumanResourcesPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const myOverviewRes = await axios.get(`${API}/hr/my/overview`, { withCredentials: true }).catch(() => ({ data: null }));
+      const [myOverviewRes, myPayStubsRes] = await Promise.all([
+        axios.get(`${API}/hr/my/overview`, { withCredentials: true }).catch(() => ({ data: null })),
+        axios.get(`${API}/hr/pay-stubs/mine`, { withCredentials: true }).catch(() => ({ data: [] })),
+      ]);
       setMyOverview(myOverviewRes.data || null);
+      setMyPayStubs(Array.isArray(myPayStubsRes.data) ? myPayStubsRes.data : []);
 
       if (!canView) {
         return;
@@ -171,6 +184,9 @@ export function HumanResourcesPage() {
         settingsRes,
         settingsAuditRes,
         biweeklyRes,
+        payrollAdjustmentsRes,
+        leavesRes,
+        payStubsRes,
       ] = await Promise.all([
         axios.get(`${API}/hr/summary`, { withCredentials: true }).catch(() => ({ data: null })),
         axios.get(`${API}/branches`, { withCredentials: true }).catch(() => ({ data: [] })),
@@ -183,6 +199,9 @@ export function HumanResourcesPage() {
         axios.get(`${API}/hr/attendance/settings`, { withCredentials: true }).catch(() => ({ data: null })),
         axios.get(`${API}/hr/attendance/settings/audit?limit=60`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/attendance/reports/biweekly`, { withCredentials: true }).catch(() => ({ data: { rows: [], summary: null } })),
+        axios.get(`${API}/hr/payroll-adjustments?limit=200`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/hr/leaves?limit=200`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/hr/pay-stubs?limit=120`, { withCredentials: true }).catch(() => ({ data: [] })),
       ]);
 
       setSummary(summaryRes.data || null);
@@ -200,6 +219,9 @@ export function HumanResourcesPage() {
         start_date: biweeklyRes.data?.start_date || "",
         end_date: biweeklyRes.data?.end_date || "",
       });
+      setPayrollAdjustments(Array.isArray(payrollAdjustmentsRes.data) ? payrollAdjustmentsRes.data : []);
+      setLeaves(Array.isArray(leavesRes.data) ? leavesRes.data : []);
+      setPayStubs(Array.isArray(payStubsRes.data) ? payStubsRes.data : []);
 
       const effectiveSettings = settingsRes.data?.effective;
       if (effectiveSettings) {
@@ -397,6 +419,31 @@ export function HumanResourcesPage() {
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo cargar el reporte quincenal");
     }
+  };
+
+  const processPayStub = async () => {
+    if (!payStubForm.user_id) {
+      toast.error("Selecciona un empleado");
+      return;
+    }
+    try {
+      const payload = {
+        user_id: payStubForm.user_id,
+        force_reprocess: true,
+      };
+      if (payStubForm.period_start) payload.period_start = payStubForm.period_start;
+      if (payStubForm.period_end) payload.period_end = payStubForm.period_end;
+      await axios.post(`${API}/hr/pay-stubs`, payload, { withCredentials: true });
+      toast.success("Nómina procesada y comprobante generado");
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo procesar la nómina");
+    }
+  };
+
+  const downloadPayStubPdf = (stubId) => {
+    if (!stubId) return;
+    window.open(`${API}/hr/pay-stubs/${stubId}/pdf`, "_blank");
   };
 
   const exportBiweeklyReport = (format = "csv") => {
@@ -824,6 +871,89 @@ export function HumanResourcesPage() {
               <Button onClick={createLeave} disabled={!canEdit}>Registrar ausencia</Button>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Procesar nómina y comprobantes</CardTitle>
+              <CardDescription>Genera colillas de pago con salario base, comisiones, INSS y deducciones.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <Label>Empleado</Label>
+                  <Select value={payStubForm.user_id} onValueChange={(v) => setPayStubForm({ ...payStubForm, user_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                    <SelectContent>{users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{getUserLabel(u.user_id)}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Inicio periodo</Label><Input type="date" value={payStubForm.period_start} onChange={(e) => setPayStubForm({ ...payStubForm, period_start: e.target.value })} /></div>
+                <div><Label>Fin periodo</Label><Input type="date" value={payStubForm.period_end} onChange={(e) => setPayStubForm({ ...payStubForm, period_end: e.target.value })} /></div>
+                <div className="flex items-end">
+                  <Button onClick={processPayStub} disabled={!canEdit} className="w-full">Procesar nómina</Button>
+                </div>
+              </div>
+              <Table>
+                <TableHeader><TableRow><TableHead>Empleado</TableHead><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {payStubs.slice(0, 30).map((item) => (
+                    <TableRow key={item.stub_id}>
+                      <TableCell>{item.user_name || getUserLabel(item.user_id)}</TableCell>
+                      <TableCell>{item.period_label || `${item.period_start} - ${item.period_end}`}</TableCell>
+                      <TableCell>{Number(item.gross_earnings || 0).toFixed(2)}</TableCell>
+                      <TableCell>{Number(item.inss_amount || 0).toFixed(2)}</TableCell>
+                      <TableCell>{Number(item.net_pay || 0).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => downloadPayStubPdf(item.stub_id)}>
+                          <Download className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Ajustes de nómina registrados</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Monto</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {payrollAdjustments.slice(0, 30).map((item) => (
+                    <TableRow key={item.adjustment_id}>
+                      <TableCell>{formatDateTime(item.effective_date || item.created_at)}</TableCell>
+                      <TableCell>{getUserLabel(item.user_id)}</TableCell>
+                      <TableCell>{item.adjustment_type}</TableCell>
+                      <TableCell>{Number(item.amount || 0).toFixed(2)}</TableCell>
+                      <TableCell>{item.notes || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Ausencias / permisos registrados</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader><TableRow><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Inicio</TableHead><TableHead>Fin</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {leaves.slice(0, 30).map((item) => (
+                    <TableRow key={item.leave_id}>
+                      <TableCell>{getUserLabel(item.user_id)}</TableCell>
+                      <TableCell>{item.leave_type}</TableCell>
+                      <TableCell>{item.start_date}</TableCell>
+                      <TableCell>{item.end_date}</TableCell>
+                      <TableCell>{item.status}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>}
 
         {canView && <TabsContent value="personnel" className="space-y-4">
@@ -1061,6 +1191,31 @@ export function HumanResourcesPage() {
                       <TableCell>{item.category || "-"}</TableCell>
                       <TableCell>{item.title || "-"}</TableCell>
                       <TableCell>{item.message || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Mis comprobantes de pago</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader><TableRow><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {myPayStubs.slice(0, 20).map((item) => (
+                    <TableRow key={item.stub_id}>
+                      <TableCell>{item.period_label || `${item.period_start} - ${item.period_end}`}</TableCell>
+                      <TableCell>{Number(item.gross_earnings || 0).toFixed(2)}</TableCell>
+                      <TableCell>{Number(item.inss_amount || 0).toFixed(2)}</TableCell>
+                      <TableCell>{Number(item.net_pay || 0).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => downloadPayStubPdf(item.stub_id)}>
+                          <Download className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

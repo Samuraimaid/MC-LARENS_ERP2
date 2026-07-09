@@ -142,12 +142,14 @@ def validate_expense_payload(
     if for_payment and monthly_cap > 0 and spent_month + amount > monthly_cap:
         errors.append("El gasto supera el tope mensual de caja chica")
 
+    employee_user_id = str(payload.get("employee_user_id") or "").strip() or None
     clean = {
         "amount": amount,
         "currency": currency,
         "category": category,
         "description": description,
         "beneficiary": beneficiary,
+        "employee_user_id": employee_user_id,
         "payment_method": str(payload.get("payment_method") or "cash").strip().lower() or "cash",
         "received_by": str(payload.get("received_by") or beneficiary).strip(),
         "notes": str(payload.get("notes") or "").strip(),

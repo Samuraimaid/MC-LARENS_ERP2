@@ -57,6 +57,10 @@ export function UsersAdminPage() {
   const [editRole, setEditRole] = useState("");
   const [editBranch, setEditBranch] = useState("");
   const [editWarehouse, setEditWarehouse] = useState("");
+  const [editBaseSalary, setEditBaseSalary] = useState("");
+  const [editEarnsCommissions, setEditEarnsCommissions] = useState(false);
+  const [editHasSocialSecurity, setEditHasSocialSecurity] = useState(false);
+  const [editEligibleAttendanceBonus, setEditEligibleAttendanceBonus] = useState(false);
   
   // PIN user dialogs
   const [showCreatePin, setShowCreatePin] = useState(false);
@@ -68,7 +72,11 @@ export function UsersAdminPage() {
     pin: "",
     login_pin: "",
     branch_id: "",
-    warehouse_id: ""
+    warehouse_id: "",
+    base_salary: "",
+    earns_commissions: false,
+    has_social_security: false,
+    eligible_for_attendance_bonus: false,
   });
   const [showPin, setShowPin] = useState(false);
   const [editingPinUser, setEditingPinUser] = useState(null);
@@ -463,6 +471,10 @@ export function UsersAdminPage() {
         role: editRole,
         branch_id: editBranch,
         warehouse_id: editWarehouse || null,
+        base_salary: Number(editBaseSalary || 0),
+        earns_commissions: editEarnsCommissions,
+        has_social_security: editHasSocialSecurity,
+        eligible_for_attendance_bonus: editEligibleAttendanceBonus,
       }, { withCredentials: true });
       toast.success("Rol actualizado");
       setEditingUser(null);
@@ -503,11 +515,28 @@ export function UsersAdminPage() {
         login_pin: pinForm.login_pin,
         branch_id: pinForm.branch_id,
         warehouse_id: pinForm.warehouse_id || null,
+        base_salary: Number(pinForm.base_salary || 0),
+        earns_commissions: pinForm.earns_commissions,
+        has_social_security: pinForm.has_social_security,
+        eligible_for_attendance_bonus: pinForm.eligible_for_attendance_bonus,
       }, { withCredentials: true });
       
       toast.success(`Usuario ${pinForm.name} creado con acceso PIN`);
       setShowCreatePin(false);
-      setPinForm({ name: "", last_name: "", phone: "", role: "ventas", pin: "", login_pin: "", branch_id: "", warehouse_id: "" });
+      setPinForm({
+        name: "",
+        last_name: "",
+        phone: "",
+        role: "ventas",
+        pin: "",
+        login_pin: "",
+        branch_id: "",
+        warehouse_id: "",
+        base_salary: "",
+        earns_commissions: false,
+        has_social_security: false,
+        eligible_for_attendance_bonus: false,
+      });
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al crear usuario PIN");
@@ -945,6 +974,42 @@ export function UsersAdminPage() {
                       </Select>
                     </div>
                     
+                    <div>
+                      <Label>Salario base mensual (C$)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={pinForm.base_salary}
+                        onChange={(e) => setPinForm({ ...pinForm, base_salary: e.target.value })}
+                        placeholder="15000"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={pinForm.earns_commissions}
+                          onCheckedChange={(v) => setPinForm({ ...pinForm, earns_commissions: Boolean(v) })}
+                        />
+                        Aprobación de comisiones
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={pinForm.has_social_security}
+                          onCheckedChange={(v) => setPinForm({ ...pinForm, has_social_security: Boolean(v) })}
+                        />
+                        Seguro social INSS (7%)
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={pinForm.eligible_for_attendance_bonus}
+                          onCheckedChange={(v) => setPinForm({ ...pinForm, eligible_for_attendance_bonus: Boolean(v) })}
+                        />
+                        Bono de puntualidad y asistencia
+                      </label>
+                    </div>
+
                     {(pinForm.role === "bodegas" || pinForm.role === "transporte") && (
                       <div>
                         <Label>Bodega (Opcional)</Label>
@@ -1132,6 +1197,10 @@ export function UsersAdminPage() {
                                   setEditRole(user.role || "");
                                   setEditBranch(user.branch_id || "");
                                   setEditWarehouse(user.warehouse_id || "");
+                                  setEditBaseSalary(String(user.base_salary ?? ""));
+                                  setEditEarnsCommissions(Boolean(user.earns_commissions));
+                                  setEditHasSocialSecurity(Boolean(user.has_social_security));
+                                  setEditEligibleAttendanceBonus(Boolean(user.eligible_for_attendance_bonus));
                                   setIsViewOnly(false);
                                 }}
                                 data-testid={`edit-user-${user.user_id}`}
@@ -1152,6 +1221,10 @@ export function UsersAdminPage() {
                                   setEditRole(user.role || "");
                                   setEditBranch(user.branch_id || "");
                                   setEditWarehouse(user.warehouse_id || "");
+                                  setEditBaseSalary(String(user.base_salary ?? ""));
+                                  setEditEarnsCommissions(Boolean(user.earns_commissions));
+                                  setEditHasSocialSecurity(Boolean(user.has_social_security));
+                                  setEditEligibleAttendanceBonus(Boolean(user.eligible_for_attendance_bonus));
                                   setIsViewOnly(true);
                                 }}
                                 className="text-foreground/80"
@@ -1481,6 +1554,44 @@ export function UsersAdminPage() {
                 </Select>
               </div>
             )}
+
+            <div>
+              <Label>Salario base mensual (C$)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={editBaseSalary}
+                onChange={(e) => setEditBaseSalary(e.target.value)}
+                disabled={isViewOnly}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={editEarnsCommissions}
+                  onCheckedChange={(v) => setEditEarnsCommissions(Boolean(v))}
+                  disabled={isViewOnly}
+                />
+                Aprobación de comisiones
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={editHasSocialSecurity}
+                  onCheckedChange={(v) => setEditHasSocialSecurity(Boolean(v))}
+                  disabled={isViewOnly}
+                />
+                Seguro social INSS (7%)
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={editEligibleAttendanceBonus}
+                  onCheckedChange={(v) => setEditEligibleAttendanceBonus(Boolean(v))}
+                  disabled={isViewOnly}
+                />
+                Bono de puntualidad y asistencia
+              </label>
+            </div>
 
             {!isViewOnly && canEditUsers && (
               <Button onClick={updateUserRole} className="w-full" data-testid="save-role-btn">

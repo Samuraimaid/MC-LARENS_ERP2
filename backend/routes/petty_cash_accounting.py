@@ -70,6 +70,7 @@ def get_petty_cash_accounting_router(
         category: str = "otros"
         description: str = ""
         beneficiary: str = ""
+        employee_user_id: Optional[str] = None
         amount: float = 0.0
         currency: Optional[str] = None
         payment_method: str = "cash"
