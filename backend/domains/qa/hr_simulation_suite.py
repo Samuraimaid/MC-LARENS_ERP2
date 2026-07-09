@@ -20,6 +20,15 @@ def _round2(value: Any) -> float:
     return round(float(value or 0.0), 2)
 
 
+def _pay_stub_output_has_key_strings(raw: bytes) -> bool:
+    text = raw.decode("latin-1", errors="ignore").upper()
+    return (
+        "MUNDO DE ACCESORIOS" in text
+        and "INSS" in text
+        and "NETO A PAGAR" in text
+    )
+
+
 class ApiSession:
     def __init__(self, label: str, base_url: str):
         self.label = label
@@ -284,10 +293,37 @@ def run_hr_simulation_suite(base_url: str) -> Dict[str, Any]:
             detail=f"bytes={len(pdf_res.content)}",
         )
 
+        thermal_res = gerencia.get(f"/hr/pay-stubs/{stub_main.get('stub_id')}/thermal")
+        thermal_ok = (
+            thermal_res.status_code == 200
+            and len(thermal_res.content or b"") > 80
+            and _pay_stub_output_has_key_strings(thermal_res.content)
+        )
+        _step(
+            steps,
+            "case1_download_pay_stub_thermal",
+            ok=thermal_ok,
+            detail=f"bytes={len(thermal_res.content or b'')} status={thermal_res.status_code}",
+        )
+
+        mobile_res = gerencia.get(f"/hr/pay-stubs/{stub_main.get('stub_id')}/pdf-mobile")
+        mobile_ok = (
+            mobile_res.status_code == 200
+            and mobile_res.headers.get("content-type", "").startswith("application/pdf")
+            and len(mobile_res.content or b"") > 200
+            and _pay_stub_output_has_key_strings(mobile_res.content)
+        )
+        _step(
+            steps,
+            "case1_download_pay_stub_pdf_mobile",
+            ok=mobile_ok,
+            detail=f"bytes={len(mobile_res.content or b'')} status={mobile_res.status_code}",
+        )
+
         cases.append(
             {
                 "case": "mundo_accesorios_inss_commissions",
-                "success": case1_ok and pdf_res.status_code == 200,
+                "success": case1_ok and pdf_res.status_code == 200 and thermal_ok and mobile_ok,
                 "stub_id": stub_main.get("stub_id"),
                 "inss_amount": inss,
                 "inss_expected": expected_inss,

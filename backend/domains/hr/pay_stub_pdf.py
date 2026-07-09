@@ -1,57 +1,122 @@
-"""PDF pay stub (colilla de pago) generation."""
+"""PDF pay stub (colilla de pago) generation — letter and mobile layouts."""
 from __future__ import annotations
 
 import io
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional
+
+from backend.domains.hr.pay_stub_document import (
+    _ascii_safe,
+    build_pay_stub_display,
+    build_pay_stub_text_lines,
+)
 
 
-def draw_pay_stub_pdf(stub: Dict[str, Any], *, letter: Any, canvas: Any) -> bytes:
+def _draw_text_lines_pdf(
+    text_lines: list[str],
+    *,
+    canvas: Any,
+    page_width: float,
+    page_height: float,
+    margin_top: float = 40,
+    margin_x: float = 40,
+    line_height: float = 13,
+    body_size: int = 9,
+    title_size: int = 10,
+    net_size: int = 11,
+) -> None:
+    pdf = canvas
+    y = page_height - margin_top
+
+    for line in text_lines:
+        upper = line.upper()
+        if (
+            "COMPROBANTE" in upper
+            or "MUNDO DE ACCESORIOS" in upper
+            or "TOP CAR" in upper
+            or "QUINCENA DEL MES" in upper
+        ):
+            pdf.setFont("Helvetica-Bold" if "COMPROBANTE" in upper else "Helvetica", title_size)
+            text_width = pdf.stringWidth(line, pdf._fontname, pdf._fontsize)
+            x = max(margin_x, (page_width - text_width) / 2.0)
+        elif "NETO A PAGAR" in upper:
+            pdf.setFont("Helvetica-Bold", net_size)
+            x = margin_x
+        elif "TOTAL INGRESOS" in upper or "TOTAL DEDUCCIONES" in upper:
+            pdf.setFont("Helvetica-Bold", body_size)
+            x = margin_x
+        elif line.startswith("INGRESOS") or line.startswith("DEDUCCIONES"):
+            pdf.setFont("Helvetica-Bold", body_size)
+            x = margin_x
+        else:
+            pdf.setFont("Helvetica", body_size)
+            x = margin_x
+        pdf.drawString(x, y, _ascii_safe(line)[:95])
+        y -= line_height
+
+
+def draw_pay_stub_pdf(
+    stub: Dict[str, Any],
+    *,
+    letter: Any,
+    canvas: Any,
+    user_doc: Optional[Dict[str, Any]] = None,
+) -> bytes:
+    """Letter-size PDF using the Mundo de Accesorios colilla layout."""
+    display = build_pay_stub_display(stub, user_doc)
+    text_lines = build_pay_stub_text_lines(display, width=72)
+
     buffer = io.BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-    y = height - 40
+    pdf = canvas.Canvas(buffer, pagesize=letter, pageCompression=0)
+    _draw_text_lines_pdf(
+        text_lines,
+        canvas=pdf,
+        page_width=width,
+        page_height=height,
+        margin_top=40,
+        margin_x=40,
+        line_height=13,
+        body_size=9,
+        title_size=11,
+        net_size=12,
+    )
+    pdf.save()
+    buffer.seek(0)
+    return buffer.getvalue()
 
-    def line(text: str, *, bold: bool = False, size: int = 10) -> None:
-        nonlocal y
-        pdf.setFont("Helvetica-Bold" if bold else "Helvetica", size)
-        pdf.drawString(40, y, text[:95])
-        y -= size + 4
 
-    def money(value: Any) -> str:
-        return f"C$ {float(value or 0):,.2f}"
+def draw_pay_stub_pdf_mobile(
+    stub: Dict[str, Any],
+    *,
+    canvas: Any,
+    user_doc: Optional[Dict[str, Any]] = None,
+) -> bytes:
+    """Compact single-column receipt PDF (~80mm width) for mobile/WhatsApp sharing."""
+    from reportlab.lib.units import mm
 
-    line("COMPROBANTE DE PAGO", bold=True, size=14)
-    line(str(stub.get("branch_name") or stub.get("branch_id") or "Sucursal"), size=11)
-    y -= 4
-    line(f"Empleado: {stub.get('user_name') or '-'}", bold=True)
-    line(f"Periodo: {stub.get('period_label') or '-'} ({stub.get('period_start')} a {stub.get('period_end')})")
-    line(f"Fecha de pago: {stub.get('pay_date') or '-'}")
-    y -= 6
-    line("INGRESOS", bold=True)
-    line(f"Salario base proporcional: {money(stub.get('base_salary_proportional'))}")
-    line(f"Comisiones aprobadas: {money(stub.get('commissions'))}")
-    if float(stub.get("workshop_commissions") or 0) > 0:
-        line(f"  · Taller (OT): {money(stub.get('workshop_commissions'))} ({stub.get('workshop_jobs_count') or 0} trabajos)")
-    line(f"Bono puntualidad/asistencia: {money(stub.get('attendance_bonus'))}")
-    line(f"Total ingresos brutos: {money(stub.get('gross_earnings'))}", bold=True)
-    y -= 6
-    line("DEDUCCIONES", bold=True)
-    deductions = stub.get("deductions_breakdown") or []
-    if not deductions:
-        line("Sin deducciones")
-    else:
-        for item in deductions:
-            label = str(item.get("label") or item.get("type") or "Deducción")
-            line(f"  {label}: {money(item.get('amount'))}")
-    line(f"Total deducciones: {money(stub.get('total_deductions'))}", bold=True)
-    y -= 8
-    line(f"NETO RECIBIDO: {money(stub.get('net_pay'))}", bold=True, size=12)
-    if stub.get("has_social_security"):
-        line(f"INSS Laboral ({float(stub.get('inss_rate') or 0) * 100:.0f}%): {money(stub.get('inss_amount'))}", size=9)
-    line(f"Semáforo asistencia: {stub.get('attendance_compliance') or '-'}", size=9)
-    pdf.line(40, y, width - 40, y)
-    y -= 14
-    line("Documento generado por MC-LARENS ERP · Recursos Humanos", size=8)
+    display = build_pay_stub_display(stub, user_doc)
+    text_lines = build_pay_stub_text_lines(display, width=40)
+
+    page_width = 80 * mm
+    line_height = 11
+    margin_top = 14
+    margin_x = 8
+    page_height = margin_top + (len(text_lines) + 2) * line_height + 20
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=(page_width, page_height), pageCompression=0)
+    _draw_text_lines_pdf(
+        text_lines,
+        canvas=pdf,
+        page_width=page_width,
+        page_height=page_height,
+        margin_top=margin_top,
+        margin_x=margin_x,
+        line_height=line_height,
+        body_size=7,
+        title_size=8,
+        net_size=9,
+    )
     pdf.save()
     buffer.seek(0)
     return buffer.getvalue()

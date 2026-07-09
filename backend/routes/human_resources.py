@@ -15,7 +15,8 @@ from fastapi.responses import Response, StreamingResponse
 from backend.domains.export.dependencies import (
     get_reportlab_symbols as export_get_reportlab_symbols,
 )
-from backend.domains.hr.pay_stub_pdf import draw_pay_stub_pdf
+from backend.domains.hr.pay_stub_document import build_pay_stub_thermal_escpos
+from backend.domains.hr.pay_stub_pdf import draw_pay_stub_pdf, draw_pay_stub_pdf_mobile
 from backend.domains.hr.payroll_engine import (
     INSS_LABORAL_RATE,
     build_payroll_snapshot,
@@ -2052,8 +2053,7 @@ def get_human_resources_router(
                 await _ensure_user_branch_access(actor, target)
         return stub
 
-    @router.get("/pay-stubs/{stub_id}/pdf")
-    async def download_pay_stub_pdf(stub_id: str, request: Request):
+    async def _resolve_pay_stub_for_print(stub_id: str, request: Request) -> tuple[Dict[str, Any], Dict[str, Any]]:
         actor = await require_auth(request)
         stub = await db.hr_pay_stubs.find_one({"stub_id": stub_id}, {"_id": 0})
         if not stub:
@@ -2063,13 +2063,42 @@ def get_human_resources_router(
             target = await db.users.find_one({"user_id": stub.get("user_id")}, {"_id": 0, "branch_id": 1})
             if target:
                 await _ensure_user_branch_access(actor, target)
+        user_doc = await db.users.find_one({"user_id": stub.get("user_id")}, {"_id": 0}) or {}
+        return stub, user_doc
+
+    @router.get("/pay-stubs/{stub_id}/pdf")
+    async def download_pay_stub_pdf(stub_id: str, request: Request):
+        stub, user_doc = await _resolve_pay_stub_for_print(stub_id, request)
         letter, canvas = _get_reportlab_symbols()
-        pdf_bytes = draw_pay_stub_pdf(stub, letter=letter, canvas=canvas)
+        pdf_bytes = draw_pay_stub_pdf(stub, letter=letter, canvas=canvas, user_doc=user_doc)
         filename = f"colilla_{stub_id}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @router.get("/pay-stubs/{stub_id}/thermal")
+    async def download_pay_stub_thermal(stub_id: str, request: Request):
+        stub, user_doc = await _resolve_pay_stub_for_print(stub_id, request)
+        escpos = build_pay_stub_thermal_escpos(stub, user_doc)
+        filename = f"colilla_{stub_id}_thermal.bin"
+        return Response(
+            content=escpos,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @router.get("/pay-stubs/{stub_id}/pdf-mobile")
+    async def download_pay_stub_pdf_mobile(stub_id: str, request: Request):
+        stub, user_doc = await _resolve_pay_stub_for_print(stub_id, request)
+        _, canvas = _get_reportlab_symbols()
+        pdf_bytes = draw_pay_stub_pdf_mobile(stub, canvas=canvas, user_doc=user_doc)
+        filename = f"colilla_{stub_id}_mobile.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="{filename}"'},
         )
 
     @router.get("/summary")
