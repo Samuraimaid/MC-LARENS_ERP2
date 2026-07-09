@@ -57,7 +57,6 @@ from backend.domains.integrations import (
     get_stripe_checkout_symbols as integrations_get_stripe_checkout_symbols,
     send_email_notification as integrations_send_email_notification,
 )
-from backend.domains.hr.payroll_engine import normalize_hr_employee_fields
 from backend.domains.hr.payroll_periods import (
     SCHEME_PAYROLL_9_24,
     format_quincena_label,
@@ -65,13 +64,6 @@ from backend.domains.hr.payroll_periods import (
 )
 from backend.domains.hr.attendance_status import build_technician_attendance_snapshot
 from backend.domains.operations.work_order_split import ensure_single_item_work_orders
-from backend.domains.sales.delivery import (
-    activate_delivery_after_payment,
-    delivery_cost_nio_for_settlement,
-    parse_delivery_info,
-    resolve_messenger_for_sale,
-    validate_delivery_info,
-)
 from backend.domains.vehicles.thumbnails import (
     apply_reset_metadata as vehicle_apply_reset_metadata,
     apply_upload_metadata as vehicle_apply_upload_metadata,
@@ -1825,7 +1817,6 @@ class SaleCreate(FlexibleModel):
     manager_authorization_code: Optional[str] = None
     delivery_required: bool = False
     delivery_address: Optional[str] = None
-    delivery_info: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None
     vehicle_id: Optional[str] = None
     cash_session_id: Optional[str] = None
@@ -1856,10 +1847,6 @@ class SaleSettlementPreviewRequest(FlexibleModel):
     apply_iva: Optional[bool] = None
     retention_profile: Optional[str] = None  # general | agricola | exento
     retention_rate_hint: Optional[float] = None  # 0.01 | 0.02
-    delivery_info: Optional[Dict[str, Any]] = None
-    delivery_cost: float = 0.0
-    currency: Optional[str] = None
-    exchange_rate: Optional[float] = None
 
 
 class SaleCommercialTermsUpdate(FlexibleModel):
@@ -2468,7 +2455,6 @@ async def _finalize_create_sale_settlement(
     sale_data: Any,
     customer: Dict[str, Any],
     subtotal_base: float,
-    delivery_topup_nio: float = 0.0,
 ) -> Dict[str, Any]:
     prep = _build_create_sale_settlement(
         sale_data=sale_data,
@@ -2518,10 +2504,7 @@ async def _finalize_create_sale_settlement(
         discounts_allowed_by_method=discounts_allowed_by_method,
     )
 
-    expected_total = _round2(float(settlement["net_to_collect"]) + float(delivery_topup_nio or 0.0))
-    if delivery_topup_nio:
-        settlement["net_to_collect"] = expected_total
-        settlement["delivery_cost_nio"] = _round2(float(delivery_topup_nio))
+    expected_total = float(settlement["net_to_collect"])
     submitted_total = getattr(sale_data, "total_amount", None)
     if submitted_total is not None:
         try:
@@ -4626,7 +4609,6 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
         "warehouse_id": warehouse_id if warehouse_id not in ("", "none") else None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    update_data.update(normalize_hr_employee_fields(data))
 
     result = await db.users.update_one({"user_id": user_id}, {"$set": update_data})
     if result.matched_count == 0:
@@ -4786,7 +4768,6 @@ async def create_pin_user(payload: Dict[str, Any], request: Request):
     doc["login_pin_hash"] = hash_pin(login_pin_value)
     doc["login_pin_index"] = login_index
     doc["login_pin_last_set_at"] = now_iso
-    doc.update(normalize_hr_employee_fields(data))
 
     await db.users.insert_one(doc)
     # Return sanitized document
@@ -5430,11 +5411,7 @@ async def get_products(
 
     # Ensure all products have installation_type (migration for legacy products)
     for product in products:
-        if product.get("installation_required") and str(
-            product.get("installation_type") or "optional"
-        ).lower() == "optional":
-            product["installation_type"] = "required"
-        elif "installation_type" not in product or not product.get("installation_type"):
+        if "installation_type" not in product or not product.get("installation_type"):
             product["installation_type"] = "optional"  # Default for legacy products
 
         # Ensure price tiers exist: precio1, precio2, precio3, precio_vip
@@ -8433,43 +8410,10 @@ async def create_sale(sale_data: SaleCreate, request: Request):
             exchange_rate=sale_exchange_rate,
         )
 
-    buy_rate = await _get_usd_nio_buy_rate()
-    delivery_info = parse_delivery_info(
-        getattr(sale_data, "delivery_info", None),
-        branch_id=user_branch_id,
-    )
-    delivery_topup_nio = 0.0
-    if delivery_info.get("is_delivery"):
-        messenger_doc = None
-        if delivery_info.get("messenger_id"):
-            messenger_doc = await resolve_messenger_for_sale(
-                db,
-                str(delivery_info.get("messenger_id")),
-                user_branch_id,
-            )
-        validate_delivery_info(
-            delivery_info,
-            branch_id=user_branch_id,
-            messenger_doc=messenger_doc,
-        )
-        if messenger_doc:
-            delivery_info["messenger_name"] = (
-                f"{messenger_doc.get('name', '')} {messenger_doc.get('last_name', '')}".strip()
-            )
-            delivery_info["branch_id"] = user_branch_id
-        delivery_topup_nio = delivery_cost_nio_for_settlement(
-            delivery_info,
-            sale_currency=sale_currency,
-            exchange_rate=float(sale_exchange_rate or buy_rate),
-            buy_rate=buy_rate,
-        )
-        delivery_info["delivery_cost_nio"] = delivery_topup_nio
-
     settlement = await _finalize_create_sale_settlement(
         sale_data=sale_data,
         customer=customer,
         subtotal_base=settlement_subtotal,
-        delivery_topup_nio=delivery_topup_nio,
     )
     net_to_collect = float(settlement["net_to_collect"])
 
@@ -8576,13 +8520,9 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         payment_method=normalized_payment_method,
         sale_channel=sale_channel,
         credit_due_date=credit_due_date,
-        delivery_required=bool(sale_data.delivery_required or delivery_info.get("is_delivery")),
+        delivery_required=sale_data.delivery_required,
         delivery_address=sale_data.delivery_address,
-        delivery_status=(
-            "pendiente"
-            if delivery_info.get("is_delivery")
-            else ("pending" if sale_data.delivery_required else None)
-        ),
+        delivery_status="pending" if sale_data.delivery_required else None,
         notes=sale_data.notes,
         has_installation=needs_work_order,
         iva_rate=float(settlement["iva_rate"]),
@@ -8623,10 +8563,6 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         mixed_methods_raw if normalized_payment_type == "mixed" else []
     )
     doc["credit_days"] = resolved_credit_days
-    if delivery_info.get("is_delivery"):
-        doc["delivery_info"] = delivery_info
-        doc["delivery_required"] = True
-        doc["delivery_status"] = delivery_info.get("delivery_status") or "pendiente"
     doc["warehouse_dispatch_status"] = "awaiting_payment"
     doc["workflow_state"] = "awaiting_payment"
     doc["inventory_adjustments"] = inventory_updates
@@ -8864,27 +8800,6 @@ async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request
         retention_profile=retention_profile,
         retention_rate_hint=payload.retention_rate_hint,
     )
-
-    delivery_info = parse_delivery_info(
-        payload.delivery_info,
-        branch_id=str(user.branch_id or ""),
-    )
-    if delivery_info.get("is_delivery") or float(payload.delivery_cost or 0) > 0:
-        if not delivery_info.get("is_delivery"):
-            delivery_info["is_delivery"] = True
-            delivery_info["delivery_cost"] = _round2(float(payload.delivery_cost or 0))
-        buy_rate = await _get_usd_nio_buy_rate()
-        preview_currency = _currency_code(payload.currency or "NIO")
-        preview_rate = float(payload.exchange_rate or buy_rate)
-        delivery_nio = delivery_cost_nio_for_settlement(
-            delivery_info,
-            sale_currency=preview_currency,
-            exchange_rate=preview_rate,
-            buy_rate=buy_rate,
-        )
-        settlement["delivery_cost_nio"] = delivery_nio
-        settlement["net_to_collect"] = _round2(float(settlement["net_to_collect"]) + delivery_nio)
-        settlement["delivery_info"] = delivery_info
 
     return {
         "customer_id": payload.customer_id,
@@ -10996,10 +10911,6 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     fulfillment_result: Dict[str, Any] = {}
     if new_status == "paid":
         fulfillment_result = await trigger_sale_fulfillment_after_payment(sale_id)
-        fresh_sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
-        if fresh_sale:
-            delivery_activation = await activate_delivery_after_payment(db, fresh_sale)
-            fulfillment_result["delivery"] = delivery_activation
 
     pending_usd_suggested = _round2((new_pending / usd_to_nio_rate) if usd_to_nio_rate > 0 else 0.0)
 
@@ -11848,12 +11759,7 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
 
 
 WORK_ORDER_FIELD_TECHNICIAN_ROLES = {"instalaciones", "instalador", "electrico"}
-WORK_ORDER_QC_APPROVER_ROLES = {
-    "gerencia",
-    "supervisor",
-    "jefe_tienda",
-    "coordinador_instalaciones",
-}
+WORK_ORDER_QC_APPROVER_ROLES = {"gerencia", "coordinador_instalaciones"}
 
 
 @api_router.put("/work-orders/{work_order_id}")
@@ -11884,23 +11790,6 @@ async def update_work_order(
                 raise HTTPException(
                     status_code=403,
                     detail="Solo el coordinador de instalaciones puede aprobar trabajos terminados",
-                )
-
-        if update.status == "delivered":
-            qc_passed = bool(wo.get("qc_approved"))
-            if not qc_passed:
-                approved_qc = await db.quality_controls.find_one(
-                    {"work_order_id": work_order_id, "approved": True},
-                    {"_id": 0, "qc_id": 1},
-                )
-                qc_passed = approved_qc is not None
-            if not qc_passed:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "No se puede marcar como Entregado sin aprobación de Control de Calidad "
-                        "(QC_Passed). Envíe la orden a QC y obtenga aprobación del supervisor."
-                    ),
                 )
 
         updates["status"] = update.status
@@ -12359,7 +12248,7 @@ async def get_technician_completed_jobs(
 
 
 QC_VIEW_ROLES = ["gerencia", "supervisor", "coordinador_instalaciones"]
-QC_APPROVER_ROLES = ["gerencia", "supervisor", "jefe_tienda", "coordinador_instalaciones"]
+QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"]
 
 
 @api_router.get("/quality-control")
@@ -14824,7 +14713,6 @@ async def _draw_invoice_letter_pdf(
         payment_info=payment_info,
         exchange_rate=float(context.get("exchange_rate") or sale.get("exchange_rate") or 36.5),
         sale_id=str(sale.get("sale_id") or ""),
-        delivery_info=sale.get("delivery_info"),
     )
 
 
@@ -17246,100 +17134,6 @@ async def run_full_simulation_suite_endpoint(request: Request):
         base_url = f"{base_url}/api"
 
     report = await asyncio.to_thread(run_full_simulation_suite, base_url)
-    return report
-
-
-@api_router.post("/qa/run-logistic-simulation-suite")
-async def run_logistic_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación logística: ingreso ciego + traslado en 3 pasos."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.logistic_simulation_suite import run_logistic_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_logistic_simulation_suite, base_url)
-    return report
-
-
-@api_router.post("/qa/run-full-workshop-simulation-suite")
-async def run_full_workshop_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación E2E taller: OT, QC, despacho multi-sucursal, logística y garantías."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.workshop_simulation_suite import run_workshop_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_workshop_simulation_suite, base_url)
-    return report
-
-
-QA_DEBUG_COLLECTIONS = frozenset({
-    "sales",
-    "work_orders",
-    "hr_payroll_adjustments",
-    "hr_timeclock_events",
-    "petty_cash_expenses",
-})
-
-
-@api_router.post("/qa/debug/upsert-document")
-async def qa_debug_upsert_document(payload: Dict[str, Any], request: Request):
-    """Inyecta documentos controlados para suites QA (solo gerencia/programador)."""
-    await require_roles(request, ["gerencia", "programador"])
-    data = payload or {}
-    collection = str(data.get("collection") or "").strip()
-    document = data.get("document")
-    upsert_key = str(data.get("upsert_key") or "").strip()
-    if collection not in QA_DEBUG_COLLECTIONS:
-        raise HTTPException(status_code=400, detail="Colección no permitida para QA debug")
-    if not isinstance(document, dict) or not document:
-        raise HTTPException(status_code=400, detail="document es requerido")
-    if not upsert_key or upsert_key not in document:
-        raise HTTPException(status_code=400, detail="upsert_key inválido")
-    target = getattr(db, collection, None)
-    if target is None:
-        raise HTTPException(status_code=400, detail="Colección no disponible")
-    await target.update_one({upsert_key: document[upsert_key]}, {"$set": document}, upsert=True)
-    return {"message": "Documento upserted", "collection": collection, "key": document[upsert_key]}
-
-
-@api_router.post("/qa/run-full-hr-simulation-suite")
-async def run_full_hr_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación E2E RRHH: nómina multi-sucursal, INSS, comprobantes y aislamiento supervisor."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.hr_simulation_suite import run_hr_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_hr_simulation_suite, base_url)
-    return report
-
-
-@api_router.post("/qa/run-global-chaos-stress-suite")
-async def run_global_chaos_stress_suite_endpoint(request: Request):
-    """Plan de Caos Operativo: barrido de rutas, seeding realista, estrés cruzado y mensajeros."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.global_chaos_stress_suite import run_global_chaos_stress_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_global_chaos_stress_suite, base_url)
     return report
 
 

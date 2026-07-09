@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File [35m"c:\MC-LARENS_ERP_3\MC-LARENS_ERP2\backend\scripts\post_deploy_verification.py"[0m, line [35m217[0m, in [35m<module>[0m
+    sys.exit([31mmain[0m[1;31m()[0m)
+             [31m~~~~[0m[1;31m^^[0m
+  File [35m"c:\MC-LARENS_ERP_3\MC-LARENS_ERP2\backend\scripts\post_deploy_verification.py"[0m, line [35m204[0m, in [35mmain[0m
+    report["checks"]["letter_pdf_graphics"] = [31mverify_letter_pdf_graphics[0m[1;31m([0m
+                                              [31m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mclient,[0m
+        [1;31m^^^^^^^[0m
+        [1;31mqa_result.get("report") or {},[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"c:\MC-LARENS_ERP_3\MC-LARENS_ERP2\backend\scripts\post_deploy_verification.py"[0m, line [35m68[0m, in [35mverify_letter_pdf_graphics[0m
+    from reportlab.lib.pagesizes import letter
+[1;35mModuleNotFoundError[0m: [35mNo module named 'reportlab'[0m

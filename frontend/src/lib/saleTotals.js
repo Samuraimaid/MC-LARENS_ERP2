@@ -49,6 +49,8 @@ export const computeSaleTotals = ({
   hasSelectedVehicle = false,
   isCompanyCustomerFlow = false,
   supervisorDiscountPreapproved = false,
+  deliveryCost = 0,
+  isDelivery = false,
 }) => {
   const pricingRate = Number(sellRate || exchangeRate) || 36.5;
   const normalizedMethod = normalizePaymentMethodCode(paymentMethod);
@@ -117,7 +119,8 @@ export const computeSaleTotals = ({
   const shouldApplyRetention = isCompanyCustomerFlow && applyRetention && retentionThresholdMet;
   const retention = shouldApplyRetention ? subtotalForRetention * (retentionRate / 100) : 0;
   const tax = applyIVA === false ? 0 : subtotalForRetention * (ivaRate / 100);
-  const total = subtotalForRetention + tax - retention;
+  const deliveryAmount = isDelivery ? Math.max(0, Number(deliveryCost) || 0) : 0;
+  const total = subtotalForRetention + tax - retention + deliveryAmount;
   const displayTotalDiscounts = totalDiscounts + manualPriceDiscountTotal;
   const globalDiscountEffectivePercent = subtotalAfterItemPriceDiscounts > 0
     ? (discountAmountRaw / subtotalAfterItemPriceDiscounts) * 100
@@ -141,6 +144,7 @@ export const computeSaleTotals = ({
     blockedDiscountsAmount,
     discountsBlockedByPayment,
     retention,
+    deliveryAmount,
     total,
   };
 };

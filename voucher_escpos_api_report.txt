@@ -1,0 +1,8 @@
+Vehiculo:=True
+Placa:=True
+MUNDO DE ACCESORIOS=True
+VOUCHER DE VENTA=True
+ESCANEAR EN CAJA=True
+align_center_cmd=False
+API_LINES_HAS_VEHICLE=True
+API_LINES_HAS_PLATE=True

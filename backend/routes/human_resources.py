@@ -15,6 +15,14 @@ from fastapi.responses import Response, StreamingResponse
 from backend.domains.export.dependencies import (
     get_reportlab_symbols as export_get_reportlab_symbols,
 )
+from backend.domains.hr.delivery_messengers import (
+    build_messenger_status_summary,
+    ensure_delivery_messengers,
+    list_messengers,
+    normalize_messenger_status,
+    set_messenger_status,
+    VALID_STATUSES,
+)
 from backend.domains.hr.pay_stub_document import build_pay_stub_thermal_escpos
 from backend.domains.hr.pay_stub_pdf import draw_pay_stub_pdf, draw_pay_stub_pdf_mobile
 from backend.domains.hr.payroll_engine import (
@@ -55,6 +63,7 @@ def get_human_resources_router(
     router = APIRouter(prefix="/hr", tags=["human-resources"])
 
     HR_ALLOWED_ROLES = ["gerencia", "recursos_humanos", "supervisor", "programador"]
+    MESSENGER_READ_ROLES = HR_ALLOWED_ROLES + ["ventas", "cajero", "jefe_tienda"]
     HR_GLOBAL_ACCESS_ROLES = {"gerencia", "recursos_humanos", "programador"}
     HR_BRANCH_SCOPED_ROLES = {"supervisor", "jefe_tienda"}
     TECHNICIAN_ROLES = {"instalaciones", "tecnico", "bodegas", "polarizador", "electrico"}
@@ -2100,6 +2109,50 @@ def get_human_resources_router(
             media_type="application/pdf",
             headers={"Content-Disposition": f'inline; filename="{filename}"'},
         )
+
+    @router.get("/messengers/status")
+    async def get_messengers_status(request: Request, branch_id: Optional[str] = None):
+        """Semáforo de disponibilidad de mensajeros por sucursal."""
+        actor = await require_roles(request, MESSENGER_READ_ROLES)
+        role = _actor_role_key(actor)
+        if role in {"ventas", "cajero"}:
+            scoped_branch = str(getattr(actor, "branch_id", "") or "").strip() or None
+        else:
+            scoped_branch = _resolve_hr_branch_scope(actor, branch_id)
+        await ensure_delivery_messengers(db)
+        return await build_messenger_status_summary(db, branch_id=scoped_branch)
+
+    @router.get("/messengers")
+    async def list_hr_messengers(request: Request, branch_id: Optional[str] = None):
+        actor = await require_roles(request, MESSENGER_READ_ROLES)
+        role = _actor_role_key(actor)
+        if role in {"ventas", "cajero"}:
+            scoped_branch = str(getattr(actor, "branch_id", "") or "").strip() or None
+        else:
+            scoped_branch = _resolve_hr_branch_scope(actor, branch_id)
+        return await list_messengers(db, branch_id=scoped_branch)
+
+    @router.put("/messengers/{messenger_id}/status")
+    async def update_messenger_status(
+        messenger_id: str,
+        payload: Dict[str, Any],
+        request: Request,
+    ):
+        await require_roles(request, HR_ALLOWED_ROLES)
+        data = payload or {}
+        status = normalize_messenger_status(data.get("status"))
+        if status not in VALID_STATUSES:
+            raise HTTPException(status_code=400, detail="status inválido")
+        updated = await set_messenger_status(
+            db,
+            messenger_id,
+            status,
+            active_sale_id=data.get("active_sale_id"),
+            active_delivery_id=data.get("active_delivery_id"),
+        )
+        if not updated:
+            raise HTTPException(status_code=404, detail="Mensajero no encontrado")
+        return {"message": "Estado actualizado", "messenger": updated}
 
     @router.get("/summary")
     async def get_hr_summary(request: Request):

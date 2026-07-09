@@ -1,0 +1,57 @@
+{
+  "ok": true,
+  "session_id": "caja_bb1c3a5adb",
+  "buy_rate_used": 36.62,
+  "arqueo_before": {
+    "usd_to_nio_rate": 36.5,
+    "expected_by_currency": {
+      "NIO": 946429.43,
+      "USD": 10544.33
+    },
+    "saldo_teorico_nio": 568442.03
+  },
+  "cierre": {
+    "diferencia_nio": 764120.76,
+    "diferencia_tipo": "sobrante",
+    "difference_by_currency": {
+      "NIO": 0.0,
+      "USD": 0.0
+    },
+    "expected_by_currency": {
+      "NIO": 946429.43,
+      "USD": 10544.33
+    },
+    "physical_by_currency": {
+      "NIO": 946429.43,
+      "USD": 10544.33
+    },
+    "saldo_teorico_nio": 568442.03,
+    "total_fisico_nio": 1332562.79
+  },
+  "reporte_gerencia": {
+    "status": 200,
+    "diferencia_tipo": "sobrante",
+    "diferencia_nio": 764120.76,
+    "comparativo": {
+      "nio": {
+        "fondo_inicial": 0.0,
+        "ventas_efectivo": 946429.43,
+        "salidas_caja": 0.0,
+        "saldo_esperado": 946429.43,
+        "conteo_fisico": 946429.43,
+        "diferencia": 0.0,
+        "diferencia_label": "C$0.00 (Cuadrado)"
+      },
+      "usd": {
+        "fondo_inicial": 0.0,
+        "ventas_efectivo": 10544.33,
+        "salidas_caja": 0.0,
+        "saldo_esperado": 10544.33,
+        "conteo_fisico": 10544.33,
+        "diferencia": 0.0,
+        "diferencia_label": "$0.00 (Cuadrado)"
+      }
+    },
+    "cuadrado": false
+  }
+}

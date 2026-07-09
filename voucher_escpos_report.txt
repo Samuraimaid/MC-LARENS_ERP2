@@ -1,0 +1,11 @@
+text_len=1189
+barcode_cmd=True
+top_feed_8=1
+MUNDO DE ACCESORIOS=True
+VOUCHER DE VENTA=True
+Vehiculo:=False
+Placa:=False
+ESCANEAR EN CAJA=True
+Valido hasta=True
+NO ES FACTURA=True
+INV-20260706-0001=True

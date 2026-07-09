@@ -39,6 +39,7 @@ import {
   ShoppingCart,
   Tag,
   Trash2,
+  Truck,
   Undo2,
   User,
   UserSearch,
@@ -278,6 +279,12 @@ export default function SaleForm({
   const [useVinDecoder, setUseVinDecoder] = useState(false);
   const [isDecodingVin, setIsDecodingVin] = useState(false);
   const [vehicleFlowOption, setVehicleFlowOption] = useState("carryout");
+  const [logisticMode, setLogisticMode] = useState("carryout");
+  const [deliveryDestinationType, setDeliveryDestinationType] = useState("domicilio");
+  const [deliveryCost, setDeliveryCost] = useState("");
+  const [selectedMessengerId, setSelectedMessengerId] = useState("");
+  const [messengerOptions, setMessengerOptions] = useState([]);
+  const [messengerLoading, setMessengerLoading] = useState(false);
   const [isVehiclePickerVisible, setIsVehiclePickerVisible] = useState(true);
   const [useVehicleVinDecoder, setUseVehicleVinDecoder] = useState(false);
   const [isDecodingVehicleVin, setIsDecodingVehicleVin] = useState(false);
@@ -681,6 +688,35 @@ export default function SaleForm({
   }, [vehicleFlowOption]);
 
   useEffect(() => {
+    if (!user?.branch_id) return undefined;
+    let cancelled = false;
+    (async () => {
+      setMessengerLoading(true);
+      try {
+        const response = await axios.get(`${API}/hr/messengers/status`, { withCredentials: true });
+        const branches = response.data?.branches || [];
+        const branchRow = branches.find((row) => String(row.branch_id) === String(user.branch_id));
+        const messengers = branchRow?.messengers || [];
+        if (cancelled) return;
+        setMessengerOptions(messengers);
+        const preferred = messengers.find((row) => row.status === "disponible") || messengers[0];
+        if (preferred?.messenger_id) {
+          setSelectedMessengerId((current) => current || preferred.messenger_id);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error("No se pudo cargar mensajeros de la sucursal");
+        }
+      } finally {
+        if (!cancelled) setMessengerLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.branch_id]);
+
+  useEffect(() => {
     if (!selectedCustomer) return;
 
     if (isCompanyCustomer(selectedCustomer)) {
@@ -762,6 +798,17 @@ export default function SaleForm({
       setVehicleFlowOption(
         draft?.vehicleFlowOption || (draft?.selectedVehicle ? "registered" : "carryout"),
       );
+      setLogisticMode(
+        draft?.logisticMode
+        || (draft?.delivery_info?.is_delivery ? "delivery" : (draft?.selectedVehicle ? "installed" : "carryout")),
+      );
+      setDeliveryDestinationType(draft?.deliveryDestinationType || draft?.delivery_info?.destination_type || "domicilio");
+      setDeliveryCost(
+        draft?.deliveryCost != null
+          ? String(draft.deliveryCost)
+          : String(draft?.delivery_info?.delivery_cost || ""),
+      );
+      setSelectedMessengerId(draft?.selectedMessengerId || draft?.delivery_info?.messenger_id || "");
       if (typeof draft?.isVehiclePickerVisible === "boolean") {
         setIsVehiclePickerVisible(draft.isVehiclePickerVisible);
       } else if (draft?.vehicleFlowOption) {
@@ -1356,6 +1403,8 @@ export default function SaleForm({
     return priceUSD;
   };
 
+  const isDeliveryLogistics = logisticMode === "delivery";
+
   const totals = useMemo(() => computeSaleTotals({
     cartItems: normalizedCartItems,
     currency,
@@ -1373,6 +1422,8 @@ export default function SaleForm({
     hasSelectedVehicle,
     isCompanyCustomerFlow,
     supervisorDiscountPreapproved: sellerReleasedRestricted && globalDiscount > 0,
+    deliveryCost: Number(deliveryCost) || 0,
+    isDelivery: isDeliveryLogistics,
   }), [
     normalizedCartItems,
     currency,
@@ -1389,6 +1440,8 @@ export default function SaleForm({
     hasSelectedVehicle,
     isCompanyCustomerFlow,
     sellerReleasedRestricted,
+    deliveryCost,
+    isDeliveryLogistics,
   ]);
 
   useEffect(() => {
@@ -1473,6 +1526,26 @@ export default function SaleForm({
   };
 
   const handleSubmit = async () => {
+    if (!logisticMode) {
+      toast.error("Selecciona una opción logística: Para llevar, Instalado o Delivery");
+      return;
+    }
+    if (logisticMode === "delivery") {
+      const parsedDeliveryCost = Number(deliveryCost);
+      if (!Number.isFinite(parsedDeliveryCost) || parsedDeliveryCost <= 0) {
+        toast.error("Ingrese el costo de envío mayor a cero");
+        return;
+      }
+      if (!selectedMessengerId) {
+        toast.error("Debe asignar un mensajero para el delivery");
+        return;
+      }
+      const selectedMessenger = messengerOptions.find((row) => row.messenger_id === selectedMessengerId);
+      if (selectedMessenger && !["disponible", "en_ruta"].includes(String(selectedMessenger.status || ""))) {
+        toast.error("El mensajero seleccionado no está disponible para ruta");
+        return;
+      }
+    }
     const payloadPaymentMethod = normalizedPaymentMethod;
     const payloadMixedPaymentMethods = normalizedPaymentMethod === "mixed" ? normalizedMixedPaymentMethods : [];
     if (normalizedPaymentMethod === "mixed" && payloadMixedPaymentMethods.length === 0) {
@@ -1577,6 +1650,17 @@ export default function SaleForm({
       discounts_blocked_by_method: totals.discountsBlockedByPayment,
       total_amount: totals.total,
       notes,
+      logistic_mode: logisticMode,
+      delivery_required: logisticMode === "delivery",
+      delivery_info: logisticMode === "delivery"
+        ? {
+          is_delivery: true,
+          destination_type: deliveryDestinationType,
+          delivery_cost: Number(deliveryCost) || 0,
+          messenger_id: selectedMessengerId,
+          delivery_status: "pendiente",
+        }
+        : null,
     };
     try {
       const result = onSubmit && onSubmit(payload);
@@ -1623,6 +1707,10 @@ export default function SaleForm({
       customerSearch,
       productSearch,
       vehicleFlowOption,
+      logisticMode,
+      deliveryDestinationType,
+      deliveryCost,
+      selectedMessengerId,
       isVehiclePickerVisible,
       selectedVehicleData,
       showNewCustomer,
@@ -1659,6 +1747,10 @@ export default function SaleForm({
     customerSearch,
     productSearch,
     vehicleFlowOption,
+    logisticMode,
+    deliveryDestinationType,
+    deliveryCost,
+    selectedMessengerId,
     isVehiclePickerVisible,
     selectedVehicleData,
     showNewCustomer,
@@ -1954,6 +2046,47 @@ export default function SaleForm({
     setTimeout(() => customerSearchRef.current?.focus(), 0);
   }, [notifySellerFlowLocked, persistDraftSnapshot, resetSaleFlowForCustomerChange, sellerFlowLocked]);
 
+  const handleSelectLogisticMode = useCallback((nextMode) => {
+    if (sellerFlowLocked) {
+      notifySellerFlowLocked();
+      return;
+    }
+    setLogisticMode(nextMode);
+    if (nextMode === "installed") {
+      if (selectedVehicle) {
+        if (vehicleFlowOption !== "registered") {
+          setVehicleFlowOption("registered");
+          setIsVehiclePickerVisible(false);
+        }
+      } else if (customerVehicles.length > 0) {
+        const firstVehicleId = normalizeVehicleId(customerVehicles[0].vehicle_id ?? customerVehicles[0].id);
+        setVehicleFlowOption("registered");
+        setSelectedVehicle(firstVehicleId);
+        setIsVehiclePickerVisible(false);
+      } else {
+        setIsVehiclePickerVisible(true);
+        toast.info("Selecciona un vehículo para venta instalada");
+      }
+    } else if (nextMode === "carryout" || nextMode === "delivery") {
+      if (vehicleFlowOption !== "carryout" || selectedVehicle) {
+        setVehicleFlowOption("carryout");
+        setSelectedVehicle("");
+        setIsVehiclePickerVisible(false);
+        setCartItems((prev) => prev.map((item) => ({ ...item, with_installation: false })));
+      }
+    }
+    persistDraftSnapshot({ logisticMode: nextMode });
+    playSelectionFeedbackSound();
+  }, [
+    customerVehicles,
+    normalizeVehicleId,
+    notifySellerFlowLocked,
+    persistDraftSnapshot,
+    selectedVehicle,
+    sellerFlowLocked,
+    vehicleFlowOption,
+  ]);
+
   const handleSelectVehicleFlow = useCallback((nextFlowOption, nextVehicleId = "") => {
     if (sellerFlowLocked) {
       notifySellerFlowLocked();
@@ -1972,6 +2105,11 @@ export default function SaleForm({
       : normalizedCartItems;
     setVehicleFlowOption(nextFlowOption);
     setSelectedVehicle(normalizedVehicleId);
+    if (nextFlowOption === "registered") {
+      setLogisticMode("installed");
+    } else if (nextFlowOption === "carryout") {
+      setLogisticMode((current) => (current === "delivery" ? "delivery" : "carryout"));
+    }
     if (nextFlowOption !== "new") {
       setIsVehiclePickerVisible(false);
     }
@@ -1987,8 +2125,9 @@ export default function SaleForm({
       selectedVehicle: normalizedVehicleId,
       cartItems: nextCartItems,
       showNewVehicleDialog: nextFlowOption === "new",
+      logisticMode: nextFlowOption === "registered" ? "installed" : (logisticMode === "delivery" ? "delivery" : "carryout"),
     });
-  }, [normalizeVehicleId, normalizedCartItems, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
+  }, [logisticMode, normalizeVehicleId, normalizedCartItems, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
 
   const updateCartItem = useCallback((productId, field, value, options = {}) => {
     if (!isSupervisorUser) {
@@ -2932,6 +3071,154 @@ export default function SaleForm({
                   </Badge>
                 </div>
               </div>
+            </div>
+          ) : null}
+
+          {stepOneComplete && selectedCustomer ? (
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/30">
+              <Label className="inline-flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                <span>Opción logística (obligatoria)</span>
+              </Label>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  disabled={sellerFlowLocked}
+                  onClick={() => handleSelectLogisticMode("carryout")}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                    logisticMode === "carryout"
+                      ? "border-emerald-500 bg-emerald-100/80 dark:border-emerald-500/50 dark:bg-emerald-500/20"
+                      : "border-emerald-200 bg-white hover:bg-emerald-50/80 dark:border-emerald-500/30 dark:bg-slate-900/40",
+                  )}
+                >
+                  <p className="font-medium inline-flex items-center gap-1.5">
+                    <Package className="h-4 w-4" />
+                    Para llevar
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Venta sin instalación en vehículo</p>
+                </button>
+                <button
+                  type="button"
+                  disabled={sellerFlowLocked}
+                  onClick={() => handleSelectLogisticMode("installed")}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                    logisticMode === "installed"
+                      ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
+                      : "border-sky-200 bg-white hover:bg-sky-50/80 dark:border-sky-500/30 dark:bg-slate-900/40",
+                  )}
+                >
+                  <p className="font-medium inline-flex items-center gap-1.5">
+                    <Wrench className="h-4 w-4" />
+                    Instalado
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Requiere vehículo registrado</p>
+                </button>
+                <button
+                  type="button"
+                  disabled={sellerFlowLocked}
+                  onClick={() => handleSelectLogisticMode("delivery")}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                    logisticMode === "delivery"
+                      ? "border-amber-500 bg-amber-100/80 dark:border-amber-500/50 dark:bg-amber-500/20"
+                      : "border-amber-200 bg-white hover:bg-amber-50/80 dark:border-amber-500/30 dark:bg-slate-900/40",
+                  )}
+                >
+                  <p className="font-medium inline-flex items-center gap-1.5">
+                    <Truck className="h-4 w-4" />
+                    Con envío incluido
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Delivery con mensajero asignado</p>
+                </button>
+              </div>
+
+              {logisticMode === "delivery" ? (
+                <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 sm:grid-cols-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                  <div className="space-y-1.5">
+                    <Label>Tipo de destino</Label>
+                    <Select
+                      value={deliveryDestinationType}
+                      onValueChange={(value) => {
+                        setDeliveryDestinationType(value);
+                        persistDraftSnapshot({ deliveryDestinationType: value });
+                      }}
+                      disabled={sellerFlowLocked}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione destino" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="domicilio">A domicilio</SelectItem>
+                        <SelectItem value="terminal_buses">A terminal de buses</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Costo de envío</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={deliveryCost}
+                      onChange={(e) => setDeliveryCost(e.target.value)}
+                      onBlur={() => persistDraftSnapshot({ deliveryCost })}
+                      disabled={sellerFlowLocked}
+                      placeholder="Tarifa cobrada al cliente"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Mensajero asignado</Label>
+                    {messengerLoading ? (
+                      <p className="text-xs text-muted-foreground">Cargando mensajeros...</p>
+                    ) : messengerOptions.length === 0 ? (
+                      <p className="text-xs text-rose-700">No hay mensajeros configurados para esta sucursal.</p>
+                    ) : (
+                      <Select
+                        value={selectedMessengerId}
+                        onValueChange={(value) => {
+                          const messenger = messengerOptions.find((row) => row.messenger_id === value);
+                          if (messenger && messenger.status === "libre") {
+                            toast.error("El mensajero está fuera de turno. Seleccione otro.");
+                            return;
+                          }
+                          setSelectedMessengerId(value);
+                          persistDraftSnapshot({ selectedMessengerId: value });
+                        }}
+                        disabled={sellerFlowLocked}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione mensajero" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {messengerOptions.map((messenger) => {
+                            const fullName = `${messenger.name || ""} ${messenger.last_name || ""}`.trim();
+                            const statusLabel = messenger.status_label || messenger.status || "disponible";
+                            return (
+                              <SelectItem key={messenger.messenger_id} value={messenger.messenger_id}>
+                                {fullName} — {statusLabel}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {(() => {
+                      const activeMessenger = messengerOptions.find((row) => row.messenger_id === selectedMessengerId);
+                      if (!activeMessenger || activeMessenger.status === "disponible") return null;
+                      if (activeMessenger.status === "en_ruta") {
+                        return (
+                          <p className="text-xs text-amber-800">
+                            El mensajero asignado está en ruta; puede continuar o elegir otro disponible.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -4078,6 +4365,9 @@ export default function SaleForm({
             <SaleTotalsBreakdownRow label={`Retención IR (${retentionRate}%):`} value={totals.retention} currency={currency} prefix="-" className="text-sm text-orange-600" />
           )}
           <SaleTotalsBreakdownRow label={`IVA (${ivaRate}%):`} value={totals.tax} currency={currency} className="text-sm" />
+          {isDeliveryLogistics && totals.deliveryAmount > 0 ? (
+            <SaleTotalsBreakdownRow label="Costo de envío:" value={totals.deliveryAmount} currency={currency} className="text-sm text-amber-800" />
+          ) : null}
           <SaleTotalsBreakdownRow label="Total:" value={totals.total} currency={currency} className="text-lg font-bold" />
           <SavingsHighlightRow
             amount={totals.totalDiscounts + totals.manualPriceDiscountTotal}

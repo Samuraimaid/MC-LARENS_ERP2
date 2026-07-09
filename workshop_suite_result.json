@@ -1,0 +1,333 @@
+login 200
+suite_status 200
+{
+  "suite": "full_workshop_simulation",
+  "success": true,
+  "started_at": "2026-07-09T00:06:14.137640+00:00",
+  "finished_at": "2026-07-09T00:06:18.216394+00:00",
+  "run_tag": "20260709000614",
+  "steps": [
+    {
+      "step": "login_gerencia",
+      "ok": true,
+      "detail": {
+        "user_id": "user_d2145542ae48"
+      }
+    },
+    {
+      "step": "login_ventas_main",
+      "ok": true,
+      "detail": {
+        "user_id": "user_d4c80a62e8c1"
+      }
+    },
+    {
+      "step": "login_cajero",
+      "ok": true,
+      "detail": {
+        "user_id": "user_021238403544"
+      }
+    },
+    {
+      "step": "login_topcar_ventas",
+      "ok": true,
+      "detail": {
+        "north_ventas": "user_ecae97238f6d",
+        "south_ventas": "user_91a8f012574a"
+      }
+    },
+    {
+      "step": "create_customer",
+      "ok": true,
+      "detail": {
+        "customer_id": "customer_92f2752beac0"
+      }
+    },
+    {
+      "step": "create_vehicle",
+      "ok": true,
+      "detail": {
+        "vehicle_id": "vehicle_98818fc40ce3",
+        "plate": "QA77610B"
+      }
+    },
+    {
+      "step": "pick_catalog_products",
+      "ok": true,
+      "detail": {
+        "carry": [
+          "prod_alf_001",
+          "prod_amp_001"
+        ],
+        "install": "prod_alr_001"
+      }
+    },
+    {
+      "step": "blind_intake_wh_main",
+      "ok": true,
+      "detail": {
+        "receipt_id": "ir_5368e81cf0",
+        "warehouse_id": "wh_main",
+        "items": [
+          {
+            "product_id": "prod_alf_001",
+            "quantity": 10,
+            "inventory_id": "inv_prod_alf_001_wh_main",
+            "updated_quantity": 105
+          },
+          {
+            "product_id": "prod_amp_001",
+            "quantity": 10,
+            "inventory_id": "inv_prod_amp_001_wh_main",
+            "updated_quantity": 109
+          },
+          {
+            "product_id": "prod_alr_001",
+            "quantity": 10,
+            "inventory_id": "inv_prod_alr_001_wh_main",
+            "updated_quantity": 109
+          }
+        ],
+        "message": "Ingreso de productos registrado"
+      }
+    },
+    {
+      "step": "workshop_sale_main",
+      "ok": true,
+      "detail": {
+        "sale_id": "sale_3eb1f8de47e0",
+        "invoice_number": "INV-20260709-0003",
+        "work_order_ids": [
+          "wo_c8b27afd"
+        ],
+        "dispatch_id": "DSP-A08E2E89"
+      }
+    },
+    {
+      "step": "work_order_pending_status",
+      "ok": true,
+      "detail": {
+        "work_order_id": "wo_c8b27afd",
+        "status": "pending"
+      }
+    },
+    {
+      "step": "topcar_install_blocked_north",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "status_code": 400,
+        "detail": "400: {\"detail\":\"Esta sucursal no ofrece servicios de instalaciones. Solo la sucursal central puede procesar instalaciones/polarizados.\"}",
+        "sale": null
+      }
+    },
+    {
+      "step": "topcar_install_blocked_south",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "status_code": 400,
+        "detail": "400: {\"detail\":\"Esta sucursal no ofrece servicios de instalaciones. Solo la sucursal central puede procesar instalaciones/polarizados.\"}",
+        "sale": null
+      }
+    },
+    {
+      "step": "work_order_in_progress",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "step": "work_order_submit_qc",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "step": "qc_gate_blocks_delivered",
+      "ok": true,
+      "detail": {
+        "status_code": 400,
+        "detail": "{\"detail\":\"No se puede marcar como Entregado sin aprobación de Control de Calidad (QC_Passed). Envíe la orden a QC y obtenga aprobación del supervisor.\"}"
+      }
+    },
+    {
+      "step": "quality_control_approved",
+      "ok": true,
+      "detail": {
+        "qc_id": "qc_e218d8c4",
+        "work_order_id": "wo_c8b27afd",
+        "technician_id": null,
+        "technician_name": null,
+        "inspector_id": "user_d2145542ae48",
+        "inspector_name": "Xinon",
+        "overall_rating": 5.0,
+        "cleanliness_rating": 5.0,
+        "functionality_rating": 5.0,
+        "finish_rating": 5.0,
+        "safety_rating": 5.0,
+        "average_rating": 5.0,
+        "checklist": [],
+        "comments": "QC_Passed workshop QA 20260709000614",
+        "photos": null,
+        "approved": true,
+        "created_at": "2026-07-09T00:06:17.227812+00:00"
+      }
+    },
+    {
+      "step": "dispatch_main_completed",
+      "ok": true,
+      "detail": {
+        "dispatch_id": "DSP-A08E2E89",
+        "delivered_products": [
+          "prod_alf_001",
+          "prod_amp_001",
+          "prod_alr_001"
+        ],
+        "status": "completed",
+        "all_completed": true
+      }
+    },
+    {
+      "step": "thermal_invoice_pdf",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "bytes": 13391
+      }
+    },
+    {
+      "step": "transfer_approve",
+      "ok": true,
+      "detail": {
+        "request_id": "tr_9469dd2f",
+        "status": "approved"
+      }
+    },
+    {
+      "step": "transfer_ship",
+      "ok": true,
+      "detail": {
+        "request_id": "tr_9469dd2f",
+        "status": "shipped"
+      }
+    },
+    {
+      "step": "transfer_receive",
+      "ok": true,
+      "detail": {
+        "request_id": "tr_9469dd2f",
+        "status": "received"
+      }
+    },
+    {
+      "step": "transfer_inventory_reconciliation",
+      "ok": true,
+      "detail": {
+        "product_id": "prod_alf_001",
+        "origin_delta": -2,
+        "dest_delta": 2
+      }
+    },
+    {
+      "step": "work_order_delivered_after_qc",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "step": "topcar_sale_north",
+      "ok": true,
+      "detail": {
+        "sale_id": "sale_fe0b0f608afb",
+        "dispatch_id": "DSP-4B84B460"
+      }
+    },
+    {
+      "step": "topcar_dispatch_north",
+      "ok": true,
+      "detail": {
+        "dispatch": {
+          "dispatch_id": "DSP-4B84B460",
+          "delivered_products": [
+            "prod_alf_001"
+          ],
+          "status": "completed",
+          "all_completed": true
+        },
+        "main_delta": 0,
+        "local_delta": -1
+      }
+    },
+    {
+      "step": "topcar_sale_south",
+      "ok": true,
+      "detail": {
+        "sale_id": "sale_32df167f8612",
+        "dispatch_id": "DSP-DC86B04E"
+      }
+    },
+    {
+      "step": "topcar_dispatch_south",
+      "ok": true,
+      "detail": {
+        "dispatch": {
+          "dispatch_id": "DSP-DC86B04E",
+          "delivered_products": [
+            "prod_amp_001"
+          ],
+          "status": "completed",
+          "all_completed": true
+        },
+        "main_delta": 0,
+        "local_delta": -1
+      }
+    },
+    {
+      "step": "warranty_lookup_invoice",
+      "ok": true,
+      "detail": {
+        "invoice_number": "INV-20260709-0003",
+        "eligible_count": 3
+      }
+    },
+    {
+      "step": "warranty_claim_replacement",
+      "ok": true,
+      "detail": {
+        "claim_id": "wcl_f3ca4918",
+        "inventory_effect": {
+          "applied": true,
+          "warehouse_id": "wh_main",
+          "quantity": 1,
+          "damaged_added": 1,
+          "available_reduced": 1
+        },
+        "qty_before": 102,
+        "qty_after": 101
+      }
+    }
+  ],
+  "errors": [],
+  "context": {
+    "run_tag": "20260709000614",
+    "vehicle_id": "vehicle_98818fc40ce3",
+    "sale_id": "sale_3eb1f8de47e0",
+    "invoice_number": "INV-20260709-0003",
+    "work_order_ids": [
+      "wo_c8b27afd"
+    ],
+    "dispatch_id": "DSP-A08E2E89"
+  },
+  "summary": {
+    "phases": [
+      "customer_vehicle",
+      "workshop_sale_ot",
+      "topcar_install_restriction",
+      "work_order_qc_dispatch",
+      "blind_intake_transfer",
+      "topcar_local_dispatch",
+      "warranty_lookup_claim"
+    ],
+    "work_order_id": "wo_c8b27afd",
+    "sale_id": "sale_3eb1f8de47e0",
+    "invoice_number": "INV-20260709-0003"
+  }
+}

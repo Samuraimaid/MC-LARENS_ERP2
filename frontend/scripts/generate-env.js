@@ -5,7 +5,19 @@ const path = require('path');
 const publicDir = path.resolve(__dirname, '..', 'public');
 const outFile = path.join(publicDir, 'env.js');
 
-const apiBase = process.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || '/api';
+const configuredBackendUrl = process.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || '';
+const apiBaseExpression = configuredBackendUrl
+  ? `'${String(configuredBackendUrl).replace(/\/$/, '')}/api'`
+  : `(function () {
+  if (typeof window === 'undefined' || !window.location || !window.location.hostname) {
+    return '/api';
+  }
+  var host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return '/api';
+  }
+  return 'http://' + host + ':8001/api';
+})()`;
 const attendanceKioskShortcutPin = process.env.VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN || process.env.REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN || '';
 const buildTime = process.env.VITE_APP_BUILD_TIME || process.env.REACT_APP_BUILD_TIME || new Date().toISOString();
 const buildId = process.env.VITE_APP_BUILD_ID || process.env.REACT_APP_BUILD_ID || (() => {
@@ -35,7 +47,7 @@ try {
 const version = process.env.VITE_APP_VERSION || process.env.REACT_APP_VERSION || require('../package.json').version || '0.2.0-beta.0';
 
 const content = `// This file is auto-generated at build time
-window.__API_BASE__ = '${apiBase}';
+window.__API_BASE__ = ${apiBaseExpression};
 window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__ = '${attendanceKioskShortcutPin}';
 window.__BUILD_TIME__ = '${buildTime}';
 window.__BUILD_ID__ = '${buildId}';

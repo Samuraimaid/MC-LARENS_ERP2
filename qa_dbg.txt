@@ -1,0 +1,4 @@
+login 200 {"user":{"user_id":"user_d4c80a62e8c1","name":"Julia Alan","last_name":"Campos Aleman","phone":"6005-7005","email":"qa.apr2026.branch-main.ventas@pin.local","role":"ventas","branch_id":"branch_main","
+customer 200 {"name":"QA Debug","customer_type":"natural","tax_id":"001-DBG-c6d9a5","phone":"7700","email":"dbg@qa.local","address":"Managua","created_at":"2026-07-08T18:58:54.797416+00:00","customer_id":"customer_bc39afd22a10","is_active":true,"salesperson_history":[],"branch_visit_history":[],"customer_segment
+sale 400
+{"detail":"Insufficient inventory for Alfombras de Goma Universal 4pcs"}

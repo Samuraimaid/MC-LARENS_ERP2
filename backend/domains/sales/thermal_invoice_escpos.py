@@ -246,6 +246,11 @@ def build_thermal_invoice_lines(
     if collection_lines:
         lines.extend(collection_lines)
 
+    from backend.domains.sales.delivery import build_delivery_print_lines
+
+    for delivery_line in build_delivery_print_lines(sale):
+        lines.append(VoucherLine(_clip_line(delivery_line, line_width), centered=False))
+
     if _section_enabled(settings, "header_rules"):
         lines.append(VoucherLine("=" * line_width))
     return lines

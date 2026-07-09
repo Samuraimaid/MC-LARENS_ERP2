@@ -722,6 +722,7 @@ def draw_invoice_letter_pdf(
     payment_info: Optional[Dict[str, Any]] = None,
     exchange_rate: float = 36.5,
     sale_id: str = "",
+    delivery_info: Optional[Dict[str, Any]] = None,
 ) -> None:
     colors, letter, _, _ = get_reportlab_symbols()
     width, height = letter
@@ -1077,7 +1078,27 @@ def draw_invoice_letter_pdf(
         p.setFont("Helvetica", 9)
         p.drawString(margin_x, notes_y - 14, _truncate(notes, 120))
 
+    delivery_lines: List[str] = []
+    if delivery_info and delivery_info.get("is_delivery"):
+        from backend.domains.sales.delivery import build_delivery_print_lines
+
+        delivery_lines = build_delivery_print_lines({"delivery_info": delivery_info})
+
     trace_y = 96 if _sec("company_footer") else 72
+    if delivery_lines:
+        if y < trace_y + 40:
+            p.showPage()
+            y = _new_page() - 18
+        p.setFillColor(colors.HexColor(COLOR_TEXT))
+        p.setFont("Helvetica-Bold", 8.5)
+        p.drawString(margin_x, y, "Logística de envío")
+        y -= 14
+        p.setFont("Helvetica", 8.5)
+        for line in delivery_lines:
+            p.drawString(margin_x, y, _truncate(line, 110))
+            y -= 12
+        y -= 6
+
     scan_code = str(invoice_number or "").strip()
     if scan_code:
         if y < trace_y + 100:

@@ -1,0 +1,34 @@
+login_status=200
+settings_status=200
+ENABLED=["barcode", "breakdown", "breakdown_blocked_discount", "breakdown_code_discount", "breakdown_global_discount", "breakdown_gross_subtotal", "breakdown_iva", "breakdown_line_discount", "breakdown_price_discount", "breakdown_retention", "breakdown_subtotal", "breakdown_total", "company_name", "customer", "date", "footer_disclaimer", "footer_valid", "header_rules", "invoice_number", "items", "payment_plan", "plate", "scan_label", "subtitle", "vehicle"]
+DISABLED=[]
+FULL_SETTINGS={"body_font_size": 6, "title_font_size": 10, "chars_per_line": 64, "top_feed_lines": 8, "left_margin_chars": 2, "barcode_module_width": 4, "barcode_pdf_bar_width": 0.66, "texts": {"company_name": "MUNDO DE ACCESORIOS", "subtitle": "VOUCHER DE VENTA (NO FISCAL)", "scan_label": "ESCANEAR EN CAJA", "footer_valid": "Valido hasta cobro en caja", "footer_disclaimer": "NO ES FACTURA FISCAL"}, "sections": {"header_rules": true, "company_name": true, "subtitle": true, "invoice_number": true, "date": true, "customer": true, "vehicle": true, "plate": true, "items": true, "breakdown": true, "breakdown_gross_subtotal": true, "breakdown_line_discount": true, "breakdown_price_discount": true, "breakdown_code_discount": true, "breakdown_global_discount": true, "breakdown_blocked_discount": true, "breakdown_subtotal": true, "breakdown_retention": true, "breakdown_iva": true, "breakdown_total": true, "payment_plan": true, "barcode": true, "scan_label": true, "footer_valid": true, "footer_disclaimer": true}}
+sales_status=200
+sale_id=sale_946b7f1b387e vehicle_id=seed_vehicle_0047
+voucher_status=200
+VOUCHER_LINES_BEGIN
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260706-0001
+Fecha: 2026-07-06 08:07
+Cliente: Daniela Sofia Vargas
+Vehiculo: HONDA CR-V 2022
+Placa: M 147 429
+----------------------------------------------------------------
+Forro de Timon Cuero Negro
+x1  C$ 1,000.00  C$ 1,000.00
+Parlantes JBL 6.5" 300W Par
+x1  C$ 3,000.00  C$ 3,000.00
+Canastero de Techo Universal
+x1  C$ 10,000.00  C$ 10,000.00
+----------------------------------------------------------------
+Subtotal:                                           C$ 14,000.00
+IVA (15%):                                           C$ 2,100.00
+TOTAL:                                              C$ 16,100.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Transferencia: C$ 16,100.00
+================================================================
+VOUCHER_LINES_END

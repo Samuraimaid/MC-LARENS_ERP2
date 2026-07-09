@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+plugins: anyio-4.12.0
+collecting ... collected 16 items
+
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_money_format_uses_symbol_and_commas PASSED [  6%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_lines_use_full_width_without_article_header PASSED [ 12%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_long_product_name_wraps PASSED [ 18%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_escpos_has_single_header_and_footer PASSED [ 25%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_escpos_starts_with_top_margin_feed PASSED [ 31%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_breakdown_shows_line_global_and_code_discounts PASSED [ 37%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_breakdown_row_sections_hide_individual_lines PASSED [ 43%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_breakdown_master_switch_hides_all_breakdown_lines PASSED [ 50%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_total_amount_row_is_monospace_aligned PASSED [ 56%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_credit_sale_shows_agreed_payment_method_without_plan PASSED [ 62%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_title_lines_use_printer_centering_not_space_padding PASSED [ 68%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_escpos_uses_manual_centering_for_titles PASSED [ 75%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_sample_preview_includes_vehicle_and_plate PASSED [ 81%]
+backend/tests/test_seller_voucher_layout.py::TestSellerVoucherLayout::test_manual_price_discount_appears_when_original_unit_price_preserved PASSED [ 87%]
+backend/tests/test_sale_voucher_discount_parity.py::test_sale_item_keeps_catalog_original_when_payload_omits_it PASSED [ 93%]
+backend/tests/test_sale_voucher_discount_parity.py::test_sale_item_respects_explicit_original_unit_price PASSED [100%]
+
+============================== 16 passed in 0.13s ==============================

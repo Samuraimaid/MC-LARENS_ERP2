@@ -415,6 +415,15 @@ def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float
             {"bold_label": True, "kind": "blocked_discount"},
         ))
 
+    delivery_info = sale.get("delivery_info") or {}
+    delivery_cost = float(delivery_info.get("delivery_cost") or 0) if delivery_info.get("is_delivery") else 0.0
+    if delivery_cost > 0:
+        rows.append((
+            "Costo de envio:",
+            round(delivery_cost, 2),
+            {"bold_label": True, "kind": "delivery_cost"},
+        ))
+
     rows.append(("Subtotal:", subtotal_after, {"bold_label": True, "kind": "subtotal"}))
 
     retention = float(sale.get("retention_amount") or 0)

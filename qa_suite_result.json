@@ -1,0 +1,211 @@
+{
+  "run_tag": "20260708190145",
+  "started_at": "2026-07-08T19:01:45.540764+00:00",
+  "ok": false,
+  "steps": [
+    {
+      "name": "login_roles",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "set_dual_rates",
+      "ok": false,
+      "detail": "{\"detail\":\"Not Found\"}"
+    },
+    {
+      "name": "seed_catalog_stock",
+      "ok": true,
+      "detail": {
+        "products": [
+          "prod_alf_001",
+          "prod_alr_001",
+          "prod_amp_001",
+          "prod_bar_001",
+          "prod_cam_001"
+        ]
+      }
+    },
+    {
+      "name": "cashier_session",
+      "ok": true,
+      "detail": {
+        "session_id": "caja_bb1c3a5adb"
+      }
+    },
+    {
+      "name": "complete_transactions",
+      "ok": true,
+      "detail": {
+        "natural_ok": 5,
+        "company_ok": 5,
+        "total_ok": 10,
+        "expected": 10,
+        "buy_rate": 36.62,
+        "sell_rate": 37.15
+      }
+    }
+  ],
+  "transactions": [
+    {
+      "customer_id": "customer_9a4451d21699",
+      "customer_type": "natural",
+      "sale_id": "sale_6841ddbd6b2a",
+      "invoice_number": "INV-20260708-0015",
+      "apply_iva": false,
+      "total_nio": 35416.95,
+      "payment_method": "cash",
+      "print_checks": {
+        "thermal_status": 200,
+        "thermal_bytes": 13586,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 35416.95
+    },
+    {
+      "customer_id": "customer_ec1d820c13ea",
+      "customer_type": "natural",
+      "sale_id": "sale_bb13fff38896",
+      "invoice_number": "INV-20260708-0016",
+      "apply_iva": false,
+      "total_nio": 35416.95,
+      "payment_method": "transfer",
+      "print_checks": {
+        "thermal_status": 200,
+        "thermal_bytes": 13590,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 35416.95
+    },
+    {
+      "customer_id": "customer_a5b064f441c9",
+      "customer_type": "natural",
+      "sale_id": "sale_2c58386be908",
+      "invoice_number": "INV-20260708-0017",
+      "apply_iva": false,
+      "total_nio": 35416.95,
+      "payment_method": "mixed",
+      "print_checks": {
+        "thermal_status": 200,
+        "thermal_bytes": 13585,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 35416.95
+    },
+    {
+      "customer_id": "customer_75d9f7426120",
+      "customer_type": "natural",
+      "sale_id": "sale_674a3f57b874",
+      "invoice_number": "INV-20260708-0018",
+      "apply_iva": false,
+      "total_nio": 35416.95,
+      "payment_method": "mixed",
+      "print_checks": {
+        "thermal_status": 200,
+        "thermal_bytes": 13584,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 35416.95
+    },
+    {
+      "customer_id": "customer_34162286e40a",
+      "customer_type": "natural",
+      "sale_id": "sale_d292fd794fda",
+      "invoice_number": "INV-20260708-0019",
+      "apply_iva": false,
+      "total_nio": 35416.95,
+      "payment_method": "mixed",
+      "print_checks": {
+        "thermal_status": 200,
+        "thermal_bytes": 13586,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 35416.95
+    },
+    {
+      "customer_id": "customer_d2d097991c3d",
+      "customer_type": "empresa",
+      "sale_id": "sale_9ffe333aa828",
+      "invoice_number": "INV-20260708-0020",
+      "apply_iva": true,
+      "total_nio": 40729.49,
+      "payment_method": "cash",
+      "print_checks": {
+        "letter_pdf_status": 200,
+        "letter_pdf_bytes": 408326,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 40729.49
+    },
+    {
+      "customer_id": "customer_8eccc3a93e16",
+      "customer_type": "empresa",
+      "sale_id": "sale_548d5eac43d8",
+      "invoice_number": "INV-20260708-0021",
+      "apply_iva": true,
+      "total_nio": 40729.49,
+      "payment_method": "transfer",
+      "print_checks": {
+        "letter_pdf_status": 200,
+        "letter_pdf_bytes": 408327,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 40729.49
+    },
+    {
+      "customer_id": "customer_475ee55425be",
+      "customer_type": "empresa",
+      "sale_id": "sale_b5317e8b9010",
+      "invoice_number": "INV-20260708-0022",
+      "apply_iva": true,
+      "total_nio": 40729.49,
+      "payment_method": "mixed",
+      "print_checks": {
+        "letter_pdf_status": 200,
+        "letter_pdf_bytes": 408338,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 40729.49
+    },
+    {
+      "customer_id": "customer_74dce26cbdc7",
+      "customer_type": "empresa",
+      "sale_id": "sale_61fff5edf3d2",
+      "invoice_number": "INV-20260708-0023",
+      "apply_iva": true,
+      "total_nio": 40729.49,
+      "payment_method": "mixed",
+      "print_checks": {
+        "letter_pdf_status": 200,
+        "letter_pdf_bytes": 408341,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 40729.49
+    },
+    {
+      "customer_id": "customer_527ef21b6f9f",
+      "customer_type": "empresa",
+      "sale_id": "sale_0f5033ebce4b",
+      "invoice_number": "INV-20260708-0024",
+      "apply_iva": true,
+      "total_nio": 40729.49,
+      "payment_method": "mixed",
+      "print_checks": {
+        "letter_pdf_status": 200,
+        "letter_pdf_bytes": 408327,
+        "warranty_lookup_status": 404
+      },
+      "collect_amount": 40729.49
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "natural_ok": 5,
+    "company_ok": 5,
+    "total_ok": 10,
+    "expected": 10,
+    "buy_rate": 36.62,
+    "sell_rate": 37.15
+  },
+  "finished_at": "2026-07-08T19:01:51.213940+00:00"
+}

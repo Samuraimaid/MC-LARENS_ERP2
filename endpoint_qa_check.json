@@ -1,0 +1,43 @@
+{
+  "dual_rates": {
+    "status": 200,
+    "ok": true,
+    "body": {
+      "pair": "USD_NIO",
+      "buy_rate": 36.62,
+      "sell_rate": 37.15,
+      "rate": 37.15,
+      "buy_source": "billing_buy",
+      "sell_source": "billing_sell",
+      "source": "billing_sell"
+    }
+  },
+  "warranties_route": {
+    "unauth_status": 401,
+    "invalid_status": 400,
+    "route_ok": true
+  },
+  "qa_suite": {
+    "status": 200,
+    "ok": true,
+    "summary": {
+      "natural_ok": 5,
+      "company_ok": 5,
+      "total_ok": 10,
+      "expected": 10,
+      "buy_rate": 36.62,
+      "sell_rate": 37.15
+    },
+    "errors": 0
+  },
+  "warranty_lookup_paid": {
+    "status": 401,
+    "invoice": "INV-20260708-0050"
+  },
+  "letter_pdf_api": {
+    "status": 401,
+    "bytes": 28,
+    "sale_id": "sale_f7d54c169031",
+    "pdf_header": false
+  }
+}

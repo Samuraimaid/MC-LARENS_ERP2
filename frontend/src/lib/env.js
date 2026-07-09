@@ -23,6 +23,13 @@ function buildApiBase() {
     return `${String(backendUrl).replace(/\/$/, "")}/api`;
   }
 
+  if (runtimeWindow?.location?.hostname) {
+    const host = runtimeWindow.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return `http://${host}:8001/api`;
+    }
+  }
+
   return "/api";
 }
 

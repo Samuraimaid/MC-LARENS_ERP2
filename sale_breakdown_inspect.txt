@@ -1,0 +1,244 @@
+=== INV-20260706-0002 ===
+{
+  "discount": 0.0,
+  "discounts_applied_amount": 0.0,
+  "applied_discounts": [],
+  "subtotal": 578.08,
+  "items": [
+    {
+      "product_name": "Canastero de Techo Universal",
+      "quantity": 1,
+      "unit_price": 273.972603,
+      "original_unit_price": 273.972603,
+      "discount": 0.0,
+      "subtotal": 273.972603
+    },
+    {
+      "product_name": "Forro de Timón Cuero Negro",
+      "quantity": 1,
+      "unit_price": 30.136986,
+      "original_unit_price": 30.136986,
+      "discount": 0.0,
+      "subtotal": 30.136986
+    },
+    {
+      "product_name": "Alarma Viper 5906V con GPS",
+      "quantity": 1,
+      "unit_price": 273.972603,
+      "original_unit_price": 273.972603,
+      "discount": 0.0,
+      "subtotal": 273.972603
+    }
+  ]
+}
+--- voucher ---
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260706-0002
+Fecha: 2026-07-06 08:19
+Cliente: Adriana Maria Mora
+Vehiculo: NISSAN X-TRAIL 2023
+Placa: M 122 254
+----------------------------------------------------------------
+Canastero de Techo Universal
+x1  C$ 10,000.00  C$ 10,000.00
+Forro de Timon Cuero Negro
+x1  C$ 1,100.00  C$ 1,100.00
+Alarma Viper 5906V con GPS
+x1  C$ 10,000.00  C$ 10,000.00
+----------------------------------------------------------------
+Subtotal:                                           C$ 21,100.00
+IVA (15%):                                           C$ 3,165.00
+TOTAL:                                              C$ 24,265.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Transferencia: C$ 24,265.00
+================================================================
+
+=== INV-20260706-0001 ===
+{
+  "discount": 0.0,
+  "discounts_applied_amount": 0.0,
+  "applied_discounts": [],
+  "subtotal": 383.56,
+  "items": [
+    {
+      "product_name": "Forro de Timón Cuero Negro",
+      "quantity": 1,
+      "unit_price": 27.39726,
+      "original_unit_price": 27.39726,
+      "discount": 0.0,
+      "subtotal": 27.39726
+    },
+    {
+      "product_name": "Parlantes JBL 6.5\" 300W Par",
+      "quantity": 1,
+      "unit_price": 82.191781,
+      "original_unit_price": 82.191781,
+      "discount": 0.0,
+      "subtotal": 82.191781
+    },
+    {
+      "product_name": "Canastero de Techo Universal",
+      "quantity": 1,
+      "unit_price": 273.972603,
+      "original_unit_price": 273.972603,
+      "discount": 0.0,
+      "subtotal": 273.972603
+    }
+  ]
+}
+--- voucher ---
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260706-0001
+Fecha: 2026-07-06 08:07
+Cliente: Daniela Sofia Vargas
+Vehiculo: HONDA CR-V 2022
+Placa: M 147 429
+----------------------------------------------------------------
+Forro de Timon Cuero Negro
+x1  C$ 1,000.00  C$ 1,000.00
+Parlantes JBL 6.5" 300W Par
+x1  C$ 3,000.00  C$ 3,000.00
+Canastero de Techo Universal
+x1  C$ 10,000.00  C$ 10,000.00
+----------------------------------------------------------------
+Subtotal:                                           C$ 14,000.00
+IVA (15%):                                           C$ 2,100.00
+TOTAL:                                              C$ 16,100.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Transferencia: C$ 16,100.00
+================================================================
+
+=== INV-20260704-0006 ===
+{
+  "discount": 0.0,
+  "discounts_applied_amount": 0.0,
+  "applied_discounts": [],
+  "subtotal": 123.29,
+  "items": [
+    {
+      "product_name": "Parlantes JBL 6.5\" 300W Par",
+      "quantity": 1,
+      "unit_price": 82.191781,
+      "original_unit_price": 82.191781,
+      "discount": 0.0,
+      "subtotal": 82.191781
+    },
+    {
+      "product_name": "Alfombras de Goma Universal 4pcs",
+      "quantity": 1,
+      "unit_price": 41.09589,
+      "original_unit_price": 41.09589,
+      "discount": 0.0,
+      "subtotal": 41.09589
+    }
+  ]
+}
+--- voucher ---
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260704-0006
+Fecha: 2026-07-04 12:56
+Cliente: Ana Sofia Morales Hernandez
+Vehiculo: HYUNDAI Elantra (CN7) [2020-Presente] - 1.6L [H] 2021
+Placa: M 544 843
+----------------------------------------------------------------
+Parlantes JBL 6.5" 300W Par
+x1  C$ 3,000.00  C$ 3,000.00
+Alfombras de Goma Universal 4pcs
+x1  C$ 1,500.00  C$ 1,500.00
+----------------------------------------------------------------
+Subtotal:                                            C$ 4,500.00
+IVA (15%):                                             C$ 675.00
+TOTAL:                                               C$ 5,175.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Transferencia: C$ 5,175.00
+================================================================
+
+=== INV-20260704-0005 ===
+{
+  "discount": 0.0,
+  "discounts_applied_amount": 0.0,
+  "applied_discounts": [],
+  "subtotal": 273.97,
+  "items": [
+    {
+      "product_name": "Radio Android 10\" Toyota Universal",
+      "quantity": 1,
+      "unit_price": 273.972603,
+      "original_unit_price": 273.972603,
+      "discount": 0.0,
+      "subtotal": 273.972603
+    }
+  ]
+}
+--- voucher ---
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260704-0005
+Fecha: 2026-07-04 12:26
+Cliente: Maria Fernanda Gutierrez Perez
+Vehiculo: NISSAN Sentra (B18) [2020-Presente] - 2.0L MR20DD [G] 
+Placa: M 554 852
+----------------------------------------------------------------
+Radio Android 10" Toyota Universal
+x1  C$ 10,000.00  C$ 10,000.00
+----------------------------------------------------------------
+Subtotal:                                           C$ 10,000.00
+IVA (0%):                                                C$ 0.00
+TOTAL:                                              C$ 10,000.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Efectivo: C$ 10,000.00
+================================================================
+
+=== INV-20260704-0004 ===
+{
+  "discount": 0.0,
+  "discounts_applied_amount": 0.0,
+  "applied_discounts": [],
+  "subtotal": 273.97,
+  "items": [
+    {
+      "product_name": "Radio Android 10\" Toyota Universal",
+      "quantity": 1,
+      "unit_price": 273.972603,
+      "original_unit_price": 273.972603,
+      "discount": 0.0,
+      "subtotal": 273.972603
+    }
+  ]
+}
+--- voucher ---
+================================================================
+MUNDO DE ACCESORIOS
+VOUCHER DE VENTA (NO FISCAL)
+================================================================
+Factura: INV-20260704-0004
+Fecha: 2026-07-04 10:56
+Cliente: Maria Fernanda Gutierrez Perez
+Vehiculo: NISSAN Sentra (B18) [2020-Presente] - 2.0L MR20DD [G] 
+Placa: M 554 852
+----------------------------------------------------------------
+Radio Android 10" Toyota Universal
+x1  C$ 10,000.00  C$ 10,000.00
+----------------------------------------------------------------
+Subtotal:                                           C$ 10,000.00
+IVA (0%):                                                C$ 0.00
+TOTAL:                                              C$ 10,000.00
+----------------------------------------------------------------
+Metodo de pago acordado:
+Efectivo: C$ 10,000.00
+================================================================
