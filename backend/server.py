@@ -5411,7 +5411,11 @@ async def get_products(
 
     # Ensure all products have installation_type (migration for legacy products)
     for product in products:
-        if "installation_type" not in product or not product.get("installation_type"):
+        if product.get("installation_required") and str(
+            product.get("installation_type") or "optional"
+        ).lower() == "optional":
+            product["installation_type"] = "required"
+        elif "installation_type" not in product or not product.get("installation_type"):
             product["installation_type"] = "optional"  # Default for legacy products
 
         # Ensure price tiers exist: precio1, precio2, precio3, precio_vip
@@ -11759,7 +11763,12 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
 
 
 WORK_ORDER_FIELD_TECHNICIAN_ROLES = {"instalaciones", "instalador", "electrico"}
-WORK_ORDER_QC_APPROVER_ROLES = {"gerencia", "coordinador_instalaciones"}
+WORK_ORDER_QC_APPROVER_ROLES = {
+    "gerencia",
+    "supervisor",
+    "jefe_tienda",
+    "coordinador_instalaciones",
+}
 
 
 @api_router.put("/work-orders/{work_order_id}")
@@ -11790,6 +11799,23 @@ async def update_work_order(
                 raise HTTPException(
                     status_code=403,
                     detail="Solo el coordinador de instalaciones puede aprobar trabajos terminados",
+                )
+
+        if update.status == "delivered":
+            qc_passed = bool(wo.get("qc_approved"))
+            if not qc_passed:
+                approved_qc = await db.quality_controls.find_one(
+                    {"work_order_id": work_order_id, "approved": True},
+                    {"_id": 0, "qc_id": 1},
+                )
+                qc_passed = approved_qc is not None
+            if not qc_passed:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No se puede marcar como Entregado sin aprobación de Control de Calidad "
+                        "(QC_Passed). Envíe la orden a QC y obtenga aprobación del supervisor."
+                    ),
                 )
 
         updates["status"] = update.status
@@ -12248,7 +12274,7 @@ async def get_technician_completed_jobs(
 
 
 QC_VIEW_ROLES = ["gerencia", "supervisor", "coordinador_instalaciones"]
-QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"]
+QC_APPROVER_ROLES = ["gerencia", "supervisor", "jefe_tienda", "coordinador_instalaciones"]
 
 
 @api_router.get("/quality-control")
@@ -17150,6 +17176,22 @@ async def run_logistic_simulation_suite_endpoint(request: Request):
         base_url = f"{base_url}/api"
 
     report = await asyncio.to_thread(run_logistic_simulation_suite, base_url)
+    return report
+
+
+@api_router.post("/qa/run-full-workshop-simulation-suite")
+async def run_full_workshop_simulation_suite_endpoint(request: Request):
+    """Ejecuta simulación E2E taller: OT, QC, despacho multi-sucursal, logística y garantías."""
+    import asyncio
+
+    await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.qa.workshop_simulation_suite import run_workshop_simulation_suite
+
+    base_url = str(request.base_url).rstrip("/")
+    if not base_url.endswith("/api"):
+        base_url = f"{base_url}/api"
+
+    report = await asyncio.to_thread(run_workshop_simulation_suite, base_url)
     return report
 
 
