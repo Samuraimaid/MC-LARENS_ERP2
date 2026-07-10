@@ -28,6 +28,9 @@ ERROR_PATTERNS = (
     r"%BLD%%CYAN%",
     r"echo !CYAN!╔",
     r"echo !CYAN!║",
+    r"%GRN%\[9\]%RST%",
+    r"%GRN%\[1\]%RST%",
+    r"%RED%\[0\]%RST%",
 )
 
 REQUIRED_PATTERNS = (
@@ -37,7 +40,7 @@ REQUIRED_PATTERNS = (
     r"docker compose exec -T backend python /app/backend/scripts/render_qr_ascii\.py",
     r"pip install qrcode==8\.2",
     r"if not exist \"%REPO_ROOT%\" mkdir \"%REPO_ROOT%\"",
-    r"\[ESTADO: INSTALACION LIMPIA DESDE CERO\]",
+    r"INSTALACION LIMPIA DESDE CERO",
     r":AUDIT_HARDWARE",
     r":RESTORE_DELTA_FROM_USB",
     r'reg add "HKCU\\Console" /v VirtualTerminalLevel',
@@ -45,6 +48,8 @@ REQUIRED_PATTERNS = (
     r"mode con: cols=80 lines=25",
     r":RENDER_MAIN_MENU_FRAME",
     r":BUILD_MENU_STATUS",
+    r"%GRN%Op\.9%RST%",
+    r"%CYAN%\^|%RST%",
 )
 
 

@@ -621,9 +621,9 @@ echo %YLW%║%RST%  %BLD%MODO INSTALACION DESATENDIDA ZERO-TOUCH — BLACK BOX A
 echo %YLW%╚══════════════════════════════════════════════════════════════════════╝%RST%
 echo.
 echo %BLD%Perfil del nodo:%RST%
-echo   %GRN%[1]%RST% Casa Matriz ^(SUCURSAL^)
-echo   %GRN%[2]%RST% Sucursal Alterna ^(SUCURSAL^)
-echo   %GRN%[3]%RST% Bodega Satelite Pura
+echo   %GRN%Op.1%RST% Casa Matriz ^(SUCURSAL^)
+echo   %GRN%Op.2%RST% Sucursal Alterna ^(SUCURSAL^)
+echo   %GRN%Op.3%RST% Bodega Satelite Pura
 set "AUTO_NODE_PROFILE="
 set /p "AUTO_NODE_PROFILE=Seleccione [1-3]: "
 if "%AUTO_NODE_PROFILE%"=="" goto MODO_AUTOMATICO_DESATENDIDO
@@ -694,29 +694,29 @@ set "NET_TEXT=DISCONNECTED"
 set "MENU_NET=DISCONNECTED"
 if /i "%INTERNET%"=="CONNECTED" (
     set "NET_TEXT=CONNECTED"
-    set "MENU_NET=%GRN%CONNECTED%RST%"
+    call set "MENU_NET=%%GRN%%CONNECTED%%RST%%"
 ) else (
     set "NET_TEXT=DISCONNECTED"
-    set "MENU_NET=%RED%DISCONNECTED%RST%"
+    call set "MENU_NET=%%RED%%DISCONNECTED%%RST%%"
 )
 goto :eof
 
 :RENDER_MAIN_MENU_FRAME
-echo %CYAN%╔══════════════════════════════════════════════════════════════════════════════╗%RST%
-echo %CYAN%║%RST% %BLD%USER:%RST% %USERNAME%  %BLD%HOST:%RST% %COMPUTERNAME%  %BLD%NODE:%RST% %NODE_ID%          %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%IP:%RST% %SERVER_LAN_IP%  %BLD%NET:%RST% %MENU_NET%  %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%REPO:%RST% %DIM%%REPO_ROOT%%RST%                                %CYAN%║%RST%
-if "%CLEAN_INSTALL%"=="1" echo %CYAN%║%RST% %YLW%[ESTADO: INSTALACION LIMPIA DESDE CERO]%RST%                                      %CYAN%║%RST%
-echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════╣%RST%
-echo %CYAN%║%RST% %BLD%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.3-ZeroTouch^)%RST%                          %CYAN%║%RST%
-echo %CYAN%╠════════════════════════╦════════════════════════╦══════════════════════════════╣%RST%
-echo %CYAN%║%RST% %RED%[0]%RST% Zero-Touch Auto       %CYAN%║%RST% %YLW%Multi-Nodo%RST%             %CYAN%║%RST% %YLW%Mantenimiento%RST%              %CYAN%║%RST%
-echo %CYAN%╠════════════════════════╬════════════════════════╬══════════════════════════════╣%RST%
-echo %CYAN%║%RST% %GRN%[1]%RST% Git                   %CYAN%║%RST% %GRN%[5]%RST% Clonar Repo PAT       %CYAN%║%RST% %GRN%[9]%RST%  Respaldo USB           %CYAN%║%RST%
-echo %CYAN%║%RST% %GRN%[2]%RST% Docker                %CYAN%║%RST% %GRN%[6]%RST% Casa Matriz           %CYAN%║%RST% %GRN%[10]%RST% Daemon Beep            %CYAN%║%RST%
-echo %CYAN%║%RST% %GRN%[3]%RST% Escaner IP            %CYAN%║%RST% %GRN%[7]%RST% Bodega Pura           %CYAN%║%RST% %GRN%[11]%RST% Suite Caos QA          %CYAN%║%RST%
-echo %CYAN%║%RST% %GRN%[4]%RST% Tareas 03:00 AM       %CYAN%║%RST% %GRN%[8]%RST% Kiosk + QR ASCII      %CYAN%║%RST% %RED%[99]%RST% Apagar/Reiniciar       %CYAN%║%RST%
-echo %CYAN%╚════════════════════════╩════════════════════════╩══════════════════════════════╝%RST%
+echo %CYAN%+==============================================================================+%RST%
+echo %CYAN%^|%RST% %BLD%USER:%RST% %USERNAME%   %BLD%HOST:%RST% %COMPUTERNAME%   %BLD%NODE:%RST% %NODE_ID%              %CYAN%^|%RST%
+echo %CYAN%^|%RST% %BLD%IP:%RST% %SERVER_LAN_IP%   %BLD%NET:%RST% %MENU_NET%                           %CYAN%^|%RST%
+echo %CYAN%^|%RST% %BLD%REPO:%RST% %DIM%%REPO_ROOT%%RST%                         %CYAN%^|%RST%
+if "%CLEAN_INSTALL%"=="1" echo %CYAN%^|%RST% %YLW%* INSTALACION LIMPIA DESDE CERO *%RST%                                    %CYAN%^|%RST%
+echo %CYAN%+==============================================================================+%RST%
+echo %CYAN%^|%RST% %BLD%MCLARENS ERP - SERVER BLACK BOX CORE v2.3-ZeroTouch%RST%                  %CYAN%^|%RST%
+echo %CYAN%+======================+======================+==============================+%RST%
+echo %CYAN%^|%RST% %RED%Op.0%RST% Zero-Touch Auto    %CYAN%^|%RST% %YLW%Multi-Nodo%RST%           %CYAN%^|%RST% %YLW%Mantenimiento%RST%             %CYAN%^|%RST%
+echo %CYAN%+======================+======================+==============================+%RST%
+echo %CYAN%^|%RST% %GRN%Op.1%RST% Git                %CYAN%^|%RST% %GRN%Op.5%RST% Clonar Repo        %CYAN%^|%RST% %GRN%Op.9%RST%  Respaldo USB          %CYAN%^|%RST%
+echo %CYAN%^|%RST% %GRN%Op.2%RST% Docker             %CYAN%^|%RST% %GRN%Op.6%RST% Casa Matriz        %CYAN%^|%RST% %GRN%Op.10%RST% Daemon Beep          %CYAN%^|%RST%
+echo %CYAN%^|%RST% %GRN%Op.3%RST% Escaner IP         %CYAN%^|%RST% %GRN%Op.7%RST% Bodega Pura        %CYAN%^|%RST% %GRN%Op.11%RST% Suite Caos QA        %CYAN%^|%RST%
+echo %CYAN%^|%RST% %GRN%Op.4%RST% Tareas 03:00       %CYAN%^|%RST% %GRN%Op.8%RST% Kiosk y QR ASCII   %CYAN%^|%RST% %RED%Op.99%RST% Apagar/Reiniciar     %CYAN%^|%RST%
+echo %CYAN%+======================+======================+==============================+%RST%
 echo.
 goto :eof
 
@@ -818,8 +818,8 @@ if exist "%FREE_TMP%" (
 echo.
 echo %GRN%SUGERENCIA AUTOMATICA:%RST% !SUGGEST_IP! ^(menor riesgo de colision en zona servidor^)
 echo.
-echo   %GRN%[1]%RST% Usar IP sugerida automaticamente ^(!SUGGEST_IP!^)
-echo   %GRN%[2]%RST% Digitar otra direccion IP manualmente
+echo   %GRN%Op.1%RST% Usar IP sugerida automaticamente ^(!SUGGEST_IP!^)
+echo   %GRN%Op.2%RST% Digitar otra direccion IP manualmente
 echo   %GRN%[C]%RST% Cancelar
 set "IP_CHOICE="
 set /p "IP_CHOICE=Seleccione: "
@@ -1008,9 +1008,9 @@ echo %CYAN%═══ [8] CENTRO DE MANDO - QR ASCII + KIOSK ═══%RST%
 echo.
 call :RENDER_QR_ASCII "!KIOSK_URL!"
 echo.
-echo   %GRN%[1]%RST% Solo QR en consola ^(escanear ahora^)
-echo   %GRN%[2]%RST% QR + abrir Kiosk fullscreen en Edge
-echo   %GRN%[3]%RST% Volver al menu
+echo   %GRN%Op.1%RST% Solo QR en consola ^(escanear ahora^)
+echo   %GRN%Op.2%RST% QR + abrir Kiosk fullscreen en Edge
+echo   %GRN%Op.3%RST% Volver al menu
 set "KIOSK_CHOICE="
 set /p "KIOSK_CHOICE=Seleccione: "
 if "!KIOSK_CHOICE!"=="3" (
