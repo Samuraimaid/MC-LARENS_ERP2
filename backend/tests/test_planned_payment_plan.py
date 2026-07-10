@@ -160,6 +160,24 @@ class TestPlannedPaymentPlanRules:
             )
         assert exc.value.status_code == 409
 
+    def test_mixed_cash_collect_allows_cross_currency_when_nio_total_matches(self):
+        plan = {
+            "locked": True,
+            "mode": "cash",
+            "exchange_rate": 36.62,
+            "lines": [
+                {"metodo": "cash", "moneda": "NIO", "monto_origen": 12700, "monto_cordobas": 12700},
+                {"metodo": "cash", "moneda": "USD", "monto_origen": 200, "monto_cordobas": 7324.0},
+            ],
+        }
+        validate_collect_against_plan(
+            plan,
+            pagos=[{"metodo": "cash", "moneda": "NIO", "monto_origen": 20024}],
+            amount=20024,
+            payment_method="cash",
+            pending_amount=20024,
+        )
+
     def test_mixed_collect_always_requires_exact_signature_even_if_under_pending(self):
         plan = {
             "locked": True,

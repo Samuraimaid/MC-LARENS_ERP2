@@ -115,6 +115,70 @@ export function computeUsdCashChangeInNio(receivedUsd, dueUsd, exchangeRate = 36
   };
 }
 
+export function computeUnifiedCashSettlement({
+  nioAmount = 0,
+  usdAmount = 0,
+  receivedNio = 0,
+  receivedUsd = 0,
+  exchangeRate = 36.5,
+  buyRate = null,
+}) {
+  const rate = resolveCashierPaymentRate(exchangeRate, buyRate);
+  const dueNio = round2(Number(nioAmount || 0) + Number(usdAmount || 0) * rate);
+  const receivedTotalNio = round2(Number(receivedNio || 0) + Number(receivedUsd || 0) * rate);
+  const hasAnyReceived = receivedTotalNio > 0.009;
+  const shortfall = round2(Math.max(0, dueNio - receivedTotalNio));
+  const changeNio = round2(Math.max(0, receivedTotalNio - dueNio));
+  return {
+    rate,
+    dueNio,
+    receivedTotalNio,
+    shortfall,
+    changeNio,
+    hasAnyReceived,
+    isValid: !hasAnyReceived || receivedTotalNio >= dueNio - 0.009,
+  };
+}
+
+export function canSubmitCashierCollect({
+  pendingNio = 0,
+  nioAmount = 0,
+  usdAmount = 0,
+  receivedNio = 0,
+  receivedUsd = 0,
+  receivedAmount = 0,
+  exchangeRate = 36.5,
+  buyRate = null,
+  useDualCurrency = false,
+  allowPartial = false,
+  authBlocked = false,
+}) {
+  if (authBlocked) return false;
+  const dualTotals = computeDualCurrencyTotals({
+    pendingNio,
+    nioAmount,
+    usdAmount,
+    exchangeRate,
+    buyRate,
+  });
+  const amountToCollect = dualTotals.covered > 0 ? dualTotals.covered : pendingNio;
+  if (!allowPartial && amountToCollect > 0 && !dualTotals.isComplete) return false;
+  if (!useDualCurrency) return amountToCollect > 0.009;
+  const receivedNioValue = receivedNio || receivedAmount || 0;
+  const settlement = computeUnifiedCashSettlement({
+    nioAmount,
+    usdAmount,
+    receivedNio: receivedNioValue,
+    receivedUsd,
+    exchangeRate,
+    buyRate,
+  });
+  if (!settlement.hasAnyReceived) {
+    return dualTotals.isComplete || allowPartial;
+  }
+  return settlement.isValid;
+}
+
 export function computeTotalCashChangeNio({
   nioAmount = 0,
   usdAmount = 0,
@@ -125,14 +189,20 @@ export function computeTotalCashChangeNio({
 }) {
   const nioTotals = computeCashChange(receivedNio, nioAmount);
   const usdTotals = computeUsdCashChangeInNio(receivedUsd, usdAmount, exchangeRate, buyRate);
+  const unified = computeUnifiedCashSettlement({
+    nioAmount,
+    usdAmount,
+    receivedNio,
+    receivedUsd,
+    exchangeRate,
+    buyRate,
+  });
   return {
     nio: nioTotals,
     usd: usdTotals,
-    totalChangeNio: round2(nioTotals.change + usdTotals.changeNio),
-    isValid: (
-      (Number(nioAmount) <= 0.009 || nioTotals.isValid)
-      && (Number(usdAmount) <= 0.009 || usdTotals.isValid)
-    ),
+    unified,
+    totalChangeNio: unified.changeNio,
+    isValid: unified.isValid,
   };
 }
 

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDualCurrencyPagos,
+  canSubmitCashierCollect,
   computeCashChange,
   computeDualCurrencyTotals,
   computeTotalCashChangeNio,
+  computeUnifiedCashSettlement,
   computeUsdCashChangeInNio,
   dualCurrencyAmountFromPlan,
   isCashSingleCollect,
@@ -88,5 +90,42 @@ describe("cashierCollect", () => {
     });
     expect(totals.totalChangeNio).toBe(2125);
     expect(totals.isValid).toBe(true);
+  });
+
+  it("accepts nio overpayment that covers planned usd using buy rate", () => {
+    const settlement = computeUnifiedCashSettlement({
+      nioAmount: 12700,
+      usdAmount: 200,
+      receivedNio: 20281.73,
+      receivedUsd: 0,
+      exchangeRate: 37.15,
+      buyRate: 36.62,
+    });
+    expect(settlement.dueNio).toBe(20024);
+    expect(settlement.isValid).toBe(true);
+    expect(settlement.changeNio).toBe(257.73);
+
+    const totals = computeTotalCashChangeNio({
+      nioAmount: 12700,
+      usdAmount: 200,
+      receivedNio: 20281.73,
+      receivedUsd: 0,
+      buyRate: 36.62,
+    });
+    expect(totals.isValid).toBe(true);
+    expect(totals.totalChangeNio).toBe(257.73);
+  });
+
+  it("enables collect when unified nio received covers mixed due", () => {
+    const allowed = canSubmitCashierCollect({
+      pendingNio: 20024,
+      nioAmount: 12700,
+      usdAmount: 200,
+      receivedNio: 20281.73,
+      receivedUsd: 0,
+      buyRate: 36.62,
+      useDualCurrency: true,
+    });
+    expect(allowed).toBe(true);
   });
 });

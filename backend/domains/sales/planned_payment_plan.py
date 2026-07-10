@@ -240,6 +240,156 @@ def _signature(lines: List[Dict[str, Any]]) -> List[Tuple[str, str, float]]:
     return sorted(sig)
 
 
+def _lines_nio_total(lines: List[Dict[str, Any]], exchange_rate: float) -> float:
+    return _round2(sum(line_amount_nio(line, exchange_rate) for line in lines))
+
+
+def _cash_lines(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [line for line in lines if _normalize_method(line.get("metodo")) == "cash"]
+
+
+def _non_cash_lines(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [line for line in lines if _normalize_method(line.get("metodo")) != "cash"]
+
+
+def _validate_mixed_collect_lines(
+    plan_lines: List[Dict[str, Any]],
+    collect_lines: List[Dict[str, Any]],
+    *,
+    exchange_rate: float,
+    submitted_amount: float,
+    pending_amount: Optional[float] = None,
+) -> None:
+    rate = _round4(exchange_rate or 36.62)
+    tolerance = _compute_plan_rounding_tolerance(plan_lines, rate)
+
+    plan_non_cash = _non_cash_lines(plan_lines)
+    collect_non_cash = _non_cash_lines(collect_lines)
+    if _signature(plan_non_cash) != _signature(collect_non_cash):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "PAYMENT_PLAN_MISMATCH",
+                "message": "Los pagos con tarjeta/transferencia deben coincidir con el plan acordado por ventas.",
+            },
+        )
+
+    plan_methods = sorted({_normalize_method(line.get("metodo")) for line in plan_lines})
+    collect_methods = sorted({_normalize_method(line.get("metodo")) for line in collect_lines})
+    if plan_methods != collect_methods:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "PAYMENT_PLAN_MISMATCH",
+                "message": "Los métodos de cobro no coinciden con el plan acordado por ventas.",
+            },
+        )
+
+    plan_total_nio = _lines_nio_total(plan_lines, rate)
+    collect_total_nio = _lines_nio_total(collect_lines, rate)
+    expected_total = _round2(pending_amount) if pending_amount is not None else plan_total_nio
+
+    if abs(_round2(submitted_amount) - collect_total_nio) > tolerance + 1e-9:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "PAYMENT_PLAN_MISMATCH",
+                "message": "El monto enviado no coincide con el desglose de pagos recibido.",
+                "expected_amount": collect_total_nio,
+                "submitted_amount": _round2(submitted_amount),
+            },
+        )
+
+    if abs(collect_total_nio - expected_total) > tolerance + 1e-9:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "PAYMENT_PLAN_MISMATCH",
+                "message": "El total cobrado no coincide con el pendiente/plan acordado por ventas.",
+                "expected_amount": expected_total,
+                "submitted_amount": collect_total_nio,
+            },
+        )
+
+    plan_cash_nio = _lines_nio_total(_cash_lines(plan_lines), rate)
+    collect_cash_nio = _lines_nio_total(_cash_lines(collect_lines), rate)
+    if abs(plan_cash_nio - collect_cash_nio) > tolerance + 1e-9:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "PAYMENT_PLAN_MISMATCH",
+                "message": "El total en efectivo no cuadra con el plan (se permite reasignar NIO/USD si el total en córdobas coincide).",
+                "expected_cash_nio": plan_cash_nio,
+                "submitted_cash_nio": collect_cash_nio,
+            },
+        )
+
+
+def normalize_collect_pagos_for_plan(
+    plan: Dict[str, Any],
+    pagos: List[Dict[str, Any]],
+    *,
+    exchange_rate: float,
+) -> List[Dict[str, Any]]:
+    """Reasigna líneas de efectivo al desglose físico recibido cuando el total en NIO cuadra."""
+    if not plan or not plan.get("locked"):
+        return pagos
+
+    plan_lines = plan.get("lines") if isinstance(plan.get("lines"), list) else []
+    if not plan_lines:
+        return pagos
+
+    rate = _round4(exchange_rate or plan.get("exchange_rate") or 36.62)
+    tolerance = _compute_plan_rounding_tolerance(plan_lines, rate)
+
+    collect_lines: List[Dict[str, Any]] = []
+    for row in pagos or []:
+        if hasattr(row, "model_dump"):
+            row_dict = row.model_dump()
+        elif isinstance(row, dict):
+            row_dict = dict(row)
+        else:
+            continue
+        amount_origin = _round2(row_dict.get("monto_origen"))
+        if amount_origin <= 0:
+            continue
+        currency = _normalize_currency(row_dict.get("moneda"))
+        row_rate = _round4(row_dict.get("tasa_cambio") or (1.0 if currency == "NIO" else rate))
+        collect_lines.append(
+            {
+                "metodo": _normalize_method(row_dict.get("metodo")),
+                "moneda": currency,
+                "monto_origen": amount_origin,
+                "tasa_cambio": row_rate,
+                "monto_cordobas": line_amount_nio(
+                    {
+                        "moneda": currency,
+                        "monto_origen": amount_origin,
+                        "tasa_cambio": row_rate,
+                    },
+                    rate,
+                ),
+            }
+        )
+
+    if _signature(plan_lines) == _signature(collect_lines):
+        return pagos
+
+    plan_total = _lines_nio_total(plan_lines, rate)
+    collect_total = _lines_nio_total(collect_lines, rate)
+    if abs(plan_total - collect_total) > tolerance + 1e-9:
+        return pagos
+
+    normalized: List[Dict[str, Any]] = []
+    for row in collect_lines:
+        if _normalize_method(row.get("metodo")) != "cash":
+            normalized.append(row)
+    cash_rows = _cash_lines(collect_lines)
+    if cash_rows:
+        normalized.extend(cash_rows)
+    return normalized or pagos
+
+
 def _is_partial_collect(
     amount: float,
     pending_amount: Optional[float],
@@ -351,14 +501,15 @@ def validate_collect_against_plan(
                     "monto_origen": amount_origin,
                 }
             )
-        if _signature(plan_lines) != _signature(collect_lines):
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "error": "PAYMENT_PLAN_MISMATCH",
-                    "message": "El cobro no coincide con el plan acordado por ventas. Solicita edición a gerencia/supervisor.",
-                },
-            )
+        if _signature(plan_lines) == _signature(collect_lines):
+            return
+        _validate_mixed_collect_lines(
+            plan_lines,
+            collect_lines,
+            exchange_rate=plan.get("exchange_rate") or 36.62,
+            submitted_amount=submitted_amount,
+            pending_amount=pending_amount,
+        )
         return
 
     if len(plan_lines) != 1:

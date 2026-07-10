@@ -27,6 +27,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { cn } from "@/lib/utils";
 import {
   buildDualCurrencyPagos,
+  canSubmitCashierCollect,
   CASHIER_QUICK_BILLS_NIO,
   computeDualCurrencyTotals,
   computeTotalCashChangeNio,
@@ -1426,11 +1427,10 @@ export function CashierPage() {
         receivedNio: collectForm.received_nio || collectForm.received_amount,
         receivedUsd: collectForm.received_usd,
         exchangeRate,
+        buyRate,
       });
       if (!cashTotals.isValid) {
-        const shortfall = cashTotals.nio.shortfall > 0
-          ? formatCashierMoney(cashTotals.nio.shortfall)
-          : formatUsdMoney(cashTotals.usd.shortfallUsd);
+        const shortfall = formatCashierMoney(cashTotals.unified?.shortfall || 0);
         toast.error(`El efectivo recibido no cubre el cobro. Faltan ${shortfall}`);
         return;
       }
@@ -2357,7 +2357,7 @@ function CashierDualCurrencyPayment({
   showPartialHint = false,
 }) {
   const totals = useMemo(
-    () => computeDualCurrencyTotals({ pendingNio, nioAmount, usdAmount, exchangeRate }),
+    () => computeDualCurrencyTotals({ pendingNio, nioAmount, usdAmount, exchangeRate, buyRate: exchangeRate }),
     [pendingNio, nioAmount, usdAmount, exchangeRate],
   );
   const cashTotals = useMemo(
@@ -2367,6 +2367,7 @@ function CashierDualCurrencyPayment({
       receivedNio,
       receivedUsd,
       exchangeRate,
+      buyRate: exchangeRate,
     }),
     [nioAmount, usdAmount, receivedNio, receivedUsd, exchangeRate],
   );
@@ -2587,6 +2588,7 @@ function CollectActionCard({
       nioAmount,
       usdAmount,
       exchangeRate,
+      buyRate: exchangeRate,
     }),
     [pendingAmount, nioAmount, usdAmount, exchangeRate],
   );
@@ -2603,8 +2605,38 @@ function CollectActionCard({
       receivedNio: collectForm.received_nio || collectForm.received_amount,
       receivedUsd: collectForm.received_usd,
       exchangeRate,
+      buyRate: exchangeRate,
     }),
     [nioAmount, usdAmount, collectForm.received_nio, collectForm.received_amount, collectForm.received_usd, exchangeRate],
+  );
+  const canCollectPayment = useMemo(
+    () => canSubmitCashierCollect({
+      pendingNio: pendingAmount,
+      nioAmount,
+      usdAmount,
+      receivedNio: collectForm.received_nio,
+      receivedUsd: collectForm.received_usd,
+      receivedAmount: collectForm.received_amount,
+      exchangeRate,
+      buyRate: exchangeRate,
+      useDualCurrency,
+      allowPartial: showPartialHint || isPartialPayment,
+      authBlocked: authRequiredForCollect && posDiscountAuthStatus !== "approved",
+    }),
+    [
+      pendingAmount,
+      nioAmount,
+      usdAmount,
+      collectForm.received_nio,
+      collectForm.received_usd,
+      collectForm.received_amount,
+      exchangeRate,
+      useDualCurrency,
+      showPartialHint,
+      isPartialPayment,
+      authRequiredForCollect,
+      posDiscountAuthStatus,
+    ],
   );
 
   const header = (
@@ -2639,10 +2671,10 @@ function CollectActionCard({
           sale={sale}
           amountToCollect={amountToCollect}
           cashChange={{
-            received: cashTotals.nio.received + cashTotals.usd.received,
-            due: amountToCollect,
+            received: cashTotals.unified?.receivedTotalNio || 0,
+            due: cashTotals.unified?.dueNio || amountToCollect,
             change: cashTotals.totalChangeNio,
-            shortfall: 0,
+            shortfall: cashTotals.unified?.shortfall || 0,
             isValid: cashTotals.isValid,
             isExact: cashTotals.totalChangeNio <= 0.009,
           }}
@@ -2768,7 +2800,7 @@ function CollectActionCard({
         )}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <Button size="lg" className="min-w-[180px] text-base" onClick={onSubmitCollect} disabled={busyCollect || !canOperate}>
+          <Button size="lg" className="min-w-[180px] text-base" onClick={onSubmitCollect} disabled={busyCollect || !canOperate || !canCollectPayment}>
             {busyCollect ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
             {submitLabel}
           </Button>
