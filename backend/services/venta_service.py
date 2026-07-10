@@ -261,6 +261,8 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
                 "$set": {"last_updated": now_iso},
             },
         )
+        branch_id = str(sale.get("branch_id") or "").strip()
+        branch_name = str(sale.get("branch_name") or branch_id or "").strip()
         await db.inventory_movements.insert_one({
             "product_id": product_id,
             "warehouse_id": warehouse_id,
@@ -269,6 +271,8 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
             "reference_id": sale_id,
             "created_at": now_iso,
             "actor_id": actor_id,
+            "branch_id": branch_id or None,
+            "branch_name": branch_name or branch_id or None,
         })
 
     if sale.get("payment_type") == "credit":
@@ -307,11 +311,16 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
 
     raw_total = sale.get("total") or 0.0
     total_decimal = Decimal(str(raw_total))
+    cancel_branch_id = str(sale.get("branch_id") or "").strip()
+    cancel_branch_name = str(sale.get("branch_name") or cancel_branch_id or "").strip()
     await db.audit_logs.insert_one({
         "action": "sale_cancelled",
+        "entity": "sale",
         "entity_id": sale_id,
         "actor_id": actor_id,
         "actor_name": getattr(approver, "name", None),
+        "branch_id": cancel_branch_id or None,
+        "branch_name": cancel_branch_name or cancel_branch_id or None,
         "timestamp": now_iso,
         "metadata": {
             "total": str(total_decimal),

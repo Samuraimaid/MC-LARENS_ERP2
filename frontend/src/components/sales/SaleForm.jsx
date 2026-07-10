@@ -180,6 +180,7 @@ export default function SaleForm({
   products = [],
   warehouses = [],
   inventory = [],
+  crossBranchInventory = [],
   vehicles = [],
   initialData = {},
   onSubmit,
@@ -3401,6 +3402,21 @@ export default function SaleForm({
 
                           otherStoreRows.push({
                             name: String(wh?.name || row.warehouse_id || "Tienda"),
+                            qty: Number(row.quantity || 0),
+                          });
+                        });
+
+                        const remoteStockRows = Array.isArray(crossBranchInventory)
+                          ? crossBranchInventory.filter(
+                            (row) => String(row?.product_id || "") === String(p.product_id || "")
+                              && Number(row?.quantity || 0) > 0,
+                          )
+                          : [];
+                        remoteStockRows.forEach((row) => {
+                          const branchLabel = String(row.branch_name || row.branch_id || "Sucursal");
+                          const warehouseLabel = String(row.warehouse_name || row.warehouse_id || "Bodega");
+                          otherStoreRows.push({
+                            name: `${branchLabel} · ${warehouseLabel}`,
                             qty: Number(row.quantity || 0),
                           });
                         });

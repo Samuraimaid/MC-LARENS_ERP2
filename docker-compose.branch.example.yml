@@ -1,0 +1,83 @@
+# =============================================================================
+# MC-LARENS ERP — Plantilla multi-sucursal (3 tiendas + túnel Cloudflare)
+# =============================================================================
+# Uso por sucursal:
+#   1. Copie este archivo como docker-compose.override.yml en el servidor local.
+#   2. Ajuste BRANCH_ID, MONGODB_CENTRAL_URI y CLOUDFLARE_TUNNEL_TOKEN.
+#   3. Ejecute: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+#
+# Sucursales:
+#   - branch_main  → Mundo de Accesorios (CEO / central)
+#   - branch_north → TopCar El Calvario
+#   - branch_south → TopCar La Tigre
+# =============================================================================
+
+services:
+  backend:
+    volumes:
+      # Almacenamiento físico local de evidencias/fotos (Modelo Delta — sin nube de costo)
+      - ./backend/uploads:/app/uploads
+      # Respaldo interno fechado (mongodump + tar.gz de uploads)
+      - ./backend/backups:/app/backups
+      # Disco USB externo montado en el host → /mnt/usb_backup en el contenedor
+      - ./backups/usb:/mnt/usb_backup
+    environment:
+      # Identidad de la tienda en esta máquina física
+      - BRANCH_ID=${BRANCH_ID:-branch_main}
+      # Mongo local (veloz, operación diaria / facturación)
+      - MONGODB_LOCAL_URI=${MONGODB_LOCAL_URI:-mongodb://mongodb:27017}
+      - MONGO_URL=${MONGODB_LOCAL_URI:-mongodb://mongodb:27017}
+      - DB_NAME=${DB_NAME:-mc-larens2_mundo_accesorios_erp}
+      # Mongo Atlas central (consultas cross-branch + feed CEO)
+      - MONGODB_CENTRAL_URI=${MONGODB_CENTRAL_URI:-}
+      - MONGODB_CENTRAL_DB=${MONGODB_CENTRAL_DB:-mc-larens2_mundo_accesorios_erp}
+      - DEFAULT_BRANCH_ID=${BRANCH_ID:-branch_main}
+      - LOCAL_UPLOAD_ROOT=/app/uploads
+      - PUBLIC_TUNNEL_URL_MAIN=${PUBLIC_TUNNEL_URL_MAIN:-https://mclarenerp.com}
+      - PUBLIC_TUNNEL_URL_NORTH=${PUBLIC_TUNNEL_URL_NORTH:-https://north.mclarenerp.com}
+      - PUBLIC_TUNNEL_URL_SOUTH=${PUBLIC_TUNNEL_URL_SOUTH:-https://south.mclarenerp.com}
+      - BACKUP_INTERNAL_ROOT=/app/backups
+      - USB_BACKUP_ROOT=/mnt/usb_backup
+
+  frontend:
+    build:
+      args:
+        VITE_FAILOVER_TUNNEL_MAIN: ${VITE_FAILOVER_TUNNEL_MAIN:-https://mclarenerp.com}
+        VITE_FAILOVER_TUNNEL_NORTH: ${VITE_FAILOVER_TUNNEL_NORTH:-https://north.mclarenerp.com}
+        VITE_FAILOVER_TUNNEL_SOUTH: ${VITE_FAILOVER_TUNNEL_SOUTH:-https://south.mclarenerp.com}
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: mundo-cloudflared-${BRANCH_ID:-branch}
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    networks:
+      - mundo-network
+
+# -----------------------------------------------------------------------------
+# Ejemplos de .env por sucursal
+# -----------------------------------------------------------------------------
+# MAIN (192.168.1.26):
+#   BRANCH_ID=branch_main
+#   MONGODB_LOCAL_URI=mongodb://mongodb:27017
+#   MONGODB_CENTRAL_URI=mongodb+srv://erp_user:PASS@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+#   CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...
+#
+# NORTH (192.168.1.27):
+#   BRANCH_ID=branch_north
+#   MONGODB_LOCAL_URI=mongodb://mongodb:27017
+#   MONGODB_CENTRAL_URI=mongodb+srv://erp_user:PASS@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+#   CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...
+#
+# SOUTH (192.168.1.28):
+#   BRANCH_ID=branch_south
+#   MONGODB_LOCAL_URI=mongodb://mongodb:27017
+#   MONGODB_CENTRAL_URI=mongodb+srv://erp_user:PASS@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+#   CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...

@@ -192,6 +192,7 @@ export function SalesPage() {
   const [warehouses, setWarehouses] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [inventory, setInventory] = useState([]);
+  const [crossBranchInventory, setCrossBranchInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshingData, setIsRefreshingData] = useState(false);
   const [search, setSearch] = useState("");
@@ -650,13 +651,14 @@ export function SalesPage() {
       setLoading(true);
     }
     try {
-      const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, usersRes, branchesRes, cashierRes] = await Promise.all([
+      const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, crossBranchRes, usersRes, branchesRes, cashierRes] = await Promise.all([
         axios.get(`${API}/sales`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }),
         axios.get(`${API}/products`, { withCredentials: true }),
         axios.get(`${API}/warehouses`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/vehicles`, { withCredentials: true }),
         axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/inventory/other-branches`, { withCredentials: true }).catch(() => ({ data: { items: [] } })),
         axios.get(`${API}/users`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/branches`, { withCredentials: true }).catch(() => ({ data: [] })),
         canUseCashier
@@ -677,6 +679,7 @@ export function SalesPage() {
       setWarehouses(warehousesRes.data);
       setVehicles(vehiclesRes.data);
       setInventory(inventoryRes.data);
+      setCrossBranchInventory(Array.isArray(crossBranchRes?.data?.items) ? crossBranchRes.data.items : []);
       setSellers(usersRes.data.filter(u => u.role === "ventas" || u.role === "gerencia"));
       setBranches(branchesRes.data);
       if (warehousesRes.data.length > 0) {
@@ -2485,6 +2488,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               products={products}
               warehouses={warehouses}
               inventory={inventory}
+              crossBranchInventory={crossBranchInventory}
               vehicles={vehicles}
               initialData={{ selectedCustomer, selectedVehicle, selectedWarehouse, cartItems, paymentMethod: paymentType, mixedPaymentMethods, globalDiscount, notes, applyIVA, applyRetention, retentionRate, ivaRate, currency }}
               exchangeRate={exchangeRate}

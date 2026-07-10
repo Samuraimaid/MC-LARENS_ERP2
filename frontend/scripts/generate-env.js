@@ -8,16 +8,7 @@ const outFile = path.join(publicDir, 'env.js');
 const configuredBackendUrl = process.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || '';
 const apiBaseExpression = configuredBackendUrl
   ? `'${String(configuredBackendUrl).replace(/\/$/, '')}/api'`
-  : `(function () {
-  if (typeof window === 'undefined' || !window.location || !window.location.hostname) {
-    return '/api';
-  }
-  var host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') {
-    return '/api';
-  }
-  return 'http://' + host + ':8001/api';
-})()`;
+  : `'/api'`;
 const attendanceKioskShortcutPin = process.env.VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN || process.env.REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN || '';
 const buildTime = process.env.VITE_APP_BUILD_TIME || process.env.REACT_APP_BUILD_TIME || new Date().toISOString();
 const buildId = process.env.VITE_APP_BUILD_ID || process.env.REACT_APP_BUILD_ID || (() => {
@@ -46,8 +37,15 @@ try {
 }
 const version = process.env.VITE_APP_VERSION || process.env.REACT_APP_VERSION || require('../package.json').version || '0.2.0-beta.0';
 
+const failoverTunnelMain = process.env.VITE_FAILOVER_TUNNEL_MAIN || process.env.REACT_APP_FAILOVER_TUNNEL_MAIN || 'https://mclarenerp.com';
+const failoverTunnelNorth = process.env.VITE_FAILOVER_TUNNEL_NORTH || process.env.REACT_APP_FAILOVER_TUNNEL_NORTH || 'https://north.mclarenerp.com';
+const failoverTunnelSouth = process.env.VITE_FAILOVER_TUNNEL_SOUTH || process.env.REACT_APP_FAILOVER_TUNNEL_SOUTH || 'https://south.mclarenerp.com';
+
 const content = `// This file is auto-generated at build time
 window.__API_BASE__ = ${apiBaseExpression};
+window.__FAILOVER_TUNNEL_MAIN__ = '${failoverTunnelMain}';
+window.__FAILOVER_TUNNEL_NORTH__ = '${failoverTunnelNorth}';
+window.__FAILOVER_TUNNEL_SOUTH__ = '${failoverTunnelSouth}';
 window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__ = '${attendanceKioskShortcutPin}';
 window.__BUILD_TIME__ = '${buildTime}';
 window.__BUILD_ID__ = '${buildId}';

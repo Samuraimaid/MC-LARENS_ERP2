@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -91,18 +92,8 @@ from backend.services.venta_service import revert_sale_effects
 logger = logging.getLogger("erp")
 logging.basicConfig(level=logging.INFO)
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app = FastAPI()
 
-# CORS para desarrollo local
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
 api_router = APIRouter(prefix="/api")
 
 # Basic API root for health/checks
@@ -148,10 +139,26 @@ async def delete_drafts_backup(request: Request):
     await db.drafts_backup.delete_one({"_id": user.user_id})
     return JSONResponse({"status": "deleted"})
 
-MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+from backend.db.distributed import (
+    get_central_database,
+    get_local_client,
+    get_local_database,
+    resolve_deployment_branch_id,
+    resolve_local_mongo_uri,
+)
+from backend.services.inventory_central_sync import InventoryCentralSyncService
+
+MONGO_URL = resolve_local_mongo_uri()
 MONGO_DB = os.environ.get("MONGO_DB", os.environ.get("DB_NAME", "mc-larens2_erp"))
-client = AsyncIOMotorClient(MONGO_URL)
-db = client[MONGO_DB]
+client = get_local_client()
+db = get_local_database()
+central_db = get_central_database()
+DEPLOYMENT_BRANCH_ID = resolve_deployment_branch_id()
+inventory_central_sync = InventoryCentralSyncService(
+    local_db=db,
+    central_db=central_db,
+    deployment_branch_id=DEPLOYMENT_BRANCH_ID,
+)
 
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 ROOT_DIR = Path(__file__).resolve().parent
@@ -454,7 +461,11 @@ PRODUCT_CATEGORIES = {
     "accessories": {"name": "Accesorios", "subcategories": ["Interior", "Exterior"]},
 }
 
-audit_service = AuditService(db, logger)
+async def _resolve_branch_name_for_audit(branch_id: Optional[str]) -> str:
+    return await inventory_central_sync.resolve_branch_name(branch_id)
+
+
+audit_service = AuditService(db, logger, branch_name_resolver=_resolve_branch_name_for_audit)
 pin_policy_service = PinPolicyService(db, logger)
 cash_service = CashService(db, logger)
 
@@ -3433,7 +3444,49 @@ def _sanitize_user_doc(user_doc: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized
 
 
-async def _create_session_response(user_doc: Dict[str, Any]) -> JSONResponse:
+_PRIVATE_LAN_HOST_RE = re.compile(
+    r"^(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+    r"172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$"
+)
+
+
+def _is_private_lan_host(hostname: Optional[str]) -> bool:
+    if not hostname:
+        return False
+    host = str(hostname).split(":")[0].strip().lower()
+    return bool(_PRIVATE_LAN_HOST_RE.match(host))
+
+
+def _resolve_session_cookie_secure(request: Optional[Request] = None) -> bool:
+    """Secure flag solo en HTTPS real; desactivado en HTTP LAN (ej. 192.168.x.x)."""
+    env_val = os.environ.get("COOKIE_SECURE", "false").strip().lower()
+    if env_val in ("0", "false", "no", ""):
+        return False
+
+    proto = ""
+    host = ""
+    if request is not None:
+        proto = str(request.headers.get("x-forwarded-proto") or request.url.scheme or "").lower()
+        host = str(request.headers.get("host") or request.url.hostname or "").split(":")[0]
+
+    if _is_private_lan_host(host) and proto != "https":
+        return False
+    return proto == "https"
+
+
+def _session_cookie_params(request: Optional[Request] = None) -> Dict[str, Any]:
+    return {
+        "httponly": True,
+        "samesite": "lax",
+        "secure": _resolve_session_cookie_secure(request),
+        "path": "/",
+    }
+
+
+async def _create_session_response(
+    user_doc: Dict[str, Any],
+    request: Optional[Request] = None,
+) -> JSONResponse:
     user_id = user_doc["user_id"]
 
     # Single-session policy: invalidate any previous sessions for this user
@@ -3450,15 +3503,7 @@ async def _create_session_response(user_doc: Dict[str, Any]) -> JSONResponse:
     )
     payload = {"user": _sanitize_user_doc(user_doc), "session_token": session_token}
     response = JSONResponse(payload)
-    # Use host-only cookie to support localhost and LAN-IP access.
-    response.set_cookie(
-        "session_token",
-        session_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,  # Cambia a True solo si usas HTTPS
-        path="/",
-    )
+    response.set_cookie("session_token", session_token, **_session_cookie_params(request))
     return response
 
 
@@ -4251,7 +4296,13 @@ async def auth_logout(request: Request):
         await db.sessions.delete_many({"session_token": token})
 
     response = JSONResponse({"message": "Sesión cerrada"})
-    response.delete_cookie("session_token")
+    cookie_params = _session_cookie_params(request)
+    response.delete_cookie(
+        "session_token",
+        path=cookie_params["path"],
+        secure=cookie_params["secure"],
+        samesite=cookie_params["samesite"],
+    )
     return response
 
 
@@ -4384,7 +4435,7 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
         await audit_service.log_pin_auth_attempt(None, request.client.host if request.client else "unknown", False)
         raise HTTPException(status_code=401, detail="PIN incorrecto")
 
-    return await _create_session_response(user_doc)
+    return await _create_session_response(user_doc, request)
 
 
 USER_LIST_PROJECTION: Dict[str, int] = {
@@ -8177,7 +8228,11 @@ async def get_sales(
 
 
 @api_router.post("/sales")
-async def create_sale(sale_data: SaleCreate, request: Request):
+async def create_sale(
+    sale_data: SaleCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
     user = await require_auth(request)
     user_branch_id = str(user.branch_id or "branch_main")
 
@@ -8641,10 +8696,11 @@ async def create_sale(sale_data: SaleCreate, request: Request):
                 }
             },
         )
-    await db.sales.insert_one(doc)
-
     branch_info = await get_branch_with_policy(user_branch_id)
     branch_name = str(branch_info.get("name") or user_branch_id)
+    doc["branch_name"] = branch_name
+
+    await db.sales.insert_one(doc)
 
     customer_history_update = {
         "$set": {
@@ -8739,6 +8795,7 @@ async def create_sale(sale_data: SaleCreate, request: Request):
         entity="sale",
         entity_id=doc.get("sale_id"),
         branch_id=user_branch_id,
+        branch_name=branch_name,
         metadata={
             "customer_id": sale_data.customer_id,
             "total": doc.get("total"),
@@ -8774,8 +8831,18 @@ async def create_sale(sale_data: SaleCreate, request: Request):
                 reason="sale",
                 actor=user,
                 branch_id=user_branch_id,
+                branch_name=branch_name,
                 reference_id=doc.get("sale_id"),
                 metadata={"customer_id": sale_data.customer_id},
+            )
+            inventory_central_sync.schedule_replicate(
+                background_tasks,
+                product_id=product_id,
+                warehouse_id=warehouse_id,
+                source_event="sale",
+                reference_id=doc.get("sale_id"),
+                branch_id=user_branch_id,
+                branch_name=branch_name,
             )
 
     # Mark samples as consumed when used in sale
@@ -10992,6 +11059,9 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         update_sale_set["pos_bank_withholding_expected"] = _round2(total_legal * 0.015)
 
     await db.sales.update_one({"sale_id": sale_id}, {"$set": update_sale_set})
+
+    if inventory_central_sync.enabled:
+        asyncio.create_task(inventory_central_sync.replicate_sale_document(sale_id))
 
     fulfillment_result: Dict[str, Any] = {}
     if new_status == "paid":
@@ -16996,6 +17066,8 @@ class WarrantyClaim(BaseModel):
     resolution: Optional[str] = None
     work_order_id: Optional[str] = None
     notes: Optional[str] = None
+    evidence_image_ids: List[str] = Field(default_factory=list)
+    evidence_urls: List[str] = Field(default_factory=list)
 
 
 class WarrantyClaimCreatePayload(FlexibleModel):
@@ -21972,8 +22044,15 @@ inventory_router = get_inventory_router(
     require_roles,
     InventoryUpdate,
     require_inventory_label_permission,
+    inventory_central_sync=inventory_central_sync,
+    deployment_branch_id=DEPLOYMENT_BRANCH_ID,
 )
 api_router.include_router(inventory_router)
+
+from backend.routes.warranties_media import get_warranties_media_router
+
+warranties_media_router = get_warranties_media_router(db, require_auth, require_roles)
+api_router.include_router(warranties_media_router)
 
 human_resources_router = get_human_resources_router(
     db,
@@ -22006,22 +22085,30 @@ if cors_origins_env:
     cors_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
 else:
     # ADVERTENCIA: modificar estos orígenes afecta el login (PIN) desde el frontend.
-    # Si cambias puertos o dominios, actualiza el frontend y el docker-compose.
     cors_origins = [
         "http://127.0.0.1:3000",
         "http://localhost:3000",
         "http://127.0.0.1:3001",
         "http://localhost:3001",
         "http://localhost:8001",
-        "http://127.0.0.1:8001"
+        "http://127.0.0.1:8001",
+        "http://192.168.1.26:3000",
+        "http://192.168.1.26:8001",
+        "https://192.168.1.26:3443",
     ]
 
 cors_origins = list(dict.fromkeys(cors_origins))
+# Permite credenciales desde cualquier IP privada LAN (192.168.x.x, 10.x, 172.16-31).
+cors_origin_regex = (
+    r"https?://(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|"
+    r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(?::\d+)?$"
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=cors_origins,
+    allow_origin_regex=cors_origin_regex,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -6,7 +6,7 @@ import uuid
 import csv
 from io import BytesIO, StringIO
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -67,6 +67,8 @@ def get_inventory_router(
     require_roles,
     InventoryUpdate,
     require_inventory_label_permission=None,
+    inventory_central_sync=None,
+    deployment_branch_id: Optional[str] = None,
 ):
     router = APIRouter()
 
@@ -83,6 +85,41 @@ def get_inventory_router(
 
     def _can_view_all_movements(role: Optional[str]) -> bool:
         return role in {"gerencia", "supervisor", "recursos_humanos", "programador"}
+
+    async def _branch_warehouse_ids(branch_id: Optional[str]) -> List[str]:
+        bid = str(branch_id or "").strip()
+        if not bid:
+            return []
+        rows = await db.warehouses.find(
+            {"branch_id": bid, "is_active": True},
+            {"_id": 0, "warehouse_id": 1},
+        ).to_list(100)
+        return [str(row.get("warehouse_id")) for row in rows if row.get("warehouse_id")]
+
+    async def _resolve_actor_branch(user) -> str:
+        return str(user.branch_id or deployment_branch_id or "").strip()
+
+    def _schedule_inventory_sync(
+        background_tasks: Optional[BackgroundTasks],
+        *,
+        product_id: str,
+        warehouse_id: str,
+        source_event: str,
+        reference_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
+        branch_name: Optional[str] = None,
+    ) -> None:
+        if inventory_central_sync is None:
+            return
+        inventory_central_sync.schedule_replicate(
+            background_tasks,
+            product_id=product_id,
+            warehouse_id=warehouse_id,
+            source_event=source_event,
+            reference_id=reference_id,
+            branch_id=branch_id,
+            branch_name=branch_name,
+        )
 
     async def _fetch_inventory_movements(
         user,
@@ -139,6 +176,12 @@ def get_inventory_router(
             query["warehouse_id"] = warehouse_id
         elif user.warehouse_id:
             query["warehouse_id"] = user.warehouse_id
+        else:
+            branch_scope = await _resolve_actor_branch(user)
+            if branch_scope:
+                warehouse_ids = await _branch_warehouse_ids(branch_scope)
+                if warehouse_ids:
+                    query["warehouse_id"] = {"$in": warehouse_ids}
 
         inventory = await db.inventory.find(query, {"_id": 0}).to_list(5000)
 
@@ -154,6 +197,54 @@ def get_inventory_router(
                 item["product"] = product
 
         return inventory
+
+    @router.get("/inventory/other-branches")
+    @router.get("/inventory/cross-branch")
+    async def get_other_branches_inventory(
+        request: Request,
+        product_id: Optional[str] = None,
+        limit: int = 5000,
+    ):
+        """Consulta existencias de otras sucursales desde el clúster central (Atlas)."""
+        user = await require_auth(request)
+        current_branch_id = await _resolve_actor_branch(user)
+        if not current_branch_id:
+            raise HTTPException(
+                status_code=400,
+                detail="No se pudo determinar la sucursal activa para filtrar inventario remoto",
+            )
+
+        if inventory_central_sync is None or not inventory_central_sync.enabled:
+            warehouse_ids = await _branch_warehouse_ids(current_branch_id)
+            local_query: Dict[str, Any] = {"quantity": {"$gt": 0}}
+            if warehouse_ids:
+                local_query["warehouse_id"] = {"$nin": warehouse_ids}
+            if product_id:
+                local_query["product_id"] = product_id
+            rows = await db.inventory.find(local_query, {"_id": 0}).to_list(limit)
+            warehouses = await db.warehouses.find({}, {"_id": 0, "warehouse_id": 1, "name": 1, "branch_id": 1}).to_list(300)
+            warehouse_map = {str(w.get("warehouse_id")): w for w in warehouses}
+            for row in rows:
+                wh = warehouse_map.get(str(row.get("warehouse_id")))
+                if wh:
+                    row["warehouse_name"] = wh.get("name")
+                    row["branch_id"] = wh.get("branch_id")
+            return {
+                "source": "local_fallback",
+                "current_branch_id": current_branch_id,
+                "items": rows,
+            }
+
+        rows = await inventory_central_sync.fetch_other_branches_inventory(
+            current_branch_id=current_branch_id,
+            product_id=product_id,
+            limit=limit,
+        )
+        return {
+            "source": "central",
+            "current_branch_id": current_branch_id,
+            "items": rows,
+        }
 
     @router.get("/inventory/warehouses")
     async def get_inventory_warehouses(request: Request):
@@ -606,7 +697,11 @@ def get_inventory_router(
         }
 
     @router.post("/inventory/purchase-receipt")
-    async def receive_blind_product_intake(request: Request, payload: BlindReceiptPayload):
+    async def receive_blind_product_intake(
+        request: Request,
+        payload: BlindReceiptPayload,
+        background_tasks: BackgroundTasks,
+    ):
         """Blind product intake: physical quantity only, no supplier or cost data."""
         user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
 
@@ -695,6 +790,14 @@ def get_inventory_router(
                     "updated_quantity": updated_quantity,
                 }
             )
+            _schedule_inventory_sync(
+                background_tasks,
+                product_id=product_id,
+                warehouse_id=warehouse_id,
+                source_event="inventory_blind_receipt",
+                reference_id=receipt_id,
+                branch_id=user.branch_id,
+            )
 
         await audit_service.log_audit_event(
             action="inventory_blind_receipt",
@@ -721,6 +824,7 @@ def get_inventory_router(
     @router.post("/inventory/transfer")
     async def transfer_inventory(
         request: Request,
+        background_tasks: BackgroundTasks,
         product_id: str,
         from_warehouse: str,
         to_warehouse: str,
@@ -810,6 +914,21 @@ def get_inventory_router(
                 "to_warehouse": to_warehouse,
                 "quantity": quantity,
             },
+        )
+
+        _schedule_inventory_sync(
+            background_tasks,
+            product_id=product_id,
+            warehouse_id=from_warehouse,
+            source_event="transfer_out",
+            branch_id=user.branch_id,
+        )
+        _schedule_inventory_sync(
+            background_tasks,
+            product_id=product_id,
+            warehouse_id=to_warehouse,
+            source_event="transfer_in",
+            branch_id=user.branch_id,
         )
 
         return {"message": "Transfer completed"}
@@ -1030,7 +1149,11 @@ def get_inventory_router(
         }
 
     @router.put("/inventory/transfer-requests/{request_id}/ship")
-    async def ship_transfer_request(request_id: str, request: Request):
+    async def ship_transfer_request(
+        request_id: str,
+        request: Request,
+        background_tasks: BackgroundTasks,
+    ):
         """Dispatch approved transfer: deduct origin stock and mark as in transit."""
         user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
 
@@ -1107,6 +1230,15 @@ def get_inventory_router(
             },
         )
 
+        _schedule_inventory_sync(
+            background_tasks,
+            product_id=transfer_req["product_id"],
+            warehouse_id=from_wh,
+            source_event="transfer_shipped",
+            reference_id=request_id,
+            branch_id=user.branch_id,
+        )
+
         return {
             "message": "Mercancía despachada. En tránsito hacia bodega destino.",
             "request_id": request_id,
@@ -1114,7 +1246,11 @@ def get_inventory_router(
         }
 
     @router.put("/inventory/transfer-requests/{request_id}/receive")
-    async def receive_transfer_request(request_id: str, request: Request):
+    async def receive_transfer_request(
+        request_id: str,
+        request: Request,
+        background_tasks: BackgroundTasks,
+    ):
         """Receive in-transit transfer: increment destination stock and finalize."""
         user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
 
@@ -1201,6 +1337,15 @@ def get_inventory_router(
                 "to_warehouse_id": to_wh,
                 "quantity": qty,
             },
+        )
+
+        _schedule_inventory_sync(
+            background_tasks,
+            product_id=transfer_req["product_id"],
+            warehouse_id=to_wh,
+            source_event="transfer_received",
+            reference_id=request_id,
+            branch_id=user.branch_id,
         )
 
         return {

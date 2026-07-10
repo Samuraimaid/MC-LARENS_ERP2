@@ -23,13 +23,8 @@ function buildApiBase() {
     return `${String(backendUrl).replace(/\/$/, "")}/api`;
   }
 
-  if (runtimeWindow?.location?.hostname) {
-    const host = runtimeWindow.location.hostname;
-    if (host !== "localhost" && host !== "127.0.0.1") {
-      return `http://${host}:8001/api`;
-    }
-  }
-
+  // Same-origin /api: nginx (Docker) o proxy de Vite reenvían al backend.
+  // Evita cookies cross-origin en acceso LAN (ej. http://192.168.1.26:3000).
   return "/api";
 }
 

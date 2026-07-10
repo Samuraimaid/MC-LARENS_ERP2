@@ -36,8 +36,13 @@ services:
     ports:
       - "8001:8001"  # 0.0.0.0 — accesible en LAN (ej. 192.168.1.26:8001)
     environment:
-      - MONGO_URL=mongodb://mongodb:27017
+      - BRANCH_ID=${BRANCH_ID:-branch_main}
+      - MONGODB_LOCAL_URI=${MONGODB_LOCAL_URI:-mongodb://mongodb:27017}
+      - MONGO_URL=${MONGODB_LOCAL_URI:-mongodb://mongodb:27017}
       - DB_NAME=mc-larens2_mundo_accesorios_erp
+      - MONGODB_CENTRAL_URI=${MONGODB_CENTRAL_URI:-}
+      - MONGODB_CENTRAL_DB=${MONGODB_CENTRAL_DB:-mc-larens2_mundo_accesorios_erp}
+      - DEFAULT_BRANCH_ID=${BRANCH_ID:-branch_main}
       - ENABLE_TEST_ENDPOINTS=false
       - ENABLE_TEST_PIN_SEEDING=false
       - AUTOLOAD_CORE_SEED=true
@@ -56,7 +61,16 @@ services:
       - POS_VOUCHER_BRIDGE_URL=http://host.docker.internal:9266
       - POS_VOUCHER_PRINTER_NAME=POS-80 Voucher
       - POS_BRIDGE_TOKEN_FILE=/app/backend/data/pos-voucher-bridge-token.txt
+      - LOCAL_UPLOAD_ROOT=/app/uploads
+      - PUBLIC_TUNNEL_URL_MAIN=${PUBLIC_TUNNEL_URL_MAIN:-https://mclarenerp.com}
+      - PUBLIC_TUNNEL_URL_NORTH=${PUBLIC_TUNNEL_URL_NORTH:-https://north.mclarenerp.com}
+      - PUBLIC_TUNNEL_URL_SOUTH=${PUBLIC_TUNNEL_URL_SOUTH:-https://south.mclarenerp.com}
+      - BACKUP_INTERNAL_ROOT=/app/backups
+      - USB_BACKUP_ROOT=/mnt/usb_backup
     volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/backups:/app/backups
+      - ./backups/usb:/mnt/usb_backup
       - ./backend/data/vehicle-thumbnails:/app/backend/data/vehicle-thumbnails
       - ./backend/data/label-bridge-token.txt:/app/backend/data/label-bridge-token.txt
       - ./backend/data/pos-voucher-bridge-token.txt:/app/backend/data/pos-voucher-bridge-token.txt
@@ -86,6 +100,9 @@ services:
         VITE_BACKEND_URL: ""
         VITE_AUTH_URL: /api/auth/login
         VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN: "50005000"
+        VITE_FAILOVER_TUNNEL_MAIN: ${VITE_FAILOVER_TUNNEL_MAIN:-https://mclarenerp.com}
+        VITE_FAILOVER_TUNNEL_NORTH: ${VITE_FAILOVER_TUNNEL_NORTH:-https://north.mclarenerp.com}
+        VITE_FAILOVER_TUNNEL_SOUTH: ${VITE_FAILOVER_TUNNEL_SOUTH:-https://south.mclarenerp.com}
     image: mundo-frontend:updated-20260619c
     container_name: mundo-frontend
     restart: unless-stopped

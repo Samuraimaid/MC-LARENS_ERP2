@@ -3,6 +3,11 @@ import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
 import axios from "axios";
+import { startFailoverManager } from "@/lib/failoverManager";
+
+// Sesión por cookie HTTP: obligatorio en login PIN y acceso LAN.
+axios.defaults.withCredentials = true;
+startFailoverManager();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

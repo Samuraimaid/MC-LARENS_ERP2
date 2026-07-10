@@ -1,3 +1,4 @@
+FROM mongo:7.0 AS mongo-tools
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -5,9 +6,12 @@ WORKDIR /app
 # Copiar requirements e instalar dependencias
 COPY requirements.txt .
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core bash tar gzip \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -r requirements.txt
+
+COPY --from=mongo-tools /usr/bin/mongodump /usr/bin/mongodump
+COPY --from=mongo-tools /usr/bin/mongorestore /usr/bin/mongorestore
 
 # Copiar código fuente
 RUN mkdir -p /app/backend
@@ -27,7 +31,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
 
 # Copiar entrypoint y dar permisos
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+    && chmod +x /app/backend/scripts/backup_server_node.sh \
+    && mkdir -p /app/uploads /app/backups /mnt/usb_backup
 
 # Comando de inicio (entrypoint runs migrations/validator then starts app)
 ENTRYPOINT ["/entrypoint.sh"]
