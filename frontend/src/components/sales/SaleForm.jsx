@@ -1472,6 +1472,22 @@ export default function SaleForm({
     }
   }, [paymentPlanLines, paymentExchangeRate, totals.total]);
 
+  const isPaymentPlanReady = useMemo(() => {
+    if (normalizedPaymentMethod === "credit") return true;
+    if (normalizedPaymentMethod === "mixed" && normalizedMixedPaymentMethods.length === 0) return false;
+    if (!paymentPlanLines.length) return false;
+    if (paymentPlanLines.some((line) => isPlanLineAmountEmpty(line))) return false;
+    const uniqueness = validatePlanLineUniqueness(paymentPlanLines);
+    if (!uniqueness.ok) return false;
+    return validatePlanAgainstTotal(paymentPlanLines, paymentExchangeRate, totals.total).ok;
+  }, [
+    normalizedMixedPaymentMethods.length,
+    normalizedPaymentMethod,
+    paymentExchangeRate,
+    paymentPlanLines,
+    totals.total,
+  ]);
+
   const focusMixedPaymentPlanMismatch = (message) => {
     setPlanTotalChangedHint(true);
     setPaymentPlanSubmitAttention(true);
@@ -4386,7 +4402,15 @@ export default function SaleForm({
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleSubmit} className="flex-1">
+          <Button
+            onClick={handleSubmit}
+            disabled={normalizedPaymentMethod !== "credit" && !isPaymentPlanReady}
+            className={cn(
+              "flex-1",
+              (normalizedPaymentMethod === "credit" || isPaymentPlanReady)
+                && "bg-emerald-600 text-white hover:bg-emerald-700",
+            )}
+          >
             <ShieldCheck className="h-4 w-4 mr-2" />
             {submitLabel}
           </Button>

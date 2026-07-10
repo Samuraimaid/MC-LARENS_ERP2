@@ -81,6 +81,16 @@ export function computePlanTotalNio(lines = [], exchangeRate = 36.5, buyRate = n
   );
 }
 
+/** Saldo pendiente del plan expresado en córdobas (total factura − acumulado del plan). */
+export function computePendingPlanBalanceNio(
+  lines = [],
+  targetTotal = 0,
+  exchangeRate = 36.5,
+  buyRate = null,
+) {
+  return round2(targetTotal) - computePlanTotalNio(lines, exchangeRate, buyRate);
+}
+
 export function isPlanLineAmountEmpty(line) {
   const raw = String(line?.monto_origen ?? "").trim();
   if (!raw) return true;
@@ -135,8 +145,12 @@ export function applyMixedPlanLinePatch(lines, index, patch, exchangeRate, targe
       return { ...converted, ...patch, moneda: converted.moneda, monto_origen: converted.monto_origen };
     });
     if (Number(targetTotal) > 0) {
-      next = applyMixedPlanRemainder(next, index, exchangeRate, targetTotal);
-      next = rebalanceMixedPlanRemainders(next, exchangeRate, targetTotal);
+      const convertedLine = next[index];
+      const fillCurrent = isPlanLineAmountEmpty(convertedLine);
+      next = applyMixedPlanRemainder(next, index, exchangeRate, targetTotal, { fillCurrentIfEmpty: fillCurrent });
+      if (!fillCurrent) {
+        next = rebalanceMixedPlanRemainders(next, exchangeRate, targetTotal);
+      }
     }
     return next;
   }
@@ -153,26 +167,46 @@ export function applyMixedPlanLinePatch(lines, index, patch, exchangeRate, targe
   return next;
 }
 
-/** Auto-completa la primera línea vacía posterior con el faltante del total (pago mixto). */
-export function applyMixedPlanRemainder(lines, editedIndex, exchangeRate, targetTotal) {
+/**
+ * Auto-completa una línea vacía con el saldo pendiente del plan.
+ * Por defecto rellena la primera línea vacía posterior a `editedIndex`;
+ * con `fillCurrentIfEmpty` rellena la propia línea editada si aún está vacía.
+ */
+export function applyMixedPlanRemainder(
+  lines,
+  editedIndex,
+  exchangeRate,
+  targetTotal,
+  options = {},
+) {
+  const { fillCurrentIfEmpty = false, buyRate = null } = options;
   const rows = Array.isArray(lines) ? lines : [];
-  const target = round2(targetTotal);
-  const allocated = computePlanTotalNio(rows, exchangeRate);
-  const remainingNio = round2(target - allocated);
+  const remainingNio = computePendingPlanBalanceNio(rows, targetTotal, exchangeRate, buyRate);
 
-  const nextEmptyIndex = rows.findIndex(
-    (line, index) => index > editedIndex && isPlanLineAmountEmpty(line),
-  );
-  if (nextEmptyIndex < 0) return rows;
+  let targetIndex = -1;
+  if (
+    fillCurrentIfEmpty
+    && editedIndex >= 0
+    && editedIndex < rows.length
+    && isPlanLineAmountEmpty(rows[editedIndex])
+  ) {
+    targetIndex = editedIndex;
+  } else {
+    targetIndex = rows.findIndex(
+      (line, index) => index > editedIndex && isPlanLineAmountEmpty(line),
+    );
+  }
+  if (targetIndex < 0) return rows;
 
   const fillValue = formatRemainderForCurrency(
     remainingNio,
-    rows[nextEmptyIndex]?.moneda,
+    rows[targetIndex]?.moneda,
     exchangeRate,
+    buyRate,
   );
 
   return rows.map((line, index) => (
-    index === nextEmptyIndex
+    index === targetIndex
       ? { ...line, monto_origen: fillValue }
       : line
   ));

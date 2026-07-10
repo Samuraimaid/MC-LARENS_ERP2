@@ -7,10 +7,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import {
   applyMixedPlanLinePatch,
+  applyMixedPlanRemainder,
   absorbPlanRoundingDifference,
   buildDefaultPlanLine,
   canAddMixedPlanLine,
   computeLineAmountNio,
+  computePendingPlanBalanceNio,
   computePlanRoundingTolerance,
   computePlanTotalNio,
   normalizePlanLineAmounts,
@@ -59,6 +61,10 @@ export default function PaymentPlanEditor({
     () => validatePlanAgainstTotal(lines, exchangeRate, targetTotal),
     [lines, exchangeRate, targetTotal],
   );
+  const pendingBalanceNio = useMemo(
+    () => computePendingPlanBalanceNio(lines, targetTotal, exchangeRate),
+    [lines, targetTotal, exchangeRate],
+  );
   const uniqueness = useMemo(() => validatePlanLineUniqueness(lines), [lines]);
   const canAddLine = isMixed && canAddMixedPlanLine(lines, mixedMethods);
   const mixedMethodsReady = !isMixed || mixedMethods.length > 0;
@@ -85,9 +91,14 @@ export default function PaymentPlanEditor({
       return;
     }
     if (isAmountOnlyPatch(patch)) {
-      onChangeLines?.(lines.map((line, rowIndex) => (
+      const nextLines = lines.map((line, rowIndex) => (
         rowIndex === index ? { ...line, monto_origen: patch.monto_origen } : line
-      )));
+      ));
+      if (isMixed && Number(targetTotal) > 0) {
+        onChangeLines?.(applyMixedPlanRemainder(nextLines, index, exchangeRate, targetTotal));
+        return;
+      }
+      onChangeLines?.(nextLines);
       return;
     }
     const nextLines = isMixed
@@ -129,7 +140,17 @@ export default function PaymentPlanEditor({
       toast.error("No hay combinaciones método/moneda disponibles");
       return;
     }
-    commitLines([...lines, created]);
+    const nextLines = [...lines, created];
+    const filled = Number(targetTotal) > 0
+      ? applyMixedPlanRemainder(
+        nextLines,
+        nextLines.length - 1,
+        exchangeRate,
+        targetTotal,
+        { fillCurrentIfEmpty: true },
+      )
+      : nextLines;
+    commitLines(filled);
   };
 
   const removeLine = (index) => {
@@ -306,9 +327,16 @@ export default function PaymentPlanEditor({
       ) : (
         <p className="text-sm text-sky-900">Configura los montos del plan de cobro.</p>
       )}
+      {isMixed && canValidatePlan && pendingBalanceNio > roundingTolerance ? (
+        <p className="text-xs font-medium text-amber-800">
+          Saldo pendiente: C$ {Math.max(0, pendingBalanceNio).toFixed(2)}
+          {lines.some(isPlanLineAmountEmpty) ? " · Se auto-completa al elegir moneda o agregar línea." : ""}
+        </p>
+      ) : null}
       {isMixed ? (
         <p className="text-xs text-muted-foreground">
-          Al ingresar un monto, la siguiente línea vacía se completa con el faltante para cuadrar el total.
+          Al ingresar un monto o elegir moneda en una línea vacía, el sistema completa el faltante para cuadrar el total.
+          Puedes editar cualquier monto manualmente después.
           No se repite la misma combinación de método y moneda.
           En tarjeta el vendedor solo declara monto; banco, tipo y referencia los registra caja.
         </p>

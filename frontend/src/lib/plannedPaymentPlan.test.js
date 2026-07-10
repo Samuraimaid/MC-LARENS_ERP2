@@ -3,11 +3,13 @@ import {
   absorbPlanRoundingDifference,
   applyMixedPlanLinePatch,
   applyMixedPlanRemainder,
+  buildDefaultPlanLine,
   buildMixedPaymentPlan,
   buildPlanLinesForSubmit,
   buildSinglePaymentPlan,
   rescalePlanLinesToTotal,
   canAddMixedPlanLine,
+  computePendingPlanBalanceNio,
   computePlanRoundingTolerance,
   computePlanTotalNio,
   computeLineAmountNio,
@@ -87,6 +89,49 @@ describe("plannedPaymentPlan", () => {
       36.5,
       1000,
     )).toEqual([]);
+  });
+
+  it("computes pending balance in córdobas for mixed USD + NIO plan", () => {
+    const lines = [
+      { metodo: "cash", moneda: "USD", monto_origen: "100.00" },
+      { metodo: "cash", moneda: "NIO", monto_origen: "" },
+    ];
+    expect(computePendingPlanBalanceNio(lines, 6129.75, 36.62)).toBeCloseTo(2467.75, 2);
+  });
+
+  it("auto-fills current empty line when currency is selected", () => {
+    const lines = [
+      { metodo: "cash", moneda: "USD", monto_origen: "100.00" },
+      { metodo: "cash", moneda: "USD", monto_origen: "" },
+    ];
+    const updated = applyMixedPlanLinePatch(lines, 1, { moneda: "NIO" }, 36.62, 6129.75);
+    expect(updated[1].moneda).toBe("NIO");
+    expect(updated[1].monto_origen).toBe("2467.75");
+    expect(validatePlanAgainstTotal(updated, 36.62, 6129.75).ok).toBe(true);
+  });
+
+  it("auto-fills newly added line with pending balance in selected currency", () => {
+    const lines = [{ metodo: "cash", moneda: "USD", monto_origen: "100.00" }];
+    const newLine = buildDefaultPlanLine("transfer", "NIO");
+    const updated = applyMixedPlanRemainder(
+      [...lines, newLine],
+      1,
+      36.62,
+      6129.75,
+      { fillCurrentIfEmpty: true },
+    );
+    expect(updated[1].monto_origen).toBe("2467.75");
+    expect(computePlanTotalNio(updated, 36.62)).toBe(6129.75);
+  });
+
+  it("auto-fills next empty line in USD using buy rate", () => {
+    const lines = [
+      { metodo: "cash", moneda: "NIO", monto_origen: "2467.75" },
+      { metodo: "cash", moneda: "USD", monto_origen: "" },
+    ];
+    const updated = applyMixedPlanRemainder(lines, 0, 36.62, 6129.75, { fillCurrentIfEmpty: true });
+    expect(Number(updated[1].monto_origen)).toBeCloseTo(100, 2);
+    expect(validatePlanAgainstTotal(updated, 36.62, 6129.75).ok).toBe(true);
   });
 
   it("auto-fills next empty mixed line with remaining total", () => {
