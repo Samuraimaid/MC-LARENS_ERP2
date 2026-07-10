@@ -38,6 +38,10 @@ ERROR_PATTERNS = (
 
 REQUIRED_PATTERNS = (
     r":MODO_AUTOMATICO_DESATENDIDO",
+    r":AUTO_INSTALACION_INTELIGENTE",
+    r":RESOLVE_AUTO_NODE_PROFILE_INTELIGENTE",
+    r":RUN_AUTO_DEPLOY_PIPELINE",
+    r"detect_lan_casa_matriz.ps1",
     r":WZ_RENDER_DUAL_BARS",
     r":ENSURE_QRCODE_MODULE",
     r"docker compose exec -T backend python /app/backend/scripts/render_qr_ascii\.py",

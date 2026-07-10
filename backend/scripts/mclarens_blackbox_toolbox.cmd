@@ -578,29 +578,108 @@ popd
 call :WZ_STEP_TICK 100
 goto :eof
 
-:MODO_AUTOMATICO_DESATENDIDO
-cls
-color 0E
-echo %YLW%╔══════════════════════════════════════════════════════════════════════╗%RST%
-echo %YLW%║%RST%  %BLD%MODO INSTALACION DESATENDIDA ZERO-TOUCH — BLACK BOX APPLIANCE%RST%   %YLW%║%RST%
-echo %YLW%╚══════════════════════════════════════════════════════════════════════╝%RST%
-echo.
-echo %BLD%Perfil del nodo:%RST%
-echo   %GRN%Op.1%RST% Casa Matriz ^(SUCURSAL^)
-echo   %GRN%Op.2%RST% Sucursal Alterna ^(SUCURSAL^)
-echo   %GRN%Op.3%RST% Bodega Satelite Pura
-set "AUTO_NODE_PROFILE="
-set /p "AUTO_NODE_PROFILE=Seleccione [1-3]: "
-if "%AUTO_NODE_PROFILE%"=="" goto MODO_AUTOMATICO_DESATENDIDO
-if not "%AUTO_NODE_PROFILE%"=="1" if not "%AUTO_NODE_PROFILE%"=="2" if not "%AUTO_NODE_PROFILE%"=="3" goto MODO_AUTOMATICO_DESATENDIDO
-set "AUTO_NODE_NAME="
-set /p "AUTO_NODE_NAME=Nombre descriptivo del nodo en red CEO: "
-if "!AUTO_NODE_NAME!"=="" set "AUTO_NODE_NAME=Nodo ERP"
-echo.
-echo %ESC%[6;1H
+:SANITIZE_AUTO_NODE_ID
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "$n='%COMPUTERNAME%'; $n=$n.ToLower() -replace '[^a-z0-9]+','_'; if($n.Length -gt 24){$n=$n.Substring(0,24)}; if(-not $n){$n='nodo'}; Write-Output $n" 2^>nul`) do set "AUTO_NODE_ID_SUFFIX=%%i"
+if not defined AUTO_NODE_ID_SUFFIX set "AUTO_NODE_ID_SUFFIX=nodo"
+goto :eof
+
+:DETECT_CASA_MATRIZ_LAN
+set "MATRIZ_FOUND=0"
+set "MATRIZ_IP="
+set "MATRIZ_NODE_ID="
+set "LAN_SUCURSAL_COUNT=0"
+set "LAN_BODEGA_COUNT=0"
+set "DETECT_PS=%REPO_ROOT%\backend\scripts\detect_lan_casa_matriz.ps1"
+if not exist "%DETECT_PS%" set "DETECT_PS=%SCRIPT_DIR%detect_lan_casa_matriz.ps1"
+if not exist "%DETECT_PS%" goto :eof
+call :DETECT_NETWORK_PREFIX
+for /f "usebackq tokens=1,2,3,4,5,6 delims=|" %%a in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%DETECT_PS%" -NetPrefix "%NET_PREFIX%" -SelfIp "%IP_FIJA%" 2^>nul`) do (
+    set "DETECT_RESULT=%%a"
+    set "MATRIZ_IP=%%b"
+    set "MATRIZ_NODE_ID=%%c"
+    set "MATRIZ_NODE_TYPE=%%d"
+    set "LAN_SUCURSAL_COUNT=%%e"
+    set "LAN_BODEGA_COUNT=%%f"
+)
+if /i "%DETECT_RESULT%"=="MATRIZ" set "MATRIZ_FOUND=1"
+call :LOG "LAN detect: result=%DETECT_RESULT% matriz=%MATRIZ_IP% suc=%LAN_SUCURSAL_COUNT% bod=%LAN_BODEGA_COUNT%"
+goto :eof
+
+:RESOLVE_AUTO_NODE_PROFILE_INTELIGENTE
+call :SANITIZE_AUTO_NODE_ID
+if not defined AUTO_NODE_NAME set "AUTO_NODE_NAME=%COMPUTERNAME%"
+call :DETECT_CASA_MATRIZ_LAN
+if "%MATRIZ_FOUND%"=="0" goto RESOLVE_INTEL_MATRIZ
+echo %YLW%INFO%RST% Casa Matriz detectada en %MATRIZ_IP% ^(%MATRIZ_NODE_ID%^)
+echo %COMPUTERNAME%| findstr /i "BODEGA WAREHOUSE ALMACEN BODEG" >nul 2>&1
+if not errorlevel 1 goto RESOLVE_INTEL_BODEGA
+if %LAN_SUCURSAL_COUNT% geq 2 if %LAN_BODEGA_COUNT% equ 0 goto RESOLVE_INTEL_BODEGA
+goto RESOLVE_INTEL_SUCURSAL
+
+:RESOLVE_INTEL_MATRIZ
+set "AUTO_NODE_TYPE=CASA_MATRIZ"
+set "AUTO_NODE_ID=branch_main"
+set "AUTO_NODE_NAME=Casa Matriz - Mundo de Accesorios"
+set "AUTO_ENABLE_SALES=true"
+set "AUTO_ENABLE_WORKSHOP=true"
+set "AUTO_ENABLE_HR=true"
+echo %GRN%OK%RST% Decision: crear CASA MATRIZ ^(no hay matriz en la red^)
+goto :eof
+
+:RESOLVE_INTEL_SUCURSAL
+set "AUTO_NODE_TYPE=SUCURSAL"
+set "AUTO_NODE_ID=branch_%AUTO_NODE_ID_SUFFIX%"
+set "AUTO_NODE_NAME=Sucursal - %COMPUTERNAME%"
+set "AUTO_ENABLE_SALES=true"
+set "AUTO_ENABLE_WORKSHOP=true"
+set "AUTO_ENABLE_HR=true"
+echo %GRN%OK%RST% Decision: crear SUCURSAL satelite ^(%AUTO_NODE_ID%^)
+goto :eof
+
+:RESOLVE_INTEL_BODEGA
+set "AUTO_NODE_TYPE=BODEGA_PURA"
+set "AUTO_NODE_ID=warehouse_%AUTO_NODE_ID_SUFFIX%"
+set "AUTO_NODE_NAME=Bodega - %COMPUTERNAME%"
+set "AUTO_ENABLE_SALES=false"
+set "AUTO_ENABLE_WORKSHOP=false"
+set "AUTO_ENABLE_HR=false"
+echo %GRN%OK%RST% Decision: crear BODEGA PURA ^(%AUTO_NODE_ID%^)
+goto :eof
+
+:WRITE_ENV_DYNAMIC
+if not defined AUTO_NODE_ID set "AUTO_NODE_ID=branch_main"
+if not defined AUTO_NODE_NAME set "AUTO_NODE_NAME=Nodo ERP"
+if not defined AUTO_NODE_TYPE set "AUTO_NODE_TYPE=CASA_MATRIZ"
+if not defined AUTO_ENABLE_SALES set "AUTO_ENABLE_SALES=true"
+if not defined AUTO_ENABLE_WORKSHOP set "AUTO_ENABLE_WORKSHOP=true"
+if not defined AUTO_ENABLE_HR set "AUTO_ENABLE_HR=true"
+(
+echo # Generado por auto-instalacion MC-LARENS ERP
+echo BRANCH_ID=%AUTO_NODE_ID%
+echo NODE_ID=%AUTO_NODE_ID%
+echo NODE_NAME=%AUTO_NODE_NAME%
+echo NODE_TYPE=%AUTO_NODE_TYPE%
+echo NODE_ENABLE_SALES=%AUTO_ENABLE_SALES%
+echo NODE_ENABLE_WORKSHOP=%AUTO_ENABLE_WORKSHOP%
+echo NODE_ENABLE_HR=%AUTO_ENABLE_HR%
+echo SERVER_LAN_IP=%IP_FIJA%
+echo SERVER_FRONTEND_PORT=3000
+echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
+echo DB_NAME=mc-larens2_mundo_accesorios_erp
+echo MONGODB_CENTRAL_URI=
+echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
+echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
+echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
+echo HTTPS_CERT_IPS=127.0.0.1,%IP_FIJA%
+)>"%REPO_ROOT%\.env"
+set "NODE_ID=%AUTO_NODE_ID%"
+echo %GRN%OK%RST% .env %AUTO_NODE_TYPE% - %AUTO_NODE_ID% / %AUTO_NODE_NAME%
+goto :eof
+
+:RUN_AUTO_DEPLOY_PIPELINE
 set "WZ_GLOBAL_PCT=0"
 set "WZ_STEP_PCT=0"
-set "WZ_STEP_LABEL=Inicializando wizard..."
+set "WZ_STEP_LABEL=Inicializando..."
 call :WZ_RENDER_DUAL_BARS
 call :WZ_SET_GLOBAL 5
 call :WZ_STEP_BEGIN "Auditoria de hardware"
@@ -619,14 +698,27 @@ if not exist "%REPO_ROOT%\docker-compose.yml" (
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
-    goto MAIN_MENU
+    goto :eof
 )
 call :WZ_SET_GLOBAL 65
 call :WZ_STEP_BEGIN "Generando .env del nodo"
-call :WRITE_ENV_AUTO_PROFILE
+if "%AUTO_INTEL_MODE%"=="1" (
+    call :RESOLVE_AUTO_NODE_PROFILE_INTELIGENTE
+    call :WRITE_ENV_DYNAMIC
+) else (
+    call :WRITE_ENV_AUTO_PROFILE
+)
 call :WZ_STEP_TICK 100
 call :WZ_SET_GLOBAL 80
 call :WZ_STEP_BEGIN "Desplegando stack Docker"
+docker info >nul 2>&1
+if errorlevel 1 (
+    echo %RED%FALLO%RST% Docker Desktop no esta corriendo. Espere al engine e intente de nuevo.
+    color 0B
+    call :BEEP_ERROR
+    call :WAIT_KEY
+    goto :eof
+)
 pushd "%REPO_ROOT%"
 docker compose up -d --build >>"%LOG_DIR%\toolbox.log" 2>&1
 set "WZ_DEPLOY_ERR=!errorlevel!"
@@ -637,7 +729,7 @@ if !WZ_DEPLOY_ERR! neq 0 (
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
-    goto MAIN_MENU
+    goto :eof
 )
 call :WZ_SET_GLOBAL 90
 call :INJECT_USB_BACKUP
@@ -647,11 +739,43 @@ call :TRIGGER_ATLAS_DELTA_SYNC
 call :OPT_DAWN_TASKS_SILENT
 call :WZ_SET_GLOBAL 100
 echo.
-echo %GRN%OK%RST% Instalacion desatendida completada — nodo !AUTO_NODE_NAME! en !IP_FIJA!
-call :RENDER_QR_ASCII "http://!IP_FIJA!:3000"
+echo %GRN%OK%RST% Instalacion completada - %AUTO_NODE_TYPE% %AUTO_NODE_ID% en %IP_FIJA%
+call :RENDER_QR_ASCII "http://%IP_FIJA%:3000"
 color 0B
 call :BEEP_OK
 call :WAIT_KEY
+goto :eof
+
+:AUTO_INSTALACION_INTELIGENTE
+cls
+color 0E
+echo %CYAN%=== Op.0 AUTO-INTELIGENTE - SIN INTERVENCION DEL USUARIO ===%RST%
+echo %DIM%Detecta Casa Matriz en la LAN y despliega Matriz, Sucursal o Bodega.%RST%
+echo.
+set "AUTO_INTEL_MODE=1"
+set "AUTO_NODE_NAME=%COMPUTERNAME%"
+call :RUN_AUTO_DEPLOY_PIPELINE
+set "AUTO_INTEL_MODE="
+goto MAIN_MENU
+
+:MODO_AUTOMATICO_DESATENDIDO
+cls
+color 0E
+echo %YLW%=== Op.00 ZERO-TOUCH MANUAL - PERFIL A ELEGIR ===%RST%
+echo.
+echo %BLD%Perfil del nodo:%RST%
+echo   %GRN%Op.1%RST% Casa Matriz ^(CASA_MATRIZ^)
+echo   %GRN%Op.2%RST% Sucursal Alterna ^(SUCURSAL^)
+echo   %GRN%Op.3%RST% Bodega Satelite Pura
+set "AUTO_NODE_PROFILE="
+set /p "AUTO_NODE_PROFILE=Seleccione 1-3: "
+if "%AUTO_NODE_PROFILE%"=="" goto MODO_AUTOMATICO_DESATENDIDO
+if not "%AUTO_NODE_PROFILE%"=="1" if not "%AUTO_NODE_PROFILE%"=="2" if not "%AUTO_NODE_PROFILE%"=="3" goto MODO_AUTOMATICO_DESATENDIDO
+set "AUTO_NODE_NAME="
+set /p "AUTO_NODE_NAME=Nombre descriptivo del nodo en red CEO: "
+if "!AUTO_NODE_NAME!"=="" set "AUTO_NODE_NAME=Nodo ERP"
+set "AUTO_INTEL_MODE="
+call :RUN_AUTO_DEPLOY_PIPELINE
 goto MAIN_MENU
 
 :BUILD_MENU_STATUS
@@ -675,7 +799,8 @@ if "%CLEAN_INSTALL%"=="1" echo %CYAN%^|%RST% %YLW%* INSTALACION LIMPIA DESDE CER
 echo %CYAN%+==============================================================================+%RST%
 echo %CYAN%^|%RST% %BLD%MCLARENS ERP - SERVER BLACK BOX CORE v2.3-ZeroTouch%RST%                  %CYAN%^|%RST%
 echo %CYAN%+======================+======================+==============================+%RST%
-echo %CYAN%^|%RST% %RED%Op.0%RST% Zero-Touch Auto    %CYAN%^|%RST% %YLW%Multi-Nodo%RST%           %CYAN%^|%RST% %YLW%Mantenimiento%RST%             %CYAN%^|%RST%
+echo %CYAN%^|%RST% %RED%Op.0%RST% Auto-Inteligente     %CYAN%^|%RST% %YLW%Multi-Nodo%RST%           %CYAN%^|%RST% %YLW%Mantenimiento%RST%             %CYAN%^|%RST%
+echo %CYAN%^|%RST% %RED%Op.00%RST% Zero-Touch Manual   %CYAN%^|%RST% %DIM%detecta matriz LAN%RST%      %CYAN%^|%RST% %DIM%sucursal/bodega%RST%            %CYAN%^|%RST%
 echo %CYAN%+======================+======================+==============================+%RST%
 echo %CYAN%^|%RST% %GRN%Op.1%RST% Git                %CYAN%^|%RST% %GRN%Op.5%RST% Clonar Repo        %CYAN%^|%RST% %GRN%Op.9%RST%  Respaldo USB          %CYAN%^|%RST%
 echo %CYAN%^|%RST% %GRN%Op.2%RST% Docker             %CYAN%^|%RST% %GRN%Op.6%RST% Casa Matriz        %CYAN%^|%RST% %GRN%Op.10%RST% Daemon Beep          %CYAN%^|%RST%
@@ -699,7 +824,8 @@ call :RENDER_MAIN_MENU_FRAME
 set "MENU_CHOICE="
 set /p "MENU_CHOICE=%BLD%Seleccione una opcion:%RST% "
 if "%MENU_CHOICE%"=="" goto MAIN_MENU
-if "%MENU_CHOICE%"=="0" goto MODO_AUTOMATICO_DESATENDIDO
+if "%MENU_CHOICE%"=="0" goto AUTO_INSTALACION_INTELIGENTE
+if "%MENU_CHOICE%"=="00" goto MODO_AUTOMATICO_DESATENDIDO
 if "%MENU_CHOICE%"=="1" goto OPT_GIT
 if "%MENU_CHOICE%"=="2" goto OPT_DOCKER
 if "%MENU_CHOICE%"=="3" goto OPT_STATIC_IP
