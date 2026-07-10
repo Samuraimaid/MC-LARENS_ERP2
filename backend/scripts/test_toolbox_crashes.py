@@ -24,6 +24,8 @@ ERROR_PATTERNS = (
     r"No se encontro docker-compose\.yml en la ruta de produccion",
     r"REPO_ROOT no valido",
     r"docker exec mundo-backend python /app/backend/scripts/render_qr_ascii",
+    r"!NET_COLOR!!NET_TEXT!!RST%",
+    r"%BLD%%CYAN%",
 )
 
 REQUIRED_PATTERNS = (
@@ -36,6 +38,8 @@ REQUIRED_PATTERNS = (
     r"\[ESTADO: INSTALACION LIMPIA DESDE CERO\]",
     r":AUDIT_HARDWARE",
     r":RESTORE_DELTA_FROM_USB",
+    r'reg add "HKCU\\Console" /v VirtualTerminalLevel',
+    r"mode con: cols=80 lines=25",
 )
 
 
