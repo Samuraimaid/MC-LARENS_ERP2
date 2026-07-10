@@ -791,6 +791,7 @@ PERMISSION_ENFORCEMENT_EXEMPT_PREFIXES = [
     "/api/test/",
     "/api/currencies/",
     "/api/drafts/",
+    "/api/server-appliance/",
 ]
 
 SESSION_LOCK_EXEMPT_PATHS = {
@@ -3310,6 +3311,16 @@ async def start_vehicle_catalog_scheduler() -> None:
 
     asyncio.create_task(catalog_sync_scheduler_loop())
     logger.info("Vehicle catalog monthly sync scheduler started")
+
+
+@app.on_event("startup")
+async def start_hardware_monitor_service() -> None:
+    import asyncio
+
+    from backend.services.hardware_monitor import start_hardware_monitor
+
+    start_hardware_monitor(db)
+    logger.info("Hardware monitor service started")
 
 
 async def _get_user_by_session(session_token: str) -> Optional[Dict[str, Any]]:
@@ -22053,6 +22064,11 @@ from backend.routes.warranties_media import get_warranties_media_router
 
 warranties_media_router = get_warranties_media_router(db, require_auth, require_roles)
 api_router.include_router(warranties_media_router)
+
+from backend.routes.server_appliance import get_server_appliance_router
+
+server_appliance_router = get_server_appliance_router(db)
+api_router.include_router(server_appliance_router)
 
 human_resources_router = get_human_resources_router(
     db,

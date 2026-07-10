@@ -84,6 +84,7 @@ const SamplesPage = lazyNamedPage(() => import("./pages/SamplesPage"), "SamplesP
 const HumanResourcesPage = lazyNamedPage(() => import("./pages/HumanResourcesPage"), "HumanResourcesPage");
 const AttendanceClockPage = lazyNamedPage(() => import("./pages/AttendanceClockPage"), "AttendanceClockPage");
 const HyperVisorPage = lazyNamedPage(() => import("./pages/HyperVisorPage"), "HyperVisorPage");
+const ServerDashboardPage = lazyNamedPage(() => import("./pages/ServerDashboardPage"), "ServerDashboardPage");
 
 function RouteLoading() {
   return (
@@ -162,6 +163,7 @@ function AppRouter() {
       <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/server-dashboard" element={<ServerDashboardPage />} />
 
       {/* Protected Routes with Main Layout */}
       <Route

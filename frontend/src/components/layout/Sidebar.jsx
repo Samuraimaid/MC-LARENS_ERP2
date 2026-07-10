@@ -52,6 +52,7 @@ import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { getBrandingForBranch } from "../../lib/branding";
 import { APP_ENV } from "../../lib/env";
+import { fetchNodeProfile, getCachedNodeProfile, isRouteEnabledByNodeProfile } from "../../lib/nodeProfile";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["gerencia", "recursos_humanos"] },
@@ -80,6 +81,7 @@ const navigation = [
   { name: "Contabilidad", href: "/accounting", icon: Calculator, roles: ["gerencia", "recursos_humanos", "supervisor"] },
   { name: "Recursos Humanos", href: "/human-resources", icon: Briefcase, roles: ["gerencia", "supervisor", "recursos_humanos"] },
   { name: "HyiperVisor", href: "/hypervisor", icon: Eye, roles: ["gerencia", "programador", "recursos_humanos"] },
+  { name: "Centro Servidor", href: "/server-dashboard", icon: Monitor, roles: ["gerencia", "programador"] },
   { name: "Sucursales", href: "/branches", icon: Building2, roles: ["gerencia"] },
   { name: "Bodegas", href: "/warehouses", icon: Warehouse, roles: ["gerencia", "supervisor"] },
   { name: "Usuarios", href: "/users", icon: Users, roles: ["gerencia"] },
@@ -148,7 +150,17 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
     "/help/tutorials": "tutorials",
   };
 
+  const [nodeProfile, setNodeProfile] = React.useState(() => getCachedNodeProfile());
+
+  React.useEffect(() => {
+    fetchNodeProfile().then(setNodeProfile).catch(() => {});
+  }, []);
+
   const filteredNav = navigation.filter((item) => {
+    if (!isRouteEnabledByNodeProfile(item.href, nodeProfile)) {
+      return false;
+    }
+
     if (item.href === "/dashboard") {
       const normalizedRole = String(user?.role || "").toLowerCase();
       const canSeeDashboard = normalizedRole === "gerencia" || normalizedRole === "recursos_humanos";
