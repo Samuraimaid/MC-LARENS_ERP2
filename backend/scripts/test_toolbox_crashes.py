@@ -31,6 +31,9 @@ ERROR_PATTERNS = (
     r"%GRN%\[9\]%RST%",
     r"%GRN%\[1\]%RST%",
     r"%RED%\[0\]%RST%",
+    r"%GRN%\[OK\]%RST%",
+    r"!LB_BAR!",
+    r"/ST 03:00 ",
 )
 
 REQUIRED_PATTERNS = (

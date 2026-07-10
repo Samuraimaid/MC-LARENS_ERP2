@@ -47,7 +47,7 @@ if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
 rem Verificar Administrador
 net session >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[ERROR]%RST% Este toolbox requiere ejecucion como Administrador.
+    echo %RED%ERROR%RST% Este toolbox requiere ejecucion como Administrador.
     echo         Clic derecho ^> "Ejecutar como administrador"
     pause
     exit /b 1
@@ -130,38 +130,26 @@ goto :eof
 
 :SPINNER_TICK
 set /a SPIN_IDX+=1
-set /a MOD=!SPIN_IDX! %% 4
-if !MOD!==0 set "SPIN_CHAR=/"
-if !MOD!==1 set "SPIN_CHAR=-"
-if !MOD!==2 set "SPIN_CHAR=\"
-if !MOD!==3 set "SPIN_CHAR=|"
+set /a SPIN_MOD=SPIN_IDX%%4
+if %SPIN_MOD%==0 set "SPIN_CHAR=/"
+if %SPIN_MOD%==1 set "SPIN_CHAR=-"
+if %SPIN_MOD%==2 set "SPIN_CHAR=\"
+if %SPIN_MOD%==3 set "SPIN_CHAR=|"
 goto :eof
 
 :LOADING_BAR
 set "LB_LABEL=%~1"
 set "LB_STEPS=%~2"
-if "%LB_STEPS%"=="" set "LB_STEPS=10"
-set /a LB_PCT=0
-set /a LB_STEP_SIZE=100/LB_STEPS
+if "%LB_STEPS%"=="" set "LB_STEPS=8"
+set /a LB_TICK=0
 :LOADING_BAR_LOOP
 call :SPINNER_TICK
-set /a LB_FILLED=!LB_PCT!*30/100
-set "LB_BAR="
-for /l %%i in (1,1,30) do (
-    if %%i leq !LB_FILLED! (
-        set "LB_BAR=!LB_BAR!█"
-    ) else (
-        set "LB_BAR=!LB_BAR!░"
-    )
-)
-<nul set /p "=!CYAN![!SPIN_CHAR!] !LB_LABEL! !GRN[![LB_BAR!] !LB_PCT!%%!RST!   "
-echo.
-set /a LB_PCT+=LB_STEP_SIZE
-if !LB_PCT! leq 100 (
-    ping -n 2 127.0.0.1 >nul
-    goto LOADING_BAR_LOOP
-)
-goto :eof
+set /a LB_TICK+=1
+set /a LB_PCT=LB_TICK*100/LB_STEPS
+echo %CYAN%[%SPIN_CHAR%]%RST% %LB_LABEL% %GRN%#%LB_PCT%%% %RST%
+if %LB_TICK% geq %LB_STEPS% goto :eof
+ping -n 2 127.0.0.1 >nul
+goto LOADING_BAR_LOOP
 
 :WAIT_KEY
 echo.
@@ -176,10 +164,10 @@ call :LOADING_BAR "!RW_LABEL!" 8
 call :LOG "RUN: !RW_CMD!"
 cmd /c "!RW_CMD!" >>"%LOG_DIR%\toolbox.log" 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% !RW_LABEL!
+    echo %RED%FALLO%RST% !RW_LABEL!
     call :BEEP_ERROR
 ) else (
-    echo %GRN%[OK]%RST% !RW_LABEL!
+    echo %GRN%OK%RST% !RW_LABEL!
     call :BEEP_OK
 )
 goto :eof
@@ -251,13 +239,13 @@ netsh interface ipv4 set address name="!ADAPTER!" source=static address=!CHOSEN_
 netsh interface ipv4 set dnsservers name="!ADAPTER!" source=static address=1.1.1.1 register=primary >nul 2>&1
 netsh interface ipv4 add dnsservers name="!ADAPTER!" 8.8.8.8 index=2 >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% No se pudo fijar IP estatica en !ADAPTER!
+    echo %RED%FALLO%RST% No se pudo fijar IP estatica en !ADAPTER!
     call :BEEP_ERROR
     goto :eof
 )
 set "IP_FIJA=!CHOSEN_IP!"
 call :UPDATE_ENV_LAN_IP "!CHOSEN_IP!"
-echo %GRN%[OK]%RST% IP estatica !CHOSEN_IP! aplicada. .env actualizado.
+echo %GRN%OK%RST% IP estatica !CHOSEN_IP! aplicada. .env actualizado.
 call :LOG "IP estatica: !CHOSEN_IP! adaptador !ADAPTER!"
 call :BEEP_OK
 goto :eof
@@ -298,41 +286,18 @@ if exist "!QR_SCRIPT!" (
         )
     )
 )
-echo %YLW%[WARN]%RST% Generador QR no disponible. Instale Python+qrcode o levante el stack Docker.
+echo %YLW%WARN%RST% Generador QR no disponible. Instale Python+qrcode o levante el stack Docker.
 echo %BLD%http://!IP_FIJA!:3000%RST%
-goto :eof
-
-:BUILD_PROGRESS_BAR
-set "BP_PCT=%~1"
-set "BP_WIDTH=%~2"
-if "%BP_WIDTH%"=="" set "BP_WIDTH=20"
-set /a BP_FILLED=!BP_PCT!*!BP_WIDTH!/100
-set "BP_OUT="
-for /l %%b in (1,1,!BP_WIDTH!) do (
-    if %%b leq !BP_FILLED! (
-        set "BP_OUT=!BP_OUT!█"
-    ) else (
-        set "BP_OUT=!BP_OUT!░"
-    )
-)
-set "PROGRESS_BAR=!BP_OUT!"
 goto :eof
 
 :WZ_RENDER_DUAL_BARS
 if not defined WZ_STEP_LABEL set "WZ_STEP_LABEL=Preparando..."
 if not defined WZ_STEP_PCT set "WZ_STEP_PCT=0"
 if not defined WZ_GLOBAL_PCT set "WZ_GLOBAL_PCT=0"
-call :BUILD_PROGRESS_BAR !WZ_STEP_PCT! 20
-set "WZ_STEP_BAR=!PROGRESS_BAR!"
-call :BUILD_PROGRESS_BAR !WZ_GLOBAL_PCT! 30
-set "WZ_GLOBAL_BAR=!PROGRESS_BAR!"
 call :SPINNER_TICK
-echo %ESC%[8;1H%ESC%[K
-echo %BLD%PASO ACTUAL:%RST% %ESC%[K
-echo %CYAN%[%SPIN_CHAR%]%RST% %WZ_STEP_LABEL%: %GRN%[%WZ_STEP_BAR%] %WZ_STEP_PCT%%% %RST% %ESC%[K
-echo. %ESC%[K
-echo %BLD%ACANCE GENERAL DEL APPLIANCE:%RST% %ESC%[K
-echo %GRN%[%WZ_GLOBAL_BAR%] %WZ_GLOBAL_PCT%%% %RST% %ESC%[K
+echo.
+echo %BLD%PASO ACTUAL:%RST% %CYAN%[%SPIN_CHAR%]%RST% %WZ_STEP_LABEL% - %WZ_STEP_PCT%%%
+echo %BLD%ACANCE GENERAL DEL APPLIANCE:%RST% %GRN%#%WZ_GLOBAL_PCT%%% %RST%
 goto :eof
 
 :WZ_SET_GLOBAL
@@ -384,9 +349,9 @@ for /f "skip=1 tokens=1,2" %%a in ('wmic logicaldisk where "DeviceID='C:'" get F
     )
 )
 if !HW_DISK_FREE_GB! lss 20 set "HW_DISK_OK=0"
-if "!HW_RAM_OK!"=="0" echo %RED%[HW]%RST% RAM insuficiente: !HW_RAM_MB! MB ^(minimo 4096 MB^)
-if "!HW_DISK_OK!"=="0" echo %RED%[HW]%RST% Disco C: libre !HW_DISK_FREE_GB! GB ^(minimo 20 GB^)
-if "!HW_RAM_OK!"=="1" if "!HW_DISK_OK!"=="1" echo %GRN%[HW]%RST% RAM !HW_RAM_MB! MB ^| Disco libre !HW_DISK_FREE_GB! GB
+if "!HW_RAM_OK!"=="0" echo %RED%HW%RST% RAM insuficiente: !HW_RAM_MB! MB ^(minimo 4096 MB^)
+if "!HW_DISK_OK!"=="0" echo %RED%HW%RST% Disco C: libre !HW_DISK_FREE_GB! GB ^(minimo 20 GB^)
+if "!HW_RAM_OK!"=="1" if "!HW_DISK_OK!"=="1" echo %GRN%HW%RST% RAM !HW_RAM_MB! MB ^| Disco libre !HW_DISK_FREE_GB! GB
 call :LOG "HW audit RAM=!HW_RAM_MB!MB DISK_FREE=!HW_DISK_FREE_GB!GB"
 goto :eof
 
@@ -408,7 +373,7 @@ if not errorlevel 1 (
 )
 where winget >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% winget no disponible para instalar Git.
+    echo %RED%FALLO%RST% winget no disponible para instalar Git.
     goto :eof
 )
 call :WZ_ANIMATE_STEP "Descargando Git" 6
@@ -428,12 +393,12 @@ if not errorlevel 1 (
 )
 where winget >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% winget no disponible para instalar Docker.
+    echo %RED%FALLO%RST% winget no disponible para instalar Docker.
     goto :eof
 )
 call :WZ_ANIMATE_STEP "Descargando Docker Desktop" 10
 winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements --silent >>"%LOG_DIR%\toolbox.log" 2>&1
-echo %YLW%[INFO]%RST% Espere a que Docker Desktop inicie el engine...
+echo %YLW%INFO%RST% Espere a que Docker Desktop inicie el engine...
 set /a DOCKER_WAIT=0
 :AUTO_DOCKER_WAIT_LOOP
 call :WZ_STEP_TICK !DOCKER_WAIT!
@@ -469,7 +434,7 @@ goto :eof
 call :WZ_STEP_BEGIN "Clonando repositorio privado"
 call :RESOLVE_GITHUB_PAT
 if "!GITHUB_PAT!"=="" (
-    echo %RED%[FALLO]%RST% PAT GitHub requerido para clonacion.
+    echo %RED%FALLO%RST% PAT GitHub requerido para clonacion.
     goto :eof
 )
 set "CLONE_URL=https://!GITHUB_PAT!@github.com/Samuraimaid/MC-LARENS_ERP2.git"
@@ -580,7 +545,7 @@ if not exist "%REPO_ROOT%\backups\usb" mkdir "%REPO_ROOT%\backups\usb" >nul 2>&1
 for %%f in ("!USB_BACKUP_PATH!") do set "USB_BACKUP_NAME=%%~nxf"
 copy /y "!USB_BACKUP_PATH!" "%REPO_ROOT%\backups\usb\!USB_BACKUP_NAME!" >>"%LOG_DIR%\toolbox.log" 2>&1
 set "INJECTED_BACKUP=%REPO_ROOT%\backups\usb\!USB_BACKUP_NAME!"
-echo %GRN%[OK]%RST% Respaldo USB inyectado: !USB_BACKUP_NAME!
+echo %GRN%OK%RST% Respaldo USB inyectado: !USB_BACKUP_NAME!
 call :LOG "USB backup injected !INJECTED_BACKUP!"
 goto :eof
 
@@ -650,7 +615,7 @@ call :AUTO_INSTALL_DOCKER
 call :WZ_SET_GLOBAL 55
 call :AUTO_CLONE_REPOSITORY
 if not exist "%REPO_ROOT%\docker-compose.yml" (
-    echo %RED%[FALLO]%RST% Clonacion incompleta; docker-compose.yml ausente.
+    echo %RED%FALLO%RST% Clonacion incompleta; docker-compose.yml ausente.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
@@ -668,7 +633,7 @@ set "WZ_DEPLOY_ERR=!errorlevel!"
 popd
 call :WZ_STEP_TICK 100
 if !WZ_DEPLOY_ERR! neq 0 (
-    echo %RED%[FALLO]%RST% docker compose up fallo en modo desatendido.
+    echo %RED%FALLO%RST% docker compose up fallo en modo desatendido.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
@@ -682,7 +647,7 @@ call :TRIGGER_ATLAS_DELTA_SYNC
 call :OPT_DAWN_TASKS_SILENT
 call :WZ_SET_GLOBAL 100
 echo.
-echo %GRN%[OK]%RST% Instalacion desatendida completada — nodo !AUTO_NODE_NAME! en !IP_FIJA!
+echo %GRN%OK%RST% Instalacion desatendida completada — nodo !AUTO_NODE_NAME! en !IP_FIJA!
 call :RENDER_QR_ASCII "http://!IP_FIJA!:3000"
 color 0B
 call :BEEP_OK
@@ -754,11 +719,11 @@ goto MAIN_MENU
 rem --- [1] Git ---
 :OPT_GIT
 cls
-echo %CYAN%═══ [1] INSTALAR / VERIFICAR GIT ═══%RST%
+echo %CYAN%=== Op.1 INSTALAR / VERIFICAR GIT ===%RST%
 set "GIT_DONE=0"
 where git >nul 2>&1
 if not errorlevel 1 (
-    for /f "delims=" %%g in ('git --version 2^>nul') do echo %GRN%[OK]%RST% %%g
+    for /f "delims=" %%g in ('git --version 2^>nul') do echo %GRN%OK%RST% %%g
     set "GIT_DONE=1"
 )
 if "!GIT_DONE!"=="0" (
@@ -776,14 +741,14 @@ goto MAIN_MENU
 rem --- [2] Docker ---
 :OPT_DOCKER
 cls
-echo %CYAN%═══ [2] INSTALAR / VERIFICAR DOCKER DESKTOP ═══%RST%
+echo %CYAN%=== Op.2 INSTALAR / VERIFICAR DOCKER DESKTOP ===%RST%
 set "DOCKER_DONE=0"
 where docker >nul 2>&1
 if not errorlevel 1 (
-    for /f "delims=" %%d in ('docker --version 2^>nul') do echo %GRN%[OK]%RST% %%d
+    for /f "delims=" %%d in ('docker --version 2^>nul') do echo %GRN%OK%RST% %%d
     docker info >nul 2>&1
     if not errorlevel 1 (
-        echo %GRN%[OK]%RST% Docker Engine respondiendo
+        echo %GRN%OK%RST% Docker Engine respondiendo
         set "DOCKER_DONE=1"
     )
 )
@@ -797,7 +762,7 @@ goto MAIN_MENU
 rem --- [3] Escanner IP Inteligente ---
 :OPT_STATIC_IP
 cls
-echo %CYAN%═══ [3] ESCANER DE RED INTELIGENTE - IP ESTATICA ═══%RST%
+echo %CYAN%=== Op.3 ESCANER DE RED INTELIGENTE - IP ESTATICA ===%RST%
 call :DETECT_NETWORK_PREFIX
 call :LOADING_BAR "Barriendo red !NET_PREFIX!.2-60" 12
 call :SCAN_NETWORK_IPS
@@ -820,7 +785,7 @@ echo %GRN%SUGERENCIA AUTOMATICA:%RST% !SUGGEST_IP! ^(menor riesgo de colision en
 echo.
 echo   %GRN%Op.1%RST% Usar IP sugerida automaticamente ^(!SUGGEST_IP!^)
 echo   %GRN%Op.2%RST% Digitar otra direccion IP manualmente
-echo   %GRN%[C]%RST% Cancelar
+echo   %GRN%Op.C%RST% Cancelar
 set "IP_CHOICE="
 set /p "IP_CHOICE=Seleccione: "
 if /i "!IP_CHOICE!"=="C" goto OPT_STATIC_IP_DONE
@@ -839,18 +804,19 @@ rem --- [4] Tareas Madrugada ---
 set "BOOT_PS=%REPO_ROOT%\backend\scripts\server_boot_prune.ps1"
 set "DAWN_PS=%REPO_ROOT%\backend\scripts\server_dawn_maintenance.ps1"
 set "BEEP_PS=%REPO_ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
+set "DAWN_TIME=03:00"
 schtasks /Create /TN "MCLarensERP_BootPrune" /SC ONSTART /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%BOOT_PS%\"" /F >nul 2>&1
-schtasks /Create /TN "MCLarensERP_DawnRestart" /SC DAILY /ST 03:00 /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%DAWN_PS%\"" /F >nul 2>&1
+schtasks /Create /TN "MCLarensERP_DawnRestart" /SC DAILY /ST %DAWN_TIME% /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%DAWN_PS%\"" /F >nul 2>&1
 schtasks /Create /TN "MCLarensERP_HardwareBeep" /SC ONSTART /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"%BEEP_PS%\"" /F >nul 2>&1
 call :LOG "Tareas madrugada registradas (silent)"
 goto :eof
 
 :OPT_DAWN_TASKS
 cls
-echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA ^(03:00 AM^) ═══%RST%
+echo %CYAN%=== Op.4 CONFIGURAR MANTENIMIENTO DE MADRUGADA 03:00 AM ===%RST%
 call :LOADING_BAR "Registrando tareas programadas" 10
 call :OPT_DAWN_TASKS_SILENT
-echo %GRN%[OK]%RST% Tareas: BootPrune, DawnRestart 03:00, HardwareBeep
+echo %GRN%OK%RST% Tareas: BootPrune, DawnRestart %DAWN_TIME%, HardwareBeep
 call :BEEP_OK
 call :WAIT_KEY
 goto MAIN_MENU
@@ -869,7 +835,7 @@ echo.
 set "GITHUB_PAT="
 set /p "GITHUB_PAT=Ingrese PAT: "
 if "!GITHUB_PAT!"=="" (
-    echo %RED%[ABORTADO]%RST% PAT vacio.
+    echo %RED%ABORTADO%RST% PAT vacio.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
@@ -889,7 +855,7 @@ if not exist "%REPO_ROOT%\.git" (
 set "GITHUB_PAT="
 set "CLONE_URL="
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% Clonacion/actualizacion fallida. Revise PAT y red.
+    echo %RED%FALLO%RST% Clonacion/actualizacion fallida. Revise PAT y red.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
@@ -900,7 +866,7 @@ call :LOADING_BAR "Checkout commit !TARGET_COMMIT!" 6
 git checkout !TARGET_COMMIT! >>"%LOG_DIR%\toolbox.log" 2>&1
 popd
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% Checkout !TARGET_COMMIT! fallido.
+    echo %RED%FALLO%RST% Checkout !TARGET_COMMIT! fallido.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
@@ -909,9 +875,9 @@ if errorlevel 1 (
 if exist "%REPO_ROOT%\docker-compose.yml" (
     set "CLEAN_INSTALL=0"
     setx MCLARENS_ERP_ROOT "%REPO_ROOT%" >nul 2>&1
-    echo %GRN%[OK]%RST% Repositorio listo en commit !TARGET_COMMIT! - docker-compose.yml detectado.
+    echo %GRN%OK%RST% Repositorio listo en commit !TARGET_COMMIT! - docker-compose.yml detectado.
 ) else (
-    echo %YLW%[WARN]%RST% Repositorio en !TARGET_COMMIT! pero falta docker-compose.yml en %REPO_ROOT%
+    echo %YLW%WARN%RST% Repositorio en !TARGET_COMMIT! pero falta docker-compose.yml en %REPO_ROOT%
 )
 color 0B
 call :BEEP_OK
@@ -921,14 +887,14 @@ goto MAIN_MENU
 rem --- [6] Casa Matriz ---
 :OPT_NODE_MAIN
 cls
-echo %CYAN%═══ [6] DESPLEGAR NODO CASA MATRIZ ^(MUNDO DE ACCESORIOS^) ═══%RST%
+echo %CYAN%=== Op.6 DESPLEGAR NODO CASA MATRIZ - MUNDO DE ACCESORIOS ===%RST%
 call :WRITE_ENV_SUCURSAL
 goto DEPLOY_STACK
 
 rem --- [7] Bodega Pura ---
 :OPT_NODE_WAREHOUSE
 cls
-echo %CYAN%═══ [7] DESPLEGAR NODO BODEGA PURA ═══%RST%
+echo %CYAN%=== Op.7 DESPLEGAR NODO BODEGA PURA ===%RST%
 call :WRITE_ENV_BODEGA
 goto DEPLOY_STACK
 
@@ -952,7 +918,7 @@ echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
 echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
 echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
 )>"%REPO_ROOT%\.env"
-echo %GRN%[OK]%RST% .env SUCURSAL escrito.
+echo %GRN%OK%RST% .env SUCURSAL escrito.
 goto :eof
 
 :WRITE_ENV_BODEGA
@@ -973,12 +939,19 @@ echo MONGODB_CENTRAL_URI=
 echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
 echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
 )>"%REPO_ROOT%\.env"
-echo %GRN%[OK]%RST% .env BODEGA_PURA escrito.
+echo %GRN%OK%RST% .env BODEGA_PURA escrito.
 goto :eof
 
 :DEPLOY_STACK
 if not exist "%REPO_ROOT%\docker-compose.yml" (
-    echo %RED%[FALLO]%RST% No se encontro docker-compose.yml en %REPO_ROOT%
+    echo %RED%FALLO%RST% No se encontro docker-compose.yml en %REPO_ROOT%
+    call :BEEP_ERROR
+    call :WAIT_KEY
+    goto MAIN_MENU
+)
+docker info >nul 2>&1
+if errorlevel 1 (
+    echo %RED%FALLO%RST% Docker Desktop no esta corriendo. Use Op.2 para instalar o iniciar Docker.
     call :BEEP_ERROR
     call :WAIT_KEY
     goto MAIN_MENU
@@ -989,10 +962,10 @@ docker compose up -d --build
 set "DEPLOY_ERR=!errorlevel!"
 popd
 if !DEPLOY_ERR! neq 0 (
-    echo %RED%[FALLO]%RST% docker compose up fallo.
+    echo %RED%FALLO%RST% docker compose up fallo.
     call :BEEP_ERROR
 ) else (
-    echo %GRN%[OK]%RST% Stack ERP desplegado.
+    echo %GRN%OK%RST% Stack ERP desplegado.
     call :BEEP_OK
 )
 call :WAIT_KEY
@@ -1004,7 +977,7 @@ cls
 color 0F
 set "KIOSK_URL=http://!IP_FIJA!:3000"
 set "DASH_URL=http://!IP_FIJA!:3000/server-dashboard"
-echo %CYAN%═══ [8] CENTRO DE MANDO - QR ASCII + KIOSK ═══%RST%
+echo %CYAN%=== Op.8 CENTRO DE MANDO - QR ASCII y KIOSK ===%RST%
 echo.
 call :RENDER_QR_ASCII "!KIOSK_URL!"
 echo.
@@ -1033,22 +1006,22 @@ goto MAIN_MENU
 rem --- [9] Backup USB ---
 :OPT_BACKUP_USB
 cls
-echo %CYAN%═══ [9] RESPALDO MANUAL A USB EXTRAIBLE ═══%RST%
+echo %CYAN%=== Op.9 RESPALDO MANUAL A USB EXTRAIBLE ===%RST%
 if not exist "%REPO_ROOT%\backups\usb" mkdir "%REPO_ROOT%\backups\usb" >nul 2>&1
 call :LOADING_BAR "Ejecutando backup Delta" 12
 docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% Contenedor mundo-backend no esta corriendo.
+    echo %RED%FALLO%RST% Contenedor mundo-backend no esta corriendo.
     call :BEEP_ERROR
     call :WAIT_KEY
     goto MAIN_MENU
 )
 docker exec mundo-backend bash /app/backend/scripts/backup_server_node.sh
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% backup_server_node.sh fallo.
+    echo %RED%FALLO%RST% backup_server_node.sh fallo.
     call :BEEP_ERROR
 ) else (
-    echo %GRN%[OK]%RST% Respaldo interno + USB completado.
+    echo %GRN%OK%RST% Respaldo interno + USB completado.
     call :BEEP_OK
 )
 call :WAIT_KEY
@@ -1057,16 +1030,16 @@ goto MAIN_MENU
 rem --- [10] Beep Daemon ---
 :OPT_BEEP_DAEMON
 cls
-echo %CYAN%═══ [10] DAEMON ALERTA SONORA HARDWARE ═══%RST%
+echo %CYAN%=== Op.10 DAEMON ALERTA SONORA HARDWARE ===%RST%
 set "BEEP_PS=%REPO_ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
 if not exist "!BEEP_PS!" (
-    echo %RED%[FALLO]%RST% No se encontro server_hardware_beep_daemon.ps1
+    echo %RED%FALLO%RST% No se encontro server_hardware_beep_daemon.ps1
     call :BEEP_ERROR
     call :WAIT_KEY
     goto MAIN_MENU
 )
 start "MCLarensERP_BeepDaemon" /min powershell.exe -NoProfile -ExecutionPolicy Bypass -File "!BEEP_PS!"
-echo %GRN%[OK]%RST% Daemon Beep iniciado en segundo plano.
+echo %GRN%OK%RST% Daemon Beep iniciado en segundo plano.
 call :BEEP_OK
 call :WAIT_KEY
 goto MAIN_MENU
@@ -1074,10 +1047,10 @@ goto MAIN_MENU
 rem --- [11] Chaos Suite ---
 :OPT_CHAOS_SUITE
 cls
-echo %CYAN%═══ [11] SUITE DE CAOS LOGISTICA Y QA EN VIVO ═══%RST%
+echo %CYAN%=== Op.11 SUITE DE CAOS LOGISTICA Y QA EN VIVO ===%RST%
 docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% Backend no disponible. Despliegue el stack primero.
+    echo %RED%FALLO%RST% Backend no disponible. Despliegue el stack primero.
     call :BEEP_ERROR
     call :WAIT_KEY
     goto MAIN_MENU
@@ -1085,17 +1058,17 @@ if errorlevel 1 (
 call :LOADING_BAR "Ejecutando chaos suite" 20
 docker exec mundo-backend python /app/backend/scripts/run_chaos_suite_live.py
 if errorlevel 1 (
-    echo %YLW%[WARN]%RST% Fallo via docker exec; intentando host local...
+    echo %YLW%WARN%RST% Fallo via docker exec; intentando host local...
     pushd "%REPO_ROOT%"
     set "PYTHONPATH=%REPO_ROOT%"
     python backend\scripts\run_chaos_suite_live.py
     popd
 )
 if errorlevel 1 (
-    echo %RED%[FALLO]%RST% Suite de caos reporto errores.
+    echo %RED%FALLO%RST% Suite de caos reporto errores.
     call :BEEP_ERROR
 ) else (
-    echo %GRN%[OK]%RST% Suite de caos completada.
+    echo %GRN%OK%RST% Suite de caos completada.
     call :BEEP_OK
 )
 call :WAIT_KEY
@@ -1104,10 +1077,10 @@ goto MAIN_MENU
 rem --- [99] Stack Control ---
 :OPT_STACK_CONTROL
 cls
-echo %RED%═══ [99] APAGAR / REINICIAR STACK DE CONTENEDORES ═══%RST%
-echo   %GRN%[A]%RST% Apagar stack ^(docker compose down^)
-echo   %GRN%[R]%RST% Reiniciar stack ^(down + up --build^)
-echo   %GRN%[C]%RST% Cancelar
+echo %RED%=== Op.99 APAGAR / REINICIAR STACK DE CONTENEDORES ===%RST%
+echo   %GRN%Op.A%RST% Apagar stack - docker compose down
+echo   %GRN%Op.R%RST% Reiniciar stack - down + up --build
+echo   %GRN%Op.C%RST% Cancelar
 set "STACK_CHOICE="
 set /p "STACK_CHOICE=Seleccione A/R/C: "
 if /i "!STACK_CHOICE!"=="C" goto MAIN_MENU
