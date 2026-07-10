@@ -34,7 +34,7 @@ catch {
 
 $repoRoot = $env:MCLARENS_ERP_ROOT
 if (-not $repoRoot) {
-    $repoRoot = "C:\MCLarensERP"
+    $repoRoot = "C:\MC-LARENS_ERP_3\MC-LARENS_ERP2"
 }
 
 if (Test-Path (Join-Path $repoRoot "docker-compose.yml")) {

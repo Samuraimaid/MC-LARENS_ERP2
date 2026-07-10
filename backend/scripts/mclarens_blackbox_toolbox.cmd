@@ -1,12 +1,13 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title MCLARENS ERP - Server Black Box Toolbox v2.1-Delta
+title MCLARENS ERP - Server Black Box Toolbox v2.2-Delta
 color 0B
 
 rem ANSI / Virtual Terminal
 reg add HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1 /f >nul 2>&1
 for /F "delims=" %%a in ('echo prompt $E^| cmd') do set "ESC=%%a"
+if not defined ESC set "ESC=."
 set "RST=%ESC%[0m"
 set "CYAN=%ESC%[36m"
 set "GRN=%ESC%[32m"
@@ -17,14 +18,17 @@ set "DIM=%ESC%[2m"
 set "WHT=%ESC%[97m"
 set "BLK=%ESC%[40m"
 
-rem Rutas y constantes
+rem Rutas y constantes - REPO_ROOT dinamico desde ubicacion del script
 set "SCRIPT_DIR=%~dp0"
-set "ROOT=%SCRIPT_DIR%..\.."
-for %%I in ("%ROOT%") do set "ROOT=%%~fI"
-if not exist "%ROOT%\docker-compose.yml" set "ROOT=C:\MCLarensERP"
+set "REPO_ROOT=%SCRIPT_DIR%..\..\"
+for %%I in ("%REPO_ROOT%") do set "REPO_ROOT=%%~fI"
+if not exist "%REPO_ROOT%\docker-compose.yml" set "REPO_ROOT=C:\MC-LARENS_ERP_3\MC-LARENS_ERP2"
+for %%I in ("%REPO_ROOT%") do set "REPO_ROOT=%%~fI"
 set "IP_FIJA=192.168.1.26"
+set "SERVER_LAN_IP=192.168.1.26"
 set "GATEWAY=192.168.1.1"
 set "NET_PREFIX=192.168.1"
+set "NODE_ID=branch_main"
 set "TARGET_COMMIT=1a27364"
 set "SPIN_IDX=0"
 set "LOG_DIR=%ProgramData%\MCLarensERP\logs"
@@ -41,8 +45,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "MCLARENS_ERP_ROOT=%ROOT%"
-setx MCLARENS_ERP_ROOT "%ROOT%" >nul 2>&1
+if not exist "%REPO_ROOT%\docker-compose.yml" (
+    echo %RED%[ERROR]%RST% REPO_ROOT no valido: "%REPO_ROOT%"
+    echo         No se encontro docker-compose.yml en la ruta de produccion.
+    pause
+    exit /b 1
+)
+
+set "MCLARENS_ERP_ROOT=%REPO_ROOT%"
+setx MCLARENS_ERP_ROOT "%REPO_ROOT%" >nul 2>&1
 
 goto MAIN_MENU
 
@@ -64,26 +75,35 @@ goto :eof
 
 :PARSE_NODE_ID
 set "NODE_ID=branch_main"
-if not exist "%ROOT%\.env" goto :eof
-for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "NODE_ID BRANCH_ID SERVER_LAN_IP" "%ROOT%\.env" 2^>nul`) do (
+set "IP_FIJA=192.168.1.26"
+set "SERVER_LAN_IP=192.168.1.26"
+if not exist "%REPO_ROOT%\.env" goto :eof
+for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "NODE_ID BRANCH_ID SERVER_LAN_IP" "%REPO_ROOT%\.env" 2^>nul`) do (
     set "KEY=%%a"
     set "VAL=%%b"
     set "VAL=!VAL:"=!"
-    if /i "!KEY!"=="NODE_ID" set "NODE_ID=!VAL!"
-    if /i "!KEY!"=="BRANCH_ID" set "NODE_ID=!VAL!"
-    if /i "!KEY!"=="SERVER_LAN_IP" set "IP_FIJA=!VAL!"
+    if /i "!KEY!"=="NODE_ID" if not "!VAL!"=="" set "NODE_ID=!VAL!"
+    if /i "!KEY!"=="BRANCH_ID" if not "!VAL!"=="" set "NODE_ID=!VAL!"
+    if /i "!KEY!"=="SERVER_LAN_IP" (
+        if not "!VAL!"=="" (
+            set "IP_FIJA=!VAL!"
+            set "SERVER_LAN_IP=!VAL!"
+        )
+    )
 )
+if not defined IP_FIJA set "IP_FIJA=192.168.1.26"
+if not defined SERVER_LAN_IP set "SERVER_LAN_IP=192.168.1.26"
 goto :eof
 
 :UPDATE_ENV_LAN_IP
 set "NEW_IP=%~1"
 if "%NEW_IP%"=="" goto :eof
-if not exist "%ROOT%\.env" (
-    echo SERVER_LAN_IP=%NEW_IP%>>"%ROOT%\.env"
+if not exist "%REPO_ROOT%\.env" (
+    echo SERVER_LAN_IP=%NEW_IP%>>"%REPO_ROOT%\.env"
     goto :eof
 )
 powershell -NoProfile -Command ^
-  "$p='%ROOT%\.env'; $ip='%NEW_IP%';" ^
+  "$p='%REPO_ROOT%\.env'; $ip='%NEW_IP%';" ^
   "$lines=Get-Content $p -ErrorAction SilentlyContinue;" ^
   "$out=@(); $found=$false;" ^
   "foreach($line in $lines){" ^
@@ -93,6 +113,7 @@ powershell -NoProfile -Command ^
   "}; if(-not $found){ $out += 'SERVER_LAN_IP='+$ip };" ^
   "Set-Content -Path $p -Value $out -Encoding UTF8" >nul 2>&1
 set "IP_FIJA=%NEW_IP%"
+set "SERVER_LAN_IP=%NEW_IP%"
 goto :eof
 
 :CHECK_INTERNET
@@ -160,12 +181,18 @@ goto :eof
 :DETECT_NETWORK_PREFIX
 set "NET_PREFIX=192.168.1"
 set "GATEWAY=192.168.1.1"
-for /f "usebackq delims=" %%p in (`powershell -NoProfile -Command "$addr=Get-NetIPAddress -AddressFamily IPv4 ^| Where-Object { $_.IPAddress -match '^(192\\.168\\.|10\\.)' -and $_.PrefixOrigin -ne 'WellKnown' } ^| Select-Object -First 1; if($addr){ $ip=$addr.IPAddress; $prefix=$ip -replace '\\.\\d+$',''; $gw=(Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Where-Object { $_.NextHop -match '^(192\\.168\\.|10\\.)' } ^| Select-Object -First 1).NextHop; Write-Output ($prefix+'|'+$(if($gw){$gw}else{$prefix+'.1'})) } else { Write-Output '192.168.1^|192.168.1.1' }"`) do (
-    for /f "tokens=1,2 delims=|" %%a in ("%%p") do (
-        set "NET_PREFIX=%%a"
-        set "GATEWAY=%%b"
+set "DETECT_RAW="
+for /f "usebackq delims=" %%p in (`powershell -NoProfile -Command "try { $addr=Get-NetIPAddress -AddressFamily IPv4 ^| Where-Object { $_.IPAddress -match '^(192\\.168\\.|10\\.)' -and $_.PrefixOrigin -ne 'WellKnown' } ^| Select-Object -First 1; if($addr){ $ip=$addr.IPAddress; $prefix=$ip -replace '\\.\\d+$',''; $gw=(Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Where-Object { $_.NextHop -match '^(192\\.168\\.|10\\.)' } ^| Select-Object -First 1).NextHop; if(-not $gw){ $gw=$prefix+'.1' }; Write-Output ($prefix+'|'+$gw) } else { Write-Output '192.168.1|192.168.1.1' } } catch { Write-Output '192.168.1|192.168.1.1' }" 2^>nul`) do (
+    set "DETECT_RAW=%%p"
+)
+if defined DETECT_RAW (
+    for /f "tokens=1,2 delims=|" %%a in ("%DETECT_RAW%") do (
+        if not "%%a"=="" set "NET_PREFIX=%%a"
+        if not "%%b"=="" set "GATEWAY=%%b"
     )
 )
+if not defined NET_PREFIX set "NET_PREFIX=192.168.1"
+if not defined GATEWAY set "GATEWAY=192.168.1.1"
 goto :eof
 
 :SCAN_NETWORK_IPS
@@ -209,7 +236,8 @@ goto :eof
 :APPLY_STATIC_IP
 set "CHOSEN_IP=%~1"
 if "%CHOSEN_IP%"=="" goto :eof
-for /f "tokens=1,* delims=:" %%a in (`powershell -NoProfile -Command "(Get-NetAdapter ^| Where-Object Status -eq 'Up' ^| Select-Object -First 1).Name"`) do set "ADAPTER=%%b"
+set "ADAPTER=Ethernet"
+for /f "tokens=1,* delims=:" %%a in (`powershell -NoProfile -Command "try { (Get-NetAdapter ^| Where-Object Status -eq 'Up' ^| Select-Object -First 1).Name } catch { 'Ethernet' }" 2^>nul`) do set "ADAPTER=%%b"
 set "ADAPTER=!ADAPTER: =!"
 if "!ADAPTER!"=="" set "ADAPTER=Ethernet"
 call :LOADING_BAR "Aplicando IP estatica !CHOSEN_IP!" 6
@@ -235,7 +263,7 @@ echo.
 echo %BLD%%WHT%════════ CODIGO QR ASCII - ESCANEAR DESDE CELULAR ════════%RST%
 echo %DIM%URL: %QR_URL%%RST%
 echo.
-set "QR_SCRIPT=%ROOT%\backend\scripts\render_qr_ascii.py"
+set "QR_SCRIPT=%REPO_ROOT%\backend\scripts\render_qr_ascii.py"
 if exist "!QR_SCRIPT!" (
     where python >nul 2>&1
     if not errorlevel 1 (
@@ -272,10 +300,10 @@ if /i "!INTERNET!"=="CONNECTED" (
 echo %CYAN%╔══════════════════════════════════════════════════════════════════════════════════════╗%RST%
 echo %CYAN%║%RST% %BLD%USER:%RST% %-18s %BLD%HOST:%RST% %-18s %BLD%NODE:%RST% %-16s %CYAN%║%RST%
 echo %CYAN%║%RST% %USERNAME%          %COMPUTERNAME%          !NODE_ID!          %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% !IP_FIJA!          %BLD%INTERNET:%RST% !NET_COLOR!!NET_TEXT!!RST%                              %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%ROOT:%RST% %DIM%!ROOT!%RST%
+echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% !SERVER_LAN_IP!          %BLD%INTERNET:%RST% !NET_COLOR!!NET_TEXT!!RST%                              %CYAN%║%RST%
+echo %CYAN%║%RST% %BLD%REPO:%RST% %DIM%!REPO_ROOT!%RST%
 echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════════════╣%RST%
-echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.1-Delta^)%RST%                  %CYAN%║%RST%
+echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.2-Delta^)%RST%                  %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╦═══════════════════════════════╦══════════════════════╣%RST%
 echo %CYAN%║%RST% %YLW%[TWEAK ^& ENTORNO]%RST%              %CYAN%║%RST% %YLW%[ASISTENTE MULTI-NODO]%RST%          %CYAN%║%RST% %YLW%[MANTENIMIENTO ^& DAEMONS]%RST%     %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╬═══════════════════════════════╬══════════════════════╣%RST%
@@ -391,9 +419,9 @@ rem --- [4] Tareas Madrugada ---
 :OPT_DAWN_TASKS
 cls
 echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA ^(03:00 AM^) ═══%RST%
-set "BOOT_PS=%ROOT%\backend\scripts\server_boot_prune.ps1"
-set "DAWN_PS=%ROOT%\backend\scripts\server_dawn_maintenance.ps1"
-set "BEEP_PS=%ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
+set "BOOT_PS=%REPO_ROOT%\backend\scripts\server_boot_prune.ps1"
+set "DAWN_PS=%REPO_ROOT%\backend\scripts\server_dawn_maintenance.ps1"
+set "BEEP_PS=%REPO_ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
 call :LOADING_BAR "Registrando tareas programadas" 10
 schtasks /Create /TN "MCLarensERP_BootPrune" /SC ONSTART /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%BOOT_PS%\"" /F >nul 2>&1
 schtasks /Create /TN "MCLarensERP_DawnRestart" /SC DAILY /ST 03:00 /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%DAWN_PS%\"" /F >nul 2>&1
@@ -422,14 +450,14 @@ if "!GITHUB_PAT!"=="" (
     goto MAIN_MENU
 )
 set "CLONE_URL=https://!GITHUB_PAT!@github.com/Samuraimaid/MC-LARENS_ERP2.git"
-if not exist "%ROOT%\.git" (
+if not exist "%REPO_ROOT%\.git" (
     call :LOADING_BAR "Clonando repositorio privado" 12
-    if exist "%ROOT%" rmdir /s /q "%ROOT%" >nul 2>&1
-    mkdir "%ROOT%" >nul 2>&1
-    git clone "!CLONE_URL!" "%ROOT%" >>"%LOG_DIR%\toolbox.log" 2>&1
+    if exist "%REPO_ROOT%" rmdir /s /q "%REPO_ROOT%" >nul 2>&1
+    mkdir "%REPO_ROOT%" >nul 2>&1
+    git clone "!CLONE_URL!" "%REPO_ROOT%" >>"%LOG_DIR%\toolbox.log" 2>&1
 ) else (
     call :LOADING_BAR "Actualizando repositorio" 8
-    pushd "%ROOT%"
+    pushd "%REPO_ROOT%"
     git pull >>"%LOG_DIR%\toolbox.log" 2>&1
     popd
 )
@@ -442,7 +470,7 @@ if errorlevel 1 (
     call :WAIT_KEY
     goto MAIN_MENU
 )
-pushd "%ROOT%"
+pushd "%REPO_ROOT%"
 call :LOADING_BAR "Checkout commit !TARGET_COMMIT!" 6
 git checkout !TARGET_COMMIT! >>"%LOG_DIR%\toolbox.log" 2>&1
 popd
@@ -492,7 +520,7 @@ echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
 echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
 echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
 echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
-)>"%ROOT%\.env"
+)>"%REPO_ROOT%\.env"
 echo %GRN%[OK]%RST% .env SUCURSAL escrito.
 goto :eof
 
@@ -513,18 +541,18 @@ echo DB_NAME=mc-larens2_mundo_accesorios_erp
 echo MONGODB_CENTRAL_URI=
 echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
 echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
-)>"%ROOT%\.env"
+)>"%REPO_ROOT%\.env"
 echo %GRN%[OK]%RST% .env BODEGA_PURA escrito.
 goto :eof
 
 :DEPLOY_STACK
-if not exist "%ROOT%\docker-compose.yml" (
-    echo %RED%[FALLO]%RST% No se encontro docker-compose.yml en %ROOT%
+if not exist "%REPO_ROOT%\docker-compose.yml" (
+    echo %RED%[FALLO]%RST% No se encontro docker-compose.yml en %REPO_ROOT%
     call :BEEP_ERROR
     call :WAIT_KEY
     goto MAIN_MENU
 )
-pushd "%ROOT%"
+pushd "%REPO_ROOT%"
 call :LOADING_BAR "Docker compose build" 15
 docker compose up -d --build
 set "DEPLOY_ERR=!errorlevel!"
@@ -575,7 +603,7 @@ rem --- [9] Backup USB ---
 :OPT_BACKUP_USB
 cls
 echo %CYAN%═══ [9] RESPALDO MANUAL A USB EXTRAIBLE ═══%RST%
-if not exist "%ROOT%\backups\usb" mkdir "%ROOT%\backups\usb" >nul 2>&1
+if not exist "%REPO_ROOT%\backups\usb" mkdir "%REPO_ROOT%\backups\usb" >nul 2>&1
 call :LOADING_BAR "Ejecutando backup Delta" 12
 docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
 if errorlevel 1 (
@@ -599,7 +627,7 @@ rem --- [10] Beep Daemon ---
 :OPT_BEEP_DAEMON
 cls
 echo %CYAN%═══ [10] DAEMON ALERTA SONORA HARDWARE ═══%RST%
-set "BEEP_PS=%ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
+set "BEEP_PS=%REPO_ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
 if not exist "!BEEP_PS!" (
     echo %RED%[FALLO]%RST% No se encontro server_hardware_beep_daemon.ps1
     call :BEEP_ERROR
@@ -627,8 +655,8 @@ call :LOADING_BAR "Ejecutando chaos suite" 20
 docker exec mundo-backend python /app/backend/scripts/run_chaos_suite_live.py
 if errorlevel 1 (
     echo %YLW%[WARN]%RST% Fallo via docker exec; intentando host local...
-    pushd "%ROOT%"
-    set "PYTHONPATH=%ROOT%"
+    pushd "%REPO_ROOT%"
+    set "PYTHONPATH=%REPO_ROOT%"
     python backend\scripts\run_chaos_suite_live.py
     popd
 )
@@ -653,14 +681,14 @@ set "STACK_CHOICE="
 set /p "STACK_CHOICE=Seleccione A/R/C: "
 if /i "!STACK_CHOICE!"=="C" goto MAIN_MENU
 if /i "!STACK_CHOICE!"=="A" (
-    pushd "%ROOT%"
+    pushd "%REPO_ROOT%"
     call :LOADING_BAR "Deteniendo contenedores" 8
     docker compose down
     popd
     goto STACK_DONE
 )
 if /i "!STACK_CHOICE!"=="R" (
-    pushd "%ROOT%"
+    pushd "%REPO_ROOT%"
     call :LOADING_BAR "Reiniciando stack" 12
     docker compose down
     docker compose up -d --build
