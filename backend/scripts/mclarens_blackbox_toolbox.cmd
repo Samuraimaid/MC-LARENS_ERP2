@@ -464,7 +464,7 @@ goto :eof
 :WRITE_ENV_AUTO_PROFILE
 if "%AUTO_NODE_PROFILE%"=="1" (
     set "AUTO_NODE_ID=branch_main"
-    set "AUTO_NODE_TYPE=SUCURSAL"
+    set "AUTO_NODE_TYPE=CASA_MATRIZ"
     set "AUTO_ENABLE_SALES=true"
     set "AUTO_ENABLE_WORKSHOP=true"
     set "AUTO_ENABLE_HR=true"
@@ -888,7 +888,7 @@ rem --- [6] Casa Matriz ---
 :OPT_NODE_MAIN
 cls
 echo %CYAN%=== Op.6 DESPLEGAR NODO CASA MATRIZ - MUNDO DE ACCESORIOS ===%RST%
-call :WRITE_ENV_SUCURSAL
+call :WRITE_ENV_CASA_MATRIZ
 goto DEPLOY_STACK
 
 rem --- [7] Bodega Pura ---
@@ -898,17 +898,17 @@ echo %CYAN%=== Op.7 DESPLEGAR NODO BODEGA PURA ===%RST%
 call :WRITE_ENV_BODEGA
 goto DEPLOY_STACK
 
-:WRITE_ENV_SUCURSAL
+:WRITE_ENV_CASA_MATRIZ
 (
-echo # Generado por mclarens_blackbox_toolbox.cmd
+echo # Generado por mclarens_blackbox_toolbox.cmd - Casa Matriz CEO
 echo BRANCH_ID=branch_main
 echo NODE_ID=branch_main
-echo NODE_NAME=Mundo de Accesorios
-echo NODE_TYPE=SUCURSAL
+echo NODE_NAME=Casa Matriz - Mundo de Accesorios
+echo NODE_TYPE=CASA_MATRIZ
 echo NODE_ENABLE_SALES=true
 echo NODE_ENABLE_WORKSHOP=true
 echo NODE_ENABLE_HR=true
-echo SERVER_LAN_IP=!IP_FIJA!
+echo SERVER_LAN_IP=%IP_FIJA%
 echo SERVER_FRONTEND_PORT=3000
 echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
 echo DB_NAME=mc-larens2_mundo_accesorios_erp
@@ -916,9 +916,34 @@ echo MONGODB_CENTRAL_URI=
 echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
 echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
 echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
-echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
+echo HTTPS_CERT_IPS=127.0.0.1,%IP_FIJA%
 )>"%REPO_ROOT%\.env"
-echo %GRN%OK%RST% .env SUCURSAL escrito.
+set "NODE_ID=branch_main"
+echo %GRN%OK%RST% Perfil CASA MATRIZ - branch_main / Mundo de Accesorios
+goto :eof
+
+:WRITE_ENV_SUCURSAL
+(
+echo # Generado por mclarens_blackbox_toolbox.cmd - Sucursal satelite
+echo BRANCH_ID=branch_alt
+echo NODE_ID=branch_alt
+echo NODE_NAME=Sucursal Satelite
+echo NODE_TYPE=SUCURSAL
+echo NODE_ENABLE_SALES=true
+echo NODE_ENABLE_WORKSHOP=true
+echo NODE_ENABLE_HR=true
+echo SERVER_LAN_IP=%IP_FIJA%
+echo SERVER_FRONTEND_PORT=3000
+echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
+echo DB_NAME=mc-larens2_mundo_accesorios_erp
+echo MONGODB_CENTRAL_URI=
+echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
+echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
+echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
+echo HTTPS_CERT_IPS=127.0.0.1,%IP_FIJA%
+)>"%REPO_ROOT%\.env"
+set "NODE_ID=branch_alt"
+echo %GRN%OK%RST% Perfil SUCURSAL SATELITE - branch_alt
 goto :eof
 
 :WRITE_ENV_BODEGA
@@ -931,15 +956,15 @@ echo NODE_TYPE=BODEGA_PURA
 echo NODE_ENABLE_SALES=false
 echo NODE_ENABLE_WORKSHOP=false
 echo NODE_ENABLE_HR=false
-echo SERVER_LAN_IP=!IP_FIJA!
+echo SERVER_LAN_IP=%IP_FIJA%
 echo SERVER_FRONTEND_PORT=3000
 echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
 echo DB_NAME=mc-larens2_mundo_accesorios_erp
 echo MONGODB_CENTRAL_URI=
 echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
-echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
+echo HTTPS_CERT_IPS=127.0.0.1,%IP_FIJA%
 )>"%REPO_ROOT%\.env"
-echo %GRN%OK%RST% .env BODEGA_PURA escrito.
+echo %GRN%OK%RST% Perfil BODEGA PURA - warehouse_central
 goto :eof
 
 :DEPLOY_STACK

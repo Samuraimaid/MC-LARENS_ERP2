@@ -99,6 +99,12 @@ export function ServerDashboardPage() {
   const accessUrl = payload?.access?.url || (typeof window !== "undefined" ? window.location.origin : "");
   const nodeName = payload?.node?.node_name || payload?.node?.node_id || "Nodo ERP";
   const nodeType = payload?.node?.node_type || "SUCURSAL";
+  const profileLabel =
+    nodeType === "BODEGA_PURA"
+      ? "Perfil Bodega Pura"
+      : nodeType === "CASA_MATRIZ"
+        ? "Perfil Casa Matriz"
+        : "Perfil Sucursal";
   const metrics = payload?.metrics || {};
   const delta = payload?.delta || {};
 
@@ -115,7 +121,7 @@ export function ServerDashboardPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300/80">Centro de Mando · Black Box</p>
             <h1 className="mt-2 text-4xl font-black tracking-tight lg:text-5xl">{nodeName}</h1>
             <p className="mt-2 text-lg text-white/70">
-              {nodeType === "BODEGA_PURA" ? "Perfil Bodega Pura" : "Perfil Sucursal"} · {clock.toLocaleString("es-NI")}
+              {profileLabel} · {clock.toLocaleString("es-NI")}
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-right">

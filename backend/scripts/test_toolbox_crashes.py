@@ -46,6 +46,8 @@ REQUIRED_PATTERNS = (
     r"INSTALACION LIMPIA DESDE CERO",
     r":AUDIT_HARDWARE",
     r":RESTORE_DELTA_FROM_USB",
+    r":WRITE_ENV_CASA_MATRIZ",
+    r"NODE_TYPE=CASA_MATRIZ",
     r'reg add "HKCU\\Console" /v VirtualTerminalLevel',
     r'reg add "HKCU\\Software\\Microsoft\\Command Processor" /v DelayedExpansion',
     r"mode con: cols=80 lines=25",

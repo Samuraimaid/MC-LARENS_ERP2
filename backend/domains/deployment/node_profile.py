@@ -13,7 +13,9 @@ def _env_bool(key: str, default: bool = False) -> bool:
 
 def resolve_node_type() -> str:
     value = str(os.environ.get("NODE_TYPE", "SUCURSAL")).strip().upper()
-    return value if value in {"SUCURSAL", "BODEGA_PURA"} else "SUCURSAL"
+    if value in {"SUCURSAL", "BODEGA_PURA", "CASA_MATRIZ"}:
+        return value
+    return "SUCURSAL"
 
 
 def build_node_profile() -> Dict[str, Any]:
