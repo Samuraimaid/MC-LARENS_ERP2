@@ -26,6 +26,8 @@ ERROR_PATTERNS = (
     r"docker exec mundo-backend python /app/backend/scripts/render_qr_ascii",
     r"!NET_COLOR!!NET_TEXT!!RST%",
     r"%BLD%%CYAN%",
+    r"echo !CYAN!╔",
+    r"echo !CYAN!║",
 )
 
 REQUIRED_PATTERNS = (
@@ -39,7 +41,10 @@ REQUIRED_PATTERNS = (
     r":AUDIT_HARDWARE",
     r":RESTORE_DELTA_FROM_USB",
     r'reg add "HKCU\\Console" /v VirtualTerminalLevel',
+    r'reg add "HKCU\\Software\\Microsoft\\Command Processor" /v DelayedExpansion',
     r"mode con: cols=80 lines=25",
+    r":RENDER_MAIN_MENU_FRAME",
+    r":BUILD_MENU_STATUS",
 )
 
 

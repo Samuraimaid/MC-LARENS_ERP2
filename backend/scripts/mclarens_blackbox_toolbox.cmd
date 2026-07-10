@@ -1,27 +1,30 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
+reg add "HKCU\Software\Microsoft\Command Processor" /v DelayedExpansion /t REG_DWORD /d 1 /f >nul 2>&1
 chcp 65001 >nul 2>&1
 mode con: cols=80 lines=25 >nul 2>&1
 reg add "HKCU\Console" /v VirtualTerminalLevel /t REG_DWORD /d 1 /f >nul 2>&1
 title MCLARENS ERP - Server Black Box Toolbox v2.3-ZeroTouch
 color 0B
 
-rem ANSI / Virtual Terminal — activar antes de definir colores
+rem ANSI / Virtual Terminal
 for /F "delims=" %%a in ('echo prompt $E^| cmd') do set "ESC=%%a"
 if not defined ESC set "ESC=."
 if "!ESC!"=="." (
     for /F "delims=" %%b in ('powershell -NoProfile -Command "[char]27" 2^>nul') do set "ESC=%%b"
 )
 if not defined ESC set "ESC=."
-set "RST=!ESC![0m"
-set "CYAN=!ESC![36m"
-set "GRN=!ESC![32m"
-set "RED=!ESC![31m"
-set "YLW=!ESC![33m"
-set "BLD=!ESC![1m"
-set "DIM=!ESC![2m"
-set "WHT=!ESC![97m"
-set "BLK=!ESC![40m"
+set "RST=%ESC%[0m"
+set "CYAN=%ESC%[36m"
+set "GRN=%ESC%[32m"
+set "RED=%ESC%[31m"
+set "YLW=%ESC%[33m"
+set "BLD=%ESC%[1m"
+set "DIM=%ESC%[2m"
+set "WHT=%ESC%[97m"
+set "BLK=%ESC%[40m"
+set "NET_TEXT=DISCONNECTED"
+set "MENU_NET=DISCONNECTED"
 
 rem Rutas y constantes - REPO_ROOT dinamico desde ubicacion del script
 set "SCRIPT_DIR=%~dp0"
@@ -78,6 +81,8 @@ goto :eof
 set "NODE_ID=branch_main"
 set "IP_FIJA=192.168.1.26"
 set "SERVER_LAN_IP=192.168.1.26"
+set "NET_TEXT=DISCONNECTED"
+set "MENU_NET=DISCONNECTED"
 if not exist "%REPO_ROOT%\.env" goto :eof
 for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "NODE_ID BRANCH_ID SERVER_LAN_IP" "%REPO_ROOT%\.env" 2^>nul`) do (
     set "KEY=%%a"
@@ -322,12 +327,12 @@ set "WZ_STEP_BAR=!PROGRESS_BAR!"
 call :BUILD_PROGRESS_BAR !WZ_GLOBAL_PCT! 30
 set "WZ_GLOBAL_BAR=!PROGRESS_BAR!"
 call :SPINNER_TICK
-echo !ESC![8;1H!ESC![K
-echo !BLD!PASO ACTUAL:!RST! !ESC![K
-echo !CYAN![!SPIN_CHAR!]!RST! !WZ_STEP_LABEL!: !GRN[![WZ_STEP_BAR!] !WZ_STEP_PCT!%%!RST! !ESC![K
-echo. !ESC![K
-echo !BLD!AVANCE GENERAL DEL APPLIANCE:!RST! !ESC![K
-echo !GRN[![WZ_GLOBAL_BAR!] !WZ_GLOBAL_PCT!%%!RST! !ESC![K
+echo %ESC%[8;1H%ESC%[K
+echo %BLD%PASO ACTUAL:%RST% %ESC%[K
+echo %CYAN%[%SPIN_CHAR%]%RST% %WZ_STEP_LABEL%: %GRN%[%WZ_STEP_BAR%] %WZ_STEP_PCT%%% %RST% %ESC%[K
+echo. %ESC%[K
+echo %BLD%ACANCE GENERAL DEL APPLIANCE:%RST% %ESC%[K
+echo %GRN%[%WZ_GLOBAL_BAR%] %WZ_GLOBAL_PCT%%% %RST% %ESC%[K
 goto :eof
 
 :WZ_SET_GLOBAL
@@ -684,6 +689,37 @@ call :BEEP_OK
 call :WAIT_KEY
 goto MAIN_MENU
 
+:BUILD_MENU_STATUS
+set "NET_TEXT=DISCONNECTED"
+set "MENU_NET=DISCONNECTED"
+if /i "%INTERNET%"=="CONNECTED" (
+    set "NET_TEXT=CONNECTED"
+    set "MENU_NET=%GRN%CONNECTED%RST%"
+) else (
+    set "NET_TEXT=DISCONNECTED"
+    set "MENU_NET=%RED%DISCONNECTED%RST%"
+)
+goto :eof
+
+:RENDER_MAIN_MENU_FRAME
+echo %CYAN%╔══════════════════════════════════════════════════════════════════════════════╗%RST%
+echo %CYAN%║%RST% %BLD%USER:%RST% %USERNAME%  %BLD%HOST:%RST% %COMPUTERNAME%  %BLD%NODE:%RST% %NODE_ID%          %CYAN%║%RST%
+echo %CYAN%║%RST% %BLD%IP:%RST% %SERVER_LAN_IP%  %BLD%NET:%RST% %MENU_NET%  %CYAN%║%RST%
+echo %CYAN%║%RST% %BLD%REPO:%RST% %DIM%%REPO_ROOT%%RST%                                %CYAN%║%RST%
+if "%CLEAN_INSTALL%"=="1" echo %CYAN%║%RST% %YLW%[ESTADO: INSTALACION LIMPIA DESDE CERO]%RST%                                      %CYAN%║%RST%
+echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════╣%RST%
+echo %CYAN%║%RST% %BLD%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.3-ZeroTouch^)%RST%                          %CYAN%║%RST%
+echo %CYAN%╠════════════════════════╦════════════════════════╦══════════════════════════════╣%RST%
+echo %CYAN%║%RST% %RED%[0]%RST% Zero-Touch Auto       %CYAN%║%RST% %YLW%Multi-Nodo%RST%             %CYAN%║%RST% %YLW%Mantenimiento%RST%              %CYAN%║%RST%
+echo %CYAN%╠════════════════════════╬════════════════════════╬══════════════════════════════╣%RST%
+echo %CYAN%║%RST% %GRN%[1]%RST% Git                   %CYAN%║%RST% %GRN%[5]%RST% Clonar Repo PAT       %CYAN%║%RST% %GRN%[9]%RST%  Respaldo USB           %CYAN%║%RST%
+echo %CYAN%║%RST% %GRN%[2]%RST% Docker                %CYAN%║%RST% %GRN%[6]%RST% Casa Matriz           %CYAN%║%RST% %GRN%[10]%RST% Daemon Beep            %CYAN%║%RST%
+echo %CYAN%║%RST% %GRN%[3]%RST% Escaner IP            %CYAN%║%RST% %GRN%[7]%RST% Bodega Pura           %CYAN%║%RST% %GRN%[11]%RST% Suite Caos QA          %CYAN%║%RST%
+echo %CYAN%║%RST% %GRN%[4]%RST% Tareas 03:00 AM       %CYAN%║%RST% %GRN%[8]%RST% Kiosk + QR ASCII      %CYAN%║%RST% %RED%[99]%RST% Apagar/Reiniciar       %CYAN%║%RST%
+echo %CYAN%╚════════════════════════╩════════════════════════╩══════════════════════════════╝%RST%
+echo.
+goto :eof
+
 rem =============================================================================
 rem  MENU PRINCIPAL
 rem =============================================================================
@@ -693,32 +729,10 @@ cls
 if exist "%REPO_ROOT%\docker-compose.yml" (set "CLEAN_INSTALL=0") else (set "CLEAN_INSTALL=1")
 call :PARSE_NODE_ID
 call :CHECK_INTERNET
-
-if /i "!INTERNET!"=="CONNECTED" (
-    set "NET_COLOR=!GRN!"
-    set "NET_TEXT=CONNECTED"
-) else (
-    set "NET_COLOR=!RED!"
-    set "NET_TEXT=DISCONNECTED"
-)
-
-echo !CYAN!╔══════════════════════════════════════════════════════════════════════════════╗!RST!
-echo !CYAN!║!RST! !BLD!USER:!RST! %USERNAME%  !BLD!HOST:!RST! %COMPUTERNAME%  !BLD!NODE:!RST! !NODE_ID!          !CYAN!║!RST!
-echo !CYAN!║!RST! !BLD!IP:!RST! !SERVER_LAN_IP!  !BLD!NET:!RST! !NET_COLOR!!NET_TEXT!!RST!  !BLD!REPO:!RST! !DIM!!REPO_ROOT!!RST!  !CYAN!║!RST!
-if "!CLEAN_INSTALL!"=="1" echo !CYAN!║!RST! !YLW![ESTADO: INSTALACION LIMPIA DESDE CERO]!RST!                                      !CYAN!║!RST!
-echo !CYAN!╠══════════════════════════════════════════════════════════════════════════════╣!RST!
-echo !CYAN!║!RST! !BLD!MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.3-ZeroTouch^)!RST!                          !CYAN!║!RST!
-echo !CYAN!╠════════════════════════╦════════════════════════╦══════════════════════════════╣!RST!
-echo !CYAN!║!RST! !RED![0]!RST! Zero-Touch Auto       !CYAN!║!RST! !YLW!Multi-Nodo!RST!             !CYAN!║!RST! !YLW!Mantenimiento!RST!              !CYAN!║!RST!
-echo !CYAN!╠════════════════════════╬════════════════════════╬══════════════════════════════╣!RST!
-echo !CYAN!║!RST! !GRN![1]!RST! Git                   !CYAN!║!RST! !GRN![5]!RST! Clonar Repo PAT       !CYAN!║!RST! !GRN![9]!RST!  Respaldo USB           !CYAN!║!RST!
-echo !CYAN!║!RST! !GRN![2]!RST! Docker                !CYAN!║!RST! !GRN![6]!RST! Casa Matriz           !CYAN!║!RST! !GRN![10]!RST! Daemon Beep            !CYAN!║!RST!
-echo !CYAN!║!RST! !GRN![3]!RST! Escaner IP            !CYAN!║!RST! !GRN![7]!RST! Bodega Pura           !CYAN!║!RST! !GRN![11]!RST! Suite Caos QA          !CYAN!║!RST!
-echo !CYAN!║!RST! !GRN![4]!RST! Tareas 03:00 AM       !CYAN!║!RST! !GRN![8]!RST! Kiosk + QR ASCII      !CYAN!║!RST! !RED![99]!RST! Apagar/Reiniciar       !CYAN!║!RST!
-echo !CYAN!╚════════════════════════╩════════════════════════╩══════════════════════════════╝!RST!
-echo.
+call :BUILD_MENU_STATUS
+call :RENDER_MAIN_MENU_FRAME
 set "MENU_CHOICE="
-set /p "MENU_CHOICE=!BLD!Seleccione una opcion:!RST! "
+set /p "MENU_CHOICE=%BLD%Seleccione una opcion:%RST% "
 if "%MENU_CHOICE%"=="" goto MAIN_MENU
 if "%MENU_CHOICE%"=="0" goto MODO_AUTOMATICO_DESATENDIDO
 if "%MENU_CHOICE%"=="1" goto OPT_GIT
