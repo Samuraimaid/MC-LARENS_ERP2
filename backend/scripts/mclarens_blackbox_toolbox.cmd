@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title MCLARENS ERP — Server Black Box Toolbox v2.0-Delta
+title MCLARENS ERP - Server Black Box Toolbox v2.1-Delta
 color 0B
 
-:: ── ANSI / Virtual Terminal ──────────────────────────────────────────────────
+rem ANSI / Virtual Terminal
 reg add HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1 /f >nul 2>&1
 for /F "delims=" %%a in ('echo prompt $E^| cmd') do set "ESC=%%a"
 set "RST=%ESC%[0m"
@@ -14,21 +14,25 @@ set "RED=%ESC%[31m"
 set "YLW=%ESC%[33m"
 set "BLD=%ESC%[1m"
 set "DIM=%ESC%[2m"
+set "WHT=%ESC%[97m"
+set "BLK=%ESC%[40m"
 
-:: ── Rutas y constantes ───────────────────────────────────────────────────────
+rem Rutas y constantes
 set "SCRIPT_DIR=%~dp0"
 set "ROOT=%SCRIPT_DIR%..\.."
 for %%I in ("%ROOT%") do set "ROOT=%%~fI"
 if not exist "%ROOT%\docker-compose.yml" set "ROOT=C:\MCLarensERP"
 set "IP_FIJA=192.168.1.26"
 set "GATEWAY=192.168.1.1"
+set "NET_PREFIX=192.168.1"
 set "TARGET_COMMIT=1a27364"
-set "REPO_URL=https://github.com/Samuraimaid/MC-LARENS_ERP2.git"
 set "SPIN_IDX=0"
 set "LOG_DIR=%ProgramData%\MCLarensERP\logs"
+set "SCAN_TMP=%TEMP%\mclarens_ip_scan.txt"
+set "FREE_TMP=%TEMP%\mclarens_free_ips.txt"
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
 
-:: ── Verificar Administrador ──────────────────────────────────────────────────
+rem Verificar Administrador
 net session >nul 2>&1
 if errorlevel 1 (
     echo %RED%[ERROR]%RST% Este toolbox requiere ejecucion como Administrador.
@@ -42,9 +46,9 @@ setx MCLARENS_ERP_ROOT "%ROOT%" >nul 2>&1
 
 goto MAIN_MENU
 
-:: ═══════════════════════════════════════════════════════════════════════════
-::  SUBRUTINAS
-:: ═══════════════════════════════════════════════════════════════════════════
+rem =============================================================================
+rem  SUBRUTINAS
+rem =============================================================================
 
 :BEEP_ERROR
 powershell -NoProfile -Command "[console]::Beep(400,600); [console]::Beep(300,600)" >nul 2>&1
@@ -61,13 +65,34 @@ goto :eof
 :PARSE_NODE_ID
 set "NODE_ID=branch_main"
 if not exist "%ROOT%\.env" goto :eof
-for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "NODE_ID BRANCH_ID" "%ROOT%\.env" 2^>nul`) do (
+for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "NODE_ID BRANCH_ID SERVER_LAN_IP" "%ROOT%\.env" 2^>nul`) do (
     set "KEY=%%a"
     set "VAL=%%b"
     set "VAL=!VAL:"=!"
     if /i "!KEY!"=="NODE_ID" set "NODE_ID=!VAL!"
     if /i "!KEY!"=="BRANCH_ID" set "NODE_ID=!VAL!"
+    if /i "!KEY!"=="SERVER_LAN_IP" set "IP_FIJA=!VAL!"
 )
+goto :eof
+
+:UPDATE_ENV_LAN_IP
+set "NEW_IP=%~1"
+if "%NEW_IP%"=="" goto :eof
+if not exist "%ROOT%\.env" (
+    echo SERVER_LAN_IP=%NEW_IP%>>"%ROOT%\.env"
+    goto :eof
+)
+powershell -NoProfile -Command ^
+  "$p='%ROOT%\.env'; $ip='%NEW_IP%';" ^
+  "$lines=Get-Content $p -ErrorAction SilentlyContinue;" ^
+  "$out=@(); $found=$false;" ^
+  "foreach($line in $lines){" ^
+  "  if($line -match '^SERVER_LAN_IP='){ $out += 'SERVER_LAN_IP='+$ip; $found=$true }" ^
+  "  elseif($line -match '^HTTPS_CERT_IPS='){ $out += 'HTTPS_CERT_IPS=127.0.0.1,'+$ip }" ^
+  "  else { $out += $line }" ^
+  "}; if(-not $found){ $out += 'SERVER_LAN_IP='+$ip };" ^
+  "Set-Content -Path $p -Value $out -Encoding UTF8" >nul 2>&1
+set "IP_FIJA=%NEW_IP%"
 goto :eof
 
 :CHECK_INTERNET
@@ -132,9 +157,104 @@ if errorlevel 1 (
 )
 goto :eof
 
-:: ═══════════════════════════════════════════════════════════════════════════
-::  MENU PRINCIPAL
-:: ═══════════════════════════════════════════════════════════════════════════
+:DETECT_NETWORK_PREFIX
+set "NET_PREFIX=192.168.1"
+set "GATEWAY=192.168.1.1"
+for /f "usebackq delims=" %%p in (`powershell -NoProfile -Command "$addr=Get-NetIPAddress -AddressFamily IPv4 ^| Where-Object { $_.IPAddress -match '^(192\\.168\\.|10\\.)' -and $_.PrefixOrigin -ne 'WellKnown' } ^| Select-Object -First 1; if($addr){ $ip=$addr.IPAddress; $prefix=$ip -replace '\\.\\d+$',''; $gw=(Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Where-Object { $_.NextHop -match '^(192\\.168\\.|10\\.)' } ^| Select-Object -First 1).NextHop; Write-Output ($prefix+'|'+$(if($gw){$gw}else{$prefix+'.1'})) } else { Write-Output '192.168.1^|192.168.1.1' }"`) do (
+    for /f "tokens=1,2 delims=|" %%a in ("%%p") do (
+        set "NET_PREFIX=%%a"
+        set "GATEWAY=%%b"
+    )
+)
+goto :eof
+
+:SCAN_NETWORK_IPS
+del "%SCAN_TMP%" "%FREE_TMP%" >nul 2>&1
+set "FREE_COUNT=0"
+set "SUGGEST_IP="
+set "SUGGEST_SCORE=9999"
+echo %CYAN%Escaneando segmento !NET_PREFIX!.X ...%RST%
+for /l %%h in (2,1,60) do (
+    set "TARGET_IP=!NET_PREFIX!.%%h"
+    set "PING_MS=timeout"
+    ping -n 1 -w 100 !TARGET_IP! >"%TEMP%\mclarens_ping.txt" 2>&1
+    if errorlevel 1 (
+        echo LIBRE^|!TARGET_IP!^|0>>"%FREE_TMP%"
+        set /a FREE_COUNT+=1
+        set /a SCORE=%%h
+        if %%h==26 set /a SCORE=0
+        if %%h geq 20 if %%h leq 35 set /a SCORE-=5
+        if !SCORE! lss !SUGGEST_SCORE! (
+            set "SUGGEST_SCORE=!SCORE!"
+            set "SUGGEST_IP=!TARGET_IP!"
+        )
+    ) else (
+        set "PING_MS=?"
+        for /f "tokens=*" %%t in ('findstr /i /c:"tiempo" /c:"time" "%TEMP%\mclarens_ping.txt" 2^>nul') do (
+            set "PLINE=%%t"
+        )
+        if defined PLINE (
+            for /f "tokens=2 delims=<=>" %%m in ("!PLINE!") do set "PING_MS=%%m"
+            set "PING_MS=!PING_MS:ms=!"
+            set "PING_MS=!PING_MS: =!"
+        )
+        echo OCUPADA^|!TARGET_IP!^|!PING_MS!>>"%SCAN_TMP%"
+    )
+)
+if not defined SUGGEST_IP (
+    set "SUGGEST_IP=!NET_PREFIX!.26"
+)
+goto :eof
+
+:APPLY_STATIC_IP
+set "CHOSEN_IP=%~1"
+if "%CHOSEN_IP%"=="" goto :eof
+for /f "tokens=1,* delims=:" %%a in (`powershell -NoProfile -Command "(Get-NetAdapter ^| Where-Object Status -eq 'Up' ^| Select-Object -First 1).Name"`) do set "ADAPTER=%%b"
+set "ADAPTER=!ADAPTER: =!"
+if "!ADAPTER!"=="" set "ADAPTER=Ethernet"
+call :LOADING_BAR "Aplicando IP estatica !CHOSEN_IP!" 6
+netsh interface ipv4 set address name="!ADAPTER!" source=static address=!CHOSEN_IP! mask=255.255.255.0 gateway=!GATEWAY! >nul 2>&1
+netsh interface ipv4 set dnsservers name="!ADAPTER!" source=static address=1.1.1.1 register=primary >nul 2>&1
+netsh interface ipv4 add dnsservers name="!ADAPTER!" 8.8.8.8 index=2 >nul 2>&1
+if errorlevel 1 (
+    echo %RED%[FALLO]%RST% No se pudo fijar IP estatica en !ADAPTER!
+    call :BEEP_ERROR
+    goto :eof
+)
+set "IP_FIJA=!CHOSEN_IP!"
+call :UPDATE_ENV_LAN_IP "!CHOSEN_IP!"
+echo %GRN%[OK]%RST% IP estatica !CHOSEN_IP! aplicada. .env actualizado.
+call :LOG "IP estatica: !CHOSEN_IP! adaptador !ADAPTER!"
+call :BEEP_OK
+goto :eof
+
+:RENDER_QR_ASCII
+set "QR_URL=%~1"
+if "%QR_URL%"=="" set "QR_URL=http://!IP_FIJA!:3000"
+echo.
+echo %BLD%%WHT%════════ CODIGO QR ASCII - ESCANEAR DESDE CELULAR ════════%RST%
+echo %DIM%URL: %QR_URL%%RST%
+echo.
+set "QR_SCRIPT=%ROOT%\backend\scripts\render_qr_ascii.py"
+if exist "!QR_SCRIPT!" (
+    where python >nul 2>&1
+    if not errorlevel 1 (
+        python "!QR_SCRIPT!" "!QR_URL!"
+        if not errorlevel 1 goto :eof
+    )
+    docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
+    if not errorlevel 1 (
+        docker exec mundo-backend python /app/backend/scripts/render_qr_ascii.py "!QR_URL!"
+        if not errorlevel 1 goto :eof
+    )
+)
+echo %YLW%[WARN]%RST% Generador QR no disponible. Instale Python+qrcode o levante el stack Docker.
+echo %BLD%http://!IP_FIJA!:3000%RST%
+goto :eof
+
+rem =============================================================================
+rem  MENU PRINCIPAL
+rem =============================================================================
 
 :MAIN_MENU
 cls
@@ -152,17 +272,17 @@ if /i "!INTERNET!"=="CONNECTED" (
 echo %CYAN%╔══════════════════════════════════════════════════════════════════════════════════════╗%RST%
 echo %CYAN%║%RST% %BLD%USER:%RST% %-18s %BLD%HOST:%RST% %-18s %BLD%NODE:%RST% %-16s %CYAN%║%RST%
 echo %CYAN%║%RST% %USERNAME%          %COMPUTERNAME%          !NODE_ID!          %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% %IP_FIJA%          %BLD%INTERNET:%RST% !NET_COLOR!!NET_TEXT!!RST%                              %CYAN%║%RST%
-echo %CYAN%║%RST% %BLD%ROOT:%RST% %DIM%%ROOT%%RST%
+echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% !IP_FIJA!          %BLD%INTERNET:%RST% !NET_COLOR!!NET_TEXT!!RST%                              %CYAN%║%RST%
+echo %CYAN%║%RST% %BLD%ROOT:%RST% %DIM%!ROOT!%RST%
 echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════════════╣%RST%
-echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP — SERVER BLACK BOX CORE (v2.0-Delta)%RST%                  %CYAN%║%RST%
+echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.1-Delta^)%RST%                  %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╦═══════════════════════════════╦══════════════════════╣%RST%
-echo %CYAN%║%RST% %YLW%[TWEAK ^& ENTORNO]%RST%              %CYAN%║%RST% %YLW%[ASISTENTE MULTI-NODO]%RST%          %CYAN%║%RST% %YLW%[MANTENIMIENTO]^& DAEMONS%RST%     %CYAN%║%RST%
+echo %CYAN%║%RST% %YLW%[TWEAK ^& ENTORNO]%RST%              %CYAN%║%RST% %YLW%[ASISTENTE MULTI-NODO]%RST%          %CYAN%║%RST% %YLW%[MANTENIMIENTO ^& DAEMONS]%RST%     %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╬═══════════════════════════════╬══════════════════════╣%RST%
-echo %CYAN%║%RST%  %GRN%[1]%RST% Instalar/Verificar Git       %CYAN%║%RST%  %GRN%[5]%RST% Clonar/Actualizar Repo (PAT) %CYAN%║%RST%  %GRN%[9]%RST% Respaldo Manual USB       %CYAN%║%RST%
-echo %CYAN%║%RST%  %GRN%[2]%RST% Instalar/Verificar Docker    %CYAN%║%RST%  %GRN%[6]%RST% Nodo CASA MATRIZ (Sucursal)  %CYAN%║%RST%  %GRN%[10]%RST% Daemon Beep Hardware      %CYAN%║%RST%
-echo %CYAN%║%RST%  %GRN%[3]%RST% Forzar IP Estatica !IP_FIJA! %CYAN%║%RST%  %GRN%[7]%RST% Nodo BODEGA PURA             %CYAN%║%RST%  %GRN%[11]%RST% Suite Caos Logistica QA   %CYAN%║%RST%
-echo %CYAN%║%RST%  %GRN%[4]%RST% Tareas Madrugada 03:00 AM    %CYAN%║%RST%  %GRN%[8]%RST% Centro Mando Fullscreen      %CYAN%║%RST%  %RED%[99]%RST% Apagar/Reiniciar Stack    %CYAN%║%RST%
+echo %CYAN%║%RST%  %GRN%[1]%RST% Instalar/Verificar Git       %CYAN%║%RST%  %GRN%[5]%RST% Clonar/Actualizar Repo ^(PAT^) %CYAN%║%RST%  %GRN%[9]%RST% Respaldo Manual USB       %CYAN%║%RST%
+echo %CYAN%║%RST%  %GRN%[2]%RST% Instalar/Verificar Docker    %CYAN%║%RST%  %GRN%[6]%RST% Nodo CASA MATRIZ ^(Sucursal^)  %CYAN%║%RST%  %GRN%[10]%RST% Daemon Beep Hardware      %CYAN%║%RST%
+echo %CYAN%║%RST%  %GRN%[3]%RST% Escaner IP Inteligente       %CYAN%║%RST%  %GRN%[7]%RST% Nodo BODEGA PURA             %CYAN%║%RST%  %GRN%[11]%RST% Suite Caos Logistica QA   %CYAN%║%RST%
+echo %CYAN%║%RST%  %GRN%[4]%RST% Tareas Madrugada 03:00 AM    %CYAN%║%RST%  %GRN%[8]%RST% Kiosk ^+ QR ASCII Consola       %CYAN%║%RST%  %RED%[99]%RST% Apagar/Reiniciar Stack    %CYAN%║%RST%
 echo %CYAN%╚═══════════════════════════════╩═══════════════════════════════╩══════════════════════╝%RST%
 echo.
 set "MENU_CHOICE="
@@ -184,68 +304,93 @@ echo %RED%Opcion invalida.%RST%
 ping -n 2 127.0.0.1 >nul
 goto MAIN_MENU
 
-:: ── [1] Git ─────────────────────────────────────────────────────────────────
+rem --- [1] Git ---
 :OPT_GIT
 cls
 echo %CYAN%═══ [1] INSTALAR / VERIFICAR GIT ═══%RST%
+set "GIT_DONE=0"
 where git >nul 2>&1
 if not errorlevel 1 (
     for /f "delims=" %%g in ('git --version 2^>nul') do echo %GRN%[OK]%RST% %%g
-    call :WAIT_KEY
+    set "GIT_DONE=1"
 )
-where winget >nul 2>&1
-if errorlevel 1 (
-    echo %RED%winget no disponible. Instale App Installer desde Microsoft Store.%RST%
-    call :BEEP_ERROR
-    call :WAIT_KEY
+if "!GIT_DONE!"=="0" (
+    where winget >nul 2>&1
+    if errorlevel 1 (
+        echo %RED%winget no disponible. Instale App Installer desde Microsoft Store.%RST%
+        call :BEEP_ERROR
+    ) else (
+        call :RUN_WITH_PROGRESS "Instalando Git silencioso" "winget install --id Git.Git -e --accept-package-agreements --accept-source-agreements --silent"
+    )
 )
-call :RUN_WITH_PROGRESS "Instalando Git silencioso" "winget install --id Git.Git -e --accept-package-agreements --accept-source-agreements --silent"
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [2] Docker ──────────────────────────────────────────────────────────────
+rem --- [2] Docker ---
 :OPT_DOCKER
 cls
 echo %CYAN%═══ [2] INSTALAR / VERIFICAR DOCKER DESKTOP ═══%RST%
+set "DOCKER_DONE=0"
 where docker >nul 2>&1
 if not errorlevel 1 (
     for /f "delims=" %%d in ('docker --version 2^>nul') do echo %GRN%[OK]%RST% %%d
     docker info >nul 2>&1
     if not errorlevel 1 (
         echo %GRN%[OK]%RST% Docker Engine respondiendo
-        call :WAIT_KEY
+        set "DOCKER_DONE=1"
     )
 )
-call :RUN_WITH_PROGRESS "Instalando Docker Desktop" "winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements --silent"
-echo %YLW%Inicie Docker Desktop manualmente si es la primera instalacion.%RST%
+if "!DOCKER_DONE!"=="0" (
+    call :RUN_WITH_PROGRESS "Instalando Docker Desktop" "winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements --silent"
+    echo %YLW%Inicie Docker Desktop manualmente si es la primera instalacion.%RST%
+)
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [3] IP Estatica ─────────────────────────────────────────────────────────
+rem --- [3] Escanner IP Inteligente ---
 :OPT_STATIC_IP
 cls
-echo %CYAN%═══ [3] FORZAR IP ESTATICA AUTORITARIA ═══%RST%
-call :LOADING_BAR "Detectando adaptador activo" 5
-for /f "tokens=1,* delims=:" %%a in ('powershell -NoProfile -Command "(Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1).Name"') do set "ADAPTER=%%b"
-set "ADAPTER=!ADAPTER: =!"
-if "!ADAPTER!"=="" set "ADAPTER=Ethernet"
-echo Adaptador: !ADAPTER!
-call :LOADING_BAR "Aplicando IP !IP_FIJA!" 6
-netsh interface ipv4 set address name="!ADAPTER!" source=static address=!IP_FIJA! mask=255.255.255.0 gateway=!GATEWAY! >nul 2>&1
-netsh interface ipv4 set dnsservers name="!ADAPTER!" source=static address=1.1.1.1 register=primary >nul 2>&1
-netsh interface ipv4 add dnsservers name="!ADAPTER!" 8.8.8.8 index=2 >nul 2>&1
-if errorlevel 1 (
-    echo %RED%[FALLO]%RST% No se pudo fijar IP estatica.
-    call :BEEP_ERROR
+echo %CYAN%═══ [3] ESCANER DE RED INTELIGENTE - IP ESTATICA ═══%RST%
+call :DETECT_NETWORK_PREFIX
+call :LOADING_BAR "Barriendo red !NET_PREFIX!.2-60" 12
+call :SCAN_NETWORK_IPS
+echo.
+echo %BLD%IPs OCUPADAS ^(con latencia^):%RST%
+if exist "%SCAN_TMP%" (
+    for /f "usebackq tokens=1,2,3 delims=|" %%a in ("%SCAN_TMP%") do echo   %%a  %%b  %%c ms
 ) else (
-    echo %GRN%[OK]%RST% IP fijada en !IP_FIJA!
-    call :BEEP_OK
+    echo   %DIM%Ninguna detectada en el rango escaneado.%RST%
 )
-call :LOG "IP estatica aplicada: !IP_FIJA! en !ADAPTER!"
+echo.
+echo %BLD%IPs LIBRES detectadas:%RST%
+if exist "%FREE_TMP%" (
+    for /f "usebackq tokens=1,2 delims=|" %%a in ("%FREE_TMP%") do echo   %%a  %%b
+) else (
+    echo   %RED%No se detectaron IPs libres en el rango.%RST%
+)
+echo.
+echo %GRN%SUGERENCIA AUTOMATICA:%RST% !SUGGEST_IP! ^(menor riesgo de colision en zona servidor^)
+echo.
+echo   %GRN%[1]%RST% Usar IP sugerida automaticamente ^(!SUGGEST_IP!^)
+echo   %GRN%[2]%RST% Digitar otra direccion IP manualmente
+echo   %GRN%[C]%RST% Cancelar
+set "IP_CHOICE="
+set /p "IP_CHOICE=Seleccione: "
+if /i "!IP_CHOICE!"=="C" goto OPT_STATIC_IP_DONE
+if "!IP_CHOICE!"=="1" call :APPLY_STATIC_IP "!SUGGEST_IP!"
+if "!IP_CHOICE!"=="2" (
+    set "MANUAL_IP="
+    set /p "MANUAL_IP=IP estatica deseada ^(ej !NET_PREFIX!.26^): "
+    if not "!MANUAL_IP!"=="" call :APPLY_STATIC_IP "!MANUAL_IP!"
+)
+:OPT_STATIC_IP_DONE
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [4] Tareas Madrugada ─────────────────────────────────────────────────────
+rem --- [4] Tareas Madrugada ---
 :OPT_DAWN_TASKS
 cls
-echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA (03:00 AM) ═══%RST%
+echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA ^(03:00 AM^) ═══%RST%
 set "BOOT_PS=%ROOT%\backend\scripts\server_boot_prune.ps1"
 set "DAWN_PS=%ROOT%\backend\scripts\server_dawn_maintenance.ps1"
 set "BEEP_PS=%ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
@@ -256,23 +401,25 @@ schtasks /Create /TN "MCLarensERP_HardwareBeep" /SC ONSTART /RL HIGHEST /RU SYST
 echo %GRN%[OK]%RST% Tareas: BootPrune, DawnRestart 03:00, HardwareBeep
 call :BEEP_OK
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [5] Clonacion PAT ───────────────────────────────────────────────────────
+rem --- [5] Clonacion PAT ---
 :OPT_CLONE_PAT
 cls
 color 0E
 echo %YLW%╔══════════════════════════════════════════════════════════════════════╗%RST%
-echo %YLW%║%RST%  %BLD%LLAVE ANTIRROBO — LICENCIA / PAT DE GITHUB OBLIGATORIA%RST%              %YLW%║%RST%
+echo %YLW%║%RST%  %BLD%LLAVE ANTIRROBO - LICENCIA / PAT DE GITHUB OBLIGATORIA%RST%              %YLW%║%RST%
 echo %YLW%║%RST%  El repositorio privado solo se despliega con token autorizado.     %YLW%║%RST%
 echo %YLW%╚══════════════════════════════════════════════════════════════════════╝%RST%
 echo.
 set "GITHUB_PAT="
-set /p "GITHUB_PAT=Ingrese PAT (no se mostrara en pantalla): "
+set /p "GITHUB_PAT=Ingrese PAT: "
 if "!GITHUB_PAT!"=="" (
     echo %RED%[ABORTADO]%RST% PAT vacio.
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 set "CLONE_URL=https://!GITHUB_PAT!@github.com/Samuraimaid/MC-LARENS_ERP2.git"
 if not exist "%ROOT%\.git" (
@@ -293,6 +440,7 @@ if errorlevel 1 (
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 pushd "%ROOT%"
 call :LOADING_BAR "Checkout commit !TARGET_COMMIT!" 6
@@ -303,20 +451,22 @@ if errorlevel 1 (
     color 0B
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 echo %GRN%[OK]%RST% Repositorio listo en commit !TARGET_COMMIT!
 color 0B
 call :BEEP_OK
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [6] Casa Matriz ─────────────────────────────────────────────────────────
+rem --- [6] Casa Matriz ---
 :OPT_NODE_MAIN
 cls
-echo %CYAN%═══ [6] DESPLEGAR NODO CASA MATRIZ (MUNDO DE ACCESORIOS) ═══%RST%
+echo %CYAN%═══ [6] DESPLEGAR NODO CASA MATRIZ ^(MUNDO DE ACCESORIOS^) ═══%RST%
 call :WRITE_ENV_SUCURSAL
 goto DEPLOY_STACK
 
-:: ── [7] Bodega Pura ─────────────────────────────────────────────────────────
+rem --- [7] Bodega Pura ---
 :OPT_NODE_WAREHOUSE
 cls
 echo %CYAN%═══ [7] DESPLEGAR NODO BODEGA PURA ═══%RST%
@@ -372,6 +522,7 @@ if not exist "%ROOT%\docker-compose.yml" (
     echo %RED%[FALLO]%RST% No se encontro docker-compose.yml en %ROOT%
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 pushd "%ROOT%"
 call :LOADING_BAR "Docker compose build" 15
@@ -386,33 +537,52 @@ if !DEPLOY_ERR! neq 0 (
     call :BEEP_OK
 )
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [8] Kiosk Dashboard ──────────────────────────────────────────────────────
+rem --- [8] Kiosk + QR ASCII ---
 :OPT_KIOSK
 cls
-echo %CYAN%═══ [8] CENTRO DE MANDO VISUAL — PANTALLA COMPLETA ═══%RST%
-set "KIOSK_URL=http://!IP_FIJA!:3000/server-dashboard"
-echo Abriendo: !KIOSK_URL!
-set "EDGE=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
-if exist "!EDGE!" (
-    start "" "!EDGE!" --kiosk "!KIOSK_URL!" --edge-kiosk-type=fullscreen
-) else (
-    start "" "!KIOSK_URL!"
+color 0F
+set "KIOSK_URL=http://!IP_FIJA!:3000"
+set "DASH_URL=http://!IP_FIJA!:3000/server-dashboard"
+echo %CYAN%═══ [8] CENTRO DE MANDO - QR ASCII + KIOSK ═══%RST%
+echo.
+call :RENDER_QR_ASCII "!KIOSK_URL!"
+echo.
+echo   %GRN%[1]%RST% Solo QR en consola ^(escanear ahora^)
+echo   %GRN%[2]%RST% QR + abrir Kiosk fullscreen en Edge
+echo   %GRN%[3]%RST% Volver al menu
+set "KIOSK_CHOICE="
+set /p "KIOSK_CHOICE=Seleccione: "
+if "!KIOSK_CHOICE!"=="3" (
+    color 0B
+    goto MAIN_MENU
 )
-call :BEEP_OK
+if "!KIOSK_CHOICE!"=="2" (
+    set "EDGE=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+    if exist "!EDGE!" (
+        start "" "!EDGE!" --kiosk "!DASH_URL!" --edge-kiosk-type=fullscreen
+    ) else (
+        start "" "!DASH_URL!"
+    )
+    call :BEEP_OK
+)
+color 0B
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [9] Backup USB ───────────────────────────────────────────────────────────
+rem --- [9] Backup USB ---
 :OPT_BACKUP_USB
 cls
 echo %CYAN%═══ [9] RESPALDO MANUAL A USB EXTRAIBLE ═══%RST%
 if not exist "%ROOT%\backups\usb" mkdir "%ROOT%\backups\usb" >nul 2>&1
 call :LOADING_BAR "Ejecutando backup Delta" 12
-docker ps --format "{{.Names}}" | findstr /i "mundo-backend" >nul 2>&1
+docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
 if errorlevel 1 (
     echo %RED%[FALLO]%RST% Contenedor mundo-backend no esta corriendo.
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 docker exec mundo-backend bash /app/backend/scripts/backup_server_node.sh
 if errorlevel 1 (
@@ -423,8 +593,9 @@ if errorlevel 1 (
     call :BEEP_OK
 )
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [10] Beep Daemon ─────────────────────────────────────────────────────────
+rem --- [10] Beep Daemon ---
 :OPT_BEEP_DAEMON
 cls
 echo %CYAN%═══ [10] DAEMON ALERTA SONORA HARDWARE ═══%RST%
@@ -433,21 +604,24 @@ if not exist "!BEEP_PS!" (
     echo %RED%[FALLO]%RST% No se encontro server_hardware_beep_daemon.ps1
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 start "MCLarensERP_BeepDaemon" /min powershell.exe -NoProfile -ExecutionPolicy Bypass -File "!BEEP_PS!"
 echo %GRN%[OK]%RST% Daemon Beep iniciado en segundo plano.
 call :BEEP_OK
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [11] Chaos Suite ─────────────────────────────────────────────────────────
+rem --- [11] Chaos Suite ---
 :OPT_CHAOS_SUITE
 cls
 echo %CYAN%═══ [11] SUITE DE CAOS LOGISTICA Y QA EN VIVO ═══%RST%
-docker ps --format "{{.Names}}" | findstr /i "mundo-backend" >nul 2>&1
+docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
 if errorlevel 1 (
     echo %RED%[FALLO]%RST% Backend no disponible. Despliegue el stack primero.
     call :BEEP_ERROR
     call :WAIT_KEY
+    goto MAIN_MENU
 )
 call :LOADING_BAR "Ejecutando chaos suite" 20
 docker exec mundo-backend python /app/backend/scripts/run_chaos_suite_live.py
@@ -466,13 +640,14 @@ if errorlevel 1 (
     call :BEEP_OK
 )
 call :WAIT_KEY
+goto MAIN_MENU
 
-:: ── [99] Stack Control ───────────────────────────────────────────────────────
+rem --- [99] Stack Control ---
 :OPT_STACK_CONTROL
 cls
 echo %RED%═══ [99] APAGAR / REINICIAR STACK DE CONTENEDORES ═══%RST%
-echo   %GRN%[A]%RST% Apagar stack (docker compose down)
-echo   %GRN%[R]%RST% Reiniciar stack (down + up --build)
+echo   %GRN%[A]%RST% Apagar stack ^(docker compose down^)
+echo   %GRN%[R]%RST% Reiniciar stack ^(down + up --build^)
 echo   %GRN%[C]%RST% Cancelar
 set "STACK_CHOICE="
 set /p "STACK_CHOICE=Seleccione A/R/C: "
@@ -501,3 +676,4 @@ if errorlevel 1 (
     call :BEEP_OK
 )
 call :WAIT_KEY
+goto MAIN_MENU
