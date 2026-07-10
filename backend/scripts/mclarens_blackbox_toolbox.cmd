@@ -2,7 +2,7 @@
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
 mode con: cols=80 >nul 2>&1
-title MCLARENS ERP - Server Black Box Toolbox v2.2-Delta
+title MCLARENS ERP - Server Black Box Toolbox v2.3-ZeroTouch
 color 0B
 
 rem ANSI / Virtual Terminal
@@ -253,6 +253,14 @@ call :LOG "IP estatica: !CHOSEN_IP! adaptador !ADAPTER!"
 call :BEEP_OK
 goto :eof
 
+:ENSURE_QRCODE_MODULE
+where python >nul 2>&1
+if errorlevel 1 goto :eof
+python -c "import qrcode" >nul 2>&1
+if not errorlevel 1 goto :eof
+pip install qrcode==8.2 >nul 2>&1
+goto :eof
+
 :RENDER_QR_ASCII
 set "QR_URL=%~1"
 if "%QR_URL%"=="" set "QR_URL=http://!IP_FIJA!:3000"
@@ -264,18 +272,413 @@ set "QR_SCRIPT=%REPO_ROOT%\backend\scripts\render_qr_ascii.py"
 if exist "!QR_SCRIPT!" (
     where python >nul 2>&1
     if not errorlevel 1 (
+        call :ENSURE_QRCODE_MODULE
         python "!QR_SCRIPT!" "!QR_URL!"
         if not errorlevel 1 goto :eof
     )
-    docker ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
-    if not errorlevel 1 (
-        docker exec mundo-backend python /app/backend/scripts/render_qr_ascii.py "!QR_URL!"
-        if not errorlevel 1 goto :eof
+    if exist "%REPO_ROOT%\docker-compose.yml" (
+        pushd "%REPO_ROOT%"
+        docker compose ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
+        if not errorlevel 1 (
+            docker compose exec -T backend python /app/backend/scripts/render_qr_ascii.py "!QR_URL!"
+            set "QR_DOCKER_ERR=!errorlevel!"
+            popd
+            if !QR_DOCKER_ERR! equ 0 goto :eof
+        ) else (
+            popd
+        )
     )
 )
 echo %YLW%[WARN]%RST% Generador QR no disponible. Instale Python+qrcode o levante el stack Docker.
 echo %BLD%http://!IP_FIJA!:3000%RST%
 goto :eof
+
+:BUILD_PROGRESS_BAR
+set "BP_PCT=%~1"
+set "BP_WIDTH=%~2"
+if "%BP_WIDTH%"=="" set "BP_WIDTH=20"
+set /a BP_FILLED=!BP_PCT!*!BP_WIDTH!/100
+set "BP_OUT="
+for /l %%b in (1,1,!BP_WIDTH!) do (
+    if %%b leq !BP_FILLED! (
+        set "BP_OUT=!BP_OUT!█"
+    ) else (
+        set "BP_OUT=!BP_OUT!░"
+    )
+)
+set "PROGRESS_BAR=!BP_OUT!"
+goto :eof
+
+:WZ_RENDER_DUAL_BARS
+if not defined WZ_STEP_LABEL set "WZ_STEP_LABEL=Preparando..."
+if not defined WZ_STEP_PCT set "WZ_STEP_PCT=0"
+if not defined WZ_GLOBAL_PCT set "WZ_GLOBAL_PCT=0"
+call :BUILD_PROGRESS_BAR !WZ_STEP_PCT! 20
+set "WZ_STEP_BAR=!PROGRESS_BAR!"
+call :BUILD_PROGRESS_BAR !WZ_GLOBAL_PCT! 30
+set "WZ_GLOBAL_BAR=!PROGRESS_BAR!"
+call :SPINNER_TICK
+echo %ESC%[8;1H%ESC%[K
+echo %BLD%PASO ACTUAL:%RST% %ESC%[K
+echo %CYAN%[!SPIN_CHAR!]%RST% !WZ_STEP_LABEL!: %GRN%[![WZ_STEP_BAR!] !WZ_STEP_PCT!%%!RST% %ESC%[K
+echo. %ESC%[K
+echo %BLD%ACANCE GENERAL DEL APPLIANCE:%RST% %ESC%[K
+echo %GRN%[![WZ_GLOBAL_BAR!] !WZ_GLOBAL_PCT!%%!RST% %ESC%[K
+goto :eof
+
+:WZ_SET_GLOBAL
+set /a WZ_GLOBAL_PCT=%~1
+call :WZ_RENDER_DUAL_BARS
+goto :eof
+
+:WZ_STEP_BEGIN
+set "WZ_STEP_LABEL=%~1"
+set "WZ_STEP_PCT=0"
+call :WZ_RENDER_DUAL_BARS
+goto :eof
+
+:WZ_STEP_TICK
+set /a WZ_STEP_PCT=%~1
+if !WZ_STEP_PCT! gtr 100 set "WZ_STEP_PCT=100"
+call :WZ_RENDER_DUAL_BARS
+goto :eof
+
+:WZ_ANIMATE_STEP
+set "WZ_ANIM_LABEL=%~1"
+set "WZ_ANIM_TICKS=%~2"
+if "%WZ_ANIM_TICKS%"=="" set "WZ_ANIM_TICKS=10"
+set "WZ_STEP_LABEL=!WZ_ANIM_LABEL!"
+set /a WZ_ANIM_SIZE=100/!WZ_ANIM_TICKS!
+set /a WZ_STEP_PCT=0
+:WZ_ANIMATE_STEP_LOOP
+call :WZ_STEP_TICK !WZ_STEP_PCT!
+ping -n 2 127.0.0.1 >nul
+set /a WZ_STEP_PCT+=WZ_ANIM_SIZE
+if !WZ_STEP_PCT! leq 100 goto WZ_ANIMATE_STEP_LOOP
+set "WZ_STEP_PCT=100"
+call :WZ_STEP_TICK 100
+goto :eof
+
+:AUDIT_HARDWARE
+set "HW_RAM_OK=1"
+set "HW_DISK_OK=1"
+set "HW_RAM_MB=0"
+set "HW_DISK_FREE_GB=0"
+for /f "skip=1 tokens=1" %%r in ('wmic computersystem get TotalPhysicalMemory 2^>nul') do (
+    if not "%%r"=="" set /a HW_RAM_MB=%%r/1048576
+)
+if !HW_RAM_MB! lss 4096 set "HW_RAM_OK=0"
+for /f "skip=1 tokens=1,2" %%a in ('wmic logicaldisk where "DeviceID='C:'" get FreeSpace^,Size 2^>nul') do (
+    if not "%%a"=="" if not "%%b"=="" (
+        set /a HW_DISK_FREE_GB=%%a/1073741824
+        set /a HW_DISK_SIZE_GB=%%b/1073741824
+    )
+)
+if !HW_DISK_FREE_GB! lss 20 set "HW_DISK_OK=0"
+if "!HW_RAM_OK!"=="0" echo %RED%[HW]%RST% RAM insuficiente: !HW_RAM_MB! MB ^(minimo 4096 MB^)
+if "!HW_DISK_OK!"=="0" echo %RED%[HW]%RST% Disco C: libre !HW_DISK_FREE_GB! GB ^(minimo 20 GB^)
+if "!HW_RAM_OK!"=="1" if "!HW_DISK_OK!"=="1" echo %GRN%[HW]%RST% RAM !HW_RAM_MB! MB ^| Disco libre !HW_DISK_FREE_GB! GB
+call :LOG "HW audit RAM=!HW_RAM_MB!MB DISK_FREE=!HW_DISK_FREE_GB!GB"
+goto :eof
+
+:AUTO_APPLY_SUGGESTED_IP
+call :DETECT_NETWORK_PREFIX
+call :SCAN_NETWORK_IPS
+if not defined SUGGEST_IP set "SUGGEST_IP=!NET_PREFIX!.26"
+call :WZ_STEP_BEGIN "Asignando IP estatica !SUGGEST_IP!"
+call :WZ_ANIMATE_STEP "Escaneo y fijacion IP" 8
+call :APPLY_STATIC_IP "!SUGGEST_IP!"
+goto :eof
+
+:AUTO_INSTALL_GIT
+call :WZ_STEP_BEGIN "Instalando Git"
+where git >nul 2>&1
+if not errorlevel 1 (
+    call :WZ_STEP_TICK 100
+    goto :eof
+)
+where winget >nul 2>&1
+if errorlevel 1 (
+    echo %RED%[FALLO]%RST% winget no disponible para instalar Git.
+    goto :eof
+)
+call :WZ_ANIMATE_STEP "Descargando Git" 6
+winget install --id Git.Git -e --accept-package-agreements --accept-source-agreements --silent >>"%LOG_DIR%\toolbox.log" 2>&1
+call :WZ_STEP_TICK 100
+goto :eof
+
+:AUTO_INSTALL_DOCKER
+call :WZ_STEP_BEGIN "Instalando Docker Desktop"
+where docker >nul 2>&1
+if not errorlevel 1 (
+    docker info >nul 2>&1
+    if not errorlevel 1 (
+        call :WZ_STEP_TICK 100
+        goto :eof
+    )
+)
+where winget >nul 2>&1
+if errorlevel 1 (
+    echo %RED%[FALLO]%RST% winget no disponible para instalar Docker.
+    goto :eof
+)
+call :WZ_ANIMATE_STEP "Descargando Docker Desktop" 10
+winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements --silent >>"%LOG_DIR%\toolbox.log" 2>&1
+echo %YLW%[INFO]%RST% Espere a que Docker Desktop inicie el engine...
+set /a DOCKER_WAIT=0
+:AUTO_DOCKER_WAIT_LOOP
+call :WZ_STEP_TICK !DOCKER_WAIT!
+docker info >nul 2>&1
+if not errorlevel 1 (
+    call :WZ_STEP_TICK 100
+    goto :eof
+)
+set /a DOCKER_WAIT+=5
+if !DOCKER_WAIT! geq 100 goto :eof
+ping -n 6 127.0.0.1 >nul
+goto AUTO_DOCKER_WAIT_LOOP
+
+:RESOLVE_GITHUB_PAT
+set "GITHUB_PAT="
+if not "%MCLARENS_GITHUB_PAT%"=="" set "GITHUB_PAT=%MCLARENS_GITHUB_PAT%"
+if "!GITHUB_PAT!"=="" if not "%GITHUB_PAT%"=="" set "GITHUB_PAT=%GITHUB_PAT%"
+if not "!GITHUB_PAT!"=="" goto :eof
+if exist "%SCRIPT_DIR%.mclarens_pat" (
+    set /p GITHUB_PAT=<"%SCRIPT_DIR%.mclarens_pat"
+    goto :eof
+)
+for %%d in (D E F G H I J K L M N O P Q R S T U V W X Y Z) do (
+    if exist "%%d:\.mclarens_pat" (
+        set /p GITHUB_PAT=<"%%d:\.mclarens_pat"
+        goto :eof
+    )
+)
+set /p "GITHUB_PAT=PAT GitHub ^(licencia^): "
+goto :eof
+
+:AUTO_CLONE_REPOSITORY
+call :WZ_STEP_BEGIN "Clonando repositorio privado"
+call :RESOLVE_GITHUB_PAT
+if "!GITHUB_PAT!"=="" (
+    echo %RED%[FALLO]%RST% PAT GitHub requerido para clonacion.
+    goto :eof
+)
+set "CLONE_URL=https://!GITHUB_PAT!@github.com/Samuraimaid/MC-LARENS_ERP2.git"
+if not exist "%REPO_ROOT%\.git" (
+    if not exist "%REPO_ROOT%" mkdir "%REPO_ROOT%"
+    call :WZ_ANIMATE_STEP "git clone" 8
+    git clone "!CLONE_URL!" "%REPO_ROOT%" >>"%LOG_DIR%\toolbox.log" 2>&1
+) else (
+    call :WZ_ANIMATE_STEP "git pull" 6
+    pushd "%REPO_ROOT%"
+    git pull >>"%LOG_DIR%\toolbox.log" 2>&1
+    popd
+)
+set "GITHUB_PAT="
+set "CLONE_URL="
+if errorlevel 1 goto :eof
+pushd "%REPO_ROOT%"
+git checkout !TARGET_COMMIT! >>"%LOG_DIR%\toolbox.log" 2>&1
+popd
+call :WZ_STEP_TICK 100
+if exist "%REPO_ROOT%\docker-compose.yml" (
+    set "CLEAN_INSTALL=0"
+    setx MCLARENS_ERP_ROOT "%REPO_ROOT%" >nul 2>&1
+)
+goto :eof
+
+:WRITE_ENV_AUTO_PROFILE
+if "%AUTO_NODE_PROFILE%"=="1" (
+    set "AUTO_NODE_ID=branch_main"
+    set "AUTO_NODE_TYPE=SUCURSAL"
+    set "AUTO_ENABLE_SALES=true"
+    set "AUTO_ENABLE_WORKSHOP=true"
+    set "AUTO_ENABLE_HR=true"
+)
+if "%AUTO_NODE_PROFILE%"=="2" (
+    set "AUTO_NODE_ID=branch_alt"
+    set "AUTO_NODE_TYPE=SUCURSAL"
+    set "AUTO_ENABLE_SALES=true"
+    set "AUTO_ENABLE_WORKSHOP=true"
+    set "AUTO_ENABLE_HR=true"
+)
+if "%AUTO_NODE_PROFILE%"=="3" (
+    set "AUTO_NODE_ID=warehouse_satellite"
+    set "AUTO_NODE_TYPE=BODEGA_PURA"
+    set "AUTO_ENABLE_SALES=false"
+    set "AUTO_ENABLE_WORKSHOP=false"
+    set "AUTO_ENABLE_HR=false"
+)
+if not defined AUTO_NODE_NAME set "AUTO_NODE_NAME=Nodo ERP"
+if "%AUTO_NODE_PROFILE%"=="2" (
+    set "AUTO_NODE_ID=branch_alt"
+)
+(
+echo # Generado por MODO_AUTOMATICO_DESATENDIDO
+echo BRANCH_ID=!AUTO_NODE_ID!
+echo NODE_ID=!AUTO_NODE_ID!
+echo NODE_NAME=!AUTO_NODE_NAME!
+echo NODE_TYPE=!AUTO_NODE_TYPE!
+echo NODE_ENABLE_SALES=!AUTO_ENABLE_SALES!
+echo NODE_ENABLE_WORKSHOP=!AUTO_ENABLE_WORKSHOP!
+echo NODE_ENABLE_HR=!AUTO_ENABLE_HR!
+echo SERVER_LAN_IP=!IP_FIJA!
+echo SERVER_FRONTEND_PORT=3000
+echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
+echo DB_NAME=mc-larens2_mundo_accesorios_erp
+echo MONGODB_CENTRAL_URI=
+echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
+echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
+echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
+echo HTTPS_CERT_IPS=127.0.0.1,!IP_FIJA!
+)>"%REPO_ROOT%\.env"
+set "NODE_ID=!AUTO_NODE_ID!"
+call :LOG ".env auto perfil !AUTO_NODE_PROFILE! nodo !AUTO_NODE_NAME!"
+goto :eof
+
+:SCAN_USB_BACKUP_FILES
+set "USB_BACKUP_FOUND="
+set "USB_BACKUP_PATH="
+for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "Get-CimInstance Win32_LogicalDisk ^| Where-Object { $_.DriveType -eq 2 } ^| ForEach-Object { $_.DeviceID }" 2^>nul`) do (
+    if exist "%%d\erp_delta_backup_*.tar.gz" (
+        for /f "delims=" %%f in ('dir /b /o-d "%%d\erp_delta_backup_*.tar.gz" 2^>nul') do (
+            set "USB_BACKUP_FOUND=1"
+            set "USB_BACKUP_PATH=%%d\%%f"
+            goto :eof
+        )
+    )
+    if exist "%%d\mongodb_*.archive.gz" (
+        for /f "delims=" %%f in ('dir /b /o-d "%%d\mongodb_*.archive.gz" 2^>nul') do (
+            set "USB_BACKUP_FOUND=1"
+            set "USB_BACKUP_PATH=%%d\%%f"
+            goto :eof
+        )
+    )
+    if exist "%%d\*.archive" (
+        for /f "delims=" %%f in ('dir /b /o-d "%%d\*.archive" 2^>nul') do (
+            set "USB_BACKUP_FOUND=1"
+            set "USB_BACKUP_PATH=%%d\%%f"
+            goto :eof
+        )
+    )
+)
+goto :eof
+
+:INJECT_USB_BACKUP
+call :SCAN_USB_BACKUP_FILES
+if not defined USB_BACKUP_FOUND goto :eof
+if not exist "%REPO_ROOT%\backups\usb" mkdir "%REPO_ROOT%\backups\usb" >nul 2>&1
+for %%f in ("!USB_BACKUP_PATH!") do set "USB_BACKUP_NAME=%%~nxf"
+copy /y "!USB_BACKUP_PATH!" "%REPO_ROOT%\backups\usb\!USB_BACKUP_NAME!" >>"%LOG_DIR%\toolbox.log" 2>&1
+set "INJECTED_BACKUP=%REPO_ROOT%\backups\usb\!USB_BACKUP_NAME!"
+echo %GRN%[OK]%RST% Respaldo USB inyectado: !USB_BACKUP_NAME!
+call :LOG "USB backup injected !INJECTED_BACKUP!"
+goto :eof
+
+:RESTORE_DELTA_FROM_USB
+if not defined INJECTED_BACKUP goto :eof
+if not exist "%REPO_ROOT%\docker-compose.yml" goto :eof
+call :WZ_STEP_BEGIN "Restaurando Delta desde USB"
+pushd "%REPO_ROOT%"
+docker compose ps --format "{{.Names}}" 2>nul | findstr /i "mundo-backend" >nul 2>&1
+if errorlevel 1 (
+    popd
+    goto :eof
+)
+echo !INJECTED_BACKUP!| findstr /i "\.tar\.gz" >nul 2>&1
+if not errorlevel 1 (
+    docker compose exec -T backend bash /app/backend/scripts/restore_delta_backup.sh "/mnt/usb_backup/!USB_BACKUP_NAME!" >>"%LOG_DIR%\toolbox.log" 2>&1
+) else (
+    docker compose exec -T backend bash -c "mongorestore --uri=mongodb://mongodb:27017 --gzip --drop --archive=/mnt/usb_backup/!USB_BACKUP_NAME!" >>"%LOG_DIR%\toolbox.log" 2>&1
+)
+popd
+call :WZ_STEP_TICK 100
+goto :eof
+
+:TRIGGER_ATLAS_DELTA_SYNC
+if not exist "%REPO_ROOT%\docker-compose.yml" goto :eof
+call :WZ_STEP_BEGIN "Sincronizacion Delta Atlas"
+pushd "%REPO_ROOT%"
+docker compose exec -T backend python /app/backend/scripts/trigger_central_delta_sync.py >>"%LOG_DIR%\toolbox.log" 2>&1
+popd
+call :WZ_STEP_TICK 100
+goto :eof
+
+:MODO_AUTOMATICO_DESATENDIDO
+cls
+color 0E
+echo %YLW%╔══════════════════════════════════════════════════════════════════════╗%RST%
+echo %YLW%║%RST%  %BLD%MODO INSTALACION DESATENDIDA ZERO-TOUCH — BLACK BOX APPLIANCE%RST%   %YLW%║%RST%
+echo %YLW%╚══════════════════════════════════════════════════════════════════════╝%RST%
+echo.
+echo %BLD%Perfil del nodo:%RST%
+echo   %GRN%[1]%RST% Casa Matriz ^(SUCURSAL^)
+echo   %GRN%[2]%RST% Sucursal Alterna ^(SUCURSAL^)
+echo   %GRN%[3]%RST% Bodega Satelite Pura
+set "AUTO_NODE_PROFILE="
+set /p "AUTO_NODE_PROFILE=Seleccione [1-3]: "
+if "%AUTO_NODE_PROFILE%"=="" goto MODO_AUTOMATICO_DESATENDIDO
+if not "%AUTO_NODE_PROFILE%"=="1" if not "%AUTO_NODE_PROFILE%"=="2" if not "%AUTO_NODE_PROFILE%"=="3" goto MODO_AUTOMATICO_DESATENDIDO
+set "AUTO_NODE_NAME="
+set /p "AUTO_NODE_NAME=Nombre descriptivo del nodo en red CEO: "
+if "!AUTO_NODE_NAME!"=="" set "AUTO_NODE_NAME=Nodo ERP"
+echo.
+echo %ESC%[6;1H
+set "WZ_GLOBAL_PCT=0"
+set "WZ_STEP_PCT=0"
+set "WZ_STEP_LABEL=Inicializando wizard..."
+call :WZ_RENDER_DUAL_BARS
+call :WZ_SET_GLOBAL 5
+call :WZ_STEP_BEGIN "Auditoria de hardware"
+call :AUDIT_HARDWARE
+call :WZ_STEP_TICK 100
+call :WZ_SET_GLOBAL 15
+call :AUTO_APPLY_SUGGESTED_IP
+call :WZ_SET_GLOBAL 25
+call :AUTO_INSTALL_GIT
+call :WZ_SET_GLOBAL 40
+call :AUTO_INSTALL_DOCKER
+call :WZ_SET_GLOBAL 55
+call :AUTO_CLONE_REPOSITORY
+if not exist "%REPO_ROOT%\docker-compose.yml" (
+    echo %RED%[FALLO]%RST% Clonacion incompleta; docker-compose.yml ausente.
+    color 0B
+    call :BEEP_ERROR
+    call :WAIT_KEY
+    goto MAIN_MENU
+)
+call :WZ_SET_GLOBAL 65
+call :WZ_STEP_BEGIN "Generando .env del nodo"
+call :WRITE_ENV_AUTO_PROFILE
+call :WZ_STEP_TICK 100
+call :WZ_SET_GLOBAL 80
+call :WZ_STEP_BEGIN "Desplegando stack Docker"
+pushd "%REPO_ROOT%"
+docker compose up -d --build >>"%LOG_DIR%\toolbox.log" 2>&1
+set "WZ_DEPLOY_ERR=!errorlevel!"
+popd
+call :WZ_STEP_TICK 100
+if !WZ_DEPLOY_ERR! neq 0 (
+    echo %RED%[FALLO]%RST% docker compose up fallo en modo desatendido.
+    color 0B
+    call :BEEP_ERROR
+    call :WAIT_KEY
+    goto MAIN_MENU
+)
+call :WZ_SET_GLOBAL 90
+call :INJECT_USB_BACKUP
+call :RESTORE_DELTA_FROM_USB
+call :WZ_SET_GLOBAL 95
+call :TRIGGER_ATLAS_DELTA_SYNC
+call :OPT_DAWN_TASKS_SILENT
+call :WZ_SET_GLOBAL 100
+echo.
+echo %GRN%[OK]%RST% Instalacion desatendida completada — nodo !AUTO_NODE_NAME! en !IP_FIJA!
+call :RENDER_QR_ASCII "http://!IP_FIJA!:3000"
+color 0B
+call :BEEP_OK
+call :WAIT_KEY
+goto MAIN_MENU
 
 rem =============================================================================
 rem  MENU PRINCIPAL
@@ -302,9 +705,9 @@ echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% !SERVER_LAN_IP!          %BLD%INTERNET:%R
 echo %CYAN%║%RST% %BLD%REPO:%RST% %DIM%!REPO_ROOT!%RST%
 if "!CLEAN_INSTALL!"=="1" echo %CYAN%║%RST% %YLW%[ESTADO: INSTALACION LIMPIA DESDE CERO]%RST%                              %CYAN%║%RST%
 echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════════════╣%RST%
-echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.2-Delta^)%RST%                  %CYAN%║%RST%
+echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.3-ZeroTouch^)%RST%               %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╦═══════════════════════════════╦══════════════════════╣%RST%
-echo %CYAN%║%RST% %YLW%[TWEAK ^& ENTORNO]%RST%              %CYAN%║%RST% %YLW%[ASISTENTE MULTI-NODO]%RST%          %CYAN%║%RST% %YLW%[MANTENIMIENTO ^& DAEMONS]%RST%     %CYAN%║%RST%
+echo %CYAN%║%RST% %RED%[0]%RST% %YLW%INSTALACION ZERO-TOUCH%RST% ^(auto^)      %CYAN%║%RST% %YLW%[ASISTENTE MULTI-NODO]%RST%          %CYAN%║%RST% %YLW%[MANTENIMIENTO ^& DAEMONS]%RST%     %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╬═══════════════════════════════╬══════════════════════╣%RST%
 echo %CYAN%║%RST%  %GRN%[1]%RST% Instalar/Verificar Git       %CYAN%║%RST%  %GRN%[5]%RST% Clonar/Actualizar Repo ^(PAT^) %CYAN%║%RST%  %GRN%[9]%RST% Respaldo Manual USB       %CYAN%║%RST%
 echo %CYAN%║%RST%  %GRN%[2]%RST% Instalar/Verificar Docker    %CYAN%║%RST%  %GRN%[6]%RST% Nodo CASA MATRIZ ^(Sucursal^)  %CYAN%║%RST%  %GRN%[10]%RST% Daemon Beep Hardware      %CYAN%║%RST%
@@ -315,6 +718,7 @@ echo.
 set "MENU_CHOICE="
 set /p "MENU_CHOICE=%BLD%Seleccione una opcion:%RST% "
 if "%MENU_CHOICE%"=="" goto MAIN_MENU
+if "%MENU_CHOICE%"=="0" goto MODO_AUTOMATICO_DESATENDIDO
 if "%MENU_CHOICE%"=="1" goto OPT_GIT
 if "%MENU_CHOICE%"=="2" goto OPT_DOCKER
 if "%MENU_CHOICE%"=="3" goto OPT_STATIC_IP
@@ -415,16 +819,21 @@ call :WAIT_KEY
 goto MAIN_MENU
 
 rem --- [4] Tareas Madrugada ---
-:OPT_DAWN_TASKS
-cls
-echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA ^(03:00 AM^) ═══%RST%
+:OPT_DAWN_TASKS_SILENT
 set "BOOT_PS=%REPO_ROOT%\backend\scripts\server_boot_prune.ps1"
 set "DAWN_PS=%REPO_ROOT%\backend\scripts\server_dawn_maintenance.ps1"
 set "BEEP_PS=%REPO_ROOT%\backend\scripts\server_hardware_beep_daemon.ps1"
-call :LOADING_BAR "Registrando tareas programadas" 10
 schtasks /Create /TN "MCLarensERP_BootPrune" /SC ONSTART /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%BOOT_PS%\"" /F >nul 2>&1
 schtasks /Create /TN "MCLarensERP_DawnRestart" /SC DAILY /ST 03:00 /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%DAWN_PS%\"" /F >nul 2>&1
 schtasks /Create /TN "MCLarensERP_HardwareBeep" /SC ONSTART /RL HIGHEST /RU SYSTEM /TR "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"%BEEP_PS%\"" /F >nul 2>&1
+call :LOG "Tareas madrugada registradas (silent)"
+goto :eof
+
+:OPT_DAWN_TASKS
+cls
+echo %CYAN%═══ [4] CONFIGURAR MANTENIMIENTO DE MADRUGADA ^(03:00 AM^) ═══%RST%
+call :LOADING_BAR "Registrando tareas programadas" 10
+call :OPT_DAWN_TASKS_SILENT
 echo %GRN%[OK]%RST% Tareas: BootPrune, DawnRestart 03:00, HardwareBeep
 call :BEEP_OK
 call :WAIT_KEY
