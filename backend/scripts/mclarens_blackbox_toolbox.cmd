@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
+mode con: cols=80 >nul 2>&1
 title MCLARENS ERP - Server Black Box Toolbox v2.2-Delta
 color 0B
 
@@ -45,12 +46,8 @@ if errorlevel 1 (
     exit /b 1
 )
 
-if not exist "%REPO_ROOT%\docker-compose.yml" (
-    echo %RED%[ERROR]%RST% REPO_ROOT no valido: "%REPO_ROOT%"
-    echo         No se encontro docker-compose.yml en la ruta de produccion.
-    pause
-    exit /b 1
-)
+set "CLEAN_INSTALL=0"
+if not exist "%REPO_ROOT%\docker-compose.yml" set "CLEAN_INSTALL=1"
 
 set "MCLARENS_ERP_ROOT=%REPO_ROOT%"
 setx MCLARENS_ERP_ROOT "%REPO_ROOT%" >nul 2>&1
@@ -286,6 +283,7 @@ rem ============================================================================
 
 :MAIN_MENU
 cls
+if exist "%REPO_ROOT%\docker-compose.yml" (set "CLEAN_INSTALL=0") else (set "CLEAN_INSTALL=1")
 call :PARSE_NODE_ID
 call :CHECK_INTERNET
 
@@ -302,6 +300,7 @@ echo %CYAN%║%RST% %BLD%USER:%RST% %-18s %BLD%HOST:%RST% %-18s %BLD%NODE:%RST% 
 echo %CYAN%║%RST% %USERNAME%          %COMPUTERNAME%          !NODE_ID!          %CYAN%║%RST%
 echo %CYAN%║%RST% %BLD%IP_FIJA:%RST% !SERVER_LAN_IP!          %BLD%INTERNET:%RST% !NET_COLOR!!NET_TEXT!!RST%                              %CYAN%║%RST%
 echo %CYAN%║%RST% %BLD%REPO:%RST% %DIM%!REPO_ROOT!%RST%
+if "!CLEAN_INSTALL!"=="1" echo %CYAN%║%RST% %YLW%[ESTADO: INSTALACION LIMPIA DESDE CERO]%RST%                              %CYAN%║%RST%
 echo %CYAN%╠══════════════════════════════════════════════════════════════════════════════════════╣%RST%
 echo %CYAN%║%RST%            %BLD%%CYAN%MCLARENS ERP - SERVER BLACK BOX CORE ^(v2.2-Delta^)%RST%                  %CYAN%║%RST%
 echo %CYAN%╠═══════════════════════════════╦═══════════════════════════════╦══════════════════════╣%RST%
@@ -320,7 +319,7 @@ if "%MENU_CHOICE%"=="1" goto OPT_GIT
 if "%MENU_CHOICE%"=="2" goto OPT_DOCKER
 if "%MENU_CHOICE%"=="3" goto OPT_STATIC_IP
 if "%MENU_CHOICE%"=="4" goto OPT_DAWN_TASKS
-if "%MENU_CHOICE%"=="5" goto OPT_CLONE_PAT
+if "%MENU_CHOICE%"=="5" goto CLONE_REPOSITORY
 if "%MENU_CHOICE%"=="6" goto OPT_NODE_MAIN
 if "%MENU_CHOICE%"=="7" goto OPT_NODE_WAREHOUSE
 if "%MENU_CHOICE%"=="8" goto OPT_KIOSK
@@ -432,13 +431,15 @@ call :WAIT_KEY
 goto MAIN_MENU
 
 rem --- [5] Clonacion PAT ---
-:OPT_CLONE_PAT
+:CLONE_REPOSITORY
 cls
 color 0E
 echo %YLW%╔══════════════════════════════════════════════════════════════════════╗%RST%
 echo %YLW%║%RST%  %BLD%LLAVE ANTIRROBO - LICENCIA / PAT DE GITHUB OBLIGATORIA%RST%              %YLW%║%RST%
 echo %YLW%║%RST%  El repositorio privado solo se despliega con token autorizado.     %YLW%║%RST%
 echo %YLW%╚══════════════════════════════════════════════════════════════════════╝%RST%
+echo.
+echo %DIM%Destino: %REPO_ROOT%%RST%
 echo.
 set "GITHUB_PAT="
 set /p "GITHUB_PAT=Ingrese PAT: "
@@ -452,8 +453,7 @@ if "!GITHUB_PAT!"=="" (
 set "CLONE_URL=https://!GITHUB_PAT!@github.com/Samuraimaid/MC-LARENS_ERP2.git"
 if not exist "%REPO_ROOT%\.git" (
     call :LOADING_BAR "Clonando repositorio privado" 12
-    if exist "%REPO_ROOT%" rmdir /s /q "%REPO_ROOT%" >nul 2>&1
-    mkdir "%REPO_ROOT%" >nul 2>&1
+    if not exist "%REPO_ROOT%" mkdir "%REPO_ROOT%"
     git clone "!CLONE_URL!" "%REPO_ROOT%" >>"%LOG_DIR%\toolbox.log" 2>&1
 ) else (
     call :LOADING_BAR "Actualizando repositorio" 8
@@ -481,7 +481,13 @@ if errorlevel 1 (
     call :WAIT_KEY
     goto MAIN_MENU
 )
-echo %GRN%[OK]%RST% Repositorio listo en commit !TARGET_COMMIT!
+if exist "%REPO_ROOT%\docker-compose.yml" (
+    set "CLEAN_INSTALL=0"
+    setx MCLARENS_ERP_ROOT "%REPO_ROOT%" >nul 2>&1
+    echo %GRN%[OK]%RST% Repositorio listo en commit !TARGET_COMMIT! - docker-compose.yml detectado.
+) else (
+    echo %YLW%[WARN]%RST% Repositorio en !TARGET_COMMIT! pero falta docker-compose.yml en %REPO_ROOT%
+)
 color 0B
 call :BEEP_OK
 call :WAIT_KEY
