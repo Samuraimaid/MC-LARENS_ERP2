@@ -583,6 +583,43 @@ for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "$n='%COMPUTER
 if not defined AUTO_NODE_ID_SUFFIX set "AUTO_NODE_ID_SUFFIX=nodo"
 goto :eof
 
+:LOAD_CENTRAL_CONFIG
+if not defined MONGODB_CENTRAL_URI set "MONGODB_CENTRAL_URI="
+if not defined MATRIZ_PROFILE_URL set "MATRIZ_PROFILE_URL=https://mclarenerp.com/api/server-appliance/profile"
+if not defined MONGODB_CENTRAL_DB set "MONGODB_CENTRAL_DB=mc-larens2_mundo_accesorios_erp"
+if defined MCLARENS_CENTRAL_URI if not defined MONGODB_CENTRAL_URI set "MONGODB_CENTRAL_URI=%MCLARENS_CENTRAL_URI%"
+if exist "%ProgramData%\MCLarensERP\central.env" call :PARSE_CENTRAL_ENV "%ProgramData%\MCLarensERP\central.env"
+if exist "%SCRIPT_DIR%.mclarens_central.env" call :PARSE_CENTRAL_ENV "%SCRIPT_DIR%.mclarens_central.env"
+for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "Get-CimInstance Win32_LogicalDisk ^| Where-Object { $_.DriveType -eq 2 } ^| ForEach-Object { $_.DeviceID }" 2^>nul`) do (
+    if exist "%%d\.mclarens_central.env" call :PARSE_CENTRAL_ENV "%%d\.mclarens_central.env"
+)
+goto :eof
+
+:PARSE_CENTRAL_ENV
+for /f "usebackq tokens=1,* delims==" %%a in (`findstr /b /i "MONGODB_CENTRAL_URI MCLARENS_CENTRAL_URI MATRIZ_PROFILE_URL MONGODB_CENTRAL_DB" "%~1" 2^>nul`) do (
+    set "CKEY=%%a"
+    set "CVAL=%%b"
+    set "CVAL=!CVAL:"=!"
+    if /i "!CKEY!"=="MONGODB_CENTRAL_URI" if not "!CVAL!"=="" set "MONGODB_CENTRAL_URI=!CVAL!"
+    if /i "!CKEY!"=="MCLARENS_CENTRAL_URI" if not "!CVAL!"=="" if "!MONGODB_CENTRAL_URI!"=="" set "MONGODB_CENTRAL_URI=!CVAL!"
+    if /i "!CKEY!"=="MATRIZ_PROFILE_URL" if not "!CVAL!"=="" set "MATRIZ_PROFILE_URL=!CVAL!"
+    if /i "!CKEY!"=="MONGODB_CENTRAL_DB" if not "!CVAL!"=="" set "MONGODB_CENTRAL_DB=!CVAL!"
+)
+goto :eof
+
+:PERSIST_CENTRAL_CONFIG
+if not defined MONGODB_CENTRAL_URI goto :eof
+if not exist "%ProgramData%\MCLarensERP" mkdir "%ProgramData%\MCLarensERP" >nul 2>&1
+if exist "%ProgramData%\MCLarensERP\central.env" goto :eof
+(
+echo # Central config persistida por toolbox MC-LARENS ERP
+echo MONGODB_CENTRAL_URI=%MONGODB_CENTRAL_URI%
+echo MATRIZ_PROFILE_URL=%MATRIZ_PROFILE_URL%
+echo MONGODB_CENTRAL_DB=%MONGODB_CENTRAL_DB%
+)>"%ProgramData%\MCLarensERP\central.env"
+call :LOG "central.env persistido en ProgramData"
+goto :eof
+
 :DETECT_CASA_MATRIZ_LAN
 set "MATRIZ_FOUND=0"
 set "MATRIZ_IP="
@@ -602,15 +639,51 @@ for /f "usebackq tokens=1,2,3,4,5,6 delims=|" %%a in (`powershell -NoProfile -Ex
     set "LAN_BODEGA_COUNT=%%f"
 )
 if /i "%DETECT_RESULT%"=="MATRIZ" set "MATRIZ_FOUND=1"
+if not defined MATRIZ_SOURCE set "MATRIZ_SOURCE=lan"
 call :LOG "LAN detect: result=%DETECT_RESULT% matriz=%MATRIZ_IP% suc=%LAN_SUCURSAL_COUNT% bod=%LAN_BODEGA_COUNT%"
+goto :eof
+
+:DETECT_CASA_MATRIZ_TOPOLOGY
+set "MATRIZ_FOUND=0"
+set "MATRIZ_SOURCE="
+set "MATRIZ_IP="
+set "MATRIZ_NODE_ID="
+set "MATRIZ_NODE_TYPE="
+set "LAN_SUCURSAL_COUNT=0"
+set "LAN_BODEGA_COUNT=0"
+call :LOAD_CENTRAL_CONFIG
+call :DETECT_NETWORK_PREFIX
+set "TOPO_PY=%REPO_ROOT%\backend\scripts\detect_casa_matriz_topology.py"
+if not exist "%TOPO_PY%" set "TOPO_PY=%SCRIPT_DIR%detect_casa_matriz_topology.py"
+if not exist "%TOPO_PY%" (
+    call :DETECT_CASA_MATRIZ_LAN
+    goto :eof
+)
+where python >nul 2>&1
+if errorlevel 1 (
+    call :DETECT_CASA_MATRIZ_LAN
+    goto :eof
+)
+for /f "usebackq tokens=1,2,3,4,5,6,7 delims=|" %%a in (`python "%TOPO_PY%" --net-prefix "%NET_PREFIX%" --self-ip "%IP_FIJA%" 2^>nul`) do (
+    set "DETECT_RESULT=%%a"
+    set "MATRIZ_SOURCE=%%b"
+    set "MATRIZ_IP=%%c"
+    set "MATRIZ_NODE_ID=%%d"
+    set "MATRIZ_NODE_TYPE=%%e"
+    set "LAN_SUCURSAL_COUNT=%%f"
+    set "LAN_BODEGA_COUNT=%%g"
+)
+if /i "%DETECT_RESULT%"=="MATRIZ" set "MATRIZ_FOUND=1"
+call :LOG "Topology detect: result=%DETECT_RESULT% source=%MATRIZ_SOURCE% matriz=%MATRIZ_IP% suc=%LAN_SUCURSAL_COUNT% bod=%LAN_BODEGA_COUNT%"
 goto :eof
 
 :RESOLVE_AUTO_NODE_PROFILE_INTELIGENTE
 call :SANITIZE_AUTO_NODE_ID
 if not defined AUTO_NODE_NAME set "AUTO_NODE_NAME=%COMPUTERNAME%"
-call :DETECT_CASA_MATRIZ_LAN
+call :DETECT_CASA_MATRIZ_TOPOLOGY
 if "%MATRIZ_FOUND%"=="0" goto RESOLVE_INTEL_MATRIZ
-echo %YLW%INFO%RST% Casa Matriz detectada en %MATRIZ_IP% ^(%MATRIZ_NODE_ID%^)
+if not defined MATRIZ_SOURCE set "MATRIZ_SOURCE=desconocida"
+echo %YLW%INFO%RST% Casa Matriz detectada via %MATRIZ_SOURCE% en %MATRIZ_IP% ^(%MATRIZ_NODE_ID%^)
 echo %COMPUTERNAME%| findstr /i "BODEGA WAREHOUSE ALMACEN BODEG" >nul 2>&1
 if not errorlevel 1 goto RESOLVE_INTEL_BODEGA
 if %LAN_SUCURSAL_COUNT% geq 2 if %LAN_BODEGA_COUNT% equ 0 goto RESOLVE_INTEL_BODEGA
@@ -623,7 +696,7 @@ set "AUTO_NODE_NAME=Casa Matriz - Mundo de Accesorios"
 set "AUTO_ENABLE_SALES=true"
 set "AUTO_ENABLE_WORKSHOP=true"
 set "AUTO_ENABLE_HR=true"
-echo %GRN%OK%RST% Decision: crear CASA MATRIZ ^(no hay matriz en la red^)
+echo %GRN%OK%RST% Decision: crear CASA MATRIZ ^(no hay matriz en central ni LAN^)
 goto :eof
 
 :RESOLVE_INTEL_SUCURSAL
@@ -666,14 +739,31 @@ echo SERVER_LAN_IP=%IP_FIJA%
 echo SERVER_FRONTEND_PORT=3000
 echo MONGODB_LOCAL_URI=mongodb://mongodb:27017
 echo DB_NAME=mc-larens2_mundo_accesorios_erp
+if defined MONGODB_CENTRAL_URI (
+echo MONGODB_CENTRAL_URI=%MONGODB_CENTRAL_URI%
+) else (
 echo MONGODB_CENTRAL_URI=
+)
+if defined MONGODB_CENTRAL_DB echo MONGODB_CENTRAL_DB=%MONGODB_CENTRAL_DB%
 echo PUBLIC_TUNNEL_URL_MAIN=https://mclarenerp.com
 echo PUBLIC_TUNNEL_URL_NORTH=https://north.mclarenerp.com
 echo PUBLIC_TUNNEL_URL_SOUTH=https://south.mclarenerp.com
 echo HTTPS_CERT_IPS=127.0.0.1,%IP_FIJA%
 )>"%REPO_ROOT%\.env"
 set "NODE_ID=%AUTO_NODE_ID%"
+call :PERSIST_CENTRAL_CONFIG
 echo %GRN%OK%RST% .env %AUTO_NODE_TYPE% - %AUTO_NODE_ID% / %AUTO_NODE_NAME%
+goto :eof
+
+:REGISTER_CASA_MATRIZ_CENTRAL
+if not defined MONGODB_CENTRAL_URI goto :eof
+if /i not "%AUTO_NODE_TYPE%"=="CASA_MATRIZ" goto :eof
+if not exist "%REPO_ROOT%\docker-compose.yml" goto :eof
+call :WZ_STEP_BEGIN "Registrando Casa Matriz en Atlas"
+pushd "%REPO_ROOT%"
+docker compose exec -T backend python /app/backend/scripts/register_casa_matriz_central.py >>"%LOG_DIR%\toolbox.log" 2>&1
+popd
+call :WZ_STEP_TICK 100
 goto :eof
 
 :RUN_AUTO_DEPLOY_PIPELINE
@@ -734,6 +824,8 @@ if !WZ_DEPLOY_ERR! neq 0 (
 call :WZ_SET_GLOBAL 90
 call :INJECT_USB_BACKUP
 call :RESTORE_DELTA_FROM_USB
+call :WZ_SET_GLOBAL 93
+call :REGISTER_CASA_MATRIZ_CENTRAL
 call :WZ_SET_GLOBAL 95
 call :TRIGGER_ATLAS_DELTA_SYNC
 call :OPT_DAWN_TASKS_SILENT
@@ -750,7 +842,7 @@ goto :eof
 cls
 color 0E
 echo %CYAN%=== Op.0 AUTO-INTELIGENTE - SIN INTERVENCION DEL USUARIO ===%RST%
-echo %DIM%Detecta Casa Matriz en la LAN y despliega Matriz, Sucursal o Bodega.%RST%
+echo %DIM%Detecta Casa Matriz via URL publica, Atlas o LAN; despliega Matriz, Sucursal o Bodega.%RST%
 echo.
 set "AUTO_INTEL_MODE=1"
 set "AUTO_NODE_NAME=%COMPUTERNAME%"

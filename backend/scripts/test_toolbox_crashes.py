@@ -16,6 +16,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CMD_PATH = REPO_ROOT / "backend" / "scripts" / "mclarens_blackbox_toolbox.cmd"
 QR_SCRIPT = REPO_ROOT / "backend" / "scripts" / "render_qr_ascii.py"
+TOPO_SCRIPT = REPO_ROOT / "backend" / "scripts" / "detect_casa_matriz_topology.py"
 
 ERROR_PATTERNS = (
     r"can't open file",
@@ -41,6 +42,11 @@ REQUIRED_PATTERNS = (
     r":AUTO_INSTALACION_INTELIGENTE",
     r":RESOLVE_AUTO_NODE_PROFILE_INTELIGENTE",
     r":RUN_AUTO_DEPLOY_PIPELINE",
+    r":LOAD_CENTRAL_CONFIG",
+    r":DETECT_CASA_MATRIZ_TOPOLOGY",
+    r":REGISTER_CASA_MATRIZ_CENTRAL",
+    r"detect_casa_matriz_topology\.py",
+    r"register_casa_matriz_central\.py",
     r"detect_lan_casa_matriz.ps1",
     r":WZ_RENDER_DUAL_BARS",
     r":ENSURE_QRCODE_MODULE",
@@ -160,6 +166,27 @@ def test_clean_install_gate() -> None:
         fail("Banner de instalacion limpia no visible sin docker-compose.yml")
 
 
+def test_topology_detector_output() -> None:
+    if not TOPO_SCRIPT.exists():
+        fail(f"No existe {TOPO_SCRIPT}")
+    proc = subprocess.run(
+        [sys.executable, str(TOPO_SCRIPT), "--net-prefix", "192.168.99", "--self-ip", "192.168.99.1"],
+        capture_output=True,
+        text=True,
+        timeout=200,
+        cwd=str(REPO_ROOT),
+    )
+    line = ""
+    for raw in (proc.stdout or "").splitlines():
+        raw = raw.strip()
+        if raw:
+            line = raw
+    if proc.returncode != 0:
+        fail(f"detect_casa_matriz_topology.py fallo (code={proc.returncode}): {(proc.stderr or '')[:300]}")
+    if not re.match(r"^(MATRIZ|NONE)\|", line):
+        fail(f"Salida topology invalida: {line!r}")
+
+
 def test_option8_qr_path_in_output() -> None:
     text = CMD_PATH.read_text(encoding="utf-8", errors="replace")
     if "docker compose exec -T backend python /app/backend/scripts/render_qr_ascii.py" not in text:
@@ -171,6 +198,9 @@ def main() -> int:
     cmd_text = CMD_PATH.read_text(encoding="utf-8", errors="replace")
     static_validate_cmd(cmd_text)
     print("[test] Estatico OK")
+
+    test_topology_detector_output()
+    print("[test] detect_casa_matriz_topology.py OK")
 
     test_option8_qr_path_in_output()
     print("[test] Ruta QR Docker OK")
