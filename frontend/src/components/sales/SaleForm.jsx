@@ -286,6 +286,8 @@ export default function SaleForm({
   const [selectedMessengerId, setSelectedMessengerId] = useState("");
   const [messengerOptions, setMessengerOptions] = useState([]);
   const [messengerLoading, setMessengerLoading] = useState(false);
+  const [messengerLoadFailed, setMessengerLoadFailed] = useState(false);
+  const deliveryMessengerRetryRef = useRef(false);
   const [isVehiclePickerVisible, setIsVehiclePickerVisible] = useState(true);
   const [useVehicleVinDecoder, setUseVehicleVinDecoder] = useState(false);
   const [isDecodingVehicleVin, setIsDecodingVehicleVin] = useState(false);
@@ -688,34 +690,57 @@ export default function SaleForm({
     }
   }, [vehicleFlowOption]);
 
+  const fetchMessengerOptions = useCallback(async ({ showErrorToast = false, isActive = () => true } = {}) => {
+    if (!user?.branch_id) return;
+    if (isActive()) setMessengerLoading(true);
+    try {
+      const response = await axios.get(`${API}/hr/messengers/status`, { withCredentials: true });
+      const branches = response.data?.branches || [];
+      const branchRow = branches.find((row) => String(row.branch_id) === String(user.branch_id));
+      const messengers = branchRow?.messengers || [];
+      if (!isActive()) return;
+      setMessengerOptions(messengers);
+      setMessengerLoadFailed(false);
+      const preferred = messengers.find((row) => row.status === "disponible") || messengers[0];
+      if (preferred?.messenger_id) {
+        setSelectedMessengerId((current) => current || preferred.messenger_id);
+      }
+    } catch (error) {
+      if (!isActive()) return;
+      setMessengerLoadFailed(true);
+      setMessengerOptions([]);
+      if (showErrorToast) {
+        toast.error("No se pudo cargar mensajeros de la sucursal");
+      } else {
+        console.warn(
+          "[SaleForm] Precarga de mensajeros omitida:",
+          error?.response?.status || error?.message || error,
+        );
+      }
+    } finally {
+      if (isActive()) setMessengerLoading(false);
+    }
+  }, [user?.branch_id]);
+
   useEffect(() => {
     if (!user?.branch_id) return undefined;
-    let cancelled = false;
-    (async () => {
-      setMessengerLoading(true);
-      try {
-        const response = await axios.get(`${API}/hr/messengers/status`, { withCredentials: true });
-        const branches = response.data?.branches || [];
-        const branchRow = branches.find((row) => String(row.branch_id) === String(user.branch_id));
-        const messengers = branchRow?.messengers || [];
-        if (cancelled) return;
-        setMessengerOptions(messengers);
-        const preferred = messengers.find((row) => row.status === "disponible") || messengers[0];
-        if (preferred?.messenger_id) {
-          setSelectedMessengerId((current) => current || preferred.messenger_id);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          toast.error("No se pudo cargar mensajeros de la sucursal");
-        }
-      } finally {
-        if (!cancelled) setMessengerLoading(false);
-      }
-    })();
+    let active = true;
+    void fetchMessengerOptions({ showErrorToast: false, isActive: () => active });
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [user?.branch_id]);
+  }, [user?.branch_id, fetchMessengerOptions]);
+
+  useEffect(() => {
+    if (logisticMode !== "delivery") {
+      deliveryMessengerRetryRef.current = false;
+      return;
+    }
+    if (!user?.branch_id || !messengerLoadFailed || messengerLoading) return;
+    if (deliveryMessengerRetryRef.current) return;
+    deliveryMessengerRetryRef.current = true;
+    void fetchMessengerOptions({ showErrorToast: true });
+  }, [logisticMode, messengerLoadFailed, messengerLoading, fetchMessengerOptions, user?.branch_id]);
 
   useEffect(() => {
     if (!selectedCustomer) return;
@@ -3189,6 +3214,10 @@ export default function SaleForm({
                     <Label>Mensajero asignado</Label>
                     {messengerLoading ? (
                       <p className="text-xs text-muted-foreground">Cargando mensajeros...</p>
+                    ) : messengerLoadFailed ? (
+                      <p className="text-xs text-rose-700">
+                        No se pudieron cargar los mensajeros. Revisa la conexión o contacta a sistemas.
+                      </p>
                     ) : messengerOptions.length === 0 ? (
                       <p className="text-xs text-rose-700">No hay mensajeros configurados para esta sucursal.</p>
                     ) : (
