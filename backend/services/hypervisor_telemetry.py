@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 from backend.db.distributed import get_central_database, ping_central_database, resolve_central_mongo_uri
+from backend.domains.deployment.lan_identity import resolve_lan_ip
 from backend.domains.deployment.node_profile import build_node_profile
 from backend.services.hardware_monitor import get_active_alerts
 from backend.services.terabox_overview_service import build_terabox_overview
@@ -66,7 +67,12 @@ def _read_cpu_percent() -> Optional[float]:
     try:
         import psutil  # type: ignore
 
-        return round(float(psutil.cpu_percent(interval=0.15)), 1)
+        psutil.cpu_percent(interval=None)
+        time.sleep(0.2)
+        value = float(psutil.cpu_percent(interval=0.35))
+        if value <= 0.0:
+            value = float(psutil.cpu_percent(interval=0.35))
+        return round(value, 1)
     except Exception:
         load = os.getloadavg()[0] if hasattr(os, "getloadavg") else None
         if load is None:
@@ -481,7 +487,10 @@ def _terabox_cloud_block(terabox_overview: Dict[str, Any], terabox_raw: Dict[str
 
 async def build_hypervisor_dashboard(db) -> Dict[str, Any]:
     profile = build_node_profile()
-    lan_ip = profile.get("lan_ip") or os.environ.get("SERVER_LAN_IP") or "192.168.1.26"
+    lan_ip, lan_ip_source = resolve_lan_ip()
+    if profile.get("lan_ip"):
+        lan_ip = str(profile.get("lan_ip"))
+        lan_ip_source = str(profile.get("lan_ip_source") or lan_ip_source)
     port = int(profile.get("frontend_port") or os.environ.get("SERVER_FRONTEND_PORT") or 3000)
     uploads_path = os.environ.get("LOCAL_UPLOAD_ROOT", "/app/uploads")
     usb_path = os.environ.get("USB_BACKUP_ROOT", "/mnt/usb_backup")
@@ -543,6 +552,7 @@ async def build_hypervisor_dashboard(db) -> Dict[str, Any]:
 
     local_lan = {
         "lan_ip": lan_ip,
+        "lan_ip_source": lan_ip_source,
         "frontend_port": port,
         "access_url": f"http://{lan_ip}:{port}",
         "active_connections": _count_net_connections(),
@@ -582,6 +592,7 @@ async def build_hypervisor_dashboard(db) -> Dict[str, Any]:
         "node": profile,
         "access": {
             "lan_ip": lan_ip,
+            "lan_ip_source": lan_ip_source,
             "frontend_port": port,
             "url": local_lan["access_url"],
             "dashboard_url": f"http://{lan_ip}:{port}/server-dashboard",

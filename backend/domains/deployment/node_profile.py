@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List
 
+from backend.domains.deployment.lan_identity import resolve_lan_ip
+
 
 def _env_bool(key: str, default: bool = False) -> bool:
     raw = str(os.environ.get(key, "")).strip().lower()
@@ -45,13 +47,15 @@ def build_node_profile() -> Dict[str, Any]:
         }
 
     disabled_routes = _routes_disabled_by_features(features)
+    lan_ip, lan_ip_source = resolve_lan_ip()
     return {
         "node_id": node_id,
         "node_name": node_name,
         "node_type": node_type,
         "features": features,
         "disabled_routes": disabled_routes,
-        "lan_ip": str(os.environ.get("SERVER_LAN_IP") or "192.168.1.26").strip(),
+        "lan_ip": lan_ip,
+        "lan_ip_source": lan_ip_source,
         "frontend_port": int(os.environ.get("SERVER_FRONTEND_PORT") or "3000"),
     }
 

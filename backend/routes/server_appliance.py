@@ -11,6 +11,7 @@ import httpx
 from fastapi import APIRouter, Request
 
 from backend.db.distributed import ping_central_database, resolve_central_mongo_uri
+from backend.domains.deployment.lan_identity import resolve_lan_ip
 from backend.domains.deployment.node_profile import build_node_profile
 from backend.services.hardware_monitor import get_active_alerts, get_last_scan_at, scan_hardware_health
 
@@ -123,10 +124,12 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
     @router.get("/server-appliance/profile")
     async def server_appliance_profile():
         profile = build_node_profile()
-        lan_ip = profile.get("lan_ip") or "192.168.1.26"
+        lan_ip, lan_ip_source = resolve_lan_ip()
         port = profile.get("frontend_port") or 3000
         return {
             **profile,
+            "lan_ip": lan_ip,
+            "lan_ip_source": lan_ip_source,
             "access_url": f"http://{lan_ip}:{port}",
             "dashboard_url": f"http://{lan_ip}:{port}/server-dashboard",
             "qr_target_url": f"http://{lan_ip}:{port}",

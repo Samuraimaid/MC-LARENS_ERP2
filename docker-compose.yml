@@ -49,7 +49,8 @@ services:
       - NODE_ENABLE_SALES=${NODE_ENABLE_SALES:-true}
       - NODE_ENABLE_WORKSHOP=${NODE_ENABLE_WORKSHOP:-true}
       - NODE_ENABLE_HR=${NODE_ENABLE_HR:-true}
-      - SERVER_LAN_IP=${SERVER_LAN_IP:-192.168.1.26}
+      - SERVER_LAN_IP=${SERVER_LAN_IP:-}
+      - HOST_LAN_IP_FILE=/app/backend/data/host_lan_ip.txt
       - SERVER_FRONTEND_PORT=${SERVER_FRONTEND_PORT:-3000}
       - HARDWARE_BEEP_FLAG_PATH=/app/backend/data/hardware_beep.flag
       - ENABLE_TEST_ENDPOINTS=false
@@ -90,6 +91,7 @@ services:
       - ./backend/data/pos-voucher-bridge-token.txt:/app/backend/data/pos-voucher-bridge-token.txt
       - ./frontend/src/data/vehicleCatalog.json:/app/backend/data/vehicleCatalog.json
       - ./backend/data/vehicle-descriptor-types.json:/app/backend/data/vehicle-descriptor-types.json
+      - ./backend/data/host_lan_ip.txt:/app/backend/data/host_lan_ip.txt
       - ./backend/data/vehicle-catalog-history:/app/backend/data/vehicle-catalog-history
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/', timeout=5)"]

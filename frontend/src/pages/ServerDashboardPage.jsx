@@ -410,9 +410,12 @@ export function ServerDashboardPage() {
           <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 to-slate-950 p-5 lg:col-span-1">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">IP de acceso LAN</p>
             <p className="mt-2 break-all font-mono text-[clamp(1.5rem,4vw,3.2rem)] font-black leading-none text-white">
-              {accessUrl || "192.168.1.26:3000"}
+              {accessUrl || "Detectando IP LAN..."}
             </p>
-            <p className="mt-2 text-sm text-slate-400">Dirección fija del ERP en la red local</p>
+            <p className="mt-2 text-sm text-slate-400">
+              Dirección fija del ERP en la red local
+              {lan.lan_ip_source ? ` · origen: ${lan.lan_ip_source}` : ""}
+            </p>
           </div>
           <QrPanel url={accessUrl} />
           <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5 flex flex-col justify-center">
