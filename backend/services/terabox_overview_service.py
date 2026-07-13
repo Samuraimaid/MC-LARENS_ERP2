@@ -6,9 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-import requests
-
 from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
+from backend.services.terabox_sdk import get_quota, test_connection
 
 TERABOX_TOTAL_BYTES = 1_099_511_627_776  # 1 TB
 REQUIRED_FOLDERS = ("/productos", "/evidencias_taller", "/backups_sistema")
@@ -45,48 +44,6 @@ def _local_used_bytes() -> int:
     evidence_used = _dir_size(_upload_root() / "evidencias_taller")
     products_used = _dir_size(_upload_root() / "productos")
     return int(backup_used + deliveries_used + evidence_used + products_used)
-
-
-def _terabox_login(session: requests.Session, username: str, password: str) -> bool:
-    try:
-        session.get("https://www.terabox.com/", timeout=15)
-        response = session.post(
-            "https://www.terabox.com/passport/login",
-            data={"username": username, "password": password, "client": "web"},
-            timeout=20,
-        )
-        if response.status_code in {200, 302}:
-            return True
-        alt = session.post(
-            "https://www.terabox.com/api/login",
-            json={"username": username, "password": password},
-            timeout=20,
-        )
-        return alt.status_code == 200
-    except requests.RequestException:
-        return False
-
-
-def _remote_used_hint(session: requests.Session, root_folder: str) -> int | None:
-    try:
-        response = session.get(
-            "https://www.terabox.com/api/quota",
-            params={"path": root_folder},
-            timeout=20,
-        )
-        if response.status_code != 200:
-            return None
-        payload = response.json()
-        for key in ("used", "used_size", "used_bytes"):
-            if key in payload:
-                return int(payload[key])
-        data = payload.get("data") or {}
-        for key in ("used", "used_size", "used_bytes"):
-            if key in data:
-                return int(data[key])
-    except (requests.RequestException, ValueError, TypeError):
-        return None
-    return None
 
 
 def _folder_rows(root_folder: str, used_bytes: int) -> List[Dict[str, Any]]:
@@ -129,13 +86,17 @@ def build_terabox_overview() -> Dict[str, Any]:
     message = "Modo estimado por volcados locales"
 
     if username and password:
-        session = requests.Session()
-        connected = _terabox_login(session, username, password)
+        probe = test_connection()
+        connected = bool(probe.get("connected"))
         if connected:
-            used_remote = _remote_used_hint(session, root_folder)
-            message = "Sesión TeraBox activa"
+            try:
+                quota = get_quota()
+                used_remote = int(quota.get("used") or probe.get("remote_used_bytes") or 0)
+            except Exception:
+                used_remote = int(probe.get("remote_used_bytes") or 0)
+            message = probe.get("message") or "Sesión TeraBox activa"
         else:
-            message = "Credenciales TeraBox configuradas — login no confirmado"
+            message = probe.get("message") or "Credenciales TeraBox configuradas — login no confirmado"
 
     used_bytes = int(used_remote if used_remote is not None else used_local)
     available_bytes = max(0, TERABOX_TOTAL_BYTES - used_bytes)

@@ -489,12 +489,15 @@ def _terabox_cloud_block(
     used_bytes = int(terabox_overview.get("used_space_bytes") or terabox_raw.get("space_used_bytes") or 0)
     used_gb = round(used_bytes / (1024 ** 3), 2)
     sync_ok = terabox_raw.get("last_upload_status") == "success"
-    if sync_ok or remote_connected:
+    sync_error = terabox_raw.get("last_upload_status") == "error"
+    if sync_ok:
         sync_pct = 100.0
-    elif local_ready:
-        sync_pct = 100.0
+    elif sync_error:
+        sync_pct = 0.0
+    elif remote_connected:
+        sync_pct = 25.0
     elif creds_configured:
-        sync_pct = 85.0
+        sync_pct = 10.0
     else:
         sync_pct = 0.0
 

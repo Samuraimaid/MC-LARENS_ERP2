@@ -1,16 +1,14 @@
-"""TeraBox cold backup uploader — nightly async upload with 30-day retention."""
+"""TeraBox cold backup uploader — real API upload with 30-day local retention."""
 from __future__ import annotations
 
 import json
 import os
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import httpx
-
-from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
+from backend.domains.deployment.appliance_cloud_config import resolve_terabox_settings
+from backend.services.terabox_sdk import get_quota, upload_file
 
 STATUS_FILENAME = "terabox_status.json"
 RETENTION_DAYS = 30
@@ -68,49 +66,17 @@ def _prune_old_archives(backup_root: Path, keep_days: int = RETENTION_DAYS) -> i
     return removed
 
 
-async def _terabox_login(client: httpx.AsyncClient, username: str, password: str) -> bool:
-    """Best-effort session bootstrap for TeraBox web API."""
-    try:
-        await client.get("https://www.terabox.com/", timeout=20.0)
-        response = await client.post(
-            "https://www.terabox.com/passport/login",
-            data={"username": username, "password": password, "client": "web"},
-            timeout=30.0,
-        )
-        if response.status_code in {200, 302}:
-            return True
-        alt = await client.post(
-            "https://www.terabox.com/api/login",
-            json={"username": username, "password": password},
-            timeout=30.0,
-        )
-        return alt.status_code == 200
-    except Exception:
-        return False
-
-
-async def _terabox_upload_file(client: httpx.AsyncClient, archive: Path, remote_folder: str) -> bool:
-    try:
-        with archive.open("rb") as handle:
-            files = {"file": (archive.name, handle, "application/gzip")}
-            response = await client.post(
-                "https://www.terabox.com/api/upload",
-                data={"path": remote_folder},
-                files=files,
-                timeout=600.0,
-            )
-        return response.status_code in {200, 201}
-    except Exception:
-        return False
-
-
-async def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
-    username, password = resolve_terabox_credentials()
+def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
     backup_root = Path(os.environ.get("BACKUP_INTERNAL_ROOT", "/app/backups"))
     archive = Path(archive_path)
+    settings = resolve_terabox_settings()
+    branch_id = os.environ.get("BRANCH_ID", "branch_main")
+    remote_folder = (settings.get("remote_folder") or "/MCLarensERP/cold-backups").rstrip("/")
+    remote_dest = f"{remote_folder}/{branch_id}/{archive.name}"
+
     if not archive.exists():
         payload = {
-            "connected": bool(username and password),
+            "connected": False,
             "last_upload_status": "error",
             "last_upload_at": datetime.now(timezone.utc).isoformat(),
             "message": f"Archivo no encontrado: {archive}",
@@ -118,39 +84,32 @@ async def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
         write_terabox_status(payload)
         return payload
 
-    if not username or not password:
-        payload = {
-            "connected": False,
-            "last_upload_status": "skipped",
-            "last_upload_at": datetime.now(timezone.utc).isoformat(),
-            "last_archive": archive.name,
-            "message": "TERABOX_USERNAME/PASSWORD no configurados",
-        }
-        write_terabox_status(payload)
-        return payload
-
-    remote_folder = os.environ.get("TERABOX_REMOTE_FOLDER", "/MCLarensERP/cold-backups")
-    branch_id = os.environ.get("BRANCH_ID", "branch_main")
     ok = False
-    logged_in = False
     message = ""
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        logged_in = await _terabox_login(client, username, password)
-        if not logged_in:
-            message = "Login TeraBox fallido — verifique credenciales"
-        else:
-            ok = await _terabox_upload_file(client, archive, f"{remote_folder}/{branch_id}")
-            message = "Exito" if ok else "Upload TeraBox fallido"
+    remote_used = None
+    try:
+        result = upload_file(str(archive), remote_dest)
+        ok = bool(result.get("ok"))
+        message = result.get("message") or "Subida TeraBox completada"
+        try:
+            quota = get_quota()
+            remote_used = int(quota.get("used") or 0)
+        except Exception:
+            remote_used = None
+    except Exception as exc:
+        message = f"Upload TeraBox fallido: {exc}"
 
-    used_bytes = sum(p.stat().st_size for p in _list_local_archives(backup_root))
+    local_used = sum(p.stat().st_size for p in _list_local_archives(backup_root))
+    used_bytes = remote_used if remote_used is not None else local_used
     percent = round((used_bytes / TERABOX_FREE_BYTES) * 100, 2) if TERABOX_FREE_BYTES else None
     _prune_old_archives(backup_root)
 
     payload = {
-        "connected": ok or logged_in,
+        "connected": ok,
         "last_upload_status": "success" if ok else "error",
         "last_upload_at": datetime.now(timezone.utc).isoformat(),
         "last_archive": archive.name,
+        "last_remote_path": remote_dest if ok else None,
         "space_used_percent": percent,
         "space_used_bytes": used_bytes,
         "space_limit_bytes": TERABOX_FREE_BYTES,
@@ -162,18 +121,7 @@ async def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
 
 
 def upload_archive_to_terabox_sync(archive_path: str) -> Dict[str, Any]:
-    import asyncio
-
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                return pool.submit(lambda: asyncio.run(upload_archive_to_terabox(archive_path))).result()
-        return loop.run_until_complete(upload_archive_to_terabox(archive_path))
-    except RuntimeError:
-        return asyncio.run(upload_archive_to_terabox(archive_path))
+    return upload_archive_to_terabox(archive_path)
 
 
 def format_terabox_indicator(status: Optional[Dict[str, Any]] = None) -> str:

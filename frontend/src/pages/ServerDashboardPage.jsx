@@ -696,10 +696,18 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
                   </span>
                 ))}
               </div>
+              {filesPayload?.source === "local_fallback" ? (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+                  Estos archivos están solo en el servidor local — aún no aparecen en la web de TeraBox.
+                  {filesPayload.remote_error ? ` Error remoto: ${filesPayload.remote_error}` : ""}
+                </div>
+              ) : null}
               {filesPayload?.message ? (
                 <p className="text-[11px] text-slate-500">
                   {filesPayload.message}
-                  {filesPayload.source ? ` · fuente: ${filesPayload.source}` : ""}
+                  {filesPayload.source && filesPayload.source !== "local_fallback"
+                    ? ` · fuente: ${filesPayload.source}`
+                    : ""}
                 </p>
               ) : null}
               {filesError ? (
