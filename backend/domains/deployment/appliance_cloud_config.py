@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 _CONFIG_CACHE: Dict[str, str] | None = None
 
@@ -95,6 +95,65 @@ def resolve_terabox_credentials() -> tuple[str, str]:
     username = cloud_config_value("TERABOX_USERNAME")
     password = cloud_config_value("TERABOX_PASSWORD")
     return username, password
+
+
+def resolve_terabox_settings() -> Dict[str, str]:
+    return {
+        "username": cloud_config_value("TERABOX_USERNAME"),
+        "root_folder": cloud_config_value("TERABOX_ROOT_FOLDER") or "/MCLarensERP",
+        "remote_folder": cloud_config_value("TERABOX_REMOTE_FOLDER") or "/MCLarensERP/cold-backups",
+        "share_url": cloud_config_value("TERABOX_SHARE_URL"),
+    }
+
+
+def _mask_username(value: str) -> str:
+    raw = str(value or "").strip()
+    if "@" not in raw:
+        return raw[:3] + "***" if len(raw) > 3 else "***"
+    local, domain = raw.split("@", 1)
+    masked_local = (local[:2] + "***") if local else "***"
+    return f"{masked_local}@{domain}"
+
+
+def get_terabox_credentials_public() -> Dict[str, Any]:
+    username, _password = resolve_terabox_credentials()
+    settings = resolve_terabox_settings()
+    return {
+        "configured": bool(username),
+        "username_masked": _mask_username(username) if username else "",
+        "root_folder": settings.get("root_folder"),
+        "remote_folder": settings.get("remote_folder"),
+        "share_url": settings.get("share_url"),
+    }
+
+
+def _primary_config_path() -> Path:
+    custom = str(os.environ.get("APPLIANCE_CLOUD_ENV_FILE") or "").strip()
+    if custom:
+        return Path(custom)
+    return Path(__file__).resolve().parents[2] / "data" / "appliance_cloud.env"
+
+
+def clear_appliance_cloud_cache() -> None:
+    global _CONFIG_CACHE
+    _CONFIG_CACHE = None
+
+
+def write_appliance_cloud_values(updates: Dict[str, str]) -> Path:
+    path = _primary_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing = _parse_env_file(path) if path.exists() else {}
+    merged = {**existing, **{k: str(v).strip() for k, v in updates.items() if str(v).strip()}}
+    lines = [
+        "# Credenciales cloud — NO commitear (gitignored)",
+    ]
+    for key in sorted(merged.keys()):
+        lines.append(f"{key}={merged[key]}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    clear_appliance_cloud_cache()
+    for key, value in merged.items():
+        os.environ[key] = value
+    return path
 
 
 def is_cloud_configured() -> Dict[str, bool]:

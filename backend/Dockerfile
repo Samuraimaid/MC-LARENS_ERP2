@@ -6,7 +6,7 @@ WORKDIR /app
 # Copiar requirements e instalar dependencias
 COPY requirements.txt .
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-dejavu-core bash tar gzip libjpeg62-turbo zlib1g \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core bash tar gzip libjpeg62-turbo zlib1g libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -r requirements.txt
 

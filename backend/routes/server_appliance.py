@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
+import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from backend.db.distributed import ping_central_database, resolve_central_mongo_uri
 from backend.domains.deployment.lan_identity import resolve_lan_ip
@@ -213,6 +215,126 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         from backend.services.terabox_overview_service import build_terabox_overview
 
         return build_terabox_overview()
+
+    @router.get("/server-appliance/terabox/credentials")
+    async def get_terabox_credentials(request: Request):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+        from backend.domains.deployment.appliance_cloud_config import get_terabox_credentials_public
+        from backend.services.terabox_client import test_terabox_connection
+
+        public = get_terabox_credentials_public()
+        probe = test_terabox_connection()
+        return {**public, "connected": probe.get("connected"), "message": probe.get("message")}
+
+    @router.put("/server-appliance/terabox/credentials")
+    async def update_terabox_credentials(request: Request, payload: Dict[str, Any]):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+        from backend.domains.deployment.appliance_cloud_config import write_appliance_cloud_values
+        from backend.services.terabox_client import test_terabox_connection
+
+        from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
+
+        data = payload or {}
+        existing_user, _existing_pass = resolve_terabox_credentials()
+        username = str(data.get("username") or data.get("TERABOX_USERNAME") or existing_user or "").strip()
+        password = str(data.get("password") or data.get("TERABOX_PASSWORD") or "").strip()
+        if not username:
+            raise HTTPException(status_code=400, detail="username requerido")
+        updates: Dict[str, str] = {"TERABOX_USERNAME": username}
+        if password:
+            updates["TERABOX_PASSWORD"] = password
+        if data.get("root_folder") or data.get("TERABOX_ROOT_FOLDER"):
+            updates["TERABOX_ROOT_FOLDER"] = str(data.get("root_folder") or data.get("TERABOX_ROOT_FOLDER")).strip()
+        if data.get("remote_folder") or data.get("TERABOX_REMOTE_FOLDER"):
+            updates["TERABOX_REMOTE_FOLDER"] = str(data.get("remote_folder") or data.get("TERABOX_REMOTE_FOLDER")).strip()
+        if data.get("share_url") or data.get("TERABOX_SHARE_URL"):
+            updates["TERABOX_SHARE_URL"] = str(data.get("share_url") or data.get("TERABOX_SHARE_URL")).strip()
+
+        write_appliance_cloud_values(updates)
+        probe = test_terabox_connection(username=username, password=password or None)
+        if password and not probe.get("connected"):
+            raise HTTPException(status_code=400, detail=probe.get("message") or "No se pudo validar TeraBox")
+        return {
+            "message": "Credenciales TeraBox actualizadas",
+            "connected": probe.get("connected"),
+            "username_masked": username[:2] + "***@" + username.split("@")[-1] if "@" in username else "***",
+        }
+
+    @router.post("/server-appliance/terabox/credentials/test")
+    async def test_terabox_credentials_endpoint(request: Request, payload: Optional[Dict[str, Any]] = None):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+        from backend.services.terabox_client import test_terabox_connection
+
+        data = payload or {}
+        return test_terabox_connection(
+            username=str(data.get("username") or "").strip() or None,
+            password=str(data.get("password") or "").strip() or None,
+        )
+
+    @router.get("/server-appliance/terabox/files")
+    async def list_terabox_files(request: Request, path: Optional[str] = None):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+        from backend.services.terabox_client import list_terabox_directory
+
+        return list_terabox_directory(path)
+
+    @router.post("/server-appliance/backup/run")
+    async def run_full_erp_backup(request: Request):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+
+        script = Path("/app/backend/scripts/backup_server_node.sh")
+        if not script.exists():
+            script = Path(__file__).resolve().parents[1] / "scripts" / "backup_server_node.sh"
+        if not script.exists():
+            raise HTTPException(status_code=500, detail="Script de respaldo no encontrado")
+
+        def _run_backup() -> Dict[str, Any]:
+            result = subprocess.run(
+                ["bash", str(script)],
+                capture_output=True,
+                text=True,
+                timeout=900,
+            )
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout[-4000:],
+                "stderr": result.stderr[-2000:],
+            }
+
+        outcome = await asyncio.to_thread(_run_backup)
+        backup_root = Path(os.environ.get("BACKUP_INTERNAL_ROOT", "/app/backups"))
+        archives = sorted(backup_root.glob("erp_delta_backup_*.tar.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+        latest = archives[0] if archives else None
+        if outcome.get("exit_code") != 0:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Respaldo falló",
+                    "stderr": outcome.get("stderr"),
+                    "stdout": outcome.get("stdout"),
+                },
+            )
+        return {
+            "message": "Respaldo completo del ERP iniciado/finalizado",
+            "latest_archive": latest.name if latest else None,
+            "latest_size_bytes": latest.stat().st_size if latest else None,
+            "stdout": outcome.get("stdout"),
+        }
 
     @router.get("/server-appliance/alerts")
     async def server_appliance_alerts():

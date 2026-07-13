@@ -4,15 +4,23 @@ import {
   Activity,
   Battery,
   BatteryCharging,
+  ChevronRight,
   Cloud,
   Cpu,
   Database,
+  Folder,
+  File,
   HardDrive,
+  KeyRound,
+  Loader2,
   Network,
+  RefreshCw,
+  Save,
   Server,
   Smartphone,
   Thermometer,
   Timer,
+  Upload,
   Users,
   Wifi,
 } from "lucide-react";
@@ -349,6 +357,440 @@ function formatUptime(hours) {
   return `${h}h ${m}m`;
 }
 
+function formatBytes(bytes) {
+  const n = Number(bytes || 0);
+  if (!n) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const idx = Math.min(units.length - 1, Math.floor(Math.log(n) / Math.log(1024)));
+  return `${(n / 1024 ** idx).toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
+}
+
+function formatModified(value) {
+  if (!value) return "—";
+  const asNum = Number(value);
+  if (!Number.isNaN(asNum) && asNum > 1_000_000_000) {
+    return new Date(asNum * 1000).toLocaleString("es-NI");
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString("es-NI");
+}
+
+function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
+  const [creds, setCreds] = useState(null);
+  const [credsError, setCredsError] = useState("");
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    root_folder: defaultRoot,
+    remote_folder: "/MCLarensERP/cold-backups",
+    share_url: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [currentPath, setCurrentPath] = useState(defaultRoot);
+  const [filesPayload, setFilesPayload] = useState(null);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesError, setFilesError] = useState("");
+  const [backupRunning, setBackupRunning] = useState(false);
+  const [backupResult, setBackupResult] = useState(null);
+  const [backupError, setBackupError] = useState("");
+
+  const loadCredentials = useCallback(async () => {
+    try {
+      const response = await axios.get(buildApiUrl("/server-appliance/terabox/credentials"), {
+        withCredentials: true,
+        timeout: 12000,
+      });
+      setCreds(response.data);
+      setCredsError("");
+      setForm((prev) => ({
+        ...prev,
+        username: "",
+        password: "",
+        root_folder: response.data?.root_folder || prev.root_folder,
+        remote_folder: response.data?.remote_folder || prev.remote_folder,
+        share_url: response.data?.share_url || prev.share_url,
+      }));
+      if (response.data?.root_folder) {
+        setCurrentPath(response.data.root_folder);
+      }
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setCredsError(typeof detail === "string" ? detail : err?.message || "Sin acceso a credenciales TeraBox");
+    }
+  }, []);
+
+  const loadFiles = useCallback(async (path) => {
+    setFilesLoading(true);
+    setFilesError("");
+    try {
+      const response = await axios.get(buildApiUrl("/server-appliance/terabox/files"), {
+        params: { path },
+        withCredentials: true,
+        timeout: 20000,
+      });
+      setFilesPayload(response.data);
+      setCurrentPath(response.data?.path || path);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setFilesError(typeof detail === "string" ? detail : err?.message || "No se pudo listar TeraBox");
+      setFilesPayload(null);
+    } finally {
+      setFilesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCredentials();
+  }, [loadCredentials]);
+
+  useEffect(() => {
+    if (!credsError && creds) {
+      loadFiles(currentPath);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recargar al cambiar ruta en explorador
+  }, [creds, credsError, currentPath]);
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const payload = {};
+      if (form.username.trim()) payload.username = form.username.trim();
+      if (form.password.trim()) payload.password = form.password.trim();
+      const response = await axios.post(
+        buildApiUrl("/server-appliance/terabox/credentials/test"),
+        payload,
+        { withCredentials: true, timeout: 20000 },
+      );
+      setTestResult(response.data);
+    } catch (err) {
+      setTestResult({
+        connected: false,
+        message: err?.response?.data?.detail || err?.message || "Prueba fallida",
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setTestResult(null);
+    try {
+      const payload = {
+        root_folder: form.root_folder.trim(),
+        remote_folder: form.remote_folder.trim(),
+        share_url: form.share_url.trim(),
+      };
+      if (form.username.trim()) payload.username = form.username.trim();
+      if (form.password.trim()) payload.password = form.password.trim();
+      const response = await axios.put(
+        buildApiUrl("/server-appliance/terabox/credentials"),
+        payload,
+        { withCredentials: true, timeout: 20000 },
+      );
+      setTestResult({ connected: response.data?.connected, message: response.data?.message });
+      setForm((prev) => ({ ...prev, password: "" }));
+      await loadCredentials();
+      await loadFiles(form.root_folder.trim() || currentPath);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setTestResult({
+        connected: false,
+        message: typeof detail === "string" ? detail : err?.message || "No se guardaron las credenciales",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBackup = async () => {
+    setBackupRunning(true);
+    setBackupError("");
+    setBackupResult(null);
+    try {
+      const response = await axios.post(
+        buildApiUrl("/server-appliance/backup/run"),
+        {},
+        { withCredentials: true, timeout: 960000 },
+      );
+      setBackupResult(response.data);
+      await loadFiles(form.remote_folder.trim() || currentPath);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      if (detail && typeof detail === "object") {
+        setBackupError(detail.message || detail.stderr || "Respaldo falló");
+      } else {
+        setBackupError(typeof detail === "string" ? detail : err?.message || "Respaldo falló");
+      }
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
+  const pathSegments = useMemo(() => {
+    const normalized = (currentPath || "/").replace(/\/+$/, "") || "/";
+    if (normalized === "/") return [{ label: "/", path: "/" }];
+    const parts = normalized.split("/").filter(Boolean);
+    const crumbs = [{ label: "/", path: "/" }];
+    let acc = "";
+    parts.forEach((part) => {
+      acc += `/${part}`;
+      crumbs.push({ label: part, path: acc });
+    });
+    return crumbs;
+  }, [currentPath]);
+
+  const entries = filesPayload?.entries || [];
+  const sortedEntries = useMemo(() => {
+    return [...entries].sort((a, b) => {
+      if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+      return String(a.name).localeCompare(String(b.name), "es");
+    });
+  }, [entries]);
+
+  const connected = creds?.connected ?? testResult?.connected;
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-cyan-500/25 bg-slate-900/70 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">
+            <Cloud className="h-4 w-4" />
+            TeraBox · Credenciales y explorador
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Gestione la cuenta de respaldo y navegue archivos sin salir del ERP
+          </p>
+        </div>
+        <span className={cn(
+          "rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider",
+          connected ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300",
+        )}
+        >
+          {connected ? "Conectado" : "Desconectado"}
+        </span>
+      </div>
+
+      {credsError ? (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-200">
+          {credsError} — inicie sesión como gerencia o programador.
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-950/60 p-4">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <KeyRound className="h-4 w-4 text-cyan-400" />
+                Credenciales de acceso
+              </p>
+              <p className="text-xs text-slate-500">
+                Cuenta actual: {creds?.username_masked || "no configurada"}
+              </p>
+              <label className="block text-xs text-slate-400">
+                Usuario / correo
+                <input
+                  type="email"
+                  value={form.username}
+                  onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+                  placeholder={creds?.username_masked || "cuenta@terabox.com"}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                />
+              </label>
+              <label className="block text-xs text-slate-400">
+                Contraseña (dejar vacío para no cambiar)
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                  placeholder="••••••••"
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-xs text-slate-400">
+                  Carpeta raíz
+                  <input
+                    type="text"
+                    value={form.root_folder}
+                    onChange={(e) => setForm((prev) => ({ ...prev, root_folder: e.target.value }))}
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                  />
+                </label>
+                <label className="block text-xs text-slate-400">
+                  Carpeta respaldos
+                  <input
+                    type="text"
+                    value={form.remote_folder}
+                    onChange={(e) => setForm((prev) => ({ ...prev, remote_folder: e.target.value }))}
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                  />
+                </label>
+              </div>
+              <label className="block text-xs text-slate-400">
+                URL de compartido (opcional)
+                <input
+                  type="url"
+                  value={form.share_url}
+                  onChange={(e) => setForm((prev) => ({ ...prev, share_url: e.target.value }))}
+                  placeholder="https://1024terabox.com/s/..."
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleTest}
+                  disabled={testing || saving}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-200 hover:bg-slate-700 disabled:opacity-50"
+                >
+                  {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  Probar conexión
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving || testing}
+                  className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/50 bg-cyan-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 hover:bg-cyan-500/25 disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Guardar credenciales
+                </button>
+              </div>
+              {testResult ? (
+                <p className={cn("text-xs", testResult.connected ? "text-emerald-300" : "text-rose-300")}>
+                  {testResult.message}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-950/60 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <Folder className="h-4 w-4 text-cyan-400" />
+                  Explorador de archivos
+                </p>
+                <button
+                  type="button"
+                  onClick={() => loadFiles(currentPath)}
+                  disabled={filesLoading}
+                  className="rounded-lg border border-slate-600 p-1.5 text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                  title="Actualizar listado"
+                >
+                  <RefreshCw className={cn("h-4 w-4", filesLoading && "animate-spin")} />
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-1 text-xs text-slate-400">
+                {pathSegments.map((crumb, idx) => (
+                  <span key={crumb.path} className="inline-flex items-center gap-1">
+                    {idx > 0 ? <ChevronRight className="h-3 w-3 text-slate-600" /> : null}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPath(crumb.path)}
+                      className="rounded px-1 py-0.5 font-mono hover:bg-slate-800 hover:text-cyan-300"
+                    >
+                      {crumb.label}
+                    </button>
+                  </span>
+                ))}
+              </div>
+              {filesPayload?.message ? (
+                <p className="text-[11px] text-slate-500">
+                  {filesPayload.message}
+                  {filesPayload.source ? ` · fuente: ${filesPayload.source}` : ""}
+                </p>
+              ) : null}
+              {filesError ? (
+                <p className="text-xs text-rose-300">{filesError}</p>
+              ) : (
+                <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-800">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-slate-900 text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">Nombre</th>
+                        <th className="px-3 py-2 font-semibold">Tamaño</th>
+                        <th className="px-3 py-2 font-semibold">Modificado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedEntries.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="px-3 py-6 text-center text-slate-500">
+                            {filesLoading ? "Cargando..." : "Carpeta vacía o sin acceso remoto"}
+                          </td>
+                        </tr>
+                      ) : (
+                        sortedEntries.map((entry) => {
+                          const entryPath = entry.path || `${currentPath.replace(/\/$/, "")}/${entry.name}`;
+                          return (
+                            <tr
+                              key={`${entryPath}-${entry.name}`}
+                              className="border-t border-slate-800/80 hover:bg-slate-900/80"
+                            >
+                              <td className="px-3 py-2">
+                                <button
+                                  type="button"
+                                  disabled={!entry.is_dir}
+                                  onClick={() => entry.is_dir && setCurrentPath(entryPath)}
+                                  className={cn(
+                                    "inline-flex items-center gap-2 text-left",
+                                    entry.is_dir ? "text-cyan-300 hover:underline" : "text-slate-300",
+                                  )}
+                                >
+                                  {entry.is_dir ? <Folder className="h-3.5 w-3.5" /> : <File className="h-3.5 w-3.5" />}
+                                  {entry.name}
+                                </button>
+                              </td>
+                              <td className="px-3 py-2 font-mono text-slate-400">
+                                {entry.is_dir ? "—" : formatBytes(entry.size_bytes)}
+                              </td>
+                              <td className="px-3 py-2 text-slate-500">{formatModified(entry.modified_at)}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-emerald-200">Respaldo completo del ERP</p>
+                <p className="text-xs text-slate-400">
+                  MongoDB + uploads → archivo .tar.gz → copia local, USB y TeraBox en segundo plano
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleBackup}
+                disabled={backupRunning}
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-emerald-100 hover:bg-emerald-500/30 disabled:opacity-50"
+              >
+                {backupRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {backupRunning ? "Respaldando..." : "Ejecutar respaldo ahora"}
+              </button>
+            </div>
+            {backupError ? <p className="mt-2 text-xs text-rose-300">{backupError}</p> : null}
+            {backupResult ? (
+              <p className="mt-2 text-xs text-emerald-300">
+                {backupResult.message}
+                {backupResult.latest_archive ? ` · ${backupResult.latest_archive}` : ""}
+                {backupResult.latest_size_bytes ? ` (${formatBytes(backupResult.latest_size_bytes)})` : ""}
+              </p>
+            ) : null}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ServerDashboardPage() {
   const [payload, setPayload] = useState(null);
   const [error, setError] = useState("");
@@ -563,6 +1005,11 @@ export function ServerDashboardPage() {
             {" · "}
             Estado {teraboxHealthy ? "CONNECTED" : (cloud.terabox?.status || "DISCONNECTED")}
           </p>
+        </section>
+
+        {/* SECCIÓN 5 — TeraBox gestión */}
+        <section>
+          <TeraBoxManagementPanel />
         </section>
       </div>
     </div>
