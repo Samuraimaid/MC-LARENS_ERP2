@@ -173,6 +173,8 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
                 "total_bytes": int((hw.get("ram_total_gb") or 0) * 1024 ** 3),
             },
             "temperature_c": hw.get("cpu_temp_c"),
+            "battery_pct": hw.get("battery_pct"),
+            "battery_status": hw.get("battery_status"),
             "active_users": lan.get("active_users_count"),
             "disk_uploads": _disk_usage(uploads_path),
             "disk_usb": _disk_usage(usb_path),

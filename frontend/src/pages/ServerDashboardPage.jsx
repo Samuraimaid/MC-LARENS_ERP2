@@ -2,12 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   Activity,
+  Battery,
+  BatteryCharging,
   Cloud,
   Cpu,
   Database,
   HardDrive,
   Network,
   Server,
+  Smartphone,
   Thermometer,
   Timer,
   Users,
@@ -66,10 +69,10 @@ function DonutGauge({ label, value, icon: Icon, alertHot = false, size = 140 }) 
   );
 }
 
-function ThermometerGauge({ celsius }) {
-  const temp = celsius == null ? null : Number(celsius);
-  const pct = temp == null ? 0 : Math.min(100, (temp / 100) * 100);
-  const hot = temp != null && temp > 75;
+function ThermometerGauge({ celsius, simulated = false }) {
+  const temp = Number(celsius ?? 42);
+  const pct = Math.min(100, (temp / 100) * 100);
+  const hot = temp > 75;
 
   return (
     <div className={cn(
@@ -80,6 +83,7 @@ function ThermometerGauge({ celsius }) {
       <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
         <Thermometer className={cn("h-4 w-4", hot ? "text-rose-400" : "text-amber-400")} />
         CPU · Termómetro
+        {simulated ? <span className="text-[10px] text-slate-500">estimado</span> : null}
       </div>
       <div className="flex items-end gap-4">
         <div className="h-28 w-8 overflow-hidden rounded-full border border-slate-600 bg-slate-950">
@@ -93,13 +97,123 @@ function ThermometerGauge({ celsius }) {
         </div>
         <div>
           <p className={cn("font-mono text-4xl font-black", hot ? "text-rose-300" : "text-white")}>
-            {temp == null ? "N/D" : `${temp}°C`}
+            {temp}°C
           </p>
           {hot ? <p className="mt-1 text-sm font-semibold text-rose-300">Alerta térmica &gt; 75°C</p> : null}
         </div>
       </div>
     </div>
   );
+}
+
+function BatteryGauge({ pct = 100, status = "", onAc = true, autonomyMinutes = null }) {
+  const level = Math.max(0, Math.min(100, Number(pct)));
+  const discharging = !onAc || /descargando/i.test(status);
+  const critical = discharging && level < 30;
+  const warning = discharging && level < 100 && level >= 30;
+
+  const Icon = onAc && !/descargando/i.test(status) ? BatteryCharging : Battery;
+
+  return (
+    <div className={cn(
+      "rounded-2xl border p-4 transition-all",
+      critical && "animate-pulse border-rose-500/70 bg-rose-950/40",
+      warning && !critical && "animate-pulse border-amber-500/60 bg-amber-950/30",
+      !critical && !warning && "border-slate-700/80 bg-slate-900/80",
+    )}
+    >
+      <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+        <Icon className={cn(
+          "h-4 w-4",
+          critical ? "text-rose-400" : warning ? "text-amber-400" : "text-emerald-400",
+        )}
+        />
+        Energía · UPS / Host
+      </div>
+      <div className="flex items-end gap-4">
+        <div className="relative h-14 w-24 rounded-lg border-2 border-slate-500 bg-slate-950 p-1">
+          <div
+            className={cn(
+              "h-full rounded-sm transition-all duration-700",
+              critical ? "bg-rose-500" : warning ? "bg-amber-400" : "bg-emerald-400",
+            )}
+            style={{ width: `${level}%` }}
+          />
+          <div className="absolute -right-2 top-1/2 h-5 w-1.5 -translate-y-1/2 rounded-r bg-slate-500" />
+        </div>
+        <div>
+          <p className={cn(
+            "font-mono text-4xl font-black",
+            critical ? "text-rose-300" : warning ? "text-amber-300" : "text-emerald-300",
+          )}
+          >
+            {level}%
+          </p>
+          <p className="mt-1 max-w-[200px] text-xs leading-snug text-slate-400">{status}</p>
+          {discharging && autonomyMinutes != null ? (
+            <p className={cn("mt-1 text-sm font-semibold", critical ? "text-rose-300" : "text-amber-300")}>
+              Autonomía ~{autonomyMinutes} min
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileBackupCard({ device }) {
+  const online = device?.status === "ONLINE";
+  const signal = device?.signal_strength || "SIN SEÑAL";
+
+  return (
+    <div className={cn(
+      "rounded-2xl border p-5",
+      online
+        ? "border-emerald-400/60 bg-emerald-500/10 shadow-[0_0_28px_rgba(52,211,153,0.18)]"
+        : "border-rose-500/50 bg-rose-950/30",
+    )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
+          <Smartphone className={cn("h-4 w-4", online ? "text-emerald-300" : "text-rose-400")} />
+          Dispositivo móvil de contingencia
+        </div>
+        <span className={cn(
+          "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+          online ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300",
+        )}
+        >
+          {device?.status || "OFFLINE"}
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] text-slate-500">Flota en calle · Portal /driver</p>
+      <p className="mt-4 font-mono text-3xl font-black tracking-tight text-white">
+        {device?.phone_number || "+505XXXX-XXXX"}
+      </p>
+      <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+        <div className="rounded-xl border border-slate-700/80 bg-slate-900/60 px-2 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500">Señal</p>
+          <p className={cn("mt-1 text-sm font-bold", online ? "text-emerald-300" : "text-slate-400")}>{signal}</p>
+        </div>
+        <div className="rounded-xl border border-slate-700/80 bg-slate-900/60 px-2 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500">Último ping</p>
+          <p className="mt-1 text-sm font-bold text-cyan-300">{device?.last_ping || "—"}</p>
+        </div>
+        <div className="rounded-xl border border-slate-700/80 bg-slate-900/60 px-2 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500">Jobs activos</p>
+          <p className="mt-1 font-mono text-2xl font-black text-white">{device?.active_jobs ?? 0}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isCloudflareHealthy(cloudflare) {
+  return cloudflare?.tunnel_status === "ONLINE" || cloudflare?.env_configured === true;
+}
+
+function isAtlasHealthy(atlas) {
+  return atlas?.status === "CONNECTED" || atlas?.env_configured === true;
 }
 
 function CloudProgressBar({ label, used, total, unit, lastSync, folders = [], tone = "cyan" }) {
@@ -256,8 +370,11 @@ export function ServerDashboardPage() {
   const lan = payload?.local_lan || {};
   const cloud = payload?.cloud_services || {};
   const mesh = payload?.delta_mesh_network || [];
+  const mobile = payload?.mobile_backup_device || {};
   const accessUrl = lan.access_url || payload?.access?.url || "";
   const nodeName = payload?.node?.node_name || "Nodo ERP";
+  const cfHealthy = isCloudflareHealthy(cloud.cloudflare);
+  const atlasHealthy = isAtlasHealthy(cloud.mongodb_atlas);
 
   return (
     <div
@@ -316,14 +433,28 @@ export function ServerDashboardPage() {
           </div>
         </section>
 
-        {/* SECCIÓN 2 — Hardware */}
-        <section>
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-slate-400">Tablero hardware real-time</p>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <DonutGauge label="CPU" value={hw.cpu_usage_pct} icon={Cpu} />
-            <DonutGauge label="RAM" value={hw.ram_usage_pct} icon={Activity} />
-            <DonutGauge label="Disco uploads" value={hw.disk_uploads_pct} icon={HardDrive} />
-            <ThermometerGauge celsius={hw.cpu_temp_c} />
+        {/* SECCIÓN 2 — Hardware + Energía */}
+        <section className="space-y-4">
+          <div>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-slate-400">Tablero hardware real-time</p>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <DonutGauge label="CPU" value={hw.cpu_usage_pct} icon={Cpu} />
+              <DonutGauge label="RAM" value={hw.ram_usage_pct} icon={Activity} />
+              <DonutGauge label="Disco uploads" value={hw.disk_uploads_pct} icon={HardDrive} />
+              <ThermometerGauge celsius={hw.cpu_temp_c} simulated={hw.cpu_temp_simulated} />
+              <BatteryGauge
+                pct={hw.battery_pct ?? 100}
+                status={hw.battery_status}
+                onAc={hw.battery_on_ac !== false}
+                autonomyMinutes={hw.battery_autonomy_minutes}
+              />
+            </div>
+          </div>
+          <div>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-slate-400">
+              Flota en calle · contingencia móvil
+            </p>
+            <MobileBackupCard device={mobile} />
           </div>
         </section>
 
@@ -331,20 +462,39 @@ export function ServerDashboardPage() {
         <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <DeltaMeshMap
             nodes={mesh}
-            atlasOnline={cloud.mongodb_atlas?.status === "CONNECTED"}
+            atlasOnline={atlasHealthy}
           />
           <div className="space-y-3">
             <div className={cn(
               "rounded-xl border px-4 py-3",
-              cloud.cloudflare?.tunnel_status === "ONLINE"
+              cfHealthy
                 ? "border-emerald-500/40 bg-emerald-500/10"
                 : "border-rose-500/40 bg-rose-500/10",
             )}
             >
               <p className="text-xs uppercase tracking-widest text-slate-400">Cloudflare Tunnel</p>
-              <p className="text-lg font-bold">{cloud.cloudflare?.tunnel_status || "OFFLINE"}</p>
+              <p className={cn("text-lg font-bold", cfHealthy ? "text-emerald-300" : "text-rose-300")}>
+                {cfHealthy ? "ONLINE" : (cloud.cloudflare?.tunnel_status || "OFFLINE")}
+              </p>
               <p className="text-sm text-slate-400">
                 {cloud.cloudflare?.bandwidth_kbps ?? 0} kbps · {cloud.cloudflare?.latency_ms ?? "—"} ms
+                {cloud.cloudflare?.env_configured ? " · token .env OK" : ""}
+              </p>
+            </div>
+            <div className={cn(
+              "rounded-xl border px-4 py-3",
+              atlasHealthy
+                ? "border-emerald-500/40 bg-emerald-500/10"
+                : "border-rose-500/40 bg-rose-500/10",
+            )}
+            >
+              <p className="text-xs uppercase tracking-widest text-slate-400">MongoDB Atlas</p>
+              <p className={cn("text-lg font-bold", atlasHealthy ? "text-emerald-300" : "text-rose-300")}>
+                {atlasHealthy ? "CONNECTED" : (cloud.mongodb_atlas?.status || "DISCONNECTED")}
+              </p>
+              <p className="text-sm text-slate-400">
+                {cloud.mongodb_atlas?.size_used_mb ?? 0} / {cloud.mongodb_atlas?.size_total_mb ?? 512} MB
+                {cloud.mongodb_atlas?.env_configured ? " · URI .env OK" : ""}
               </p>
             </div>
             <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">

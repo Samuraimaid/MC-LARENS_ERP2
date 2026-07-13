@@ -126,6 +126,8 @@ def get_drivers_router(db, require_auth, require_roles):
     @router.get("/portal/jobs")
     async def get_portal_jobs(request: Request, include_completed: bool = True):
         user = await require_roles(request, DRIVER_ROLES)
+        from datetime import datetime, timezone
+
         driver = await get_driver_by_user_id(db, user.user_id)
         if not driver:
             await ensure_erp_drivers(db)
@@ -140,6 +142,13 @@ def get_drivers_router(db, require_auth, require_roles):
                 driver = fallback
         if not driver:
             raise HTTPException(status_code=404, detail="Conductor no vinculado. Contacte a RRHH.")
+        try:
+            await db.erp_drivers.update_one(
+                {"driver_id": driver["driver_id"]},
+                {"$set": {"last_portal_ping_at": datetime.now(timezone.utc).isoformat()}},
+            )
+        except Exception:
+            pass
         return await list_driver_jobs(db, driver, include_completed=include_completed)
 
     @router.put("/portal/jobs/{job_id}/status")
