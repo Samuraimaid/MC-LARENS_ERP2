@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from backend.domains.deployment.appliance_cloud_config import resolve_terabox_settings
+from backend.services.terabox_sdk import clear_terabox_cache
 from backend.services.terabox_sdk import list_directory as sdk_list_directory
 from backend.services.terabox_sdk import test_connection as sdk_test_connection
 
@@ -13,6 +14,8 @@ from backend.services.terabox_sdk import test_connection as sdk_test_connection
 def test_terabox_connection(
     username: Optional[str] = None,
     password: Optional[str] = None,
+    *,
+    force: bool = False,
 ) -> Dict[str, Any]:
     if username or password:
         import os as _os
@@ -24,7 +27,12 @@ def test_terabox_connection(
         from backend.domains.deployment.appliance_cloud_config import clear_appliance_cloud_cache
 
         clear_appliance_cloud_cache()
-    return sdk_test_connection()
+        clear_terabox_cache()
+        force = True
+    result = sdk_test_connection(force=force)
+    if not force and result.get("connected"):
+        result = {**result, "from_cache": True}
+    return result
 
 
 def list_terabox_directory(remote_path: Optional[str] = None) -> Dict[str, Any]:

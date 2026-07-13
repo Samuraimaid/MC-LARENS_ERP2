@@ -214,7 +214,7 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
             await require_auth(request)
         from backend.services.terabox_overview_service import build_terabox_overview
 
-        return build_terabox_overview()
+        return build_terabox_overview(live=True)
 
     @router.get("/server-appliance/terabox/credentials")
     async def get_terabox_credentials(request: Request):
@@ -227,7 +227,12 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
 
         public = get_terabox_credentials_public()
         probe = test_terabox_connection()
-        return {**public, "connected": probe.get("connected"), "message": probe.get("message")}
+        return {
+            **public,
+            "connected": probe.get("connected"),
+            "message": probe.get("message"),
+            "cached": not probe.get("tested_at") or probe.get("from_cache", True),
+        }
 
     @router.put("/server-appliance/terabox/credentials")
     async def update_terabox_credentials(request: Request, payload: Dict[str, Any]):
@@ -275,10 +280,12 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         from backend.services.terabox_client import test_terabox_connection
 
         data = payload or {}
-        return test_terabox_connection(
-            username=str(data.get("username") or "").strip() or None,
-            password=str(data.get("password") or "").strip() or None,
-        )
+        from backend.services.terabox_client import test_terabox_connection as _test
+
+        username = str(data.get("username") or "").strip() or None
+        password = str(data.get("password") or "").strip() or None
+        force = bool(username or password)
+        return _test(username=username, password=password, force=force)
 
     @router.get("/server-appliance/terabox/files")
     async def list_terabox_files(request: Request, path: Optional[str] = None):

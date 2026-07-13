@@ -3,9 +3,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import threading
+import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from backend.domains.deployment.appliance_cloud_config import (
     resolve_terabox_credentials,
@@ -14,6 +18,32 @@ from backend.domains.deployment.appliance_cloud_config import (
 
 LOGGER = logging.getLogger(__name__)
 
+_CACHE: Dict[str, Tuple[float, Any]] = {}
+_CACHE_TTL_SEC = int(os.environ.get("TERABOX_CACHE_TTL_SEC", "180"))
+_TERABOX_LOCK = threading.Lock()
+
+
+def clear_terabox_cache() -> None:
+    _CACHE.clear()
+
+
+def get_cached_connection_status() -> Optional[Dict[str, Any]]:
+    return _cache_get("connection")
+
+
+def _cache_get(key: str) -> Optional[Any]:
+    row = _CACHE.get(key)
+    if not row:
+        return None
+    ts, value = row
+    if time.time() - ts > _CACHE_TTL_SEC:
+        return None
+    return value
+
+
+def _cache_set(key: str, value: Any) -> None:
+    _CACHE[key] = (time.time(), value)
+
 
 def _run_async(coro):
     try:
@@ -21,14 +51,15 @@ def _run_async(coro):
         if loop.is_running():
             import concurrent.futures
 
-            with concurrent.futures.ThreadPoolExecutor() as pool:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                 return pool.submit(lambda: asyncio.run(coro)).result()
         return loop.run_until_complete(coro)
     except RuntimeError:
         return asyncio.run(coro)
 
 
-async def _open_client() -> Tuple[Any, Any]:
+@asynccontextmanager
+async def _terabox_client():
     import aiohttp
     from aioterabox.api import TeraboxClient
     from aioterabox.exceptions import TeraboxLoginChallengeRequired
@@ -40,15 +71,15 @@ async def _open_client() -> Tuple[Any, Any]:
     session = aiohttp.ClientSession()
     client = TeraboxClient(email=username, password=password, session=session)
     try:
-        await client.login()
-    except TeraboxLoginChallengeRequired as exc:
-        await client.complete_login_challenge(exc.challenge)
-    return client, session
-
-
-async def _close_client(session) -> None:
-    if session and not session.closed:
-        await session.close()
+        try:
+            await client.login()
+        except TeraboxLoginChallengeRequired as exc:
+            await client.complete_login_challenge(exc.challenge)
+        yield client
+    finally:
+        if not session.closed:
+            await session.close()
+        await asyncio.sleep(0.05)
 
 
 async def _ensure_remote_dirs(client, remote_path: str) -> None:
@@ -85,8 +116,7 @@ def _entry_row(entry) -> Dict[str, Any]:
 
 async def test_connection_async() -> Dict[str, Any]:
     username, _password = resolve_terabox_credentials()
-    client, session = await _open_client()
-    try:
+    async with _terabox_client() as client:
         await client.ensure_logged_in()
         quota = await client.get_storage_quota()
         return {
@@ -97,25 +127,19 @@ async def test_connection_async() -> Dict[str, Any]:
             "remote_total_bytes": int(quota.get("total") or 0),
             "tested_at": datetime.now(timezone.utc).isoformat(),
         }
-    finally:
-        await _close_client(session)
 
 
 async def get_quota_async() -> Dict[str, Any]:
-    client, session = await _open_client()
-    try:
+    async with _terabox_client() as client:
         await client.ensure_logged_in()
         return await client.get_storage_quota()
-    finally:
-        await _close_client(session)
 
 
 async def list_directory_async(remote_path: Optional[str] = None) -> Dict[str, Any]:
     settings = resolve_terabox_settings()
     directory = "/" + str(remote_path or settings.get("root_folder") or "/MCLarensERP").strip("/")
 
-    client, session = await _open_client()
-    try:
+    async with _terabox_client() as client:
         await client.ensure_logged_in()
         entries = await client.list_remote_directory(directory)
         return {
@@ -125,8 +149,6 @@ async def list_directory_async(remote_path: Optional[str] = None) -> Dict[str, A
             "message": "Listado remoto TeraBox",
             "source": "remote",
         }
-    finally:
-        await _close_client(session)
 
 
 async def upload_file_async(local_path: str, remote_path: str) -> Dict[str, Any]:
@@ -135,8 +157,7 @@ async def upload_file_async(local_path: str, remote_path: str) -> Dict[str, Any]
         raise FileNotFoundError(f"Archivo no encontrado: {archive}")
 
     destination = "/" + str(remote_path).strip("/")
-    client, session = await _open_client()
-    try:
+    async with _terabox_client() as client:
         await client.ensure_logged_in()
         await _ensure_remote_dirs(client, destination)
         result = await client.upload_file(str(archive), destination)
@@ -146,13 +167,26 @@ async def upload_file_async(local_path: str, remote_path: str) -> Dict[str, Any]
             "fs_id": result.get("fs_id"),
             "message": f"Subido a TeraBox: {destination}",
         }
-    finally:
-        await _close_client(session)
 
 
-def test_connection() -> Dict[str, Any]:
+def _cached_call(key: str, coro_factory, *, force: bool = False) -> Any:
+    if not force:
+        cached = _cache_get(key)
+        if cached is not None:
+            return cached
+    with _TERABOX_LOCK:
+        if not force:
+            cached = _cache_get(key)
+            if cached is not None:
+                return cached
+        result = _run_async(coro_factory())
+        _cache_set(key, result)
+        return result
+
+
+def test_connection(*, force: bool = False) -> Dict[str, Any]:
     try:
-        return _run_async(test_connection_async())
+        return _cached_call("connection", test_connection_async, force=force)
     except Exception as exc:
         username, _ = resolve_terabox_credentials()
         return {
@@ -163,12 +197,24 @@ def test_connection() -> Dict[str, Any]:
         }
 
 
-def list_directory(remote_path: Optional[str] = None) -> Dict[str, Any]:
+def list_directory(remote_path: Optional[str] = None, *, force: bool = False) -> Dict[str, Any]:
+    settings = resolve_terabox_settings()
+    directory = "/" + str(remote_path or settings.get("root_folder") or "/MCLarensERP").strip("/")
+    cache_key = f"list:{directory}"
     try:
-        return _run_async(list_directory_async(remote_path))
+        if not force:
+            cached = _cache_get(cache_key)
+            if cached is not None:
+                return cached
+        with _TERABOX_LOCK:
+            if not force:
+                cached = _cache_get(cache_key)
+                if cached is not None:
+                    return cached
+            result = _run_async(list_directory_async(directory))
+            _cache_set(cache_key, result)
+            return result
     except Exception as exc:
-        settings = resolve_terabox_settings()
-        directory = "/" + str(remote_path or settings.get("root_folder") or "/MCLarensERP").strip("/")
         return {
             "connected": False,
             "path": directory,
@@ -180,8 +226,12 @@ def list_directory(remote_path: Optional[str] = None) -> Dict[str, Any]:
 
 
 def upload_file(local_path: str, remote_path: str) -> Dict[str, Any]:
-    return _run_async(upload_file_async(local_path, remote_path))
+    result = _run_async(upload_file_async(local_path, remote_path))
+    clear_terabox_cache()
+    list_cache_key = f"list:{str(Path(remote_path).parent).replace(chr(92), '/')}"
+    _CACHE.pop(list_cache_key, None)
+    return result
 
 
-def get_quota() -> Dict[str, Any]:
-    return _run_async(get_quota_async())
+def get_quota(*, force: bool = False) -> Dict[str, Any]:
+    return _cached_call("quota", get_quota_async, force=force)

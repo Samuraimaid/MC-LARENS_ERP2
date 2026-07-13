@@ -151,6 +151,12 @@ def write_appliance_cloud_values(updates: Dict[str, str]) -> Path:
         lines.append(f"{key}={merged[key]}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     clear_appliance_cloud_cache()
+    try:
+        from backend.services.terabox_sdk import clear_terabox_cache
+
+        clear_terabox_cache()
+    except Exception:
+        pass
     for key, value in merged.items():
         os.environ[key] = value
     return path

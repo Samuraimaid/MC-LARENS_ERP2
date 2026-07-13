@@ -400,7 +400,7 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
     try {
       const response = await axios.get(buildApiUrl("/server-appliance/terabox/credentials"), {
         withCredentials: true,
-        timeout: 12000,
+        timeout: 25000,
       });
       setCreds(response.data);
       setCredsError("");
@@ -442,7 +442,10 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
   }, []);
 
   useEffect(() => {
-    loadCredentials();
+    const timer = window.setTimeout(() => {
+      loadCredentials();
+    }, 2500);
+    return () => window.clearTimeout(timer);
   }, [loadCredentials]);
 
   useEffect(() => {

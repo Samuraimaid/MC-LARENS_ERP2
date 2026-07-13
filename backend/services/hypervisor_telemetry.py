@@ -652,7 +652,9 @@ async def build_hypervisor_dashboard(db) -> Dict[str, Any]:
         terabox_raw = read_terabox_status()
     except Exception:
         terabox_raw = {}
-    terabox_overview = build_terabox_overview()
+    import asyncio
+
+    terabox_overview = await asyncio.to_thread(lambda: build_terabox_overview(live=False))
     terabox_user, terabox_pass = resolve_terabox_credentials()
     terabox_configured = bool(terabox_user and terabox_pass)
 

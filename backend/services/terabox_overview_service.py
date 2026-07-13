@@ -1,4 +1,4 @@
-"""TeraBox cloud quota overview — HTTP client simulation + local footprint."""
+"""TeraBox cloud quota overview — cached remote status + local footprint."""
 from __future__ import annotations
 
 import os
@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
-from backend.services.terabox_sdk import get_quota, test_connection
+from backend.services.terabox_backup_service import read_terabox_status
+from backend.services.terabox_sdk import get_cached_connection_status
 
 TERABOX_TOTAL_BYTES = 1_099_511_627_776  # 1 TB
 REQUIRED_FOLDERS = ("/productos", "/evidencias_taller", "/backups_sistema")
@@ -76,9 +77,11 @@ def _folder_rows(root_folder: str, used_bytes: int) -> List[Dict[str, Any]]:
     return rows
 
 
-def build_terabox_overview() -> Dict[str, Any]:
+def build_terabox_overview(*, live: bool = False) -> Dict[str, Any]:
+    """Build TeraBox overview. Dashboard uses cached data (live=False) to stay fast."""
     username, password = resolve_terabox_credentials()
     root_folder = (os.environ.get("TERABOX_ROOT_FOLDER") or "/MCLarensERP").strip() or "/MCLarensERP"
+    raw_status = read_terabox_status()
 
     used_local = _local_used_bytes()
     used_remote: int | None = None
@@ -86,17 +89,28 @@ def build_terabox_overview() -> Dict[str, Any]:
     message = "Modo estimado por volcados locales"
 
     if username and password:
-        probe = test_connection()
-        connected = bool(probe.get("connected"))
-        if connected:
-            try:
-                quota = get_quota()
-                used_remote = int(quota.get("used") or probe.get("remote_used_bytes") or 0)
-            except Exception:
-                used_remote = int(probe.get("remote_used_bytes") or 0)
-            message = probe.get("message") or "Sesión TeraBox activa"
+        if live:
+            from backend.services.terabox_sdk import test_connection
+
+            probe = test_connection(force=True)
         else:
-            message = probe.get("message") or "Credenciales TeraBox configuradas — login no confirmado"
+            probe = get_cached_connection_status()
+            if probe is None:
+                connected = bool(raw_status.get("connected")) or raw_status.get("last_upload_status") == "success"
+                used_remote = int(raw_status.get("space_used_bytes") or 0) or None
+                message = (
+                    raw_status.get("message")
+                    or ("Último respaldo remoto OK" if connected else "Credenciales configuradas — estado en caché")
+                )
+                probe = None
+
+        if probe is not None:
+            connected = bool(probe.get("connected"))
+            if connected:
+                used_remote = int(probe.get("remote_used_bytes") or raw_status.get("space_used_bytes") or 0)
+                message = probe.get("message") or "Sesión TeraBox activa"
+            else:
+                message = probe.get("message") or "Credenciales TeraBox configuradas — login no confirmado"
 
     used_bytes = int(used_remote if used_remote is not None else used_local)
     available_bytes = max(0, TERABOX_TOTAL_BYTES - used_bytes)
@@ -112,4 +126,5 @@ def build_terabox_overview() -> Dict[str, Any]:
         "folders": _folder_rows(root_folder, used_bytes),
         "message": message,
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "cache_mode": not live,
     }
