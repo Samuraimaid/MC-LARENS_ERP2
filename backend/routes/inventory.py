@@ -1155,7 +1155,7 @@ def get_inventory_router(
         background_tasks: BackgroundTasks,
     ):
         """Dispatch approved transfer: deduct origin stock and mark as in transit."""
-        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "transporte", "entregador"])
 
         transfer_req = await _load_transfer_request_or_404(request_id)
         if transfer_req["status"] != "approved":
@@ -1252,7 +1252,7 @@ def get_inventory_router(
         background_tasks: BackgroundTasks,
     ):
         """Receive in-transit transfer: increment destination stock and finalize."""
-        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+        user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "transporte", "entregador"])
 
         transfer_req = await _load_transfer_request_or_404(request_id)
         if transfer_req["status"] != "shipped":

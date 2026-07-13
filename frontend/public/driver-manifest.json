@@ -1,0 +1,17 @@
+{
+  "name": "MC-LARENS Conductor",
+  "short_name": "Conductor",
+  "description": "Portal móvil de entregas y traslados MC-LARENS ERP",
+  "start_url": "/driver",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

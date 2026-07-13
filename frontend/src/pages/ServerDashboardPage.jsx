@@ -194,6 +194,20 @@ export function ServerDashboardPage() {
                     : `Libre ${Math.round((metrics.disk_usb?.free_bytes || 0) / (1024 ** 3))} GB`
                 }
               />
+              <StatusLight
+                label="TeraBox Cold Backup"
+                healthy={delta.terabox?.connected === true && delta.terabox?.last_upload_status === "success"}
+                detail={delta.terabox?.indicator || "Sin datos TeraBox"}
+              />
+              <StatusLight
+                label="Modo Emergencia Standby"
+                healthy={!delta.emergency_standby?.active}
+                detail={
+                  delta.emergency_standby?.active
+                    ? `Absorbiendo ${delta.emergency_standby?.emergency_host_for}`
+                    : "Operación normal por sucursal local"
+                }
+              />
               {(delta.hardware_alerts || []).length > 0 ? (
                 <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-4 text-rose-100">
                   <p className="font-semibold uppercase tracking-[0.2em]">Alertas hardware</p>

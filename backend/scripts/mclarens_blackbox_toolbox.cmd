@@ -897,7 +897,9 @@ echo %CYAN%+======================+======================+======================
 echo %CYAN%^|%RST% %GRN%Op.1%RST% Git                %CYAN%^|%RST% %GRN%Op.5%RST% Clonar Repo        %CYAN%^|%RST% %GRN%Op.9%RST%  Respaldo USB          %CYAN%^|%RST%
 echo %CYAN%^|%RST% %GRN%Op.2%RST% Docker             %CYAN%^|%RST% %GRN%Op.6%RST% Casa Matriz        %CYAN%^|%RST% %GRN%Op.10%RST% Daemon Beep          %CYAN%^|%RST%
 echo %CYAN%^|%RST% %GRN%Op.3%RST% Escaner IP         %CYAN%^|%RST% %GRN%Op.7%RST% Bodega Pura        %CYAN%^|%RST% %GRN%Op.11%RST% Suite Caos QA        %CYAN%^|%RST%
-echo %CYAN%^|%RST% %GRN%Op.4%RST% Tareas 03:00       %CYAN%^|%RST% %GRN%Op.8%RST% Kiosk y QR ASCII   %CYAN%^|%RST% %RED%Op.99%RST% Apagar/Reiniciar     %CYAN%^|%RST%
+echo %CYAN%^|%RST% %GRN%Op.4%RST% Tareas 03:00       %CYAN%^|%RST% %GRN%Op.8%RST% Kiosk y QR ASCII   %CYAN%^|%RST% %RED%Op.12%RST% Modo Emergencia    %CYAN%^|%RST%
+echo %CYAN%^|%RST% %DIM%[CLOUDBACKUP]%RST% TeraBox semaforo en dashboard / backup nocturno                  %CYAN%^|%RST%
+echo %CYAN%^|%RST% %RED%Op.99%RST% Apagar/Reiniciar stack Docker                                  %CYAN%^|%RST%
 echo %CYAN%+======================+======================+==============================+%RST%
 echo.
 goto :eof
@@ -929,6 +931,7 @@ if "%MENU_CHOICE%"=="8" goto OPT_KIOSK
 if "%MENU_CHOICE%"=="9" goto OPT_BACKUP_USB
 if "%MENU_CHOICE%"=="10" goto OPT_BEEP_DAEMON
 if "%MENU_CHOICE%"=="11" goto OPT_CHAOS_SUITE
+if "%MENU_CHOICE%"=="12" goto OPT_EMERGENCY_STANDBY
 if "%MENU_CHOICE%"=="99" goto OPT_STACK_CONTROL
 echo %RED%Opcion invalida.%RST%
 ping -n 2 127.0.0.1 >nul
@@ -1314,6 +1317,37 @@ if errorlevel 1 (
     echo %GRN%OK%RST% Suite de caos completada.
     call :BEEP_OK
 )
+call :WAIT_KEY
+goto MAIN_MENU
+
+rem --- [12] Modo Emergencia Standby ---
+:OPT_EMERGENCY_STANDBY
+cls
+echo %RED%=== Op.12 ACTIVAR MODO EMERGENCIA / SUCURSAL CAIDA ===%RST%
+echo %DIM%La tienda principal absorbe operaciones de una sucursal sin electricidad via Atlas.%RST%
+echo.
+set "EMERGENCY_BRANCH="
+set /p "EMERGENCY_BRANCH=Sucursal caida (branch_main / branch_north / branch_south): "
+if "!EMERGENCY_BRANCH!"=="" goto MAIN_MENU
+if not exist "%REPO_ROOT%\.env" (
+    echo EMERGENCY_HOST_FOR=!EMERGENCY_BRANCH!>>"%REPO_ROOT%\.env"
+) else (
+    findstr /b /i "EMERGENCY_HOST_FOR=" "%REPO_ROOT%\.env" >nul 2>&1
+    if errorlevel 1 (
+        echo EMERGENCY_HOST_FOR=!EMERGENCY_BRANCH!>>"%REPO_ROOT%\.env"
+    ) else (
+        powershell -NoProfile -Command ^
+          "$p='%REPO_ROOT%\.env'; $bid='!EMERGENCY_BRANCH!';" ^
+          "$lines=Get-Content $p;" ^
+          "$out=@(); foreach($line in $lines){ if($line -match '^EMERGENCY_HOST_FOR='){ $out += 'EMERGENCY_HOST_FOR='+$bid } else { $out += $line } };" ^
+          "if(-not ($out -match '^EMERGENCY_HOST_FOR=')){ $out += 'EMERGENCY_HOST_FOR='+$bid };" ^
+          "Set-Content -Path $p -Value $out -Encoding UTF8" >nul 2>&1
+    )
+)
+echo %GRN%OK%RST% EMERGENCY_HOST_FOR=!EMERGENCY_BRANCH! inyectado en .env
+echo %YLW%INFO%RST% Reinicie el stack: docker compose up -d --build
+call :LOG "Emergency standby enabled for !EMERGENCY_BRANCH!"
+call :BEEP_OK
 call :WAIT_KEY
 goto MAIN_MENU
 

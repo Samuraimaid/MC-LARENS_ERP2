@@ -53,7 +53,7 @@ export function getRoleHomePath(role) {
   if (normalized === "coordinador_instalaciones") return "/coordinator/instalaciones";
   if (normalized === "coordinador_polarizados") return "/coordinator/polarizados";
   if (normalized === "bodegas" || normalized === "jefe_tienda") return "/dispatch";
-  if (normalized === "transporte") return "/deliveries";
+  if (normalized === "transporte" || normalized === "entregador") return "/driver";
   return "/workbench";
 }
 

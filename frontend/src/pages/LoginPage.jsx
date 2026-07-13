@@ -358,7 +358,8 @@ export function LoginPage() {
       ]).catch(() => null);
 
       const loggedRole = (response.data?.user || response.data)?.role;
-      window.location.href = getRoleHomePath(loggedRole);
+      const nextPath = new URLSearchParams(window.location.search).get("next");
+      window.location.href = nextPath && nextPath.startsWith("/") ? nextPath : getRoleHomePath(loggedRole);
     } catch (error) {
       setAuthStatus("error");
       setShowResetWarning(true);

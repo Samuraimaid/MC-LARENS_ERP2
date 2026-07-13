@@ -166,6 +166,27 @@ def get_server_appliance_router(db):
             except Exception:
                 pass
 
+        terabox_status: Dict[str, Any] = {"indicator": "Sin datos TeraBox"}
+        emergency_status: Dict[str, Any] = {"active": False}
+        try:
+            from backend.services.terabox_backup_service import format_terabox_indicator, read_terabox_status
+
+            terabox_raw = read_terabox_status()
+            terabox_status = {**terabox_raw, "indicator": format_terabox_indicator(terabox_raw)}
+        except Exception:
+            pass
+        try:
+            from backend.middlewares.emergency_standby import resolve_emergency_host_for
+
+            host_for = resolve_emergency_host_for()
+            emergency_status = {
+                "active": bool(host_for),
+                "emergency_host_for": host_for,
+                "public_url": os.environ.get("PUBLIC_TUNNEL_URL_MAIN", "https://mclarenerp.com"),
+            }
+        except Exception:
+            pass
+
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "node": profile,
@@ -189,6 +210,8 @@ def get_server_appliance_router(db):
                 "mongodb_atlas": atlas_stats,
                 "hardware_alerts": get_active_alerts(),
                 "last_hardware_scan": get_last_scan_at(),
+                "terabox": terabox_status,
+                "emergency_standby": emergency_status,
             },
         }
 

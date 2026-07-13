@@ -76,6 +76,10 @@ services:
       - PUBLIC_TUNNEL_URL_SOUTH=${PUBLIC_TUNNEL_URL_SOUTH:-https://south.mclarenerp.com}
       - BACKUP_INTERNAL_ROOT=/app/backups
       - USB_BACKUP_ROOT=/mnt/usb_backup
+      - TERABOX_USERNAME=${TERABOX_USERNAME:-}
+      - TERABOX_PASSWORD=${TERABOX_PASSWORD:-}
+      - TERABOX_REMOTE_FOLDER=${TERABOX_REMOTE_FOLDER:-/MCLarensERP/cold-backups}
+      - EMERGENCY_HOST_FOR=${EMERGENCY_HOST_FOR:-}
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/backups:/app/backups

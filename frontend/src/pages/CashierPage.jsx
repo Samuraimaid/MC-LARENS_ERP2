@@ -25,6 +25,8 @@ import { OperationalJobCard, getCashierUrgencyState } from "@/components/erp/Ope
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
+import { buildSaleJobId } from "@/lib/driverDispatch";
 import {
   buildDualCurrencyPagos,
   canSubmitCashierCollect,
@@ -515,6 +517,7 @@ export function CashierPage() {
   const [invoiceSearch, setInvoiceSearch] = useState("");
   const [voucherScanInput, setVoucherScanInput] = useState("");
   const [collectDialogOpen, setCollectDialogOpen] = useState(false);
+  const [deliveryDispatchJobId, setDeliveryDispatchJobId] = useState("");
   const [collectDialogSale, setCollectDialogSale] = useState(null);
   const voucherScanRef = useRef(null);
   const [invoiceRows, setInvoiceRows] = useState([]);
@@ -1460,6 +1463,9 @@ export function CashierPage() {
           : successMessage,
       );
       await printInvoiceAfterCollect(sale, response.data);
+      if (sale?.delivery_info?.is_delivery || sale?.delivery_required) {
+        setDeliveryDispatchJobId(buildSaleJobId(sale.sale_id));
+      }
       setCollectDialogOpen(false);
       setCollectDialogSale(null);
       prefillCollectSaleRef.current = "";
@@ -1777,6 +1783,18 @@ export function CashierPage() {
           ) : null}
         </div>
       </div>
+
+      {deliveryDispatchJobId ? (
+        <Card className="border-emerald-300 bg-emerald-50/70">
+          <CardContent className="py-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-emerald-900">Entrega cobrada — notifique al conductor por WhatsApp</p>
+            <div className="flex gap-2">
+              <DriverWhatsAppDispatchButton jobId={deliveryDispatchJobId} />
+              <Button size="sm" variant="ghost" onClick={() => setDeliveryDispatchJobId("")}>Cerrar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {!isSessionOpenedHere && (
         <Card className="border-amber-300 bg-amber-50">

@@ -22,6 +22,8 @@ import {
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
+import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
+import { buildTransferJobId } from "@/lib/driverDispatch";
 
 export function InventoryPage() {
   const { hasPermission, user } = useAuth();
@@ -2154,9 +2156,10 @@ export function InventoryPage() {
                         {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
                       </div>
                       {canApproveTransfers ? (
-                        <div className="flex gap-2 pt-1">
+                        <div className="flex flex-wrap gap-2 pt-1">
                           <Button size="sm" onClick={() => approveTransferRequest(req.request_id)}>Aprobar</Button>
                           <Button size="sm" variant="outline" onClick={() => rejectTransferRequest(req.request_id)}>Rechazar</Button>
+                          <DriverWhatsAppDispatchButton jobId={buildTransferJobId(req.request_id)} label="Despachar por WhatsApp" />
                         </div>
                       ) : null}
                     </div>
@@ -2186,10 +2189,13 @@ export function InventoryPage() {
                         {getWarehouseLabelById(req.from_warehouse_id)} → {getWarehouseLabelById(req.to_warehouse_id)} · cant. {req.quantity}
                       </div>
                       {canShipTransfer(req) ? (
-                        <Button size="sm" className="mt-1" onClick={() => shipTransferRequest(req.request_id)}>
-                          <Truck className="h-4 w-4 mr-1" />
-                          Despachar
-                        </Button>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <Button size="sm" onClick={() => shipTransferRequest(req.request_id)}>
+                            <Truck className="h-4 w-4 mr-1" />
+                            Despachar
+                          </Button>
+                          <DriverWhatsAppDispatchButton jobId={buildTransferJobId(req.request_id)} label="Despachar por WhatsApp" />
+                        </div>
                       ) : null}
                     </div>
                   ))

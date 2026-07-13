@@ -53,4 +53,16 @@ cp "${INTERNAL_ROOT}/${ARCHIVE_NAME}" "${USB_ROOT}/${ARCHIVE_NAME}"
 
 echo "[backup] Copia interna: ${INTERNAL_ROOT}/${ARCHIVE_NAME}"
 echo "[backup] Copia USB:     ${USB_ROOT}/${ARCHIVE_NAME}"
+
+ARCHIVE_PATH="${INTERNAL_ROOT}/${ARCHIVE_NAME}"
+if command -v python3 >/dev/null 2>&1; then
+  echo "[backup] Iniciando subida TeraBox en segundo plano..."
+  nohup python3 /app/backend/scripts/upload_terabox_backup.py "${ARCHIVE_PATH}" >> "${INTERNAL_ROOT}/terabox_upload.log" 2>&1 &
+elif command -v python >/dev/null 2>&1; then
+  echo "[backup] Iniciando subida TeraBox en segundo plano..."
+  nohup python /app/backend/scripts/upload_terabox_backup.py "${ARCHIVE_PATH}" >> "${INTERNAL_ROOT}/terabox_upload.log" 2>&1 &
+else
+  echo "[backup] WARN: Python no disponible; subida TeraBox omitida"
+fi
+
 echo "[backup] Completado."

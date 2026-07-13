@@ -46,6 +46,8 @@ REQUIRED_PATTERNS = (
     r":DETECT_CASA_MATRIZ_TOPOLOGY",
     r":REGISTER_CASA_MATRIZ_CENTRAL",
     r"detect_casa_matriz_topology\.py",
+    r":OPT_EMERGENCY_STANDBY",
+    r"EMERGENCY_HOST_FOR",
     r"register_casa_matriz_central\.py",
     r"detect_lan_casa_matriz.ps1",
     r":WZ_RENDER_DUAL_BARS",

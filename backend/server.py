@@ -792,6 +792,8 @@ PERMISSION_ENFORCEMENT_EXEMPT_PREFIXES = [
     "/api/currencies/",
     "/api/drafts/",
     "/api/server-appliance/",
+    "/api/hr/drivers/deep-link/",
+    "/api/emergency/",
 ]
 
 SESSION_LOCK_EXEMPT_PATHS = {
@@ -22079,6 +22081,16 @@ human_resources_router = get_human_resources_router(
 )
 api_router.include_router(human_resources_router)
 
+from backend.routes.drivers import get_drivers_router
+
+drivers_router = get_drivers_router(db, require_auth, require_roles)
+api_router.include_router(drivers_router)
+
+from backend.routes.emergency import get_emergency_router
+
+emergency_router = get_emergency_router(db, require_roles)
+api_router.include_router(emergency_router)
+
 from backend.routes.petty_cash_accounting import get_petty_cash_accounting_router
 
 petty_cash_accounting_router = get_petty_cash_accounting_router(
@@ -22128,6 +22140,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from backend.middlewares.emergency_standby import EmergencyStandbyMiddleware
+
+app.add_middleware(EmergencyStandbyMiddleware)
 
 
 frontend_build_dir = ROOT_DIR.parent / "frontend" / "build"
