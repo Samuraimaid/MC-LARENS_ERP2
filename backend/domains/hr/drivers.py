@@ -11,6 +11,7 @@ TOKEN_COLLECTION = "erp_driver_auth_tokens"
 
 DRIVER_TYPES = frozenset({"delivery_last_mile", "inter_branch_haul"})
 DRIVER_STATUSES = frozenset({"disponible", "en_ruta", "fuera_turno"})
+TRANSPORT_USER_ROLES = frozenset({"transporte", "entregador"})
 
 JOB_TYPES = frozenset({"delivery_sale", "transfer_request"})
 
@@ -152,6 +153,139 @@ async def get_driver_by_user_id(db, user_id: str) -> Optional[Dict[str, Any]]:
         return None
     await ensure_erp_drivers(db)
     return await db[DRIVER_COLLECTION].find_one({"user_id": user_id}, {"_id": 0})
+
+
+class DriverValidationError(ValueError):
+    """Raised when driver create/update payload fails validation."""
+
+
+def _slug_driver_id(user_id: str) -> str:
+    raw = str(user_id or "").strip().lower()
+    if raw.startswith("user_"):
+        return f"drv_{raw[5:]}"
+    safe = "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in raw)
+    return f"drv_{safe or 'conductor'}"
+
+
+async def _validate_transport_user(db, user_id: str) -> Dict[str, Any]:
+    uid = str(user_id or "").strip()
+    if not uid:
+        raise DriverValidationError("user_id requerido")
+    user = await db.users.find_one({"user_id": uid}, {"_id": 0, "user_id": 1, "role": 1, "name": 1, "last_name": 1, "branch_id": 1})
+    if not user:
+        raise DriverValidationError("Usuario no encontrado")
+    role = str(user.get("role") or "").strip().lower()
+    if role not in TRANSPORT_USER_ROLES:
+        raise DriverValidationError("El usuario debe tener rol transporte o entregador")
+    return user
+
+
+async def _ensure_user_not_linked(db, user_id: str, *, exclude_driver_id: Optional[str] = None) -> None:
+    existing = await get_driver_by_user_id(db, user_id)
+    if existing and str(existing.get("driver_id")) != str(exclude_driver_id or ""):
+        raise DriverValidationError("El usuario ya está vinculado a otro conductor")
+
+
+async def create_driver(db, payload: Dict[str, Any]) -> Dict[str, Any]:
+    await ensure_erp_drivers(db)
+    data = payload or {}
+    user = await _validate_transport_user(db, data.get("user_id"))
+    user_id = str(user["user_id"])
+    await _ensure_user_not_linked(db, user_id)
+
+    driver_type = normalize_driver_type(data.get("driver_type"))
+    branch_id = str(data.get("branch_id") or user.get("branch_id") or "").strip()
+    if not branch_id:
+        raise DriverValidationError("branch_id requerido")
+
+    phone = normalize_phone(data.get("phone"))
+    if not phone:
+        raise DriverValidationError("Teléfono celular requerido (+505...)")
+
+    vehicle_plate = str(data.get("vehicle_plate") or "").strip()
+    if not vehicle_plate:
+        raise DriverValidationError("Placa del vehículo requerida")
+
+    driver_id = str(data.get("driver_id") or "").strip() or _slug_driver_id(user_id)
+    if await get_driver(db, driver_id):
+        raise DriverValidationError("Ya existe un conductor con ese identificador")
+
+    name = str(data.get("name") or user.get("name") or "").strip()
+    last_name = str(data.get("last_name") or user.get("last_name") or "").strip()
+    doc = {
+        "driver_id": driver_id,
+        "driver_type": driver_type,
+        "name": name,
+        "last_name": last_name,
+        "branch_id": branch_id,
+        "phone": phone,
+        "vehicle_plate": vehicle_plate,
+        "status": normalize_driver_status(data.get("status")),
+        "user_id": user_id,
+        "active_job_id": None,
+        "created_at": _now_iso(),
+        "updated_at": _now_iso(),
+    }
+    await db[DRIVER_COLLECTION].insert_one(doc)
+    doc["status_label"] = STATUS_LABELS_ES.get(doc["status"], doc["status"])
+    return doc
+
+
+async def update_driver(db, driver_id: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    await ensure_erp_drivers(db)
+    existing = await get_driver(db, driver_id)
+    if not existing:
+        return None
+
+    data = payload or {}
+    patch: Dict[str, Any] = {"updated_at": _now_iso()}
+
+    if "user_id" in data:
+        user_id = str(data.get("user_id") or "").strip()
+        if user_id:
+            await _validate_transport_user(db, user_id)
+            await _ensure_user_not_linked(db, user_id, exclude_driver_id=driver_id)
+            patch["user_id"] = user_id
+        else:
+            patch["user_id"] = None
+
+    if "driver_type" in data:
+        patch["driver_type"] = normalize_driver_type(data.get("driver_type"))
+
+    if "branch_id" in data:
+        branch_id = str(data.get("branch_id") or "").strip()
+        if not branch_id:
+            raise DriverValidationError("branch_id requerido")
+        patch["branch_id"] = branch_id
+
+    if "phone" in data:
+        phone = normalize_phone(data.get("phone"))
+        if not phone:
+            raise DriverValidationError("Teléfono celular requerido (+505...)")
+        patch["phone"] = phone
+
+    if "vehicle_plate" in data:
+        vehicle_plate = str(data.get("vehicle_plate") or "").strip()
+        if not vehicle_plate:
+            raise DriverValidationError("Placa del vehículo requerida")
+        patch["vehicle_plate"] = vehicle_plate
+
+    if "status" in data:
+        patch["status"] = normalize_driver_status(data.get("status"))
+
+    if "name" in data:
+        patch["name"] = str(data.get("name") or "").strip()
+    if "last_name" in data:
+        patch["last_name"] = str(data.get("last_name") or "").strip()
+
+    await db[DRIVER_COLLECTION].update_one({"driver_id": driver_id}, {"$set": patch})
+    updated = await get_driver(db, driver_id)
+    if updated:
+        updated["status_label"] = STATUS_LABELS_ES.get(
+            normalize_driver_status(updated.get("status")),
+            updated.get("status"),
+        )
+    return updated
 
 
 async def assign_driver_user(db, driver_id: str, user_id: str) -> Optional[Dict[str, Any]]:

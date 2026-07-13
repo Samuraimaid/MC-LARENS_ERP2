@@ -14,6 +14,7 @@ import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { toast } from "sonner";
 import { Download, RefreshCw } from "lucide-react";
+import { DriversManagementTab } from "../components/hr/DriversManagementTab";
 
 const ROLE_LABELS = {
   gerencia: "Gerencia",
@@ -508,12 +509,13 @@ export function HumanResourcesPage() {
       )}
 
       <Tabs defaultValue={canView ? "timeclock" : "my"} className="space-y-4">
-        <TabsList className={`grid w-full ${canView ? "grid-cols-7" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full ${canView ? "grid-cols-8" : "grid-cols-1"}`}>
           {canView && (
             <>
               <TabsTrigger value="timeclock">Marcador</TabsTrigger>
               <TabsTrigger value="payroll">Nómina</TabsTrigger>
               <TabsTrigger value="personnel">Personal</TabsTrigger>
+              <TabsTrigger value="drivers">Conductores</TabsTrigger>
               <TabsTrigger value="operations">Operativos</TabsTrigger>
               <TabsTrigger value="tools">Herramientas</TabsTrigger>
               <TabsTrigger value="schedule">Auditoría 2x mes</TabsTrigger>
@@ -1002,6 +1004,18 @@ export function HumanResourcesPage() {
             </CardContent>
           </Card>
         </TabsContent>}
+
+        {canView && (
+          <TabsContent value="drivers" className="space-y-4">
+            <DriversManagementTab
+              users={users}
+              branches={branches}
+              canEdit={canEdit}
+              getUserLabel={getUserLabel}
+              getBranchLabel={getBranchLabel}
+            />
+          </TabsContent>
+        )}
 
         {canView && <TabsContent value="operations" className="space-y-4">
           <Card>

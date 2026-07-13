@@ -9,6 +9,7 @@ from backend.domains.hr.drivers import (
     normalize_driver_type,
     normalize_phone,
     _parse_job_id,
+    _slug_driver_id,
 )
 
 
@@ -25,6 +26,11 @@ def test_normalize_driver_status_aliases():
 def test_normalize_phone_nicaragua():
     assert normalize_phone("8888-1201") == "+50588881201"
     assert normalize_phone("+50588881201") == "+50588881201"
+
+
+def test_slug_driver_id_from_user():
+    assert _slug_driver_id("user_oscar_membreno") == "drv_oscar_membreno"
+    assert _slug_driver_id("transporte_norte").startswith("drv_")
 
 
 def test_build_and_parse_job_id():

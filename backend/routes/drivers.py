@@ -7,8 +7,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from backend.domains.hr.drivers import (
+    DriverValidationError,
     assign_driver_user,
     consume_driver_auth_token,
+    create_driver,
     create_driver_auth_token,
     ensure_erp_drivers,
     get_driver,
@@ -20,6 +22,7 @@ from backend.domains.hr.drivers import (
     resolve_driver_auth_token,
     set_driver_status,
     update_delivery_job_status,
+    update_driver,
     update_transfer_job_status,
 )
 
@@ -29,6 +32,7 @@ def get_drivers_router(db, require_auth, require_roles):
 
     STAFF_ROLES = ["gerencia", "supervisor", "cajero", "ventas", "bodegas", "jefe_tienda", "programador"]
     DRIVER_ROLES = ["transporte", "entregador", "gerencia", "supervisor"]
+    HR_DRIVER_ROLES = ["gerencia", "recursos_humanos", "supervisor", "programador"]
 
     def _public_tunnel_base() -> str:
         return (
@@ -43,8 +47,28 @@ def get_drivers_router(db, require_auth, require_roles):
         branch_id: Optional[str] = None,
         driver_type: Optional[str] = None,
     ):
-        await require_roles(request, STAFF_ROLES + DRIVER_ROLES)
+        await require_roles(request, STAFF_ROLES + DRIVER_ROLES + HR_DRIVER_ROLES)
         return {"drivers": await list_drivers(db, branch_id=branch_id, driver_type=driver_type)}
+
+    @router.post("")
+    async def create_erp_driver(request: Request, payload: Dict[str, Any]):
+        await require_roles(request, HR_DRIVER_ROLES)
+        try:
+            driver = await create_driver(db, payload or {})
+        except DriverValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"message": "Conductor registrado", "driver": driver}
+
+    @router.put("/{driver_id}")
+    async def update_erp_driver(driver_id: str, request: Request, payload: Dict[str, Any]):
+        await require_roles(request, HR_DRIVER_ROLES)
+        try:
+            updated = await update_driver(db, driver_id, payload or {})
+        except DriverValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if not updated:
+            raise HTTPException(status_code=404, detail="Conductor no encontrado")
+        return {"message": "Conductor actualizado", "driver": updated}
 
     @router.get("/auth-token/{job_id}")
     async def generate_driver_auth_token(job_id: str, request: Request):
