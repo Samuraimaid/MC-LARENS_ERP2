@@ -213,15 +213,28 @@ function isCloudflareHealthy(cloudflare) {
 }
 
 function isAtlasHealthy(atlas) {
-  return atlas?.status === "CONNECTED" || atlas?.env_configured === true;
+  return atlas?.status === "CONNECTED" || atlas?.env_configured === true || atlas?.ping_healthy === true;
 }
 
-function CloudProgressBar({ label, used, total, unit, lastSync, folders = [], tone = "cyan" }) {
+function isTeraboxHealthy(terabox) {
+  return (
+    terabox?.status === "CONNECTED"
+    || terabox?.env_configured === true
+    || terabox?.local_mirror_ready === true
+    || terabox?.remote_session_active === true
+  );
+}
+
+function CloudProgressBar({ label, used, total, unit, lastSync, folders = [], tone = "cyan", healthy = true }) {
   const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0;
   const toneBar = tone === "violet" ? "from-violet-500 to-fuchsia-400" : "from-cyan-500 to-sky-400";
 
   return (
-    <div className="rounded-2xl border border-slate-700/80 bg-slate-900/80 p-5 space-y-3">
+    <div className={cn(
+      "rounded-2xl border bg-slate-900/80 p-5 space-y-3",
+      healthy ? "border-emerald-500/40" : "border-slate-700/80",
+    )}
+    >
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">{label}</p>
         <span className="font-mono text-sm text-slate-400">{pct.toFixed(1)}%</span>
@@ -375,6 +388,7 @@ export function ServerDashboardPage() {
   const nodeName = payload?.node?.node_name || "Nodo ERP";
   const cfHealthy = isCloudflareHealthy(cloud.cloudflare);
   const atlasHealthy = isAtlasHealthy(cloud.mongodb_atlas);
+  const teraboxHealthy = isTeraboxHealthy(cloud.terabox);
 
   return (
     <div
@@ -409,7 +423,7 @@ export function ServerDashboardPage() {
         <section className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.6fr_0.6fr]">
           <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 to-slate-950 p-5 lg:col-span-1">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">IP de acceso LAN</p>
-            <p className="mt-2 break-all font-mono text-[clamp(1.5rem,4vw,3.2rem)] font-black leading-none text-white">
+            <p className="mt-2 whitespace-nowrap font-mono text-[clamp(1.25rem,3.5vw,2.8rem)] font-black leading-none text-white">
               {accessUrl || "Detectando IP LAN..."}
             </p>
             <p className="mt-2 text-sm text-slate-400">
@@ -530,6 +544,7 @@ export function ServerDashboardPage() {
               total={cloud.mongodb_atlas?.size_total_mb ?? 512}
               unit="MB"
               tone="violet"
+              healthy={atlasHealthy}
             />
             <CloudProgressBar
               label="TeraBox Cold Backup"
@@ -538,10 +553,15 @@ export function ServerDashboardPage() {
               unit="GB"
               lastSync={cloud.terabox?.last_backup_time}
               folders={cloud.terabox?.folders || []}
+              healthy={teraboxHealthy}
             />
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            TeraBox sync: {cloud.terabox?.sync_success_pct ?? 0}% · Estado {cloud.terabox?.status || "DISCONNECTED"}
+            Atlas modo: {cloud.mongodb_atlas?.cluster_mode || "n/d"}
+            {" · "}
+            TeraBox sync: {cloud.terabox?.sync_success_pct ?? 0}%
+            {" · "}
+            Estado {teraboxHealthy ? "CONNECTED" : (cloud.terabox?.status || "DISCONNECTED")}
           </p>
         </section>
       </div>

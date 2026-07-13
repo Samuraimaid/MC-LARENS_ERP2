@@ -92,6 +92,7 @@ services:
       - ./frontend/src/data/vehicleCatalog.json:/app/backend/data/vehicleCatalog.json
       - ./backend/data/vehicle-descriptor-types.json:/app/backend/data/vehicle-descriptor-types.json
       - ./backend/data/host_lan_ip.txt:/app/backend/data/host_lan_ip.txt
+      - ./backend/data/appliance_cloud.env:/app/backend/data/appliance_cloud.env
       - ./backend/data/vehicle-catalog-history:/app/backend/data/vehicle-catalog-history
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/', timeout=5)"]

@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
+
 STATUS_FILENAME = "terabox_status.json"
 RETENTION_DAYS = 30
 TERABOX_FREE_BYTES = 1024 * 1024 * 1024 * 1024  # 1 TB
@@ -103,8 +105,7 @@ async def _terabox_upload_file(client: httpx.AsyncClient, archive: Path, remote_
 
 
 async def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
-    username = (os.environ.get("TERABOX_USERNAME") or "").strip()
-    password = (os.environ.get("TERABOX_PASSWORD") or "").strip()
+    username, password = resolve_terabox_credentials()
     backup_root = Path(os.environ.get("BACKUP_INTERNAL_ROOT", "/app/backups"))
     archive = Path(archive_path)
     if not archive.exists():

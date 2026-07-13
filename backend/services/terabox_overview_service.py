@@ -8,6 +8,8 @@ from typing import Any, Dict, List
 
 import requests
 
+from backend.domains.deployment.appliance_cloud_config import resolve_terabox_credentials
+
 TERABOX_TOTAL_BYTES = 1_099_511_627_776  # 1 TB
 REQUIRED_FOLDERS = ("/productos", "/evidencias_taller", "/backups_sistema")
 
@@ -118,8 +120,7 @@ def _folder_rows(root_folder: str, used_bytes: int) -> List[Dict[str, Any]]:
 
 
 def build_terabox_overview() -> Dict[str, Any]:
-    username = (os.environ.get("TERABOX_USERNAME") or "").strip()
-    password = (os.environ.get("TERABOX_PASSWORD") or "").strip()
+    username, password = resolve_terabox_credentials()
     root_folder = (os.environ.get("TERABOX_ROOT_FOLDER") or "/MCLarensERP").strip() or "/MCLarensERP"
 
     used_local = _local_used_bytes()

@@ -21,8 +21,13 @@ def resolve_local_mongo_uri() -> str:
 
 
 def resolve_central_mongo_uri() -> Optional[str]:
-    uri = (os.environ.get("MONGODB_CENTRAL_URI") or "").strip()
-    return uri or None
+    try:
+        from backend.domains.deployment.appliance_cloud_config import resolve_central_mongo_uri as _resolve
+
+        return _resolve()
+    except Exception:
+        uri = (os.environ.get("MONGODB_CENTRAL_URI") or "").strip()
+        return uri or None
 
 
 def resolve_database_name() -> str:
