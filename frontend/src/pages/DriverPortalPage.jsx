@@ -11,6 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  getCameraContextError,
+  INSECURE_CAMERA_NETWORK_ALERT,
+  isSecureCameraContext,
+} from "@/lib/cameraAccess";
 
 function JobCard({ job, driverType, onAction, busy, requiresProof }) {
   const isTransfer = job.job_type === "transfer_request" || driverType === "inter_branch_haul";
@@ -98,6 +103,8 @@ export function DriverPortalPage() {
   const [gpsCoords, setGpsCoords] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraContextError = getCameraContextError();
+  const cameraBlocked = !isSecureCameraContext() || Boolean(cameraContextError);
 
   useEffect(() => {
     const link = document.querySelector('link[rel="manifest"][data-driver-portal]');
@@ -168,6 +175,11 @@ export function DriverPortalPage() {
   };
 
   const openProofDialog = async (job) => {
+    const contextError = getCameraContextError();
+    if (contextError) {
+      toast.error(contextError, { duration: 12000 });
+      return;
+    }
     setProofJob(job);
     setProofFile(null);
     setGpsCoords(null);
@@ -281,6 +293,11 @@ export function DriverPortalPage() {
       </header>
 
       <main className="mx-auto max-w-lg px-4 pt-4 space-y-6">
+        {cameraBlocked ? (
+          <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            {cameraContextError || INSECURE_CAMERA_NETWORK_ALERT}
+          </div>
+        ) : null}
         {sections.focus ? (
           <section>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Tarea del enlace</p>
@@ -347,23 +364,29 @@ export function DriverPortalPage() {
                   : "GPS pendiente — active ubicación"}
               </p>
             </div>
-            <div>
-              <Label htmlFor="proof-camera">Foto en el mostrador o terminal</Label>
-              <input
-                id="proof-camera"
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="mt-2 block w-full text-sm"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-              />
-              {proofFile ? <p className="text-xs text-muted-foreground mt-1">{proofFile.name}</p> : null}
-            </div>
+            {cameraBlocked ? (
+              <div className="rounded-lg border border-amber-300/50 bg-amber-50/90 px-3 py-2 text-sm text-amber-950">
+                {cameraContextError || INSECURE_CAMERA_NETWORK_ALERT}
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="proof-camera">Foto en el mostrador o terminal</Label>
+                <input
+                  id="proof-camera"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="mt-2 block w-full text-sm"
+                  onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                />
+                {proofFile ? <p className="text-xs text-muted-foreground mt-1">{proofFile.name}</p> : null}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetProofDialog}>Cancelar</Button>
-            <Button onClick={submitProofDelivery} disabled={!proofFile || !gpsCoords || gpsLoading || busyJobId}>
+            <Button onClick={submitProofDelivery} disabled={cameraBlocked || !proofFile || !gpsCoords || gpsLoading || busyJobId}>
               Confirmar entrega
             </Button>
           </DialogFooter>

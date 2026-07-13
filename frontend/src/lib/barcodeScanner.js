@@ -1,4 +1,5 @@
 import { Html5Qrcode } from "html5-qrcode";
+import { guardSecureCameraContext } from "@/lib/cameraAccess";
 
 const NATIVE_BARCODE_FORMATS = [
   "qr_code",
@@ -133,6 +134,7 @@ export async function startNativeCameraScanner({
   preferredCameraId = "",
   isActive = () => true,
 }) {
+  guardSecureCameraContext();
   if (!regionElement) {
     throw new Error("No se encontró el visor de cámara");
   }

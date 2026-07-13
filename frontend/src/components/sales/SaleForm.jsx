@@ -99,6 +99,7 @@ import {
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
 import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
+import { getCameraContextError } from "@/lib/cameraAccess";
 import SaleFlowStepProgress from "@/components/erp/SaleFlowStepProgress";
 import EmptyCartPlaceholder from "@/components/erp/EmptyCartPlaceholder";
 import SavingsHighlightRow from "@/components/erp/SavingsHighlightRow";
@@ -1858,6 +1859,11 @@ export default function SaleForm({
   }, [buildDraftSnapshot, draftKey, draftLoaded, onDraftClear, onDraftPersist, onDraftSaveStateChange]);
 
   const handleOpenBarcodeScanner = useCallback(() => {
+    const contextError = getCameraContextError();
+    if (contextError) {
+      toast.error(contextError, { duration: 12000 });
+      return;
+    }
     setShowBarcodeScanner(true);
   }, []);
 

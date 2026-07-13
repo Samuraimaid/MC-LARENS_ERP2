@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   getCameraContextError,
   getRecommendedCameraUrl,
+  INSECURE_CAMERA_NETWORK_ALERT,
   mapCameraStartError,
 } from "./cameraAccess";
 
@@ -36,7 +37,12 @@ describe("cameraAccess", () => {
 
   it("maps insecure context errors clearly", () => {
     expect(mapCameraStartError({ message: "Only secure origins are allowed" }))
-      .toMatch(/HTTPS/i);
+      .toBe(INSECURE_CAMERA_NETWORK_ALERT);
+  });
+
+  it("returns network alert when secure context is false", () => {
+    Object.defineProperty(window, "isSecureContext", { configurable: true, value: false });
+    expect(getCameraContextError()).toBe(INSECURE_CAMERA_NETWORK_ALERT);
   });
 
   it("maps gesture activation errors clearly", () => {

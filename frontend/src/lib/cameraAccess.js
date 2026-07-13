@@ -1,13 +1,15 @@
+export const INSECURE_CAMERA_NETWORK_ALERT =
+  "Aviso de Red: Para activar la cámara y el escáner desde este dispositivo, debes ingresar a la URL de contingencia segura por Internet (HTTPS) o usar la aplicación APK nativa de la tienda.";
+
 export function isCameraApiAvailable() {
   return typeof navigator !== "undefined"
     && Boolean(navigator.mediaDevices?.getUserMedia);
 }
 
+/** Strict secure-context gate — required before any getUserMedia / camera capture. */
 export function isSecureCameraContext() {
   if (typeof window === "undefined") return false;
-  if (window.isSecureContext) return true;
-  const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1";
+  return Boolean(window.isSecureContext);
 }
 
 export function getRecommendedCameraUrl(hostname = "") {
@@ -20,12 +22,16 @@ export function getCameraContextError() {
     return "Este navegador no permite acceso a la cámara.";
   }
   if (!isSecureCameraContext()) {
-    const host = window.location.hostname;
-    const port = window.location.port ? `:${window.location.port}` : "";
-    const secureUrl = getRecommendedCameraUrl(host);
-    return `La cámara requiere HTTPS. Estás en http://${host}${port}. Abre ${secureUrl} y acepta el certificado.`;
+    return INSECURE_CAMERA_NETWORK_ALERT;
   }
   return "";
+}
+
+export function guardSecureCameraContext() {
+  const error = getCameraContextError();
+  if (error) {
+    throw new Error(error);
+  }
 }
 
 export function getSelfSignedHttpsNotice() {
@@ -51,6 +57,7 @@ async function waitForTrackEnded(track) {
 }
 
 export async function ensureCameraPermission(options = {}) {
+  guardSecureCameraContext();
   const { facingMode = "environment" } = options;
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -67,12 +74,11 @@ export function mapCameraStartError(error) {
   const message = String(error?.message || error || "");
   const name = String(error?.name || "");
 
+  if (message === INSECURE_CAMERA_NETWORK_ALERT || /Aviso de Red/i.test(message)) {
+    return INSECURE_CAMERA_NETWORK_ALERT;
+  }
   if (/secure|insecure|secure origins/i.test(message)) {
-    const contextError = getCameraContextError();
-    if (contextError && /HTTPS/i.test(contextError)) {
-      return contextError;
-    }
-    return "La cámara requiere HTTPS. En móvil usa https://TU-IP:3443 y acepta el certificado.";
+    return INSECURE_CAMERA_NETWORK_ALERT;
   }
   if (/gesture|transient activation|user agent|not allowed by the user agent/i.test(message)) {
     return "Toca Activar cámara para permitir el acceso. Chrome en móvil requiere un toque directo.";

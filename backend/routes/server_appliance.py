@@ -134,9 +134,12 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
 
     @router.get("/server-appliance/dashboard")
     async def server_appliance_dashboard():
-        profile = build_node_profile()
-        lan_ip = profile.get("lan_ip") or "192.168.1.26"
-        port = profile.get("frontend_port") or 3000
+        from backend.services.hypervisor_telemetry import build_hypervisor_dashboard
+
+        payload = await build_hypervisor_dashboard(db)
+        hw = payload.get("hardware") or {}
+        lan = payload.get("local_lan") or {}
+        cloud = payload.get("cloud_services") or {}
         uploads_path = os.environ.get("LOCAL_UPLOAD_ROOT", "/app/uploads")
         usb_path = os.environ.get("USB_BACKUP_ROOT", "/mnt/usb_backup")
 
@@ -146,36 +149,10 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         except Exception:
             local_db_ok = False
 
-        central_enabled = bool(resolve_central_mongo_uri())
-        central_ok = await ping_central_database() if central_enabled else None
-
-        atlas_stats: Dict[str, Any] = {"enabled": central_enabled, "healthy": central_ok}
-        if central_ok:
-            try:
-                from backend.db.distributed import get_central_database
-
-                central_db = get_central_database()
-                if central_db is not None:
-                    stats = await central_db.command("dbStats")
-                    used = int(stats.get("storageSize") or 0) + int(stats.get("indexSize") or 0)
-                    free_limit = int(os.environ.get("MONGODB_ATLAS_FREE_BYTES", str(512 * 1024 * 1024)))
-                    atlas_stats.update({
-                        "used_bytes": used,
-                        "free_limit_bytes": free_limit,
-                        "percent": round((used / free_limit) * 100, 1) if free_limit else None,
-                    })
-            except Exception:
-                pass
-
-        terabox_status: Dict[str, Any] = {"indicator": "Sin datos TeraBox"}
+        atlas = cloud.get("mongodb_atlas") or {}
+        terabox = cloud.get("terabox") or {}
+        cf = cloud.get("cloudflare") or {}
         emergency_status: Dict[str, Any] = {"active": False}
-        try:
-            from backend.services.terabox_backup_service import format_terabox_indicator, read_terabox_status
-
-            terabox_raw = read_terabox_status()
-            terabox_status = {**terabox_raw, "indicator": format_terabox_indicator(terabox_raw)}
-        except Exception:
-            pass
         try:
             from backend.middlewares.emergency_standby import resolve_emergency_host_for
 
@@ -188,33 +165,39 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         except Exception:
             pass
 
-        return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "node": profile,
-            "access": {
-                "lan_ip": lan_ip,
-                "frontend_port": port,
-                "url": f"http://{lan_ip}:{port}",
-                "dashboard_url": f"http://{lan_ip}:{port}/server-dashboard",
+        payload["metrics"] = {
+            "cpu_percent": hw.get("cpu_usage_pct"),
+            "memory": {
+                "percent": hw.get("ram_usage_pct"),
+                "used_bytes": int((hw.get("ram_used_gb") or 0) * 1024 ** 3),
+                "total_bytes": int((hw.get("ram_total_gb") or 0) * 1024 ** 3),
             },
-            "metrics": {
-                "cpu_percent": _read_cpu_percent(),
-                "memory": _read_memory_metrics(),
-                "temperature_c": _read_temperature_c(),
-                "active_users": await _count_active_users(db),
-                "disk_uploads": _disk_usage(uploads_path),
-                "disk_usb": _disk_usage(usb_path),
-            },
-            "delta": {
-                "local_database": {"healthy": local_db_ok},
-                "cloudflare_tunnel": await _tunnel_health(),
-                "mongodb_atlas": atlas_stats,
-                "hardware_alerts": get_active_alerts(),
-                "last_hardware_scan": get_last_scan_at(),
-                "terabox": terabox_status,
-                "emergency_standby": emergency_status,
-            },
+            "temperature_c": hw.get("cpu_temp_c"),
+            "active_users": lan.get("active_users_count"),
+            "disk_uploads": _disk_usage(uploads_path),
+            "disk_usb": _disk_usage(usb_path),
+            "uptime_hours": hw.get("uptime_hours"),
         }
+        payload["delta"] = {
+            "local_database": {"healthy": local_db_ok},
+            "cloudflare_tunnel": {
+                "healthy": cf.get("tunnel_status") == "ONLINE",
+                "latency_ms": cf.get("latency_ms"),
+                "url": cf.get("url"),
+            },
+            "mongodb_atlas": {
+                "enabled": atlas.get("status") != "DISABLED",
+                "healthy": atlas.get("status") == "CONNECTED",
+                "percent": atlas.get("used_pct"),
+                "used_bytes": int((atlas.get("size_used_mb") or 0) * 1024 ** 2),
+                "free_limit_bytes": int((atlas.get("size_total_mb") or 512) * 1024 ** 2),
+            },
+            "hardware_alerts": get_active_alerts(),
+            "last_hardware_scan": get_last_scan_at(),
+            "terabox": terabox,
+            "emergency_standby": emergency_status,
+        }
+        return payload
 
     @router.get("/server-appliance/terabox/overview")
     async def terabox_cloud_overview(request: Request):
