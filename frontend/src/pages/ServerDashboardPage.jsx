@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Activity, Cpu, HardDrive, Thermometer, Users } from "lucide-react";
+import { Activity, Cloud, Cpu, FolderTree, HardDrive, Thermometer, Users } from "lucide-react";
 import { buildApiUrl } from "@/lib/runtimeApi";
 import { cn } from "@/lib/utils";
 
@@ -60,15 +60,29 @@ function QrPanel({ url }) {
   );
 }
 
+function formatBytes(value) {
+  const bytes = Number(value || 0);
+  if (bytes >= 1024 ** 4) return `${(bytes / 1024 ** 4).toFixed(2)} TB`;
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+  return `${bytes} B`;
+}
+
 export function ServerDashboardPage() {
   const [payload, setPayload] = useState(null);
+  const [teraboxOverview, setTeraboxOverview] = useState(null);
+  const [expandedFolder, setExpandedFolder] = useState(null);
   const [error, setError] = useState("");
   const [clock, setClock] = useState(() => new Date());
 
   const loadDashboard = useCallback(async () => {
     try {
-      const response = await axios.get(buildApiUrl("/server-appliance/dashboard"), { timeout: 5000 });
-      setPayload(response.data);
+      const [dashboardRes, teraboxRes] = await Promise.all([
+        axios.get(buildApiUrl("/server-appliance/dashboard"), { timeout: 5000 }),
+        axios.get(buildApiUrl("/server-appliance/terabox/overview"), { timeout: 8000, withCredentials: true }).catch(() => ({ data: null })),
+      ]);
+      setPayload(dashboardRes.data);
+      setTeraboxOverview(teraboxRes.data || null);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.detail || err?.message || "No se pudo cargar el dashboard del servidor");
@@ -199,6 +213,51 @@ export function ServerDashboardPage() {
                 healthy={delta.terabox?.connected === true && delta.terabox?.last_upload_status === "success"}
                 detail={delta.terabox?.indicator || "Sin datos TeraBox"}
               />
+              {teraboxOverview ? (
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-5 py-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                    <Cloud className="h-4 w-4" />
+                    Espacio TeraBox ({teraboxOverview.used_percentage ?? 0}% usado)
+                  </div>
+                  <MetricBar
+                    label="Nube TeraBox"
+                    value={teraboxOverview.used_percentage}
+                    icon={Cloud}
+                    tone="sky"
+                  />
+                  <div className="grid grid-cols-3 gap-2 text-xs text-white/80">
+                    <div><span className="block text-white/50">Total</span>{formatBytes(teraboxOverview.total_space_bytes)}</div>
+                    <div><span className="block text-white/50">Usado</span>{formatBytes(teraboxOverview.used_space_bytes)}</div>
+                    <div><span className="block text-white/50">Libre</span>{formatBytes(teraboxOverview.available_space_bytes)}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/60">
+                      <FolderTree className="h-3.5 w-3.5" />
+                      Árbol de carpetas raíz
+                    </p>
+                    {(teraboxOverview.folders || []).map((folder) => (
+                      <button
+                        key={folder.name}
+                        type="button"
+                        onClick={() => setExpandedFolder((prev) => (prev === folder.name ? null : folder.name))}
+                        className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:bg-black/30"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-mono text-sm">{folder.name}</span>
+                          <span className="text-xs text-white/60">{formatBytes(folder.size_bytes)}</span>
+                        </div>
+                        {expandedFolder === folder.name ? (
+                          <div className="mt-2 space-y-1 text-xs text-white/70">
+                            <p>Remoto: {folder.remote_path}</p>
+                            <p>Local: {folder.local_mirror}</p>
+                            <p>Estado: {folder.status} · {folder.share_percent ?? 0}% del espejo local</p>
+                          </div>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <StatusLight
                 label="Modo Emergencia Standby"
                 healthy={!delta.emergency_standby?.active}

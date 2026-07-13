@@ -4,7 +4,8 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import Response
 
 from backend.domains.hr.drivers import (
     DriverValidationError,
@@ -25,6 +26,8 @@ from backend.domains.hr.drivers import (
     update_driver,
     update_transfer_job_status,
 )
+from backend.domains.hr.delivery_proof import complete_delivery_with_proof
+from backend.domains.media.local_storage import read_local_image_bytes
 
 
 def get_drivers_router(db, require_auth, require_roles):
@@ -33,6 +36,7 @@ def get_drivers_router(db, require_auth, require_roles):
     STAFF_ROLES = ["gerencia", "supervisor", "cajero", "ventas", "bodegas", "jefe_tienda", "programador"]
     DRIVER_ROLES = ["transporte", "entregador", "gerencia", "supervisor"]
     HR_DRIVER_ROLES = ["gerencia", "recursos_humanos", "supervisor", "programador"]
+    SELLER_ROLES = ["ventas", "cajero", "gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"]
 
     def _public_tunnel_base() -> str:
         return (
@@ -175,6 +179,11 @@ def get_drivers_router(db, require_auth, require_roles):
             return {"job": updated, "driver_id": driver["driver_id"]}
 
         entity_id = job_id.split(":", 1)[-1] if ":" in job_id else job_id
+        if action in {"entregado", "delivered"}:
+            raise HTTPException(
+                status_code=400,
+                detail="La entrega requiere foto-evidencia con GPS. Use POST /portal/jobs/{job_id}/complete-delivery",
+            )
         updated = await update_delivery_job_status(
             db,
             entity_id,
@@ -185,6 +194,59 @@ def get_drivers_router(db, require_auth, require_roles):
         if not updated:
             raise HTTPException(status_code=404, detail="Entrega no encontrada")
         return {"job": updated, "driver_id": driver["driver_id"]}
+
+    @router.post("/portal/jobs/{job_id}/complete-delivery")
+    async def complete_delivery_with_photo_proof(
+        job_id: str,
+        request: Request,
+        proof_image: UploadFile = File(...),
+        latitude: float = Form(...),
+        longitude: float = Form(...),
+        notes: Optional[str] = Form(None),
+    ):
+        user = await require_roles(request, DRIVER_ROLES)
+        driver = await get_driver_by_user_id(db, user.user_id)
+        if not driver:
+            raise HTTPException(status_code=403, detail="Usuario no vinculado a erp_drivers")
+
+        entity_id = job_id.split(":", 1)[-1] if ":" in job_id else job_id
+        content_type = str(proof_image.content_type or "").lower()
+        if not content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Solo se permiten imágenes como evidencia")
+
+        raw = await proof_image.read()
+        if not raw:
+            raise HTTPException(status_code=400, detail="Imagen vacía")
+        if len(raw) > 12 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="La imagen supera 12 MB")
+
+        try:
+            result = await complete_delivery_with_proof(
+                db,
+                entity_id,
+                driver_id=driver["driver_id"],
+                image_bytes=raw,
+                latitude=latitude,
+                longitude=longitude,
+                notes=notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+        return {
+            "message": "Entrega liquidada con evidencia",
+            "driver_id": driver["driver_id"],
+            **result,
+        }
+
+    @router.get("/seller-notifications/live")
+    async def poll_seller_delivery_notifications(request: Request, since: Optional[str] = None):
+        user = await require_roles(request, SELLER_ROLES)
+        query: Dict[str, Any] = {"user_id": user.user_id, "category": "delivery"}
+        if since:
+            query["created_at"] = {"$gt": since}
+        rows = await db.hr_notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(30)
+        return {"notifications": rows}
 
     @router.get("/whatsapp-dispatch/{job_id}")
     async def build_whatsapp_dispatch(job_id: str, request: Request, driver_id: Optional[str] = None):

@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, Clock, MapPin, Package, RefreshCw, Truck } from "lucide-react";
+import { Camera, CheckCircle2, Clock, MapPin, Package, RefreshCw, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-function JobCard({ job, driverType, onAction, busy }) {
+function JobCard({ job, driverType, onAction, busy, requiresProof }) {
   const isTransfer = job.job_type === "transfer_request" || driverType === "inter_branch_haul";
   const status = String(job.status || "").toLowerCase();
 
@@ -52,9 +54,9 @@ function JobCard({ job, driverType, onAction, busy }) {
             </>
           ) : (
             status !== "entregado" && status !== "delivered" ? (
-              <Button size="sm" disabled={busy} onClick={() => onAction(job, "entregado")}>
+              <Button size="sm" disabled={busy} onClick={() => onAction(job, requiresProof ? "proof" : "entregado")}>
                 <CheckCircle2 className="h-4 w-4 mr-1" />
-                Marcar Entregado
+                {requiresProof ? "Liquidar con foto" : "Marcar Entregado"}
               </Button>
             ) : null
           )}
@@ -62,6 +64,23 @@ function JobCard({ job, driverType, onAction, busy }) {
       </CardContent>
     </Card>
   );
+}
+
+function captureGeolocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator?.geolocation) {
+      reject(new Error("Geolocalización no disponible en este dispositivo"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      }),
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  });
 }
 
 export function DriverPortalPage() {
@@ -74,6 +93,11 @@ export function DriverPortalPage() {
   const [loading, setLoading] = useState(true);
   const [busyJobId, setBusyJobId] = useState("");
   const [notes, setNotes] = useState("");
+  const [proofJob, setProofJob] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const link = document.querySelector('link[rel="manifest"][data-driver-portal]');
@@ -124,6 +148,7 @@ export function DriverPortalPage() {
   }, [user, authLoading, token, loadJobs, navigate]);
 
   const driverType = jobsPayload?.driver_type || "delivery_last_mile";
+  const requiresProof = driverType === "delivery_last_mile";
   const sections = useMemo(() => {
     const pending = jobsPayload?.pending || [];
     const active = jobsPayload?.active || [];
@@ -134,7 +159,69 @@ export function DriverPortalPage() {
     return { focus: deepLinkJob, pending, active, completed };
   }, [jobsPayload, deepLinkJob]);
 
+  const resetProofDialog = () => {
+    setProofJob(null);
+    setProofFile(null);
+    setGpsCoords(null);
+    setGpsLoading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const openProofDialog = async (job) => {
+    setProofJob(job);
+    setProofFile(null);
+    setGpsCoords(null);
+    setGpsLoading(true);
+    try {
+      const coords = await captureGeolocation();
+      setGpsCoords(coords);
+    } catch (error) {
+      toast.error(error?.message || "No se pudo obtener GPS. Active ubicación en el celular.");
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
+  const submitProofDelivery = async () => {
+    if (!proofJob || !proofFile) {
+      toast.error("Tome la foto de evidencia con la cámara");
+      return;
+    }
+    if (!gpsCoords) {
+      toast.error("Espere la captura de coordenadas GPS");
+      return;
+    }
+
+    setBusyJobId(proofJob.job_id);
+    const form = new FormData();
+    form.append("proof_image", proofFile);
+    form.append("latitude", String(gpsCoords.latitude));
+    form.append("longitude", String(gpsCoords.longitude));
+    if (notes) form.append("notes", notes);
+
+    try {
+      await axios.post(
+        `${API}/hr/drivers/portal/jobs/${encodeURIComponent(proofJob.job_id)}/complete-delivery`,
+        form,
+        { withCredentials: true, headers: { "Content-Type": "multipart/form-data" } },
+      );
+      toast.success("Entrega liquidada con evidencia geo-localizada");
+      setNotes("");
+      resetProofDialog();
+      await loadJobs();
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "No se pudo liquidar la entrega");
+    } finally {
+      setBusyJobId("");
+    }
+  };
+
   const handleAction = async (job, action) => {
+    if (action === "proof") {
+      await openProofDialog(job);
+      return;
+    }
+
     setBusyJobId(job.job_id);
     const entityId = job.entity_id || (job.job_id || "").split(":").pop();
     try {
@@ -197,7 +284,7 @@ export function DriverPortalPage() {
         {sections.focus ? (
           <section>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Tarea del enlace</p>
-            <JobCard job={sections.focus} driverType={driverType} onAction={handleAction} busy={busyJobId === sections.focus.job_id} />
+            <JobCard job={sections.focus} driverType={driverType} onAction={handleAction} busy={busyJobId === sections.focus.job_id} requiresProof={requiresProof} />
           </section>
         ) : null}
 
@@ -207,7 +294,7 @@ export function DriverPortalPage() {
           </p>
           <div className="space-y-3">
             {sections.pending.map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} />
+              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} requiresProof={requiresProof} />
             ))}
             {!loading && sections.pending.length === 0 ? <p className="text-sm text-white/50">Sin pendientes</p> : null}
           </div>
@@ -217,7 +304,7 @@ export function DriverPortalPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">En curso ({sections.active.length})</p>
           <div className="space-y-3">
             {sections.active.map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} />
+              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} requiresProof={requiresProof} />
             ))}
           </div>
         </section>
@@ -226,7 +313,7 @@ export function DriverPortalPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">Completados</p>
           <div className="space-y-3">
             {sections.completed.slice(0, 10).map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={false} />
+              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={false} requiresProof={requiresProof} />
             ))}
           </div>
         </section>
@@ -236,6 +323,52 @@ export function DriverPortalPage() {
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="bg-slate-900 border-white/10 text-white" />
         </div>
       </main>
+
+      <Dialog open={Boolean(proofJob)} onOpenChange={(open) => { if (!open) resetProofDialog(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Foto-evidencia obligatoria
+            </DialogTitle>
+            <DialogDescription>
+              Capture la entrega con la cámara del celular. Se estampará marca de agua con fecha/hora y GPS del dispositivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Coordenadas GPS
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                {gpsLoading ? "Capturando ubicación..." : gpsCoords
+                  ? `LAT ${gpsCoords.latitude.toFixed(4)} / LON ${gpsCoords.longitude.toFixed(4)}`
+                  : "GPS pendiente — active ubicación"}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="proof-camera">Foto en el mostrador o terminal</Label>
+              <input
+                id="proof-camera"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="mt-2 block w-full text-sm"
+                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+              />
+              {proofFile ? <p className="text-xs text-muted-foreground mt-1">{proofFile.name}</p> : null}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={resetProofDialog}>Cancelar</Button>
+            <Button onClick={submitProofDelivery} disabled={!proofFile || !gpsCoords || gpsLoading || busyJobId}>
+              Confirmar entrega
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

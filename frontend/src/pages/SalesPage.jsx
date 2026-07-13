@@ -86,6 +86,7 @@ import { canAccessCashier, canPrintLetterInvoice, isSellerRole } from "@/lib/rol
 import { computeDraftSnapshotTotals } from "@/lib/saleTotals";
 import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
+import { buildCustomerProofWhatsAppUrl } from "@/lib/deliveryProof";
 
 // Divisas disponibles
 const CURRENCIES = [
@@ -211,6 +212,8 @@ export function SalesPage() {
   const [showArchivedSales, setShowArchivedSales] = useState(false);
   const [draftSaveState, setDraftSaveState] = useState("idle");
   const [draftSavedAt, setDraftSavedAt] = useState(null);
+  const deliveryNotifSinceRef = useRef(null);
+  const seenDeliveryNotifIdsRef = useRef(new Set());
   
   // Search states
   const [customerSearch, setCustomerSearch] = useState("");
@@ -698,6 +701,60 @@ export function SalesPage() {
       }
     }
   }, [user?.branch_id]);
+
+  const openDeliveryProofWhatsApp = useCallback((payload) => {
+    const url = buildCustomerProofWhatsAppUrl({
+      proofImageId: payload?.proof_image_id,
+      proofUrl: payload?.proof_url,
+      customerName: payload?.customer_name,
+    });
+    if (!url) {
+      toast.error("No hay evidencia de entrega disponible");
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, []);
+
+  useEffect(() => {
+    if (!user?.user_id) return undefined;
+    const sellerRoles = ["ventas", "cajero", "jefe_vendedores", "jefe_tienda", "gerencia", "supervisor"];
+    if (!sellerRoles.includes(String(user.role || "").toLowerCase())) return undefined;
+
+    const pollDeliveryNotifications = async () => {
+      try {
+        const since = deliveryNotifSinceRef.current
+          || new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const response = await axios.get(`${API}/hr/drivers/seller-notifications/live`, {
+          withCredentials: true,
+          params: { since },
+        });
+        const rows = Array.isArray(response.data?.notifications) ? response.data.notifications : [];
+        if (!rows.length) return;
+
+        rows.slice().reverse().forEach((item) => {
+          if (!item?.notification_id || seenDeliveryNotifIdsRef.current.has(item.notification_id)) return;
+          seenDeliveryNotifIdsRef.current.add(item.notification_id);
+          toast.success(item.message, {
+            duration: 12000,
+            className: "border-emerald-500 bg-emerald-50 text-emerald-900",
+            action: item.proof_url || item.proof_image_id ? {
+              label: "Compartir evidencia",
+              onClick: () => openDeliveryProofWhatsApp(item),
+            } : undefined,
+          });
+        });
+
+        deliveryNotifSinceRef.current = rows[0]?.created_at || since;
+        fetchData({ silent: true });
+      } catch {
+        // polling silencioso
+      }
+    };
+
+    pollDeliveryNotifications();
+    const timer = window.setInterval(pollDeliveryNotifications, 4000);
+    return () => window.clearInterval(timer);
+  }, [user?.user_id, user?.role, fetchData, openDeliveryProofWhatsApp]);
 
   const handleRefreshData = useCallback(async () => {
     setIsRefreshingData(true);
@@ -2897,6 +2954,21 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                         {canPrintLetterInvoice(user?.role, sale) ? (
                           <Button variant="ghost" size="icon" title="Ver factura" onClick={() => openInvoicePdf(sale.sale_id, sale)}>
                             <Eye className="h-5 w-5" />
+                          </Button>
+                        ) : null}
+                        {(sale.delivery_info?.proof_image_id || sale.delivery_info?.proof_url) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-emerald-700 border-emerald-300"
+                            onClick={() => openDeliveryProofWhatsApp({
+                              proof_image_id: sale.delivery_info?.proof_image_id,
+                              proof_url: sale.delivery_info?.proof_url,
+                              customer_name: sale.customer_name,
+                            })}
+                          >
+                            <WhatsAppIcon className="h-4 w-4" />
+                            Compartir evidencia con cliente
                           </Button>
                         ) : null}
                       </div>

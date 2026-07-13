@@ -116,8 +116,9 @@ async def _tunnel_health() -> Dict[str, Any]:
         }
 
 
-def get_server_appliance_router(db):
+def get_server_appliance_router(db, require_auth=None, require_roles=None):
     router = APIRouter()
+    ADMIN_ROLES = ["gerencia", "programador"]
 
     @router.get("/server-appliance/profile")
     async def server_appliance_profile():
@@ -214,6 +215,16 @@ def get_server_appliance_router(db):
                 "emergency_standby": emergency_status,
             },
         }
+
+    @router.get("/server-appliance/terabox/overview")
+    async def terabox_cloud_overview(request: Request):
+        if require_roles:
+            await require_roles(request, ADMIN_ROLES)
+        elif require_auth:
+            await require_auth(request)
+        from backend.services.terabox_overview_service import build_terabox_overview
+
+        return build_terabox_overview()
 
     @router.get("/server-appliance/alerts")
     async def server_appliance_alerts():

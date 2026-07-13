@@ -79,6 +79,7 @@ async def save_local_image(
 def resolve_local_image_path(image_id: str, *, category: Optional[str] = None) -> Tuple[Path, str]:
     media_id = normalize_image_id(image_id)
     search_dirs = [_category_dir(category)] if category else [
+        _category_dir("deliveries"),
         _category_dir("warranties"),
         _category_dir("products"),
         _category_dir("evidence"),

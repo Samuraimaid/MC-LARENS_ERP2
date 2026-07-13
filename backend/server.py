@@ -22069,7 +22069,7 @@ api_router.include_router(warranties_media_router)
 
 from backend.routes.server_appliance import get_server_appliance_router
 
-server_appliance_router = get_server_appliance_router(db)
+server_appliance_router = get_server_appliance_router(db, require_auth, require_roles)
 api_router.include_router(server_appliance_router)
 
 human_resources_router = get_human_resources_router(
@@ -22085,6 +22085,11 @@ from backend.routes.drivers import get_drivers_router
 
 drivers_router = get_drivers_router(db, require_auth, require_roles)
 api_router.include_router(drivers_router)
+
+from backend.routes.deliveries_media import get_deliveries_media_router
+
+deliveries_media_router = get_deliveries_media_router(db, require_auth, require_roles)
+api_router.include_router(deliveries_media_router)
 
 from backend.routes.emergency import get_emergency_router
 

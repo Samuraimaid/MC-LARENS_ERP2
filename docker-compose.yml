@@ -79,6 +79,7 @@ services:
       - TERABOX_USERNAME=${TERABOX_USERNAME:-}
       - TERABOX_PASSWORD=${TERABOX_PASSWORD:-}
       - TERABOX_REMOTE_FOLDER=${TERABOX_REMOTE_FOLDER:-/MCLarensERP/cold-backups}
+      - TERABOX_ROOT_FOLDER=${TERABOX_ROOT_FOLDER:-/MCLarensERP}
       - EMERGENCY_HOST_FOR=${EMERGENCY_HOST_FOR:-}
     volumes:
       - ./backend/uploads:/app/uploads
