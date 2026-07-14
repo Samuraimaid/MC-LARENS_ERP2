@@ -98,12 +98,51 @@ def resolve_terabox_credentials() -> tuple[str, str]:
 
 
 def resolve_terabox_settings() -> Dict[str, str]:
+    root = cloud_config_value("TERABOX_ROOT_FOLDER") or "/MCLarensERP"
+    remote = cloud_config_value("TERABOX_REMOTE_FOLDER") or "/MCLarensERP/cold-backups"
+    if root and not str(root).startswith("/"):
+        root = f"/{root}"
+    if remote and not str(remote).startswith("/"):
+        remote = f"/{remote}"
     return {
         "username": cloud_config_value("TERABOX_USERNAME"),
-        "root_folder": cloud_config_value("TERABOX_ROOT_FOLDER") or "/MCLarensERP",
-        "remote_folder": cloud_config_value("TERABOX_REMOTE_FOLDER") or "/MCLarensERP/cold-backups",
+        "root_folder": root,
+        "remote_folder": remote,
         "share_url": cloud_config_value("TERABOX_SHARE_URL"),
     }
+
+
+def resolve_terabox_session_cookies() -> Dict[str, str]:
+    return {
+        "jstoken": cloud_config_value("TERABOX_JSTOKEN"),
+        "csrfToken": cloud_config_value("TERABOX_CSRFTOKEN", "TERABOX_CSRF_TOKEN"),
+        "browserid": cloud_config_value("TERABOX_BROWSERID"),
+        "ndus": cloud_config_value("TERABOX_NDUS"),
+        "lang": cloud_config_value("TERABOX_LANG") or "en",
+    }
+
+
+def has_terabox_session_cookies() -> bool:
+    cookies = resolve_terabox_session_cookies()
+    return bool(
+        cookies.get("jstoken")
+        and cookies.get("csrfToken")
+        and cookies.get("browserid")
+        and cookies.get("ndus")
+    )
+
+
+def persist_terabox_session_cookies(cookie_map: Dict[str, Any]) -> None:
+    mapping = {
+        "TERABOX_JSTOKEN": cookie_map.get("jstoken"),
+        "TERABOX_CSRFTOKEN": cookie_map.get("csrfToken"),
+        "TERABOX_BROWSERID": cookie_map.get("browserid"),
+        "TERABOX_NDUS": cookie_map.get("ndus"),
+        "TERABOX_LANG": cookie_map.get("lang"),
+    }
+    updates = {key: str(value).strip() for key, value in mapping.items() if str(value or "").strip()}
+    if updates:
+        write_appliance_cloud_values(updates)
 
 
 def _mask_username(value: str) -> str:
@@ -124,6 +163,13 @@ def get_terabox_credentials_public() -> Dict[str, Any]:
         "root_folder": settings.get("root_folder"),
         "remote_folder": settings.get("remote_folder"),
         "share_url": settings.get("share_url"),
+        "session_configured": has_terabox_session_cookies(),
+        "session_fields": {
+            "jstoken": bool(resolve_terabox_session_cookies().get("jstoken")),
+            "ndus": bool(resolve_terabox_session_cookies().get("ndus")),
+            "csrfToken": bool(resolve_terabox_session_cookies().get("csrfToken")),
+            "browserid": bool(resolve_terabox_session_cookies().get("browserid")),
+        },
     }
 
 

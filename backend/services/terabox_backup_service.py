@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from backend.domains.deployment.appliance_cloud_config import resolve_terabox_settings
-from backend.services.terabox_sdk import get_quota, upload_file
+from backend.domains.deployment.appliance_cloud_config import has_terabox_session_cookies
+from backend.services.terabox_sdk import VERIFY_HELP, get_quota, upload_file
 
 STATUS_FILENAME = "terabox_status.json"
 RETENTION_DAYS = 30
@@ -87,7 +88,10 @@ def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
     ok = False
     message = ""
     remote_used = None
+    needs_session = not has_terabox_session_cookies()
     try:
+        if needs_session:
+            raise ValueError(VERIFY_HELP)
         result = upload_file(str(archive), remote_dest)
         ok = bool(result.get("ok"))
         message = result.get("message") or "Subida TeraBox completada"
@@ -97,7 +101,9 @@ def upload_archive_to_terabox(archive_path: str) -> Dict[str, Any]:
         except Exception:
             remote_used = None
     except Exception as exc:
-        message = f"Upload TeraBox fallido: {exc}"
+        from backend.services.terabox_sdk import _format_error
+
+        message = f"Upload TeraBox fallido: {_format_error(exc)}"
 
     local_used = sum(p.stat().st_size for p in _list_local_archives(backup_root))
     used_bytes = remote_used if remote_used is not None else local_used

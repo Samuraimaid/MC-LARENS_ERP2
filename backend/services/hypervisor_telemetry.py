@@ -481,10 +481,14 @@ def _terabox_cloud_block(
     *,
     creds_configured: bool = False,
 ) -> Dict[str, Any]:
+    from backend.domains.deployment.appliance_cloud_config import has_terabox_session_cookies
+
     folders = terabox_overview.get("folders") or []
     local_ready = any(str(item.get("status") or "").lower() == "ok" for item in folders)
     remote_connected = bool(terabox_overview.get("connected") or terabox_raw.get("connected"))
-    connected = remote_connected or creds_configured or local_ready
+    session_ready = has_terabox_session_cookies()
+    connected = remote_connected
+    status = "CONNECTED" if connected else ("PENDING_SESSION" if creds_configured and not session_ready else "DISCONNECTED")
 
     used_bytes = int(terabox_overview.get("used_space_bytes") or terabox_raw.get("space_used_bytes") or 0)
     used_gb = round(used_bytes / (1024 ** 3), 2)
@@ -509,7 +513,7 @@ def _terabox_cloud_block(
             last_backup = datetime.fromtimestamp(archives[0].stat().st_mtime, tz=timezone.utc).isoformat()
 
     return {
-        "status": "CONNECTED" if connected else "DISCONNECTED",
+        "status": status,
         "storage_used_gb": used_gb,
         "storage_total_gb": TERABOX_TOTAL_GB,
         "sync_success_pct": round(sync_pct, 1),
@@ -519,6 +523,8 @@ def _terabox_cloud_block(
         "env_configured": creds_configured,
         "local_mirror_ready": local_ready,
         "remote_session_active": remote_connected,
+        "session_configured": session_ready,
+        "needs_browser_session": creds_configured and not session_ready,
     }
 
 

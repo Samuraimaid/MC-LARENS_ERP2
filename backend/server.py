@@ -12,6 +12,7 @@ import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import bcrypt
@@ -703,7 +704,19 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
     "bodegas": {
         "inventory": {"view": True, "create": True, "edit": True},
         "dispatch": {"view": True, "create": True, "edit": True},
-    }
+    },
+    "ventas": {
+        "approvals": {"create": True},
+    },
+    "cajero": {
+        "approvals": {"create": True},
+    },
+    "jefe_vendedores": {
+        "approvals": {"create": True},
+    },
+    "jefe_tienda": {
+        "approvals": {"create": True},
+    },
 }
 
 
@@ -872,6 +885,17 @@ def build_default_role_permissions(role: str) -> Dict[str, Any]:
                     "create": True,
                     "view": True,
                     "edit": True,
+                    "delete": False,
+                }
+            elif (
+                function_key == "approvals"
+                and effective_role in {"ventas", "cajero", "jefe_vendedores", "jefe_tienda"}
+            ):
+                # Vendedores pueden solicitar aprobaciones sin ver el panel completo.
+                matrix[module_key][function_key] = {
+                    "create": True,
+                    "view": False,
+                    "edit": False,
                     "delete": False,
                 }
             else:
@@ -2255,6 +2279,58 @@ def _compute_items_subtotal(items: List[Dict[str, Any]]) -> float:
                 pass
         subtotal += qty * unit
     return round(subtotal, 2)
+
+
+async def _apply_sale_currency_to_subtotal(
+    subtotal: float,
+    sale_currency: str,
+    sale_exchange_rate: Optional[float],
+) -> float:
+    """Convierte subtotal en USD (precios de catálogo) a base de liquidación."""
+    settlement_subtotal = round(float(subtotal or 0.0), 2)
+    currency = _currency_code(sale_currency or "USD")
+    if currency == "NIO":
+        rate = sale_exchange_rate
+        if rate is None or rate <= 0:
+            rate = await _get_usd_nio_sell_rate()
+        settlement_subtotal = round(float(subtotal) * float(rate), 2)
+    return settlement_subtotal
+
+
+async def _compute_sale_settlement_subtotal_from_items(
+    *,
+    user: User,
+    items: List[Dict[str, Any]],
+    sale_currency: str,
+    sale_exchange_rate: Optional[float],
+) -> float:
+    """Misma base de subtotal que create_sale (precio catálogo + instalación + moneda)."""
+    subtotal = 0.0
+    for item in items or []:
+        product_id = item.get("product_id")
+        if not product_id:
+            continue
+        product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if not product:
+            unit = float(item.get("unit_price") or 0.0)
+            qty = float(item.get("quantity") or 1.0)
+            subtotal += unit * qty
+            continue
+        qty = float(item.get("quantity") or 1.0)
+        price = _resolve_sale_item_unit_price(user, product, item)
+        discount = float(item.get("discount") or 0.0)
+        subtotal += (price * qty) * (1.0 - discount / 100.0)
+        install_type = product.get("installation_type", "optional")
+        wants_installation = bool(item.get("with_installation", False))
+        if install_type == "required" or (
+            install_type == "optional" and wants_installation
+        ):
+            subtotal += float(product.get("installation_price", 0) or 0.0) * qty
+    return await _apply_sale_currency_to_subtotal(
+        subtotal,
+        sale_currency,
+        sale_exchange_rate,
+    )
 
 
 def _build_sale_settlement(
@@ -8485,12 +8561,11 @@ async def create_sale(
         sale_exchange_rate = float(raw_sale_exchange_rate) if raw_sale_exchange_rate is not None else None
     except (TypeError, ValueError):
         sale_exchange_rate = None
-    settlement_subtotal = round(subtotal, 2)
-    if sale_currency == "NIO":
-        rate = sale_exchange_rate
-        if rate is None or rate <= 0:
-            rate = await _get_usd_nio_sell_rate()
-        settlement_subtotal = round(subtotal * float(rate), 2)
+    settlement_subtotal = await _apply_sale_currency_to_subtotal(
+        subtotal,
+        sale_currency,
+        sale_exchange_rate,
+    )
 
     if not bool(getattr(sale_data, "supervisor_discount_preapproved", False)):
         await _enforce_seller_global_discount_limits(
@@ -8880,10 +8955,10 @@ async def create_sale(
         )
 
     # Update credit balance
-    if sale_data.payment_type == "credit":
+    if normalized_payment_type == "credit":
         await db.customers.update_one(
             {"customer_id": customer["customer_id"]},
-            {"$inc": {"credit_balance": total}},
+            {"$inc": {"credit_balance": round(net_to_collect, 2)}},
         )
 
     # Update quotation if from quotation
@@ -8927,43 +9002,60 @@ async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request
     if payload.customer_id:
         customer = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0})
 
-    subtotal_base = float(payload.subtotal) if payload.subtotal is not None else _compute_items_subtotal(payload.items)
-    retention_profile = payload.retention_profile or _extract_retention_profile_from_customer(customer)
+    if payload.subtotal is not None:
+        subtotal_base = round(float(payload.subtotal), 2)
+    else:
+        subtotal_base = await _compute_sale_settlement_subtotal_from_items(
+            user=user,
+            items=payload.items,
+            sale_currency=str(payload.currency or "USD"),
+            sale_exchange_rate=payload.exchange_rate,
+        )
 
-    iva_rate_percent = await _get_billing_iva_rate(user.branch_id)
-
-    settlement = _build_sale_settlement(
-        subtotal_base=subtotal_base,
-        discount_percent=payload.discount_percent,
-        discounts_amount=payload.discounts_amount,
-        promotions_amount=payload.promotions_amount,
+    preview_sale_data = SimpleNamespace(
+        currency=payload.currency or "USD",
+        exchange_rate=payload.exchange_rate,
         payment_method=payload.payment_method,
-        print_format=payload.print_format,
+        payment_type=payload.payment_method,
+        discount=payload.discount_percent,
         apply_iva=payload.apply_iva,
-        iva_rate_percent=iva_rate_percent,
-        retention_profile=retention_profile,
-        retention_rate_hint=payload.retention_rate_hint,
+        apply_retention=False,
+        retention_rate=0,
+        applied_discounts=[],
+        mixed_payment_methods=[],
+        print_format=payload.print_format or "thermal80",
+        iva_rate=None,
+        branch_id=user.branch_id,
+        supervisor_discount_preapproved=False,
     )
 
     delivery_info = parse_delivery_info(
         payload.delivery_info,
         branch_id=str(user.branch_id or ""),
     )
+    delivery_topup_nio = 0.0
     if delivery_info.get("is_delivery") or float(payload.delivery_cost or 0) > 0:
         if not delivery_info.get("is_delivery"):
             delivery_info["is_delivery"] = True
             delivery_info["delivery_cost"] = _round2(float(payload.delivery_cost or 0))
         buy_rate = await _get_usd_nio_buy_rate()
-        preview_currency = _currency_code(payload.currency or "NIO")
+        preview_currency = _currency_code(payload.currency or "USD")
         preview_rate = float(payload.exchange_rate or buy_rate)
-        delivery_nio = delivery_cost_nio_for_settlement(
+        delivery_topup_nio = delivery_cost_nio_for_settlement(
             delivery_info,
             sale_currency=preview_currency,
             exchange_rate=preview_rate,
             buy_rate=buy_rate,
         )
-        settlement["delivery_cost_nio"] = delivery_nio
-        settlement["net_to_collect"] = _round2(float(settlement["net_to_collect"]) + delivery_nio)
+        delivery_info["delivery_cost_nio"] = delivery_topup_nio
+
+    settlement = await _finalize_create_sale_settlement(
+        sale_data=preview_sale_data,
+        customer=customer or {},
+        subtotal_base=subtotal_base,
+        delivery_topup_nio=delivery_topup_nio,
+    )
+    if delivery_topup_nio:
         settlement["delivery_info"] = delivery_info
 
     return {

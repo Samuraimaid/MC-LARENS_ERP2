@@ -214,7 +214,7 @@ export default function SaleForm({
   const sellerPaymentPlanStructureLocked = sellerReleasedRestricted;
 
   const notifySellerFlowLocked = useCallback(() => {
-    toast.error("No puedes modificar cliente, vehículo ni opción para llevar en este borrador.");
+    toast.error("No puedes modificar cliente ni forma de entrega en este borrador.");
   }, []);
 
   const notifySellerParamsLocked = useCallback(() => {
@@ -281,7 +281,7 @@ export default function SaleForm({
   const [useVinDecoder, setUseVinDecoder] = useState(false);
   const [isDecodingVin, setIsDecodingVin] = useState(false);
   const [vehicleFlowOption, setVehicleFlowOption] = useState("carryout");
-  const [logisticMode, setLogisticMode] = useState("carryout");
+  const [logisticMode, setLogisticMode] = useState(initialData.logistic_mode || initialData.logisticMode || null);
   const [deliveryDestinationType, setDeliveryDestinationType] = useState("domicilio");
   const [deliveryCost, setDeliveryCost] = useState("");
   const [selectedMessengerId, setSelectedMessengerId] = useState("");
@@ -545,7 +545,13 @@ export default function SaleForm({
   }, [customerVehicles, normalizeVehicleId, selectedVehicle]);
 
   const stepOneComplete = Boolean(selectedCustomer?.customer_id);
-  const stepTwoComplete = stepOneComplete && !isVehiclePickerVisible;
+  const stepTwoComplete = useMemo(() => {
+    if (!stepOneComplete || !logisticMode) return false;
+    if (logisticMode === "installed") {
+      return Boolean(normalizeVehicleId(selectedVehicle)) && !isVehiclePickerVisible;
+    }
+    return !isVehiclePickerVisible;
+  }, [stepOneComplete, logisticMode, selectedVehicle, isVehiclePickerVisible, normalizeVehicleId]);
 
   const triggerVehiclePulse = useCallback(() => {
     setVehiclePulseActive(true);
@@ -556,6 +562,7 @@ export default function SaleForm({
     const normalizedId = normalizeVehicleId(vehicleId);
     if (!normalizedId) return;
     recentlyCreatedVehicleIdRef.current = normalizedId;
+    setLogisticMode("installed");
     setVehicleFlowOption("registered");
     setSelectedVehicle(normalizedId);
     setIsVehiclePickerVisible(false);
@@ -589,7 +596,10 @@ export default function SaleForm({
     };
 
   const vehicleOptionTriggerTone = useMemo(() => {
-    if (selectedVehicleOption === "carryout") {
+    if (logisticMode === "delivery") {
+      return "border-amber-300 bg-amber-50 text-amber-900";
+    }
+    if (logisticMode === "carryout" || selectedVehicleOption === "carryout") {
       return "border-emerald-300 bg-emerald-50 text-emerald-900";
     }
     if (selectedVehicleOption === "new") {
@@ -599,7 +609,7 @@ export default function SaleForm({
       return "border-sky-300 bg-sky-50 text-sky-900";
     }
     return "";
-  }, [selectedVehicleOption]);
+  }, [logisticMode, selectedVehicleOption]);
 
   const newCustomerYearOptions = useMemo(
     () => getVehicleYearsByBrand(newCustomer.brand),
@@ -654,42 +664,35 @@ export default function SaleForm({
     }
 
     if (!selectedCustomer) {
+      if (logisticMode !== null) setLogisticMode(null);
       if (vehicleFlowOption !== "carryout" || selectedVehicle) {
         setVehicleFlowOption("carryout");
         setSelectedVehicle("");
       }
       return;
     }
-    if (customerVehicles.length === 0) {
-      if (hasRestorableVehicle || isVehiclePickerVisible) {
-        return;
+    if (logisticMode === "installed") {
+      if (normalizedSelectedVehicle && customerVehicles.some((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedSelectedVehicle)) {
+        if (vehicleFlowOption !== "registered") {
+          setVehicleFlowOption("registered");
+        }
       }
+      return;
+    }
+    if (logisticMode === "carryout" || logisticMode === "delivery") {
       if (vehicleFlowOption !== "carryout" || selectedVehicle) {
         setVehicleFlowOption("carryout");
         setSelectedVehicle("");
       }
-      return;
     }
-    if (normalizedSelectedVehicle && customerVehicles.some(v => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedSelectedVehicle)) {
-      if (vehicleFlowOption !== "registered") {
-        setVehicleFlowOption("registered");
-      }
-      return;
-    }
-    if (isVehiclePickerVisible) {
-      return;
-    }
-    if (vehicleFlowOption === "registered" && !normalizedSelectedVehicle) {
-      setVehicleFlowOption("carryout");
-    }
-  }, [draftLoaded, pendingCustomerId, selectedCustomer, customerVehicles, isVehiclePickerVisible, localVehicles.length, normalizeVehicleId, selectedVehicle, vehicleFlowOption]);
+  }, [draftLoaded, pendingCustomerId, selectedCustomer, customerVehicles, logisticMode, localVehicles.length, normalizeVehicleId, selectedVehicle, vehicleFlowOption]);
 
   useEffect(() => {
-    if (vehicleFlowOption === "carryout") {
+    if (logisticMode === "carryout" || logisticMode === "delivery") {
       setSelectedVehicle("");
-      setCartItems(prev => prev.map(item => ({ ...item, with_installation: false })));
+      setCartItems((prev) => prev.map((item) => ({ ...item, with_installation: false })));
     }
-  }, [vehicleFlowOption]);
+  }, [logisticMode]);
 
   const fetchMessengerOptions = useCallback(async ({ showErrorToast = false, isActive = () => true } = {}) => {
     if (!user?.branch_id) return;
@@ -1271,7 +1274,10 @@ export default function SaleForm({
       const created = customersRes.data.find(c => c.customer_id === customerId);
       if (created) {
         setSelectedCustomer(created);
-        if (!newCustomer.add_vehicle) {
+        if (createdVehicleId) {
+          setLogisticMode("installed");
+        } else {
+          setLogisticMode(null);
           setIsVehiclePickerVisible(true);
         }
       }
@@ -1284,6 +1290,7 @@ export default function SaleForm({
       persistDraftSnapshot({
         selectedCustomerId: customerId,
         vehicleFlowOption: createdVehicleId ? "registered" : "carryout",
+        logisticMode: createdVehicleId ? "installed" : null,
         selectedVehicle: createdVehicleId ? normalizeVehicleId(createdVehicleId) : "",
         isVehiclePickerVisible: createdVehicleId ? false : true,
         showNewCustomer: false,
@@ -1400,6 +1407,7 @@ export default function SaleForm({
       resetNewVehicleForm();
       persistDraftSnapshot({
         vehicleFlowOption: "registered",
+        logisticMode: "installed",
         selectedVehicle: normalizeVehicleId(createdVehicleId),
         isVehiclePickerVisible: false,
         showNewVehicleDialog: false,
@@ -1570,7 +1578,11 @@ export default function SaleForm({
 
   const handleSubmit = async () => {
     if (!logisticMode) {
-      toast.error("Selecciona una opción logística: Para llevar, Instalado o Delivery");
+      toast.error("Selecciona cómo se entrega la venta: Para llevar, Con envío o Instalado");
+      return;
+    }
+    if (logisticMode === "installed" && !normalizeVehicleId(selectedVehicle)) {
+      toast.error("Selecciona un vehículo para la venta instalada");
       return;
     }
     if (logisticMode === "delivery") {
@@ -2026,6 +2038,7 @@ export default function SaleForm({
     setProductSearch("");
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
+    setLogisticMode(null);
     setIsVehiclePickerVisible(true);
     setStepThreeUnlockFlash(false);
     prevStepTwoCompleteRef.current = false;
@@ -2047,6 +2060,7 @@ export default function SaleForm({
     setCustomerSearch("");
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
+    setLogisticMode(null);
     setIsVehiclePickerVisible(true);
     setApplyIVA(nextApplyIva);
     playSelectionFeedbackSound();
@@ -2055,6 +2069,7 @@ export default function SaleForm({
       customerSearch: "",
       selectedVehicle: "",
       vehicleFlowOption: "carryout",
+      logisticMode: null,
       cartItems: shouldResetCart ? [] : normalizedCartItems,
       appliedDiscounts: shouldResetCart ? [] : appliedDiscounts,
       productSearch: "",
@@ -2079,6 +2094,7 @@ export default function SaleForm({
     setPendingCustomerId(null);
     setSelectedVehicle("");
     setVehicleFlowOption("carryout");
+    setLogisticMode(null);
     setIsVehiclePickerVisible(true);
     setCustomerSearch("");
     playSelectionFeedbackSound();
@@ -2086,6 +2102,7 @@ export default function SaleForm({
       selectedCustomerId: null,
       selectedVehicle: "",
       vehicleFlowOption: "carryout",
+      logisticMode: null,
       customerSearch: "",
       cartItems: [],
       appliedDiscounts: [],
@@ -2094,36 +2111,37 @@ export default function SaleForm({
     setTimeout(() => customerSearchRef.current?.focus(), 0);
   }, [notifySellerFlowLocked, persistDraftSnapshot, resetSaleFlowForCustomerChange, sellerFlowLocked]);
 
-  const handleSelectLogisticMode = useCallback((nextMode) => {
+  const handleSelectFulfillmentMode = useCallback((nextMode) => {
     if (sellerFlowLocked) {
       notifySellerFlowLocked();
       return;
     }
     setLogisticMode(nextMode);
     if (nextMode === "installed") {
-      if (selectedVehicle) {
-        if (vehicleFlowOption !== "registered") {
-          setVehicleFlowOption("registered");
-          setIsVehiclePickerVisible(false);
-        }
-      } else if (customerVehicles.length > 0) {
-        const firstVehicleId = normalizeVehicleId(customerVehicles[0].vehicle_id ?? customerVehicles[0].id);
-        setVehicleFlowOption("registered");
-        setSelectedVehicle(firstVehicleId);
+      setVehicleFlowOption("registered");
+      const hasValidVehicle = Boolean(selectedVehicle)
+        && customerVehicles.some((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizeVehicleId(selectedVehicle));
+      if (hasValidVehicle) {
         setIsVehiclePickerVisible(false);
       } else {
-        setIsVehiclePickerVisible(true);
-        toast.info("Selecciona un vehículo para venta instalada");
-      }
-    } else if (nextMode === "carryout" || nextMode === "delivery") {
-      if (vehicleFlowOption !== "carryout" || selectedVehicle) {
-        setVehicleFlowOption("carryout");
         setSelectedVehicle("");
-        setIsVehiclePickerVisible(false);
-        setCartItems((prev) => prev.map((item) => ({ ...item, with_installation: false })));
+        setIsVehiclePickerVisible(true);
+        if (customerVehicles.length === 0) {
+          toast.info("Selecciona o registra un vehículo para la instalación");
+        }
       }
+    } else {
+      setVehicleFlowOption("carryout");
+      setSelectedVehicle("");
+      setIsVehiclePickerVisible(false);
+      setCartItems((prev) => prev.map((item) => ({ ...item, with_installation: false })));
     }
-    persistDraftSnapshot({ logisticMode: nextMode });
+    persistDraftSnapshot({
+      logisticMode: nextMode,
+      vehicleFlowOption: nextMode === "installed" ? "registered" : "carryout",
+      selectedVehicle: nextMode === "installed" ? selectedVehicle : "",
+      isVehiclePickerVisible: nextMode === "installed",
+    });
     playSelectionFeedbackSound();
   }, [
     customerVehicles,
@@ -2132,8 +2150,16 @@ export default function SaleForm({
     persistDraftSnapshot,
     selectedVehicle,
     sellerFlowLocked,
-    vehicleFlowOption,
   ]);
+
+  const handleReopenFulfillmentStep = useCallback(() => {
+    if (sellerFlowLocked) {
+      notifySellerFlowLocked();
+      return;
+    }
+    setIsVehiclePickerVisible(true);
+    persistDraftSnapshot({ isVehiclePickerVisible: true });
+  }, [notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked]);
 
   const handleSelectVehicleFlow = useCallback((nextFlowOption, nextVehicleId = "") => {
     if (sellerFlowLocked) {
@@ -2142,40 +2168,27 @@ export default function SaleForm({
     }
     const normalizedVehicleId = normalizeVehicleId(nextVehicleId);
     const pendingCreatedVehicle = normalizeVehicleId(recentlyCreatedVehicleIdRef.current);
-    if (
-      nextFlowOption === "carryout"
-      || (normalizedVehicleId && normalizedVehicleId !== pendingCreatedVehicle)
-    ) {
+    if (normalizedVehicleId && normalizedVehicleId !== pendingCreatedVehicle) {
       recentlyCreatedVehicleIdRef.current = "";
     }
-    const nextCartItems = nextFlowOption === "carryout"
-      ? normalizedCartItems.map((item) => ({ ...item, with_installation: false }))
-      : normalizedCartItems;
+    setLogisticMode("installed");
     setVehicleFlowOption(nextFlowOption);
     setSelectedVehicle(normalizedVehicleId);
-    if (nextFlowOption === "registered") {
-      setLogisticMode("installed");
-    } else if (nextFlowOption === "carryout") {
-      setLogisticMode((current) => (current === "delivery" ? "delivery" : "carryout"));
-    }
     if (nextFlowOption !== "new") {
       setIsVehiclePickerVisible(false);
     }
     playSelectionFeedbackSound();
-    if (nextFlowOption === "carryout") {
-      setCartItems(nextCartItems);
-    }
     if (nextFlowOption === "registered" && normalizedVehicleId) {
       triggerVehiclePulse();
     }
     persistDraftSnapshot({
       vehicleFlowOption: nextFlowOption,
       selectedVehicle: normalizedVehicleId,
-      cartItems: nextCartItems,
       showNewVehicleDialog: nextFlowOption === "new",
-      logisticMode: nextFlowOption === "registered" ? "installed" : (logisticMode === "delivery" ? "delivery" : "carryout"),
+      logisticMode: "installed",
+      isVehiclePickerVisible: nextFlowOption === "new",
     });
-  }, [logisticMode, normalizeVehicleId, normalizedCartItems, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
+  }, [normalizeVehicleId, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
 
   const updateCartItem = useCallback((productId, field, value, options = {}) => {
     if (!isSupervisorUser) {
@@ -2956,183 +2969,24 @@ export default function SaleForm({
           )}
         >
           <Label className="inline-flex items-center gap-2">
-            <CarFront className="h-4 w-4" />
-            <span>Paso 2: Seleccionar opción de vehículo</span>
+            <Truck className="h-4 w-4" />
+            <span>Paso 2: ¿Cómo se entrega esta venta?</span>
           </Label>
           {!stepOneComplete ? (
-            <p className="text-xs text-muted-foreground">Completa el paso 1 para habilitar la selección de vehículo</p>
-          ) : null}
-          {isVehiclePickerVisible ? (
-            <div className={`grid gap-2 ui-fade-in-stagger ${selectedCustomer ? "sm:grid-cols-2" : ""}`}>
-              <button
-                type="button"
-                disabled={!selectedCustomer || sellerFlowLocked}
-                onClick={() => {
-                  setIsVehiclePickerVisible(false);
-                  handleSelectVehicleFlow("carryout", "");
-                }}
-                className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${selectedVehicleOption === "carryout"
-                  ? "border-emerald-500 bg-emerald-100/80 dark:border-emerald-500/50 dark:bg-emerald-500/20"
-                  : "border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100/80 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                <p className="font-medium text-emerald-900 dark:text-emerald-100 inline-flex items-center gap-1.5">
-                  <Package className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-                  Producto para llevar
-                </p>
-                <p className="text-xs text-emerald-800 dark:text-emerald-200/90 mt-1">Venta sin instalación ni vehículo registrado</p>
-              </button>
-
-              {customerVehicles.map((v) => {
-                const plate = v.plate || v.plate_number || v.number_plate || "Sin placa";
-                const vin = v.vin || v.chasis || v.chassis || "Sin chasis";
-                const color = v.color || v.vehicle_color || v.colour || "Sin color";
-                const catalogHint = formatVehicleIdentityHint(v.brand, v.year, v.model);
-                const vehicleOptionId = normalizeVehicleId(v.vehicle_id ?? v.id);
-                const isActiveVehicle = selectedVehicleOption === `vehicle:${vehicleOptionId}`;
-                return (
-                  <button
-                    key={v.vehicle_id ?? v.id}
-                    type="button"
-                    disabled={!selectedCustomer || sellerFlowLocked}
-                    onClick={() => {
-                      setIsVehiclePickerVisible(false);
-                      handleSelectVehicleFlow("registered", vehicleOptionId);
-                    }}
-                    className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${isActiveVehicle
-                      ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
-                      : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80 dark:border-sky-500/30 dark:bg-sky-500/10 dark:hover:bg-sky-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    <p className="font-medium text-sky-900 dark:text-sky-100 inline-flex items-center gap-1.5">
-                      <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
-                      {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
-                    </p>
-                    {catalogHint ? (
-                      <p className="text-[11px] text-sky-800/90 mt-1">{catalogHint}</p>
-                    ) : null}
-                    <p className="text-xs text-sky-800 mt-1">{plate}</p>
-                    <p className="text-[11px] text-sky-700 mt-0.5">{vin} • {color}</p>
-                  </button>
-                );
-              })}
-
-              <button
-                type="button"
-                disabled={!selectedCustomer || sellerFlowLocked}
-                onClick={() => {
-                  setIsVehiclePickerVisible(false);
-                  setShowNewVehicleDialog(true);
-                  handleSelectVehicleFlow("new", "");
-                }}
-                className={`rounded-lg border p-3 text-left transition-colors ui-interactive ${selectedVehicleOption === "new"
-                  ? "border-violet-500 bg-violet-100/80 dark:border-violet-500/50 dark:bg-violet-500/20"
-                  : "border-violet-200 bg-violet-50/80 hover:bg-violet-100/80 dark:border-violet-500/30 dark:bg-violet-500/10 dark:hover:bg-violet-500/20"} ${!selectedCustomer ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                <p className="font-medium text-violet-900 dark:text-violet-100 inline-flex items-center gap-1.5">
-                  <PlusCircle className="h-4 w-4 text-violet-700 dark:text-violet-300" />
-                  Registrar nuevo vehículo
-                </p>
-                <p className="text-xs text-violet-800 mt-1">Agregar otro vehículo a este cliente</p>
-              </button>
-            </div>
+            <p className="text-xs text-muted-foreground">Completa el paso 1 para habilitar la forma de entrega</p>
           ) : null}
 
           {!selectedCustomer ? (
-            <p className="text-xs text-muted-foreground">Primero selecciona un cliente para ver sus opciones de vehículo</p>
+            <p className="text-xs text-muted-foreground">Primero selecciona un cliente</p>
           ) : null}
 
-          {vehicleFlowOption === "carryout" && (
-            <p className="text-xs text-muted-foreground">
-              Venta configurada como producto para llevar. No se aplicará instalación.
-            </p>
-          )}
-
-          {!isVehiclePickerVisible && vehicleFlowOption === "carryout" && selectedCustomer ? (
-            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.shell)}>
-              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
-                <div className="min-w-0 space-y-1.5">
-                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.title}>
-                    <Package className="h-4 w-4 shrink-0 text-emerald-700" />
-                    Producto para llevar
-                  </p>
-                  <p className="text-xs text-emerald-900/90">Venta sin instalación ni vehículo registrado</p>
-                </div>
-                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                    disabled={sellerFlowLocked}
-                    onClick={() => setIsVehiclePickerVisible(true)}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-1.5" />
-                    Cambiar
-                  </Button>
-                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.badge}>
-                    Para llevar
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {!isVehiclePickerVisible && vehicleFlowOption === "registered" && selectedVehicleData ? (
-            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
-              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
-                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
-                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
-                    <CarFront className="h-4 w-4 shrink-0 text-sky-700" />
-                    <span className="min-w-0 whitespace-normal break-words">{[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo seleccionado"}</span>
-                  </p>
-
-                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
-                    <p className="inline-flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
-                    </p>
-                    <p className="inline-flex items-center gap-1.5">
-                      <Palette className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
-                    </p>
-                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                    disabled={sellerFlowLocked}
-                    onClick={() => {
-                      setIsVehiclePickerVisible(true);
-                      handleSelectVehicleFlow("carryout", "");
-                    }}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-1.5" />
-                    Cambiar
-                  </Button>
-                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>
-                    Vehículo
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {stepOneComplete && selectedCustomer ? (
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/30">
-              <Label className="inline-flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                <span>Opción logística (obligatoria)</span>
-              </Label>
+          {stepOneComplete && selectedCustomer && isVehiclePickerVisible ? (
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 ui-fade-in-stagger dark:border-slate-700 dark:bg-slate-900/30">
               <div className="grid gap-2 sm:grid-cols-3">
                 <button
                   type="button"
                   disabled={sellerFlowLocked}
-                  onClick={() => handleSelectLogisticMode("carryout")}
+                  onClick={() => handleSelectFulfillmentMode("carryout")}
                   className={cn(
                     "rounded-lg border p-3 text-left transition-colors ui-interactive",
                     logisticMode === "carryout"
@@ -3140,33 +2994,16 @@ export default function SaleForm({
                       : "border-emerald-200 bg-white hover:bg-emerald-50/80 dark:border-emerald-500/30 dark:bg-slate-900/40",
                   )}
                 >
-                  <p className="font-medium inline-flex items-center gap-1.5">
+                  <p className="font-medium inline-flex items-center gap-1.5 text-emerald-900 dark:text-emerald-100">
                     <Package className="h-4 w-4" />
                     Para llevar
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Venta sin instalación en vehículo</p>
+                  <p className="text-xs text-muted-foreground mt-1">Cliente recoge — sin instalación ni envío</p>
                 </button>
                 <button
                   type="button"
                   disabled={sellerFlowLocked}
-                  onClick={() => handleSelectLogisticMode("installed")}
-                  className={cn(
-                    "rounded-lg border p-3 text-left transition-colors ui-interactive",
-                    logisticMode === "installed"
-                      ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
-                      : "border-sky-200 bg-white hover:bg-sky-50/80 dark:border-sky-500/30 dark:bg-slate-900/40",
-                  )}
-                >
-                  <p className="font-medium inline-flex items-center gap-1.5">
-                    <Wrench className="h-4 w-4" />
-                    Instalado
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Requiere vehículo registrado</p>
-                </button>
-                <button
-                  type="button"
-                  disabled={sellerFlowLocked}
-                  onClick={() => handleSelectLogisticMode("delivery")}
+                  onClick={() => handleSelectFulfillmentMode("delivery")}
                   className={cn(
                     "rounded-lg border p-3 text-left transition-colors ui-interactive",
                     logisticMode === "delivery"
@@ -3174,13 +3011,93 @@ export default function SaleForm({
                       : "border-amber-200 bg-white hover:bg-amber-50/80 dark:border-amber-500/30 dark:bg-slate-900/40",
                   )}
                 >
-                  <p className="font-medium inline-flex items-center gap-1.5">
+                  <p className="font-medium inline-flex items-center gap-1.5 text-amber-900 dark:text-amber-100">
                     <Truck className="h-4 w-4" />
                     Con envío incluido
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Delivery con mensajero asignado</p>
+                  <p className="text-xs text-muted-foreground mt-1">Delivery con mensajero — sin instalación</p>
+                </button>
+                <button
+                  type="button"
+                  disabled={sellerFlowLocked}
+                  onClick={() => handleSelectFulfillmentMode("installed")}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                    logisticMode === "installed"
+                      ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
+                      : "border-sky-200 bg-white hover:bg-sky-50/80 dark:border-sky-500/30 dark:bg-slate-900/40",
+                  )}
+                >
+                  <p className="font-medium inline-flex items-center gap-1.5 text-sky-900 dark:text-sky-100">
+                    <Wrench className="h-4 w-4" />
+                    Instalado en vehículo
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Trabajo en taller — requiere vehículo del cliente</p>
                 </button>
               </div>
+
+              {logisticMode === "installed" ? (
+                <div className="space-y-2">
+                  <Label className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                    <CarFront className="h-4 w-4" />
+                    Seleccionar vehículo
+                  </Label>
+                  <div className={`grid gap-2 ${customerVehicles.length ? "sm:grid-cols-2" : ""}`}>
+                    {customerVehicles.map((v) => {
+                      const plate = v.plate || v.plate_number || v.number_plate || "Sin placa";
+                      const vin = v.vin || v.chasis || v.chassis || "Sin chasis";
+                      const color = v.color || v.vehicle_color || v.colour || "Sin color";
+                      const catalogHint = formatVehicleIdentityHint(v.brand, v.year, v.model);
+                      const vehicleOptionId = normalizeVehicleId(v.vehicle_id ?? v.id);
+                      const isActiveVehicle = selectedVehicleOption === `vehicle:${vehicleOptionId}`;
+                      return (
+                        <button
+                          key={v.vehicle_id ?? v.id}
+                          type="button"
+                          disabled={sellerFlowLocked}
+                          onClick={() => handleSelectVehicleFlow("registered", vehicleOptionId)}
+                          className={cn(
+                            "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                            isActiveVehicle
+                              ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
+                              : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80 dark:border-sky-500/30 dark:bg-sky-500/10 dark:hover:bg-sky-500/20",
+                          )}
+                        >
+                          <p className="font-medium text-sky-900 dark:text-sky-100 inline-flex items-center gap-1.5">
+                            <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
+                            {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
+                          </p>
+                          {catalogHint ? (
+                            <p className="text-[11px] text-sky-800/90 mt-1">{catalogHint}</p>
+                          ) : null}
+                          <p className="text-xs text-sky-800 mt-1">{plate}</p>
+                          <p className="text-[11px] text-sky-700 mt-0.5">{vin} • {color}</p>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      disabled={sellerFlowLocked}
+                      onClick={() => {
+                        setShowNewVehicleDialog(true);
+                        handleSelectVehicleFlow("new", "");
+                      }}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                        selectedVehicleOption === "new"
+                          ? "border-violet-500 bg-violet-100/80 dark:border-violet-500/50 dark:bg-violet-500/20"
+                          : "border-violet-200 bg-violet-50/80 hover:bg-violet-100/80 dark:border-violet-500/30 dark:bg-violet-500/10 dark:hover:bg-violet-500/20",
+                      )}
+                    >
+                      <p className="font-medium text-violet-900 dark:text-violet-100 inline-flex items-center gap-1.5">
+                        <PlusCircle className="h-4 w-4 text-violet-700 dark:text-violet-300" />
+                        Registrar nuevo vehículo
+                      </p>
+                      <p className="text-xs text-violet-800 mt-1">Agregar otro vehículo a este cliente</p>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {logisticMode === "delivery" ? (
                 <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 sm:grid-cols-2 dark:border-amber-500/30 dark:bg-amber-500/10">
@@ -3273,6 +3190,185 @@ export default function SaleForm({
               ) : null}
             </div>
           ) : null}
+
+          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "carryout" ? (
+            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.shell)}>
+              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                <div className="min-w-0 space-y-1.5">
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.title}>
+                    <Package className="h-4 w-4 shrink-0 text-emerald-700" />
+                    Para llevar
+                  </p>
+                  <p className="text-xs text-emerald-900/90">Cliente recoge — sin instalación ni envío</p>
+                </div>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    disabled={sellerFlowLocked}
+                    onClick={handleReopenFulfillmentStep}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1.5" />
+                    Cambiar
+                  </Button>
+                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.badge}>
+                    Para llevar
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "delivery" ? (
+            <div className="space-y-3">
+              <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10")}>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                  <div className="min-w-0 space-y-1.5">
+                    <p className="font-semibold text-amber-900 dark:text-amber-100 inline-flex items-center gap-1.5">
+                      <Truck className="h-4 w-4 shrink-0 text-amber-700" />
+                      Con envío incluido
+                    </p>
+                    <p className="text-xs text-amber-900/90">Delivery con mensajero — sin instalación</p>
+                  </div>
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                      disabled={sellerFlowLocked}
+                      onClick={handleReopenFulfillmentStep}
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-1.5" />
+                      Cambiar
+                    </Button>
+                    <Badge variant="outline" className="border-amber-300 text-amber-800">
+                      Envío
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 sm:grid-cols-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                <div className="space-y-1.5">
+                  <Label>Tipo de destino</Label>
+                  <Select
+                    value={deliveryDestinationType}
+                    onValueChange={(value) => {
+                      setDeliveryDestinationType(value);
+                      persistDraftSnapshot({ deliveryDestinationType: value });
+                    }}
+                    disabled={sellerFlowLocked}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione destino" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="domicilio">A domicilio</SelectItem>
+                      <SelectItem value="terminal_buses">A terminal de buses</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Costo de envío</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={deliveryCost}
+                    onChange={(e) => setDeliveryCost(e.target.value)}
+                    onBlur={() => persistDraftSnapshot({ deliveryCost })}
+                    disabled={sellerFlowLocked}
+                    placeholder="Tarifa cobrada al cliente"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Mensajero asignado</Label>
+                  {messengerLoading ? (
+                    <p className="text-xs text-muted-foreground">Cargando mensajeros...</p>
+                  ) : messengerLoadFailed ? (
+                    <p className="text-xs text-rose-700">
+                      No se pudieron cargar los mensajeros. Revisa la conexión o contacta a sistemas.
+                    </p>
+                  ) : messengerOptions.length === 0 ? (
+                    <p className="text-xs text-rose-700">No hay mensajeros configurados para esta sucursal.</p>
+                  ) : (
+                    <Select
+                      value={selectedMessengerId}
+                      onValueChange={(value) => {
+                        const messenger = messengerOptions.find((row) => row.messenger_id === value);
+                        if (messenger && messenger.status === "libre") {
+                          toast.error("El mensajero está fuera de turno. Seleccione otro.");
+                          return;
+                        }
+                        setSelectedMessengerId(value);
+                        persistDraftSnapshot({ selectedMessengerId: value });
+                      }}
+                      disabled={sellerFlowLocked}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione mensajero" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {messengerOptions.map((messenger) => {
+                          const fullName = `${messenger.name || ""} ${messenger.last_name || ""}`.trim();
+                          const statusLabel = messenger.status_label || messenger.status || "disponible";
+                          return (
+                            <SelectItem key={messenger.messenger_id} value={messenger.messenger_id}>
+                              {fullName} — {statusLabel}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
+            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
+              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
+                    <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
+                    <span className="min-w-0 whitespace-normal break-words">
+                      Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
+                    </span>
+                  </p>
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
+                    <p className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5">
+                      <Palette className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                    </p>
+                  </div>
+                </div>
+                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
+                    disabled={sellerFlowLocked}
+                    onClick={handleReopenFulfillmentStep}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1.5" />
+                    Cambiar
+                  </Button>
+                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>
+                    Instalado
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -3288,7 +3384,7 @@ export default function SaleForm({
             <span>Paso 3: Seleccionar productos</span>
           </Label>
           {!stepTwoComplete ? (
-            <p className="text-xs text-muted-foreground">Selecciona cliente y opción de vehículo para habilitar productos</p>
+            <p className="text-xs text-muted-foreground">Selecciona cliente y forma de entrega para habilitar productos</p>
           ) : null}
           <div className="flex flex-col gap-2 mb-2 md:flex-row ui-fade-in-stagger">
               <div className="relative flex-1">
@@ -3597,7 +3693,7 @@ export default function SaleForm({
         )}
       >
         {!stepTwoComplete ? (
-          <p className="text-xs text-muted-foreground">Los pasos 4 y 5 se habilitan después de seleccionar la opción de vehículo</p>
+          <p className="text-xs text-muted-foreground">Los pasos 4 y 5 se habilitan después de definir la forma de entrega</p>
         ) : null}
         {cartFlashActive ? (
           <div className="pointer-events-none absolute inset-x-3 top-10 h-28 rounded-3xl bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.98),rgba(186,230,253,0.34)_35%,rgba(255,255,255,0)_70%)] opacity-90 blur-sm" />
@@ -4476,12 +4572,17 @@ export default function SaleForm({
           if (!open) {
             resetNewVehicleForm();
             if (vehicleFlowOption === "new") {
-              setVehicleFlowOption(selectedVehicle ? "registered" : "carryout");
+              setVehicleFlowOption(selectedVehicle ? "registered" : "registered");
+              if (!selectedVehicle) {
+                setIsVehiclePickerVisible(true);
+              }
             }
           }
           persistDraftSnapshot({
             showNewVehicleDialog: open,
-            vehicleFlowOption: open ? "new" : (selectedVehicle ? "registered" : "carryout"),
+            vehicleFlowOption: open ? "new" : (selectedVehicle ? "registered" : "registered"),
+            logisticMode: open ? "installed" : logisticMode,
+            isVehiclePickerVisible: open ? true : !selectedVehicle,
             newVehicle: open ? newVehicle : {
               plate_prefix: "M",
               plate_number: "",

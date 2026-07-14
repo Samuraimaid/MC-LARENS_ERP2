@@ -12,7 +12,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from backend.domains.deployment.appliance_cloud_config import (
+    has_terabox_session_cookies,
+    persist_terabox_session_cookies,
     resolve_terabox_credentials,
+    resolve_terabox_session_cookies,
     resolve_terabox_settings,
 )
 
@@ -21,6 +24,12 @@ LOGGER = logging.getLogger(__name__)
 _CACHE: Dict[str, Tuple[float, Any]] = {}
 _CACHE_TTL_SEC = int(os.environ.get("TERABOX_CACHE_TTL_SEC", "180"))
 _TERABOX_LOCK = threading.Lock()
+
+VERIFY_HELP = (
+    "TeraBox pide verificación humana (need verify). Abra terabox.com en el navegador, "
+    "inicie sesión, luego en F12 → Application → Cookies copie ndus, jstoken, csrfToken "
+    "y browserid, y pégalos en «Sesión del navegador» del panel ERP."
+)
 
 
 def clear_terabox_cache() -> None:
@@ -58,23 +67,62 @@ def _run_async(coro):
         return asyncio.run(coro)
 
 
+def _format_error(exc: Exception) -> str:
+    if isinstance(exc, KeyError):
+        return VERIFY_HELP
+    text = str(exc).strip() or exc.__class__.__name__
+    lowered = text.lower()
+    if (
+        "need verify" in lowered
+        or "simple-verify" in lowered
+        or "login requires" in lowered
+        or "errmsg" in lowered
+        or "challenge" in lowered
+    ):
+        return VERIFY_HELP
+    if not has_terabox_session_cookies() and resolve_terabox_credentials()[1]:
+        return f"{VERIFY_HELP} (login automático bloqueado)"
+    return text
+
+
 @asynccontextmanager
 async def _terabox_client():
     import aiohttp
     from aioterabox.api import TeraboxClient
-    from aioterabox.exceptions import TeraboxLoginChallengeRequired
+    from aioterabox.exceptions import TeraboxLoginChallengeRequired, TeraboxUnauthorizedError
 
     username, password = resolve_terabox_credentials()
-    if not username or not password:
+    if not username:
         raise ValueError("Credenciales TeraBox no configuradas")
 
+    cookies = resolve_terabox_session_cookies()
+    use_cookies = has_terabox_session_cookies()
+
     session = aiohttp.ClientSession()
-    client = TeraboxClient(email=username, password=password, session=session)
+    client = TeraboxClient(
+        email=username,
+        password=password or "",
+        session=session,
+        cookies=cookies if use_cookies else None,
+    )
     try:
-        try:
-            await client.login()
-        except TeraboxLoginChallengeRequired as exc:
-            await client.complete_login_challenge(exc.challenge)
+        if use_cookies:
+            await client.ensure_logged_in()
+        elif password:
+            try:
+                await client.login()
+            except TeraboxLoginChallengeRequired as exc:
+                raise ValueError(VERIFY_HELP) from exc
+            except TeraboxUnauthorizedError as exc:
+                if "need verify" in str(exc).lower() or "simple-verify" in str(exc).lower():
+                    raise ValueError(VERIFY_HELP) from exc
+                raise
+            except KeyError as exc:
+                raise ValueError(VERIFY_HELP) from exc
+        else:
+            raise ValueError("Configure contraseña o cookies de sesión TeraBox")
+
+        persist_terabox_session_cookies(client.request_cookies)
         yield client
     finally:
         if not session.closed:
@@ -121,10 +169,11 @@ async def test_connection_async() -> Dict[str, Any]:
         quota = await client.get_storage_quota()
         return {
             "connected": True,
-            "message": "Sesión TeraBox activa (API real)",
+            "message": "Sesión TeraBox activa",
             "username": username,
             "remote_used_bytes": int(quota.get("used") or 0),
             "remote_total_bytes": int(quota.get("total") or 0),
+            "session_mode": "cookies" if has_terabox_session_cookies() else "password",
             "tested_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -191,8 +240,9 @@ def test_connection(*, force: bool = False) -> Dict[str, Any]:
         username, _ = resolve_terabox_credentials()
         return {
             "connected": False,
-            "message": f"Error TeraBox: {exc}",
+            "message": _format_error(exc),
             "username": username,
+            "needs_browser_session": not has_terabox_session_cookies(),
             "tested_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -219,17 +269,18 @@ def list_directory(remote_path: Optional[str] = None, *, force: bool = False) ->
             "connected": False,
             "path": directory,
             "entries": [],
-            "message": f"No se pudo listar TeraBox remoto: {exc}",
+            "message": _format_error(exc),
             "source": "error",
-            "remote_error": str(exc),
+            "remote_error": _format_error(exc),
+            "needs_browser_session": not has_terabox_session_cookies(),
         }
 
 
 def upload_file(local_path: str, remote_path: str) -> Dict[str, Any]:
     result = _run_async(upload_file_async(local_path, remote_path))
     clear_terabox_cache()
-    list_cache_key = f"list:{str(Path(remote_path).parent).replace(chr(92), '/')}"
-    _CACHE.pop(list_cache_key, None)
+    parent = str(Path(remote_path).parent).replace("\\", "/")
+    _CACHE.pop(f"list:{parent}", None)
     return result
 
 

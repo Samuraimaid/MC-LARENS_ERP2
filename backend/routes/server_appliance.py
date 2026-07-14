@@ -261,14 +261,30 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         if data.get("share_url") or data.get("TERABOX_SHARE_URL"):
             updates["TERABOX_SHARE_URL"] = str(data.get("share_url") or data.get("TERABOX_SHARE_URL")).strip()
 
+        session = data.get("session") or {}
+        for src, key in (
+            ("jstoken", "TERABOX_JSTOKEN"),
+            ("ndus", "TERABOX_NDUS"),
+            ("csrfToken", "TERABOX_CSRFTOKEN"),
+            ("browserid", "TERABOX_BROWSERID"),
+        ):
+            val = session.get(src) or data.get(key)
+            if val:
+                updates[key] = str(val).strip()
+
         write_appliance_cloud_values(updates)
-        probe = test_terabox_connection(username=username, password=password or None)
-        if password and not probe.get("connected"):
+        probe = test_terabox_connection(
+            username=username,
+            password=password or None,
+            force=bool(password or session),
+        )
+        if (password or session) and not probe.get("connected"):
             raise HTTPException(status_code=400, detail=probe.get("message") or "No se pudo validar TeraBox")
         return {
             "message": "Credenciales TeraBox actualizadas",
             "connected": probe.get("connected"),
             "username_masked": username[:2] + "***@" + username.split("@")[-1] if "@" in username else "***",
+            "needs_browser_session": probe.get("needs_browser_session"),
         }
 
     @router.post("/server-appliance/terabox/credentials/test")
@@ -282,9 +298,24 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
         data = payload or {}
         from backend.services.terabox_client import test_terabox_connection as _test
 
+        from backend.domains.deployment.appliance_cloud_config import write_appliance_cloud_values
+
         username = str(data.get("username") or "").strip() or None
         password = str(data.get("password") or "").strip() or None
-        force = bool(username or password)
+        session = data.get("session") or {}
+        session_updates: Dict[str, str] = {}
+        for src, key in (
+            ("jstoken", "TERABOX_JSTOKEN"),
+            ("ndus", "TERABOX_NDUS"),
+            ("csrfToken", "TERABOX_CSRFTOKEN"),
+            ("browserid", "TERABOX_BROWSERID"),
+        ):
+            val = session.get(src) or data.get(key)
+            if val:
+                session_updates[key] = str(val).strip()
+        if session_updates:
+            write_appliance_cloud_values(session_updates)
+        force = bool(username or password or session_updates)
         return _test(username=username, password=password, force=force)
 
     @router.get("/server-appliance/terabox/files")
@@ -336,11 +367,25 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
                     "stdout": outcome.get("stdout"),
                 },
             )
+        terabox_upload = None
+        if latest:
+            from backend.services.terabox_backup_service import upload_archive_to_terabox_sync
+
+            terabox_upload = await asyncio.to_thread(upload_archive_to_terabox_sync, str(latest))
+
+        local_ok = True
+        remote_ok = bool((terabox_upload or {}).get("last_upload_status") == "success")
         return {
-            "message": "Respaldo completo del ERP iniciado/finalizado",
+            "message": (
+                "Respaldo local completado y subido a TeraBox"
+                if remote_ok
+                else "Respaldo local completado — subida TeraBox pendiente o fallida"
+            ),
             "latest_archive": latest.name if latest else None,
             "latest_size_bytes": latest.stat().st_size if latest else None,
             "stdout": outcome.get("stdout"),
+            "local_backup_ok": local_ok,
+            "terabox_upload": terabox_upload,
         }
 
     @router.get("/server-appliance/alerts")

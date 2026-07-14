@@ -226,11 +226,16 @@ function isAtlasHealthy(atlas) {
 
 function isTeraboxHealthy(terabox) {
   return (
-    terabox?.status === "CONNECTED"
-    || terabox?.env_configured === true
-    || terabox?.local_mirror_ready === true
-    || terabox?.remote_session_active === true
+    terabox?.remote_session_active === true
+    || terabox?.status === "CONNECTED"
   );
+}
+
+function teraboxStatusLabel(terabox) {
+  if (terabox?.remote_session_active || terabox?.status === "CONNECTED") return "CONECTADO";
+  if (terabox?.needs_browser_session || terabox?.status === "PENDING_SESSION") return "PENDIENTE SESIÓN";
+  if (terabox?.env_configured) return "CREDENCIALES OK";
+  return terabox?.status || "DESCONECTADO";
 }
 
 function CloudProgressBar({ label, used, total, unit, lastSync, folders = [], tone = "cyan", healthy = true }) {
@@ -375,6 +380,48 @@ function formatModified(value) {
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString("es-NI");
 }
 
+const TERABOX_COOKIE_KEYS = ["jstoken", "ndus", "csrfToken", "browserid"];
+
+function parseTeraboxCookiePaste(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return {};
+
+  const out = {};
+  const assign = (name, value) => {
+    const key = String(name || "").trim();
+    const val = String(value || "").trim();
+    if (TERABOX_COOKIE_KEYS.includes(key) && val) out[key] = val;
+  };
+
+  if (text.startsWith("[") || text.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(text);
+      const rows = Array.isArray(parsed) ? parsed : (parsed.cookies || []);
+      rows.forEach((row) => assign(row?.name || row?.key, row?.value));
+      if (Object.keys(out).length) return out;
+    } catch {
+      /* intentar formato texto */
+    }
+  }
+
+  text.split(/[;\n]/).forEach((part) => {
+    const eq = part.indexOf("=");
+    if (eq < 1) return;
+    assign(part.slice(0, eq), part.slice(eq + 1));
+  });
+  return out;
+}
+
+function buildTeraboxSessionPayload(form) {
+  const session = {};
+  const pasted = parseTeraboxCookiePaste(form.cookie_paste);
+  TERABOX_COOKIE_KEYS.forEach((key) => {
+    const value = String(form[key] || pasted[key] || "").trim();
+    if (value) session[key] = value;
+  });
+  return session;
+}
+
 function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
   const [creds, setCreds] = useState(null);
   const [credsError, setCredsError] = useState("");
@@ -384,6 +431,11 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
     root_folder: defaultRoot,
     remote_folder: "/MCLarensERP/cold-backups",
     share_url: "",
+    jstoken: "",
+    ndus: "",
+    csrfToken: "",
+    browserid: "",
+    cookie_paste: "",
   });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -462,6 +514,8 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
       const payload = {};
       if (form.username.trim()) payload.username = form.username.trim();
       if (form.password.trim()) payload.password = form.password.trim();
+      const session = buildTeraboxSessionPayload(form);
+      if (Object.keys(session).length) payload.session = session;
       const response = await axios.post(
         buildApiUrl("/server-appliance/terabox/credentials/test"),
         payload,
@@ -489,6 +543,8 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
       };
       if (form.username.trim()) payload.username = form.username.trim();
       if (form.password.trim()) payload.password = form.password.trim();
+      const session = buildTeraboxSessionPayload(form);
+      if (Object.keys(session).length) payload.session = session;
       const response = await axios.put(
         buildApiUrl("/server-appliance/terabox/credentials"),
         payload,
@@ -583,6 +639,37 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
         </div>
       ) : (
         <>
+          {creds?.configured && !creds?.session_configured ? (
+            <div className="rounded-xl border border-amber-500/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+              <p className="font-semibold">TeraBox cierra la página si detecta F12 — no use DevTools en terabox.com</p>
+              <p className="mt-1 text-xs text-amber-200/90">
+                Cookie-Editor solo funciona <strong>estando en la pestaña terabox.com</strong> (no en about:blank).
+                Cierre el aviso «Got it» de la extensión, abra terabox.com, inicie sesión, y recién ahí clic en el icono de la extensión.
+              </p>
+              <ol className="mt-2 list-decimal space-y-2 pl-5 text-xs text-amber-200/90">
+                <li>
+                  <strong>Recomendado — Firefox:</strong> instale Firefox, abra terabox.com, inicie sesión, F12 → Almacenamiento → Cookies →
+                  www.terabox.com (Firefox no suele bloquear DevTools).
+                </li>
+                <li>
+                  <strong>Cookie-Editor en Chrome:</strong> pestaña <strong>terabox.com</strong> con sesión iniciada → icono extensión → Export → pegar JSON abajo.
+                  No abra F12.
+                </li>
+                <li>
+                  <strong>Script automático (Windows):</strong> inicie sesión en terabox.com en Chrome, cierre Chrome, luego en PowerShell:{" "}
+                  <code className="block mt-1 rounded bg-slate-900 px-2 py-1 text-[10px] text-cyan-200">
+                    pip install browser-cookie3
+                    <br />
+                    python backend/scripts/export_chrome_terabox_cookies.py --test
+                  </code>
+                </li>
+                <li>
+                  <strong>Chrome datos de sitios:</strong> tras iniciar sesión en terabox.com, otra pestaña →{" "}
+                  <code className="rounded bg-slate-900 px-1 text-cyan-200">chrome://settings/siteData</code> → buscar terabox.
+                </li>
+              </ol>
+            </div>
+          ) : null}
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-950/60 p-4">
               <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -642,6 +729,53 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
                 />
               </label>
+              <div className="rounded-lg border border-violet-500/30 bg-violet-950/20 p-3 space-y-2">
+                <p className="text-xs font-semibold text-violet-200">Sesión del navegador (requerida si TeraBox pide verificación)</p>
+                <p className="text-[11px] text-slate-400">
+                  Cookies de <strong className="text-violet-200">www.terabox.com</strong>, no de localhost.
+                  Estado actual: {creds?.session_configured ? "cookies guardadas" : "sin cookies"}
+                </p>
+                <label className="block text-[11px] text-slate-400">
+                  Pegado rápido (JSON de Cookie-Editor o texto ndus=...; jstoken=...)
+                  <textarea
+                    value={form.cookie_paste}
+                    onChange={(e) => setForm((prev) => ({ ...prev, cookie_paste: e.target.value }))}
+                    rows={3}
+                    placeholder='[{"name":"ndus","value":"..."},{"name":"jstoken","value":"..."}]'
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-[11px] text-white outline-none focus:border-violet-400"
+                  />
+                </label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    value={form.ndus}
+                    onChange={(e) => setForm((prev) => ({ ...prev, ndus: e.target.value }))}
+                    placeholder="ndus"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    value={form.jstoken}
+                    onChange={(e) => setForm((prev) => ({ ...prev, jstoken: e.target.value }))}
+                    placeholder="jstoken"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    value={form.csrfToken}
+                    onChange={(e) => setForm((prev) => ({ ...prev, csrfToken: e.target.value }))}
+                    placeholder="csrfToken"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    value={form.browserid}
+                    onChange={(e) => setForm((prev) => ({ ...prev, browserid: e.target.value }))}
+                    placeholder="browserid"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-violet-400"
+                  />
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   type="button"
@@ -789,11 +923,19 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
             </div>
             {backupError ? <p className="mt-2 text-xs text-rose-300">{backupError}</p> : null}
             {backupResult ? (
-              <p className="mt-2 text-xs text-emerald-300">
-                {backupResult.message}
-                {backupResult.latest_archive ? ` · ${backupResult.latest_archive}` : ""}
-                {backupResult.latest_size_bytes ? ` (${formatBytes(backupResult.latest_size_bytes)})` : ""}
-              </p>
+              <div className="mt-2 space-y-1 text-xs">
+                <p className={backupResult.terabox_upload?.last_upload_status === "success" ? "text-emerald-300" : "text-amber-300"}>
+                  {backupResult.message}
+                  {backupResult.latest_archive ? ` · ${backupResult.latest_archive}` : ""}
+                  {backupResult.latest_size_bytes ? ` (${formatBytes(backupResult.latest_size_bytes)})` : ""}
+                </p>
+                {backupResult.terabox_upload ? (
+                  <p className={backupResult.terabox_upload.last_upload_status === "success" ? "text-emerald-300" : "text-rose-300"}>
+                    TeraBox: {backupResult.terabox_upload.message || backupResult.terabox_upload.last_upload_status}
+                    {backupResult.terabox_upload.last_remote_path ? ` → ${backupResult.terabox_upload.last_remote_path}` : ""}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </>
@@ -1014,7 +1156,7 @@ export function ServerDashboardPage() {
             {" · "}
             TeraBox sync: {cloud.terabox?.sync_success_pct ?? 0}%
             {" · "}
-            Estado {teraboxHealthy ? "CONNECTED" : (cloud.terabox?.status || "DISCONNECTED")}
+            Estado {teraboxStatusLabel(cloud.terabox)}
           </p>
         </section>
 

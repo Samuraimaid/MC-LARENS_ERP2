@@ -16,7 +16,25 @@ def test_terabox_connection(
     password: Optional[str] = None,
     *,
     force: bool = False,
+    session: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
+    if session:
+        from backend.domains.deployment.appliance_cloud_config import write_appliance_cloud_values
+
+        updates = {}
+        for src, key in (
+            ("jstoken", "TERABOX_JSTOKEN"),
+            ("ndus", "TERABOX_NDUS"),
+            ("csrfToken", "TERABOX_CSRFTOKEN"),
+            ("browserid", "TERABOX_BROWSERID"),
+        ):
+            val = session.get(src)
+            if val:
+                updates[key] = str(val).strip()
+        if updates:
+            write_appliance_cloud_values(updates)
+        clear_terabox_cache()
+        force = True
     if username or password:
         import os as _os
 
