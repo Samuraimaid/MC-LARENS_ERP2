@@ -46,6 +46,20 @@ if (Test-Path (Join-Path $repoRoot "docker-compose.yml")) {
         else {
             docker compose up -d
             Write-Log "Stack ERP levantado tras arranque"
+
+            $descriptorScript = Join-Path $repoRoot "backend\scripts\build_all_descriptor_types.py"
+            if (Test-Path $descriptorScript) {
+                try {
+                    $python = Get-Command python -ErrorAction SilentlyContinue
+                    if ($python) {
+                        & python $descriptorScript 2>&1 | Out-Null
+                        Write-Log "Catálogo de siluetas re-asignado (build_all_descriptor_types)"
+                    }
+                }
+                catch {
+                    Write-Log "WARN: build_all_descriptor_types falló: $($_.Exception.Message)"
+                }
+            }
         }
     }
     finally {

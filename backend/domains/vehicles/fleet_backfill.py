@@ -8,19 +8,54 @@ from backend.domains.vehicles.descriptor_classifier import classify_descriptor
 from backend.domains.vehicles.vehicle_cab import apply_cab_to_vehicle_doc, is_pickup_slug
 
 
-def _catalog_label_index(entries: list[dict[str, Any]]) -> dict[tuple[str, str], dict[str, Any]]:
-    index: dict[tuple[str, str], dict[str, Any]] = {}
+def _norm_token(value: str) -> str:
+    return str(value or "").strip().lower()
+
+
+def _catalog_indexes(entries: list[dict[str, Any]]) -> tuple[
+    dict[tuple[str, str], dict[str, Any]],
+    dict[tuple[str, str], dict[str, Any]],
+    dict[tuple[str, str], dict[str, Any]],
+]:
+    by_label: dict[tuple[str, str], dict[str, Any]] = {}
+    by_descriptor: dict[tuple[str, str], dict[str, Any]] = {}
+    by_model: dict[tuple[str, str], dict[str, Any]] = {}
     for entry in entries:
         brand = str(entry.get("brand") or "").strip().upper()
         label = str(entry.get("label") or "").strip()
+        descriptor = str(entry.get("descriptor") or "").strip()
+        model = str(entry.get("model") or "").strip()
         if brand and label:
-            index[(brand, label)] = entry
-    return index
+            by_label[(brand, label)] = entry
+        if brand and descriptor:
+            by_descriptor[(brand, descriptor)] = entry
+        if brand and model:
+            by_model[(brand, _norm_token(model))] = entry
+    return by_label, by_descriptor, by_model
+
+
+def _resolve_catalog_entry(
+    vehicle: dict[str, Any],
+    *,
+    by_label: dict[tuple[str, str], dict[str, Any]],
+    by_descriptor: dict[tuple[str, str], dict[str, Any]],
+    by_model: dict[tuple[str, str], dict[str, Any]],
+) -> dict[str, Any] | None:
+    brand = str(vehicle.get("brand") or "").strip().upper()
+    model = str(vehicle.get("model") or "").strip()
+    descriptor = str(vehicle.get("descriptor") or "").strip()
+    if brand and descriptor and (brand, descriptor) in by_descriptor:
+        return by_descriptor[(brand, descriptor)]
+    if brand and model and (brand, model) in by_label:
+        return by_label[(brand, model)]
+    if brand and model and (brand, _norm_token(model)) in by_model:
+        return by_model[(brand, _norm_token(model))]
+    return None
 
 
 async def backfill_fleet_vehicle_slugs(db: Any, *, dry_run: bool = False, limit: int = 5000) -> dict[str, int]:
     entries = load_catalog_entries()
-    label_index = _catalog_label_index(entries)
+    by_label, by_descriptor, by_model = _catalog_indexes(entries)
 
     cursor = db.vehicles.find(
         {
@@ -44,7 +79,12 @@ async def backfill_fleet_vehicle_slugs(db: Any, *, dry_run: bool = False, limit:
         model = str(vehicle.get("model") or "").strip()
         descriptor = str(vehicle.get("descriptor") or "").strip()
 
-        catalog_entry = label_index.get((brand, model))
+        catalog_entry = _resolve_catalog_entry(
+            vehicle,
+            by_label=by_label,
+            by_descriptor=by_descriptor,
+            by_model=by_model,
+        )
         if catalog_entry:
             slug = str(catalog_entry.get("vehicle_type_slug") or catalog_entry.get("thumbnail_slug") or "")
             type_label = str(catalog_entry.get("vehicle_type_label") or "")

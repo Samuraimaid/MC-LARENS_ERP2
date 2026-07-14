@@ -282,12 +282,16 @@ async def _resolve_mobile_backup_device(db, branch_id: str) -> Dict[str, Any]:
         or ""
     ).strip()
     last_activity_iso: Optional[str] = None
+    drivers: List[Dict[str, Any]] = []
+    fleet_vehicle: Dict[str, Any] = {}
 
     try:
         from backend.domains.hr.drivers import ensure_erp_drivers, list_drivers
+        from backend.domains.vehicles.fleet_telemetry import resolve_branch_fleet_vehicle
 
         await ensure_erp_drivers(db)
         drivers = await list_drivers(db, branch_id=branch_id)
+        fleet_vehicle = await resolve_branch_fleet_vehicle(db, branch_id=branch_id, drivers=drivers)
         if not phone:
             primary = next(
                 (d for d in drivers if d.get("driver_type") == "delivery_last_mile"),
@@ -329,6 +333,17 @@ async def _resolve_mobile_backup_device(db, branch_id: str) -> Dict[str, Any]:
         "last_ping": _format_last_ping(seconds_ago if seconds_ago is not None else (3 if online else None)),
         "last_ping_seconds_ago": seconds_ago,
         "active_jobs": active_jobs,
+        "fleet_vehicle": fleet_vehicle,
+        "vehicle_type_slug": fleet_vehicle.get("vehicle_type_slug"),
+        "thumbnail_slug": fleet_vehicle.get("thumbnail_slug"),
+        "vehicle_type_label": fleet_vehicle.get("vehicle_type_label"),
+        "brand": fleet_vehicle.get("brand"),
+        "model": fleet_vehicle.get("model"),
+        "plate_number": fleet_vehicle.get("plate_number"),
+        "fleet_display": fleet_vehicle.get("fleet_display"),
+        "active_driver_id": fleet_vehicle.get("driver_id"),
+        "active_driver_name": fleet_vehicle.get("driver_name"),
+        "active_driver_status": fleet_vehicle.get("driver_status"),
     }
 
 

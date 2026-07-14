@@ -422,7 +422,8 @@ export function VehicleCatalogSettingsPanel({ canManage = false }) {
                 </Select>
               </div>
               <p className="text-xs text-muted-foreground pb-2">
-                Fuentes: Wikipedia + Wikidata. vPIC se usa al decodificar VIN en registro de vehículos.
+                Fuentes: Wikipedia (categorías + búsqueda), Wikidata (tipo de carrocería) y Google CSE opcional
+                (variables GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX). vPIC se usa al decodificar VIN en registro.
               </p>
               <Button type="button" disabled={!canManage || syncingCatalog} onClick={runCatalogSync}>
                 <Search className="mr-2 h-4 w-4" />
@@ -464,7 +465,17 @@ export function VehicleCatalogSettingsPanel({ canManage = false }) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="font-medium">{proposal.model}</p>
-                          <p className="text-xs text-muted-foreground">{proposal.brand} · {proposal.source}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {proposal.brand} · {proposal.source}
+                            {proposal.web_metadata?.matched_hint
+                              ? ` · ${proposal.web_metadata.matched_hint}`
+                              : ""}
+                          </p>
+                          {proposal.web_metadata?.extract_preview ? (
+                            <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
+                              {proposal.web_metadata.extract_preview}
+                            </p>
+                          ) : null}
                         </div>
                         <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
                       </div>

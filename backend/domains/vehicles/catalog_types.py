@@ -41,7 +41,12 @@ def rebuild_catalog_types() -> dict[str, int]:
         if not brand or not descriptor:
             continue
 
-        classified = classify_descriptor(brand, descriptor, model=model)
+        classified = classify_descriptor(
+            brand,
+            descriptor,
+            model=model,
+            refresh_stale_overrides=True,
+        )
         slug = classified["vehicle_type_slug"]
         type_label = classified["vehicle_type_label"]
 

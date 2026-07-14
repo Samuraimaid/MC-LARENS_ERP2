@@ -1,6 +1,7 @@
 """Discover vehicle models from public web sources and propose catalog additions."""
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import unicodedata
@@ -13,6 +14,10 @@ import httpx
 from backend.domains.vehicles.catalog_versioning import backup_catalog_before_change
 from backend.domains.vehicles.descriptor_classifier import classify_descriptor
 from backend.domains.vehicles.vehicle_cab import infer_cab_variant_from_vpic
+from backend.domains.vehicles.web_vehicle_metadata import (
+    collect_web_body_hints,
+    discover_model_titles_for_brand,
+)
 
 from backend.domains.vehicles.catalog_paths import resolve_backend_data_dir, resolve_catalog_path
 
@@ -46,6 +51,35 @@ BRAND_WIKI_CATEGORY: dict[str, str] = {
     "DODGE": "Category:Dodge vehicles",
     "GMC": "Category:GMC vehicles",
     "BYD": "Category:BYD vehicles",
+    "ACURA": "Category:Acura vehicles",
+    "LEXUS": "Category:Lexus vehicles",
+    "INFINITI": "Category:Infiniti vehicles",
+    "VOLVO": "Category:Volvo vehicles",
+    "ISUZU": "Category:Isuzu vehicles",
+    "RAM": "Category:Ram trucks",
+    "TESLA": "Category:Tesla vehicles",
+    "CHRYSLER": "Category:Chrysler vehicles",
+    "SEAT": "Category:SEAT vehicles",
+    "SKODA": "Category:Škoda vehicles",
+    "OPEL": "Category:Opel vehicles",
+    "VAUXHALL": "Category:Vauxhall vehicles",
+    "MINI": "Category:Mini vehicles",
+    "LAND ROVER": "Category:Land Rover vehicles",
+    "JAGUAR": "Category:Jaguar vehicles",
+    "PORSCHE": "Category:Porsche vehicles",
+    "DAIHATSU": "Category:Daihatsu vehicles",
+    "HINO": "Category:Hino vehicles",
+    "SCANIA": "Category:Scania vehicles",
+    "IVECO": "Category:Iveco vehicles",
+    "FOTON": "Category:Foton vehicles",
+    "JAC": "Category:JAC Motors vehicles",
+    "CHANGAN": "Category:Changan vehicles",
+    "GREAT WALL": "Category:Great Wall Motors vehicles",
+    "HAVAL": "Category:Haval vehicles",
+    "GEELY": "Category:Geely vehicles",
+    "MG": "Category:MG vehicles",
+    "SSANGYONG": "Category:KG Mobility vehicles",
+    "DAEWOO": "Category:Daewoo vehicles",
 }
 
 
@@ -75,7 +109,39 @@ def _catalog_model_tokens(entries: list[dict[str, Any]], brand: str) -> set[str]
         model = str(entry.get("model") or "")
         tokens.add(_model_base(descriptor))
         tokens.add(_norm(model))
+        for part in re.split(r"[/,&+]", descriptor.split("(", 1)[0]):
+            part_token = _norm(part)
+            if len(part_token) >= 2:
+                tokens.add(part_token)
     return {token for token in tokens if token}
+
+
+def _is_catalog_duplicate(title: str, catalog_tokens: set[str]) -> bool:
+    token = _norm(title)
+    if not token:
+        return True
+    if token in catalog_tokens:
+        return True
+    for existing in catalog_tokens:
+        if len(existing) <= 3:
+            continue
+        if token == existing or token in existing or existing in token:
+            return True
+    return False
+
+
+def _build_catalog_descriptor(title: str, web_meta: dict[str, Any] | None = None) -> str:
+    """Shape web discoveries like native catalog lines (generation + years when known)."""
+    base = str(title or "").strip()
+    if not base:
+        return "[descubierto web]"
+    years = ""
+    if web_meta:
+        extract = str(web_meta.get("extract_preview") or "")
+        year_match = re.search(r"\b(19|20)\d{2}\b", extract)
+        if year_match:
+            years = f" [{year_match.group(0)}-Presente]"
+    return f"{base}{years or ' [descubierto web]'}"
 
 
 def _clean_wiki_title(title: str) -> str | None:
@@ -191,40 +257,81 @@ async def discover_models_for_brand(brand: str, entries: list[dict[str, Any]] | 
     except Exception:
         wikidata_titles = []
 
-    discovered = list(dict.fromkeys([*wiki_titles, *wikidata_titles]))
-    if wiki_titles and wikidata_titles:
-        source = "wikipedia+wikidata"
-    elif wikidata_titles and not wiki_titles:
-        source = "wikidata"
+    search_payload = await discover_model_titles_for_brand(brand_key, limit=50)
+    search_titles = search_payload.get("titles") or []
+    search_sources = search_payload.get("sources") or []
+
+    discovered = list(dict.fromkeys([*wiki_titles, *wikidata_titles, *search_titles]))
+    source_parts: list[str] = []
+    if wiki_titles:
+        source_parts.append("wikipedia_category")
+    if wikidata_titles:
+        source_parts.append("wikidata")
+    if "wikipedia_search" in search_sources:
+        source_parts.append("wikipedia_search")
+    if "google_cse" in search_sources:
+        source_parts.append("google_cse")
+    source = "+".join(source_parts) if source_parts else source
 
     catalog_tokens = _catalog_model_tokens(entries, brand_key)
-    proposals: list[dict[str, Any]] = []
+    candidate_titles: list[str] = []
     seen_proposals: set[str] = set()
     for title in discovered:
         token = _norm(title)
         if not token or token in seen_proposals:
             continue
-        if token in catalog_tokens:
-            continue
-        if any(token in existing or existing in token for existing in catalog_tokens if len(existing) > 3):
+        if _is_catalog_duplicate(title, catalog_tokens):
             continue
         seen_proposals.add(token)
-        descriptor = f"{title} [descubierto web]"
-        classified = classify_descriptor(brand_key, descriptor, model=title)
-        proposal = {
+        candidate_titles.append(title)
+        if len(candidate_titles) >= 80:
+            break
+
+    semaphore = asyncio.Semaphore(4)
+
+    async def _enrich_title(title: str) -> dict[str, Any]:
+        async with semaphore:
+            web_meta = await collect_web_body_hints(brand_key, title)
+        web_hints = list(web_meta.get("body_hints") or [])
+        descriptor = _build_catalog_descriptor(title, web_meta)
+        classified = classify_descriptor(
+            brand_key,
+            descriptor,
+            model=title,
+            web_hints=web_hints,
+            refresh_stale_overrides=False,
+        )
+        if web_meta.get("inferred_slug"):
+            slug = str(web_meta["inferred_slug"])
+            type_label = classified["vehicle_type_label"]
+            classification_source = "web_sync"
+        else:
+            slug = classified["vehicle_type_slug"]
+            type_label = classified["vehicle_type_label"]
+            classification_source = classified.get("classification_source", "rules")
+
+        return {
             "brand": brand_key,
             "descriptor": descriptor,
             "model": title,
             "engine": "por definir [G]",
             "label": f"{descriptor} - por definir [G]",
-            "vehicle_type_slug": classified["vehicle_type_slug"],
-            "vehicle_type_label": classified["vehicle_type_label"],
-            "classification_source": classified.get("classification_source", "rules"),
+            "vehicle_type_slug": slug,
+            "vehicle_type_label": type_label,
+            "classification_source": classification_source,
             "source": source,
             "source_title": title,
+            "web_metadata": {
+                "matched_hint": web_meta.get("matched_hint"),
+                "categories": (web_meta.get("categories") or [])[:4],
+                "extract_preview": web_meta.get("extract_preview"),
+                "sources": web_meta.get("sources") or [],
+            },
             "review_status": "pending",
         }
-        proposals.append(proposal)
+
+    enriched = await asyncio.gather(*[_enrich_title(title) for title in candidate_titles[:60]])
+    proposals: list[dict[str, Any]] = list(enriched)
 
     return {
         "brand": brand_key,

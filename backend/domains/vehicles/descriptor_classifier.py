@@ -23,7 +23,7 @@ TEXT_RULES: list[tuple[str, str]] = [
     (r"\b(hiace|hiace commuter)\b", "microbus-pasajeros"),
     (r"\b(convertible|cabrio|cabriolet|roadster|spider|mx-5|miata)\b", "convertible"),
     (r"\b(station wagon|touring sports|touring|fielder|familiar|estate|variant|break|sw4)\b", "station-wagon"),
-    (r"\b(hatch|hatchback|liftback|prius|yaris(?! cross)|fit|jazz|polo|golf(?! variant)|i20|march|micra|corsa|208|sandero)\b", "hatchback"),
+    (r"\b(hatch|hatchback|liftback|prius|yaris(?! cross)|fit|jazz|polo|golf(?! variant)|i20|march|micra|corsa|208|sandero|swift|cultus|mazda2|aygo|picanto|rio hb|fabia|clio hatch|punto|500e|leaf|bolt|spark|aveo hb)\b", "hatchback"),
     (r"\b(suv|crossover|sport utility|4runner|rav4|rav 4|cr-v|hr-v|pilot|pathfinder|x-trail|qashqai|kicks|tiguan|touareg|kodiaq|sportage|sorento|tucson|santa fe|palisade|explorer|escape|edge|bronco|equinox|tracker|trailblazer|captiva|duster|koleos|renegade|compass|cherokee|pajero|montero|outlander|cx-|forester|crosstrek|vitara|jimny|niro|ev6|bZ4X|fj cruiser|fortuner|sw4|raize|rush|creta|seltos|tiggo|h6|h2|x35|x55|x60|x70)\b", "suv"),
     (r"\b(pickup|camioneta|hilux|ranger|amarok|s10|l200|frontier|np300|colorado|canyon|navara|triton|saveiro|strada|oroch|montana|toro|titan|tacoma|tundra|maverick|ridgeline|bt-50|d-max|dmax|musso|acty truck|courier|wildtrak|dakota|ram 1500|silverado|f-150|f150)\b", "camioneta-cabina-y-media"),
     (r"\b(sedan|sedán|saloon|corolla|camry|accord|civic|sentra|altima|versa|jetta|passat|a4|a6|3 series|5 series|c-class|e-class|focus|fusion|malibu|impala|aveo|cobalt|cerato|rio|forte|optima|sonata|elantra|accent|verna|logan|symbol)\b", "sedan"),
@@ -73,9 +73,46 @@ MODEL_TOKEN_DEFAULTS: dict[str, str] = {
     "passat": "sedan",
     "jetta": "sedan",
     "beetle": "hatchback",
+    "swift": "hatchback",
+    "cultus": "hatchback",
+    "mazda2": "hatchback",
+    "mazda 2": "hatchback",
+    "picanto": "hatchback",
+    "fabia": "hatchback",
+    "spark": "hatchback",
+    "vezel": "suv",
+    "hr-v": "suv",
+    "x-trail": "suv",
+    "qashqai": "suv",
+    "kicks": "suv",
+    "renegade": "suv",
+    "compass": "suv",
+    "cherokee": "suv",
+    "outlander": "suv",
+    "cx-5": "suv",
+    "cx-30": "suv",
+    "forester": "suv",
+    "outback": "station-wagon",
     "kangoo": "microbus-carga",
     "berlingo": "microbus-carga",
     "partner": "microbus-carga",
+    "transit": "microbus-carga",
+    "nv200": "microbus-carga",
+    "nv350": "microbus-carga",
+    "hilux": "camioneta-cabina-y-media",
+    "tacoma": "camioneta-cabina-y-media",
+    "tundra": "camioneta-cabina-y-media",
+    "colorado": "camioneta-cabina-y-media",
+    "navara": "camioneta-cabina-y-media",
+    "triton": "camioneta-cabina-y-media",
+    "d-max": "camioneta-cabina-y-media",
+    "dmax": "camioneta-cabina-y-media",
+    "bt-50": "camioneta-cabina-y-media",
+    "saveiro": "camioneta-cabina-y-media",
+    "strada": "camioneta-cabina-y-media",
+    "oroch": "camioneta-cabina-y-media",
+    "montana": "camioneta-cabina-y-media",
+    "toro": "camioneta-cabina-y-media",
 }
 
 
@@ -123,32 +160,30 @@ def _apply_pickup_year_bias(slug: str, descriptor: str) -> str:
     return slug
 
 
-def classify_descriptor(
+def _classify_from_rules(
     brand: str,
     descriptor: str,
     *,
     model: str = "",
-    prefer_override: bool = True,
+    web_hints: list[str] | None = None,
 ) -> dict[str, Any]:
-    key = descriptor_key(brand, descriptor)
-    if prefer_override:
-        override = _load_override_entries().get(key)
-        if override and override.get("default_silhouette_slug"):
-            slug = str(override["default_silhouette_slug"])
-            return {
-                "vehicle_type_slug": slug,
-                "vehicle_type_label": CANONICAL_TYPE_LABELS.get(slug, slug),
-                "body_family": override.get("body_family"),
-                "classification_source": "override",
-                "catalog_status": override.get("catalog_status", "validated"),
-            }
-
     combined = _normalize_match_text(brand, descriptor, model)
     slug: str | None = None
-    for pattern, candidate in TEXT_RULES:
-        if re.search(pattern, combined, flags=re.IGNORECASE):
-            slug = candidate
-            break
+    source = "rules"
+
+    if web_hints:
+        from backend.domains.vehicles.web_vehicle_metadata import infer_slug_from_body_hints
+
+        web_slug, _ = infer_slug_from_body_hints(web_hints)
+        if web_slug:
+            slug = web_slug
+            source = "web_sync"
+
+    if not slug:
+        for pattern, candidate in TEXT_RULES:
+            if re.search(pattern, combined, flags=re.IGNORECASE):
+                slug = candidate
+                break
 
     if not slug:
         token = _model_token(descriptor, model)
@@ -165,6 +200,40 @@ def classify_descriptor(
         "vehicle_type_slug": slug,
         "vehicle_type_label": CANONICAL_TYPE_LABELS.get(slug, slug.replace("-", " ").title()),
         "body_family": None,
-        "classification_source": "rules",
+        "classification_source": source,
         "catalog_status": "auto",
     }
+
+
+def classify_descriptor(
+    brand: str,
+    descriptor: str,
+    *,
+    model: str = "",
+    prefer_override: bool = True,
+    web_hints: list[str] | None = None,
+    refresh_stale_overrides: bool = True,
+) -> dict[str, Any]:
+    key = descriptor_key(brand, descriptor)
+    if prefer_override:
+        override = _load_override_entries().get(key)
+        if override and override.get("default_silhouette_slug"):
+            slug = str(override["default_silhouette_slug"])
+            catalog_status = override.get("catalog_status", "validated")
+            manual = str(override.get("classification_source") or "").strip().lower() == "manual"
+            if refresh_stale_overrides and not manual and slug == DEFAULT_SLUG:
+                rules_result = _classify_from_rules(brand, descriptor, model=model, web_hints=web_hints)
+                if rules_result["vehicle_type_slug"] != DEFAULT_SLUG:
+                    return {
+                        **rules_result,
+                        "catalog_status": catalog_status,
+                    }
+            return {
+                "vehicle_type_slug": slug,
+                "vehicle_type_label": CANONICAL_TYPE_LABELS.get(slug, slug),
+                "body_family": override.get("body_family"),
+                "classification_source": "override" if not manual else "manual",
+                "catalog_status": catalog_status,
+            }
+
+    return _classify_from_rules(brand, descriptor, model=model, web_hints=web_hints)

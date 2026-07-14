@@ -205,6 +205,7 @@ async def create_driver(db, payload: Dict[str, Any]) -> Dict[str, Any]:
     vehicle_plate = str(data.get("vehicle_plate") or "").strip()
     if not vehicle_plate:
         raise DriverValidationError("Placa del vehículo requerida")
+    vehicle_id = str(data.get("vehicle_id") or "").strip() or None
 
     driver_id = str(data.get("driver_id") or "").strip() or _slug_driver_id(user_id)
     if await get_driver(db, driver_id):
@@ -220,6 +221,7 @@ async def create_driver(db, payload: Dict[str, Any]) -> Dict[str, Any]:
         "branch_id": branch_id,
         "phone": phone,
         "vehicle_plate": vehicle_plate,
+        "vehicle_id": vehicle_id,
         "status": normalize_driver_status(data.get("status")),
         "user_id": user_id,
         "active_job_id": None,
@@ -269,6 +271,10 @@ async def update_driver(db, driver_id: str, payload: Dict[str, Any]) -> Optional
         if not vehicle_plate:
             raise DriverValidationError("Placa del vehículo requerida")
         patch["vehicle_plate"] = vehicle_plate
+
+    if "vehicle_id" in data:
+        vehicle_id = str(data.get("vehicle_id") or "").strip()
+        patch["vehicle_id"] = vehicle_id or None
 
     if "status" in data:
         patch["status"] = normalize_driver_status(data.get("status"))

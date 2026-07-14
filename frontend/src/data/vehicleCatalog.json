@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-06-23T00:04:12.609409+00:00",
+  "generated_at_utc": "2026-07-14T16:57:59.891611+00:00",
   "source_file": "c:\\Users\\Administrator\\Desktop\\marcas de vehiculo.txt",
   "total_rows": 4094,
   "total_brands": 46,
@@ -10265,10 +10265,10 @@
       "engine": "0.8L [G]",
       "fuel": "G",
       "label": "Spark (M100/M200) [1998-2010] - 0.8L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Spark (M100/M200) [1998-2010]::2",
@@ -10278,10 +10278,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Spark (M100/M200) [1998-2010] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Spark (M300) [2010-2015]::1",
@@ -10291,10 +10291,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Spark (M300) [2010-2015] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Spark (M300) [2010-2015]::2",
@@ -10304,10 +10304,10 @@
       "engine": "1.2L [G]",
       "fuel": "G",
       "label": "Spark (M300) [2010-2015] - 1.2L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Spark (M400) [2015-2022]::1",
@@ -10317,10 +10317,10 @@
       "engine": "1.4L [G]",
       "fuel": "G",
       "label": "Spark (M400) [2015-2022] - 1.4L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Cobalt [2004-2010]::1",
@@ -11617,10 +11617,10 @@
       "engine": "Eléctrico [E]",
       "fuel": "E",
       "label": "Bolt EV [2017-2023] - Eléctrico [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Bolt EUV [2022-2023]::1",
@@ -11630,10 +11630,10 @@
       "engine": "Eléctrico [E]",
       "fuel": "E",
       "label": "Bolt EUV [2022-2023] - Eléctrico [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "CHEVROLET::Equinox EV [2024-Presente]::1",
@@ -17389,10 +17389,10 @@
       "engine": "1.1L [D]",
       "fuel": "D",
       "label": "Punto (1ra Gen) [1993-1999] - 1.1L [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Punto (1ra Gen) [1993-1999]::2",
@@ -17402,10 +17402,10 @@
       "engine": "1.6L [G]",
       "fuel": "G",
       "label": "Punto (1ra Gen) [1993-1999] - 1.6L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Punto (1ra Gen) [1993-1999]::3",
@@ -17415,10 +17415,10 @@
       "engine": "Diesel [D]",
       "fuel": "D",
       "label": "Punto (1ra Gen) [1993-1999] - Diesel [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Punto (2da Gen) [1999-2010]::1",
@@ -17428,10 +17428,10 @@
       "engine": "1.2L [D]",
       "fuel": "D",
       "label": "Punto (2da Gen) [1999-2010] - 1.2L [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Punto (2da Gen) [1999-2010]::2",
@@ -17441,10 +17441,10 @@
       "engine": "1.8L [G]",
       "fuel": "G",
       "label": "Punto (2da Gen) [1999-2010] - 1.8L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Punto (2da Gen) [1999-2010]::3",
@@ -17454,10 +17454,10 @@
       "engine": "Diesel [D]",
       "fuel": "D",
       "label": "Punto (2da Gen) [1999-2010] - Diesel [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Grande Punto [2005-2018]::1",
@@ -17467,10 +17467,10 @@
       "engine": "1.2L [G/D]",
       "fuel": "G/D",
       "label": "Grande Punto [2005-2018] - 1.2L [G/D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Grande Punto [2005-2018]::2",
@@ -17480,10 +17480,10 @@
       "engine": "1.9L [G/D]",
       "fuel": "G/D",
       "label": "Grande Punto [2005-2018] - 1.9L [G/D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Palio (1ra Gen) [1996-2011]::1",
@@ -17740,10 +17740,10 @@
       "engine": "Eléctrico [E]",
       "fuel": "E",
       "label": "500e [2020-Presente] - Eléctrico [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "FIAT::Panda (1ra Gen) [1980-2003]::1",
@@ -26658,10 +26658,10 @@
       "engine": "1.2L [G]",
       "fuel": "G",
       "label": "Spark [2010-2020] - 1.2L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "HOLDEN::Volt (plug-in) [2012-2015]::1",
@@ -33795,10 +33795,10 @@
       "engine": "Motor eléctrico 80kW [E]",
       "fuel": "E",
       "label": "Leaf (ZE0) [2010-2017] - Motor eléctrico 80kW [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "NISSAN::Leaf (ZE1) [2017-Presente]::1",
@@ -33808,10 +33808,10 @@
       "engine": "Motor eléctrico 110-160kW [E]",
       "fuel": "E",
       "label": "Leaf (ZE1) [2017-Presente] - Motor eléctrico 110-160kW [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "NISSAN::X-Trail (T30) [2001-2007]::1",
@@ -34406,10 +34406,10 @@
       "engine": "1.6L HR16DE [G]",
       "fuel": "G",
       "label": "NV200 (M20) [2009-Presente] - 1.6L HR16DE [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "microbus-carga",
+      "vehicle_type_label": "Microbús de Carga",
+      "thumbnail_slug": "microbus-carga",
+      "classification_source": "rules"
     },
     {
       "id": "NISSAN::NV200 (M20) [2009-Presente]::2",
@@ -34419,10 +34419,10 @@
       "engine": "1.5L dCi [D]",
       "fuel": "D",
       "label": "NV200 (M20) [2009-Presente] - 1.5L dCi [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "microbus-carga",
+      "vehicle_type_label": "Microbús de Carga",
+      "thumbnail_slug": "microbus-carga",
+      "classification_source": "rules"
     },
     {
       "id": "NISSAN::NV200 (M20) [2009-Presente]::3",
@@ -34432,10 +34432,10 @@
       "engine": "eléctrico [E]",
       "fuel": "E",
       "label": "NV200 (M20) [2009-Presente] - eléctrico [E]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "microbus-carga",
+      "vehicle_type_label": "Microbús de Carga",
+      "thumbnail_slug": "microbus-carga",
+      "classification_source": "rules"
     },
     {
       "id": "NISSAN::Cabstar / Atlas (F22/F23) [1982-1997]::1",
@@ -41985,10 +41985,10 @@
       "engine": "1.0L F10A [G]",
       "fuel": "G",
       "label": "Swift / Cultus (SA/AA) [1983-1989] - 1.0L F10A [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift / Cultus (SA/AA) [1983-1989]::2",
@@ -41998,10 +41998,10 @@
       "engine": "1.3L G13A [G]",
       "fuel": "G",
       "label": "Swift / Cultus (SA/AA) [1983-1989] - 1.3L G13A [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift / Cultus (SF) [1989-2003]::1",
@@ -42011,10 +42011,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Swift / Cultus (SF) [1989-2003] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift / Cultus (SF) [1989-2003]::2",
@@ -42024,10 +42024,10 @@
       "engine": "1.3L G13B [G]",
       "fuel": "G",
       "label": "Swift / Cultus (SF) [1989-2003] - 1.3L G13B [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift / Cultus (SF) [1989-2003]::3",
@@ -42037,10 +42037,10 @@
       "engine": "1.6L G16B [G]",
       "fuel": "G",
       "label": "Swift / Cultus (SF) [1989-2003] - 1.6L G16B [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift / Cultus (SF) [1989-2003]::4",
@@ -42050,10 +42050,10 @@
       "engine": "1.5L D [D]",
       "fuel": "D",
       "label": "Swift / Cultus (SF) [1989-2003] - 1.5L D [D]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC/ZD) [2004-2010]::1",
@@ -42063,10 +42063,10 @@
       "engine": "1.3L M13A [G]",
       "fuel": "G",
       "label": "Swift (ZC/ZD) [2004-2010] - 1.3L M13A [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC/ZD) [2004-2010]::2",
@@ -42076,10 +42076,10 @@
       "engine": "1.5L M15A [G]",
       "fuel": "G",
       "label": "Swift (ZC/ZD) [2004-2010] - 1.5L M15A [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC/ZD) [2010-2017]::1",
@@ -42089,10 +42089,10 @@
       "engine": "1.2L K12B [G]",
       "fuel": "G",
       "label": "Swift (ZC/ZD) [2010-2017] - 1.2L K12B [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC/ZD) [2010-2017]::2",
@@ -42102,10 +42102,10 @@
       "engine": "1.4L K14B [G]",
       "fuel": "G",
       "label": "Swift (ZC/ZD) [2010-2017] - 1.4L K14B [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC33S) [2017-Presente]::1",
@@ -42115,10 +42115,10 @@
       "engine": "1.2L DualJet [G]",
       "fuel": "G",
       "label": "Swift (ZC33S) [2017-Presente] - 1.2L DualJet [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC33S) [2017-Presente]::2",
@@ -42128,10 +42128,10 @@
       "engine": "1.0L BoosterJet [G]",
       "fuel": "G",
       "label": "Swift (ZC33S) [2017-Presente] - 1.0L BoosterJet [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC33S) [2017-Presente]::3",
@@ -42141,10 +42141,10 @@
       "engine": "1.4L BoosterJet Sport [G]",
       "fuel": "G",
       "label": "Swift (ZC33S) [2017-Presente] - 1.4L BoosterJet Sport [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift (ZC33S) [2017-Presente]::4",
@@ -42154,10 +42154,10 @@
       "engine": "híbrido [H]",
       "fuel": "H",
       "label": "Swift (ZC33S) [2017-Presente] - híbrido [H]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Baleno (EG) [1995-2002]::1",
@@ -42778,10 +42778,10 @@
       "engine": "1.6L [G]",
       "fuel": "G",
       "label": "Swift Sport (varias generaciones) [2005-Presente] - 1.6L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Swift Sport (varias generaciones) [2005-Presente]::2",
@@ -42791,10 +42791,10 @@
       "engine": "1.4L Turbo [G]",
       "fuel": "G",
       "label": "Swift Sport (varias generaciones) [2005-Presente] - 1.4L Turbo [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "SUZUKI::Vitara (ET/TA) [1988-1998]::1",
@@ -51280,10 +51280,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Picanto / Morning (SA) [2004-2011] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto / Morning (SA) [2004-2011]::2",
@@ -51293,10 +51293,10 @@
       "engine": "1.1L [G]",
       "fuel": "G",
       "label": "Picanto / Morning (SA) [2004-2011] - 1.1L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto (TA) [2011-2017]::1",
@@ -51306,10 +51306,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Picanto (TA) [2011-2017] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto (TA) [2011-2017]::2",
@@ -51319,10 +51319,10 @@
       "engine": "1.2L [G]",
       "fuel": "G",
       "label": "Picanto (TA) [2011-2017] - 1.2L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto (JA) [2017-2023]::1",
@@ -51332,10 +51332,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Picanto (JA) [2017-2023] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto (JA) [2017-2023]::2",
@@ -51345,10 +51345,10 @@
       "engine": "1.2L [G]",
       "fuel": "G",
       "label": "Picanto (JA) [2017-2023] - 1.2L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Picanto (facelift) [2023-Presente]::1",
@@ -51358,10 +51358,10 @@
       "engine": "1.0L [G]",
       "fuel": "G",
       "label": "Picanto (facelift) [2023-Presente] - 1.0L [G]",
-      "vehicle_type_slug": "sedan",
-      "vehicle_type_label": "Sedán",
-      "thumbnail_slug": "sedan",
-      "classification_source": "override"
+      "vehicle_type_slug": "hatchback",
+      "vehicle_type_label": "Hatchback",
+      "thumbnail_slug": "hatchback",
+      "classification_source": "rules"
     },
     {
       "id": "KIA::Ceed (ED) [2006-2012]::1",
@@ -53275,5 +53275,5 @@
       "classification_source": "override"
     }
   ],
-  "vehicle_types_version": "2026-06-23"
+  "vehicle_types_version": "2026-07-14"
 }

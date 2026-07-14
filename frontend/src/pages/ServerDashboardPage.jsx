@@ -25,6 +25,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { buildApiUrl } from "@/lib/runtimeApi";
 import { cn } from "@/lib/utils";
 
@@ -169,34 +170,80 @@ function BatteryGauge({ pct = 100, status = "", onAc = true, autonomyMinutes = n
   );
 }
 
+function buildFleetVehicleFromDevice(device) {
+  const fleet = device?.fleet_vehicle || {};
+  return {
+    brand: fleet.brand || device?.brand || "",
+    model: fleet.model || device?.model || "",
+    plate: fleet.plate_number || device?.plate_number || "",
+    vehicle_type_slug: fleet.vehicle_type_slug || device?.vehicle_type_slug || "",
+    thumbnail_slug: fleet.thumbnail_slug || device?.thumbnail_slug || "",
+    classification_source: fleet.classification_source || "catalog",
+  };
+}
+
 function MobileBackupCard({ device }) {
   const online = device?.status === "ONLINE";
   const signal = device?.signal_strength || "SIN SEÑAL";
+  const fleetVehicle = buildFleetVehicleFromDevice(device);
+  const fleetDisplay =
+    device?.fleet_display
+    || device?.fleet_vehicle?.fleet_display
+    || (
+      [fleetVehicle.brand, fleetVehicle.model].filter(Boolean).join(" ")
+      + (fleetVehicle.plate ? ` - Placa: ${fleetVehicle.plate}` : "")
+    )
+    || "Vehículo en contingencia";
+  const hasFleetSilhouette = Boolean(fleetVehicle.brand || fleetVehicle.model || fleetVehicle.vehicle_type_slug);
 
   return (
     <div className={cn(
-      "rounded-2xl border p-5",
+      "relative overflow-hidden rounded-2xl border p-5",
       online
         ? "border-emerald-400/60 bg-emerald-500/10 shadow-[0_0_28px_rgba(52,211,153,0.18)]"
         : "border-rose-500/50 bg-rose-950/30",
     )}
     >
-      <div className="flex items-start justify-between gap-3">
+      {hasFleetSilhouette ? (
+        <VehicleThumbnailWatermark
+          vehicle={fleetVehicle}
+          positionClassName="right-[-4%] top-1/2 h-[78%] w-[52%] -translate-y-1/2"
+          className="opacity-90"
+        />
+      ) : null}
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
           <Smartphone className={cn("h-4 w-4", online ? "text-emerald-300" : "text-rose-400")} />
           Dispositivo móvil de contingencia
         </div>
-        <span className={cn(
-          "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-          online ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300",
-        )}
-        >
-          {device?.status || "OFFLINE"}
-        </span>
+        <div className="flex items-center gap-2">
+          {hasFleetSilhouette && online ? (
+            <div
+              className="relative h-10 w-14 overflow-hidden rounded-md border border-emerald-400/30 bg-slate-900/70"
+              aria-hidden="true"
+            >
+              <VehicleThumbnailWatermark
+                vehicle={fleetVehicle}
+                positionClassName="inset-0 h-full w-full"
+                className="opacity-100"
+              />
+            </div>
+          ) : null}
+          <span className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+            online ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300",
+          )}
+          >
+            {device?.status || "OFFLINE"}
+          </span>
+        </div>
       </div>
-      <p className="mt-1 text-[11px] text-slate-500">Flota en calle · Portal /driver</p>
-      <p className="mt-4 font-mono text-3xl font-black tracking-tight text-white">
-        {device?.phone_number || "+505XXXX-XXXX"}
+      <p className="relative z-10 mt-1 text-[11px] text-slate-500">Flota en calle · Portal /driver</p>
+      <p className="relative z-10 mt-4 max-w-[85%] text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
+        {fleetDisplay}
+      </p>
+      <p className="relative z-10 mt-2 font-mono text-sm text-slate-400">
+        Contingencia · {device?.phone_number || "+505XXXX-XXXX"}
       </p>
       <div className="mt-4 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl border border-slate-700/80 bg-slate-900/60 px-2 py-3">

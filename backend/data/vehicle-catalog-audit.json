@@ -7,22 +7,12 @@
   "overlap_groups": [
     {
       "brand": "ACURA",
-      "model_base": "tl",
+      "model_base": "mdx",
       "descriptors": [
-        "TL (UA1/UA2) [1996-1998]",
-        "TL (UA3/UA4) [1999-2003]",
-        "TL (UA6/UA7) [2004-2008]",
-        "TL (UA8/UA9) [2009-2014]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "ACURA",
-      "model_base": "rdx",
-      "descriptors": [
-        "RDX (TB1) [2006-2012]",
-        "RDX (TB3/4) [2013-2018]",
-        "RDX (TC1/TC2) [2019-Presente]"
+        "MDX (YD1) [2001-2006]",
+        "MDX (YD2) [2007-2013]",
+        "MDX (YD3) [2014-2020]",
+        "MDX (YD4) [2022-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -37,30 +27,21 @@
     },
     {
       "brand": "ACURA",
-      "model_base": "tsx",
-      "descriptors": [
-        "TSX (CL9) [2004-2008]",
-        "TSX (CU2) [2009-2014]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "ACURA",
-      "model_base": "mdx",
-      "descriptors": [
-        "MDX (YD1) [2001-2006]",
-        "MDX (YD2) [2007-2013]",
-        "MDX (YD3) [2014-2020]",
-        "MDX (YD4) [2022-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "ACURA",
       "model_base": "rl",
       "descriptors": [
         "RL (KA9) [1996-2004]",
         "RL (KB1/KB2) [2005-2012]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "ACURA",
+      "model_base": "tl",
+      "descriptors": [
+        "TL (UA1/UA2) [1996-1998]",
+        "TL (UA3/UA4) [1999-2003]",
+        "TL (UA6/UA7) [2004-2008]",
+        "TL (UA8/UA9) [2009-2014]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -78,10 +59,20 @@
     },
     {
       "brand": "ACURA",
-      "model_base": "cl",
+      "model_base": "rdx",
       "descriptors": [
-        "CL (YA1) [1997-1999]",
-        "CL (YA4) [2001-2003]"
+        "RDX (TB1) [2006-2012]",
+        "RDX (TB3/4) [2013-2018]",
+        "RDX (TC1/TC2) [2019-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "ACURA",
+      "model_base": "tsx",
+      "descriptors": [
+        "TSX (CL9) [2004-2008]",
+        "TSX (CU2) [2009-2014]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -91,6 +82,15 @@
       "descriptors": [
         "Legend (KA1/KA2) [1986-1990]",
         "Legend (KA7/KA8) [1991-1995]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "ACURA",
+      "model_base": "cl",
+      "descriptors": [
+        "CL (YA1) [1997-1999]",
+        "CL (YA4) [2001-2003]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -105,6 +105,15 @@
     },
     {
       "brand": "ASTON MARTIN",
+      "model_base": "vanquish",
+      "descriptors": [
+        "Vanquish (2nd Gen) [2012-2018]",
+        "Vanquish (3rd Gen) [2024-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "ASTON MARTIN",
       "model_base": "virage",
       "descriptors": [
         "Virage (1st Gen) [1989-2000]",
@@ -113,11 +122,73 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "ASTON MARTIN",
-      "model_base": "vanquish",
+      "brand": "AUDI",
+      "model_base": "audi a5",
       "descriptors": [
-        "Vanquish (2nd Gen) [2012-2018]",
-        "Vanquish (3rd Gen) [2024-Presente]"
+        "Audi A5 (8T) [2007-2016]",
+        "Audi A5 (F5) [2016-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "q5",
+      "descriptors": [
+        "Q5 (8R) [2008-2017]",
+        "Q5 (FY) [2017-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "audi 80",
+      "descriptors": [
+        "Audi 80 (B2) [1978-1986]",
+        "Audi 80 (B3) [1986-1991]",
+        "Audi 80 (B4) [1991-1996]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "audi a6",
+      "descriptors": [
+        "Audi A6 (C4) [1994-1997]",
+        "Audi A6 (C5) [1997-2004]",
+        "Audi A6 (C6) [2004-2011]",
+        "Audi A6 (C7) [2011-2018]",
+        "Audi A6 (C8) [2018-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "audi a4",
+      "descriptors": [
+        "Audi A4 (B5) [1994-2001]",
+        "Audi A4 (B6) [2001-2006]",
+        "Audi A4 (B7) [2004-2008]",
+        "Audi A4 (B8) [2008-2016]",
+        "Audi A4 (B9) [2016-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "tt",
+      "descriptors": [
+        "TT (8J) [2006-2014]",
+        "TT (8N) [1998-2006]",
+        "TT (8S) [2014-2023]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "AUDI",
+      "model_base": "audi a7",
+      "descriptors": [
+        "Audi A7 (C7) [2010-2018]",
+        "Audi A7 (C8) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -145,70 +216,10 @@
     },
     {
       "brand": "AUDI",
-      "model_base": "audi 80",
+      "model_base": "q3",
       "descriptors": [
-        "Audi 80 (B2) [1978-1986]",
-        "Audi 80 (B3) [1986-1991]",
-        "Audi 80 (B4) [1991-1996]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "audi 100",
-      "descriptors": [
-        "Audi 100 (C2) [hasta 1982]",
-        "Audi 100 (C3) [1982-1991]",
-        "Audi 100 (C4) [1990-1994]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "q5",
-      "descriptors": [
-        "Q5 (8R) [2008-2017]",
-        "Q5 (FY) [2017-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "audi a7",
-      "descriptors": [
-        "Audi A7 (C7) [2010-2018]",
-        "Audi A7 (C8) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "audi a6",
-      "descriptors": [
-        "Audi A6 (C4) [1994-1997]",
-        "Audi A6 (C5) [1997-2004]",
-        "Audi A6 (C6) [2004-2011]",
-        "Audi A6 (C7) [2011-2018]",
-        "Audi A6 (C8) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "q7",
-      "descriptors": [
-        "Q7 (4L) [2005-2015]",
-        "Q7 (4M) [2015-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "tt",
-      "descriptors": [
-        "TT (8J) [2006-2014]",
-        "TT (8N) [1998-2006]",
-        "TT (8S) [2014-2023]"
+        "Q3 (8U) [2011-2018]",
+        "Q3 (F3) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -223,31 +234,20 @@
     },
     {
       "brand": "AUDI",
-      "model_base": "q3",
+      "model_base": "q7",
       "descriptors": [
-        "Q3 (8U) [2011-2018]",
-        "Q3 (F3) [2018-Presente]"
+        "Q7 (4L) [2005-2015]",
+        "Q7 (4M) [2015-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "AUDI",
-      "model_base": "audi a4",
+      "model_base": "audi 100",
       "descriptors": [
-        "Audi A4 (B5) [1994-2001]",
-        "Audi A4 (B6) [2001-2006]",
-        "Audi A4 (B7) [2004-2008]",
-        "Audi A4 (B8) [2008-2016]",
-        "Audi A4 (B9) [2016-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "AUDI",
-      "model_base": "audi a5",
-      "descriptors": [
-        "Audi A5 (8T) [2007-2016]",
-        "Audi A5 (F5) [2016-Presente]"
+        "Audi 100 (C2) [hasta 1982]",
+        "Audi 100 (C3) [1982-1991]",
+        "Audi 100 (C4) [1990-1994]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -262,21 +262,29 @@
     },
     {
       "brand": "BMW",
-      "model_base": "z4",
+      "model_base": "serie 3",
       "descriptors": [
-        "Z4 (E85/E86) [2002-2008]",
-        "Z4 (E89) [2009-2016]",
-        "Z4 (G29) [2018-Presente]"
+        "Serie 3 (E21) [1975-1983]",
+        "Serie 3 (E30) [1982-1994]",
+        "Serie 3 (E36) [1990-2000]",
+        "Serie 3 (E46) [1998-2006]",
+        "Serie 3 (E90/E91/E92/E93) [2005-2013]",
+        "Serie 3 (F30/F31/F34) [2011-2019]",
+        "Serie 3 (G20/G21) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "BMW",
-      "model_base": "x1",
+      "model_base": "serie 7",
       "descriptors": [
-        "X1 (E84) [2009-2015]",
-        "X1 (F48) [2015-2022]",
-        "X1 (U11) [2022-Presente]"
+        "Serie 7 (E23) [1977-1987]",
+        "Serie 7 (E32) [1986-1994]",
+        "Serie 7 (E38) [1994-2001]",
+        "Serie 7 (E65/E66) [2001-2008]",
+        "Serie 7 (F01/F02) [2008-2015]",
+        "Serie 7 (G11/G12) [2015-2022]",
+        "Serie 7 (G70) [2022-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -293,15 +301,30 @@
     },
     {
       "brand": "BMW",
-      "model_base": "serie 7",
+      "model_base": "serie 6",
       "descriptors": [
-        "Serie 7 (E23) [1977-1987]",
-        "Serie 7 (E32) [1986-1994]",
-        "Serie 7 (E38) [1994-2001]",
-        "Serie 7 (E65/E66) [2001-2008]",
-        "Serie 7 (F01/F02) [2008-2015]",
-        "Serie 7 (G11/G12) [2015-2022]",
-        "Serie 7 (G70) [2022-Presente]"
+        "Serie 6 (E24) [hasta 1989]",
+        "Serie 6 (E63/E64) [2003-2010]",
+        "Serie 6 (F12/F13/F06) [2011-2018]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "BMW",
+      "model_base": "serie 4",
+      "descriptors": [
+        "Serie 4 (F32/F33/F36) [2013-2020]",
+        "Serie 4 (G22/G23/G26) [2020-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "BMW",
+      "model_base": "z4",
+      "descriptors": [
+        "Z4 (E85/E86) [2002-2008]",
+        "Z4 (E89) [2009-2016]",
+        "Z4 (G29) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -330,25 +353,6 @@
     },
     {
       "brand": "BMW",
-      "model_base": "serie 6",
-      "descriptors": [
-        "Serie 6 (E24) [hasta 1989]",
-        "Serie 6 (E63/E64) [2003-2010]",
-        "Serie 6 (F12/F13/F06) [2011-2018]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "BMW",
-      "model_base": "x4",
-      "descriptors": [
-        "X4 (F26) [2014-2018]",
-        "X4 (G02) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "BMW",
       "model_base": "x6",
       "descriptors": [
         "X6 (E71) [2008-2014]",
@@ -359,10 +363,20 @@
     },
     {
       "brand": "BMW",
-      "model_base": "serie 4",
+      "model_base": "x1",
       "descriptors": [
-        "Serie 4 (F32/F33/F36) [2013-2020]",
-        "Serie 4 (G22/G23/G26) [2020-Presente]"
+        "X1 (E84) [2009-2015]",
+        "X1 (F48) [2015-2022]",
+        "X1 (U11) [2022-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "BMW",
+      "model_base": "serie 8",
+      "descriptors": [
+        "Serie 8 (E31) [1989-1999]",
+        "Serie 8 (G14/G15/G16) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -378,29 +392,6 @@
     },
     {
       "brand": "BMW",
-      "model_base": "serie 8",
-      "descriptors": [
-        "Serie 8 (E31) [1989-1999]",
-        "Serie 8 (G14/G15/G16) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "BMW",
-      "model_base": "serie 3",
-      "descriptors": [
-        "Serie 3 (E21) [1975-1983]",
-        "Serie 3 (E30) [1982-1994]",
-        "Serie 3 (E36) [1990-2000]",
-        "Serie 3 (E46) [1998-2006]",
-        "Serie 3 (E90/E91/E92/E93) [2005-2013]",
-        "Serie 3 (F30/F31/F34) [2011-2019]",
-        "Serie 3 (G20/G21) [2019-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "BMW",
       "model_base": "serie 1",
       "descriptors": [
         "Serie 1 (E81/E87) [2004-2011]",
@@ -410,11 +401,11 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "BYD",
-      "model_base": "f3",
+      "brand": "BMW",
+      "model_base": "x4",
       "descriptors": [
-        "F3 (1ra Gen) [2005-2013]",
-        "F3 (2da Gen) [2013-2018]"
+        "X4 (F26) [2014-2018]",
+        "X4 (G02) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -428,21 +419,21 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
+      "brand": "BYD",
+      "model_base": "f3",
+      "descriptors": [
+        "F3 (1ra Gen) [2005-2013]",
+        "F3 (2da Gen) [2013-2018]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
       "brand": "CADILLAC",
       "model_base": "cts",
       "descriptors": [
         "CTS (1ra Gen) [2003-2007]",
         "CTS (2da Gen) [2008-2013]",
         "CTS (3ra Gen) [2014-2019]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CADILLAC",
-      "model_base": "srx",
-      "descriptors": [
-        "SRX (1ra Gen) [2004-2009]",
-        "SRX (2da Gen) [2010-2016]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -459,21 +450,20 @@
     },
     {
       "brand": "CADILLAC",
-      "model_base": "deville",
-      "descriptors": [
-        "DeVille (6th Gen) [1985-1993]",
-        "DeVille (7th Gen) [1994-1999]",
-        "DeVille (8th Gen) [2000-2005]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CADILLAC",
       "model_base": "eldorado",
       "descriptors": [
         "Eldorado (10th Gen) [1992-2002]",
         "Eldorado (8th Gen) [1979-1985]",
         "Eldorado (9th Gen) [1986-1991]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CADILLAC",
+      "model_base": "srx",
+      "descriptors": [
+        "SRX (1ra Gen) [2004-2009]",
+        "SRX (2da Gen) [2010-2016]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -489,12 +479,12 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "CHANGAN",
-      "model_base": "alsvin",
+      "brand": "CADILLAC",
+      "model_base": "deville",
       "descriptors": [
-        "Alsvin (1ra Gen) [2009-2014]",
-        "Alsvin (2da Gen) [2014-2019]",
-        "Alsvin (3ra Gen) [2019-Presente]"
+        "DeVille (6th Gen) [1985-1993]",
+        "DeVille (7th Gen) [1994-1999]",
+        "DeVille (8th Gen) [2000-2005]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -508,43 +498,80 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "CHEVROLET",
-      "model_base": "colorado",
+      "brand": "CHANGAN",
+      "model_base": "alsvin",
       "descriptors": [
-        "Colorado (1ra Gen) [2004-2012]",
-        "Colorado (2da Gen) [2012-2022]",
-        "Colorado (3ra Gen) [2023-Presente]"
+        "Alsvin (1ra Gen) [2009-2014]",
+        "Alsvin (2da Gen) [2014-2019]",
+        "Alsvin (3ra Gen) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "captiva",
+      "model_base": "equinox",
       "descriptors": [
-        "Captiva (1ra Gen) [2006-2018]",
-        "Captiva (2da Gen) [2019-Presente]"
+        "Equinox (1ra Gen) [2005-2009]",
+        "Equinox (2da Gen) [2010-2017]",
+        "Equinox (3ra Gen) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "silverado",
+      "model_base": "cavalier",
       "descriptors": [
-        "Silverado (C/K) [1988-1998]",
-        "Silverado (GMT800) [1999-2007]",
-        "Silverado (GMT900) [2007-2013]",
-        "Silverado (K2XX) [2014-2018]",
-        "Silverado (T1XX) [2019-Presente]"
+        "Cavalier (1ra Gen J-Body) [1982-1987]",
+        "Cavalier (2da Gen) [1988-1994]",
+        "Cavalier (3ra Gen) [1995-2005]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "blazer",
+      "model_base": "onix",
       "descriptors": [
-        "Blazer (K5) [hasta 1994]",
-        "Blazer (Nuevo) [2019-Presente]",
-        "Blazer (S-10) [1995-2005]"
+        "Onix (1ra Gen) [2012-2019]",
+        "Onix (2da Gen) [2019-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "impala",
+      "descriptors": [
+        "Impala (10th Gen) [2014-2020]",
+        "Impala (8th Gen) [2000-2005]",
+        "Impala (9th Gen) [2006-2016]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "tracker",
+      "descriptors": [
+        "Tracker (1ra Gen) [1989-1998]",
+        "Tracker (2da Gen) [1999-2009]",
+        "Tracker (3ra Gen) [2013-2018]",
+        "Tracker (4ta Gen) [2019-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "s10",
+      "descriptors": [
+        "S10 (1ra Gen) [1982-2004]",
+        "S10 (2da Gen LatAm) [2012-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "caprice",
+      "descriptors": [
+        "Caprice (4th Gen) [1991-1996]",
+        "Caprice (PPV) [2011-2017]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -562,31 +589,13 @@
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "trailblazer",
+      "model_base": "silverado",
       "descriptors": [
-        "Trailblazer (1ra Gen) [2001-2009]",
-        "Trailblazer (2da Gen) [2012-2020]",
-        "Trailblazer (3ra Gen) [2020-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "traverse",
-      "descriptors": [
-        "Traverse (1ra Gen) [2009-2017]",
-        "Traverse (2da Gen) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "tracker",
-      "descriptors": [
-        "Tracker (1ra Gen) [1989-1998]",
-        "Tracker (2da Gen) [1999-2009]",
-        "Tracker (3ra Gen) [2013-2018]",
-        "Tracker (4ta Gen) [2019-Presente]"
+        "Silverado (C/K) [1988-1998]",
+        "Silverado (GMT800) [1999-2007]",
+        "Silverado (GMT900) [2007-2013]",
+        "Silverado (K2XX) [2014-2018]",
+        "Silverado (T1XX) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -602,30 +611,11 @@
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "cavalier",
+      "model_base": "trailblazer",
       "descriptors": [
-        "Cavalier (1ra Gen J-Body) [1982-1987]",
-        "Cavalier (2da Gen) [1988-1994]",
-        "Cavalier (3ra Gen) [1995-2005]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "equinox",
-      "descriptors": [
-        "Equinox (1ra Gen) [2005-2009]",
-        "Equinox (2da Gen) [2010-2017]",
-        "Equinox (3ra Gen) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "onix",
-      "descriptors": [
-        "Onix (1ra Gen) [2012-2019]",
-        "Onix (2da Gen) [2019-Presente]"
+        "Trailblazer (1ra Gen) [2001-2009]",
+        "Trailblazer (2da Gen) [2012-2020]",
+        "Trailblazer (3ra Gen) [2020-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -642,29 +632,10 @@
     },
     {
       "brand": "CHEVROLET",
-      "model_base": "impala",
+      "model_base": "captiva",
       "descriptors": [
-        "Impala (10th Gen) [2014-2020]",
-        "Impala (8th Gen) [2000-2005]",
-        "Impala (9th Gen) [2006-2016]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "caprice",
-      "descriptors": [
-        "Caprice (4th Gen) [1991-1996]",
-        "Caprice (PPV) [2011-2017]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHEVROLET",
-      "model_base": "s10",
-      "descriptors": [
-        "S10 (1ra Gen) [1982-2004]",
-        "S10 (2da Gen LatAm) [2012-Presente]"
+        "Captiva (1ra Gen) [2006-2018]",
+        "Captiva (2da Gen) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -678,12 +649,40 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "CHRYSLER",
-      "model_base": "lebaron",
+      "brand": "CHEVROLET",
+      "model_base": "colorado",
       "descriptors": [
-        "LeBaron (2nd Gen) [1977-1981]",
-        "LeBaron (3rd Gen K-Car) [1982-1988]",
-        "LeBaron (4th Gen) [1987-1995]"
+        "Colorado (1ra Gen) [2004-2012]",
+        "Colorado (2da Gen) [2012-2022]",
+        "Colorado (3ra Gen) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "blazer",
+      "descriptors": [
+        "Blazer (K5) [hasta 1994]",
+        "Blazer (Nuevo) [2019-Presente]",
+        "Blazer (S-10) [1995-2005]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHEVROLET",
+      "model_base": "traverse",
+      "descriptors": [
+        "Traverse (1ra Gen) [2009-2017]",
+        "Traverse (2da Gen) [2018-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHRYSLER",
+      "model_base": "300",
+      "descriptors": [
+        "300 (1ra Gen moderna) [2005-2010]",
+        "300 (2da Gen) [2011-2023]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -701,20 +700,30 @@
     },
     {
       "brand": "CHRYSLER",
-      "model_base": "concorde",
-      "descriptors": [
-        "Concorde (2nd Gen) [1998-2004]",
-        "Concorde (LH) [1993-1997]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHRYSLER",
       "model_base": "new yorker",
       "descriptors": [
         "New Yorker (5th Gen) [1983-1988]",
         "New Yorker (6th Gen) [1988-1993]",
         "New Yorker (Final Gen) [1994-1996]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHRYSLER",
+      "model_base": "pacifica",
+      "descriptors": [
+        "Pacifica (Crossover 1ra Gen) [2004-2008]",
+        "Pacifica (Minivan) [2017-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CHRYSLER",
+      "model_base": "lebaron",
+      "descriptors": [
+        "LeBaron (2nd Gen) [1977-1981]",
+        "LeBaron (3rd Gen K-Car) [1982-1988]",
+        "LeBaron (4th Gen) [1987-1995]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -731,15 +740,6 @@
     },
     {
       "brand": "CHRYSLER",
-      "model_base": "300",
-      "descriptors": [
-        "300 (1ra Gen moderna) [2005-2010]",
-        "300 (2da Gen) [2011-2023]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CHRYSLER",
       "model_base": "sebring",
       "descriptors": [
         "Sebring (3rd Gen) [2007-2010]",
@@ -750,38 +750,10 @@
     },
     {
       "brand": "CHRYSLER",
-      "model_base": "pacifica",
+      "model_base": "concorde",
       "descriptors": [
-        "Pacifica (Crossover 1ra Gen) [2004-2008]",
-        "Pacifica (Minivan) [2017-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CITROËN",
-      "model_base": "jumpy",
-      "descriptors": [
-        "Jumpy (2da Gen) [2007-2016]",
-        "Jumpy (3ra Gen) [2016-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CITROËN",
-      "model_base": "c4 aircross",
-      "descriptors": [
-        "C4 Aircross (1ra Gen) [2012-2017]",
-        "C4 Aircross (China nueva gen) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "CITROËN",
-      "model_base": "c4",
-      "descriptors": [
-        "C4 (1ra Gen) [2004-2010]",
-        "C4 (2da Gen) [2010-2018]",
-        "C4 (3ra Gen) [2020-Presente]"
+        "Concorde (2nd Gen) [1998-2004]",
+        "Concorde (LH) [1993-1997]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -792,6 +764,15 @@
         "Berlingo (1ra Gen) [1996-2008]",
         "Berlingo (2da Gen) [2008-2018]",
         "Berlingo (3ra Gen) [2018-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CITROËN",
+      "model_base": "jumpy",
+      "descriptors": [
+        "Jumpy (2da Gen) [2007-2016]",
+        "Jumpy (3ra Gen) [2016-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -808,19 +789,29 @@
     },
     {
       "brand": "CITROËN",
-      "model_base": "c5",
+      "model_base": "c1",
       "descriptors": [
-        "C5 (1ra Gen) [2001-2008]",
-        "C5 (2da Gen) [2008-2017]"
+        "C1 (1ra Gen) [2005-2014]",
+        "C1 (2da Gen) [2014-2022]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "CITROËN",
-      "model_base": "c1",
+      "model_base": "c4",
       "descriptors": [
-        "C1 (1ra Gen) [2005-2014]",
-        "C1 (2da Gen) [2014-2022]"
+        "C4 (1ra Gen) [2004-2010]",
+        "C4 (2da Gen) [2010-2018]",
+        "C4 (3ra Gen) [2020-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CITROËN",
+      "model_base": "c5",
+      "descriptors": [
+        "C5 (1ra Gen) [2001-2008]",
+        "C5 (2da Gen) [2008-2017]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -839,6 +830,15 @@
       "descriptors": [
         "C6 (1ra Gen) [2005-2012]",
         "C6 (China) [2016-2023]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "CITROËN",
+      "model_base": "c4 aircross",
+      "descriptors": [
+        "C4 Aircross (1ra Gen) [2012-2017]",
+        "C4 Aircross (China nueva gen) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -871,6 +871,56 @@
     },
     {
       "brand": "DAIHATSU",
+      "model_base": "charade",
+      "descriptors": [
+        "Charade (G10/G20) [1977-1983]",
+        "Charade (G100) [1987-1993]",
+        "Charade (G11) [2011-2017]",
+        "Charade (G200) [1993-2000]",
+        "Charade (G30) [1983-1987]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DAIHATSU",
+      "model_base": "hijet truck",
+      "descriptors": [
+        "Hijet Truck (S100/S110) [1994-1999]",
+        "Hijet Truck (S200) [1999-2014]",
+        "Hijet Truck (S500) [2014-Presente]",
+        "Hijet Truck (S65) [1981-1986]",
+        "Hijet Truck (S80/S81) [1986-1994]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DAIHATSU",
+      "model_base": "move",
+      "descriptors": [
+        "Move (L150) [2002-2006]",
+        "Move (L175) [2006-2010]",
+        "Move (L600) [1995-1998]",
+        "Move (L900) [1998-2002]",
+        "Move (LA100) [2010-2014]",
+        "Move (LA150) [2014-2023]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DAIHATSU",
+      "model_base": "mira",
+      "descriptors": [
+        "Mira (L200) [1990-1994]",
+        "Mira (L250) [2002-2006]",
+        "Mira (L275) [2006-2018]",
+        "Mira (L500) [1994-1998]",
+        "Mira (L70) [1985-1990]",
+        "Mira (L700) [1998-2002]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DAIHATSU",
       "model_base": "tanto",
       "descriptors": [
         "Tanto (L350) [2003-2007]",
@@ -894,65 +944,6 @@
     },
     {
       "brand": "DAIHATSU",
-      "model_base": "sirion",
-      "descriptors": [
-        "Sirion (2da Gen) [2010-2017]",
-        "Sirion (3ra Gen) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DAIHATSU",
-      "model_base": "hijet truck",
-      "descriptors": [
-        "Hijet Truck (S100/S110) [1994-1999]",
-        "Hijet Truck (S200) [1999-2014]",
-        "Hijet Truck (S500) [2014-Presente]",
-        "Hijet Truck (S65) [1981-1986]",
-        "Hijet Truck (S80/S81) [1986-1994]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DAIHATSU",
-      "model_base": "charade",
-      "descriptors": [
-        "Charade (G10/G20) [1977-1983]",
-        "Charade (G100) [1987-1993]",
-        "Charade (G11) [2011-2017]",
-        "Charade (G200) [1993-2000]",
-        "Charade (G30) [1983-1987]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DAIHATSU",
-      "model_base": "mira",
-      "descriptors": [
-        "Mira (L200) [1990-1994]",
-        "Mira (L250) [2002-2006]",
-        "Mira (L275) [2006-2018]",
-        "Mira (L500) [1994-1998]",
-        "Mira (L70) [1985-1990]",
-        "Mira (L700) [1998-2002]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DAIHATSU",
-      "model_base": "move",
-      "descriptors": [
-        "Move (L150) [2002-2006]",
-        "Move (L175) [2006-2010]",
-        "Move (L600) [1995-1998]",
-        "Move (L900) [1998-2002]",
-        "Move (LA100) [2010-2014]",
-        "Move (LA150) [2014-2023]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DAIHATSU",
       "model_base": "terios",
       "descriptors": [
         "Terios (1ra Gen J100) [1997-2006]",
@@ -962,22 +953,31 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "DODGE",
-      "model_base": "ram",
+      "brand": "DAIHATSU",
+      "model_base": "sirion",
       "descriptors": [
-        "Ram (2da Gen) [1994-2001]",
-        "Ram (3ra Gen) [2002-2008]",
-        "Ram (4ta Gen) [2009-2018]",
-        "Ram (5ta Gen) [2019-Presente]"
+        "Sirion (2da Gen) [2010-2017]",
+        "Sirion (3ra Gen) [2018-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "DODGE",
-      "model_base": "avenger",
+      "model_base": "durango",
       "descriptors": [
-        "Avenger (1ra Gen) [1995-2000]",
-        "Avenger (2da Gen) [2007-2014]"
+        "Durango (1ra Gen) [1998-2003]",
+        "Durango (2da Gen) [2004-2009]",
+        "Durango (3ra Gen) [2011-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DODGE",
+      "model_base": "charger",
+      "descriptors": [
+        "Charger (LD) [2011-2023]",
+        "Charger (LX 1ra Gen moderna) [2006-2010]",
+        "Charger (Nueva Gen) [2024-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -994,21 +994,20 @@
     },
     {
       "brand": "DODGE",
-      "model_base": "charger",
+      "model_base": "neon",
       "descriptors": [
-        "Charger (LD) [2011-2023]",
-        "Charger (LX 1ra Gen moderna) [2006-2010]",
-        "Charger (Nueva Gen) [2024-Presente]"
+        "Neon (1ra Gen) [1994-1999]",
+        "Neon (2da Gen) [2000-2005]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "DODGE",
-      "model_base": "challenger",
+      "model_base": "dakota",
       "descriptors": [
-        "Challenger (3rd Gen moderna) [2008-2014]",
-        "Challenger (Facelift) [2015-2023]",
-        "Challenger (Nueva Gen) [2024-Presente]"
+        "Dakota (1ra Gen) [1987-1996]",
+        "Dakota (2da Gen) [1997-2004]",
+        "Dakota (3ra Gen) [2005-2011]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1025,29 +1024,22 @@
     },
     {
       "brand": "DODGE",
-      "model_base": "neon",
+      "model_base": "ram",
       "descriptors": [
-        "Neon (1ra Gen) [1994-1999]",
-        "Neon (2da Gen) [2000-2005]"
+        "Ram (2da Gen) [1994-2001]",
+        "Ram (3ra Gen) [2002-2008]",
+        "Ram (4ta Gen) [2009-2018]",
+        "Ram (5ta Gen) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "DODGE",
-      "model_base": "durango",
+      "model_base": "challenger",
       "descriptors": [
-        "Durango (1ra Gen) [1998-2003]",
-        "Durango (2da Gen) [2004-2009]",
-        "Durango (3ra Gen) [2011-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "DODGE",
-      "model_base": "stratus",
-      "descriptors": [
-        "Stratus (1ra Gen) [1995-2000]",
-        "Stratus (2da Gen) [2001-2006]"
+        "Challenger (3rd Gen moderna) [2008-2014]",
+        "Challenger (Facelift) [2015-2023]",
+        "Challenger (Nueva Gen) [2024-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1062,11 +1054,19 @@
     },
     {
       "brand": "DODGE",
-      "model_base": "dakota",
+      "model_base": "stratus",
       "descriptors": [
-        "Dakota (1ra Gen) [1987-1996]",
-        "Dakota (2da Gen) [1997-2004]",
-        "Dakota (3ra Gen) [2005-2011]"
+        "Stratus (1ra Gen) [1995-2000]",
+        "Stratus (2da Gen) [2001-2006]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "DODGE",
+      "model_base": "avenger",
+      "descriptors": [
+        "Avenger (1ra Gen) [1995-2000]",
+        "Avenger (2da Gen) [2007-2014]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1090,30 +1090,10 @@
     },
     {
       "brand": "FIAT",
-      "model_base": "tipo",
+      "model_base": "uno",
       "descriptors": [
-        "Tipo (1ra Gen) [1988-1995]",
-        "Tipo (2da Gen) [2015-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FIAT",
-      "model_base": "panda",
-      "descriptors": [
-        "Panda (1ra Gen) [1980-2003]",
-        "Panda (2da Gen) [2003-2012]",
-        "Panda (3ra Gen) [2012-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FIAT",
-      "model_base": "doblo",
-      "descriptors": [
-        "Doblo (1ra Gen) [2000-2010]",
-        "Doblo (2da Gen) [2010-2022]",
-        "Doblo (3ra Gen Stellantis) [2022-Presente]"
+        "Uno (1ra Gen) [1983-1995]",
+        "Uno (2da Gen / LatAm) [2010-2021]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1129,10 +1109,20 @@
     },
     {
       "brand": "FIAT",
-      "model_base": "strada",
+      "model_base": "panda",
       "descriptors": [
-        "Strada (1ra Gen) [1998-2020]",
-        "Strada (2da Gen) [2020-Presente]"
+        "Panda (1ra Gen) [1980-2003]",
+        "Panda (2da Gen) [2003-2012]",
+        "Panda (3ra Gen) [2012-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FIAT",
+      "model_base": "tipo",
+      "descriptors": [
+        "Tipo (1ra Gen) [1988-1995]",
+        "Tipo (2da Gen) [2015-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1166,10 +1156,20 @@
     },
     {
       "brand": "FIAT",
-      "model_base": "uno",
+      "model_base": "doblo",
       "descriptors": [
-        "Uno (1ra Gen) [1983-1995]",
-        "Uno (2da Gen / LatAm) [2010-2021]"
+        "Doblo (1ra Gen) [2000-2010]",
+        "Doblo (2da Gen) [2010-2022]",
+        "Doblo (3ra Gen Stellantis) [2022-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FIAT",
+      "model_base": "strada",
+      "descriptors": [
+        "Strada (1ra Gen) [1998-2020]",
+        "Strada (2da Gen) [2020-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1184,77 +1184,11 @@
     },
     {
       "brand": "FORD",
-      "model_base": "f-150",
-      "descriptors": [
-        "F-150 (10ma Gen) [1997-2004]",
-        "F-150 (11va Gen) [2004-2008]",
-        "F-150 (12va Gen) [2009-2014]",
-        "F-150 (13va Gen) [2015-2020]",
-        "F-150 (14va Gen) [2021-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "fiesta",
-      "descriptors": [
-        "Fiesta (Mk1/Mk2) [1976-1989]",
-        "Fiesta (Mk3) [1989-1997]",
-        "Fiesta (Mk4/Mk5) [1995-2002]",
-        "Fiesta (Mk6) [2002-2008]",
-        "Fiesta (Mk7) [2008-2017]",
-        "Fiesta (Mk8) [2017-2023]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "ford cargo",
-      "descriptors": [
-        "Ford Cargo (1ra Gen) [1981-1993]",
-        "Ford Cargo (2da Gen) [1993-2003]",
-        "Ford Cargo (3ra Gen) [2003-2011]",
-        "Ford Cargo (4ta Gen) [2011-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "ecosport",
-      "descriptors": [
-        "EcoSport (1ra Gen) [2003-2012]",
-        "EcoSport (2da Gen) [2012-2022]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "transit courier",
-      "descriptors": [
-        "Transit Courier (1ra Gen) [2014-2023]",
-        "Transit Courier (2da Gen) [2023-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
       "model_base": "transit connect",
       "descriptors": [
         "Transit Connect (1ra Gen) [2002-2013]",
         "Transit Connect (2da Gen) [2013-2023]",
         "Transit Connect (3ra Gen) [2024-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "mustang",
-      "descriptors": [
-        "Mustang (Fox Body) [1979-1993]",
-        "Mustang (S197) [2005-2014]",
-        "Mustang (S550) [2015-2023]",
-        "Mustang (S650) [2024-Presente]",
-        "Mustang (SN95) [1994-2004]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1273,6 +1207,28 @@
     },
     {
       "brand": "FORD",
+      "model_base": "ford cargo",
+      "descriptors": [
+        "Ford Cargo (1ra Gen) [1981-1993]",
+        "Ford Cargo (2da Gen) [1993-2003]",
+        "Ford Cargo (3ra Gen) [2003-2011]",
+        "Ford Cargo (4ta Gen) [2011-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "focus",
+      "descriptors": [
+        "Focus (Mk1) [1998-2004]",
+        "Focus (Mk2) [2004-2011]",
+        "Focus (Mk3) [2011-2018]",
+        "Focus (Mk4) [2018-2025]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
       "model_base": "taurus",
       "descriptors": [
         "Taurus (1ra Gen) [1986-1991]",
@@ -1281,6 +1237,17 @@
         "Taurus (4ta Gen) [2000-2007]",
         "Taurus (5ta Gen) [2008-2009]",
         "Taurus (6ta Gen) [2010-2019]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "escape",
+      "descriptors": [
+        "Escape (1ra Gen) [2000-2007]",
+        "Escape (2da Gen) [2008-2012]",
+        "Escape (3ra Gen) [2013-2019]",
+        "Escape (4ta Gen) [2020-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1298,12 +1265,22 @@
     },
     {
       "brand": "FORD",
-      "model_base": "escape",
+      "model_base": "super duty",
       "descriptors": [
-        "Escape (1ra Gen) [2000-2007]",
-        "Escape (2da Gen) [2008-2012]",
-        "Escape (3ra Gen) [2013-2019]",
-        "Escape (4ta Gen) [2020-Presente]"
+        "Super Duty (1ra Gen) [1999-2007]",
+        "Super Duty (2da Gen) [2008-2010]",
+        "Super Duty (3ra Gen) [2011-2016]",
+        "Super Duty (4ta Gen) [2017-2022]",
+        "Super Duty (5ta Gen) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "bronco",
+      "descriptors": [
+        "Bronco (1ra-5ta Gen clásicas) [1966-1996]",
+        "Bronco (6ta Gen) [2021-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1314,6 +1291,139 @@
         "F-Series (7ma Gen) [1980-1986]",
         "F-Series (8va Gen) [1987-1991]",
         "F-Series (9na Gen) [1992-1997]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "f-150",
+      "descriptors": [
+        "F-150 (10ma Gen) [1997-2004]",
+        "F-150 (11va Gen) [2004-2008]",
+        "F-150 (12va Gen) [2009-2014]",
+        "F-150 (13va Gen) [2015-2020]",
+        "F-150 (14va Gen) [2021-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "everest",
+      "descriptors": [
+        "Everest (1ra Gen) [2003-2015]",
+        "Everest (2da Gen) [2015-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "edge",
+      "descriptors": [
+        "Edge (1ra Gen) [2007-2014]",
+        "Edge (2da Gen) [2015-2023]",
+        "Edge (China nueva gen) [2024-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "expedition",
+      "descriptors": [
+        "Expedition (1ra Gen) [1997-2002]",
+        "Expedition (2da Gen) [2003-2006]",
+        "Expedition (3ra Gen) [2007-2017]",
+        "Expedition (4ta Gen) [2018-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "fiesta",
+      "descriptors": [
+        "Fiesta (Mk1/Mk2) [1976-1989]",
+        "Fiesta (Mk3) [1989-1997]",
+        "Fiesta (Mk4/Mk5) [1995-2002]",
+        "Fiesta (Mk6) [2002-2008]",
+        "Fiesta (Mk7) [2008-2017]",
+        "Fiesta (Mk8) [2017-2023]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "ka",
+      "descriptors": [
+        "Ka (1ra Gen) [1996-2008]",
+        "Ka (2da Gen) [2008-2016]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "mustang",
+      "descriptors": [
+        "Mustang (Fox Body) [1979-1993]",
+        "Mustang (S197) [2005-2014]",
+        "Mustang (S550) [2015-2023]",
+        "Mustang (S650) [2024-Presente]",
+        "Mustang (SN95) [1994-2004]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "transit courier",
+      "descriptors": [
+        "Transit Courier (1ra Gen) [2014-2023]",
+        "Transit Courier (2da Gen) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "ecosport",
+      "descriptors": [
+        "EcoSport (1ra Gen) [2003-2012]",
+        "EcoSport (2da Gen) [2012-2022]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "mondeo",
+      "descriptors": [
+        "Mondeo (Mk1) [1993-2000]",
+        "Mondeo (Mk2) [2000-2007]",
+        "Mondeo (Mk3) [2007-2014]",
+        "Mondeo (Mk4) [2014-2022]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "puma",
+      "descriptors": [
+        "Puma (1ra Gen coupe) [1997-2002]",
+        "Puma (2da Gen SUV) [2019-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "escort",
+      "descriptors": [
+        "Escort (China nueva gen) [2015-2021]",
+        "Escort (Mk3/Mk4) [1980-1990]",
+        "Escort (Mk5/Mk6) [1990-2000]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "FORD",
+      "model_base": "e-series / econoline",
+      "descriptors": [
+        "E-Series / Econoline (3ra Gen) [1975-1991]",
+        "E-Series / Econoline (4ta Gen) [1992-2014]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1332,116 +1442,6 @@
     },
     {
       "brand": "FORD",
-      "model_base": "mondeo",
-      "descriptors": [
-        "Mondeo (Mk1) [1993-2000]",
-        "Mondeo (Mk2) [2000-2007]",
-        "Mondeo (Mk3) [2007-2014]",
-        "Mondeo (Mk4) [2014-2022]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "everest",
-      "descriptors": [
-        "Everest (1ra Gen) [2003-2015]",
-        "Everest (2da Gen) [2015-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "e-series / econoline",
-      "descriptors": [
-        "E-Series / Econoline (3ra Gen) [1975-1991]",
-        "E-Series / Econoline (4ta Gen) [1992-2014]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "escort",
-      "descriptors": [
-        "Escort (China nueva gen) [2015-2021]",
-        "Escort (Mk3/Mk4) [1980-1990]",
-        "Escort (Mk5/Mk6) [1990-2000]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "fusion",
-      "descriptors": [
-        "Fusion (2da Gen) [2013-2020]",
-        "Fusion (US) [2006-2012]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "ka",
-      "descriptors": [
-        "Ka (1ra Gen) [1996-2008]",
-        "Ka (2da Gen) [2008-2016]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "focus",
-      "descriptors": [
-        "Focus (Mk1) [1998-2004]",
-        "Focus (Mk2) [2004-2011]",
-        "Focus (Mk3) [2011-2018]",
-        "Focus (Mk4) [2018-2025]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "bronco",
-      "descriptors": [
-        "Bronco (1ra-5ta Gen clásicas) [1966-1996]",
-        "Bronco (6ta Gen) [2021-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "super duty",
-      "descriptors": [
-        "Super Duty (1ra Gen) [1999-2007]",
-        "Super Duty (2da Gen) [2008-2010]",
-        "Super Duty (3ra Gen) [2011-2016]",
-        "Super Duty (4ta Gen) [2017-2022]",
-        "Super Duty (5ta Gen) [2023-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "expedition",
-      "descriptors": [
-        "Expedition (1ra Gen) [1997-2002]",
-        "Expedition (2da Gen) [2003-2006]",
-        "Expedition (3ra Gen) [2007-2017]",
-        "Expedition (4ta Gen) [2018-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
-      "model_base": "edge",
-      "descriptors": [
-        "Edge (1ra Gen) [2007-2014]",
-        "Edge (2da Gen) [2015-2023]",
-        "Edge (China nueva gen) [2024-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "FORD",
       "model_base": "transit custom",
       "descriptors": [
         "Transit Custom (1ra Gen) [2012-2023]",
@@ -1451,10 +1451,10 @@
     },
     {
       "brand": "FORD",
-      "model_base": "puma",
+      "model_base": "fusion",
       "descriptors": [
-        "Puma (1ra Gen coupe) [1997-2002]",
-        "Puma (2da Gen SUV) [2019-Presente]"
+        "Fusion (2da Gen) [2013-2020]",
+        "Fusion (US) [2006-2012]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1496,15 +1496,6 @@
     },
     {
       "brand": "GENESIS",
-      "model_base": "hyundai genesis",
-      "descriptors": [
-        "Hyundai Genesis (BH) [2008-2013]",
-        "Hyundai Genesis (DH) [2013-2016]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "GENESIS",
       "model_base": "genesis g90",
       "descriptors": [
         "Genesis G90 (1ra Gen EQ900) [2016-2022]",
@@ -1513,43 +1504,11 @@
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "GMC",
-      "model_base": "yukon",
+      "brand": "GENESIS",
+      "model_base": "hyundai genesis",
       "descriptors": [
-        "Yukon (1ra Gen) [1992-1999]",
-        "Yukon (2da Gen) [2000-2006]",
-        "Yukon (3ra Gen) [2007-2014]",
-        "Yukon (4ta Gen) [2015-2020]",
-        "Yukon (5ta Gen) [2021-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "GMC",
-      "model_base": "canyon",
-      "descriptors": [
-        "Canyon (1ra Gen) [2004-2012]",
-        "Canyon (2da Gen) [2015-2022]",
-        "Canyon (3ra Gen) [2023-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "GMC",
-      "model_base": "sonoma",
-      "descriptors": [
-        "Sonoma (1ra Gen) [1991-2003]",
-        "Sonoma (2da Gen) [1994-2004]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "GMC",
-      "model_base": "acadia",
-      "descriptors": [
-        "Acadia (1ra Gen) [2007-2016]",
-        "Acadia (2da Gen) [2017-2023]",
-        "Acadia (3ra Gen) [2024-Presente]"
+        "Hyundai Genesis (BH) [2008-2013]",
+        "Hyundai Genesis (DH) [2013-2016]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1588,6 +1547,47 @@
       "descriptors": [
         "Terrain (1ra Gen) [2010-2017]",
         "Terrain (2da Gen) [2018-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "GMC",
+      "model_base": "yukon",
+      "descriptors": [
+        "Yukon (1ra Gen) [1992-1999]",
+        "Yukon (2da Gen) [2000-2006]",
+        "Yukon (3ra Gen) [2007-2014]",
+        "Yukon (4ta Gen) [2015-2020]",
+        "Yukon (5ta Gen) [2021-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "GMC",
+      "model_base": "sonoma",
+      "descriptors": [
+        "Sonoma (1ra Gen) [1991-2003]",
+        "Sonoma (2da Gen) [1994-2004]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "GMC",
+      "model_base": "acadia",
+      "descriptors": [
+        "Acadia (1ra Gen) [2007-2016]",
+        "Acadia (2da Gen) [2017-2023]",
+        "Acadia (3ra Gen) [2024-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "GMC",
+      "model_base": "canyon",
+      "descriptors": [
+        "Canyon (1ra Gen) [2004-2012]",
+        "Canyon (2da Gen) [2015-2022]",
+        "Canyon (3ra Gen) [2023-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1683,39 +1683,17 @@
     },
     {
       "brand": "HONDA",
-      "model_base": "acty van",
+      "model_base": "civic",
       "descriptors": [
-        "Acty Van (1ra-5ta Gen) [1977-2021]",
-        "Acty Van (última Gen HA8/HA9) [2009-2021]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "hr-v",
-      "descriptors": [
-        "HR-V (1ra Gen GH) [1998-2006]",
-        "HR-V (2da Gen RU) [2013-2021]",
-        "HR-V (3ra Gen RV) [2021-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "mobilio",
-      "descriptors": [
-        "Mobilio (1ra Gen) [2001-2008]",
-        "Mobilio (2da Gen) [2014-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "integra",
-      "descriptors": [
-        "Integra (DA/DC) [1985-2006]",
-        "Integra (DC5 Type R) [2001-2006]",
-        "Integra (nueva gen) [2022-Presente]"
+        "Civic (10ma Gen FC/FK) [2015-2021]",
+        "Civic (11va Gen FE) [2021-Presente]",
+        "Civic (3ra Gen) [1983-1987]",
+        "Civic (4ta Gen EF) [1987-1991]",
+        "Civic (5ta Gen EG) [1991-1995]",
+        "Civic (6ta Gen EK) [1995-2000]",
+        "Civic (7ma Gen ES/EP) [2000-2005]",
+        "Civic (8va Gen FD/FA) [2005-2011]",
+        "Civic (9na Gen FB) [2011-2015]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1727,28 +1705,6 @@
         "Civic Type R (EP3) [2001-2005]",
         "Civic Type R (FD2) [2007-2011]",
         "Civic Type R (FK2/FK8/FL5) [2015-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "br-v",
-      "descriptors": [
-        "BR-V (1ra Gen) [2016-2022]",
-        "BR-V (2da Gen) [2022-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "city",
-      "descriptors": [
-        "City (1ra Gen moderna) [1981-1986]",
-        "City (3ra Gen) [1996-2002]",
-        "City (4ta Gen) [2002-2008]",
-        "City (5ta Gen) [2008-2014]",
-        "City (6ta Gen) [2014-2019]",
-        "City (7ma Gen) [2020-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1767,40 +1723,36 @@
     },
     {
       "brand": "HONDA",
-      "model_base": "civic",
+      "model_base": "passport",
       "descriptors": [
-        "Civic (10ma Gen FC/FK) [2015-2021]",
-        "Civic (11va Gen FE) [2021-Presente]",
-        "Civic (3ra Gen) [1983-1987]",
-        "Civic (4ta Gen EF) [1987-1991]",
-        "Civic (5ta Gen EG) [1991-1995]",
-        "Civic (6ta Gen EK) [1995-2000]",
-        "Civic (7ma Gen ES/EP) [2000-2005]",
-        "Civic (8va Gen FD/FA) [2005-2011]",
-        "Civic (9na Gen FB) [2011-2015]"
+        "Passport (1ra Gen, rebadge Isuzu) [1994-2002]",
+        "Passport (2da Gen moderna) [2019-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HONDA",
-      "model_base": "legend",
+      "model_base": "accord",
       "descriptors": [
-        "Legend (2da Gen) [1985-1990]",
-        "Legend (3ra Gen) [1990-1995]",
-        "Legend (4ta Gen) [1996-2004]",
-        "Legend (5ta Gen) [2004-2012]",
-        "Legend (Hybrid) [2014-Presente]"
+        "Accord (10ma Gen CV) [2017-2022]",
+        "Accord (11va Gen CY) [2023-Presente]",
+        "Accord (3ra Gen) [1985-1989]",
+        "Accord (4ta Gen CB) [1989-1993]",
+        "Accord (5ta Gen CD) [1993-1997]",
+        "Accord (6ta Gen CG) [1997-2002]",
+        "Accord (7ma Gen CL) [2002-2008]",
+        "Accord (8va Gen CP) [2008-2013]",
+        "Accord (9na Gen CR) [2013-2017]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HONDA",
-      "model_base": "fit / jazz",
+      "model_base": "integra",
       "descriptors": [
-        "Fit / Jazz (1ra Gen GD) [2001-2008]",
-        "Fit / Jazz (2da Gen GE) [2008-2014]",
-        "Fit / Jazz (3ra Gen GK) [2014-2020]",
-        "Fit / Jazz (4ta Gen GR) [2020-Presente]"
+        "Integra (DA/DC) [1985-2006]",
+        "Integra (DC5 Type R) [2001-2006]",
+        "Integra (nueva gen) [2022-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1812,6 +1764,74 @@
         "Pilot (2da Gen YF2) [2008-2015]",
         "Pilot (3ra Gen YF5/6) [2016-2022]",
         "Pilot (4ta Gen) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "acty van",
+      "descriptors": [
+        "Acty Van (1ra-5ta Gen) [1977-2021]",
+        "Acty Van (última Gen HA8/HA9) [2009-2021]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "odyssey",
+      "descriptors": [
+        "Odyssey (1ra Gen RA) [1994-1999]",
+        "Odyssey (2da Gen RA) [1999-2004]",
+        "Odyssey (3ra Gen RB) [2003-2008]",
+        "Odyssey (4ta Gen RB3/RB4) [2008-2013]",
+        "Odyssey (5ta Gen RC) [2013-2020]",
+        "Odyssey (6ta Gen) [2020-Presente]",
+        "Odyssey (USA 2da línea) [2011-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "hr-v",
+      "descriptors": [
+        "HR-V (1ra Gen GH) [1998-2006]",
+        "HR-V (2da Gen RU) [2013-2021]",
+        "HR-V (3ra Gen RV) [2021-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "city",
+      "descriptors": [
+        "City (1ra Gen moderna) [1981-1986]",
+        "City (3ra Gen) [1996-2002]",
+        "City (4ta Gen) [2002-2008]",
+        "City (5ta Gen) [2008-2014]",
+        "City (6ta Gen) [2014-2019]",
+        "City (7ma Gen) [2020-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "acty truck",
+      "descriptors": [
+        "Acty Truck (1ra Gen TN) [1977-1988]",
+        "Acty Truck (2da Gen HA1/HA2) [1988-1999]",
+        "Acty Truck (3ra Gen HA3/HA4) [1999-2009]",
+        "Acty Truck (4ta Gen HA8/HA9) [2009-2021]",
+        "Acty Truck (HA8/HA9 últimas gen) [2009-2021]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HONDA",
+      "model_base": "prelude",
+      "descriptors": [
+        "Prelude (3ra Gen) [1987-1991]",
+        "Prelude (4ta Gen) [1991-1996]",
+        "Prelude (5ta Gen) [1996-2001]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1839,31 +1859,10 @@
     },
     {
       "brand": "HONDA",
-      "model_base": "nsx",
+      "model_base": "crossroad",
       "descriptors": [
-        "NSX (1ra Gen NA1/NA2) [1990-2005]",
-        "NSX (2da Gen) [2016-2022]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "acty truck",
-      "descriptors": [
-        "Acty Truck (1ra Gen TN) [1977-1988]",
-        "Acty Truck (2da Gen HA1/HA2) [1988-1999]",
-        "Acty Truck (3ra Gen HA3/HA4) [1999-2009]",
-        "Acty Truck (4ta Gen HA8/HA9) [2009-2021]",
-        "Acty Truck (HA8/HA9 últimas gen) [2009-2021]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HONDA",
-      "model_base": "passport",
-      "descriptors": [
-        "Passport (1ra Gen, rebadge Isuzu) [1994-2002]",
-        "Passport (2da Gen moderna) [2019-Presente]"
+        "Crossroad (1ra Gen rebadge Land Rover) [1993-1998]",
+        "Crossroad (2da Gen) [2007-2010]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1878,63 +1877,51 @@
     },
     {
       "brand": "HONDA",
-      "model_base": "prelude",
+      "model_base": "legend",
       "descriptors": [
-        "Prelude (3ra Gen) [1987-1991]",
-        "Prelude (4ta Gen) [1991-1996]",
-        "Prelude (5ta Gen) [1996-2001]"
+        "Legend (2da Gen) [1985-1990]",
+        "Legend (3ra Gen) [1990-1995]",
+        "Legend (4ta Gen) [1996-2004]",
+        "Legend (5ta Gen) [2004-2012]",
+        "Legend (Hybrid) [2014-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HONDA",
-      "model_base": "accord",
+      "model_base": "br-v",
       "descriptors": [
-        "Accord (10ma Gen CV) [2017-2022]",
-        "Accord (11va Gen CY) [2023-Presente]",
-        "Accord (3ra Gen) [1985-1989]",
-        "Accord (4ta Gen CB) [1989-1993]",
-        "Accord (5ta Gen CD) [1993-1997]",
-        "Accord (6ta Gen CG) [1997-2002]",
-        "Accord (7ma Gen CL) [2002-2008]",
-        "Accord (8va Gen CP) [2008-2013]",
-        "Accord (9na Gen CR) [2013-2017]"
+        "BR-V (1ra Gen) [2016-2022]",
+        "BR-V (2da Gen) [2022-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HONDA",
-      "model_base": "odyssey",
+      "model_base": "fit / jazz",
       "descriptors": [
-        "Odyssey (1ra Gen RA) [1994-1999]",
-        "Odyssey (2da Gen RA) [1999-2004]",
-        "Odyssey (3ra Gen RB) [2003-2008]",
-        "Odyssey (4ta Gen RB3/RB4) [2008-2013]",
-        "Odyssey (5ta Gen RC) [2013-2020]",
-        "Odyssey (6ta Gen) [2020-Presente]",
-        "Odyssey (USA 2da línea) [2011-Presente]"
+        "Fit / Jazz (1ra Gen GD) [2001-2008]",
+        "Fit / Jazz (2da Gen GE) [2008-2014]",
+        "Fit / Jazz (3ra Gen GK) [2014-2020]",
+        "Fit / Jazz (4ta Gen GR) [2020-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HONDA",
-      "model_base": "crossroad",
+      "model_base": "nsx",
       "descriptors": [
-        "Crossroad (1ra Gen rebadge Land Rover) [1993-1998]",
-        "Crossroad (2da Gen) [2007-2010]"
+        "NSX (1ra Gen NA1/NA2) [1990-2005]",
+        "NSX (2da Gen) [2016-2022]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
-      "brand": "HYUNDAI",
-      "model_base": "accent",
+      "brand": "HONDA",
+      "model_base": "mobilio",
       "descriptors": [
-        "Accent (BN7) [2023-Presente]",
-        "Accent (HC) [2017-2022]",
-        "Accent (LC) [2000-2005]",
-        "Accent (MC) [2005-2011]",
-        "Accent (RB) [2011-2017]",
-        "Accent (X3) [1994-2000]"
+        "Mobilio (1ra Gen) [2001-2008]",
+        "Mobilio (2da Gen) [2014-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1946,6 +1933,43 @@
         "Porter (3ra Gen) [1996-2004]",
         "Porter (4ta Gen / H100 Pickup) [2004-Presente]",
         "Porter (4ta Gen) [2004-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HYUNDAI",
+      "model_base": "kona",
+      "descriptors": [
+        "Kona (OS) [2017-2023]",
+        "Kona (SX2) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HYUNDAI",
+      "model_base": "starex / h-1",
+      "descriptors": [
+        "Starex / H-1 (1ra Gen A1) [1997-2007]",
+        "Starex / H-1 (2da Gen TQ) [2007-2021]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HYUNDAI",
+      "model_base": "excel",
+      "descriptors": [
+        "Excel (X1) [1985-1989]",
+        "Excel (X2) [1989-1994]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HYUNDAI",
+      "model_base": "i20",
+      "descriptors": [
+        "i20 (BC3) [2020-Presente]",
+        "i20 (GB) [2014-2020]",
+        "i20 (PB) [2008-2014]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -1965,51 +1989,15 @@
     },
     {
       "brand": "HYUNDAI",
-      "model_base": "excel",
+      "model_base": "elantra",
       "descriptors": [
-        "Excel (X1) [1985-1989]",
-        "Excel (X2) [1989-1994]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HYUNDAI",
-      "model_base": "tucson",
-      "descriptors": [
-        "Tucson (1ra Gen JM) [2004-2009]",
-        "Tucson (2da Gen LM / ix35) [2009-2015]",
-        "Tucson (3ra Gen TL) [2015-2020]",
-        "Tucson (4ta Gen NX4) [2020-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HYUNDAI",
-      "model_base": "santa fe",
-      "descriptors": [
-        "Santa Fe (1ra Gen SM) [2000-2006]",
-        "Santa Fe (2da Gen CM) [2006-2012]",
-        "Santa Fe (3ra Gen DM) [2012-2018]",
-        "Santa Fe (4ta Gen TM) [2018-2023]",
-        "Santa Fe (5ta Gen MX5) [2023-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HYUNDAI",
-      "model_base": "hyundai trago",
-      "descriptors": [
-        "Hyundai Trago (1ra Gen) [2006-2013]",
-        "Hyundai Trago (2da Gen / Xcient base) [2013-Presente]"
-      ],
-      "reason": "alias_or_duplicate_generation"
-    },
-    {
-      "brand": "HYUNDAI",
-      "model_base": "creta",
-      "descriptors": [
-        "Creta (1ra Gen GS) [2014-2020]",
-        "Creta (2da Gen SU2) [2020-Presente]"
+        "Elantra (AD) [2015-2020]",
+        "Elantra (CN7) [2020-Presente]",
+        "Elantra (HD) [2006-2010]",
+        "Elantra (J1) [1990-1995]",
+        "Elantra (J2) [1995-2000]",
+        "Elantra (MD) [2010-2015]",
+        "Elantra (XD) [2000-2006]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
@@ -2025,26 +2013,214 @@
     },
     {
       "brand": "HYUNDAI",
-      "model_base": "elantra",
+      "model_base": "hyundai trago",
       "descriptors": [
-        "Elantra (AD) [2015-2020]",
-        "Elantra (CN7) [2020-Presente]",
-        "Elantra (HD) [2006-2010]",
-        "Elantra (J1) [1990-1995]",
-        "Elantra (J2) [1995-2000]",
-        "Elantra (MD) [2010-2015]",
-        "Elantra (XD) [2000-2006]"
+        "Hyundai Trago (1ra Gen) [2006-2013]",
+        "Hyundai Trago (2da Gen / Xcient base) [2013-Presente]"
       ],
       "reason": "alias_or_duplicate_generation"
     },
     {
       "brand": "HYUNDAI",
-      "model_base": "starex / h-1",
+      "model_base": "accent",
       "descriptors": [
-        "Starex / H-1 (1ra Gen A1) [1997-2007]",
-        "Starex / H-1 (2da Gen TQ) [2007-2021]"
+        "Accent (BN7) [2023-Presente]",
+        "Accent (HC) [2017-2022]",
+        "Accent (LC) [2000-2005]",
+        "Accent (MC) [2005-2011]",
+        "Accent (RB) [2011-2017]",
+        "Accent (X3) [1994-2000]"
       ],
       "reason": "alias_or_duplicate_generation"
+    },
+    {
+      "brand": "HYUNDAI",
+      "model_base": "santa fe",
+      "descriptors": [
+        "Santa Fe (1ra Gen SM) [2000-2006]",
+        "Santa Fe (2da Gen CM) [2006-2012]",
+        "Santa Fe (3ra Gen DM) [2012-2018]",
+        "Santa Fe (4ta Gen TM) [2018-2023]",
+        "Santa Fe (5ta Gen MX5) [2023-Presente]"
+      ],
+      "reason": "alias_or_duplicate_generation"
+    }
+  ],
+  "quality_metrics": {
+    "classification_sources": {
+      "override": 3949,
+      "rules": 145
+    },
+    "override_pct": 96.5,
+    "rules_pct": 3.5,
+    "web_sync_pct": 0.0,
+    "slug_distribution": {
+      "sedan": 3160,
+      "suv": 352,
+      "hatchback": 180,
+      "camioneta-cabina-y-media": 151,
+      "microbus-carga": 85,
+      "microbus-pasajeros": 80,
+      "camioneta-1-cabina": 57,
+      "camion-carga": 18,
+      "convertible": 5,
+      "cabezal": 3,
+      "station-wagon": 3
+    },
+    "pickup_entries": 208,
+    "pickup_without_cab_hint": 203,
+    "coverage_pct": 100.0
+  },
+  "pickup_ambiguous_samples": [
+    {
+      "brand": "BAIC",
+      "label": "BAIC Pickup (Serie general) [2010-Presente] - 2.0T [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "BAIC",
+      "label": "BAIC Pickup (Serie general) [2010-Presente] - 2.5T Diesel [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "BYD",
+      "label": "BYD Pickup (nueva generación) [2024-Presente] - Hybrid [H]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "BYD",
+      "label": "BYD Pickup (nueva generación) [2024-Presente] - Eléctrico [E]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "S10 (1ra Gen) [1982-2004] - 2.2L [G]",
+      "vehicle_type_slug": "camioneta-1-cabina"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "S10 (1ra Gen) [1982-2004] - 4.3L V6 [G]",
+      "vehicle_type_slug": "camioneta-1-cabina"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "S10 (2da Gen LatAm) [2012-Presente] - 2.4L [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "S10 (2da Gen LatAm) [2012-Presente] - 2.8L Diesel [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (1ra Gen) [2004-2012] - 2.9L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (1ra Gen) [2004-2012] - 3.7L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (2da Gen) [2012-2022] - 2.5L [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (2da Gen) [2012-2022] - 3.6L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (2da Gen) [2012-2022] - Diesel [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Colorado (3ra Gen) [2023-Presente] - 2.7T [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (C/K) [1988-1998] - 4.3L [G]",
+      "vehicle_type_slug": "camioneta-1-cabina"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (C/K) [1988-1998] - 5.7L V8 [G]",
+      "vehicle_type_slug": "camioneta-1-cabina"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (GMT800) [1999-2007] - 4.3L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (GMT800) [1999-2007] - 6.0L V8 [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (GMT900) [2007-2013] - 4.3L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (GMT900) [2007-2013] - 6.2L V8 [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (K2XX) [2014-2018] - 4.3L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (K2XX) [2014-2018] - 6.2L V8 [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (T1XX) [2019-Presente] - 2.7T [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (T1XX) [2019-Presente] - 5.3L [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (T1XX) [2019-Presente] - 6.2L V8 [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado (T1XX) [2019-Presente] - Diesel [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Montana [2003-Presente] - 1.4L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Montana [2003-Presente] - 1.8L [G]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado HD [2001-Presente] - 6.6L Duramax Diesel [D]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
+    },
+    {
+      "brand": "CHEVROLET",
+      "label": "Silverado EV [2024-Presente] - Eléctrico [E]",
+      "vehicle_type_slug": "camioneta-cabina-y-media"
     }
   ],
   "brands": {

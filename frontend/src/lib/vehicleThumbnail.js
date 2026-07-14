@@ -36,7 +36,7 @@ const TEXT_RULES = [
   [/\b(convertible|cabrio|cabriolet)\b/i, "convertible"],
   [/\b(station wagon|wagon|familiar|estate|break)\b/i, "station-wagon"],
   [/\b(suv|crossover|sport utility)\b/i, "suv"],
-  [/\b(hatchback large|hatchback|hatch\/|hatch )\b/i, "hatchback"],
+  [/\b(hatchback large|hatchback|hatch\/|hatch |swift|cultus|mazda2|picanto|fabia|spark)\b/i, "hatchback"],
   [/\b(sedan|sedán|saloon|large car)\b/i, "sedan"],
   [/\b(minivan|microbus)\b/i, "microbus-pasajeros"],
 ];

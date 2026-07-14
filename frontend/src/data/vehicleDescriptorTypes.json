@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-23",
+  "updated_at": "2026-07-14",
   "notes": "Perfiles por marca+descriptor con silueta pre-asignada. Cada entrada del catálogo incluye vehicle_type_slug para uso directo en tarjetas.",
   "entries": {
     "ACURA::ADX (Nuevo) [2025-Presente]": {
@@ -3622,19 +3622,19 @@
       ]
     },
     "CHEVROLET::Bolt EUV [2022-2023]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "Eléctrico [E]"
       ]
     },
     "CHEVROLET::Bolt EV [2017-2023]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "Eléctrico [E]"
       ]
@@ -4240,30 +4240,30 @@
       ]
     },
     "CHEVROLET::Spark (M100/M200) [1998-2010]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "0.8L [G]",
         "1.0L [G]"
       ]
     },
     "CHEVROLET::Spark (M300) [2010-2015]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]",
         "1.2L [G]"
       ]
     },
     "CHEVROLET::Spark (M400) [2015-2022]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.4L [G]"
       ]
@@ -6748,10 +6748,10 @@
       ]
     },
     "FIAT::500e [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "Eléctrico [E]"
       ]
@@ -6970,10 +6970,10 @@
       ]
     },
     "FIAT::Grande Punto [2005-2018]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.2L [G/D]",
         "1.9L [G/D]"
@@ -7060,10 +7060,10 @@
       ]
     },
     "FIAT::Punto (1ra Gen) [1993-1999]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.1L [D]",
         "1.6L [G]",
@@ -7071,10 +7071,10 @@
       ]
     },
     "FIAT::Punto (2da Gen) [1999-2010]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.2L [D]",
         "1.8L [G]",
@@ -11033,10 +11033,10 @@
       ]
     },
     "HOLDEN::Spark [2010-2020]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.2L [G]"
       ]
@@ -14169,39 +14169,39 @@
       ]
     },
     "KIA::Picanto (JA) [2017-2023]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]",
         "1.2L [G]"
       ]
     },
     "KIA::Picanto (TA) [2011-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]",
         "1.2L [G]"
       ]
     },
     "KIA::Picanto (facelift) [2023-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]"
       ]
     },
     "KIA::Picanto / Morning (SA) [2004-2011]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]",
         "1.1L [G]"
@@ -14745,19 +14745,19 @@
       ]
     },
     "NISSAN::Leaf (ZE0) [2010-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "Motor eléctrico 80kW [E]"
       ]
     },
     "NISSAN::Leaf (ZE1) [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "Motor eléctrico 110-160kW [E]"
       ]
@@ -14817,10 +14817,10 @@
       ]
     },
     "NISSAN::NV200 (M20) [2009-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "microbus-carga",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.5L dCi [D]",
         "1.6L HR16DE [G]",
@@ -17831,30 +17831,30 @@
       ]
     },
     "SUZUKI::Swift (ZC/ZD) [2004-2010]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.3L M13A [G]",
         "1.5L M15A [G]"
       ]
     },
     "SUZUKI::Swift (ZC/ZD) [2010-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.2L K12B [G]",
         "1.4L K14B [G]"
       ]
     },
     "SUZUKI::Swift (ZC33S) [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L BoosterJet [G]",
         "1.2L DualJet [G]",
@@ -17863,20 +17863,20 @@
       ]
     },
     "SUZUKI::Swift / Cultus (SA/AA) [1983-1989]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L F10A [G]",
         "1.3L G13A [G]"
       ]
     },
     "SUZUKI::Swift / Cultus (SF) [1989-2003]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.0L [G]",
         "1.3L G13B [G]",
@@ -17885,10 +17885,10 @@
       ]
     },
     "SUZUKI::Swift Sport (varias generaciones) [2005-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "hatchback",
       "body_family": null,
       "catalog_status": "auto",
-      "classification_source": "override",
+      "classification_source": "rules",
       "catalog_engines": [
         "1.4L Turbo [G]",
         "1.6L [G]"
