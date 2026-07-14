@@ -383,6 +383,14 @@ export function LoginPage() {
         } catch (_) {
           setBackendStatus("down");
         }
+      } else if (error.response?.status === 429) {
+        message = (typeof detail === "object" && detail?.message)
+          ? detail.message
+          : "Demasiados intentos desde esta ubicación. Intente más tarde.";
+        setRemainingAttempts(0);
+        if (typeof detail === "object" && detail?.retry_after_seconds) {
+          setLockoutSeconds(detail.retry_after_seconds);
+        }
       } else if (detail) {
         if (typeof detail === "object") {
           message = detail.message || message;

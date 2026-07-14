@@ -88,6 +88,7 @@ from backend.domains.vehicles.thumbnails import (
 from backend.services.audit import AuditService
 from backend.services.cash import CashService
 from backend.services.pin_policy import PinPolicyService
+from backend.services.pin_login_guard import PinLoginGuard
 from backend.services.venta_service import revert_sale_effects
 
 logger = logging.getLogger("erp")
@@ -468,6 +469,7 @@ async def _resolve_branch_name_for_audit(branch_id: Optional[str]) -> str:
 
 audit_service = AuditService(db, logger, branch_name_resolver=_resolve_branch_name_for_audit)
 pin_policy_service = PinPolicyService(db, logger)
+pin_login_guard = PinLoginGuard(db, pin_policy_service, audit_service)
 cash_service = CashService(db, logger)
 
 # Central roles catalog (frontend can fetch via /api/roles)
@@ -3431,67 +3433,13 @@ async def _validate_login_pin_for_user(
     pin: str,
     request: Request,
 ) -> None:
-    now = datetime.now(timezone.utc)
-    user_id = user_doc.get("user_id")
-
-    lockout_step_size = 3
-    base_lockout_seconds = 30
-
-    def compute_lockout_seconds_for_failed_attempts(failed_attempts: int) -> int:
-        if failed_attempts < lockout_step_size:
-            return 0
-        if failed_attempts % lockout_step_size != 0:
-            return 0
-        step = failed_attempts // lockout_step_size
-        return base_lockout_seconds * (2 ** (step - 1))
-
-    lockout_until = user_doc.get("pin_lockout_until")
-    if lockout_until:
-        try:
-            lockout_dt = datetime.fromisoformat(str(lockout_until).replace("Z", "+00:00"))
-            if lockout_dt > now:
-                policy_seconds = int(max(0, (lockout_dt - now).total_seconds()))
-                detail = {
-                    "message": "PIN bloqueado. Intente más tarde",
-                    "remaining_attempts": 0,
-                    "failed_attempts": int(user_doc.get("failed_pin_attempts", 0)),
-                    "lockout_until": lockout_until,
-                    "lockout_seconds": policy_seconds,
-                }
-                raise HTTPException(status_code=403, detail=detail)
-        except ValueError:
-            pass
-
-    if not verify_pin_hash(pin, get_login_pin_hash(user_doc)):
-        failed = int(user_doc.get("failed_pin_attempts", 0)) + 1
-        update: Dict[str, Any] = {"failed_pin_attempts": failed}
-        lockout_seconds = compute_lockout_seconds_for_failed_attempts(failed)
-        if lockout_seconds > 0:
-            update["pin_lockout_until"] = (now + timedelta(seconds=lockout_seconds)).isoformat()
-
-        await db.users.update_one({"user_id": user_id}, {"$set": update})
-        await audit_service.log_pin_auth_attempt(user_id, request.client.host if request.client else "unknown", False)
-        remaining = 0
-        if lockout_seconds <= 0:
-            remaining = lockout_step_size - (failed % lockout_step_size)
-            if remaining <= 0:
-                remaining = lockout_step_size
-        detail = {
-            "message": "PIN incorrecto",
-            "remaining_attempts": remaining,
-            "failed_attempts": failed,
-            "lockout_until": update.get("pin_lockout_until", None),
-            "lockout_seconds": lockout_seconds,
-        }
-        if lockout_seconds > 0:
-            raise HTTPException(status_code=403, detail=detail)
-        raise HTTPException(status_code=401, detail=detail)
-
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"failed_pin_attempts": 0, "pin_lockout_until": None}},
+    await pin_login_guard.validate_for_user(
+        user_doc,
+        pin,
+        request,
+        verify_pin=verify_pin_hash,
+        get_pin_hash=get_login_pin_hash,
     )
-    await audit_service.log_pin_auth_attempt(user_id, request.client.host if request.client else "unknown", True)
 
 
 async def require_auth(request: Request) -> User:
@@ -4492,9 +4440,11 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
     if not is_valid_login_pin(pin):
         raise HTTPException(status_code=400, detail="PIN inválido")
 
+    pin_policy = await pin_policy_service.load()
+    await pin_login_guard.enforce_ip_rate_limit(request, pin_policy)
+
     user_doc: Optional[Dict[str, Any]] = None
-    # Si se provee user_id, se valida contra ese usuario para poder aplicar
-    # la politica progresiva de bloqueo por intentos fallidos.
+    # Si se provee user_id, se valida contra ese usuario y aplica pin_policy (max_attempts / lockout).
     if payload.user_id:
         user_doc = await db.users.find_one({
             "user_id": payload.user_id,
@@ -4526,7 +4476,12 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
                     break
 
     if not user_doc:
-        await audit_service.log_pin_auth_attempt(None, request.client.host if request.client else "unknown", False)
+        await pin_login_guard.record_ip_failure(request)
+        await audit_service.log_pin_auth_attempt(
+            None,
+            request.client.host if request.client else "unknown",
+            False,
+        )
         raise HTTPException(status_code=401, detail="PIN incorrecto")
 
     return await _create_session_response(user_doc, request)
