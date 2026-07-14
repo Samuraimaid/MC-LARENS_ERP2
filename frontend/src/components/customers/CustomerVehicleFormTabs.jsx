@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
 import { isPickupCatalogModel } from "@/lib/vehicleCatalog";
+import { PRICING_PROFILES } from "@/lib/priceTiers";
 
 export default function CustomerVehicleFormTabs({
   formData,
@@ -16,6 +17,7 @@ export default function CustomerVehicleFormTabs({
   activeTab,
   onActiveTabChange,
   canManageCreditLimit,
+  canManagePricingProfile = false,
   disableAddVehicle = false,
   addVehicleLabel = "Registrar vehículo del cliente",
   useVinDecoder = false,
@@ -231,6 +233,25 @@ export default function CustomerVehicleFormTabs({
               placeholder="0.00"
               data-testid={creditLimitTestId}
             />
+          </div>
+        ) : null}
+
+        {canManagePricingProfile ? (
+          <div>
+            <Label>Perfil de precios</Label>
+            <Select
+              value={formData.pricing_profile || "standard"}
+              onValueChange={(value) => updateForm({ pricing_profile: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PRICING_PROFILES).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ) : null}
 

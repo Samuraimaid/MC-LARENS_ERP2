@@ -24,6 +24,7 @@ import { useAuth } from "../context/AuthContext";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
 import { buildTransferJobId } from "@/lib/driverDispatch";
+import { buildProductPricePayload, roundTo2 } from "@/lib/priceTiers";
 
 export function InventoryPage() {
   const { hasPermission, user } = useAuth();
@@ -105,6 +106,8 @@ export function InventoryPage() {
     price: "",
     precio1: "",
     precio2: "",
+    precio_vip: "",
+    precio_casa_comercial: "",
     precio3: "",
     cost: "",
     product_type: "product",
@@ -539,6 +542,8 @@ export function InventoryPage() {
       price: "",
       precio1: "",
       precio2: "",
+      precio_vip: "",
+      precio_casa_comercial: "",
       precio3: "",
       cost: "",
       product_type: "product",
@@ -577,16 +582,11 @@ export function InventoryPage() {
       return;
     }
     try {
-      const basePrice = parseFloat(newProduct.price) || 0;
-      const tier1 = parseFloat(newProduct.precio1 || newProduct.price) || basePrice;
-      const tier2 = parseFloat(newProduct.precio2) || roundTo2(tier1 * 1.05);
-      const tier3 = parseFloat(newProduct.precio3) || roundTo2(tier1 * 1.1);
+      const tier1 = parseFloat(newProduct.precio1 || newProduct.price) || 0;
+      const tierPayload = buildProductPricePayload(newProduct, { precio1: tier1 });
       const payload = {
         ...newProduct,
-        price: tier1,
-        precio1: tier1,
-        precio2: tier2,
-        precio3: tier3,
+        ...tierPayload,
         cost: parseFloat(newProduct.cost) || 0,
         warranty_months: parseInt(newProduct.warranty_months) || 12,
         installation_price: parseFloat(newProduct.installation_price) || 0,
@@ -627,16 +627,12 @@ export function InventoryPage() {
     if (!editingProduct) return;
     try {
       const tier1 = parseFloat(editingProduct.precio1 || editingProduct.price) || 0;
-      const tier2 = parseFloat(editingProduct.precio2) || roundTo2(tier1 * 1.05);
-      const tier3 = parseFloat(editingProduct.precio3) || roundTo2(tier1 * 1.1);
+      const tierPayload = buildProductPricePayload(editingProduct, { precio1: tier1 });
       const payload = {
         name: editingProduct.name,
         barcode: String(editingProduct.barcode || "").trim() || null,
         description: editingProduct.description,
-        price: tier1,
-        precio1: tier1,
-        precio2: tier2,
-        precio3: tier3,
+        ...tierPayload,
         cost: parseFloat(editingProduct.cost) || 0,
         category: editingProduct.category,
         subcategory: editingProduct.subcategory,
@@ -748,7 +744,7 @@ export function InventoryPage() {
     }
   };
 
-  const roundTo2 = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
 
   const addImageUrl = () => {
     if (newImageUrl && !newProduct.images.includes(newImageUrl)) {
@@ -1494,9 +1490,9 @@ export function InventoryPage() {
                     </div>
 
                     {newProduct.installation_type !== "not_available" && (
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Precio 1 (Instalado)</Label>
+                          <Label>Precio 1</Label>
                           <Input
                             type="number"
                             step="0.01"
@@ -1506,7 +1502,7 @@ export function InventoryPage() {
                           />
                         </div>
                         <div>
-                          <Label>Precio 2 (Instalado)</Label>
+                          <Label>Precio 2</Label>
                           <Input
                             type="number"
                             step="0.01"
@@ -1516,12 +1512,26 @@ export function InventoryPage() {
                           />
                         </div>
                         <div>
-                          <Label>Precio 3 (Instalado)</Label>
+                          <Label>Precio VIP</Label>
                           <Input
                             type="number"
                             step="0.01"
-                            value={newProduct.precio3}
-                            onChange={(e) => setNewProduct({ ...newProduct, precio3: e.target.value })}
+                            value={newProduct.precio_vip}
+                            onChange={(e) => setNewProduct({ ...newProduct, precio_vip: e.target.value })}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <Label>Precio Casa Comercial</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={newProduct.precio_casa_comercial || newProduct.precio3}
+                            onChange={(e) => setNewProduct({
+                              ...newProduct,
+                              precio_casa_comercial: e.target.value,
+                              precio3: e.target.value,
+                            })}
                             placeholder="0.00"
                           />
                         </div>
@@ -2792,14 +2802,49 @@ export function InventoryPage() {
                   placeholder="EAN / UPC para etiquetas y escáner"
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Precio</Label>
+                  <Label>Precio 1</Label>
                   <Input
                     type="number"
                     step="0.01"
-                    value={editingProduct.price}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                    value={editingProduct.precio1 || editingProduct.price}
+                    onChange={(e) => setEditingProduct({
+                      ...editingProduct,
+                      price: e.target.value,
+                      precio1: e.target.value,
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label>Precio 2</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editingProduct.precio2 || ""}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, precio2: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Precio VIP</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editingProduct.precio_vip || ""}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, precio_vip: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Precio Casa Comercial</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editingProduct.precio_casa_comercial || editingProduct.precio3 || ""}
+                    onChange={(e) => setEditingProduct({
+                      ...editingProduct,
+                      precio_casa_comercial: e.target.value,
+                      precio3: e.target.value,
+                    })}
                   />
                 </div>
                 <div>

@@ -33,6 +33,7 @@ import {
   formatPlateNumber,
   formatRUC,
 } from "@/lib/formatters";
+import { PRICING_PROFILES } from "@/lib/priceTiers";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -45,6 +46,7 @@ export function CustomersPage() {
   const { user, hasPermission } = useAuth();
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
+  const canManagePricingProfile = ["gerencia", "supervisor"].includes(normalizedUserRole);
   const canViewCustomers = hasPermission("customers", "view");
   const canCreateCustomers = hasPermission("customers", "create");
   const canEditCustomers = hasPermission("customers", "edit");
@@ -77,6 +79,7 @@ export function CustomersPage() {
     phone: "",
     address: "",
     credit_limit: 0,
+    pricing_profile: "standard",
     // Vehicle fields (optional)
     add_vehicle: false,
     plate_prefix: "M",
@@ -178,6 +181,7 @@ export function CustomersPage() {
       phone: "",
       address: "",
       credit_limit: 0,
+      pricing_profile: "standard",
       add_vehicle: false,
       plate_prefix: "M",
       plate_number: "",
@@ -378,6 +382,7 @@ export function CustomersPage() {
       phone: number,
       address: customer.address || "",
       credit_limit: customer.credit_limit || 0,
+      pricing_profile: customer.pricing_profile || "standard",
       add_vehicle: false,
       plate_prefix: "M",
       plate_number: "",
@@ -659,6 +664,7 @@ export function CustomersPage() {
         address: formData.address || null,
         credit_limit: parseFloat(formData.credit_limit) || 0,
         credit_auth_code: creditAuthCode || null,
+        ...(canManagePricingProfile ? { pricing_profile: formData.pricing_profile || "standard" } : {}),
       };
 
       const customerRes = await axios.post(`${API}/customers`, customerData, { withCredentials: true });
@@ -731,6 +737,7 @@ export function CustomersPage() {
         address: formData.address || null,
         credit_limit: parseFloat(formData.credit_limit) || 0,
         credit_auth_code: creditAuthCode || null,
+        ...(canManagePricingProfile ? { pricing_profile: formData.pricing_profile || "standard" } : {}),
       };
 
       // Instead of updating directly, create an approval request
@@ -901,6 +908,7 @@ export function CustomersPage() {
                 activeTab={activeTab}
                 onActiveTabChange={setActiveTab}
                 canManageCreditLimit={canManageCreditLimit}
+                canManagePricingProfile={canManagePricingProfile}
                 disableAddVehicle={isEditing}
                 addVehicleLabel="Registrar vehículo del cliente"
                 useVinDecoder={useVinDecoderNewVehicle}

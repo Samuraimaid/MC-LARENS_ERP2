@@ -22,6 +22,7 @@ import { UserDirectoryFilters } from "@/components/users/UserDirectoryFilters";
 import { FilterCombobox } from "@/components/users/FilterCombobox";
 import { DirectoryPagination } from "@/components/users/DirectoryPagination";
 import { useUserDirectory } from "@/hooks/useUserDirectory";
+import { SELLER_TYPES } from "@/lib/priceTiers";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -55,6 +56,7 @@ export function UsersAdminPage() {
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editSellerType, setEditSellerType] = useState("piso");
   const [editBranch, setEditBranch] = useState("");
   const [editWarehouse, setEditWarehouse] = useState("");
   const [editBaseSalary, setEditBaseSalary] = useState("");
@@ -69,6 +71,7 @@ export function UsersAdminPage() {
     last_name: "",
     phone: "",
     role: "ventas",
+    seller_type: "piso",
     pin: "",
     login_pin: "",
     branch_id: "",
@@ -469,6 +472,7 @@ export function UsersAdminPage() {
         email: editEmail.trim() || null,
         phone: editPhone.trim(),
         role: editRole,
+        ...(editRole === "ventas" ? { seller_type: editSellerType || "piso" } : {}),
         branch_id: editBranch,
         warehouse_id: editWarehouse || null,
         base_salary: Number(editBaseSalary || 0),
@@ -511,6 +515,7 @@ export function UsersAdminPage() {
         last_name: pinForm.last_name.trim(),
         phone: pinForm.phone.trim(),
         role: pinForm.role,
+        ...(pinForm.role === "ventas" ? { seller_type: pinForm.seller_type || "piso" } : {}),
         pin: pinForm.pin || null,
         login_pin: pinForm.login_pin,
         branch_id: pinForm.branch_id,
@@ -912,6 +917,25 @@ export function UsersAdminPage() {
                         El rol Gerencia requiere autenticación con Google
                       </p>
                     </div>
+
+                    {pinForm.role === "ventas" ? (
+                      <div>
+                        <Label>Tipo de vendedor</Label>
+                        <Select
+                          value={pinForm.seller_type || "piso"}
+                          onValueChange={(v) => setPinForm({ ...pinForm, seller_type: v })}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(SELLER_TYPES).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : null}
                     
                     <div>
                       <Label>PIN de Marcación (4 dígitos, opcional)</Label>
@@ -1195,6 +1219,7 @@ export function UsersAdminPage() {
                                   setEditEmail(user.email || "");
                                   setEditPhone(formatPhone(user.phone || ""));
                                   setEditRole(user.role || "");
+                                  setEditSellerType(user.seller_type || "piso");
                                   setEditBranch(user.branch_id || "");
                                   setEditWarehouse(user.warehouse_id || "");
                                   setEditBaseSalary(String(user.base_salary ?? ""));
@@ -1219,6 +1244,7 @@ export function UsersAdminPage() {
                                   setEditEmail(user.email || "");
                                   setEditPhone(formatPhone(user.phone || ""));
                                   setEditRole(user.role || "");
+                                  setEditSellerType(user.seller_type || "piso");
                                   setEditBranch(user.branch_id || "");
                                   setEditWarehouse(user.warehouse_id || "");
                                   setEditBaseSalary(String(user.base_salary ?? ""));
@@ -1522,6 +1548,22 @@ export function UsersAdminPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {editRole === "ventas" ? (
+              <div>
+                <Label>Tipo de vendedor</Label>
+                <Select value={editSellerType || "piso"} onValueChange={setEditSellerType}>
+                  <SelectTrigger disabled={isViewOnly}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SELLER_TYPES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             
             <div>
               <Label>Sucursal Asignada</Label>

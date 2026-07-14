@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { RefreshCw } from "lucide-react";
 
+const APPROVAL_TYPE_PRECIO2 = "sale_precio2";
+
 const SALE_REQUEST_APPROVE_ENDPOINTS = {
   pos_discount_card: (requestId) => `${API}/sales/requests/${requestId}/approve-pos-discount`,
   edit: (requestId) => `${API}/sales/requests/${requestId}/approve-edit`,
@@ -62,7 +64,19 @@ export function ApprovalsPage({ active = true } = {}) {
         await axios.post(buildEndpoint(itemId), {}, { withCredentials: true });
         toast.success("Solicitud aprobada");
       } else {
-        await axios.put(`${API}/approvals/${itemId}/approve`, null, { withCredentials: true });
+        let body = null;
+        if (item.type === APPROVAL_TYPE_PRECIO2) {
+          const justification = window.prompt("Justificación de aprobación (obligatoria):", "");
+          if (justification === null) {
+            return;
+          }
+          if (!justification.trim()) {
+            toast.error("La justificación es obligatoria para Precio 2");
+            return;
+          }
+          body = { approver_justification: justification.trim() };
+        }
+        await axios.put(`${API}/approvals/${itemId}/approve`, body, { withCredentials: true });
         toast.success("Aprobado");
       }
       await fetchApprovals();
@@ -200,7 +214,11 @@ export function ApprovalsPage({ active = true } = {}) {
                       className={isPosDiscount ? "bg-violet-600 hover:bg-violet-700" : ""}
                     >
                       {busyApprove ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-                      {isPosDiscount ? "Aprobar descuento + tarjeta" : "Aprobar"}
+                      {isPosDiscount
+                        ? "Aprobar descuento + tarjeta"
+                        : item.type === APPROVAL_TYPE_PRECIO2
+                          ? "Aprobar Precio 2"
+                          : "Aprobar"}
                     </Button>
                     <Button
                       size="sm"

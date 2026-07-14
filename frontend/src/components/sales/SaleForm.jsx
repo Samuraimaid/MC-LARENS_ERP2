@@ -125,6 +125,14 @@ import {
 import { computeSaleTotals, defaultApplyIvaForCustomer } from "@/lib/saleTotals";
 import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollToAnchor } from "@/lib/scrollPageToTop";
+import {
+  TIER_LABELS,
+  TIER_PRECIO2,
+  cartNeedsPrecio2Approval,
+  detectPriceTier,
+  resolveDefaultUnitPrice,
+  resolveProductTierPrice,
+} from "@/lib/priceTiers";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -324,6 +332,11 @@ export default function SaleForm({
   const [priceEditorMode, setPriceEditorMode] = useState("amount");
   const [priceEditorAmount, setPriceEditorAmount] = useState("");
   const [priceEditorPercent, setPriceEditorPercent] = useState("0");
+  const [salePricingContext, setSalePricingContext] = useState(null);
+  const [precio2ApprovalId, setPrecio2ApprovalId] = useState(null);
+  const [commercialIncludeInstallation, setCommercialIncludeInstallation] = useState(false);
+  const [commercialIncludeDelivery, setCommercialIncludeDelivery] = useState(false);
+  const [requestingPrecio2Approval, setRequestingPrecio2Approval] = useState(false);
   const priceEditorAmountRef = useRef(null);
   const priceEditorPercentRef = useRef(null);
   const [newCustomer, setNewCustomer] = useState({
@@ -1018,8 +1031,8 @@ export default function SaleForm({
           sku: product.sku || "",
           image: product.images?.[0] || null,
           quantity: 1,
-          unit_price: product.price,
-          original_unit_price: product.price,
+          unit_price: resolveDefaultUnitPrice(product, salePricingContext),
+          original_unit_price: resolveProductTierPrice(product, "precio1"),
           price_edit_history: [],
           price_edit_count: 0,
           discount: 0,
@@ -1576,9 +1589,61 @@ export default function SaleForm({
     persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
   };
 
+  const requestPrecio2Approval = async () => {
+    if (!selectedCustomer?.customer_id) {
+      toast.error("Selecciona un cliente primero");
+      return;
+    }
+    const motivo = window.prompt("Motivo de la solicitud de Precio 2 (obligatorio):", "");
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      toast.error("El motivo es obligatorio");
+      return;
+    }
+    const precio2Items = normalizedCartItems
+      .filter((item) => detectPriceTier(productsById.get(String(item.product_id)), item.unit_price) === TIER_PRECIO2)
+      .map((item) => ({
+        product_id: item.product_id,
+        unit_price: item.unit_price,
+      }));
+    if (!precio2Items.length) {
+      toast.error("No hay líneas con Precio 2 en el carrito");
+      return;
+    }
+    setRequestingPrecio2Approval(true);
+    try {
+      const response = await axios.post(`${API}/approvals`, {
+        type: "sale_precio2",
+        reason: motivo.trim(),
+        payload: {
+          customer_id: selectedCustomer.customer_id,
+          items: precio2Items,
+        },
+      }, { withCredentials: true });
+      setPrecio2ApprovalId(response.data?.approval_id || null);
+      toast.success("Solicitud de Precio 2 enviada. Espera aprobación de supervisión.");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo solicitar aprobación de Precio 2");
+    } finally {
+      setRequestingPrecio2Approval(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!logisticMode) {
       toast.error("Selecciona cómo se entrega la venta: Para llevar, Con envío o Instalado");
+      return;
+    }
+    if (
+      salePricingContext?.pricing_profile === "casa_comercial"
+      && !salePricingContext?.can_serve_commercial_house
+      && !isSupervisorUser
+    ) {
+      toast.error("Los clientes Casa Comercial solo pueden ser atendidos por Vendedores VIP o supervisión");
+      return;
+    }
+    if (needsPrecio2Approval && !precio2ApprovalId) {
+      toast.error("Precio 2 requiere aprobación de supervisor o gerencia antes de facturar");
       return;
     }
     if (logisticMode === "installed" && !normalizeVehicleId(selectedVehicle)) {
@@ -1716,6 +1781,11 @@ export default function SaleForm({
           delivery_status: "pendiente",
         }
         : null,
+      ...(precio2ApprovalId ? { precio2_approval_id: precio2ApprovalId } : {}),
+      ...(isCommercialHouseSale ? {
+        commercial_include_installation: commercialIncludeInstallation,
+        commercial_include_delivery: commercialIncludeDelivery,
+      } : {}),
     };
     try {
       const result = onSubmit && onSubmit(payload);
@@ -2582,6 +2652,43 @@ export default function SaleForm({
     [products]
   );
 
+  const needsPrecio2Approval = useMemo(
+    () => cartNeedsPrecio2Approval(normalizedCartItems, productsById, { isSupervisor: isSupervisorUser }),
+    [normalizedCartItems, productsById, isSupervisorUser],
+  );
+
+  const isCommercialHouseSale = Boolean(
+    salePricingContext?.pricing_profile === "casa_comercial"
+    && salePricingContext?.can_serve_commercial_house,
+  );
+
+  useEffect(() => {
+    const customerId = selectedCustomer?.customer_id;
+    if (!customerId) {
+      setSalePricingContext(null);
+      setPrecio2ApprovalId(null);
+      setCommercialIncludeInstallation(false);
+      setCommercialIncludeDelivery(false);
+      return undefined;
+    }
+    let cancelled = false;
+    axios.get(`${API}/pricing/sale-context`, {
+      params: { customer_id: customerId },
+      withCredentials: true,
+    })
+      .then((response) => {
+        if (!cancelled) setSalePricingContext(response.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setSalePricingContext(null);
+      });
+    return () => { cancelled = true; };
+  }, [selectedCustomer?.customer_id]);
+
+  useEffect(() => {
+    setPrecio2ApprovalId(null);
+  }, [selectedCustomer?.customer_id, normalizedCartItems]);
+
   const scrollProductList = (delta) => {
     const list = productListRef.current;
     if (!list) return;
@@ -2886,8 +2993,18 @@ export default function SaleForm({
                   <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.badge}>
                     {isCompanyCustomer(selectedCustomer) ? "Empresa" : "Cliente"}
                   </Badge>
+                  {salePricingContext?.default_price_tier_label ? (
+                    <Badge variant="outline" className="border-violet-300 bg-violet-50 text-violet-800">
+                      {salePricingContext.default_price_tier_label}
+                    </Badge>
+                  ) : null}
                 </div>
               </div>
+              {salePricingContext?.pricing_profile === "casa_comercial" && !salePricingContext?.can_serve_commercial_house && !isSupervisorUser ? (
+                <p className="mt-2 text-xs text-amber-700">
+                  Este cliente Casa Comercial requiere un Vendedor VIP o supervisión.
+                </p>
+              ) : null}
             </div>
           ) : null}
           {!selectedCustomer ? (
@@ -3698,6 +3815,47 @@ export default function SaleForm({
         {cartFlashActive ? (
           <div className="pointer-events-none absolute inset-x-3 top-10 h-28 rounded-3xl bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.98),rgba(186,230,253,0.34)_35%,rgba(255,255,255,0)_70%)] opacity-90 blur-sm" />
         ) : null}
+        {isCommercialHouseSale ? (
+          <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-3 space-y-2">
+            <p className="text-xs font-medium text-violet-900">Opciones Casa Comercial</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={commercialIncludeInstallation}
+                  onCheckedChange={(checked) => setCommercialIncludeInstallation(Boolean(checked))}
+                />
+                Incluir instalación a domicilio
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={commercialIncludeDelivery}
+                  onCheckedChange={(checked) => setCommercialIncludeDelivery(Boolean(checked))}
+                />
+                Incluir delivery
+              </label>
+            </div>
+          </div>
+        ) : null}
+        {needsPrecio2Approval ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50/80 p-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-amber-900">
+              {precio2ApprovalId
+                ? "Aprobación de Precio 2 registrada. Puedes continuar con la factura."
+                : "Hay líneas con Precio 2. Solicita aprobación de supervisor antes de facturar."}
+            </p>
+            {!precio2ApprovalId ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={requestPrecio2Approval}
+                disabled={requestingPrecio2Approval}
+              >
+                Solicitar Precio 2
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between">
           <Label className="inline-flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
@@ -3739,7 +3897,7 @@ export default function SaleForm({
               : getSellerCartLineLockState(item.product_id, draftReview);
             const canDecreaseQuantity = !lineLock.locked && currentQuantity > 1;
             const canIncreaseQuantity = !lineLock.locked && (maxStoreQuantity === null ? true : currentQuantity < maxStoreQuantity);
-            const canEditLinePrice = isSupervisorUser;
+            const canEditLinePrice = isSupervisorUser || isSellerRole;
             const canRemoveLine = lineLock.deletable;
             return (
             <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
@@ -4046,6 +4204,38 @@ export default function SaleForm({
                   />
                 </div>
               )}
+
+              {priceEditorItem && salePricingContext?.allowed_price_tiers?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {salePricingContext.allowed_price_tiers.map((tier) => {
+                    const sourceProduct = productsById.get(String(priceEditorItem.product_id));
+                    const tierPrice = resolveProductTierPrice(sourceProduct, tier);
+                    return (
+                      <Button
+                        key={`tier-${tier}`}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const nextUnitPrice = currency === "NIO"
+                            ? tierPrice
+                            : tierPrice;
+                          updateCartItem(priceEditorItem.product_id, "unit_price", nextUnitPrice, {
+                            persist: true,
+                            patch: {
+                              original_unit_price: resolveProductTierPrice(sourceProduct, "precio1"),
+                            },
+                          });
+                          setPriceEditorAmount(String(convertPrice(tierPrice)));
+                          toast.success(`${TIER_LABELS[tier] || tier} aplicado`);
+                        }}
+                      >
+                        {TIER_LABELS[tier] || tier}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               {priceEditorItem ? (
                 <div className="space-y-1">

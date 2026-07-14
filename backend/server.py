@@ -1809,6 +1809,8 @@ class SaleItem(FlexibleModel):
     installation_price: Optional[float] = None
     with_installation: bool = False
     display_note: Optional[str] = None
+    price_tier: Optional[str] = None
+    price_tier_label: Optional[str] = None
 
 
 class Sale(FlexibleModel):
@@ -1871,6 +1873,9 @@ class SaleCreate(FlexibleModel):
     idempotency_key: Optional[str] = None
     draft_id: Optional[str] = None
     supervisor_discount_preapproved: bool = False
+    precio2_approval_id: Optional[str] = None
+    commercial_include_installation: Optional[bool] = None
+    commercial_include_delivery: Optional[bool] = None
 
 
 class DraftEntryPayload(FlexibleModel):
@@ -4766,6 +4771,9 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
         "warehouse_id": warehouse_id if warehouse_id not in ("", "none") else None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    seller_type = _normalize_seller_type_field(data, role=role_key)
+    if seller_type is not None:
+        update_data["seller_type"] = seller_type
     update_data.update(normalize_hr_employee_fields(data))
 
     result = await db.users.update_one({"user_id": user_id}, {"$set": update_data})
@@ -4927,6 +4935,9 @@ async def create_pin_user(payload: Dict[str, Any], request: Request):
     doc["login_pin_index"] = login_index
     doc["login_pin_last_set_at"] = now_iso
     doc.update(normalize_hr_employee_fields(data))
+    seller_type = _normalize_seller_type_field(data, role=role_key)
+    if seller_type:
+        doc["seller_type"] = seller_type
 
     await db.users.insert_one(doc)
     # Return sanitized document
@@ -5577,23 +5588,9 @@ async def get_products(
         elif "installation_type" not in product or not product.get("installation_type"):
             product["installation_type"] = "optional"  # Default for legacy products
 
-        # Ensure price tiers exist: precio1, precio2, precio3, precio_vip
-        # Backwards-compatible: use existing `price` as precio1 if tiers missing
-        try:
-            base_price = float(product.get("price", 0) or 0)
-        except Exception:
-            base_price = 0.0
-        if "precio1" not in product:
-            product["precio1"] = round(base_price, 2)
-        if "precio2" not in product:
-            product["precio2"] = round(base_price * 1.05, 2)
-        if "precio3" not in product:
-            product["precio3"] = round(base_price * 1.1, 2)
-        if "precio_vip" not in product:
-            product["precio_vip"] = round(base_price * 0.9, 2)
+        from backend.domains.pricing.price_tiers import normalize_product_price_tiers
 
-        # Keep `price` field pointing to precio1 for UI compatibility (catalog shows precio1)
-        product["price"] = product.get("precio1", base_price)
+        normalize_product_price_tiers(product)
 
         raw_low_stock_threshold = product.get("low_stock_threshold", 5)
         try:
@@ -5603,6 +5600,24 @@ async def get_products(
         product["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
 
     return products
+
+
+@api_router.get("/pricing/sale-context")
+async def get_sale_pricing_context(request: Request, customer_id: str):
+    user = await require_auth(request)
+    customer = await db.customers.find_one({"customer_id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    seller = await db.users.find_one(
+        {"user_id": user.user_id},
+        {"_id": 0, "user_id": 1, "role": 1, "seller_type": 1},
+    )
+    from backend.domains.pricing.price_tiers import build_sale_pricing_context
+
+    return build_sale_pricing_context(
+        customer=customer,
+        seller=seller or _user_pricing_dict(user),
+    )
 
 
 @api_router.post("/products")
@@ -5639,29 +5654,11 @@ async def create_product(product_data: ProductCreate, request: Request):
         doc["installation_type"] = "required"
         doc["installation_required"] = True
 
-    # Ensure price tiers exist for newly created products
-    try:
-        base_price_new = float(doc.get("precio1", doc.get("price", 0)) or 0)
-    except Exception:
-        base_price_new = 0.0
-    try:
-        precio1 = float(doc.get("precio1", base_price_new) or base_price_new)
-    except Exception:
-        precio1 = base_price_new
-    try:
-        precio2 = float(doc.get("precio2", precio1 * 1.05) or (precio1 * 1.05))
-    except Exception:
-        precio2 = precio1 * 1.05
-    try:
-        precio3 = float(doc.get("precio3", precio1 * 1.1) or (precio1 * 1.1))
-    except Exception:
-        precio3 = precio1 * 1.1
+    from backend.domains.pricing.price_tiers import normalize_product_price_tiers
 
-    doc["precio1"] = round(precio1, 2)
-    doc["precio2"] = round(precio2, 2)
-    doc["precio3"] = round(precio3, 2)
-    doc["precio_vip"] = round(base_price_new * 0.9, 2)
-    doc["price"] = doc["precio1"]
+    normalize_product_price_tiers(doc, fill_missing=not any(
+        key in doc for key in ("precio2", "precio_vip", "precio_casa_comercial", "precio3")
+    ))
 
     raw_low_stock_threshold = doc.get("low_stock_threshold", 5)
     try:
@@ -5742,21 +5739,9 @@ async def get_product(product_id: str, request: Request):
     if "installation_type" not in product or not product.get("installation_type"):
         product["installation_type"] = "optional"
 
-    # Ensure price tiers exist on single product fetch as well
-    try:
-        base_price = float(product.get("price", 0) or 0)
-    except Exception:
-        base_price = 0.0
-    if "precio1" not in product:
-        product["precio1"] = round(base_price, 2)
-    if "precio2" not in product:
-        product["precio2"] = round(base_price * 1.05, 2)
-    if "precio3" not in product:
-        product["precio3"] = round(base_price * 1.1, 2)
-    if "precio_vip" not in product:
-        product["precio_vip"] = round(base_price * 0.9, 2)
+    from backend.domains.pricing.price_tiers import normalize_product_price_tiers
 
-    product["price"] = product.get("precio1", base_price)
+    normalize_product_price_tiers(product)
 
     raw_low_stock_threshold = product.get("low_stock_threshold", 5)
     try:
@@ -5795,7 +5780,22 @@ async def update_product(product_id: str, updates: Dict[str, Any], request: Requ
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    tracked_price_fields = ["price", "precio1", "precio2", "precio3", "precio_vip", "cost"]
+    if any(key in updates for key in ("precio_casa_comercial", "precio3", "precio1", "precio2", "precio_vip", "price")):
+        from backend.domains.pricing.price_tiers import normalize_product_price_tiers
+
+        merged = {**(before or {}), **updates}
+        normalize_product_price_tiers(merged, fill_missing=False)
+        updates.update({
+            "precio1": merged.get("precio1"),
+            "precio2": merged.get("precio2"),
+            "precio_vip": merged.get("precio_vip"),
+            "precio_casa_comercial": merged.get("precio_casa_comercial"),
+            "precio3": merged.get("precio3"),
+            "price": merged.get("price"),
+            "price_tiers": merged.get("price_tiers"),
+        })
+
+    tracked_price_fields = ["price", "precio1", "precio2", "precio3", "precio_vip", "precio_casa_comercial", "cost"]
     price_changes: List[Dict[str, Any]] = []
     before_doc = before or {}
     for field in tracked_price_fields:
@@ -6572,9 +6572,14 @@ async def get_customers(request: Request, search: Optional[str] = None):
 
 @api_router.post("/customers")
 async def create_customer(customer_data: CustomerCreate, request: Request):
-    await require_auth(request)
+    actor = await require_auth(request)
     customer = Customer(**customer_data.model_dump())
     doc = customer.model_dump()
+    from backend.domains.pricing.price_tiers import PRICING_PROFILE_STANDARD
+
+    pricing_profile = str(doc.get("pricing_profile") or PRICING_PROFILE_STANDARD).strip().lower()
+    _validate_pricing_profile_assignment(actor.role, pricing_profile)
+    doc["pricing_profile"] = pricing_profile
     customer_type = str(doc.get("customer_type") or "").strip().lower()
     tax_id = str(doc.get("tax_id") or "").strip()
 
@@ -6640,7 +6645,9 @@ async def update_customer(customer_id: str, updates: Dict[str, Any], request: Re
     """Update customer fields. Only 'gerencia' and 'supervisor' may update directly.
     Other roles must create an approval instead (enforced at API level)."""
     # enforce role-based direct modifications
-    await require_roles(request, ["gerencia", "supervisor"])
+    user = await require_roles(request, ["gerencia", "supervisor"])
+    if "pricing_profile" in updates:
+        _validate_pricing_profile_assignment(user.role, str(updates.get("pricing_profile") or ""))
     result = await db.customers.update_one({"customer_id": customer_id}, {"$set": updates})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -6884,7 +6891,7 @@ async def get_vehicle(vehicle_id: str, request: Request):
 @api_router.post("/approvals")
 async def create_approval(payload: Dict[str, Any], request: Request):
     """Create an approval request. Payload must include `type` and `payload`.
-    Types: 'delete_vehicle', 'edit_vehicle' (payload contains vehicle_id and changes)
+    Types: 'delete_vehicle', 'edit_vehicle', 'sale_precio2' (Precio 2 en venta).
     """
     user = await require_auth(request)
     data = payload or {}
@@ -6923,10 +6930,22 @@ async def list_approvals(request: Request, pending_only: bool = True):
     if pending_only:
         approval_query["status"] = "pending"
 
+    from backend.domains.pricing.price_tiers import APPROVAL_TYPE_PRECIO2
+
+    approval_type_labels = {
+        APPROVAL_TYPE_PRECIO2: "Aprobación Precio 2",
+        "edit_customer": "Editar cliente",
+        "delete_customer": "Eliminar cliente",
+        "edit_vehicle": "Editar vehículo",
+        "delete_vehicle": "Eliminar vehículo",
+    }
     legacy_approvals = await db.approvals.find(approval_query, {"_id": 0}).sort("created_at", -1).to_list(500)
     for row in legacy_approvals:
         row["source"] = "approval"
-        row["type_label"] = str(row.get("type") or "Solicitud")
+        row["type_label"] = approval_type_labels.get(
+            str(row.get("type") or ""),
+            str(row.get("type") or "Solicitud"),
+        )
 
     sale_requests = await _list_pending_sale_requests_for_reviewer(user)
     merged = sale_requests + legacy_approvals
@@ -6936,12 +6955,22 @@ async def list_approvals(request: Request, pending_only: bool = True):
 
 @api_router.put("/approvals/{approval_id}/approve")
 async def approve_request(approval_id: str, request: Request):
+    from backend.domains.pricing.price_tiers import APPROVAL_TYPE_PRECIO2
+
     approver = await require_roles(request, ["gerencia", "supervisor"])
     approval = await db.approvals.find_one({"approval_id": approval_id}, {"_id": 0})
     if not approval:
         raise HTTPException(status_code=404, detail="Approval not found")
     if approval.get("status") != "pending":
         raise HTTPException(status_code=400, detail="Approval already processed")
+
+    approver_justification = ""
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            approver_justification = str(body.get("approver_justification") or "").strip()
+    except Exception:
+        approver_justification = ""
 
     # Apply the requested action
     a_type = approval.get("type")
@@ -6985,6 +7014,11 @@ async def approve_request(approval_id: str, request: Request):
             changes = payload.get("changes") or {}
             if not customer_id or not changes:
                 raise HTTPException(status_code=400, detail="Invalid edit payload")
+            if "pricing_profile" in changes:
+                _validate_pricing_profile_assignment(
+                    approver.role,
+                    str(changes.get("pricing_profile") or ""),
+                )
             await db.customers.update_one({"customer_id": customer_id}, {"$set": changes})
             note_text = f"Cliente {customer_id} actualizado por aprobación de {approver.name}"
             await audit_service.log_audit_event(
@@ -7011,6 +7045,34 @@ async def approve_request(approval_id: str, request: Request):
                 entity_id=customer_id,
                 metadata={"approval_id": approval_id, "reason": approval.get("reason")},
             )
+        elif a_type == APPROVAL_TYPE_PRECIO2:
+            if not approver_justification:
+                raise HTTPException(
+                    status_code=400,
+                    detail="La justificación del aprobador es obligatoria para Precio 2",
+                )
+            customer_id = str(payload.get("customer_id") or "")
+            if not customer_id:
+                raise HTTPException(status_code=400, detail="Falta customer_id en la solicitud de Precio 2")
+            items = payload.get("items") or []
+            if not isinstance(items, list) or not items:
+                raise HTTPException(status_code=400, detail="La solicitud de Precio 2 debe incluir productos")
+            note_text = f"Aprobación Precio 2 para cliente {customer_id} autorizada por {approver.name}"
+            await audit_service.log_audit_event(
+                action="approve_sale_precio2",
+                actor_id=approver.user_id,
+                actor_name=approver.name,
+                actor_role=approver.role,
+                entity="approval",
+                entity_id=approval_id,
+                metadata={
+                    "approval_id": approval_id,
+                    "customer_id": customer_id,
+                    "items": items,
+                    "reason": approval.get("reason"),
+                    "approver_justification": approver_justification,
+                },
+            )
         else:
             raise HTTPException(status_code=400, detail="Unknown approval type")
     except HTTPException:
@@ -7019,12 +7081,15 @@ async def approve_request(approval_id: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
     # mark approval as approved
-    await db.approvals.update_one({"approval_id": approval_id}, {"$set": {
+    approval_update: Dict[str, Any] = {
         "status": "approved",
         "approver_id": approver.user_id,
         "approver_name": approver.name,
-        "approved_at": datetime.now(timezone.utc).isoformat()
-    }})
+        "approved_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if a_type == APPROVAL_TYPE_PRECIO2 and approver_justification:
+        approval_update["approver_justification"] = approver_justification
+    await db.approvals.update_one({"approval_id": approval_id}, {"$set": approval_update})
 
     # create a notification for requester and supervisors
     # include the original reason in the notification to give context
@@ -7697,10 +7762,68 @@ async def _revert_linked_records_after_dispatch_purge(dispatch: Dict[str, Any]) 
         )
 
 
-def _resolve_sale_item_unit_price(user: User, product: Dict[str, Any], item: Dict[str, Any]) -> float:
-    from backend.domains.sales.sale_item_pricing import resolve_catalog_list_price
+def _user_pricing_dict(user: User) -> Dict[str, Any]:
+    return {
+        "user_id": user.user_id,
+        "role": user.role,
+        "seller_type": getattr(user, "seller_type", None),
+    }
 
-    catalog_price = resolve_catalog_list_price(product)
+
+def _validate_pricing_profile_assignment(role: str, profile: str) -> None:
+    from backend.domains.pricing.price_tiers import (
+        PRICING_PROFILE_CASA_COMERCIAL,
+        PRICING_PROFILE_STANDARD,
+        PRICING_PROFILE_VIP,
+    )
+
+    normalized = str(profile or PRICING_PROFILE_STANDARD).strip().lower()
+    if normalized not in {PRICING_PROFILE_STANDARD, PRICING_PROFILE_VIP, PRICING_PROFILE_CASA_COMERCIAL}:
+        raise HTTPException(status_code=400, detail="Perfil de precios inválido")
+    if normalized != PRICING_PROFILE_STANDARD and str(role or "").strip().lower() not in {
+        "gerencia",
+        "supervisor",
+    }:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo gerencia o supervisión puede asignar perfiles VIP o Casa Comercial",
+        )
+
+
+def _normalize_seller_type_field(data: Dict[str, Any], *, role: str) -> Optional[str]:
+    from backend.domains.pricing.price_tiers import SELLER_TYPE_PISO, SELLER_TYPE_VIP
+
+    if "seller_type" not in data:
+        return None
+    raw = str(data.get("seller_type") or "").strip().lower()
+    if not raw:
+        return SELLER_TYPE_PISO if str(role or "").strip().lower() == "ventas" else None
+    if raw not in {SELLER_TYPE_PISO, SELLER_TYPE_VIP}:
+        raise HTTPException(status_code=400, detail="seller_type inválido: use 'piso' o 'vip'")
+    return raw
+
+
+def _resolve_sale_item_unit_price(
+    user: User,
+    product: Dict[str, Any],
+    item: Dict[str, Any],
+    *,
+    customer: Optional[Dict[str, Any]] = None,
+) -> float:
+    from backend.domains.pricing.price_tiers import (
+        is_supervisor_role,
+        normalize_product_price_tiers,
+        resolve_default_price_tier,
+        resolve_precio1,
+        tier_unit_price,
+    )
+
+    product = normalize_product_price_tiers(dict(product))
+    seller = _user_pricing_dict(user)
+    default_tier = resolve_default_price_tier(customer=customer, seller=seller)
+    catalog_price = tier_unit_price(product, default_tier)
+    precio1 = resolve_precio1(product)
+
     raw_unit_price = item.get("unit_price")
     if raw_unit_price is None:
         return catalog_price
@@ -7714,13 +7837,13 @@ def _resolve_sale_item_unit_price(user: User, product: Dict[str, Any], item: Dic
         return catalog_price
 
     role = str(user.role or "").strip().lower()
-    if _is_draft_branch_supervisor(role):
+    if _is_draft_branch_supervisor(role) or is_supervisor_role(role):
         return requested_price
     if role == "ventas":
-        if requested_price > catalog_price + 0.0001:
+        if requested_price > precio1 + 0.0001:
             raise HTTPException(
                 status_code=403,
-                detail="Solo supervisión puede aumentar precios por encima del catálogo",
+                detail="Solo supervisión puede aumentar precios por encima del Precio 1",
             )
         return requested_price
     return catalog_price
@@ -8385,6 +8508,63 @@ async def create_sale(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
+    from backend.domains.pricing.price_tiers import (
+        PRICING_PROFILE_CASA_COMERCIAL,
+        build_sale_pricing_context,
+        normalize_product_price_tiers,
+        resolve_default_price_tier,
+        tier_unit_price,
+    )
+    from backend.domains.pricing.sale_price_policy import (
+        SalePricePolicyError,
+        validate_sale_items_pricing,
+    )
+
+    pricing_context = build_sale_pricing_context(
+        customer=customer,
+        seller=_user_pricing_dict(user),
+    )
+    is_commercial_sale = (
+        pricing_context.get("pricing_profile") == PRICING_PROFILE_CASA_COMERCIAL
+        and pricing_context.get("can_serve_commercial_house")
+    )
+    commercial_include_installation = (
+        bool(sale_data.commercial_include_installation) if is_commercial_sale else False
+    )
+    commercial_include_delivery = (
+        bool(sale_data.commercial_include_delivery) if is_commercial_sale else False
+    )
+
+    prepared_items: List[Dict[str, Any]] = []
+    for raw_item in sale_data.items:
+        item_copy = dict(raw_item)
+        product_id = str(item_copy.get("product_id") or "")
+        product_preview = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if product_preview:
+            product_preview = normalize_product_price_tiers(dict(product_preview))
+            if item_copy.get("unit_price") is None:
+                default_tier = resolve_default_price_tier(
+                    customer=customer,
+                    seller=_user_pricing_dict(user),
+                )
+                item_copy["unit_price"] = tier_unit_price(product_preview, default_tier)
+        prepared_items.append(item_copy)
+
+    try:
+        normalized_pricing_items = await validate_sale_items_pricing(
+            db,
+            user=_user_pricing_dict(user),
+            customer=customer,
+            items=prepared_items,
+            precio2_approval_id=sale_data.precio2_approval_id,
+        )
+    except SalePricePolicyError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+
+    pricing_by_product = {
+        str(row.get("product_id") or ""): row for row in normalized_pricing_items
+    }
+
     sale_channel = str(
         getattr(sale_data, "sale_channel", "") or customer.get("customer_type") or "minorista"
     ).strip().lower()
@@ -8485,13 +8665,19 @@ async def create_sale(
                 )
 
         qty = item["quantity"]
-        price = _resolve_sale_item_unit_price(user, product, item)
+        price = _resolve_sale_item_unit_price(user, product, item, customer=customer)
         discount = item.get("discount", 0)
         item_subtotal = (price * qty) * (1 - discount / 100)
+        pricing_meta = pricing_by_product.get(str(item.get("product_id") or ""), {})
 
         # Check installation requirements
         install_type = product.get("installation_type", "optional")
-        wants_installation = item.get("with_installation", False)
+        if is_commercial_sale:
+            wants_installation = commercial_include_installation and bool(
+                item.get("with_installation", False)
+            )
+        else:
+            wants_installation = item.get("with_installation", False)
 
         # Determine display note
         display_note = ""
@@ -8538,6 +8724,8 @@ async def create_sale(
                 installation_price=float(product.get("installation_price") or 0),
                 with_installation=wants_installation or install_type == "required",
                 display_note=display_note,
+                price_tier=pricing_meta.get("price_tier"),
+                price_tier_label=pricing_meta.get("price_tier_label"),
             )
         )
         subtotal += item_subtotal
@@ -8576,6 +8764,9 @@ async def create_sale(
         getattr(sale_data, "delivery_info", None),
         branch_id=user_branch_id,
     )
+    if commercial_include_delivery and is_commercial_sale:
+        delivery_info = dict(delivery_info or {})
+        delivery_info["is_delivery"] = True
     delivery_topup_nio = 0.0
     if delivery_info.get("is_delivery"):
         messenger_doc = None
@@ -8761,6 +8952,13 @@ async def create_sale(
         mixed_methods_raw if normalized_payment_type == "mixed" else []
     )
     doc["credit_days"] = resolved_credit_days
+    doc["pricing_profile"] = pricing_context.get("pricing_profile")
+    doc["seller_type"] = pricing_context.get("seller_type")
+    if sale_data.precio2_approval_id:
+        doc["precio2_approval_id"] = sale_data.precio2_approval_id
+    if is_commercial_sale:
+        doc["commercial_include_installation"] = commercial_include_installation
+        doc["commercial_include_delivery"] = commercial_include_delivery
     if delivery_info.get("is_delivery"):
         doc["delivery_info"] = delivery_info
         doc["delivery_required"] = True
@@ -20696,10 +20894,13 @@ async def seed_demo_products(request: Request, warehouse_id: str = "wh_main"):
             base_price_seed = float(p.get("price", 0) or 0)
         except Exception:
             base_price_seed = 0.0
+        from backend.domains.pricing.price_tiers import default_tier_values
+
         precio1 = round(base_price_seed, 2)
-        precio2 = round(base_price_seed * 1.05, 2)
-        precio3 = round(base_price_seed * 1.1, 2)
-        precio_vip = round(base_price_seed * 0.9, 2)
+        tier_defaults = default_tier_values(precio1)
+        precio2 = tier_defaults["precio2"]
+        precio_vip = tier_defaults["precio_vip"]
+        precio_casa = tier_defaults["precio_casa_comercial"]
 
         product_doc = {
             "product_id": f"prod_{uuid.uuid4().hex[:8]}",
@@ -20712,8 +20913,9 @@ async def seed_demo_products(request: Request, warehouse_id: str = "wh_main"):
             # store precio tiers and keep `price` pointing to precio1 for UI
             "precio1": precio1,
             "precio2": precio2,
-            "precio3": precio3,
             "precio_vip": precio_vip,
+            "precio_casa_comercial": precio_casa,
+            "precio3": precio_casa,
             "price": precio1,
             "cost": p["cost"],
             "product_type": "service" if p["category"] == "servicios" else "product",

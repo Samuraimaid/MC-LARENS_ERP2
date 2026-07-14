@@ -6,16 +6,9 @@ from typing import Any, Mapping
 
 def resolve_catalog_list_price(product: Mapping[str, Any] | None) -> float:
     """Public list price (Precio 1) used as voucher/catalog reference."""
-    if not product:
-        return 0.0
-    for key in ("precio1", "price"):
-        try:
-            value = float(product.get(key) or 0.0)
-        except (TypeError, ValueError):
-            continue
-        if value > 0:
-            return value
-    return 0.0
+    from backend.domains.pricing.price_tiers import resolve_precio1
+
+    return resolve_precio1(product)
 
 
 def resolve_sale_item_original_unit_price(
