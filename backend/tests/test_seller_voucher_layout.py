@@ -238,3 +238,49 @@ class TestSellerVoucherLayout:
         joined = "\n".join(build_seller_voucher_text_lines(sale))
         assert "Subtotal sin descuentos:" in joined
         assert "Descuento precio (Radio Android Toyo):" in joined
+
+    def test_item_line_shows_catalog_and_discounted_price_not_duplicate(self):
+        """Mirrors INV-20260714-0029 Alfombras case: line must not repeat same amount."""
+        sale = {
+            **_sample_sale(),
+            "currency": "NIO",
+            "exchange_rate": 36.5,
+            "items": [
+                {
+                    "product_name": "Alfombras de Goma Universal 4pcs",
+                    "quantity": 1,
+                    "unit_price": 38.356164,
+                    "original_unit_price": 45.80137,
+                    "discount": 0,
+                    "with_installation": False,
+                },
+            ],
+        }
+        lines = build_seller_voucher_text_lines(sale)
+        detail = next(line for line in lines if line.strip().startswith("x1"))
+        assert "C$ 1,671.75" in detail or "C$ 1,671.74" in detail
+        assert "C$ 1,400.00" in detail
+        assert detail.count("C$ 1,400.00") == 1
+
+    def test_item_line_with_installation_keeps_base_unit_and_total(self):
+        sale = {
+            **_sample_sale(),
+            "currency": "NIO",
+            "exchange_rate": 36.5,
+            "items": [
+                {
+                    "product_name": "Canastero de Techo Universal",
+                    "quantity": 1,
+                    "unit_price": 273.972603,
+                    "original_unit_price": 284.986301,
+                    "discount": 0,
+                    "with_installation": True,
+                    "installation_price": 100.0,
+                },
+            ],
+        }
+        lines = build_seller_voucher_text_lines(sale)
+        detail = next(line for line in lines if "Canastero" not in line and line.strip().startswith("x1"))
+        assert "C$ 10,402.00" in detail
+        assert "C$ 13,650.00" in detail
+        assert detail.count("C$ 10,402.00") == 1

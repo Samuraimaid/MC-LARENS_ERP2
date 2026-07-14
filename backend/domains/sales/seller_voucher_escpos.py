@@ -302,6 +302,45 @@ def _short_product_label(name: Any, *, limit: int = 18) -> str:
     return _ascii_safe(str(name or "Producto"))[:limit]
 
 
+def _resolve_voucher_item_original_unit(item: Dict[str, Any], unit_usd: float) -> float:
+    try:
+        original_usd = float(item.get("original_unit_price") or unit_usd)
+    except (TypeError, ValueError):
+        original_usd = unit_usd
+    if original_usd > unit_usd + 0.0001:
+        return original_usd
+    return unit_usd
+
+
+def _format_voucher_item_detail_line(
+    *,
+    qty: int,
+    unit_usd: float,
+    item: Dict[str, Any],
+    currency: str,
+    exchange_rate: float,
+    disc_pct: float = 0.0,
+    with_installation: bool = False,
+    installation_usd: float = 0.0,
+) -> str:
+    """Show catalog/base unit and line total; avoids duplicate prices when discounted."""
+    unit = _convert_item_amount(unit_usd, currency, exchange_rate)
+    original_usd = _resolve_voucher_item_original_unit(item, unit_usd)
+    original = _convert_item_amount(original_usd, currency, exchange_rate)
+    line_total = unit * qty * (1 - disc_pct / 100)
+    if with_installation:
+        line_total += _convert_item_amount(installation_usd, currency, exchange_rate) * qty
+
+    has_price_discount = original > unit + 0.005
+    display_unit = original if has_price_discount else unit
+
+    detail = f"x{qty}  {format_voucher_money(display_unit, currency)}"
+    if disc_pct > 0.005:
+        detail += f"  -{_format_discount_pct_label(disc_pct)}"
+    detail += f"  {format_voucher_money(line_total, currency)}"
+    return detail
+
+
 def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float, Dict[str, Any]]], str]:
     currency = normalize_currency_code(sale.get("currency"))
     rate = float(sale.get("exchange_rate") or 36.5)
@@ -521,15 +560,18 @@ def build_seller_voucher_lines(
 
             qty = int(item.get("quantity") or 0)
             disc_pct = float(item.get("discount") or 0)
-            unit = _convert_item_amount(float(item.get("unit_price") or 0), currency, rate)
-            line_total = unit * qty * (1 - disc_pct / 100)
-            if item.get("with_installation"):
-                install_usd = float(item.get("installation_price") or 0)
-                line_total += _convert_item_amount(install_usd, currency, rate) * qty
-            detail = f"x{qty}  {format_voucher_money(unit, currency)}"
-            if disc_pct > 0.005:
-                detail += f"  -{_format_discount_pct_label(disc_pct)}"
-            detail += f"  {format_voucher_money(line_total, currency)}"
+            unit_usd = float(item.get("unit_price") or 0)
+            install_usd = float(item.get("installation_price") or 0) if item.get("with_installation") else 0.0
+            detail = _format_voucher_item_detail_line(
+                qty=qty,
+                unit_usd=unit_usd,
+                item=item,
+                currency=currency,
+                exchange_rate=rate,
+                disc_pct=disc_pct,
+                with_installation=bool(item.get("with_installation")),
+                installation_usd=install_usd,
+            )
             lines.append(VoucherLine(_clip_line(detail, line_width)))
 
     if show_breakdown:

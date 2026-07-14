@@ -7698,7 +7698,9 @@ async def _revert_linked_records_after_dispatch_purge(dispatch: Dict[str, Any]) 
 
 
 def _resolve_sale_item_unit_price(user: User, product: Dict[str, Any], item: Dict[str, Any]) -> float:
-    catalog_price = float(product.get("price") or 0.0)
+    from backend.domains.sales.sale_item_pricing import resolve_catalog_list_price
+
+    catalog_price = resolve_catalog_list_price(product)
     raw_unit_price = item.get("unit_price")
     if raw_unit_price is None:
         return catalog_price
@@ -8518,16 +8520,9 @@ async def create_sale(
                 }
             )
 
-        catalog_price = float(product.get("price") or 0.0)
-        original_price = item.get("original_unit_price")
-        try:
-            original_price_value = float(original_price) if original_price is not None else price
-        except (TypeError, ValueError):
-            original_price_value = price
-        if original_price_value <= 0:
-            original_price_value = price
-        if original_price_value <= price + 0.0001 and catalog_price > price + 0.0001:
-            original_price_value = catalog_price
+        from backend.domains.sales.sale_item_pricing import resolve_sale_item_original_unit_price
+
+        original_price_value = resolve_sale_item_original_unit_price(product, item, price)
 
         items.append(
             SaleItem(
