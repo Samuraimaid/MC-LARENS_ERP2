@@ -131,3 +131,144 @@ export function resolveDefaultUnitPrice(product, pricingContext) {
   const tier = pricingContext?.default_price_tier || TIER_PRECIO1;
   return resolveProductTierPrice(product, tier);
 }
+
+const SUPERVISOR_PRICE_EDIT_ROLES = new Set([
+  "gerencia",
+  "supervisor",
+  "jefe_vendedores",
+  "jefe_tienda",
+  "programador",
+]);
+
+export function normalizeSellerType(user) {
+  const raw = String(user?.seller_type || "").trim().toLowerCase();
+  if (raw === "vip" || raw === "piso") return raw;
+  const role = String(user?.role || "").trim().toLowerCase();
+  if (SUPERVISOR_PRICE_EDIT_ROLES.has(role)) return "vip";
+  return "piso";
+}
+
+export function formatRoleBadgeLabel(user, rolesMap = null) {
+  const role = String(user?.role || "sin_rol").trim().toLowerCase();
+  if (role === "ventas" && normalizeSellerType(user) === "vip") {
+    return "VENTAS VIP";
+  }
+  const mappedLabel = rolesMap?.[role]?.label;
+  if (mappedLabel) {
+    return String(mappedLabel).toUpperCase();
+  }
+  return String(role).replace(/_/g, " ").toUpperCase();
+}
+
+export function canSellerEditLinePrice(user, pricingContext = null) {
+  if (pricingContext?.can_edit_line_prices === true) return true;
+  if (pricingContext?.can_edit_line_prices === false) return false;
+  const role = String(user?.role || "").trim().toLowerCase();
+  if (SUPERVISOR_PRICE_EDIT_ROLES.has(role)) return true;
+  if (role !== "ventas") return false;
+  return normalizeSellerType(user) === "piso";
+}
+
+export function isSupervisorPricingRole(user) {
+  const role = String(user?.role || "").trim().toLowerCase();
+  return SUPERVISOR_PRICE_EDIT_ROLES.has(role);
+}
+
+export function canChangeActivePriceTier(user, pricingContext = null) {
+  if (!pricingContext?.allowed_price_tiers?.length) return false;
+  if (isSupervisorPricingRole(user)) return true;
+  const role = String(user?.role || "").trim().toLowerCase();
+  if (role === "ventas") return normalizeSellerType(user) === "piso";
+  return false;
+}
+
+export function tierDiscountPercent(precio1, tierPrice) {
+  const base = Number(precio1) || 0;
+  const tier = Number(tierPrice) || 0;
+  if (base <= 0 || tier <= 0) return 0;
+  return roundTo2(((base - tier) / base) * 100);
+}
+
+export function buildTierPriceCompare(product, activeTier) {
+  const tier = activeTier || TIER_PRECIO1;
+  const precio1 = resolveProductTierPrice(product, TIER_PRECIO1);
+  const tierPrice = resolveProductTierPrice(product, tier);
+  const showCompare = tier !== TIER_PRECIO1 && precio1 > 0 && tierPrice > 0;
+  return {
+    tier,
+    tierLabel: TIER_LABELS[tier] || tier,
+    precio1,
+    tierPrice,
+    showCompare,
+    discountPercent: showCompare ? tierDiscountPercent(precio1, tierPrice) : 0,
+  };
+}
+
+export function repriceCartItemsForTier(cartItems, productsById, newTier) {
+  return (cartItems || []).map((item) => {
+    const product = typeof productsById?.get === "function"
+      ? productsById.get(String(item.product_id))
+      : productsById?.[item.product_id];
+    const tierPrice = resolveProductTierPrice(product || item, newTier);
+    const precio1 = resolveProductTierPrice(product || item, TIER_PRECIO1);
+    return {
+      ...item,
+      unit_price: tierPrice,
+      original_unit_price: precio1,
+      price_tier: newTier,
+      price_tier_label: TIER_LABELS[newTier] || newTier,
+    };
+  });
+}
+
+export function buildTierChangeAuditEvent({ user, fromTier, toTier }) {
+  const role = String(user?.role || "").trim().toLowerCase();
+  const sellerType = normalizeSellerType(user);
+  return {
+    event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    event_type: "tier_change",
+    actor_id: String(user?.user_id || user?.id || ""),
+    actor_name: String(user?.name || "Usuario"),
+    actor_role: role,
+    actor_seller_type: sellerType,
+    timestamp: new Date().toISOString(),
+    visible_on_print: false,
+    details: {
+      from_tier: fromTier,
+      from_tier_label: TIER_LABELS[fromTier] || fromTier,
+      to_tier: toTier,
+      to_tier_label: TIER_LABELS[toTier] || toTier,
+    },
+  };
+}
+
+export function buildLinePriceAuditEvent({ user, productId, productName, oldPrice, newPrice }) {
+  return {
+    event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    event_type: "line_price_edit",
+    actor_id: String(user?.user_id || user?.id || ""),
+    actor_name: String(user?.name || "Usuario"),
+    actor_role: String(user?.role || "").trim().toLowerCase(),
+    timestamp: new Date().toISOString(),
+    visible_on_print: false,
+    details: {
+      product_id: productId,
+      product_name: productName,
+      old_price: oldPrice,
+      new_price: newPrice,
+    },
+  };
+}
+
+export function buildDiscountAuditEvent({ user, eventType, details = {} }) {
+  return {
+    event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    event_type: eventType,
+    actor_id: String(user?.user_id || user?.id || ""),
+    actor_name: String(user?.name || "Usuario"),
+    actor_role: String(user?.role || "").trim().toLowerCase(),
+    timestamp: new Date().toISOString(),
+    visible_on_print: false,
+    details,
+  };
+}

@@ -14,6 +14,7 @@ import { KDSLayout } from "./components/layout/KDSLayout";
 // Pages
 import { LoginPage } from "./pages/LoginPage";
 import { AuthCallback } from "./pages/AuthCallback";
+import { AntiTamperGuard } from "./components/security/AntiTamperGuard";
 
 // Fonts
 import "@fontsource/barlow-condensed/600.css";
@@ -84,6 +85,8 @@ const SamplesPage = lazyNamedPage(() => import("./pages/SamplesPage"), "SamplesP
 const HumanResourcesPage = lazyNamedPage(() => import("./pages/HumanResourcesPage"), "HumanResourcesPage");
 const AttendanceClockPage = lazyNamedPage(() => import("./pages/AttendanceClockPage"), "AttendanceClockPage");
 const HyperVisorPage = lazyNamedPage(() => import("./pages/HyperVisorPage"), "HyperVisorPage");
+const UniversalSearchPage = lazyNamedPage(() => import("./pages/UniversalSearchPage"), "UniversalSearchPage");
+const DocumentSnapshotView = lazyNamedPage(() => import("./components/sales/DocumentSnapshotView"), "DocumentSnapshotView");
 const ServerDashboardPage = lazyNamedPage(() => import("./pages/ServerDashboardPage"), "ServerDashboardPage");
 const DriverPortalPage = lazyNamedPage(() => import("./pages/DriverPortalPage"), "DriverPortalPage");
 
@@ -177,7 +180,10 @@ function AppRouter() {
       >
         <Route path="/dashboard" element={<DashboardOnlyRoute />} />
         <Route path="/sales" element={<SalesPage />} />
+        <Route path="/sales/view/:saleId" element={<DocumentSnapshotView docType="sale" />} />
         <Route path="/sales/:saleId" element={<SalesPage />} />
+        <Route path="/quotations/view/:quotationId" element={<DocumentSnapshotView docType="quotation" />} />
+        <Route path="/search" element={<UniversalSearchPage />} />
         <Route path="/cashier" element={<CashierOnlyRoute />} />
         <Route path="/quotations" element={<QuotationsPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
@@ -278,8 +284,10 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <AppRouter />
-          <Toaster position="top-center" richColors />
+          <AntiTamperGuard>
+            <AppRouter />
+            <Toaster position="top-center" richColors />
+          </AntiTamperGuard>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

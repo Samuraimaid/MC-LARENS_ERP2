@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { cn, formatCurrency, formatDate, getStatusColor, PAYMENT_TYPES } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -80,6 +81,7 @@ const getPaymentTone = (paymentType) => {
 
 export function QuotationsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const DRAFT_LIST_KEY = "draft_quote_tabs_v1";
   const DRAFT_ACTIVE_KEY = "draft_quote_active_v1";
   const DRAFT_KEY_PREFIX = "draft_quote_v1_";
@@ -1138,8 +1140,13 @@ export function QuotationsPage() {
         product_id: i.product_id,
         quantity: i.quantity,
         discount: i.discount,
+        unit_price: i.unit_price,
         with_installation: i.with_installation || false,
       })),
+      active_price_tier: payload.active_price_tier || null,
+      active_price_tier_label: payload.active_price_tier_label || null,
+      audit_events: payload.audit_events || [],
+      precio2_approval_id: payload.precio2_approval_id || null,
       discount: payload.discount || 0,
       valid_days: validDays,
       notes: payload.notes || null,
@@ -1789,8 +1796,8 @@ export function QuotationsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Ver cotización"
-                            onClick={() => window.open(`${API}/print/quotation-pdf/${quotationId}`, "_blank")}
+                            title="Ver detalle (solo lectura)"
+                            onClick={() => navigate(`/quotations/view/${quotationId}`)}
                           >
                             <Eye className="h-5 w-5" />
                           </Button>

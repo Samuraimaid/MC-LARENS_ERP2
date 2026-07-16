@@ -89,6 +89,7 @@ from backend.services.audit import AuditService
 from backend.services.cash import CashService
 from backend.services.pin_policy import PinPolicyService
 from backend.services.pin_login_guard import PinLoginGuard
+from backend.services.terminal_unlock import ensure_daily_terminal_unlock_notification
 from backend.services.venta_service import revert_sale_effects
 
 logger = logging.getLogger("erp")
@@ -1480,6 +1481,10 @@ class PinLoginRequest(FlexibleModel):
     user_id: Optional[str] = None
 
 
+class TerminalUnlockRequest(FlexibleModel):
+    unlock_pin: str
+
+
 class SessionUnlockRequest(FlexibleModel):
     pin: str
 
@@ -1532,6 +1537,9 @@ class QuotationItem(FlexibleModel):
     with_installation: bool = False
     discount: float = 0.0
     subtotal: float = 0.0
+    price_tier: Optional[str] = None
+    price_tier_label: Optional[str] = None
+    original_unit_price: Optional[float] = None
 
 
 class Quotation(FlexibleModel):
@@ -1562,6 +1570,11 @@ class Quotation(FlexibleModel):
     notes: Optional[str] = None
     status: str = "pending"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    active_price_tier: Optional[str] = None
+    active_price_tier_label: Optional[str] = None
+    pricing_profile: Optional[str] = None
+    seller_type: Optional[str] = None
+    audit_events: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class QuotationCreate(FlexibleModel):
@@ -1580,6 +1593,10 @@ class QuotationCreate(FlexibleModel):
     warehouse_id: Optional[str] = None
     valid_days: int = 7
     notes: Optional[str] = None
+    active_price_tier: Optional[str] = None
+    active_price_tier_label: Optional[str] = None
+    audit_events: Optional[List[Dict[str, Any]]] = None
+    precio2_approval_id: Optional[str] = None
 
 
 class ThemeSettings(FlexibleModel):
@@ -1878,6 +1895,9 @@ class SaleCreate(FlexibleModel):
     precio2_approval_id: Optional[str] = None
     commercial_include_installation: Optional[bool] = None
     commercial_include_delivery: Optional[bool] = None
+    active_price_tier: Optional[str] = None
+    active_price_tier_label: Optional[str] = None
+    audit_events: Optional[List[Dict[str, Any]]] = None
 
 
 class DraftEntryPayload(FlexibleModel):
@@ -2816,7 +2836,8 @@ async def _resolve_sale_for_print(sale_id: str) -> Dict[str, Any]:
 
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
-    return cast(Dict[str, Any], sale)
+    from backend.domains.pricing.document_audit import sanitize_document_for_print
+    return sanitize_document_for_print(cast(Dict[str, Any], sale))
 
 
 class CheckoutRequest(FlexibleModel):
@@ -2921,6 +2942,34 @@ def get_login_pin_hash(user_doc: Dict[str, Any]) -> Optional[str]:
     return user_doc.get("login_pin_hash")
 
 
+def _users_missing_login_pin_index_query(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Pin users that still rely on bcrypt lookup because login_pin_index was never set."""
+    query: Dict[str, Any] = {
+        "is_pin_user": True,
+        "is_active": True,
+        "$or": [
+            {"login_pin_index": {"$exists": False}},
+            {"login_pin_index": None},
+            {"login_pin_index": ""},
+        ],
+    }
+    if extra:
+        query = {**query, **extra}
+    return query
+
+
+async def _find_pin_user_by_legacy_scan(
+    pin: str,
+    *,
+    extra_filter: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Match PIN only among users missing login_pin_index (avoids scanning the full directory)."""
+    async for candidate in db.users.find(_users_missing_login_pin_index_query(extra_filter), {"_id": 0}):
+        if verify_pin_hash(pin, get_login_pin_hash(candidate)):
+            return cast(Dict[str, Any], candidate)
+    return None
+
+
 def is_valid_login_pin(pin: Optional[str]) -> bool:
     return isinstance(pin, str) and pin.isdigit() and len(pin) == LOGIN_PIN_LENGTH
 
@@ -2975,6 +3024,17 @@ async def ensure_runtime_indexes() -> None:
         )
 
     try:
+        await db.sales.create_index("invoice_number")
+        await db.sales.create_index("customer_name")
+        await db.sales.create_index("created_at")
+        await db.quotations.create_index("quotation_id")
+        await db.quotations.create_index("customer_name")
+        await db.quotations.create_index("created_at")
+        await db.vehicles.create_index("plate")
+    except Exception as exc:
+        logger.warning("Could not create unified search indexes: %s", exc)
+
+    try:
         await db.hypervisor_events.create_index("timestamp")
         await db.hypervisor_events.create_index([("actor_user_id", 1), ("timestamp", -1)])
         await db.hypervisor_events.create_index([("entity_type", 1), ("timestamp", -1)])
@@ -3000,6 +3060,25 @@ async def ensure_runtime_indexes() -> None:
         )
     except Exception as exc:
         logger.warning("Could not create user draft indexes: %s", exc)
+
+    try:
+        await db.users.create_index(
+            [("is_pin_user", 1), ("is_active", 1), ("login_pin_index", 1)],
+            sparse=True,
+        )
+    except Exception as exc:
+        logger.warning("Could not create users login_pin_index index: %s", exc)
+
+    try:
+        await db.pin_login_ip_attempts.create_index([("ip", 1), ("attempted_at", -1)])
+        await db.pin_login_ip_attempts.create_index("attempted_at", expireAfterSeconds=86400)
+    except Exception as exc:
+        logger.warning("Could not create pin_login_ip_attempts indexes: %s", exc)
+
+    try:
+        await db.pin_login_ip_lockouts.create_index("ip", unique=True)
+    except Exception as exc:
+        logger.warning("Could not create pin_login_ip_lockouts index: %s", exc)
 
 
 async def apply_core_seed_data(
@@ -3384,8 +3463,115 @@ async def seed_default_pin_user() -> None:
                     branch_id,
                     email,
                 )
+
     except Exception:
         logger.exception("Failed to seed test PIN users for roles")
+
+
+async def seed_floor_and_vip_sellers() -> None:
+    try:
+        branch_docs = await db.branches.find({}, {"_id": 0, "branch_id": 1, "name": 1}).to_list(100)
+        if not branch_docs:
+            branch_docs = [{"branch_id": "branch_main", "name": "Mundo de Accesorios"}]
+
+        floor_vip_sellers = [
+            ("piso", "Sofia", "Mendoza", "9101", "91010001"),
+            ("piso", "Diego", "Zeledon", "9102", "91020002"),
+            ("piso", "Valeria", "Urbina", "9103", "91030003"),
+            ("vip", "Camila", "Baltodano", "9201", "92010001"),
+            ("vip", "Esteban", "Guido", "9202", "92020002"),
+            ("vip", "Natalia", "Espinoza", "9203", "92030003"),
+        ]
+        default_branch_id = str(branch_docs[0].get("branch_id") or "branch_main")
+        default_warehouse_id = "wh_main"
+
+        for seller_type, first_name, last_name, attendance_pin, login_pin in floor_vip_sellers:
+            email = f"ventas_{seller_type}_{first_name.lower()}_{last_name.lower()}@local"
+            existing = await db.users.find_one({"email": email}, {"_id": 0})
+            seller_doc: Dict[str, Any] = {
+                "name": first_name,
+                "last_name": last_name,
+                "role": "ventas",
+                "seller_type": seller_type,
+                "branch_id": default_branch_id,
+                "warehouse_id": default_warehouse_id,
+                "email": email,
+                "is_active": True,
+                "is_pin_user": True,
+                "earns_commissions": True,
+                "failed_pin_attempts": 0,
+                "pin_lockout_until": None,
+            }
+            if existing:
+                updates = dict(seller_doc)
+                if not verify_pin_hash(attendance_pin, get_attendance_pin_hash(existing)):
+                    updates["attendance_pin_hash"] = hash_pin(attendance_pin)
+                    updates["attendance_pin_index"] = compute_pin_index(attendance_pin)
+                    updates["attendance_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
+                    updates["kiosk_pin_plain"] = attendance_pin
+                    updates["pin_hash"] = updates["attendance_pin_hash"]
+                    updates["pin_index"] = updates["attendance_pin_index"]
+                    updates["pin_last_set_at"] = updates["attendance_pin_last_set_at"]
+                if not verify_pin_hash(login_pin, get_login_pin_hash(existing)):
+                    updates["login_pin_hash"] = hash_pin(login_pin)
+                    updates["login_pin_index"] = compute_pin_index(login_pin)
+                    updates["login_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
+                await db.users.update_one({"user_id": existing.get("user_id")}, {"$set": updates})
+                continue
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+            await db.users.insert_one(
+                {
+                    "user_id": f"user_{uuid.uuid4().hex[:10]}",
+                    **seller_doc,
+                    "created_at": now_iso,
+                    "attendance_pin_hash": hash_pin(attendance_pin),
+                    "attendance_pin_index": compute_pin_index(attendance_pin),
+                    "attendance_pin_last_set_at": now_iso,
+                    "kiosk_pin_plain": attendance_pin,
+                    "login_pin_hash": hash_pin(login_pin),
+                    "login_pin_index": compute_pin_index(login_pin),
+                    "login_pin_last_set_at": now_iso,
+                    "pin_hash": hash_pin(attendance_pin),
+                    "pin_index": compute_pin_index(attendance_pin),
+                    "pin_last_set_at": now_iso,
+                }
+            )
+            logger.info(
+                "Seeded %s seller %s %s (%s) login_pin=%s",
+                seller_type,
+                first_name,
+                last_name,
+                email,
+                login_pin,
+            )
+    except Exception:
+        logger.exception("Failed to seed floor and VIP sellers")
+
+
+@app.on_event("startup")
+async def bootstrap_floor_and_vip_sellers() -> None:
+    await ensure_runtime_indexes()
+    await seed_floor_and_vip_sellers()
+
+
+@app.on_event("startup")
+async def ensure_terminal_login_policy() -> None:
+    try:
+        policy = await pin_policy_service.load()
+        desired = {
+            "max_attempts": 3,
+            "lockout_minutes": 0,
+            "lockout_seconds": 30,
+            "progressive_lockout": True,
+            "lockout_max_seconds": 3600,
+        }
+        if any(policy.get(key) != value for key, value in desired.items()):
+            await pin_policy_service.update(desired)
+            logger.info("Terminal PIN policy normalized: %s", desired)
+        await ensure_daily_terminal_unlock_notification(db)
+    except Exception:
+        logger.exception("Failed bootstrapping terminal login policy/notifications")
 
 
 @app.on_event("startup")
@@ -3432,6 +3618,8 @@ async def _validate_login_pin_for_user(
     user_doc: Dict[str, Any],
     pin: str,
     request: Request,
+    *,
+    pin_policy: Optional[Dict[str, Any]] = None,
 ) -> None:
     await pin_login_guard.validate_for_user(
         user_doc,
@@ -3439,6 +3627,7 @@ async def _validate_login_pin_for_user(
         request,
         verify_pin=verify_pin_hash,
         get_pin_hash=get_login_pin_hash,
+        policy=pin_policy,
     )
 
 
@@ -4442,6 +4631,8 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
 
     pin_policy = await pin_policy_service.load()
     await pin_login_guard.enforce_ip_rate_limit(request, pin_policy)
+    if not payload.user_id:
+        await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
 
     user_doc: Optional[Dict[str, Any]] = None
     # Si se provee user_id, se valida contra ese usuario y aplica pin_policy (max_attempts / lockout).
@@ -4454,7 +4645,7 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
             "_id": 0
         })
         if user_doc:
-            await _validate_login_pin_for_user(user_doc, pin, request)
+            await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
     else:
         login_index = compute_pin_index(pin)
         user_doc = await db.users.find_one(
@@ -4466,25 +4657,39 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
             {"_id": 0},
         )
         if user_doc:
-            await _validate_login_pin_for_user(user_doc, pin, request)
+            await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
         else:
-            # Legacy compatibility for users missing login_pin_index.
-            async for candidate in db.users.find({"is_pin_user": True, "is_active": True}, {"_id": 0}):
-                if verify_pin_hash(pin, get_login_pin_hash(candidate)):
-                    user_doc = candidate
-                    await _validate_login_pin_for_user(cast(Dict[str, Any], candidate), pin, request)
-                    break
+            legacy_user = await _find_pin_user_by_legacy_scan(pin)
+            if legacy_user:
+                user_doc = legacy_user
+                await _validate_login_pin_for_user(legacy_user, pin, request, pin_policy=pin_policy)
 
     if not user_doc:
-        await pin_login_guard.record_ip_failure(request)
-        await audit_service.log_pin_auth_attempt(
-            None,
-            request.client.host if request.client else "unknown",
-            False,
-        )
-        raise HTTPException(status_code=401, detail="PIN incorrecto")
+        if payload.user_id:
+            await pin_login_guard.record_ip_failure(request)
+            await audit_service.log_pin_auth_attempt(
+                None,
+                request.client.host if request.client else "unknown",
+                False,
+            )
+            raise HTTPException(status_code=401, detail="PIN incorrecto")
+        await pin_login_guard.record_anonymous_failure(request, pin_policy)
+
+    if not payload.user_id:
+        await pin_login_guard.clear_anonymous_lockout(request)
 
     return await _create_session_response(user_doc, request)
+
+
+@api_router.get("/auth/pin/terminal-status")
+async def get_pin_terminal_status(request: Request):
+    pin_policy = await pin_policy_service.load()
+    return await pin_login_guard.get_terminal_status(request, pin_policy)
+
+
+@api_router.post("/auth/pin/terminal-unlock")
+async def unlock_pin_terminal(payload: TerminalUnlockRequest, request: Request):
+    return await pin_login_guard.supervisor_unlock_terminal(request, payload.unlock_pin.strip())
 
 
 USER_LIST_PROJECTION: Dict[str, int] = {
@@ -7063,11 +7268,28 @@ async def approve_request(approval_id: str, request: Request):
     return {"message": "Approved", "notification_id": notif["notification_id"]}
 
 
+def _notifications_visibility_filter(user: User) -> Dict[str, Any]:
+    effective_role = resolve_effective_role(user.role)
+    role_scope = list({str(user.role or ""), effective_role} - {""})
+    return {
+        "$or": [
+            {"recipient_id": user.user_id},
+            {
+                "recipient_id": None,
+                "$or": [
+                    {"target_roles": {"$exists": False}},
+                    {"target_roles": {"$in": role_scope}},
+                ],
+            },
+        ],
+    }
+
+
 @api_router.get("/notifications")
 async def list_notifications(request: Request):
     user = await require_auth(request)
-    # return notifications targeted to the user or global ones (recipient_id == None)
-    notes = await db.notifications.find({"$or": [{"recipient_id": None}, {"recipient_id": user.user_id}]}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    await ensure_daily_terminal_unlock_notification(db)
+    notes = await db.notifications.find(_notifications_visibility_filter(user), {"_id": 0}).sort("created_at", -1).to_list(1000)
     return notes
 
 
@@ -7081,7 +7303,8 @@ async def mark_notification_read(notification_id: str, request: Request):
 @api_router.get("/notifications/unread-count")
 async def unread_notifications_count(request: Request):
     user = await require_auth(request)
-    count = await db.notifications.count_documents({"read": False, "$or": [{"recipient_id": None}, {"recipient_id": user.user_id}]})
+    visibility = _notifications_visibility_filter(user)
+    count = await db.notifications.count_documents({"$and": [{"read": False}, visibility]})
     return {"unread": int(count)}
 
 
@@ -7193,15 +7416,62 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # Build items with product info
-    items = []
-    subtotal = 0
+    from backend.domains.pricing.price_tiers import (
+        TIER_LABELS_ES,
+        build_sale_pricing_context,
+        normalize_product_price_tiers,
+        resolve_default_price_tier,
+        tier_unit_price,
+    )
+    from backend.domains.pricing.sale_price_policy import (
+        SalePricePolicyError,
+        validate_sale_items_pricing,
+    )
+    from backend.domains.pricing.document_audit import merge_audit_events
+
+    pricing_context = build_sale_pricing_context(
+        customer=customer,
+        seller=_user_pricing_dict(user),
+    )
     currency = quot_data.currency or "USD"
     exchange_rate = quot_data.exchange_rate or (36.5 if currency == "NIO" else 1)
     normalized_payment_method = _normalize_method_name(
         quot_data.payment_method or quot_data.payment_type
     )
     discounts_allowed_by_method = _is_discount_allowed(normalized_payment_method)
+
+    prepared_items: List[Dict[str, Any]] = []
+    for raw_item in quot_data.items:
+        item_copy = dict(raw_item)
+        product_id = str(item_copy.get("product_id") or "")
+        product_preview = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if product_preview:
+            product_preview = normalize_product_price_tiers(dict(product_preview))
+            if item_copy.get("unit_price") is None:
+                default_tier = quot_data.active_price_tier or resolve_default_price_tier(
+                    customer=customer,
+                    seller=_user_pricing_dict(user),
+                )
+                item_copy["unit_price"] = tier_unit_price(product_preview, default_tier)
+        prepared_items.append(item_copy)
+
+    try:
+        normalized_pricing_items = await validate_sale_items_pricing(
+            db,
+            user=_user_pricing_dict(user),
+            customer=customer,
+            items=prepared_items,
+            precio2_approval_id=quot_data.precio2_approval_id,
+        )
+    except SalePricePolicyError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+
+    pricing_by_product = {
+        str(row.get("product_id") or ""): row for row in normalized_pricing_items
+    }
+
+    items = []
+    subtotal = 0.0
     for item in quot_data.items:
         product = await db.products.find_one(
             {"product_id": item["product_id"]}, {"_id": 0}
@@ -7210,11 +7480,17 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
             raise HTTPException(
                 status_code=404, detail=f"Product {item['product_id']} not found"
             )
+        product = normalize_product_price_tiers(dict(product))
+        pricing_meta = pricing_by_product.get(str(item.get("product_id") or ""), {})
 
-        qty = item["quantity"]
-        price = product["price"]
+        qty = int(item.get("quantity") or 1)
+        unit_price = float(
+            item.get("unit_price")
+            or pricing_meta.get("unit_price")
+            or tier_unit_price(product, pricing_context.get("default_price_tier"))
+        )
         if currency == "NIO":
-            price = price * exchange_rate
+            unit_price = unit_price * float(exchange_rate)
 
         install_type = product.get("installation_type", "optional")
         wants_installation = bool(item.get("with_installation", False))
@@ -7223,25 +7499,29 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
         if install_type == "not_available":
             wants_installation = False
 
-        install_price = product.get("installation_price", 0)
+        install_price = float(product.get("installation_price", 0) or 0)
         if currency == "NIO":
-            install_price = install_price * exchange_rate
+            install_price = install_price * float(exchange_rate)
 
+        line_unit = unit_price
         if wants_installation and install_type != "not_available":
-            price = price + install_price
+            line_unit = unit_price + install_price
 
         discount = item.get("discount", 0) if discounts_allowed_by_method else 0
-        item_subtotal = (price * qty) * (1 - discount / 100)
+        item_subtotal = (line_unit * qty) * (1 - float(discount) / 100)
 
         items.append(
             QuotationItem(
                 product_id=product["product_id"],
                 product_name=product["name"],
                 quantity=qty,
-                unit_price=price,
+                unit_price=round(line_unit, 2),
                 with_installation=wants_installation,
                 discount=discount,
-                subtotal=item_subtotal,
+                subtotal=round(item_subtotal, 2),
+                price_tier=pricing_meta.get("price_tier"),
+                price_tier_label=pricing_meta.get("price_tier_label"),
+                original_unit_price=pricing_meta.get("original_unit_price"),
             )
         )
         subtotal += item_subtotal
@@ -7259,6 +7539,9 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     )
     total_discount = subtotal * (effective_discount_percent / 100)
     total = subtotal + tax - total_discount
+
+    active_tier = quot_data.active_price_tier or pricing_context.get("default_price_tier")
+    audit_events = merge_audit_events([], quot_data.audit_events or [])
 
     quotation = Quotation(
         quotation_id=await generate_quotation_id(),
@@ -7286,6 +7569,11 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
         total=round(total, 2),
         valid_until=datetime.now(timezone.utc) + timedelta(days=quot_data.valid_days),
         notes=quot_data.notes,
+        active_price_tier=active_tier,
+        active_price_tier_label=TIER_LABELS_ES.get(active_tier, active_tier),
+        pricing_profile=pricing_context.get("pricing_profile"),
+        seller_type=pricing_context.get("seller_type"),
+        audit_events=audit_events,
     )
 
     doc = quotation.model_dump()
@@ -7294,6 +7582,45 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
     await db.quotations.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+
+@api_router.get("/quotations/{quotation_id}")
+async def get_quotation(quotation_id: str, request: Request):
+    await require_auth(request)
+    quotation = await db.quotations.find_one({"quotation_id": quotation_id}, {"_id": 0})
+    if not quotation:
+        raise HTTPException(status_code=404, detail="Quotation not found")
+    return cast(Dict[str, Any], quotation)
+
+
+@api_router.get("/search/unified")
+async def search_unified(
+    request: Request,
+    q: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    types: Optional[str] = None,
+    limit: int = 50,
+):
+    user = await require_auth(request)
+    from backend.domains.search.unified_search import unified_search
+
+    type_list = [t.strip() for t in (types or "").split(",") if t.strip()] or None
+    return await unified_search(
+        db,
+        user={
+            "user_id": user.user_id,
+            "role": user.role,
+            "branch_id": user.branch_id,
+            "name": user.name,
+        },
+        sales_visibility_query=build_sales_visibility_query(user),
+        q=q or "",
+        date_from=date_from,
+        date_to=date_to,
+        types=type_list,
+        limit=limit,
+    )
 
 
 @api_router.put("/quotations/{quotation_id}/status")
@@ -7795,6 +8122,14 @@ def _resolve_sale_item_unit_price(
     if _is_draft_branch_supervisor(role) or is_supervisor_role(role):
         return requested_price
     if role == "ventas":
+        from backend.domains.pricing.price_tiers import SELLER_TYPE_VIP, normalize_seller_type
+
+        seller_type = normalize_seller_type(_user_pricing_dict(user))
+        if seller_type == SELLER_TYPE_VIP and abs(requested_price - catalog_price) > 0.05:
+            raise HTTPException(
+                status_code=403,
+                detail="Los Vendedores VIP no pueden modificar precios por línea; usan la tarifa establecida",
+            )
         if requested_price > precio1 + 0.0001:
             raise HTTPException(
                 status_code=403,
@@ -8909,6 +9244,17 @@ async def create_sale(
     doc["credit_days"] = resolved_credit_days
     doc["pricing_profile"] = pricing_context.get("pricing_profile")
     doc["seller_type"] = pricing_context.get("seller_type")
+    if getattr(sale_data, "active_price_tier", None):
+        from backend.domains.pricing.price_tiers import TIER_LABELS_ES
+        doc["active_price_tier"] = sale_data.active_price_tier
+        doc["active_price_tier_label"] = (
+            getattr(sale_data, "active_price_tier_label", None)
+            or TIER_LABELS_ES.get(sale_data.active_price_tier, sale_data.active_price_tier)
+        )
+    incoming_audit = getattr(sale_data, "audit_events", None) or []
+    if incoming_audit:
+        from backend.domains.pricing.document_audit import merge_audit_events
+        doc["audit_events"] = merge_audit_events(doc.get("audit_events"), incoming_audit)
     if sale_data.precio2_approval_id:
         doc["precio2_approval_id"] = sale_data.precio2_approval_id
     if is_commercial_sale:
@@ -9576,14 +9922,13 @@ async def _resolve_supervisor_or_gerencia_by_pin(
     if approver_doc:
         await _validate_login_pin_for_user(cast(Dict[str, Any], approver_doc), normalized_pin, request)
     else:
-        async for candidate in db.users.find(
-            {"is_pin_user": True, "is_active": True, "role": {"$in": ["supervisor", "gerencia"]}},
-            {"_id": 0},
-        ):
-            if verify_pin_hash(normalized_pin, get_login_pin_hash(candidate)):
-                await _validate_login_pin_for_user(cast(Dict[str, Any], candidate), normalized_pin, request)
-                approver_doc = candidate
-                break
+        legacy_approver = await _find_pin_user_by_legacy_scan(
+            normalized_pin,
+            extra_filter={"role": {"$in": ["supervisor", "gerencia"]}},
+        )
+        if legacy_approver:
+            await _validate_login_pin_for_user(legacy_approver, normalized_pin, request)
+            approver_doc = legacy_approver
 
     if not approver_doc:
         raise HTTPException(status_code=401, detail="PIN incorrecto o sin permisos de autorización")

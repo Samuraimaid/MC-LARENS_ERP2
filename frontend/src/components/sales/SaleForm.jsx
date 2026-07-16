@@ -127,12 +127,20 @@ import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollToAnchor } from "@/lib/scrollPageToTop";
 import {
   TIER_LABELS,
+  TIER_PRECIO1,
   TIER_PRECIO2,
+  buildTierChangeAuditEvent,
   cartNeedsPrecio2Approval,
+  canSellerEditLinePrice,
   detectPriceTier,
+  isSupervisorPricingRole,
+  repriceCartItemsForTier,
   resolveDefaultUnitPrice,
   resolveProductTierPrice,
 } from "@/lib/priceTiers";
+import PriceTierSelector from "@/components/sales/PriceTierSelector";
+import PriceTierCompare from "@/components/sales/PriceTierCompare";
+import DocumentAuditPanel from "@/components/sales/DocumentAuditPanel";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -333,6 +341,22 @@ export default function SaleForm({
   const [priceEditorAmount, setPriceEditorAmount] = useState("");
   const [priceEditorPercent, setPriceEditorPercent] = useState("0");
   const [salePricingContext, setSalePricingContext] = useState(null);
+  const [activePriceTier, setActivePriceTier] = useState(TIER_PRECIO1);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [tierChangeConfirmOpen, setTierChangeConfirmOpen] = useState(false);
+  const [pendingTierChange, setPendingTierChange] = useState(null);
+  const canEditLinePrice = useMemo(
+    () => canSellerEditLinePrice(user, salePricingContext),
+    [salePricingContext, user],
+  );
+  const effectivePricingContext = useMemo(() => {
+    if (!salePricingContext) return null;
+    return {
+      ...salePricingContext,
+      default_price_tier: activePriceTier || salePricingContext.default_price_tier,
+      default_price_tier_label: TIER_LABELS[activePriceTier] || salePricingContext.default_price_tier_label,
+    };
+  }, [salePricingContext, activePriceTier]);
   const [precio2ApprovalId, setPrecio2ApprovalId] = useState(null);
   const [commercialIncludeInstallation, setCommercialIncludeInstallation] = useState(false);
   const [commercialIncludeDelivery, setCommercialIncludeDelivery] = useState(false);
@@ -809,6 +833,8 @@ export default function SaleForm({
       }
       setSelectedWarehouse(draft?.selectedWarehouse || "");
       setCartItems(draft?.cartItems || []);
+      setActivePriceTier(draft?.activePriceTier || draft?.active_price_tier || TIER_PRECIO1);
+      setAuditEvents(Array.isArray(draft?.auditEvents) ? draft.auditEvents : []);
       setPaymentMethod(draft?.paymentMethod || draft?.payment_type || "cash");
       setMixedPaymentMethods(normalizePaymentMethodList(draft?.mixedPaymentMethods || draft?.mixed_payment_methods || []));
       const restoredGlobalDiscountMode = normalizeGlobalDiscountMode(draft?.globalDiscountMode || draft?.global_discount_mode);
@@ -1031,8 +1057,10 @@ export default function SaleForm({
           sku: product.sku || "",
           image: product.images?.[0] || null,
           quantity: 1,
-          unit_price: resolveDefaultUnitPrice(product, salePricingContext),
-          original_unit_price: resolveProductTierPrice(product, "precio1"),
+          unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
+          original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
+          price_tier: activePriceTier,
+          price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
           price_edit_history: [],
           price_edit_count: 0,
           discount: 0,
@@ -1786,6 +1814,9 @@ export default function SaleForm({
         commercial_include_installation: commercialIncludeInstallation,
         commercial_include_delivery: commercialIncludeDelivery,
       } : {}),
+      active_price_tier: activePriceTier,
+      active_price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
+      audit_events: auditEvents,
     };
     try {
       const result = onSubmit && onSubmit(payload);
@@ -1831,6 +1862,8 @@ export default function SaleForm({
       appliedDiscounts,
       customerSearch,
       productSearch,
+      activePriceTier,
+      auditEvents,
       vehicleFlowOption,
       logisticMode,
       deliveryDestinationType,
@@ -1871,6 +1904,8 @@ export default function SaleForm({
     appliedDiscounts,
     customerSearch,
     productSearch,
+    activePriceTier,
+    auditEvents,
     vehicleFlowOption,
     logisticMode,
     deliveryDestinationType,
@@ -2261,6 +2296,10 @@ export default function SaleForm({
   }, [normalizeVehicleId, notifySellerFlowLocked, persistDraftSnapshot, sellerFlowLocked, triggerVehiclePulse]);
 
   const updateCartItem = useCallback((productId, field, value, options = {}) => {
+    if (field === "unit_price" && !canEditLinePrice) {
+      toast.error("Los Vendedores VIP usan la tarifa establecida. Solo gerencia o supervisión pueden editar precios.");
+      return normalizedCartItems;
+    }
     if (!isSupervisorUser) {
       const lineLock = getSellerCartLineLockState(productId, draftReview);
       if (lineLock.locked && ["quantity", "discount", "unit_price", "with_installation"].includes(field)) {
@@ -2293,7 +2332,7 @@ export default function SaleForm({
       persistDraftSnapshot({ cartItems: nextCartItems });
     }
     return nextCartItems;
-  }, [draftReview, isSupervisorUser, normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
+  }, [canEditLinePrice, draftReview, isSupervisorUser, normalizedCartItems, persistDraftSnapshot, pushCartHistory]);
 
   const removeFromCart = useCallback((productId) => {
     if (!isSupervisorUser) {
@@ -2374,8 +2413,8 @@ export default function SaleForm({
   ]);
 
   const openPriceEditor = useCallback((item) => {
-    if (!isSupervisorUser) {
-      toast.error("Solo supervisores y gerencia pueden modificar precios.");
+    if (!canEditLinePrice) {
+      toast.error("Los Vendedores VIP usan la tarifa establecida. Solo gerencia o supervisión pueden editar precios.");
       return;
     }
     if (Number(item.price_edit_count || 0) >= 3) {
@@ -2389,7 +2428,7 @@ export default function SaleForm({
     setPriceEditorPercent("0");
     setPriceEditorOpen(true);
     playSelectionFeedbackSound();
-  }, [convertPrice, isSupervisorUser]);
+  }, [canEditLinePrice, convertPrice]);
 
   useEffect(() => {
     if (!priceEditorOpen) return undefined;
@@ -2666,6 +2705,8 @@ export default function SaleForm({
     const customerId = selectedCustomer?.customer_id;
     if (!customerId) {
       setSalePricingContext(null);
+      setActivePriceTier(TIER_PRECIO1);
+      setAuditEvents([]);
       setPrecio2ApprovalId(null);
       setCommercialIncludeInstallation(false);
       setCommercialIncludeDelivery(false);
@@ -2677,13 +2718,44 @@ export default function SaleForm({
       withCredentials: true,
     })
       .then((response) => {
-        if (!cancelled) setSalePricingContext(response.data || null);
+        if (!cancelled) {
+          const ctx = response.data || null;
+          setSalePricingContext(ctx);
+          if (ctx?.default_price_tier) {
+            setActivePriceTier((prev) => prev === TIER_PRECIO1 ? ctx.default_price_tier : prev);
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setSalePricingContext(null);
       });
     return () => { cancelled = true; };
   }, [selectedCustomer?.customer_id]);
+
+  const applyActiveTierChange = useCallback((newTier) => {
+    const fromTier = activePriceTier;
+    if (!newTier || newTier === fromTier) return;
+    const repriced = repriceCartItemsForTier(normalizedCartItems, productsById, newTier);
+    const auditEvent = buildTierChangeAuditEvent({ user, fromTier, toTier: newTier });
+    const nextAudit = [auditEvent, ...auditEvents];
+    setActivePriceTier(newTier);
+    setCartItems(repriced);
+    setAuditEvents(nextAudit);
+    persistDraftSnapshot({ activePriceTier: newTier, cartItems: repriced, auditEvents: nextAudit });
+    toast.success(`${TIER_LABELS[newTier] || newTier} aplicado a todas las líneas`);
+    setTierChangeConfirmOpen(false);
+    setPendingTierChange(null);
+  }, [activePriceTier, auditEvents, normalizedCartItems, persistDraftSnapshot, productsById, user]);
+
+  const handleActiveTierChange = useCallback((newTier) => {
+    if (!newTier || newTier === activePriceTier) return;
+    if (normalizedCartItems.length > 0) {
+      setPendingTierChange(newTier);
+      setTierChangeConfirmOpen(true);
+      return;
+    }
+    applyActiveTierChange(newTier);
+  }, [activePriceTier, applyActiveTierChange, normalizedCartItems.length]);
 
   useEffect(() => {
     setPrecio2ApprovalId(null);
@@ -3004,6 +3076,24 @@ export default function SaleForm({
                 <p className="mt-2 text-xs text-amber-700">
                   Este cliente Casa Comercial requiere un Vendedor VIP o supervisión.
                 </p>
+              ) : null}
+              {selectedCustomer && salePricingContext ? (
+                <div className="mt-3 space-y-2">
+                  <PriceTierSelector
+                    user={user}
+                    pricingContext={salePricingContext}
+                    activeTier={activePriceTier}
+                    onTierChange={handleActiveTierChange}
+                    disabled={sellerFlowLocked}
+                  />
+                  {auditEvents.some((e) => e.event_type === "tier_change") ? (
+                    <DocumentAuditPanel
+                      events={auditEvents.filter((e) => e.event_type === "tier_change").slice(0, 3)}
+                      activePriceTier={activePriceTier}
+                      activePriceTierLabel={TIER_LABELS[activePriceTier]}
+                    />
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -3558,6 +3648,7 @@ export default function SaleForm({
                     normalizedCategory.includes("servicio");
                   const stockStatus = getProductStockStatus(p, isServiceProduct);
                   const tone = getProductTone(stockStatus, isServiceProduct);
+                  const tierUnitPrice = resolveProductTierPrice(p, activePriceTier);
 
                   return (
                 <button
@@ -3749,7 +3840,7 @@ export default function SaleForm({
                             {/* Con instalación arriba (pequeño, muted) */}
                             <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
                               <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                              <ErpRollingCurrency value={convertPrice(p.price + (p.installation_price || 0))} currency={currency} />
+                              <ErpRollingCurrency value={convertPrice(tierUnitPrice + (p.installation_price || 0))} currency={currency} />
                             </p>
                             {/* Para llevar abajo (grande, negrita = seleccionado) */}
                             <p className={cn("inline-flex items-center gap-1 font-mono text-[13px] font-extrabold", tone.emphasisPrice)}>
@@ -3758,7 +3849,7 @@ export default function SaleForm({
                               ) : (
                                 <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                               )}
-                              <ErpRollingCurrency value={convertPrice(p.price)} currency={currency} />
+                              <PriceTierCompare product={p} activeTier={activePriceTier} currency={currency} convertPrice={convertPrice} size="lg" />
                             </p>
                           </>
                         ) : (
@@ -3773,7 +3864,7 @@ export default function SaleForm({
                               ) : (
                                 <Package className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                               )}
-                              <ErpRollingCurrency value={convertPrice(p.price)} currency={currency} />
+                              <PriceTierCompare product={p} activeTier={activePriceTier} currency={currency} convertPrice={convertPrice} />
                             </p>
                             {/* Con instalación abajo */}
                             {p.installation_type !== "not_available" && (p.installation_price || 0) > 0 && (
@@ -3782,7 +3873,7 @@ export default function SaleForm({
                                 hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
                               )}>
                                 <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                <ErpRollingCurrency value={convertPrice(p.price + (p.installation_price || 0))} currency={currency} />
+                                <ErpRollingCurrency value={convertPrice(tierUnitPrice + (p.installation_price || 0))} currency={currency} />
                               </p>
                             )}
                           </>
@@ -3897,7 +3988,6 @@ export default function SaleForm({
               : getSellerCartLineLockState(item.product_id, draftReview);
             const canDecreaseQuantity = !lineLock.locked && currentQuantity > 1;
             const canIncreaseQuantity = !lineLock.locked && (maxStoreQuantity === null ? true : currentQuantity < maxStoreQuantity);
-            const canEditLinePrice = isSupervisorUser || isSellerRole;
             const canRemoveLine = lineLock.deletable;
             return (
             <div key={item.product_id} className={cn("grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 shadow-sm ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5", tone.base)}>
@@ -3952,6 +4042,16 @@ export default function SaleForm({
                 {/* SKU + badges de estado */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={cn("text-[11px]", tone.sku)}>{item.sku || "N/A"}</span>
+                  {(() => {
+                    const itemTier = item.price_tier || detectPriceTier(sourceProduct, item.unit_price);
+                    const tierLabel = item.price_tier_label || TIER_LABELS[itemTier];
+                    if (!tierLabel || itemTier === TIER_PRECIO1) return null;
+                    return (
+                      <Badge variant="outline" className="border-violet-300 bg-violet-50/50 px-1.5 py-0 text-[10px] text-violet-800">
+                        {tierLabel}
+                      </Badge>
+                    );
+                  })()}
                   {hasSelectedVehicle && (() => {
                     const installType = item.installation_type || "optional";
                     if (installType === "not_available") return <Badge variant="outline" className="px-1.5 py-0 text-[10px]">Para llevar</Badge>;
@@ -4297,6 +4397,27 @@ export default function SaleForm({
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={closePriceEditor}>Cancelar</Button>
               <Button type="button" onClick={applyPriceEditor}>Aplicar precio</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={tierChangeConfirmOpen} onOpenChange={setTierChangeConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cambiar rango de precios</DialogTitle>
+              <DialogDescription>
+                Se actualizarán {normalizedCartItems.length} línea(s) al rango{" "}
+                {TIER_LABELS[pendingTierChange] || pendingTierChange}.
+                {isSupervisorPricingRole(user) ? " Este cambio quedará registrado en auditoría." : ""}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => { setTierChangeConfirmOpen(false); setPendingTierChange(null); }}>
+                Cancelar
+              </Button>
+              <Button type="button" onClick={() => applyActiveTierChange(pendingTierChange)}>
+                Confirmar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
