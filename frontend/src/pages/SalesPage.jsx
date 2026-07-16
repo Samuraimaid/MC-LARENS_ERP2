@@ -78,6 +78,7 @@ import {
 
 import SaleForm from "../components/sales/SaleForm";
 import SalePaymentPlanDialog from "../components/sales/SalePaymentPlanDialog";
+import SaleOperationalAuditDialog from "../components/sales/SaleOperationalAuditDialog";
 import DraftBoardCard from "@/components/erp/DraftBoardCard";
 import { OperationalJobCard } from "@/components/erp/OperationalJobCard";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
@@ -199,6 +200,8 @@ export function SalesPage() {
   const [search, setSearch] = useState("");
   const [paymentPlanDialogSale, setPaymentPlanDialogSale] = useState(null);
   const [paymentPlanDialogOpen, setPaymentPlanDialogOpen] = useState(false);
+  const [auditDialogSale, setAuditDialogSale] = useState(null);
+  const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showNewSale, setShowNewSale] = useState(true);
@@ -2027,6 +2030,12 @@ export function SalesPage() {
     setPaymentPlanDialogOpen(true);
   };
 
+  const openOperationalAuditModal = (sale) => {
+    if (!sale?.sale_id) return;
+    setAuditDialogSale(sale);
+    setAuditDialogOpen(true);
+  };
+
   const handlePaymentPlanSaved = (updatedSale) => {
     if (!updatedSale?.sale_id) return;
     setSales((prev) => prev.map((row) => (
@@ -2844,6 +2853,15 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Trazabilidad operativa"
+                          onClick={() => openOperationalAuditModal(sale)}
+                          data-testid={`audit-sale-${sale.sale_id}`}
+                        >
+                          <Wrench className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           title="Imprimir voucher"
                           onClick={() => (isSellerOnly ? printThermalSale(sale.sale_id) : printSale(sale))}
                           data-testid={`print-sale-${sale.sale_id}`}
@@ -2938,6 +2956,15 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                         embedded
                       />
                       <div className="flex flex-wrap gap-2 pt-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Trazabilidad operativa"
+                          onClick={() => openOperationalAuditModal(sale)}
+                          data-testid={`audit-closed-sale-${sale.sale_id}`}
+                        >
+                          <Wrench className="h-5 w-5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -3366,6 +3393,12 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         open={paymentPlanDialogOpen}
         onOpenChange={setPaymentPlanDialogOpen}
         onSaved={handlePaymentPlanSaved}
+      />
+
+      <SaleOperationalAuditDialog
+        sale={auditDialogSale}
+        open={auditDialogOpen}
+        onOpenChange={setAuditDialogOpen}
       />
       </>
       )}
