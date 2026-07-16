@@ -83,7 +83,7 @@ import DraftBoardCard from "@/components/erp/DraftBoardCard";
 import { OperationalJobCard } from "@/components/erp/OperationalJobCard";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
 import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/erpDesignSystem";
-import { canAccessCashier, canPrintLetterInvoice, isSellerRole } from "@/lib/roleHome";
+import { canAccessCashier, canPrintLetterInvoice, canReprintSellerVoucher, isSellerRole } from "@/lib/roleHome";
 import { computeDraftSnapshotTotals } from "@/lib/saleTotals";
 import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
@@ -140,6 +140,7 @@ export function SalesPage() {
   const canSeeAdvancedFilters = ["gerencia", "recursos_humanos", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
   const canUseCashier = canAccessCashier(user?.role);
   const isSellerOnly = isSellerRole(user?.role);
+  const canReprintVoucher = canReprintSellerVoucher(user?.role);
   const DRAFT_LIST_KEY_BASE = "draft_sale_tabs_v1";
   const DRAFT_ACTIVE_KEY_BASE = "draft_sale_active_v1";
   const DRAFT_KEY_PREFIX_BASE = "draft_sale_v1_";
@@ -2859,15 +2860,30 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                         >
                           <Wrench className="h-5 w-5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Imprimir voucher"
-                          onClick={() => (isSellerOnly ? printThermalSale(sale.sale_id) : printSale(sale))}
-                          data-testid={`print-sale-${sale.sale_id}`}
-                        >
-                          <Printer className="h-5 w-5" />
-                        </Button>
+                        {isSellerOnly ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Imprimir voucher"
+                            onClick={() => printThermalSale(sale.sale_id)}
+                            data-testid={`print-sale-${sale.sale_id}`}
+                          >
+                            <Printer className="h-5 w-5" />
+                          </Button>
+                        ) : null}
+                        {canReprintVoucher ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            title="Reimprimir voucher POS 80mm"
+                            onClick={() => printThermalSale(sale.sale_id)}
+                            data-testid={`reprint-voucher-${sale.sale_id}`}
+                          >
+                            <Printer className="h-4 w-4" />
+                            Reimprimir voucher
+                          </Button>
+                        ) : null}
                         {canPrintLetterInvoice(user?.role, sale) ? (
                           <Button
                             variant="ghost"

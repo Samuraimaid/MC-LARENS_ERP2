@@ -42,6 +42,11 @@ export function canPrintLetterInvoice(role, sale) {
   return String(sale?.payment_status || "").toLowerCase() === "paid";
 }
 
+/** Gerencia y supervisión pueden reimprimir el voucher POS 80mm desde el tablero. */
+export function canReprintSellerVoucher(role) {
+  return ["gerencia", "supervisor"].includes(String(role || "").toLowerCase());
+}
+
 /**
  * Ruta de aterrizaje post-login. Única fuente de verdad — no duplicar lógica en LoginPage.
  */

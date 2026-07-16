@@ -127,11 +127,6 @@ export default function DraftBoardCard({
                   <span className="truncate">{meta.sellerName}</span>
                 </Badge>
               ) : null}
-              {!isOwn ? (
-                <Badge variant="outline" className="border-amber-400/50 text-amber-800 dark:text-amber-300">
-                  Otro vendedor
-                </Badge>
-              ) : null}
               {relativeTime ? (
                 <Badge variant="outline" className="gap-1 text-[10px] font-normal text-muted-foreground">
                   <Clock className="h-3 w-3" />
