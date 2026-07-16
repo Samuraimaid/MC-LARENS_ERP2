@@ -74,6 +74,7 @@ from backend.domains.sales.delivery import (
     resolve_messenger_for_sale,
     validate_delivery_info,
 )
+from backend.domains.sales.operational_audit import build_operational_audit
 from backend.domains.vehicles.thumbnails import (
     apply_reset_metadata as vehicle_apply_reset_metadata,
     apply_upload_metadata as vehicle_apply_upload_metadata,
@@ -9485,6 +9486,7 @@ async def get_sale(sale_id: str, request: Request):
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
     sale = cast(Dict[str, Any], sale)
+    sale["operational_audit"] = await build_operational_audit(db, sale)
     return sale
 
 

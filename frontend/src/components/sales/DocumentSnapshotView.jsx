@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DocumentAuditPanel from "@/components/sales/DocumentAuditPanel";
+import SaleOperationalAuditPanel from "@/components/sales/SaleOperationalAuditPanel";
 import { TIER_LABELS } from "@/lib/priceTiers";
 import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -191,6 +192,10 @@ export function DocumentSnapshotView({ docType = "sale", docId: docIdProp, onBac
           ) : null}
         </CardContent>
       </Card>
+
+      {docType === "sale" ? (
+        <SaleOperationalAuditPanel audit={doc.operational_audit} />
+      ) : null}
 
       <DocumentAuditPanel
         events={doc.audit_events}

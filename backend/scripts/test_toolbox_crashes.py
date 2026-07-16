@@ -195,7 +195,73 @@ def test_option8_qr_path_in_output() -> None:
         fail("Opcion 8 no usa docker compose exec -T backend con ruta /app/backend/scripts/")
 
 
+def test_operational_audit_carryout_null_safe() -> None:
+    """Anti-crash: ventas de mostrador sin taller deben devolver operational_audit vacío."""
+    import asyncio
+
+    from backend.domains.sales.operational_audit import build_operational_audit
+
+    class _FakeCursor:
+        def __init__(self, rows):
+            self._rows = list(rows)
+
+        async def to_list(self, _length=None):
+            return list(self._rows)
+
+    class _FakeCollection:
+        def __init__(self, rows=None, one=None):
+            self._rows = rows or []
+            self._one = one
+
+        def find(self, _query, _projection=None):
+            return _FakeCursor(self._rows)
+
+        async def find_one(self, _query, _projection=None):
+            return self._one
+
+    class _FakeDB:
+        def __init__(self, **collections):
+            for name, coll in collections.items():
+                setattr(self, name, coll)
+
+    db = _FakeDB(
+        work_orders=_FakeCollection(),
+        tint_orders=_FakeCollection(),
+        dispatch_orders=_FakeCollection(one=None),
+        vehicles=_FakeCollection(one=None),
+        sales=_FakeCollection(
+            rows=[
+                {
+                    "sale_id": "sale_counter",
+                    "payment_status": "paid",
+                    "total": 120,
+                    "currency": "NIO",
+                    "items": [],
+                }
+            ]
+        ),
+    )
+    sale = {
+        "sale_id": "sale_counter",
+        "customer_id": "cust_counter",
+        "payment_status": "paid",
+        "total": 120,
+        "currency": "NIO",
+        "items": [],
+    }
+    audit = asyncio.run(build_operational_audit(db, sale))
+    assert audit["has_workshop_flow"] is False
+    assert audit.get("instalado_por") is None
+    assert audit.get("vehiculo") is None
+    assert audit.get("tiempo_espera_instalacion") is None
+    workshop_steps = {"bodega", "taller", "qc"}
+    assert not any(step.get("step") in workshop_steps for step in audit.get("timeline") or [])
+
+
 def main() -> int:
+    test_operational_audit_carryout_null_safe()
+    print("[test] operational_audit venta mostrador null-safe OK")
+
     print("[test] Validando mclarens_blackbox_toolbox.cmd ...")
     cmd_text = CMD_PATH.read_text(encoding="utf-8", errors="replace")
     static_validate_cmd(cmd_text)
