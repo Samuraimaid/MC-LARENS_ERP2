@@ -34,6 +34,7 @@ def _sample_sale() -> dict:
         },
         "items": [
             {
+                "product_sku": "RADIO-2DIN-GPS",
                 "product_name": 'Radio Android 10" Toyota Universal Bluetooth CarPlay',
                 "quantity": 1,
                 "unit_price": 252.0,
@@ -63,6 +64,36 @@ class TestSellerVoucherLayout:
         assert "Transferencia: C$ 3,753.00" in joined
         assert "Subtotal:" in joined
         assert "TOTAL:" in joined
+
+    def test_voucher_shows_product_sku_before_name(self):
+        lines = build_seller_voucher_text_lines(_sample_sale())
+        joined = "\n".join(lines)
+        assert "Cod: RADIO-2DIN-GPS" in joined
+        sku_idx = next(i for i, line in enumerate(lines) if "Cod: RADIO-2DIN-GPS" in line)
+        name_idx = next(i for i, line in enumerate(lines) if "Radio Android" in line)
+        assert sku_idx < name_idx
+
+    def test_discount_rows_prefer_product_sku_label(self):
+        sale = {
+            **_sample_sale(),
+            "subtotal": 9000.0,
+            "discounts_applied_amount": 0,
+            "total": 12015.0,
+            "net_to_collect": 12015.0,
+            "iva_amount": 1350.0,
+            "items": [
+                {
+                    "product_sku": "ALF-UNI-001",
+                    "product_name": "Alfombras de Goma Universal 4pcs",
+                    "quantity": 1,
+                    "unit_price": 43.51,
+                    "original_unit_price": 45.84,
+                    "discount": 0,
+                },
+            ],
+        }
+        joined = "\n".join(build_seller_voucher_text_lines(sale))
+        assert "Descuento precio (ALF-UNI-001):" in joined
 
     def test_long_product_name_wraps(self):
         sale = {

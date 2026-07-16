@@ -1533,6 +1533,7 @@ class InventoryUpdate(FlexibleModel):
 class QuotationItem(FlexibleModel):
     product_id: str
     product_name: str
+    product_sku: Optional[str] = None
     quantity: int
     unit_price: float
     with_installation: bool = False
@@ -1819,6 +1820,7 @@ class InvoiceEditPayload(FlexibleModel):
 class SaleItem(FlexibleModel):
     product_id: str
     product_name: str
+    product_sku: Optional[str] = None
     quantity: int
     unit_price: float
     original_unit_price: Optional[float] = None
@@ -2810,9 +2812,45 @@ async def _enrich_sale_payment_info(sale: Dict[str, Any]) -> Dict[str, Any]:
     return info
 
 
+async def _enrich_sale_items_product_sku(sale: Dict[str, Any]) -> Dict[str, Any]:
+    items = list(sale.get("items") or [])
+    if not items:
+        return sale
+    missing_ids = [
+        str(item.get("product_id"))
+        for item in items
+        if item.get("product_id")
+        and not str(item.get("product_sku") or item.get("sku") or "").strip()
+    ]
+    if not missing_ids:
+        return sale
+    unique_ids = list(dict.fromkeys(missing_ids))
+    products = await db.products.find(
+        {"product_id": {"$in": unique_ids}},
+        {"_id": 0, "product_id": 1, "sku": 1},
+    ).to_list(length=len(unique_ids))
+    sku_map = {
+        str(product.get("product_id")): str(product.get("sku") or "").strip()
+        for product in products
+        if str(product.get("sku") or "").strip()
+    }
+    if not sku_map:
+        return sale
+    enriched: List[Dict[str, Any]] = []
+    for item in items:
+        row = dict(item)
+        if not str(row.get("product_sku") or row.get("sku") or "").strip():
+            sku = sku_map.get(str(row.get("product_id") or ""))
+            if sku:
+                row["product_sku"] = sku
+        enriched.append(row)
+    return {**sale, "items": enriched}
+
+
 async def _build_seller_voucher_lines(sale: Dict[str, Any]) -> List[str]:
     from backend.domains.sales.seller_voucher_escpos import build_seller_voucher_text_lines
 
+    sale = await _enrich_sale_items_product_sku(sale)
     vehicle = None
     if sale.get("vehicle_id"):
         vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
@@ -7515,6 +7553,7 @@ async def create_quotation(quot_data: QuotationCreate, request: Request):
             QuotationItem(
                 product_id=product["product_id"],
                 product_name=product["name"],
+                product_sku=product.get("sku"),
                 quantity=qty,
                 unit_price=round(line_unit, 2),
                 with_installation=wants_installation,
@@ -9005,6 +9044,7 @@ async def create_sale(
             SaleItem(
                 product_id=product["product_id"],
                 product_name=product["name"],
+                product_sku=product.get("sku"),
                 quantity=qty,
                 unit_price=price,
                 original_unit_price=original_price_value,

@@ -312,6 +312,21 @@ def _short_product_label(name: Any, *, limit: int = 18) -> str:
     return _ascii_safe(str(name or "Producto"))[:limit]
 
 
+def _resolve_voucher_item_sku(item: Dict[str, Any]) -> str:
+    for key in ("product_sku", "sku", "product_code", "code"):
+        value = str(item.get(key) or "").strip()
+        if value:
+            return _ascii_safe(value)
+    return ""
+
+
+def _voucher_discount_product_label(item: Dict[str, Any]) -> str:
+    sku = _resolve_voucher_item_sku(item)
+    if sku:
+        return sku[:18]
+    return _short_product_label(item.get("product_name"))
+
+
 def _resolve_voucher_item_original_unit(item: Dict[str, Any], unit_usd: float) -> float:
     try:
         original_usd = float(item.get("original_unit_price") or unit_usd)
@@ -388,7 +403,7 @@ def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float
 
         pct_discount = original * qty * (disc_pct / 100.0)
         if pct_discount > 0.005:
-            short_name = _short_product_label(item.get("product_name"))
+            short_name = _voucher_discount_product_label(item)
             pct_label = _format_discount_pct_label(disc_pct)
             item_pct_rows.append((
                 f"Descuento linea {pct_label} ({short_name}):",
@@ -397,7 +412,7 @@ def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float
 
         manual = max(0.0, (original - unit) * qty * (1 - disc_pct / 100.0))
         if manual > 0.005:
-            short_name = _short_product_label(item.get("product_name"))
+            short_name = _voucher_discount_product_label(item)
             manual_rows.append((f"Descuento precio ({short_name}):", round(manual, 2)))
 
     item_pct_total = round(sum(amount for _, amount in item_pct_rows), 2)
@@ -571,6 +586,10 @@ def build_seller_voucher_lines(
 
     if show_items:
         for item in sale.get("items") or []:
+            sku = _resolve_voucher_item_sku(item)
+            if sku:
+                for wrapped in _wrap_words(f"Cod: {sku}", content_width):
+                    lines.append(VoucherLine(wrapped))
             name = str(item.get("product_name") or "Producto")
             if item.get("with_installation"):
                 name = f"{name} +INST"

@@ -368,6 +368,7 @@ def sample_sale_for_voucher_preview() -> Dict[str, Any]:
         "applied_discounts": [{"code": "VERANO10", "type": "percent", "value": 10}],
         "items": [
             {
+                "product_sku": "RADIO-2DIN-GPS",
                 "product_name": "Radio Android Toyota Universal",
                 "quantity": 1,
                 "unit_price": 252.0,
