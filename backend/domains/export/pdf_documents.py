@@ -238,6 +238,57 @@ def _truncate(text: str, max_len: int = 42) -> str:
     return value[: max_len - 1] + "…"
 
 
+def _wrap_pdf_text_lines(
+    text: str,
+    *,
+    font_name: str,
+    font_size: float,
+    max_width: float,
+) -> List[str]:
+    from reportlab.pdfbase import pdfmetrics
+
+    value = str(text or "").strip()
+    if not value:
+        return [""]
+    if pdfmetrics.stringWidth(value, font_name, font_size) <= max_width:
+        return [value]
+
+    words = value.split()
+    lines: List[str] = []
+    current = ""
+    for word in words:
+        candidate = f"{current} {word}".strip() if current else word
+        if pdfmetrics.stringWidth(candidate, font_name, font_size) <= max_width:
+            current = candidate
+            continue
+        if current:
+            lines.append(current)
+            current = ""
+        fragment = word
+        while fragment and pdfmetrics.stringWidth(fragment, font_name, font_size) > max_width:
+            chunk = ""
+            for char in fragment:
+                trial = f"{chunk}{char}"
+                if pdfmetrics.stringWidth(trial, font_name, font_size) <= max_width:
+                    chunk = trial
+                elif chunk:
+                    break
+                else:
+                    chunk = char
+                    break
+            lines.append(chunk)
+            fragment = fragment[len(chunk) :]
+        current = fragment
+    if current:
+        lines.append(current)
+    return lines or [""]
+
+
+def _pdf_item_row_height(line_count: int, *, base: float = 16, step: float = 12) -> float:
+    count = max(1, int(line_count or 1))
+    return base + max(0, count - 1) * step
+
+
 def _item_fulfillment_label(item: Dict[str, Any]) -> str:
     install_type = str(item.get("installation_type") or "optional")
     wants_install = bool(item.get("with_installation"))
@@ -933,24 +984,40 @@ def draw_invoice_letter_pdf(
         p.drawString(margin_x + 6, y + 1, title)
         y -= 16
 
+        product_col_x = margin_x + 24
+        modality_col_x = margin_x + 210
+        product_col_width = modality_col_x - product_col_x - 6
+        item_font = "Helvetica"
+        item_font_size = 8.5
+        item_line_step = 12.0
+
         for item in group_items:
-            if y < 150:
+            name_lines = _wrap_pdf_text_lines(
+                _item_display_name(item),
+                font_name=item_font,
+                font_size=item_font_size,
+                max_width=product_col_width,
+            )
+            row_height = _pdf_item_row_height(len(name_lines))
+            if y - row_height < 150:
                 p.showPage()
                 y = _new_page()
             if index % 2 == 0:
                 p.setFillColor(colors.HexColor("#F8FAFC"))
-                p.rect(margin_x, y - 4, content_width, 16, stroke=0, fill=1)
+                p.rect(margin_x, y - row_height + 4, content_width, row_height, stroke=0, fill=1)
             p.setFillColor(colors.HexColor(COLOR_TEXT))
-            p.setFont("Helvetica", 8.5)
+            p.setFont(item_font, item_font_size)
             discount_pct = float(item.get("discount") or 0)
             p.drawString(margin_x + 6, y, str(index))
-            p.drawString(margin_x + 24, y, _truncate(_item_display_name(item), 30))
-            p.drawString(margin_x + 210, y, _item_fulfillment_label(item))
+            p.drawString(product_col_x, y, name_lines[0])
+            for line_idx, name_line in enumerate(name_lines[1:], start=1):
+                p.drawString(product_col_x, y - (line_idx * item_line_step), name_line)
+            p.drawString(modality_col_x, y, _item_fulfillment_label(item))
             p.drawRightString(margin_x + 300, y, _format_money(currencies, item.get("unit_price", 0), currency))
             p.drawRightString(margin_x + 348, y, f"{int(float(item.get('quantity') or 0))}")
             p.drawRightString(margin_x + 392, y, f"{discount_pct:.0f}%" if discount_pct else "—")
             p.drawRightString(width - margin_x - 6, y, _format_money(currencies, _line_net_amount(item), currency))
-            y -= 16
+            y -= row_height
             index += 1
 
     if _sec("items_installed_group"):
@@ -1295,20 +1362,36 @@ def draw_document_pdf(
     y -= 20
 
     p.setFont("Helvetica", 8.5)
+    product_col_x = margin_x + 24
+    modality_col_x = margin_x + 250
+    product_col_width = modality_col_x - product_col_x - 6
+    item_font = "Helvetica"
+    item_font_size = 8.5
+    item_line_step = 12.0
     for index, item in enumerate(safe_items, start=1):
-        if y < 130:
+        name_lines = _wrap_pdf_text_lines(
+            str(item.get("product_name") or "").strip(),
+            font_name=item_font,
+            font_size=item_font_size,
+            max_width=product_col_width,
+        )
+        row_height = _pdf_item_row_height(len(name_lines), base=15, step=item_line_step)
+        if y - row_height < 130:
             p.showPage()
             _prepare_pdf_page(
                 p, width, height, company=company, pdf_settings=settings, logger=logger, logo_cache=logo_cache, doc_type=doc_type
             )
             y = height - 72
         p.setFillColor(colors.HexColor(COLOR_TEXT))
+        p.setFont(item_font, item_font_size)
         p.drawString(margin_x + 6, y, str(index))
-        p.drawString(margin_x + 24, y, _truncate(item.get("product_name", ""), 34))
-        p.drawString(margin_x + 250, y, _item_fulfillment_label(item))
+        p.drawString(product_col_x, y, name_lines[0])
+        for line_idx, name_line in enumerate(name_lines[1:], start=1):
+            p.drawString(product_col_x, y - (line_idx * item_line_step), name_line)
+        p.drawString(modality_col_x, y, _item_fulfillment_label(item))
         p.drawRightString(margin_x + 360, y, f"{int(float(item.get('quantity') or 0))}")
         p.drawRightString(width - margin_x - 6, y, _format_money(currencies, _line_net_amount(item), currency))
-        y -= 15
+        y -= row_height
 
     totals_x = width - margin_x - 220
     rows: List[Tuple[str, float]] = []

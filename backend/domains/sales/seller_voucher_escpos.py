@@ -39,6 +39,15 @@ def _resolve_voucher_settings(voucher_settings: Optional[Dict[str, Any]] = None)
     return normalize_seller_voucher_settings(voucher_settings)
 
 
+def _effective_voucher_width(
+    settings: Dict[str, Any],
+    width: Optional[int] = None,
+) -> int:
+    line_width = int(width or settings.get("chars_per_line") or VOUCHER_WIDTH)
+    margin = int(settings.get("left_margin_chars") or 0)
+    return max(8, line_width - margin)
+
+
 def _voucher_texts(settings: Dict[str, Any]) -> Dict[str, str]:
     return settings.get("texts") or DEFAULT_SELLER_VOUCHER_SETTINGS["texts"]
 
@@ -510,6 +519,7 @@ def build_seller_voucher_lines(
     settings = _resolve_voucher_settings(voucher_settings)
     texts = _voucher_texts(settings)
     line_width = int(width or settings.get("chars_per_line") or VOUCHER_WIDTH)
+    content_width = _effective_voucher_width(settings, width)
 
     lines: List[VoucherLine] = []
     invoice_number = normalize_invoice_scan_code(str(sale.get("invoice_number") or ""))
@@ -564,7 +574,7 @@ def build_seller_voucher_lines(
             name = str(item.get("product_name") or "Producto")
             if item.get("with_installation"):
                 name = f"{name} +INST"
-            for wrapped in _wrap_words(name, line_width):
+            for wrapped in _wrap_words(name, content_width):
                 lines.append(VoucherLine(wrapped))
 
             qty = int(item.get("quantity") or 0)
@@ -916,7 +926,7 @@ def build_seller_voucher_preview_pdf(
 
     def draw_voucher_line(line: VoucherLine) -> None:
         nonlocal y
-        text = _clip_line(line.text)
+        text = _clip_line(line.text, _effective_voucher_width(settings))
         stripped = text.strip()
         is_title = stripped in title_texts
         active_size = title_font_size if is_title else body_font_size

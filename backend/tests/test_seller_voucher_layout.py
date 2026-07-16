@@ -82,6 +82,29 @@ class TestSellerVoucherLayout:
         detail_idx = next(i for i, line in enumerate(lines) if line.strip().startswith("x"))
         assert detail_idx - start >= 2
 
+    def test_long_product_name_wraps_with_left_margin(self):
+        long_name = (
+            'Radio Android 10" Toyota Universal Bluetooth CarPlay '
+            "con pantalla tactil y camara de reversa incluida"
+        )
+        sale = {
+            **_sample_sale(),
+            "items": [{"product_name": long_name, "quantity": 1, "unit_price": 252.0, "with_installation": False}],
+        }
+        settings = normalize_seller_voucher_settings({"left_margin_chars": 4})
+        lines = build_seller_voucher_text_lines(sale, voucher_settings=settings)
+        name_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("x"):
+                break
+            if "Radio Android" in stripped or (
+                name_lines and stripped and not stripped.startswith("-") and ":" not in stripped
+            ):
+                name_lines.append(stripped)
+        assert len(name_lines) >= 2
+        assert all(len(line) <= VOUCHER_WIDTH - 4 for line in name_lines)
+
     def test_escpos_has_single_header_and_footer(self):
         sale = _sample_sale()
         payload = build_seller_voucher_escpos(sale)
