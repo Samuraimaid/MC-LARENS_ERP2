@@ -20,6 +20,7 @@ VOUCHER_WIDTH = 64  # Font B condensed on 80mm thermal paper (~17% less vertical
 VOUCHER_TOP_FEED_LINES = DEFAULT_SELLER_VOUCHER_SETTINGS["top_feed_lines"]
 VOUCHER_BARCODE_MODULE_WIDTH = DEFAULT_SELLER_VOUCHER_SETTINGS["barcode_module_width"]
 VOUCHER_BARCODE_PDF_BAR_WIDTH = DEFAULT_SELLER_VOUCHER_SETTINGS["barcode_pdf_bar_width"]
+VOUCHER_BARCODE_PDF_WIDTH_RATIO = 0.85
 _FONT_DIR = Path(__file__).resolve().parents[2] / "assets" / "fonts"
 _SHARE_TECH_MONO = _FONT_DIR / "ShareTechMono-Regular.ttf"
 _SHARE_TECH_MONO_REGISTERED = False
@@ -322,8 +323,9 @@ def _format_voucher_item_detail_line(
     disc_pct: float = 0.0,
     with_installation: bool = False,
     installation_usd: float = 0.0,
+    width: int = VOUCHER_WIDTH,
 ) -> str:
-    """Show catalog/base unit and line total; avoids duplicate prices when discounted."""
+    """Show catalog/base unit and line total with amounts right-aligned like breakdown rows."""
     unit = _convert_item_amount(unit_usd, currency, exchange_rate)
     original_usd = _resolve_voucher_item_original_unit(item, unit_usd)
     original = _convert_item_amount(original_usd, currency, exchange_rate)
@@ -334,11 +336,18 @@ def _format_voucher_item_detail_line(
     has_price_discount = original > unit + 0.005
     display_unit = original if has_price_discount else unit
 
-    detail = f"x{qty}  {format_voucher_money(display_unit, currency)}"
+    qty_label = f"x{qty}"
     if disc_pct > 0.005:
-        detail += f"  -{_format_discount_pct_label(disc_pct)}"
-    detail += f"  {format_voucher_money(line_total, currency)}"
-    return detail
+        qty_label += f"  -{_format_discount_pct_label(disc_pct)}"
+
+    money_parts: List[str] = []
+    if has_price_discount:
+        money_parts.append(format_voucher_money(display_unit, currency))
+    money_parts.append(format_voucher_money(line_total, currency))
+    money = "  ".join(money_parts)
+
+    gap = max(1, width - len(qty_label) - len(money))
+    return _clip_line(f"{qty_label}{' ' * gap}{money}", width)
 
 
 def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float, Dict[str, Any]]], str]:
@@ -571,8 +580,9 @@ def build_seller_voucher_lines(
                 disc_pct=disc_pct,
                 with_installation=bool(item.get("with_installation")),
                 installation_usd=install_usd,
+                width=line_width,
             )
-            lines.append(VoucherLine(_clip_line(detail, line_width)))
+            lines.append(VoucherLine(detail))
 
     if show_breakdown:
         if show_items:
@@ -838,6 +848,34 @@ def _register_share_tech_mono() -> str:
     return "Courier"
 
 
+def _build_pdf_barcode(
+    invoice_number: str,
+    *,
+    paper_width: float,
+    margin_x: float,
+    bar_height: float,
+    base_bar_width: float,
+):
+    from reportlab.graphics.barcode import code128
+
+    usable_width = max(1.0, paper_width - (2 * margin_x))
+    target_width = usable_width * VOUCHER_BARCODE_PDF_WIDTH_RATIO
+    barcode = code128.Code128(
+        invoice_number,
+        barHeight=bar_height,
+        barWidth=base_bar_width,
+    )
+    if barcode.width > 0 and abs(barcode.width - target_width) > 0.5:
+        scaled_bar_width = max(0.08, base_bar_width * (target_width / barcode.width))
+        barcode = code128.Code128(
+            invoice_number,
+            barHeight=bar_height,
+            barWidth=scaled_bar_width,
+        )
+    barcode_x = margin_x + max(0.0, (usable_width - barcode.width) / 2)
+    return barcode, barcode_x
+
+
 def build_seller_voucher_preview_pdf(
     sale: Dict[str, Any],
     *,
@@ -845,7 +883,6 @@ def build_seller_voucher_preview_pdf(
     text_lines: Optional[List[str]] = None,
     voucher_settings: Optional[Dict[str, Any]] = None,
 ) -> bytes:
-    from reportlab.graphics.barcode import code128
     from reportlab.lib.units import mm as mm_unit
     from reportlab.pdfgen import canvas
 
@@ -904,12 +941,13 @@ def build_seller_voucher_preview_pdf(
         pdf.drawCentredString(width / 2, y, texts["scan_label"])
         y -= title_line_height + (2 * mm_unit)
     if _section_enabled(settings, "barcode") and invoice_number:
-        barcode = code128.Code128(
+        barcode, barcode_x = _build_pdf_barcode(
             invoice_number,
-            barHeight=12 * mm_unit,
-            barWidth=barcode_pdf_width,
+            paper_width=width,
+            margin_x=margin_x,
+            bar_height=12 * mm_unit,
+            base_bar_width=barcode_pdf_width,
         )
-        barcode_x = max(margin_x, (width - barcode.width) / 2)
         barcode.drawOn(pdf, barcode_x, max(18 * mm_unit, y - 16 * mm_unit))
         y -= 20 * mm_unit
         pdf.setFont(font_name, body_font_size)

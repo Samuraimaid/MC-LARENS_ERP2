@@ -171,6 +171,47 @@ class TestSellerVoucherLayout:
         assert total_line.rstrip().endswith(money)
         assert "  " in total_line
 
+    def test_discounted_item_prices_right_aligned_with_breakdown(self):
+        sale = {
+            **_sample_sale(),
+            "items": [
+                {
+                    "product_name": "Alfombras de Goma Universal 4pcs",
+                    "quantity": 1,
+                    "unit_price": 43.51,
+                    "original_unit_price": 45.84,
+                    "discount": 0,
+                },
+            ],
+        }
+        lines = build_seller_voucher_text_lines(sale)
+        detail_line = next(line for line in lines if line.strip().startswith("x1"))
+        subtotal_line = next(line for line in lines if line.strip().startswith("Subtotal:"))
+        assert "  C$" in detail_line
+        assert len(detail_line.rstrip()) == len(subtotal_line.rstrip())
+
+    def test_pdf_barcode_uses_eighty_five_percent_paper_width(self):
+        pytest = __import__("pytest")
+        mm_unit = pytest.importorskip("reportlab.lib.units").mm
+
+        from backend.domains.sales.seller_voucher_escpos import (
+            VOUCHER_BARCODE_PDF_WIDTH_RATIO,
+            _build_pdf_barcode,
+        )
+
+        width = 80 * mm_unit
+        margin_x = 1.5 * mm_unit
+        barcode, _ = _build_pdf_barcode(
+            "INV-20260716-0001",
+            paper_width=width,
+            margin_x=margin_x,
+            bar_height=12 * mm_unit,
+            base_bar_width=0.66,
+        )
+        usable = width - (2 * margin_x)
+        target = usable * VOUCHER_BARCODE_PDF_WIDTH_RATIO
+        assert abs(barcode.width - target) <= max(2.0, target * 0.05)
+
     def test_credit_sale_shows_agreed_payment_method_without_plan(self):
         sale = {
             **_sample_sale(),
