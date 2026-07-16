@@ -16,7 +16,7 @@ import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../../lib/utils";
 import { toast } from "sonner";
-import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, User, Users, RefreshCw, Unlock, X } from "lucide-react";
+import { Bell, BookOpen, Briefcase, Building2, Calculator, Car, Check, ClipboardList, Cloud, CloudAlert, CloudDownload, CloudUpload, FlaskConical, Lock, LogOut, Menu, Moon, Search, ShoppingCart, Sun, User, Users, RefreshCw, Unlock, X } from "lucide-react";
 import { useDevice } from "../../hooks/useDevice";
 import { BottomNav } from "./BottomNav";
 import {
@@ -24,6 +24,7 @@ import {
   isSellerRole as isSellerRoleHelper,
   usesRestrictedNavigation,
 } from "../../lib/roleHome";
+import { formatRoleBadgeLabel } from "../../lib/priceTiers";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -37,6 +38,7 @@ const BRANCH_LABELS = {
 
 const WORKBENCH_TAB_ITEMS = [
   { key: "notifications", label: "Notificaciones", icon: Bell },
+  { key: "search", label: "Buscador", icon: Search },
   { key: "sales", label: "Ventas", icon: ShoppingCart },
   { key: "quotations", label: "Cotizaciones", icon: ClipboardList },
   { key: "catalog", label: "Catálogo", icon: BookOpen },
@@ -106,7 +108,7 @@ export function MainLayout() {
   const lastBackWarningRef = useRef(0);
   const branding = getBrandingForBranch(user?.branch_id);
   const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
-  const roleLabel = String(user?.role || "sin_rol").replace(/_/g, " ").toUpperCase();
+  const roleLabel = formatRoleBadgeLabel(user);
   const userFirstName = String(user?.name || "").trim();
   const userLastName = String(user?.last_name || user?.lastname || user?.apellido || "").trim();
   const userDisplayName = useMemo(() => {
@@ -633,7 +635,7 @@ export function MainLayout() {
               {!isMobile && isWorkbenchRoute ? (
                 <div className="hidden min-w-0 flex-1 justify-center lg:flex">
                   <Tabs value={activeWorkbenchTab} onValueChange={handleWorkbenchTabChange} className="w-full max-w-[980px]">
-                    <TabsList className="grid h-12 w-full grid-cols-7 rounded-full border bg-card/95 p-1">
+                    <TabsList className="grid h-12 w-full grid-cols-8 rounded-full border bg-card/95 p-1">
                       {WORKBENCH_TAB_ITEMS.map((tab) => {
                         const Icon = tab.icon;
                         return (

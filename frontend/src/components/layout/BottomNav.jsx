@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, BookOpen, Car, ClipboardList, FlaskConical, ShoppingCart, Users } from "lucide-react";
+import { Bell, BookOpen, Car, ClipboardList, FlaskConical, Search, ShoppingCart, Users } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const NAV_ITEMS = [
   { key: "notifications", label: "Alertas", icon: Bell },
+  { key: "search", label: "Buscar", icon: Search },
   { key: "sales", label: "Ventas", icon: ShoppingCart },
   { key: "quotations", label: "Cotizac.", icon: ClipboardList },
   { key: "catalog", label: "Catálogo", icon: BookOpen },

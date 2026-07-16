@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Bell, BookOpen, Car, ClipboardList, FlaskConical, ShoppingCart, Users } from "lucide-react";
+import { Bell, BookOpen, Car, ClipboardList, FlaskConical, Search, ShoppingCart, Users } from "lucide-react";
+import UniversalSearchPanel from "@/components/search/UniversalSearchPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function lazyNamedPage(loader, exportName) {
@@ -18,12 +19,22 @@ const SamplesPage = lazyNamedPage(() => import("./SamplesPage"), "SamplesPage");
 const CustomersPage = lazyNamedPage(() => import("./CustomersPage"), "CustomersPage");
 const VehiclesPage = lazyNamedPage(() => import("./VehiclesPage"), "VehiclesPage");
 
+function WorkbenchSearchTab() {
+  return <UniversalSearchPanel embedded />;
+}
+
 const TAB_CONFIG = [
   {
     key: "notifications",
     label: "Notificaciones",
     icon: Bell,
     component: NotificationsPage,
+  },
+  {
+    key: "search",
+    label: "Buscador",
+    icon: Search,
+    component: WorkbenchSearchTab,
   },
   {
     key: "sales",
@@ -87,7 +98,7 @@ export function WorkbenchPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3 animate-fade-up-soft">
         {/* Tablet-only tab strip: visible on 640–1023px. Phones use BottomNav; desktop uses header tabs. */}
         <div className="hidden w-full pb-1 sm:block lg:hidden">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-4">
             {TAB_CONFIG.map((tab) => {
               const Icon = tab.icon;
               return (

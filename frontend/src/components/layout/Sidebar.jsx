@@ -57,7 +57,7 @@ import { fetchNodeProfile, getCachedNodeProfile, isRouteEnabledByNodeProfile } f
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["gerencia", "recursos_humanos"] },
-  { name: "Buscador ERP", href: "/search", icon: Search, roles: ["all"] },
+  { name: "Buscador ERP", href: "/workbench?tab=search", icon: Search, roles: ["all"] },
   { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "programador", "cajero"] },
   { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },

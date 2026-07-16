@@ -1,7 +1,25 @@
 import asyncio
+import re
 from unittest.mock import AsyncMock, MagicMock
 
-from backend.domains.search.unified_search import unified_search
+from backend.domains.search.unified_search import (
+    normalize_plate_token,
+    plate_flexible_regex,
+    unified_search,
+)
+
+
+def test_normalize_plate_token_strips_spaces_and_dashes():
+    assert normalize_plate_token("M 123 261") == "M123261"
+    assert normalize_plate_token("m-123") == "M123"
+
+
+def test_plate_flexible_regex_matches_spaced_plates():
+    pattern = plate_flexible_regex("M123")
+    assert pattern
+    assert re.search(pattern, "M 123 261", re.IGNORECASE)
+    assert re.search(pattern, "M123261", re.IGNORECASE)
+    assert re.search(pattern, "M 123", re.IGNORECASE)
 
 
 def test_unified_search_empty_query_returns_empty():

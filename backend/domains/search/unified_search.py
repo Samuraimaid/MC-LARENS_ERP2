@@ -24,6 +24,30 @@ def _regex_safe(term: str) -> str:
     return re.escape(term.strip())
 
 
+def normalize_plate_token(value: str) -> str:
+    """Collapse plate text for tolerant matching (ignore spaces and dashes)."""
+    return re.sub(r"[\s\-]+", "", str(value or "").strip().upper())
+
+
+def plate_flexible_regex(term: str) -> str:
+    """Build a regex that matches plates regardless of spacing between characters."""
+    normalized = normalize_plate_token(term)
+    if len(normalized) < 2:
+        return ""
+    return r"\s*".join(re.escape(char) for char in normalized)
+
+
+async def _match_vehicle_ids_by_plate(db, term: str) -> set[str]:
+    pattern = plate_flexible_regex(term)
+    if not pattern:
+        return set()
+    vehicles = await db.vehicles.find(
+        {"plate": {"$regex": pattern, "$options": "i"}},
+        {"_id": 0, "vehicle_id": 1, "customer_id": 1},
+    ).to_list(100)
+    return {str(v.get("vehicle_id")) for v in vehicles if v.get("vehicle_id")}
+
+
 async def _match_user_ids(db, term: str) -> set[str]:
     if not term or len(term) < 2:
         return set()
@@ -58,13 +82,15 @@ async def _match_customer_ids(db, term: str) -> set[str]:
     ).to_list(100)
     ids = {str(c.get("customer_id")) for c in customers if c.get("customer_id")}
 
-    vehicles = await db.vehicles.find(
-        {"plate": {"$regex": pattern, "$options": "i"}},
-        {"_id": 0, "customer_id": 1, "vehicle_id": 1},
-    ).to_list(50)
-    for v in vehicles:
-        if v.get("customer_id"):
-            ids.add(str(v["customer_id"]))
+    plate_pattern = plate_flexible_regex(term)
+    if plate_pattern:
+        vehicles = await db.vehicles.find(
+            {"plate": {"$regex": plate_pattern, "$options": "i"}},
+            {"_id": 0, "customer_id": 1, "vehicle_id": 1},
+        ).to_list(100)
+        for v in vehicles:
+            if v.get("customer_id"):
+                ids.add(str(v["customer_id"]))
     return ids
 
 
@@ -129,6 +155,7 @@ async def unified_search(
 
     user_ids = await _match_user_ids(db, term) if term else set()
     customer_ids = await _match_customer_ids(db, term) if term else set()
+    matched_vehicle_ids = await _match_vehicle_ids_by_plate(db, term) if term else set()
 
     pattern = _regex_safe(term) if term else ""
 
@@ -144,6 +171,8 @@ async def unified_search(
             ])
         if customer_ids:
             or_filters.append({"customer_id": {"$in": list(customer_ids)}})
+        if matched_vehicle_ids:
+            or_filters.append({"vehicle_id": {"$in": list(matched_vehicle_ids)}})
         if user_ids:
             or_filters.append({"salesperson_id": {"$in": list(user_ids)}})
         if or_filters:
@@ -171,12 +200,12 @@ async def unified_search(
         ).sort("created_at", -1).to_list(limit * 2)
 
         vehicle_plates: dict[str, str] = {}
-        vehicle_ids = [s.get("vehicle_id") for s in sales if s.get("vehicle_id")]
-        if vehicle_ids:
+        sale_vehicle_ids = [s.get("vehicle_id") for s in sales if s.get("vehicle_id")]
+        if sale_vehicle_ids:
             veh_docs = await db.vehicles.find(
-                {"vehicle_id": {"$in": vehicle_ids}},
+                {"vehicle_id": {"$in": sale_vehicle_ids}},
                 {"_id": 0, "vehicle_id": 1, "plate": 1},
-            ).to_list(len(vehicle_ids))
+            ).to_list(len(sale_vehicle_ids))
             vehicle_plates = {str(v["vehicle_id"]): str(v.get("plate") or "") for v in veh_docs}
 
         for sale in sales:
@@ -220,6 +249,8 @@ async def unified_search(
             ])
         if customer_ids:
             or_filters.append({"customer_id": {"$in": list(customer_ids)}})
+        if matched_vehicle_ids:
+            or_filters.append({"vehicle_id": {"$in": list(matched_vehicle_ids)}})
         if user_ids:
             or_filters.append({"salesperson_id": {"$in": list(user_ids)}})
         if or_filters:
