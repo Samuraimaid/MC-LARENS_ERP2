@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import {
+  formatDocumentExchangeRateLabel,
+  formatDocumentLineAmount,
+  formatDocumentSettlementAmount,
+} from "@/lib/documentCurrency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,6 +98,9 @@ export function DocumentSnapshotView({ docType = "sale", docId: docIdProp, onBac
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
+          <div className="rounded-md border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/30 dark:bg-sky-950/30 dark:text-sky-200">
+            {formatDocumentExchangeRateLabel(doc)}
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <p className="text-muted-foreground">Cliente</p>
@@ -123,7 +131,7 @@ export function DocumentSnapshotView({ docType = "sale", docId: docIdProp, onBac
                 <p className="text-muted-foreground">Descuento global</p>
                 <p>
                   {doc.discount_percent != null ? `${doc.discount_percent}%` : ""}
-                  {doc.discount ? ` (${formatCurrency(doc.discount, doc.currency || "USD")})` : ""}
+                  {doc.discount ? ` (${formatDocumentSettlementAmount(doc.discount, doc)})` : ""}
                 </p>
               </div>
             ) : null}
@@ -145,12 +153,18 @@ export function DocumentSnapshotView({ docType = "sale", docId: docIdProp, onBac
                   <tr key={item.product_id || idx} className="border-t">
                     <td className="p-2">{item.product_name}</td>
                     <td className="p-2 text-right">{item.quantity}</td>
-                    <td className="p-2 text-right font-mono">{formatCurrency(item.unit_price, doc.currency || "USD")}</td>
+                    <td className="p-2 text-right font-mono text-[11px] leading-tight">
+                      {formatDocumentLineAmount(item.unit_price, doc, docType)}
+                    </td>
                     <td className="p-2 text-right text-muted-foreground">
                       {item.price_tier_label || TIER_LABELS[item.price_tier] || "—"}
                     </td>
-                    <td className="p-2 text-right font-mono">
-                      {formatCurrency(item.subtotal ?? (item.unit_price * item.quantity), doc.currency || "USD")}
+                    <td className="p-2 text-right font-mono text-[11px] leading-tight">
+                      {formatDocumentLineAmount(
+                        item.subtotal ?? (item.unit_price * item.quantity),
+                        doc,
+                        docType,
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -160,9 +174,12 @@ export function DocumentSnapshotView({ docType = "sale", docId: docIdProp, onBac
 
           <div className="flex justify-end">
             <div className="space-y-1 text-right text-sm">
-              <p>Subtotal: {formatCurrency(doc.subtotal, doc.currency || "USD")}</p>
-              {doc.tax ? <p>IVA: {formatCurrency(doc.tax, doc.currency || "USD")}</p> : null}
-              <p className={cn("text-base font-bold")}>Total: {formatCurrency(doc.total, doc.currency || "USD")}</p>
+              <p>Subtotal: {formatDocumentSettlementAmount(doc.subtotal, doc)}</p>
+              {doc.tax ? <p>IVA: {formatDocumentSettlementAmount(doc.tax, doc)}</p> : null}
+              {doc.discount ? (
+                <p>Descuento: {formatDocumentSettlementAmount(doc.discount, doc)}</p>
+              ) : null}
+              <p className={cn("text-base font-bold")}>Total: {formatDocumentSettlementAmount(doc.total, doc)}</p>
             </div>
           </div>
 
