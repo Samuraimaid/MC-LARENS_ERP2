@@ -30,7 +30,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: mc-larenserp20-backend:updated-20260619c
+    image: mc-larenserp20-backend:origin-7407a21-clean
     container_name: mundo-backend
     restart: unless-stopped
     ports:
@@ -120,7 +120,7 @@ services:
         VITE_FAILOVER_TUNNEL_MAIN: ${VITE_FAILOVER_TUNNEL_MAIN:-https://mclarenerp.com}
         VITE_FAILOVER_TUNNEL_NORTH: ${VITE_FAILOVER_TUNNEL_NORTH:-https://north.mclarenerp.com}
         VITE_FAILOVER_TUNNEL_SOUTH: ${VITE_FAILOVER_TUNNEL_SOUTH:-https://south.mclarenerp.com}
-    image: mundo-frontend:updated-20260619c
+    image: mundo-frontend:origin-7407a21-clean
     container_name: mundo-frontend
     restart: unless-stopped
     ports:

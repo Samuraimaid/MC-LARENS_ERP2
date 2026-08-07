@@ -11,9 +11,12 @@ class PinPolicyService:
 
     def defaults(self) -> Dict[str, Any]:
         return {
-            "max_attempts": int(os.environ.get("PIN_MAX_ATTEMPTS", "5")),
-            "lockout_minutes": int(os.environ.get("PIN_LOCKOUT_MIN", "15")),
+            # Public keypad default: lock after 3 wrong PINs (brute-force protection).
+            "max_attempts": int(os.environ.get("PIN_MAX_ATTEMPTS", "3")),
+            "lockout_minutes": int(os.environ.get("PIN_LOCKOUT_MIN", "0")),
             "lockout_seconds": int(os.environ.get("PIN_LOCKOUT_S", "30")),
+            "progressive_lockout": os.environ.get("PIN_PROGRESSIVE_LOCKOUT", "true").lower() in ("1", "true", "yes"),
+            "lockout_max_seconds": int(os.environ.get("PIN_LOCKOUT_MAX_S", "3600")),
             "pin_expiry_days": int(os.environ.get("PIN_EXPIRY_DAYS", "90")),
             "pin_rotation_days": int(os.environ.get("PIN_ROTATION_DAYS", "60")),
             "enforce_rotation": os.environ.get("PIN_ROTATION_ENFORCE", "false").lower() in ("1", "true", "yes"),
@@ -28,6 +31,8 @@ class PinPolicyService:
         merged["max_attempts"] = max(1, int(merged["max_attempts"]))
         merged["lockout_minutes"] = max(0, int(merged["lockout_minutes"]))
         merged["lockout_seconds"] = max(0, int(merged.get("lockout_seconds", 0)))
+        merged["progressive_lockout"] = bool(merged.get("progressive_lockout", True))
+        merged["lockout_max_seconds"] = max(0, int(merged.get("lockout_max_seconds") or 3600))
         merged["pin_expiry_days"] = int(merged["pin_expiry_days"])
         merged["pin_rotation_days"] = int(merged["pin_rotation_days"])
         merged["ip_window_seconds"] = max(1, int(merged["ip_window_seconds"]))
