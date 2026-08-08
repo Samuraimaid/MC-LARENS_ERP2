@@ -655,10 +655,24 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "dispatch": ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
     "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
     "promotions": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
-    "work_orders": ["gerencia", "supervisor", "instalaciones", "electrico", "coordinador_instalaciones"],
+    "work_orders": [
+        "gerencia",
+        "supervisor",
+        "instalaciones",
+        "electrico",
+        "polarizador",
+        "coordinador_instalaciones",
+        "coordinador_polarizados",
+    ],
     "coordinator_instalaciones": ["gerencia", "supervisor", "coordinador_instalaciones"],
     "coordinator_polarizados": ["gerencia", "supervisor", "coordinador_polarizados"],
-    "quality_control": ["gerencia", "supervisor", "coordinador_instalaciones"],
+    "quality_control": [
+        "gerencia",
+        "supervisor",
+        "coordinador_instalaciones",
+        "coordinador_polarizados",
+        "jefe_tienda",
+    ],
     "kds": ["all"],
     "deliveries": ["gerencia", "supervisor", "transporte", "entregador"],
     "calendar": ["gerencia", "supervisor", "instalaciones", "coordinador_instalaciones"],
@@ -714,8 +728,10 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
         "technician_completed_jobs",
     },
     "coordinador_polarizados": {
+        "work_orders",
         "tint_orders",
         "coordinator_polarizados",
+        "quality_control",
         "kds",
         "technician_completed_jobs",
     },
@@ -728,7 +744,7 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
         "tint_orders",  # legacy start/window endpoints also allow instalaciones
     },
     "electrico": {"work_orders", "kds", "technician_completed_jobs"},
-    "polarizador": {"tint_orders", "kds", "technician_completed_jobs"},
+    "polarizador": {"work_orders", "tint_orders", "kds", "technician_completed_jobs"},
     "transporte": {"deliveries"},
     "entregador": {"deliveries"},
 }
@@ -772,7 +788,9 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
         "kds": {"view": True, "edit": True},
     },
     "coordinador_polarizados": {
+        "work_orders": {"view": True, "create": True, "edit": True},
         "tint_orders": {"view": True, "create": True, "edit": True},
+        "quality_control": {"view": True, "create": True, "edit": True},
         "coordinator_polarizados": {"view": True, "edit": True},
         "kds": {"view": True, "edit": True},
     },
@@ -785,6 +803,7 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
         "kds": {"view": True, "edit": True},
     },
     "polarizador": {
+        "work_orders": {"view": True, "edit": True},
         "tint_orders": {"view": True, "edit": True},
         "kds": {"view": True, "edit": True},
     },
@@ -8647,12 +8666,19 @@ async def _create_tint_order_from_sale(
     customer: Dict[str, Any],
     polarizado_items: List[Dict[str, Any]],
     vehicle_info: Dict[str, Any],
+    *,
+    work_order_id: Optional[str] = None,
 ) -> Optional[str]:
     if not polarizado_items:
         return None
     sale_id = sale_doc.get("sale_id")
-    existing = await db.tint_orders.find_one({"sale_id": sale_id}, {"_id": 0, "tint_order_id": 1})
+    existing = await db.tint_orders.find_one({"sale_id": sale_id}, {"_id": 0, "tint_order_id": 1, "work_order_id": 1})
     if existing and existing.get("tint_order_id"):
+        if work_order_id and not existing.get("work_order_id"):
+            await db.tint_orders.update_one(
+                {"tint_order_id": existing["tint_order_id"]},
+                {"$set": {"work_order_id": work_order_id}},
+            )
         return str(existing.get("tint_order_id"))
 
     windows: List[Dict[str, Any]] = []
@@ -8709,11 +8735,12 @@ async def _create_tint_order_from_sale(
         "tint_order_id": tint_order_id,
         "sale_id": sale_id,
         "invoice_number": sale_doc.get("invoice_number"),
-        "work_order_id": None,
+        "work_order_id": work_order_id,
         "customer_id": customer.get("customer_id"),
         "customer_name": customer.get("name"),
         "vehicle_id": sale_doc.get("vehicle_id"),
         "vehicle_info": vehicle_info,
+        "branch_id": sale_doc.get("branch_id"),
         "salesperson_id": sale_doc.get("salesperson_id"),
         "salesperson_name": sale_doc.get("salesperson_name"),
         "windows": windows,
@@ -8730,6 +8757,11 @@ async def _create_tint_order_from_sale(
         "auto_generated": True,
     }
     await db.tint_orders.insert_one(tint_doc)
+    if work_order_id:
+        await db.work_orders.update_one(
+            {"work_order_id": work_order_id},
+            {"$set": {"tint_order_id": tint_order_id}},
+        )
     return tint_order_id
 
 
@@ -8784,7 +8816,8 @@ async def trigger_sale_fulfillment_after_payment(sale_id: str) -> Dict[str, Any]
     work_order_ids: List[str] = []
     primary_work_order_id: Optional[str] = None
 
-    for department in ("instalaciones", "electrico"):
+    # Polarizados also create standard work orders (OT) so KDS/coord use the same machine.
+    for department in ("instalaciones", "electrico", "polarizados"):
         dept_items = grouped_items.get(department) or []
         dept_wo_ids = await _create_work_order_for_department(
             sale, customer, department, dept_items, vehicle_info_str
@@ -8794,11 +8827,23 @@ async def trigger_sale_fulfillment_after_payment(sale_id: str) -> Dict[str, Any]
             if not primary_work_order_id:
                 primary_work_order_id = wo_id
 
+    polarizado_items = grouped_items.get("polarizados") or []
+    # Link tint detail order to first polarizados OT when present
+    polar_primary_wo: Optional[str] = None
+    if polarizado_items:
+        polar_docs = await db.work_orders.find(
+            {"sale_id": sale_id, "department": "polarizados"},
+            {"_id": 0, "work_order_id": 1},
+        ).sort("created_at", 1).to_list(20)
+        if polar_docs:
+            polar_primary_wo = str(polar_docs[0].get("work_order_id") or "") or None
+
     tint_order_id = await _create_tint_order_from_sale(
         sale,
         customer,
-        grouped_items.get("polarizados") or [],
+        polarizado_items,
         vehicle_info_obj,
+        work_order_id=polar_primary_wo,
     )
 
     has_physical_dispatch = dispatch_id is not None
@@ -8853,21 +8898,31 @@ async def trigger_sale_fulfillment_after_payment(sale_id: str) -> Dict[str, Any]
                 dedupe_key=f"installation_pending_assignment:{sale_id}:{coordinator_id}",
             )
 
+    polar_wo_notify = [
+        str(w.get("work_order_id"))
+        for w in await db.work_orders.find(
+            {"sale_id": sale_id, "department": "polarizados"},
+            {"_id": 0, "work_order_id": 1},
+        ).to_list(50)
+        if w.get("work_order_id")
+    ]
     for coordinator_id in await _get_coordinator_user_ids(
         ["coordinador_polarizados", "supervisor"],
         branch_id,
     ):
-        if tint_order_id:
+        if polar_wo_notify or tint_order_id:
             await create_notification_entry(
                 message=(
-                    f"Factura {invoice_number} pagada: orden de polarizado "
-                    f"{tint_order_id} pendiente de asignación"
+                    f"Factura {invoice_number} pagada: polarizado pendiente de asignación"
+                    + (f" OT={', '.join(polar_wo_notify)}" if polar_wo_notify else "")
+                    + (f" TINT={tint_order_id}" if tint_order_id else "")
                 ),
                 recipient_id=coordinator_id,
                 metadata={
                     "type": "tint_order_pending_assignment",
                     "sale_id": sale_id,
                     "tint_order_id": tint_order_id,
+                    "work_order_ids": polar_wo_notify,
                     "invoice_number": invoice_number,
                 },
                 dedupe_key=f"tint_pending_assignment:{sale_id}:{coordinator_id}",
@@ -9363,14 +9418,91 @@ async def create_sale(
         if net_to_collect > available_credit:
             raise HTTPException(status_code=400, detail="Exceeds credit limit")
     else:
-        planned_payment_plan = normalize_planned_payment_plan(
-            getattr(sale_data, "planned_payment_plan", None),
-            payment_method=normalized_payment_type,
-            mixed_methods=mixed_methods_raw,
-            net_to_collect=net_to_collect,
-            exchange_rate=float(sale_exchange_rate or settlement.get("exchange_rate") or 36.5),
-            currency=str(settlement.get("currency") or sale_currency or "NIO"),
+        plan_rate = float(sale_exchange_rate or settlement.get("exchange_rate") or 36.5)
+        plan_currency = str(settlement.get("currency") or sale_currency or "NIO")
+        raw_plan = getattr(sale_data, "planned_payment_plan", None)
+        use_server_settlement = bool(
+            getattr(sale_data, "use_server_settlement", False)
+            or getattr(sale_data, "server_settlement", False)
         )
+        settlement_token = getattr(sale_data, "settlement_token", None)
+        if settlement_token:
+            from backend.domains.sales.settlement_token import verify_settlement_token
+
+            ok_token, token_payload, _reason = verify_settlement_token(str(settlement_token))
+            if ok_token and token_payload:
+                token_total = float(token_payload.get("net_to_collect") or 0)
+                if abs(token_total - float(net_to_collect)) <= 0.05:
+                    use_server_settlement = True
+                else:
+                    raise HTTPException(
+                        status_code=409,
+                        detail={
+                            "error": "SETTLEMENT_TOKEN_MISMATCH",
+                            "message": "El settlement_token no corresponde al total actual del servidor",
+                            "expected_total": net_to_collect,
+                            "token_total": token_total,
+                        },
+                    )
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "SETTLEMENT_TOKEN_INVALID",
+                        "message": "settlement_token inválido o expirado; solicite un nuevo preview-settlement",
+                    },
+                )
+        if use_server_settlement or not raw_plan:
+            raw_plan = {
+                "mode": normalized_payment_type,
+                "lines": [
+                    {
+                        "metodo": normalized_payment_type,
+                        "moneda": plan_currency,
+                        "monto_origen": round(float(net_to_collect), 2),
+                    }
+                ],
+            }
+        try:
+            planned_payment_plan = normalize_planned_payment_plan(
+                raw_plan,
+                payment_method=normalized_payment_type,
+                mixed_methods=mixed_methods_raw,
+                net_to_collect=net_to_collect,
+                exchange_rate=plan_rate,
+                currency=plan_currency,
+            )
+        except HTTPException as plan_exc:
+            detail = plan_exc.detail if isinstance(plan_exc.detail, dict) else {}
+            if (
+                plan_exc.status_code == 409
+                and str(detail.get("error") or "") == "PAYMENT_PLAN_MISMATCH"
+            ):
+                # Auto-heal: rebuild cash/single-method plan to server total
+                rebuilt = {
+                    "mode": normalized_payment_type if normalized_payment_type != "mixed" else "cash",
+                    "lines": [
+                        {
+                            "metodo": (
+                                normalized_payment_type
+                                if normalized_payment_type != "mixed"
+                                else "cash"
+                            ),
+                            "moneda": plan_currency,
+                            "monto_origen": round(float(net_to_collect), 2),
+                        }
+                    ],
+                }
+                planned_payment_plan = normalize_planned_payment_plan(
+                    rebuilt,
+                    payment_method=normalized_payment_type if normalized_payment_type != "mixed" else "cash",
+                    mixed_methods=None,
+                    net_to_collect=net_to_collect,
+                    exchange_rate=plan_rate,
+                    currency=plan_currency,
+                )
+            else:
+                raise
 
     # Check manager authorization for "solo para llevar" products that want installation
     if items_requiring_manager_auth and not sale_data.manager_authorization_code:
@@ -9483,6 +9615,37 @@ async def create_sale(
     doc["catalog_subtotal_usd"] = catalog_subtotal_usd
     doc["subtotal_after_discount"] = round(float(settlement.get("subtotal_after_discount") or 0), 2)
     doc["exchange_rate"] = settlement.get("exchange_rate", sale_exchange_rate or 36.5)
+    from backend.domains.sales.settlement_token import build_money_snapshot
+
+    doc["money"] = {
+        "subtotal": build_money_snapshot(
+            amount=settlement_subtotal_amount,
+            currency=str(doc["currency"]),
+            exchange_rate=float(doc["exchange_rate"] or 0) or None,
+            catalog_amount_usd=catalog_subtotal_usd,
+        ),
+        "discount": build_money_snapshot(
+            amount=float(doc.get("discount") or 0),
+            currency=str(doc["currency"]),
+            exchange_rate=float(doc["exchange_rate"] or 0) or None,
+        ),
+        "tax": build_money_snapshot(
+            amount=float(doc.get("tax") or 0),
+            currency=str(doc["currency"]),
+            exchange_rate=float(doc["exchange_rate"] or 0) or None,
+        ),
+        "total": build_money_snapshot(
+            amount=float(net_to_collect),
+            currency=str(doc["currency"]),
+            exchange_rate=float(doc["exchange_rate"] or 0) or None,
+            catalog_amount_usd=catalog_subtotal_usd,
+        ),
+        "net_to_collect": build_money_snapshot(
+            amount=float(net_to_collect),
+            currency=str(doc["currency"]),
+            exchange_rate=float(doc["exchange_rate"] or 0) or None,
+        ),
+    }
     doc["apply_iva"] = bool(settlement.get("apply_iva", True))
     doc["applied_discounts"] = settlement.get("applied_discounts") or []
     doc["planned_payment_plan"] = planned_payment_plan
@@ -9802,9 +9965,38 @@ async def preview_sale_settlement(payload: SaleSettlementPreviewRequest, request
     if delivery_topup_nio:
         settlement["delivery_info"] = delivery_info
 
+    from backend.domains.sales.settlement_token import issue_settlement_token
+
+    net = float(settlement.get("net_to_collect") or 0)
+    settlement_token = issue_settlement_token(
+        {
+            "customer_id": payload.customer_id,
+            "net_to_collect": round(net, 2),
+            "currency": settlement.get("currency"),
+            "exchange_rate": settlement.get("exchange_rate"),
+            "payment_method": settlement.get("payment_method") or payload.payment_method,
+            "subtotal_base": settlement.get("subtotal_base"),
+        }
+    )
+    suggested_plan = {
+        "mode": _normalize_method_name(payload.payment_method or "cash"),
+        "lines": [
+            {
+                "metodo": _normalize_method_name(payload.payment_method or "cash"),
+                "moneda": settlement.get("currency") or "NIO",
+                "monto_origen": round(net, 2),
+            }
+        ],
+        "locked": False,
+        "server_suggested": True,
+    }
+
     return {
         "customer_id": payload.customer_id,
         **settlement,
+        "settlement_token": settlement_token,
+        "planned_payment_plan": suggested_plan,
+        "use_server_settlement": True,
     }
 
 
@@ -12336,7 +12528,7 @@ async def get_coordinator_queue(
     by_department: Dict[str, List[Dict[str, Any]]] = {
         "instalaciones": [],
         "electrico": [],
-        "polarizados": tint_orders if "polarizados" in allowed_departments else [],
+        "polarizados": [],
     }
     for order in work_orders:
         dept = str(order.get("department") or "instalaciones").lower()
@@ -12345,15 +12537,41 @@ async def get_coordinator_queue(
         if dept not in by_department:
             by_department[dept] = []
         by_department[dept].append(order)
+    # Keep legacy tint_orders visible under polarizados (detail windows) alongside OTs
+    if "polarizados" in allowed_departments and isinstance(tint_orders, list):
+        for tint in tint_orders:
+            row = dict(tint)
+            row["_entity"] = "tint_order"
+            by_department.setdefault("polarizados", []).append(row)
 
     filtered_board = {
         key: value for key, value in by_department.items() if key in allowed_departments
     }
 
+    # Technician availability semaphore for assignment UI
+    roster_by_dept: Dict[str, List[Dict[str, Any]]] = {}
+    for dept in filtered_board.keys():
+        members = await _coordinator_department_roster(dept, effective_branch, user)
+        enriched: List[Dict[str, Any]] = []
+        for member in members:
+            uid = str(member.get("user_id") or "")
+            active_jobs = await db.work_orders.count_documents(
+                {
+                    "technician_id": uid,
+                    "status": {"$in": ["pending", "in_progress", "quality_check"]},
+                }
+            )
+            attendance = await build_technician_attendance_snapshot(
+                db, uid, active_jobs=int(active_jobs or 0)
+            )
+            enriched.append({**member, **attendance})
+        roster_by_dept[dept] = enriched
+
     return {
         "branch_id": effective_branch or None,
         "profile": profile,
         "departments": filtered_board,
+        "technician_roster": roster_by_dept,
         "counts": {k: len(v) for k, v in filtered_board.items()},
         "total_pending": sum(len(v) for v in filtered_board.values()),
     }
@@ -12628,6 +12846,87 @@ QUEUE_PURGE_ROLES = ["gerencia", "supervisor", "programador"]
 QUEUE_PURGE_DEPARTMENTS = {"instalaciones", "electrico", "polarizados"}
 
 
+@api_router.get("/ops/flow-health")
+async def get_ops_flow_health(
+    request: Request,
+    branch_id: Optional[str] = None,
+):
+    """Gerencia dashboard: bottlenecks across caja → despacho → OT → QC → tint."""
+    user = await require_roles(request, ["gerencia", "supervisor", "programador", "jefe_tienda"])
+    effective_branch = str(branch_id or user.branch_id or "").strip()
+
+    sale_open_q: Dict[str, Any] = {
+        "invoice_state": {"$ne": "cancelled"},
+        "payment_status": {"$in": ["pending", "partial"]},
+    }
+    if effective_branch:
+        sale_open_q["branch_id"] = effective_branch
+
+    wo_active_q: Dict[str, Any] = {
+        "status": {"$in": ["pending", "pending_assignment", "in_progress", "quality_check"]},
+    }
+    if effective_branch:
+        wo_active_q["branch_id"] = effective_branch
+
+    disp_q: Dict[str, Any] = {"status": {"$in": ["pending", "in_progress", "partial"]}}
+    tint_q: Dict[str, Any] = {
+        "status": {"$in": ["pending", "pending_assignment", "in_progress", "quality_check", "assigned"]}
+    }
+
+    open_sales = await db.sales.count_documents(sale_open_q)
+    active_wo = await db.work_orders.count_documents(wo_active_q)
+    wo_unassigned = await db.work_orders.count_documents(
+        {
+            **wo_active_q,
+            "assignment_status": "pending_assignment",
+            "technician_id": None,
+        }
+    )
+    wo_qc = await db.work_orders.count_documents({**wo_active_q, "status": "quality_check"})
+    by_dept_rows = await db.work_orders.aggregate(
+        [
+            {"$match": wo_active_q},
+            {"$group": {"_id": {"$ifNull": ["$department", "instalaciones"]}, "n": {"$sum": 1}}},
+        ]
+    ).to_list(20)
+    active_dispatch = await db.dispatch_orders.count_documents(disp_q)
+    active_tint = await db.tint_orders.count_documents(tint_q)
+    recent_transitions = (
+        await db.flow_state_transitions.find({}, {"_id": 0})
+        .sort("created_at", -1)
+        .to_list(25)
+    )
+
+    alerts: List[Dict[str, Any]] = []
+    if open_sales >= 10:
+        alerts.append({"level": "warning", "code": "cashier_backlog", "count": open_sales})
+    if wo_unassigned >= 5:
+        alerts.append({"level": "warning", "code": "wo_unassigned_backlog", "count": wo_unassigned})
+    if wo_qc >= 5:
+        alerts.append({"level": "info", "code": "qc_backlog", "count": wo_qc})
+    if active_dispatch >= 10:
+        alerts.append({"level": "warning", "code": "dispatch_backlog", "count": active_dispatch})
+
+    return {
+        "branch_id": effective_branch or None,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "queues": {
+            "cashier_open_invoices": open_sales,
+            "dispatch_active": active_dispatch,
+            "work_orders_active": active_wo,
+            "work_orders_unassigned": wo_unassigned,
+            "work_orders_quality_check": wo_qc,
+            "work_orders_by_department": {
+                str(r.get("_id") or "unknown"): int(r.get("n") or 0) for r in by_dept_rows
+            },
+            "tint_active": active_tint,
+        },
+        "alerts": alerts,
+        "recent_transitions": recent_transitions,
+        "healthy": len([a for a in alerts if a.get("level") == "warning"]) == 0,
+    }
+
+
 @api_router.post("/coordinator/clear-queue")
 async def clear_coordinator_queue(
     request: Request,
@@ -12777,12 +13076,18 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
     return doc
 
 
-WORK_ORDER_FIELD_TECHNICIAN_ROLES = {"instalaciones", "instalador", "electrico"}
+WORK_ORDER_FIELD_TECHNICIAN_ROLES = {
+    "instalaciones",
+    "instalador",
+    "electrico",
+    "polarizador",
+}
 WORK_ORDER_QC_APPROVER_ROLES = {
     "gerencia",
     "supervisor",
     "jefe_tienda",
     "coordinador_instalaciones",
+    "coordinador_polarizados",
 }
 # Allowed status transitions for installation work orders (QC gate before completed/delivered).
 WORK_ORDER_STATUS_TRANSITIONS: Dict[str, set] = {
@@ -12893,17 +13198,43 @@ async def update_work_order(
         # Do NOT silently set qc_approved on status=completed — only create_quality_control may
 
     if update.technician_id:
-        if raw_role == "coordinador_polarizados":
-            raise HTTPException(
-                status_code=403,
-                detail="El coordinador de polarizados no puede asignar órdenes de instalación",
-            )
         wo_department = str(wo.get("department") or "instalaciones").lower()
+        if raw_role == "coordinador_polarizados":
+            # May only assign polarizados work orders (not instalaciones/electrico)
+            if wo_department != "polarizados":
+                raise HTTPException(
+                    status_code=403,
+                    detail="El coordinador de polarizados solo puede asignar órdenes de polarizado",
+                )
         if raw_role == "coordinador_instalaciones":
             assert_coordinator_department_access(user, wo_department, "instalaciones")
+        if wo_department == "polarizados" and raw_role == "coordinador_instalaciones":
+            raise HTTPException(
+                status_code=403,
+                detail="El coordinador de instalaciones no asigna órdenes de polarizado",
+            )
 
         tech = await db.users.find_one({"user_id": update.technician_id}, {"_id": 0})
         if tech:
+            tech_role = str(tech.get("role") or "").strip().lower()
+            if wo_department == "polarizados" and tech_role not in {
+                "polarizador",
+                "instalaciones",
+                "gerencia",
+            }:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Asigne un polarizador a las órdenes de polarizado",
+                )
+            if wo_department == "electrico" and tech_role not in {
+                "electrico",
+                "instalaciones",
+                "gerencia",
+            }:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Asigne un técnico eléctrico a las órdenes eléctricas",
+                )
             active_pipeline = [
                 {
                     "$match": {
@@ -12957,11 +13288,33 @@ async def update_work_order(
 
     await db.work_orders.update_one({"work_order_id": work_order_id}, {"$set": updates})
 
+    if updates.get("status") and str(updates.get("status")) != str(wo.get("status") or ""):
+        from backend.domains.operations.flow_transitions import log_flow_transition
+
+        await log_flow_transition(
+            db,
+            entity_type="work_order",
+            entity_id=work_order_id,
+            from_status=str(wo.get("status") or ""),
+            to_status=str(updates.get("status") or ""),
+            actor_id=user.user_id,
+            actor_name=user.name,
+            actor_role=raw_role,
+            sale_id=str(wo.get("sale_id") or "") or None,
+            metadata={"department": wo.get("department")},
+        )
+
     if update.status == "quality_check":
         branch_id = str(wo.get("branch_id") or user.branch_id or "")
         tech_name = wo.get("technician_name") or "técnico"
+        wo_dept = str(wo.get("department") or "instalaciones").lower()
+        coord_roles = (
+            ["coordinador_polarizados"]
+            if wo_dept == "polarizados"
+            else ["coordinador_instalaciones"]
+        )
         for coordinator_id in await _get_coordinator_user_ids(
-            ["coordinador_instalaciones"],
+            coord_roles,
             branch_id,
         ):
             await create_notification_entry(
@@ -13329,8 +13682,19 @@ async def get_technician_completed_jobs(
 # ============ QUALITY CONTROL ============
 
 
-QC_VIEW_ROLES = ["gerencia", "supervisor", "coordinador_instalaciones"]
-QC_APPROVER_ROLES = ["gerencia", "supervisor", "jefe_tienda", "coordinador_instalaciones"]
+QC_VIEW_ROLES = [
+    "gerencia",
+    "supervisor",
+    "coordinador_instalaciones",
+    "coordinador_polarizados",
+]
+QC_APPROVER_ROLES = [
+    "gerencia",
+    "supervisor",
+    "jefe_tienda",
+    "coordinador_instalaciones",
+    "coordinador_polarizados",
+]
 
 
 @api_router.get("/quality-control")
@@ -13754,13 +14118,19 @@ async def get_kds_department_board(request: Request, branch_id: Optional[str] = 
         "bodega": warehouse if isinstance(warehouse, list) else [],
         "instalaciones": [],
         "electrico": [],
-        "polarizados": tint_orders if isinstance(tint_orders, list) else [],
+        "polarizados": [],
     }
     for order in work_orders if isinstance(work_orders, list) else []:
         dept = str(order.get("department") or "instalaciones").lower()
         if dept not in by_department:
             by_department[dept] = []
         by_department[dept].append(order)
+    # Tint detail rows still surface on polarizados KDS (windows), alongside polar OT
+    if isinstance(tint_orders, list):
+        for tint in tint_orders:
+            row = dict(tint)
+            row["_entity"] = "tint_order"
+            by_department.setdefault("polarizados", []).append(row)
 
     return {
         "branch_id": effective_branch,

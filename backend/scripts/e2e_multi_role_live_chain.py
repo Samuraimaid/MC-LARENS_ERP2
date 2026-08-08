@@ -953,29 +953,62 @@ def run() -> int:
             )
         )
 
+    # polarizados OT (primary path) — assigned by coord polarizados
+    polar_wos = by_dept.get("polarizados") or []
+    if polar_wos:
+        for wo in polar_wos:
+            results.append(
+                advance_wo_chain(
+                    coord_pol,
+                    polarizador,
+                    coord_pol,  # QC by coord polarizados
+                    wo,
+                    roles["polarizador"]["user_id"],
+                    "polarizados",
+                )
+            )
+    else:
+        log_fail("No se generaron OT department=polarizados")
+
     if not (by_dept.get("instalaciones") or by_dept.get("electrico")):
         log_fail("No se generaron OT de instalaciones/eléctrico")
 
-    # polarizados / tint
+    # tint detail (windows) — still created and linked to OT
     if not tint_order_id:
-        # maybe find by sale
         tints = gerencia.get("/tint-orders").json()
         if isinstance(tints, list):
             hit = next((t for t in tints if t.get("sale_id") == sale_id), None)
             if hit:
                 tint_order_id = hit.get("tint_order_id")
     if tint_order_id:
-        results.append(
-            advance_tint(
-                coord_pol,
-                polarizador,
-                supervisor,
-                tint_order_id,
-                roles["polarizador"]["user_id"],
+        # windows completion may still be useful; OT is already delivered above
+        try:
+            results.append(
+                advance_tint(
+                    coord_pol,
+                    polarizador,
+                    supervisor,
+                    tint_order_id,
+                    roles["polarizador"]["user_id"],
+                )
             )
+        except Exception as tint_exc:
+            # If tint already completed/linked via OT path, record warning not fail
+            log_warn("Tint detail no avanzó (OT polarizado ya cerrado)", str(tint_exc))
+    else:
+        log_warn("Sin tint_order (detalle ventanas); OT polarizado es la fuente de verdad")
+
+    # Flow health probe
+    health = gerencia.get("/ops/flow-health")
+    if health.status_code == 200:
+        body = health.json() or {}
+        log_ok(
+            "Flow health",
+            healthy=body.get("healthy"),
+            queues=body.get("queues"),
         )
     else:
-        log_fail("No se generó tint_order de polarizados", f"sale={sale_id}")
+        log_warn("Flow health endpoint", f"{health.status_code}")
 
     # Final probes: technicians cannot list pin users; ventas blocked from dispatch
     r = ventas.get("/auth/pin/users")
