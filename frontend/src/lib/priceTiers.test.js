@@ -5,7 +5,9 @@ import {
   canSellerEditLinePrice,
   formatRoleBadgeLabel,
   repriceCartItemsForTier,
+  tierRequiresSupervisorApproval,
   TIER_PRECIO1,
+  TIER_PRECIO2,
   TIER_PRECIO_VIP,
 } from "./priceTiers";
 
@@ -75,5 +77,13 @@ describe("canChangeActivePriceTier", () => {
     const ctx = { allowed_price_tiers: ["precio1", "precio2", "precio_vip"] };
     expect(canChangeActivePriceTier({ role: "ventas", seller_type: "piso" }, ctx)).toBe(true);
     expect(canChangeActivePriceTier({ role: "ventas", seller_type: "vip" }, ctx)).toBe(false);
+  });
+});
+
+describe("tierRequiresSupervisorApproval", () => {
+  it("requires approval for precio2 for floor sellers, not for supervisors", () => {
+    expect(tierRequiresSupervisorApproval(TIER_PRECIO2, { role: "ventas", seller_type: "piso" })).toBe(true);
+    expect(tierRequiresSupervisorApproval(TIER_PRECIO2, { role: "gerencia" })).toBe(false);
+    expect(tierRequiresSupervisorApproval(TIER_PRECIO1, { role: "ventas", seller_type: "piso" })).toBe(false);
   });
 });

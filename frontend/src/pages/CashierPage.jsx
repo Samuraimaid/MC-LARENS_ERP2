@@ -14,6 +14,7 @@ import { Textarea } from "../components/ui/textarea";
 import { ArrowDown, ArrowUp, Barcode, CheckCircle2, ClipboardCheck, CreditCard, Download, FileText, Lock, Power, RefreshCw, Search, ShieldAlert, Trash2, Unlock, UserCircle2, Volume2, VolumeX, Wallet } from "lucide-react";
 import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { isValidVoucherScanCode, normalizeVoucherScanCode } from "@/lib/voucherPrinter";
 import { planToCollectForm } from "@/lib/plannedPaymentPlan";
 import {
@@ -2278,15 +2279,17 @@ export function CashierPage() {
           if (!open) setCollectDialogSale(null);
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Cobro por escaneo de voucher</DialogTitle>
-            <DialogDescription>
-              {collectDialogSale?.invoice_number
+        <DialogContent className="max-w-3xl max-h-[min(90vh,92dvh)] overflow-y-auto">
+          <ContextualDialogHeader
+            variant="success"
+            size="inline"
+            title="Cobro por escaneo de voucher"
+            description={
+              collectDialogSale?.invoice_number
                 ? `Factura ${collectDialogSale.invoice_number} · ${collectDialogSale.customer_name || "Cliente"}`
-                : "Confirma el cobro de la factura escaneada."}
-            </DialogDescription>
-          </DialogHeader>
+                : "Confirma el cobro de la factura escaneada."
+            }
+          />
           {collectDialogSale ? (
             <CollectActionCard
               sale={collectDialogSale}

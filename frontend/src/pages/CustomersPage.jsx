@@ -10,6 +10,12 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 /* table UI not required in this page currently */
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "../components/ui/dialog";
+import {
+  ContextualDialogFooter,
+  ContextualDialogHeader,
+  getStatusPrimaryButtonClass,
+  getStatusSecondaryButtonClass,
+} from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
@@ -893,14 +899,16 @@ export function CustomersPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{isEditing ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
-                <DialogDescription>
-                  {isEditing
+              <ContextualDialogHeader
+                variant="information"
+                size="inline"
+                title={isEditing ? "Editar Cliente" : "Nuevo Cliente"}
+                description={
+                  isEditing
                     ? "Actualiza los datos del cliente"
-                    : "Registra un nuevo cliente y opcionalmente su vehículo"}
-                </DialogDescription>
-              </DialogHeader>
+                    : "Registra un nuevo cliente y opcionalmente su vehículo"
+                }
+              />
               
               <CustomerVehicleFormTabs
                 formData={formData}
@@ -1145,19 +1153,23 @@ export function CustomersPage() {
               )}
 
               <Dialog open={showDeleteVehicle} onOpenChange={setShowDeleteVehicle}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Eliminar vehículo</DialogTitle>
-                    <DialogDescription>
-                      Esta acción no se puede deshacer. ¿Deseas eliminar el vehículo seleccionado?
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setShowDeleteVehicle(false)}>
+                <DialogContent className="max-w-sm">
+                  <ContextualDialogHeader
+                    variant="error"
+                    size="hero"
+                    title="Eliminar vehículo"
+                    description="Esta acción no se puede deshacer. ¿Deseas eliminar el vehículo seleccionado?"
+                  />
+                  <ContextualDialogFooter variant="error">
+                    <Button
+                      variant="ghost"
+                      className={getStatusSecondaryButtonClass("error")}
+                      onClick={() => setShowDeleteVehicle(false)}
+                    >
                       Cancelar
                     </Button>
                     <Button
-                      variant="destructive"
+                      className={getStatusPrimaryButtonClass("error")}
                       disabled={!canDeleteCustomers}
                       onClick={async () => {
                         await deleteVehicle();
@@ -1166,7 +1178,7 @@ export function CustomersPage() {
                     >
                       Eliminar
                     </Button>
-                  </div>
+                  </ContextualDialogFooter>
                 </DialogContent>
               </Dialog>
 
@@ -1181,10 +1193,12 @@ export function CustomersPage() {
           </Button>
           <Dialog open={showManageTemplates} onOpenChange={setShowManageTemplates}>
             <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Administrar Plantillas WhatsApp</DialogTitle>
-                <DialogDescription>Editar, agregar o eliminar plantillas disponibles.</DialogDescription>
-              </DialogHeader>
+              <ContextualDialogHeader
+                variant="information"
+                size="inline"
+                title="Administrar Plantillas WhatsApp"
+                description="Editar, agregar o eliminar plantillas disponibles."
+              />
               <div className="space-y-3">
                 {waTemplates.map(t => (
                   <div key={t.id} className="p-2 border rounded">
@@ -1416,12 +1430,12 @@ export function CustomersPage() {
       {/* Vehicles Modal */}
       <Dialog open={showVehiclesModal} onOpenChange={setShowVehiclesModal}>
         <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Vehículos registrados de {modalCustomer?.name || 'este cliente'}</DialogTitle>
-            <DialogDescription>
-              Revisa el detalle del vehículo y lanza acciones rápidas con este cliente y vehículo.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            title={`Vehículos de ${modalCustomer?.name || "este cliente"}`}
+            description="Revisa el detalle del vehículo y lanza acciones rápidas con este cliente y vehículo."
+          />
           <div className="grid gap-2 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 text-xs text-slate-700 md:grid-cols-2">
             <div>
               <span className="font-medium">Última compra:</span> {formatShortDate(modalCustomer?.last_purchase_date)}
@@ -1463,12 +1477,12 @@ export function CustomersPage() {
       {/* Vehicle Action Modal: crear venta / cotización con datos prellenados */}
       <Dialog open={showVehicleActionModal} onOpenChange={setShowVehicleActionModal}>
           <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Acciones del vehículo</DialogTitle>
-            <DialogDescription>
-              Crear una venta o cotización usando los datos prellenados del cliente y vehículo.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="question"
+            size="inline"
+            title="Acciones del vehículo"
+            description="Crear una venta o cotización usando los datos prellenados del cliente y vehículo."
+          />
           {actionVehicle && actionCustomer && (
             <div className="space-y-4">
               <div>
@@ -1515,10 +1529,12 @@ export function CustomersPage() {
       {/* WhatsApp Preview Dialog */}
       <Dialog open={showWaPreview} onOpenChange={setShowWaPreview}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Vista previa mensaje WhatsApp</DialogTitle>
-            <DialogDescription>Revisa el mensaje antes de abrir WhatsApp.</DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            title="Vista previa mensaje WhatsApp"
+            description="Revisa el mensaje antes de abrir WhatsApp."
+          />
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">A: {waPreviewCustomer?.name || '-'}</div>
             <pre className="whitespace-pre-wrap p-2 border rounded bg-muted">{waPreviewMessage}</pre>
@@ -1539,15 +1555,13 @@ export function CustomersPage() {
       {/* Credit Authorization Dialog */}
       <Dialog open={showCreditAuth} onOpenChange={setShowCreditAuth}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-orange-500" />
-              Autorización de Crédito
-            </DialogTitle>
-            <DialogDescription>
-              Se requiere autorización del gerente para asignar límite de crédito de {formatCurrency(pendingCreditLimit)}
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="warning"
+            size="hero"
+            icon={ShieldCheck}
+            title="Autorización de Crédito"
+            description={`Se requiere autorización del gerente para asignar límite de crédito de ${formatCurrency(pendingCreditLimit)}`}
+          />
           <div className="space-y-4">
             <div>
               <Label>Código de Autorización</Label>

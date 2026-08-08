@@ -182,6 +182,30 @@ export function canChangeActivePriceTier(user, pricingContext = null) {
   return false;
 }
 
+/**
+ * Policy: Precio 2 is visible to floor sellers but requires supervisor/gerencia
+ * approval with justification before finalize (not free self-service).
+ * Supervisors are exempt. VIP sellers don't free-switch tiers at all.
+ */
+export function tierRequiresSupervisorApproval(tier, user = null) {
+  if (String(tier || "").trim().toLowerCase() !== TIER_PRECIO2) return false;
+  if (user && isSupervisorPricingRole(user)) return false;
+  return true;
+}
+
+export function buildPrecio2CartSignature(cartItems, productsById) {
+  return (cartItems || [])
+    .filter((item) => {
+      const product = typeof productsById?.get === "function"
+        ? productsById.get(String(item.product_id))
+        : productsById?.[item.product_id];
+      return detectPriceTier(product, item.unit_price) === TIER_PRECIO2;
+    })
+    .map((item) => `${String(item.product_id)}:${Number(item.unit_price || 0).toFixed(2)}`)
+    .sort()
+    .join("|");
+}
+
 export function tierDiscountPercent(precio1, tierPrice) {
   const base = Number(precio1) || 0;
   const tier = Number(tierPrice) || 0;

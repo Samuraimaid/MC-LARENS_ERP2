@@ -7,6 +7,12 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "../components/ui/dialog";
+import {
+  ContextualDialogFooter,
+  ContextualDialogHeader,
+  getStatusPrimaryButtonClass,
+  getStatusSecondaryButtonClass,
+} from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -177,10 +183,12 @@ export function ReturnsPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Nueva Devolución</DialogTitle>
-              <DialogDescription>Busca la factura y selecciona los productos a devolver</DialogDescription>
-            </DialogHeader>
+            <ContextualDialogHeader
+              variant="information"
+              size="inline"
+              title="Nueva Devolución"
+              description="Busca la factura y selecciona los productos a devolver"
+            />
             
             {!selectedSale ? (
               <div className="space-y-4">
@@ -480,10 +488,13 @@ export function ReturnsPage() {
 
       {/* Reject Dialog */}
       <Dialog open={!!showReject} onOpenChange={() => setShowReject(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rechazar Devolución</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-sm">
+          <ContextualDialogHeader
+            variant="error"
+            size="hero"
+            title="Rechazar Devolución"
+            description="Indica la razón del rechazo. Esta acción quedará registrada."
+          />
           <div className="space-y-4">
             <div>
               <Label>Razón del Rechazo</Label>
@@ -494,13 +505,21 @@ export function ReturnsPage() {
                 rows={3}
               />
             </div>
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={() => rejectReturn(showReject?.return_id)}
-            >
-              Confirmar Rechazo
-            </Button>
+            <ContextualDialogFooter variant="error">
+              <Button
+                variant="ghost"
+                className={getStatusSecondaryButtonClass("error")}
+                onClick={() => setShowReject(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className={getStatusPrimaryButtonClass("error")}
+                onClick={() => rejectReturn(showReject?.return_id)}
+              >
+                Confirmar Rechazo
+              </Button>
+            </ContextualDialogFooter>
           </div>
         </DialogContent>
       </Dialog>

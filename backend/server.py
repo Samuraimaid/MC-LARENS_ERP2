@@ -34,7 +34,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response as FastAPIRes
 from fastapi.staticfiles import StaticFiles
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.domains.export.dependencies import (
     get_openpyxl_symbols as export_get_openpyxl_symbols,
@@ -2004,6 +2004,21 @@ class CashierInvoiceCollectRequest(FlexibleModel):
     card_type: Optional[str] = None
     bank_name: Optional[str] = None
     transaction_number: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _alias_session_fields(cls, data: Any):
+        """Accept session_id / sesion_id and amount / monto aliases from clients."""
+        if not isinstance(data, dict):
+            return data
+        payload = dict(data)
+        if not payload.get("sesion_id") and payload.get("session_id"):
+            payload["sesion_id"] = payload.get("session_id")
+        if payload.get("amount") in (None, "") and payload.get("monto") is not None:
+            payload["amount"] = payload.get("monto")
+        if not payload.get("payment_method") and payload.get("metodo"):
+            payload["payment_method"] = payload.get("metodo")
+        return payload
 
 
 class CashierInvoiceCancelRequest(FlexibleModel):
@@ -4660,7 +4675,26 @@ async def unlock_current_session(payload: SessionUnlockRequest, request: Request
 
 @api_router.get("/auth/pin/users")
 async def get_pin_users(request: Request):
-    await require_auth(request)
+    """Directory of PIN users — restricted to management/ops roles (not floor ventas)."""
+    user = await require_roles(
+        request,
+        [
+            "gerencia",
+            "supervisor",
+            "programador",
+            "recursos_humanos",
+            "jefe_tienda",
+            "jefe_vendedores",
+            "cajero",  # kiosk login may need peer list at till
+            "coordinador_instalaciones",
+            "coordinador_polarizados",
+        ],
+    )
+    # Floor sellers must not enumerate the full staff directory
+    role = str(getattr(user, "role", "") or "").strip().lower()
+    if role == "ventas":
+        raise HTTPException(status_code=403, detail="No autorizado para listar usuarios PIN")
+
     users = await db.users.find(
         {"is_pin_user": True, "is_active": True},
         {
@@ -7384,6 +7418,46 @@ async def delete_notification(notification_id: str, request: Request):
     return {"message": "deleted"}
 
 
+@api_router.get("/approvals/{approval_id}")
+async def get_approval_status(approval_id: str, request: Request):
+    """Requester or supervisors/gerencia can read approval status (for Precio 2 polling)."""
+    user = await require_auth(request)
+    approval = await db.approvals.find_one({"approval_id": approval_id}, {"_id": 0})
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval not found")
+
+    role = str(getattr(user, "role", "") or "").strip().lower()
+    is_reviewer = role in {"gerencia", "supervisor", "programador"}
+    is_requester = str(approval.get("requester_id") or "") == str(getattr(user, "user_id", "") or "")
+    if not is_reviewer and not is_requester:
+        raise HTTPException(status_code=403, detail="No autorizado para ver esta solicitud")
+
+    from backend.domains.pricing.price_tiers import APPROVAL_TYPE_PRECIO2
+
+    type_labels = {
+        APPROVAL_TYPE_PRECIO2: "Aprobación Precio 2",
+        "edit_customer": "Editar cliente",
+        "delete_customer": "Eliminar cliente",
+        "edit_vehicle": "Editar vehículo",
+        "delete_vehicle": "Eliminar vehículo",
+    }
+    return {
+        "approval_id": approval.get("approval_id"),
+        "type": approval.get("type"),
+        "type_label": type_labels.get(str(approval.get("type") or ""), str(approval.get("type") or "Solicitud")),
+        "status": approval.get("status"),
+        "reason": approval.get("reason"),
+        "requester_id": approval.get("requester_id"),
+        "requester_name": approval.get("requester_name"),
+        "approver_id": approval.get("approver_id"),
+        "approver_name": approval.get("approver_name"),
+        "approver_justification": approval.get("approver_justification"),
+        "created_at": approval.get("created_at"),
+        "approved_at": approval.get("approved_at"),
+        "payload": approval.get("payload") or {},
+    }
+
+
 @api_router.put("/approvals/{approval_id}/reject")
 async def reject_request(approval_id: str, request: Request):
     approver = await require_roles(request, ["gerencia", "supervisor"])
@@ -8173,9 +8247,12 @@ def _resolve_sale_item_unit_price(
     try:
         requested_price = float(raw_unit_price)
     except (TypeError, ValueError):
-        return catalog_price
+        raise HTTPException(status_code=400, detail="unit_price inválido")
     if requested_price <= 0:
-        return catalog_price
+        raise HTTPException(
+            status_code=400,
+            detail="unit_price debe ser mayor que cero",
+        )
     if abs(requested_price - catalog_price) <= 0.0001:
         return catalog_price
 
@@ -8974,6 +9051,25 @@ async def create_sale(
                 status_code=404, detail=f"Product {item['product_id']} not found"
             )
 
+        try:
+            qty = int(item.get("quantity") or 0)
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cantidad inválida para {product.get('name') or item.get('product_id')}",
+            )
+        if qty <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"La cantidad debe ser mayor que cero ({product.get('name') or item.get('product_id')})",
+            )
+        if qty > 10000:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cantidad excesiva ({qty}) para {product.get('name') or item.get('product_id')}",
+            )
+        item["quantity"] = qty
+
         requested_warehouse_id = item.get("warehouse_id")
         warehouse_id = str(requested_warehouse_id or branch_default_warehouse_id or "")
         if not warehouse_id:
@@ -8990,8 +9086,8 @@ async def create_sale(
             )
             sample_doc = sample_by_product.get(item["product_id"])
             sample_qty_available = sample_doc.get("quantity", 1) if sample_doc else 0
-            sample_qty_used = min(item["quantity"], sample_qty_available) if sample_doc else 0
-            required_qty = max(item["quantity"] - sample_qty_used, 0)
+            sample_qty_used = min(qty, sample_qty_available) if sample_doc else 0
+            required_qty = max(qty - sample_qty_used, 0)
 
             if required_qty > 0 and (not inv or inv["quantity"] < required_qty):
                 raise HTTPException(
@@ -9015,7 +9111,6 @@ async def create_sale(
                     }
                 )
 
-        qty = item["quantity"]
         price = _resolve_sale_item_unit_price(user, product, item, customer=customer)
         discount = item.get("discount", 0)
         item_subtotal = (price * qty) * (1 - discount / 100)
@@ -9239,6 +9334,10 @@ async def create_sale(
         sale_data.payment_method or sale_data.payment_type
     )
 
+    # Monetary fields on the sale document are in settlement currency (usually NIO).
+    # Catalog line unit_price remains USD; catalog_subtotal_usd preserves pre-FX base.
+    settlement_subtotal_amount = round(float(settlement.get("subtotal_base") or settlement_subtotal), 2)
+    catalog_subtotal_usd = round(float(subtotal), 2)
     sale = Sale(
         invoice_number=invoice_number,
         quotation_id=sale_data.quotation_id,
@@ -9248,7 +9347,7 @@ async def create_sale(
         salesperson_id=user.user_id,
         salesperson_name=user.name,
         items=[i.model_dump() for i in items],
-        subtotal=round(subtotal, 2),
+        subtotal=settlement_subtotal_amount,
         tax=round(float(settlement["iva_amount"]), 2),
         discount=round(float(settlement["discounts_applied_amount"]), 2),
         total=round(net_to_collect, 2),
@@ -9295,6 +9394,10 @@ async def create_sale(
     doc["amount_paid"] = 0.0
     doc["amount_pending"] = round(net_to_collect, 2)
     doc["currency"] = settlement.get("currency", sale_currency)
+    doc["amounts_currency"] = settlement.get("currency", sale_currency)
+    doc["catalog_currency"] = "USD"
+    doc["catalog_subtotal_usd"] = catalog_subtotal_usd
+    doc["subtotal_after_discount"] = round(float(settlement.get("subtotal_after_discount") or 0), 2)
     doc["exchange_rate"] = settlement.get("exchange_rate", sale_exchange_rate or 36.5)
     doc["apply_iva"] = bool(settlement.get("apply_iva", True))
     doc["applied_discounts"] = settlement.get("applied_discounts") or []
@@ -11058,6 +11161,18 @@ async def request_sale_edit(sale_id: str, payload: SaleRequestPayload, request: 
     if not can_access_sale_for_user(user, sale):
         raise HTTPException(status_code=403, detail="No autorizado para solicitar edición de esta factura")
 
+    payment_status = str(sale.get("payment_status") or "").lower()
+    if payment_status == "paid":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No se puede solicitar edición de una factura ya cobrada/pagada. "
+                "Use anulación con justificación o ajuste contable autorizado por gerencia."
+            ),
+        )
+    if str(sale.get("invoice_state") or "").lower() == "cancelled":
+        raise HTTPException(status_code=400, detail="No se puede editar una factura anulada")
+
     reason = str(payload.reason or "").strip()
     if len(reason) < 10:
         raise HTTPException(status_code=400, detail="La razón de solicitud debe tener al menos 10 caracteres")
@@ -12585,6 +12700,27 @@ WORK_ORDER_QC_APPROVER_ROLES = {
     "jefe_tienda",
     "coordinador_instalaciones",
 }
+# Allowed status transitions for installation work orders (QC gate before completed/delivered).
+WORK_ORDER_STATUS_TRANSITIONS: Dict[str, set] = {
+    "pending_assignment": {"pending", "in_progress"},
+    "pending": {"in_progress", "cancelled"},
+    "in_progress": {"quality_check", "pending", "cancelled"},
+    # completed/delivered require an approved QC record (enforced below)
+    "quality_check": {"in_progress", "completed", "delivered", "cancelled"},
+    "completed": {"delivered"},
+    "delivered": set(),
+    "cancelled": set(),
+}
+
+
+async def _work_order_has_approved_qc(work_order_id: str, wo: Dict[str, Any]) -> bool:
+    if bool(wo.get("qc_approved")):
+        return True
+    approved_qc = await db.quality_controls.find_one(
+        {"work_order_id": work_order_id, "approved": True},
+        {"_id": 0, "qc_id": 1},
+    )
+    return approved_qc is not None
 
 
 @api_router.put("/work-orders/{work_order_id}")
@@ -12602,7 +12738,19 @@ async def update_work_order(
     updates = {}
 
     if update.status:
-        if update.status in {"completed", "delivered"}:
+        new_status = str(update.status or "").strip().lower()
+        current_status = str(wo.get("status") or "pending").strip().lower()
+        allowed = WORK_ORDER_STATUS_TRANSITIONS.get(current_status)
+        if allowed is not None and new_status != current_status and new_status not in allowed:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Transición de estado no permitida: {current_status} → {new_status}. "
+                    "Flujo: pending → in_progress → quality_check → (QC) → completed → delivered."
+                ),
+            )
+
+        if new_status in {"completed", "delivered"}:
             if raw_role in WORK_ORDER_FIELD_TECHNICIAN_ROLES:
                 raise HTTPException(
                     status_code=403,
@@ -12617,15 +12765,27 @@ async def update_work_order(
                     detail="Solo el coordinador de instalaciones puede aprobar trabajos terminados",
                 )
 
-        if update.status == "delivered":
-            qc_passed = bool(wo.get("qc_approved"))
-            if not qc_passed:
-                approved_qc = await db.quality_controls.find_one(
-                    {"work_order_id": work_order_id, "approved": True},
-                    {"_id": 0, "qc_id": 1},
+        # completed requires formal QC record (no silent qc_approved via status flip)
+        if new_status == "completed":
+            if current_status not in {"quality_check", "completed"}:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No se puede marcar como Completado sin pasar por Control de Calidad. "
+                        "Primero envíe la orden a quality_check y registre la inspección QC."
+                    ),
                 )
-                qc_passed = approved_qc is not None
-            if not qc_passed:
+            if not await _work_order_has_approved_qc(work_order_id, wo):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No se puede marcar como Completado sin un Control de Calidad aprobado. "
+                        "Use POST /quality-control con approved=true."
+                    ),
+                )
+
+        if new_status == "delivered":
+            if not await _work_order_has_approved_qc(work_order_id, wo):
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -12634,23 +12794,19 @@ async def update_work_order(
                     ),
                 )
 
-        updates["status"] = update.status
-        if update.status == "in_progress" and not wo.get("start_time"):
+        updates["status"] = new_status
+
+        if new_status == "in_progress" and not wo.get("start_time"):
             updates["start_time"] = datetime.now(timezone.utc).isoformat()
-        if update.status == "quality_check":
+        if new_status == "quality_check":
             updates["submitted_for_qc_at"] = datetime.now(timezone.utc).isoformat()
-        if update.status in ["completed", "delivered"] and not wo.get("end_time"):
+        if new_status in ["completed", "delivered"] and not wo.get("end_time"):
             updates["end_time"] = datetime.now(timezone.utc).isoformat()
             if wo.get("start_time"):
-                start = datetime.fromisoformat(wo["start_time"])
+                start = datetime.fromisoformat(str(wo["start_time"]).replace("Z", "+00:00"))
                 end = datetime.now(timezone.utc)
                 updates["actual_time"] = int((end - start).total_seconds() / 60)
-        if update.status == "completed" and raw_role in WORK_ORDER_QC_APPROVER_ROLES:
-            now_iso = datetime.now(timezone.utc).isoformat()
-            updates["qc_approved"] = True
-            updates["qc_approved_at"] = now_iso
-            updates["qc_approved_by"] = user.user_id
-            updates["qc_approved_by_name"] = user.name
+        # Do NOT silently set qc_approved on status=completed — only create_quality_control may
 
     if update.technician_id:
         if raw_role == "coordinador_polarizados":
@@ -13180,13 +13336,23 @@ async def create_quality_control(qc_data: QualityControlCreate, request: Request
     if not wo:
         raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
 
-    # Check if QC already exists
+    wo_status = str(wo.get("status") or "").strip().lower()
+    if wo_status != "quality_check":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"La orden debe estar en quality_check para inspeccionar (estado actual: {wo_status or 'desconocido'}). "
+                "El técnico debe enviar la orden a control de calidad primero."
+            ),
+        )
+
+    # Check if QC already exists (approved blocks re-entry; rejected allows re-inspection)
     existing = await db.quality_controls.find_one(
-        {"work_order_id": qc_data.work_order_id}
+        {"work_order_id": qc_data.work_order_id, "approved": True}
     )
     if existing:
         raise HTTPException(
-            status_code=400, detail="Ya existe un control de calidad para esta orden"
+            status_code=400, detail="Ya existe un control de calidad aprobado para esta orden"
         )
 
     # Calculate average rating
@@ -19176,6 +19342,135 @@ async def update_appearance_settings(payload: AppearanceSettings, request: Reque
         upsert=True,
     )
     return {"watermark_opacity": watermark_opacity}
+
+
+# ============ DIALOG MESSAGES (editable copy) ============
+
+from backend.domains.ui.dialog_messages import (
+    DIALOG_EDITOR_ROLES,
+    DIALOG_MESSAGES_DOC_TYPE,
+    DEFAULT_DIALOG_MESSAGES,
+    normalize_message_patch,
+    serialize_dialog_catalog,
+)
+
+
+async def _get_dialog_messages_overrides() -> Dict[str, Any]:
+    doc = await db.settings.find_one({"type": DIALOG_MESSAGES_DOC_TYPE}, {"_id": 0}) or {}
+    messages = doc.get("messages") or {}
+    return messages if isinstance(messages, dict) else {}
+
+
+async def _save_dialog_messages_overrides(messages: Dict[str, Any], actor: Optional[User] = None) -> Dict[str, Any]:
+    payload = {
+        "type": DIALOG_MESSAGES_DOC_TYPE,
+        "messages": messages,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if actor is not None:
+        payload["updated_by"] = getattr(actor, "user_id", None)
+        payload["updated_by_name"] = getattr(actor, "name", None)
+    await db.settings.update_one(
+        {"type": DIALOG_MESSAGES_DOC_TYPE},
+        {"$set": payload},
+        upsert=True,
+    )
+    return serialize_dialog_catalog(messages)
+
+
+@api_router.get("/settings/dialog-messages")
+async def get_dialog_messages(request: Request):
+    """Any authenticated user can read dialog copy (for UI)."""
+    await require_auth(request)
+    overrides = await _get_dialog_messages_overrides()
+    return serialize_dialog_catalog(overrides)
+
+
+@api_router.get("/settings/dialog-messages/{message_key}")
+async def get_dialog_message(message_key: str, request: Request):
+    await require_auth(request)
+    key = str(message_key or "").strip()
+    if key not in DEFAULT_DIALOG_MESSAGES:
+        raise HTTPException(status_code=404, detail="Mensaje de diálogo no encontrado")
+    catalog = serialize_dialog_catalog(await _get_dialog_messages_overrides())
+    return catalog["by_key"][key]
+
+
+@api_router.put("/settings/dialog-messages/{message_key}")
+async def update_dialog_message(message_key: str, payload: Dict[str, Any], request: Request):
+    actor = await require_roles(request, list(DIALOG_EDITOR_ROLES))
+    key = str(message_key or "").strip()
+    if key not in DEFAULT_DIALOG_MESSAGES:
+        raise HTTPException(status_code=404, detail="Mensaje de diálogo no encontrado")
+    patch = normalize_message_patch(payload or {})
+    if not patch:
+        raise HTTPException(status_code=400, detail="No hay campos válidos para actualizar")
+    overrides = await _get_dialog_messages_overrides()
+    current = dict(overrides.get(key) or {})
+    current.update(patch)
+    overrides[key] = current
+    catalog = await _save_dialog_messages_overrides(overrides, actor)
+    return {"message": "Mensaje actualizado", "item": catalog["by_key"][key]}
+
+
+@api_router.put("/settings/dialog-messages")
+async def update_dialog_messages_bulk(payload: Dict[str, Any], request: Request):
+    """Bulk update: { "messages": { "sale.send_to_cashier": { "title": "..." }, ... } }"""
+    actor = await require_roles(request, list(DIALOG_EDITOR_ROLES))
+    data = payload or {}
+    incoming = data.get("messages") if isinstance(data.get("messages"), dict) else data
+    if not isinstance(incoming, dict) or not incoming:
+        raise HTTPException(status_code=400, detail="Envía un mapa messages con al menos un key")
+    overrides = await _get_dialog_messages_overrides()
+    updated_keys: List[str] = []
+    for raw_key, raw_patch in incoming.items():
+        key = str(raw_key or "").strip()
+        if key not in DEFAULT_DIALOG_MESSAGES:
+            continue
+        patch = normalize_message_patch(raw_patch if isinstance(raw_patch, dict) else {})
+        if not patch:
+            continue
+        current = dict(overrides.get(key) or {})
+        current.update(patch)
+        overrides[key] = current
+        updated_keys.append(key)
+    if not updated_keys:
+        raise HTTPException(status_code=400, detail="Ningún mensaje válido para actualizar")
+    catalog = await _save_dialog_messages_overrides(overrides, actor)
+    return {
+        "message": f"{len(updated_keys)} mensaje(s) actualizado(s)",
+        "updated_keys": updated_keys,
+        "catalog": catalog,
+    }
+
+
+@api_router.post("/settings/dialog-messages/reset")
+async def reset_dialog_messages(payload: Dict[str, Any], request: Request):
+    """Reset all or selected keys to code defaults. Body: { "keys": ["sale.send_to_cashier"] } optional."""
+    actor = await require_roles(request, list(DIALOG_EDITOR_ROLES))
+    data = payload or {}
+    keys = data.get("keys")
+    overrides = await _get_dialog_messages_overrides()
+    if keys is None:
+        overrides = {}
+        reset_keys = list(DEFAULT_DIALOG_MESSAGES.keys())
+    else:
+        if not isinstance(keys, list):
+            raise HTTPException(status_code=400, detail="keys debe ser una lista")
+        reset_keys = []
+        for raw in keys:
+            key = str(raw or "").strip()
+            if key in overrides:
+                overrides.pop(key, None)
+                reset_keys.append(key)
+            elif key in DEFAULT_DIALOG_MESSAGES:
+                reset_keys.append(key)
+    catalog = await _save_dialog_messages_overrides(overrides, actor)
+    return {
+        "message": "Mensajes restablecidos a valores por defecto",
+        "reset_keys": reset_keys,
+        "catalog": catalog,
+    }
 
 
 from backend.domains.inventory.label_printer import (

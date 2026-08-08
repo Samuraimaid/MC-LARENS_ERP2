@@ -1276,6 +1276,113 @@ html {
     animation: erp-fade-check 320ms ease-out;
 }
 
+/* ── Status dialog (pastel glyph modals) ─────────────────────────── */
+@keyframes status-glyph-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.72);
+    }
+    55% {
+        opacity: 1;
+        transform: scale(1.06);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes status-glyph-glow {
+    0%,
+    100% {
+        filter: brightness(1);
+        box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+        filter: brightness(1.06);
+        box-shadow: 0 8px 28px -6px hsl(var(--foreground) / 0.12);
+    }
+}
+
+@keyframes status-title-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes status-footer-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-dialog-glyph {
+    animation:
+        status-glyph-pop 480ms cubic-bezier(0.22, 1, 0.36, 1) both,
+        status-glyph-glow 2.4s ease-in-out 480ms 2;
+    will-change: transform, opacity;
+}
+
+.status-dialog-title-in {
+    animation: status-title-in 360ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.status-dialog-desc-in {
+    animation: status-title-in 360ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+}
+
+.status-dialog-footer-in {
+    animation: status-footer-in 380ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+}
+
+/* Status action buttons — light lift + glow on pointer hover */
+.status-dialog-btn {
+    transition:
+        transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 200ms ease,
+        filter 180ms ease,
+        background-color 180ms ease,
+        color 180ms ease;
+    will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .status-dialog-btn:hover:not(:disabled) {
+        transform: translateY(-2px) scale(1.03);
+        filter: brightness(1.06) saturate(1.05);
+        box-shadow:
+            0 8px 18px -6px hsl(var(--foreground) / 0.22),
+            0 2px 6px -2px hsl(var(--foreground) / 0.12);
+    }
+
+    .status-dialog-btn:active:not(:disabled) {
+        transform: translateY(0) scale(0.98);
+        filter: brightness(0.98);
+        box-shadow: 0 2px 6px -2px hsl(var(--foreground) / 0.12);
+    }
+
+    .status-dialog-btn-primary:hover:not(:disabled) {
+        box-shadow:
+            0 10px 22px -6px color-mix(in srgb, currentColor 35%, transparent),
+            0 3px 8px -2px hsl(var(--foreground) / 0.14);
+    }
+
+    .status-dialog-btn-secondary:hover:not(:disabled) {
+        background-color: rgb(226 232 240); /* slate-200 */
+        color: rgb(51 65 85); /* slate-700 */
+    }
+}
+
 .erp-rolling-amount {
     display: inline-flex;
     align-items: center;
@@ -1367,12 +1474,27 @@ html {
     .animate-erp-pulse,
     .animate-erp-fade-check,
     .animate-erp-digit-enter,
+    .status-dialog-glyph,
+    .status-dialog-title-in,
+    .status-dialog-desc-in,
+    .status-dialog-footer-in,
     .ui-fade-in-stagger > * {
         animation: none !important;
     }
 
     .erp-rolling-digit-strip {
         transition: none !important;
+    }
+
+    .status-dialog-btn {
+        transition: none !important;
+    }
+
+    .status-dialog-btn:hover:not(:disabled),
+    .status-dialog-btn:active:not(:disabled) {
+        transform: none !important;
+        filter: none !important;
+        box-shadow: none !important;
     }
 
     .ui-interactive,

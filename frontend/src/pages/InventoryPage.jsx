@@ -8,6 +8,7 @@ import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 // Checkbox imported previously but not used; removed to reduce lint warnings
@@ -1058,12 +1059,12 @@ export function InventoryPage() {
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Importar Productos desde CSV</DialogTitle>
-                <DialogDescription>
-                  Sube un archivo CSV con los productos a importar
-                </DialogDescription>
-              </DialogHeader>
+              <ContextualDialogHeader
+                variant="information"
+                size="inline"
+                title="Importar Productos desde CSV"
+                description="Sube un archivo CSV con los productos a importar"
+              />
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={downloadTemplate} className="flex-1" data-testid="download-template-btn">

@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  ContextualDialogFooter,
+  ContextualDialogHeader,
+  getStatusPrimaryButtonClass,
+  getStatusSecondaryButtonClass,
+} from "@/components/ui/contextual-dialog-header";
+import { useDialogMessages } from "@/context/DialogMessagesContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -129,6 +136,7 @@ import {
   TIER_LABELS,
   TIER_PRECIO1,
   TIER_PRECIO2,
+  buildPrecio2CartSignature,
   buildTierChangeAuditEvent,
   cartNeedsPrecio2Approval,
   canSellerEditLinePrice,
@@ -137,6 +145,7 @@ import {
   repriceCartItemsForTier,
   resolveDefaultUnitPrice,
   resolveProductTierPrice,
+  tierRequiresSupervisorApproval,
 } from "@/lib/priceTiers";
 import PriceTierSelector from "@/components/sales/PriceTierSelector";
 import PriceTierCompare from "@/components/sales/PriceTierCompare";
@@ -202,6 +211,8 @@ export default function SaleForm({
   initialData = {},
   onSubmit,
   submitLabel = "Crear",
+  /** Sellers (and sales desk): confirm checklist before locking invoice in caja */
+  confirmSendToCashier = false,
   exchangeRate = 36.5,
   buyExchangeRate = null,
   defaultIvaRate = 15,
@@ -221,6 +232,7 @@ export default function SaleForm({
   draftReview = {},
 }) {
   const { user } = useAuth();
+  const { getMessage: getDialogMessage } = useDialogMessages();
   const isSupervisorUser = isErpDraftSupervisor(user?.role);
   const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
   const sellerReleasedRestricted = isDraftReleasedWithRestrictions(draftReview) && !isSupervisorUser;
@@ -345,6 +357,9 @@ export default function SaleForm({
   const [auditEvents, setAuditEvents] = useState([]);
   const [tierChangeConfirmOpen, setTierChangeConfirmOpen] = useState(false);
   const [pendingTierChange, setPendingTierChange] = useState(null);
+  const [sendToCashierConfirmOpen, setSendToCashierConfirmOpen] = useState(false);
+  const [pendingCashierPayload, setPendingCashierPayload] = useState(null);
+  const [submittingToCashier, setSubmittingToCashier] = useState(false);
   const canEditLinePrice = useMemo(
     () => canSellerEditLinePrice(user, salePricingContext),
     [salePricingContext, user],
@@ -358,6 +373,9 @@ export default function SaleForm({
     };
   }, [salePricingContext, activePriceTier]);
   const [precio2ApprovalId, setPrecio2ApprovalId] = useState(null);
+  /** none | pending | approved | rejected — never treat pending as authorized */
+  const [precio2ApprovalStatus, setPrecio2ApprovalStatus] = useState("none");
+  const [precio2ApprovedSignature, setPrecio2ApprovedSignature] = useState("");
   const [commercialIncludeInstallation, setCommercialIncludeInstallation] = useState(false);
   const [commercialIncludeDelivery, setCommercialIncludeDelivery] = useState(false);
   const [requestingPrecio2Approval, setRequestingPrecio2Approval] = useState(false);
@@ -582,13 +600,32 @@ export default function SaleForm({
   }, [customerVehicles, normalizeVehicleId, selectedVehicle]);
 
   const stepOneComplete = Boolean(selectedCustomer?.customer_id);
-  const stepTwoComplete = useMemo(() => {
-    if (!stepOneComplete || !logisticMode) return false;
+  /** Valid fulfillment choice that can unlock products */
+  const hasValidFulfillmentSelection = useMemo(() => {
+    if (!logisticMode) return false;
     if (logisticMode === "installed") {
-      return Boolean(normalizeVehicleId(selectedVehicle)) && !isVehiclePickerVisible;
+      return Boolean(selectedVehicleData);
     }
-    return !isVehiclePickerVisible;
-  }, [stepOneComplete, logisticMode, selectedVehicle, isVehiclePickerVisible, normalizeVehicleId]);
+    return logisticMode === "carryout" || logisticMode === "delivery";
+  }, [logisticMode, selectedVehicleData]);
+
+  /**
+   * Show the 3 delivery mode buttons when:
+   * - user reopened the step, or
+   * - there is no valid selection yet (avoids empty "Paso 2" after draft restore)
+   */
+  const showFulfillmentChooser = Boolean(
+    stepOneComplete
+    && selectedCustomer
+    && (isVehiclePickerVisible || !hasValidFulfillmentSelection),
+  );
+
+  const stepTwoComplete = useMemo(() => {
+    if (!stepOneComplete || !hasValidFulfillmentSelection) return false;
+    // Chooser open means user is still deciding delivery mode
+    if (showFulfillmentChooser) return false;
+    return true;
+  }, [stepOneComplete, hasValidFulfillmentSelection, showFulfillmentChooser]);
 
   const triggerVehiclePulse = useCallback(() => {
     setVehiclePulseActive(true);
@@ -867,9 +904,10 @@ export default function SaleForm({
       setVehicleFlowOption(
         draft?.vehicleFlowOption || (draft?.selectedVehicle ? "registered" : "carryout"),
       );
+      // Do not invent "carryout" when draft never chose delivery mode — keep null so Paso 2 chooser shows
       setLogisticMode(
         draft?.logisticMode
-        || (draft?.delivery_info?.is_delivery ? "delivery" : (draft?.selectedVehicle ? "installed" : "carryout")),
+        || (draft?.delivery_info?.is_delivery ? "delivery" : (draft?.selectedVehicle ? "installed" : null)),
       );
       setDeliveryDestinationType(draft?.deliveryDestinationType || draft?.delivery_info?.destination_type || "domicilio");
       setDeliveryCost(
@@ -878,10 +916,20 @@ export default function SaleForm({
           : String(draft?.delivery_info?.delivery_cost || ""),
       );
       setSelectedMessengerId(draft?.selectedMessengerId || draft?.delivery_info?.messenger_id || "");
+      // Restore fulfillment UI visibility carefully — never leave Paso 2 blank
+      const restoredLogistic =
+        draft?.logisticMode
+        || (draft?.delivery_info?.is_delivery ? "delivery" : (draft?.selectedVehicle ? "installed" : null));
       if (typeof draft?.isVehiclePickerVisible === "boolean") {
-        setIsVehiclePickerVisible(draft.isVehiclePickerVisible);
-      } else if (draft?.vehicleFlowOption) {
+        // If draft claims picker is closed but has no valid mode, force open
+        const modeOk = restoredLogistic === "carryout"
+          || restoredLogistic === "delivery"
+          || (restoredLogistic === "installed" && Boolean(draft?.selectedVehicle));
+        setIsVehiclePickerVisible(draft.isVehiclePickerVisible || !modeOk);
+      } else if (restoredLogistic === "carryout" || restoredLogistic === "delivery" || (restoredLogistic === "installed" && draft?.selectedVehicle)) {
         setIsVehiclePickerVisible(false);
+      } else {
+        setIsVehiclePickerVisible(true);
       }
       setShowNewCustomer(Boolean(draft?.showNewCustomer));
       setShowNewVehicleDialog(Boolean(draft?.showNewVehicleDialog));
@@ -1617,9 +1665,19 @@ export default function SaleForm({
     persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
   };
 
+  const clearPrecio2Approval = useCallback(() => {
+    setPrecio2ApprovalId(null);
+    setPrecio2ApprovalStatus("none");
+    setPrecio2ApprovedSignature("");
+  }, []);
+
   const requestPrecio2Approval = async () => {
     if (!selectedCustomer?.customer_id) {
       toast.error("Selecciona un cliente primero");
+      return;
+    }
+    if (isSupervisorUser) {
+      toast.message("Supervisión no requiere solicitud de Precio 2");
       return;
     }
     const motivo = window.prompt("Motivo de la solicitud de Precio 2 (obligatorio):", "");
@@ -1648,8 +1706,12 @@ export default function SaleForm({
           items: precio2Items,
         },
       }, { withCredentials: true });
-      setPrecio2ApprovalId(response.data?.approval_id || null);
-      toast.success("Solicitud de Precio 2 enviada. Espera aprobación de supervisión.");
+      const approvalId = response.data?.approval_id || null;
+      // Only store request id as pending — backend must later return status=approved
+      setPrecio2ApprovalId(approvalId);
+      setPrecio2ApprovalStatus(approvalId ? "pending" : "none");
+      setPrecio2ApprovedSignature("");
+      toast.success("Solicitud de Precio 2 enviada. Espera aprobación de supervisión o gerencia.");
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo solicitar aprobación de Precio 2");
     } finally {
@@ -1670,8 +1732,12 @@ export default function SaleForm({
       toast.error("Los clientes Casa Comercial solo pueden ser atendidos por Vendedores VIP o supervisión");
       return;
     }
-    if (needsPrecio2Approval && !precio2ApprovalId) {
-      toast.error("Precio 2 requiere aprobación de supervisor o gerencia antes de facturar");
+    if (needsPrecio2Approval && precio2ApprovalStatus !== "approved") {
+      toast.error(
+        precio2ApprovalStatus === "pending"
+          ? "La solicitud de Precio 2 aún está pendiente de supervisión/gerencia"
+          : "Precio 2 requiere aprobación de supervisor o gerencia antes de facturar",
+      );
       return;
     }
     if (logisticMode === "installed" && !normalizeVehicleId(selectedVehicle)) {
@@ -1809,7 +1875,9 @@ export default function SaleForm({
           delivery_status: "pendiente",
         }
         : null,
-      ...(precio2ApprovalId ? { precio2_approval_id: precio2ApprovalId } : {}),
+      ...(precio2ApprovalStatus === "approved" && precio2ApprovalId
+        ? { precio2_approval_id: precio2ApprovalId }
+        : {}),
       ...(isCommercialHouseSale ? {
         commercial_include_installation: commercialIncludeInstallation,
         commercial_include_delivery: commercialIncludeDelivery,
@@ -1818,21 +1886,40 @@ export default function SaleForm({
       active_price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
       audit_events: auditEvents,
     };
+
+    // Sellers: confirm before locking invoice in caja (edits later need approval)
+    if (confirmSendToCashier && flowType === "sale") {
+      setPendingCashierPayload(payload);
+      setSendToCashierConfirmOpen(true);
+      return;
+    }
+
+    await executeSubmitToCashier(payload);
+  };
+
+  const executeSubmitToCashier = async (payload) => {
+    if (!payload) return false;
+    setSubmittingToCashier(true);
     try {
       const result = onSubmit && onSubmit(payload);
       let submissionResult = result;
       if (result && typeof result.then === "function") {
         submissionResult = await result;
       }
-      if (submissionResult?.ok !== true) return;
+      if (submissionResult?.ok !== true) return false;
       if (draftKey && typeof window !== "undefined") {
         window.localStorage.removeItem(draftKey);
         if (typeof onDraftClear === "function") {
           onDraftClear();
         }
       }
+      setSendToCashierConfirmOpen(false);
+      setPendingCashierPayload(null);
+      return true;
     } catch (error) {
       throw error;
+    } finally {
+      setSubmittingToCashier(false);
     }
   };
 
@@ -2696,6 +2783,11 @@ export default function SaleForm({
     [normalizedCartItems, productsById, isSupervisorUser],
   );
 
+  const precio2CartSignature = useMemo(
+    () => buildPrecio2CartSignature(normalizedCartItems, productsById),
+    [normalizedCartItems, productsById],
+  );
+
   const isCommercialHouseSale = Boolean(
     salePricingContext?.pricing_profile === "casa_comercial"
     && salePricingContext?.can_serve_commercial_house,
@@ -2741,11 +2833,28 @@ export default function SaleForm({
     setActivePriceTier(newTier);
     setCartItems(repriced);
     setAuditEvents(nextAudit);
+    // Switching tiers invalidates any prior Precio 2 authorization
+    clearPrecio2Approval();
     persistDraftSnapshot({ activePriceTier: newTier, cartItems: repriced, auditEvents: nextAudit });
-    toast.success(`${TIER_LABELS[newTier] || newTier} aplicado a todas las líneas`);
+    const needsApproval = tierRequiresSupervisorApproval(newTier, user);
+    if (needsApproval) {
+      toast.warning(
+        `${TIER_LABELS[newTier] || newTier} aplicado. Debes solicitar y obtener aprobación de supervisión/gerencia antes de facturar.`,
+      );
+    } else {
+      toast.success(`${TIER_LABELS[newTier] || newTier} aplicado a todas las líneas`);
+    }
     setTierChangeConfirmOpen(false);
     setPendingTierChange(null);
-  }, [activePriceTier, auditEvents, normalizedCartItems, persistDraftSnapshot, productsById, user]);
+  }, [
+    activePriceTier,
+    auditEvents,
+    clearPrecio2Approval,
+    normalizedCartItems,
+    persistDraftSnapshot,
+    productsById,
+    user,
+  ]);
 
   const handleActiveTierChange = useCallback((newTier) => {
     if (!newTier || newTier === activePriceTier) return;
@@ -2757,9 +2866,64 @@ export default function SaleForm({
     applyActiveTierChange(newTier);
   }, [activePriceTier, applyActiveTierChange, normalizedCartItems.length]);
 
+  // Invalidate approval when customer changes or Precio 2 lines/prices change
   useEffect(() => {
-    setPrecio2ApprovalId(null);
-  }, [selectedCustomer?.customer_id, normalizedCartItems]);
+    clearPrecio2Approval();
+  }, [selectedCustomer?.customer_id, clearPrecio2Approval]);
+
+  useEffect(() => {
+    if (!needsPrecio2Approval) {
+      clearPrecio2Approval();
+      return;
+    }
+    if (
+      precio2ApprovalStatus === "approved"
+      && precio2ApprovedSignature
+      && precio2ApprovedSignature !== precio2CartSignature
+    ) {
+      clearPrecio2Approval();
+      toast.message("Cambiaste líneas/precios de Precio 2: se requiere nueva aprobación");
+    }
+  }, [
+    clearPrecio2Approval,
+    needsPrecio2Approval,
+    precio2ApprovalStatus,
+    precio2ApprovedSignature,
+    precio2CartSignature,
+  ]);
+
+  // Poll pending Precio 2 approval so the seller can finalize only when approved
+  useEffect(() => {
+    if (!precio2ApprovalId || precio2ApprovalStatus !== "pending") return undefined;
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const response = await axios.get(`${API}/approvals/${precio2ApprovalId}`, {
+          withCredentials: true,
+        });
+        if (cancelled) return;
+        const status = String(response.data?.status || "").toLowerCase();
+        if (status === "approved") {
+          setPrecio2ApprovalStatus("approved");
+          setPrecio2ApprovedSignature(precio2CartSignature);
+          toast.success("Precio 2 aprobado por supervisión. Ya puedes facturar.");
+        } else if (status === "rejected") {
+          setPrecio2ApprovalStatus("rejected");
+          toast.error("La solicitud de Precio 2 fue rechazada");
+        }
+      } catch {
+        // Keep pending; next tick retries
+      }
+    };
+
+    poll();
+    const timer = window.setInterval(poll, 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [precio2ApprovalId, precio2ApprovalStatus, precio2CartSignature]);
 
   const scrollProductList = (delta) => {
     const list = productListRef.current;
@@ -2885,7 +3049,7 @@ export default function SaleForm({
 
   useEffect(() => {
     const stepOneDone = Boolean(selectedCustomer?.customer_id);
-    const stepTwoSelected = stepOneDone && !isVehiclePickerVisible;
+    const stepTwoSelected = stepOneDone && stepTwoComplete;
 
     if (!stepTwoSelected) {
       didStepThreeAutoScrollRef.current = false;
@@ -2918,7 +3082,7 @@ export default function SaleForm({
         productSearchRef.current?.focus();
       });
     });
-  }, [selectedCustomer?.customer_id, isVehiclePickerVisible]);
+  }, [selectedCustomer?.customer_id, stepTwoComplete]);
 
   useEffect(() => {
     return () => clearBreakdownTimers();
@@ -3085,6 +3249,7 @@ export default function SaleForm({
                     activeTier={activePriceTier}
                     onTierChange={handleActiveTierChange}
                     disabled={sellerFlowLocked}
+                    precio2ApprovalStatus={precio2ApprovalStatus}
                   />
                   {auditEvents.some((e) => e.event_type === "tier_change") ? (
                     <DocumentAuditPanel
@@ -3187,8 +3352,11 @@ export default function SaleForm({
             <p className="text-xs text-muted-foreground">Primero selecciona un cliente</p>
           ) : null}
 
-          {stepOneComplete && selectedCustomer && isVehiclePickerVisible ? (
+          {showFulfillmentChooser ? (
             <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 ui-fade-in-stagger dark:border-slate-700 dark:bg-slate-900/30">
+              <p className="text-xs text-muted-foreground">
+                Elige cómo se entregará esta venta. Esto habilita el paso de productos.
+              </p>
               <div className="grid gap-2 sm:grid-cols-3">
                 <button
                   type="button"
@@ -3398,7 +3566,7 @@ export default function SaleForm({
             </div>
           ) : null}
 
-          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "carryout" ? (
+          {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "carryout" ? (
             <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.carryout.shell)}>
               <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
                 <div className="min-w-0 space-y-1.5">
@@ -3427,7 +3595,7 @@ export default function SaleForm({
             </div>
           ) : null}
 
-          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "delivery" ? (
+          {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "delivery" ? (
             <div className="space-y-3">
               <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10")}>
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
@@ -3533,7 +3701,7 @@ export default function SaleForm({
             </div>
           ) : null}
 
-          {!isVehiclePickerVisible && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
+          {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
             <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
               <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
@@ -3928,24 +4096,59 @@ export default function SaleForm({
           </div>
         ) : null}
         {needsPrecio2Approval ? (
-          <div className="rounded-lg border border-amber-300 bg-amber-50/80 p-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-amber-900">
-              {precio2ApprovalId
-                ? "Aprobación de Precio 2 registrada. Puedes continuar con la factura."
-                : "Hay líneas con Precio 2. Solicita aprobación de supervisor antes de facturar."}
-            </p>
-            {!precio2ApprovalId ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={requestPrecio2Approval}
-                disabled={requestingPrecio2Approval}
+          (() => {
+            const p2 = getDialogMessage("pricing.precio2_banner");
+            const statusText =
+              precio2ApprovalStatus === "approved"
+                ? p2.description_approved
+                : precio2ApprovalStatus === "pending"
+                  ? p2.description_pending
+                  : precio2ApprovalStatus === "rejected"
+                    ? p2.description_rejected
+                    : p2.description_none;
+            const btnLabel =
+              precio2ApprovalStatus === "pending"
+                ? (p2.primary_label_pending || "Esperando aprobación…")
+                : precio2ApprovalStatus === "rejected"
+                  ? (p2.primary_label_rejected || "Solicitar de nuevo")
+                  : (p2.primary_label || "Solicitar Precio 2");
+            return (
+              <div
+                className={cn(
+                  "rounded-lg border p-3 flex flex-wrap items-center justify-between gap-2",
+                  precio2ApprovalStatus === "approved"
+                    ? "border-emerald-300 bg-emerald-50/80"
+                    : precio2ApprovalStatus === "rejected"
+                      ? "border-rose-300 bg-rose-50/80"
+                      : "border-amber-300 bg-amber-50/80",
+                )}
               >
-                Solicitar Precio 2
-              </Button>
-            ) : null}
-          </div>
+                <p
+                  className={cn(
+                    "text-xs",
+                    precio2ApprovalStatus === "approved"
+                      ? "text-emerald-900"
+                      : precio2ApprovalStatus === "rejected"
+                        ? "text-rose-900"
+                        : "text-amber-900",
+                  )}
+                >
+                  {statusText}
+                </p>
+                {precio2ApprovalStatus !== "approved" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={requestPrecio2Approval}
+                    disabled={requestingPrecio2Approval || precio2ApprovalStatus === "pending"}
+                  >
+                    {btnLabel}
+                  </Button>
+                ) : null}
+              </div>
+            );
+          })()
         ) : null}
         <div className="flex items-center justify-between">
           <Label className="inline-flex items-center gap-2">
@@ -4241,12 +4444,14 @@ export default function SaleForm({
           }}
         >
           <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Editar precio del producto</DialogTitle>
-              <DialogDescription>
-                {priceEditorItem?.product_name || "Producto"}
-              </DialogDescription>
-            </DialogHeader>
+            <ContextualDialogHeader
+              variant={getDialogMessage("sale.edit_product_price").variant || "information"}
+              size="hero"
+              title={getDialogMessage("sale.edit_product_price").title}
+              description={getDialogMessage("sale.edit_product_price", {
+                product_name: priceEditorItem?.product_name || "Producto",
+              }).description}
+            />
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label>Modo de edición</Label>
@@ -4394,31 +4599,146 @@ export default function SaleForm({
                 </div>
               ) : null}
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={closePriceEditor}>Cancelar</Button>
-              <Button type="button" onClick={applyPriceEditor}>Aplicar precio</Button>
-            </div>
+            <ContextualDialogFooter variant={getDialogMessage("sale.edit_product_price").variant || "information"}>
+              <Button
+                type="button"
+                variant="ghost"
+                className={getStatusSecondaryButtonClass(getDialogMessage("sale.edit_product_price").variant || "information")}
+                onClick={closePriceEditor}
+              >
+                {getDialogMessage("sale.edit_product_price").secondary_label || "Cancelar"}
+              </Button>
+              <Button
+                type="button"
+                className={getStatusPrimaryButtonClass(getDialogMessage("sale.edit_product_price").variant || "information")}
+                onClick={applyPriceEditor}
+              >
+                {getDialogMessage("sale.edit_product_price").primary_label || "Aplicar"}
+              </Button>
+            </ContextualDialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={sendToCashierConfirmOpen}
+          onOpenChange={(open) => {
+            if (submittingToCashier) return;
+            setSendToCashierConfirmOpen(open);
+            if (!open) setPendingCashierPayload(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            {(() => {
+              const msg = getDialogMessage("sale.send_to_cashier");
+              const variant = msg.variant || "warning";
+              const checklist = Array.isArray(msg.checklist) ? msg.checklist : [];
+              return (
+                <>
+                  <ContextualDialogHeader
+                    variant={variant}
+                    size="hero"
+                    title={msg.title}
+                    description={msg.description}
+                  />
+                  {checklist.length > 0 ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-950 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
+                      <ul className="list-disc space-y-1 pl-4 text-left">
+                        {checklist.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <ContextualDialogFooter variant={variant}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={getStatusSecondaryButtonClass(variant)}
+                      disabled={submittingToCashier}
+                      onClick={() => {
+                        setSendToCashierConfirmOpen(false);
+                        setPendingCashierPayload(null);
+                      }}
+                    >
+                      {msg.secondary_label || "Revisar de nuevo"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className={getStatusPrimaryButtonClass(variant)}
+                      disabled={submittingToCashier || !pendingCashierPayload}
+                      onClick={async () => {
+                        try {
+                          await executeSubmitToCashier(pendingCashierPayload);
+                        } catch (error) {
+                          const detail = error?.response?.data?.detail;
+                          toast.error(
+                            typeof detail === "string"
+                              ? detail
+                              : detail?.message || error?.message || "No se pudo enviar la factura a caja",
+                          );
+                        }
+                      }}
+                    >
+                      {submittingToCashier
+                        ? (msg.submitting_label || "Enviando…")
+                        : (msg.primary_label || "Sí, enviar a caja")}
+                    </Button>
+                  </ContextualDialogFooter>
+                </>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
         <Dialog open={tierChangeConfirmOpen} onOpenChange={setTierChangeConfirmOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cambiar rango de precios</DialogTitle>
-              <DialogDescription>
-                Se actualizarán {normalizedCartItems.length} línea(s) al rango{" "}
-                {TIER_LABELS[pendingTierChange] || pendingTierChange}.
-                {isSupervisorPricingRole(user) ? " Este cambio quedará registrado en auditoría." : ""}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => { setTierChangeConfirmOpen(false); setPendingTierChange(null); }}>
-                Cancelar
-              </Button>
-              <Button type="button" onClick={() => applyActiveTierChange(pendingTierChange)}>
-                Confirmar
-              </Button>
-            </div>
+          <DialogContent className="sm:max-w-md">
+            {(() => {
+              const needsApproval = tierRequiresSupervisorApproval(pendingTierChange, user);
+              const msg = getDialogMessage("sale.change_price_tier", {
+                count: String(normalizedCartItems.length),
+                tier: TIER_LABELS[pendingTierChange] || pendingTierChange || "",
+              });
+              const variant = needsApproval ? (msg.variant || "warning") : "question";
+              const extra = isSupervisorPricingRole(user)
+                ? (msg.description_supervisor || "")
+                : needsApproval
+                  ? (msg.description_precio2 || "")
+                  : "";
+              return (
+                <>
+                  <ContextualDialogHeader
+                    variant={variant}
+                    size="hero"
+                    title={msg.title}
+                    description={
+                      <>
+                        {msg.description}
+                        {extra}
+                      </>
+                    }
+                  />
+                  <ContextualDialogFooter variant={variant}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={getStatusSecondaryButtonClass(variant)}
+                      onClick={() => { setTierChangeConfirmOpen(false); setPendingTierChange(null); }}
+                    >
+                      {msg.secondary_label || "Cancelar"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className={getStatusPrimaryButtonClass(variant)}
+                      onClick={() => applyActiveTierChange(pendingTierChange)}
+                    >
+                      {needsApproval
+                        ? (msg.primary_label_precio2 || msg.primary_label || "Aplicar")
+                        : (msg.primary_label || "Confirmar")}
+                    </Button>
+                  </ContextualDialogFooter>
+                </>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
@@ -4862,7 +5182,10 @@ export default function SaleForm({
         <div className="flex gap-2">
           <Button
             onClick={handleSubmit}
-            disabled={normalizedPaymentMethod !== "credit" && !isPaymentPlanReady}
+            disabled={
+              submittingToCashier
+              || (normalizedPaymentMethod !== "credit" && !isPaymentPlanReady)
+            }
             className={cn(
               "flex-1",
               (normalizedPaymentMethod === "credit" || isPaymentPlanReady)
@@ -4870,7 +5193,7 @@ export default function SaleForm({
             )}
           >
             <ShieldCheck className="h-4 w-4 mr-2" />
-            {submitLabel}
+            {submittingToCashier ? "Enviando…" : submitLabel}
           </Button>
         </div>
       </div>
@@ -4907,16 +5230,14 @@ export default function SaleForm({
           });
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="inline-flex items-center gap-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>Registrar Vehículo</span>
-            </DialogTitle>
-            <DialogDescription>
-              Registra un nuevo vehículo para el cliente seleccionado usando marca, año y modelo del catálogo.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[min(85vh,92dvh)] overflow-y-auto">
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            icon={PlusCircle}
+            title="Registrar Vehículo"
+            description="Registra un nuevo vehículo para el cliente seleccionado usando marca, año y modelo del catálogo."
+          />
 
           <div className="space-y-3">
             <div>
@@ -5110,25 +5431,18 @@ export default function SaleForm({
           });
         }}
       >
-        <DialogContent className={`max-w-4xl max-h-[85vh] overflow-y-auto border-2 ${newCustomerTone.modal}`}>
-          <DialogHeader>
-            <DialogTitle className="inline-flex items-center gap-2">
-              {isNewCustomerCompany ? (
-                <>
-                  <Building2 className="h-4 w-4" />
-                  <PlusCircle className="h-4 w-4" />
-                </>
-              ) : (
-                <UserPlus className="h-4 w-4" />
-              )}
-              <span>{isNewCustomerCompany ? "Nueva Empresa" : "Nuevo Cliente"}</span>
-            </DialogTitle>
-            <DialogDescription>
-              {isNewCustomerCompany
+        <DialogContent className={`max-w-4xl max-h-[min(85vh,92dvh)] overflow-y-auto border-2 ${newCustomerTone.modal}`}>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            icon={isNewCustomerCompany ? Building2 : UserPlus}
+            title={isNewCustomerCompany ? "Nueva Empresa" : "Nuevo Cliente"}
+            description={
+              isNewCustomerCompany
                 ? "Registra una nueva empresa y opcionalmente su vehículo"
-                : "Registra un nuevo cliente y opcionalmente su vehículo"}
-            </DialogDescription>
-          </DialogHeader>
+                : "Registra un nuevo cliente y opcionalmente su vehículo"
+            }
+          />
 
           <CustomerVehicleFormTabs
             formData={newCustomer}

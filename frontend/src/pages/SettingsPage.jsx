@@ -16,8 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import {
   Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
   Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
+  MessageSquareText,
 } from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
+import { DialogMessagesSettingsPanel } from "@/components/settings/DialogMessagesSettingsPanel";
 import { SystemSettingsContent } from "./SystemSettingsPage";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
@@ -61,6 +63,7 @@ const SETTINGS_TAB_ICONS = {
   DollarSign,
   Bell,
   Printer,
+  MessageSquareText,
 };
 
 const VALID_SETTINGS_TABS = SETTINGS_TAB_OPTIONS.map((tab) => tab.id);
@@ -316,6 +319,7 @@ export function SettingsPage() {
   const [watermarkOpacityPercent, setWatermarkOpacityPercent] = useState(() => String(Math.round(watermarkOpacity * 100)));
   const [savingAppearanceSettings, setSavingAppearanceSettings] = useState(false);
   const canManageBillingSettings = ["gerencia", "recursos_humanos"].includes((user?.role || "").toLowerCase());
+  const canManageDialogMessages = ["gerencia", "programador"].includes((user?.role || "").toLowerCase());
 
   const handleSettingsTabChange = (nextTab) => {
     const params = new URLSearchParams(searchParams);
@@ -1446,12 +1450,13 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleSettingsTabChange} className="space-y-4 animate-fade-up-soft">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {SETTINGS_TAB_OPTIONS.map((tab) => {
             const Icon = SETTINGS_TAB_ICONS[tab.icon];
             const hidden =
               (tab.id === "billing" && !canManageBillingSettings)
               || (tab.id === "vehicles" && !canManageVehicleSettings)
+              || (tab.id === "dialogos" && !canManageDialogMessages)
               || (["monedas", "notificaciones", "impresoras"].includes(tab.id) && !canManageSystemSettings);
             if (hidden) return null;
             return (
@@ -2545,6 +2550,21 @@ export function SettingsPage() {
           <div className="rounded-md border bg-background p-2 sm:p-4 ui-panel">
             <SystemSettingsContent forcedSection="impresoras" showPageHeader={false} showBackupButton={false} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="dialogos" className="space-y-6">
+          {canManageDialogMessages ? (
+            <DialogMessagesSettingsPanel />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Mensajes de diálogos</CardTitle>
+                <CardDescription>
+                  Solo gerencia y programadores pueden editar estos textos.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-6">

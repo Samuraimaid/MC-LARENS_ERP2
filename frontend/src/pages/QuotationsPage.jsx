@@ -24,6 +24,12 @@ import {
   normalizeDraftReview,
 } from "@/lib/draftReview";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
+import {
+  ContextualDialogFooter,
+  ContextualDialogHeader,
+  getStatusPrimaryButtonClass,
+  getStatusSecondaryButtonClass,
+} from "../components/ui/contextual-dialog-header";
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
@@ -1438,22 +1444,28 @@ export function QuotationsPage() {
             </div>
             <Dialog open={showClearQuoteConfirm} onOpenChange={setShowClearQuoteConfirm}>
               <DialogContent className="max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>¿Limpiar formulario?</DialogTitle>
-                  <DialogDescription>
-                    Se borrarán todos los datos ingresados en la cotización actual. Esta acción no se puede deshacer.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex gap-2 sm:justify-end">
-                  <Button variant="outline" onClick={() => setShowClearQuoteConfirm(false)}>Cancelar</Button>
+                <ContextualDialogHeader
+                  variant="warning"
+                  size="hero"
+                  title="¿Limpiar formulario?"
+                  description="Se borrarán todos los datos ingresados en la cotización actual. Esta acción no se puede deshacer."
+                />
+                <ContextualDialogFooter variant="warning">
                   <Button
-                    variant="destructive"
+                    variant="ghost"
+                    className={getStatusSecondaryButtonClass("warning")}
+                    onClick={() => setShowClearQuoteConfirm(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className={getStatusPrimaryButtonClass("warning")}
                     onClick={() => { setShowClearQuoteConfirm(false); clearEmbeddedQuoteForm(); }}
                   >
                     <Eraser className="mr-2 h-4 w-4" />
                     Sí, limpiar
                   </Button>
-                </DialogFooter>
+                </ContextualDialogFooter>
               </DialogContent>
             </Dialog>
           </CardHeader>

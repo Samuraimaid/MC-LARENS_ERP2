@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 // Checkbox removed (not used)
@@ -555,17 +556,13 @@ export function DispatchPage() {
       {/* Dispatch Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Despacho {selectedDispatch?.dispatch_id}
-            </DialogTitle>
-            <DialogDescription>
-              Referencia: {selectedDispatch?.reference_number || selectedDispatch?.invoice_number} ·
-              Tipo: {DISPATCH_TYPE_LABELS[selectedDispatch?.dispatch_type] || "Venta"} ·
-              Vendedor: {selectedDispatch?.requested_by_name || "—"}
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            icon={Truck}
+            title={`Despacho ${selectedDispatch?.dispatch_id || ""}`}
+            description={`Referencia: ${selectedDispatch?.reference_number || selectedDispatch?.invoice_number || "—"} · Tipo: ${DISPATCH_TYPE_LABELS[selectedDispatch?.dispatch_type] || "Venta"} · Vendedor: ${selectedDispatch?.requested_by_name || "—"}`}
+          />
 
           {selectedDispatch && (
             <div className="space-y-4">

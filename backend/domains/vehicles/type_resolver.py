@@ -101,14 +101,78 @@ TEXT_RULES: list[tuple[str, str]] = [
     (r"\b(camion de carga|camión de carga|box truck|camion carga)\b", "camion-carga"),
     (r"\b(pickup doble cabina|pickup double cab)\b", "camioneta-cabina-y-media"),
     (r"\b(pickup cabina simple|pickup single cab)\b", "camioneta-1-cabina"),
+    # Explicit pickup model tokens (records often only store brand+model, no body type)
+    (
+        r"\b(hilux|tacoma|tundra|ranger|amarok|s10|l200|frontier|np300|colorado|canyon|"
+        r"navara|triton|saveiro|strada|oroch|montana|toro|titan|maverick|ridgeline|"
+        r"bt-50|d-max|dmax|musso|wildtrak|silverado|f-150|f150|gladiator|canyon)\b",
+        "camioneta-cabina-y-media",
+    ),
     (r"\b(pickup|camioneta)\b", "camioneta-1-cabina"),
     (r"\b(convertible|cabrio|cabriolet)\b", "convertible"),
     (r"\b(station wagon|wagon|familiar|estate|break)\b", "station-wagon"),
+    # Common SUVs (e.g. X-Trail) before generic hatch/sedan
+    (
+        r"\b(x-trail|xtrail|qashqai|rav4|cr-v|hr-v|tucson|sportage|sorento|duster|"
+        r"tracker|equinox|pathfinder|4runner|fortuner|prado|land cruiser|cx-5|cx-30|"
+        r"forester|outlander|kicks|creta|seltos|tiguan|escape|explorer)\b",
+        "suv",
+    ),
     (r"\b(suv|crossover|sport utility)\b", "suv"),
     (r"\b(hatchback large|hatchback|hatch/|hatch )\b", "hatchback"),
     (r"\b(sedan|sedán|saloon)\b", "sedan"),
     (r"\b(minivan|microbus)\b", "microbus-pasajeros"),
 ]
+
+# Model tokens without body-style words (Hilux, X-Trail, …)
+MODEL_TOKEN_DEFAULTS: dict[str, str] = {
+    "hilux": "camioneta-cabina-y-media",
+    "tacoma": "camioneta-cabina-y-media",
+    "tundra": "camioneta-cabina-y-media",
+    "ranger": "camioneta-cabina-y-media",
+    "amarok": "camioneta-cabina-y-media",
+    "s10": "camioneta-cabina-y-media",
+    "l200": "camioneta-cabina-y-media",
+    "frontier": "camioneta-cabina-y-media",
+    "np300": "camioneta-cabina-y-media",
+    "colorado": "camioneta-cabina-y-media",
+    "navara": "camioneta-cabina-y-media",
+    "triton": "camioneta-cabina-y-media",
+    "d-max": "camioneta-cabina-y-media",
+    "dmax": "camioneta-cabina-y-media",
+    "bt-50": "camioneta-cabina-y-media",
+    "silverado": "camioneta-cabina-y-media",
+    "f-150": "camioneta-cabina-y-media",
+    "f150": "camioneta-cabina-y-media",
+    "x-trail": "suv",
+    "xtrail": "suv",
+    "qashqai": "suv",
+    "rav4": "suv",
+    "cr-v": "suv",
+    "hr-v": "suv",
+    "tucson": "suv",
+    "sportage": "suv",
+    "sorento": "suv",
+    "duster": "suv",
+    "fortuner": "suv",
+    "prado": "suv",
+    "4runner": "suv",
+    "pathfinder": "suv",
+    "kicks": "suv",
+    "corolla": "sedan",
+    "camry": "sedan",
+    "civic": "sedan",
+    "accord": "sedan",
+    "sentra": "sedan",
+    "yaris": "hatchback",
+    "swift": "hatchback",
+    "spark": "hatchback",
+    "prius": "hatchback",
+    "gol": "hatchback",
+}
+
+# Stale defaults often written by older UI/import paths — model inference beats these.
+WEAK_PRESET_SLUGS = frozenset({"", "default", "sedan", "hatchback"})
 
 
 def normalize_vehicle_type_text(value: str = "") -> str:
@@ -157,6 +221,16 @@ def infer_slug_from_descriptor(brand: str = "", descriptor: str = "") -> str | N
     return slug or None
 
 
+def _match_model_token_defaults(text: str) -> str | None:
+    if not text:
+        return None
+    # Longer tokens first (e.g. "land cruiser" / "x-trail" before short noise)
+    for token, slug in sorted(MODEL_TOKEN_DEFAULTS.items(), key=lambda item: len(item[0]), reverse=True):
+        if re.search(rf"\b{re.escape(token)}\b", text, flags=re.IGNORECASE):
+            return slug
+    return None
+
+
 def infer_slug_from_model_text(model: str = "", brand: str = "", descriptor: str = "") -> str | None:
     combined = normalize_vehicle_type_text(" ".join(part for part in [brand, model, descriptor] if part))
     if not combined:
@@ -164,11 +238,46 @@ def infer_slug_from_model_text(model: str = "", brand: str = "", descriptor: str
 
     # Parenthetical hints in catalog labels, e.g. "(pickup doble cabina)".
     for group in re.findall(r"\(([^)]+)\)", combined):
-        slug = _match_text_rules(group)
+        slug = _match_text_rules(group) or _match_model_token_defaults(group)
         if slug:
             return slug
 
+    token_slug = _match_model_token_defaults(combined)
+    if token_slug:
+        return token_slug
+
     return _match_text_rules(combined)
+
+
+def _infer_slug_from_descriptor_fuzzy(brand: str = "", model: str = "") -> str | None:
+    """Match brand+model against catalog descriptor keys when full descriptor is missing."""
+    brand_key = normalize_vehicle_type_text(brand).upper()
+    model_key = normalize_vehicle_type_text(model)
+    if not brand_key or not model_key:
+        return None
+    model_token = model_key.split("(")[0].strip()
+    if len(model_token) < 2:
+        return None
+
+    best_slug = None
+    best_score = 0
+    for key, profile in _load_descriptor_type_entries().items():
+        if not key.startswith(f"{brand_key}::"):
+            continue
+        descriptor = key.split("::", 1)[1]
+        desc_norm = normalize_vehicle_type_text(descriptor)
+        # e.g. "hilux (an120) [2015-presente]" contains "hilux"
+        if model_token not in desc_norm and not desc_norm.startswith(model_token):
+            continue
+        slug = str((profile or {}).get("default_silhouette_slug") or "").strip()
+        if not slug:
+            continue
+        score = 100 if desc_norm.startswith(model_token) else 50
+        # Prefer more specific modern dual-cab defaults when multiple Hilux generations match
+        if score > best_score:
+            best_score = score
+            best_slug = slug
+    return best_slug
 
 
 def infer_slug_from_vpic_body_class(body_class: str = "") -> str | None:
@@ -199,19 +308,32 @@ def resolve_vehicle_thumbnail_slug(
         direct = _match_text_rules(raw_type)
 
     descriptor_slug = infer_slug_from_descriptor(brand=brand, descriptor=descriptor)
+    fuzzy_slug = None if descriptor_slug else _infer_slug_from_descriptor_fuzzy(brand=brand, model=model)
     model_slug = infer_slug_from_model_text(model=model, brand=brand, descriptor=descriptor)
     body_slug = infer_slug_from_vpic_body_class(body_class)
 
-    # Curated catalog lines beat legacy defaults like vehicle_type="sedan".
-    if descriptor_slug and (not direct or (direct == "sedan" and descriptor_slug != "sedan")):
+    # Priority: exact catalog descriptor → fuzzy catalog by model → model/token rules
+    # → free-text vehicle_type (unless weak legacy) → VPIC body class.
+    if descriptor_slug:
         return descriptor_slug
-    # Legacy records often have vehicle_type="sedan" from old defaults; trust catalog model hints.
-    if model_slug and (not direct or (direct == "sedan" and model_slug != "sedan")):
+    if fuzzy_slug:
+        return fuzzy_slug
+    if model_slug and (not direct or direct in WEAK_PRESET_SLUGS or model_slug != direct):
+        # Prefer model family (Hilux→pickup) over stale vehicle_type=sedan/hatchback
+        if not direct or direct in WEAK_PRESET_SLUGS:
+            return model_slug
+        if model_slug.startswith("camioneta") and direct in WEAK_PRESET_SLUGS | {"convertible"}:
+            return model_slug
+        if model_slug == "suv" and direct in WEAK_PRESET_SLUGS:
+            return model_slug
+    if model_slug and not direct:
         return model_slug
     if direct:
         return direct
     if body_slug:
         return body_slug
+    if model_slug:
+        return model_slug
 
     if allow_default:
         return DEFAULT_SLUG
@@ -221,23 +343,42 @@ def resolve_vehicle_thumbnail_slug(
 def resolve_vehicle_record_slug(vehicle: dict[str, Any] | None, *, allow_default: bool = False) -> str | None:
     vehicle = vehicle or {}
     preset = str(vehicle.get("vehicle_type_slug") or vehicle.get("thumbnail_slug") or "").strip().lower()
-    if preset and preset != DEFAULT_SLUG:
-        return preset
 
     brand = str(vehicle.get("brand") or "").strip()
     model = str(vehicle.get("model") or "").strip()
     if not brand and not model:
-        return None
+        return preset if preset and preset != DEFAULT_SLUG else None
 
-    slug = resolve_vehicle_thumbnail_slug(
+    inferred = resolve_vehicle_thumbnail_slug(
         str(vehicle.get("vehicle_type") or vehicle.get("type") or vehicle.get("body_type") or ""),
         brand=brand,
         model=model,
         descriptor=str(vehicle.get("descriptor") or ""),
         body_class=str(vehicle.get("body_class") or vehicle.get("vpic_body_class") or ""),
-        allow_default=allow_default,
+        allow_default=False,
     )
-    return slug
+
+    # Strong model/catalog inference overrides stale hatchback/sedan presets on old records.
+    if inferred and inferred not in WEAK_PRESET_SLUGS:
+        if not preset or preset in WEAK_PRESET_SLUGS or preset == DEFAULT_SLUG:
+            return inferred
+        if preset != inferred and preset in WEAK_PRESET_SLUGS:
+            return inferred
+        # Even if preset is non-weak, prefer model inference when preset is clearly wrong hatch for pickups
+        if inferred.startswith("camioneta") and preset in {"hatchback", "sedan", "convertible"}:
+            return inferred
+        if inferred == "suv" and preset in {"hatchback", "sedan"}:
+            return inferred
+
+    if preset and preset != DEFAULT_SLUG:
+        return preset
+
+    if inferred:
+        return inferred
+
+    if allow_default:
+        return DEFAULT_SLUG
+    return None
 
 
 def infer_canonical_vehicle_type_label(

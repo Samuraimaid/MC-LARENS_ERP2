@@ -513,6 +513,9 @@ def verify_fulfillment(gerencia: ApiClient, sale_id: str, invoice: str) -> Dict[
         "work_orders_found": [w.get("work_order_id") for w in found_wos],
         "work_orders_ok": work_orders_ok,
         "fulfillment_triggered_at": sale.get("fulfillment_triggered_at"),
+        "amounts_currency": sale.get("amounts_currency") or sale.get("currency"),
+        "catalog_subtotal_usd": sale.get("catalog_subtotal_usd"),
+        "subtotal": sale.get("subtotal"),
     }
     if not dispatch_ok:
         log_fail(f"Despacho no verificado para {invoice}", str(result))
@@ -522,7 +525,84 @@ def verify_fulfillment(gerencia: ApiClient, sale_id: str, invoice: str) -> Dict[
         log_fail(f"Órdenes instalación no verificadas para {invoice}", str(result))
     else:
         log_ok(f"Órdenes instalación {result['work_orders_found']} para {invoice}")
+    if result.get("catalog_subtotal_usd") is not None and result.get("subtotal") is not None:
+        log_ok(
+            f"Moneda explícita {invoice}: amounts={result.get('amounts_currency')} "
+            f"catalog_usd={result.get('catalog_subtotal_usd')} subtotal={result.get('subtotal')}"
+        )
     return result
+
+
+def advance_work_orders_to_qc_and_delivered(gerencia: ApiClient, sale_id: str, invoice: str) -> Dict[str, Any]:
+    """pending → in_progress → quality_check → QC approve → completed → delivered."""
+    work_orders = gerencia.get("/work-orders").json()
+    if not isinstance(work_orders, list):
+        work_orders = []
+    found = [wo for wo in work_orders if wo.get("sale_id") == sale_id]
+    if not found:
+        log_ok(f"Sin OT para QC en {invoice} (venta sin instalación)")
+        return {"skipped": True, "work_orders": []}
+
+    outcomes: List[Dict[str, Any]] = []
+    for wo in found:
+        wo_id = wo.get("work_order_id")
+        row: Dict[str, Any] = {"work_order_id": wo_id, "steps": []}
+        try:
+            # Block bypass: completed without QC must fail
+            bypass = gerencia.put(f"/work-orders/{wo_id}", json_body={"status": "completed"})
+            if bypass.status_code == 200:
+                log_fail(f"QC bypass permitido en {wo_id}", bypass.text[:200])
+                row["bypass_blocked"] = False
+            else:
+                log_ok(f"Bypass completed bloqueado en {wo_id}: {bypass.status_code}")
+                row["bypass_blocked"] = True
+
+            for status in ("in_progress", "quality_check"):
+                r = gerencia.put(f"/work-orders/{wo_id}", json_body={"status": status})
+                if r.status_code != 200:
+                    raise RuntimeError(f"WO {wo_id} → {status}: {r.status_code} {r.text[:300]}")
+                row["steps"].append(status)
+                log_ok(f"WO {wo_id} → {status}")
+
+            qc_payload = {
+                "work_order_id": wo_id,
+                "overall_rating": 5,
+                "cleanliness_rating": 5,
+                "functionality_rating": 5,
+                "finish_rating": 5,
+                "safety_rating": 5,
+                "comments": f"E2E QC auto-approve {RUN_TAG}",
+                "approved": True,
+                "checklist": [{"item": "instalacion", "ok": True}],
+            }
+            qc = gerencia.post("/quality-control", json_body=qc_payload)
+            if qc.status_code != 200:
+                raise RuntimeError(f"QC {wo_id}: {qc.status_code} {qc.text[:400]}")
+            row["qc_id"] = (qc.json() or {}).get("qc_id")
+            row["steps"].append("qc_approved")
+            log_ok(f"QC aprobado {wo_id}: {row['qc_id']}")
+
+            # After QC, status should be completed; advance to delivered
+            refreshed = gerencia.get("/work-orders").json()
+            current = next((x for x in refreshed if x.get("work_order_id") == wo_id), {})
+            current_status = str(current.get("status") or "")
+            if current_status != "completed":
+                # force completed if QC left another state (should not happen)
+                r = gerencia.put(f"/work-orders/{wo_id}", json_body={"status": "completed"})
+                if r.status_code != 200:
+                    raise RuntimeError(f"WO {wo_id} completed post-QC: {r.status_code} {r.text[:300]}")
+            r = gerencia.put(f"/work-orders/{wo_id}", json_body={"status": "delivered"})
+            if r.status_code != 200:
+                raise RuntimeError(f"WO {wo_id} delivered: {r.status_code} {r.text[:300]}")
+            row["steps"].append("delivered")
+            row["final_status"] = "delivered"
+            log_ok(f"WO {wo_id} entregada (delivered)")
+            outcomes.append(row)
+        except Exception as exc:
+            log_fail(f"Flujo QC/delivered falló en {wo_id}", str(exc))
+            row["error"] = str(exc)
+            outcomes.append(row)
+    return {"skipped": False, "work_orders": outcomes}
 
 
 def run_workflow() -> None:
@@ -661,6 +741,8 @@ def run_workflow() -> None:
         )
         verify = verify_fulfillment(gerencia, sale_id, spec["invoice_number"])
         spec["verify"] = verify
+        qc_flow = advance_work_orders_to_qc_and_delivered(gerencia, sale_id, spec["invoice_number"])
+        spec["qc_flow"] = qc_flow
         REPORT["sales"].append(spec)
 
 

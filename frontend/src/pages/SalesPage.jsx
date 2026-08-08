@@ -12,6 +12,13 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
+import {
+  ContextualDialogFooter,
+  ContextualDialogHeader,
+  getStatusPrimaryButtonClass,
+  getStatusSecondaryButtonClass,
+} from "../components/ui/contextual-dialog-header";
+import { useDialogMessages } from "../context/DialogMessagesContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
@@ -131,6 +138,7 @@ const getPaymentTone = (paymentType) => {
 export function SalesPage() {
   const navigate = useNavigate();
   const { hasPermission, user } = useAuth();
+  const { getMessage: getDialogMessage } = useDialogMessages();
   const canViewSales = hasPermission("sales", "view");
   const canCreateSales = hasPermission("sales", "create");
   const canEditSales = hasPermission("sales", "edit");
@@ -891,14 +899,23 @@ export function SalesPage() {
   };
 
   const getDraftPreview = (draft) => {
-    if (!draft) return { image: null, items: [], vehicle: null };
+    if (!draft) return { image: null, items: [], vehicle: null, previewVehicle: null };
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
     const vehicle = getVehicleById(draft.selectedVehicle);
-    const image = getVehicleThumbnail(vehicle || null);
+    // Prefer live brand/model for watermark; ignore stale hatchback/sedan slug on old records
+    const previewVehicle = vehicle
+      ? {
+          ...vehicle,
+          // Force re-resolution from brand/model (see resolveVehicleTypeSlug weak presets)
+          vehicle_type_slug: vehicle.vehicle_type_slug,
+          thumbnail_slug: vehicle.thumbnail_slug,
+        }
+      : null;
+    const image = getVehicleThumbnail(previewVehicle);
     const previewNames = items.slice(0, 3).map((item) => item.product_name || "Producto");
     return {
       image,
-      previewVehicle: vehicle || null,
+      previewVehicle,
       items: previewNames,
       vehicle: getVehicleLabel(draft.selectedVehicle),
     };
@@ -2528,22 +2545,36 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             </div>
             <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
               <DialogContent className="max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>¿Limpiar formulario?</DialogTitle>
-                  <DialogDescription>
-                    Se borrarán todos los datos ingresados en la venta actual. Esta acción no se puede deshacer.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex gap-2 sm:justify-end">
-                  <Button variant="outline" onClick={() => setShowClearSaleConfirm(false)}>Cancelar</Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => { setShowClearSaleConfirm(false); clearEmbeddedSaleForm(); }}
-                  >
-                    <Eraser className="mr-2 h-4 w-4" />
-                    Sí, limpiar
-                  </Button>
-                </DialogFooter>
+                {(() => {
+                  const msg = getDialogMessage("sale.clear_form");
+                  const variant = msg.variant || "warning";
+                  return (
+                    <>
+                      <ContextualDialogHeader
+                        variant={variant}
+                        size="hero"
+                        title={msg.title}
+                        description={msg.description}
+                      />
+                      <ContextualDialogFooter variant={variant}>
+                        <Button
+                          variant="ghost"
+                          className={getStatusSecondaryButtonClass(variant)}
+                          onClick={() => setShowClearSaleConfirm(false)}
+                        >
+                          {msg.secondary_label || "Cancelar"}
+                        </Button>
+                        <Button
+                          className={getStatusPrimaryButtonClass(variant)}
+                          onClick={() => { setShowClearSaleConfirm(false); clearEmbeddedSaleForm(); }}
+                        >
+                          <Eraser className="mr-2 h-4 w-4" />
+                          {msg.primary_label || "Sí, limpiar"}
+                        </Button>
+                      </ContextualDialogFooter>
+                    </>
+                  );
+                })()}
               </DialogContent>
             </Dialog>
           </CardHeader>
@@ -2596,6 +2627,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               onCurrencyChange={setCurrency}
               hideCurrencyField={true}
               submitLabel="Enviar Factura a Caja"
+              confirmSendToCashier={isSellerOnly || String(user?.role || "").toLowerCase() === "ventas"}
               onSubmit={async (payload) => {
                 const submittedDraftId = activeDraftIdRef.current;
                 cancelScheduledDraftSync(submittedDraftId);
@@ -3027,15 +3059,17 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       {/* Transfer Dialog */}
       <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowRightLeft className="h-5 w-5" />
-              Solicitar Traslado
-            </DialogTitle>
-            <DialogDescription>
-              {transferProduct?.name} no tiene stock en esta bodega pero está disponible en otras.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="hero"
+            icon={ArrowRightLeft}
+            title="Solicitar Traslado"
+            description={
+              transferProduct?.name
+                ? `${transferProduct.name} no tiene stock en esta bodega pero está disponible en otras.`
+                : "No hay stock en esta bodega; el producto está disponible en otras."
+            }
+          />
           <div className="space-y-4">
             {transferProduct && (
               <div className="p-3 bg-muted rounded-md">
@@ -3078,15 +3112,13 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       {/* Manager Authorization Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-orange-500" />
-              Autorización de Gerente Requerida
-            </DialogTitle>
-            <DialogDescription>
-              Los siguientes productos son Solo para llevar y requieren autorización del gerente para ser instalados.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="warning"
+            size="hero"
+            icon={ShieldCheck}
+            title="Autorización de Gerente Requerida"
+            description="Los siguientes productos son Solo para llevar y requieren autorización del gerente para ser instalados."
+          />
           
           <div className="space-y-4">
             {authProducts.length > 0 && (
@@ -3350,57 +3382,67 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
 
       <Dialog open={showPrintPrompt} onOpenChange={setShowPrintPrompt}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Imprimir comprobante</DialogTitle>
-            <DialogDescription>
-              {isSellerOnly
-                ? "El vendedor solo puede emitir voucher térmico 80mm (no fiscal)."
-                : "Elige el formato de impresión para la venta seleccionada."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={isSellerOnly ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => {
-                  if (printSaleData?.sale_id) {
-                    printThermalSale(printSaleData.sale_id);
+          {(() => {
+            const msg = getDialogMessage("sale.print_receipt");
+            return (
+              <>
+                <ContextualDialogHeader
+                  variant={msg.variant || "information"}
+                  size="hero"
+                  icon={Printer}
+                  title={msg.title || "Imprimir comprobante"}
+                  description={
+                    isSellerOnly
+                      ? (msg.description_seller || msg.description)
+                      : (msg.description_other || msg.description)
                   }
-                  setShowPrintPrompt(false);
-                }}
-              >
-                Voucher térmico 80mm
-              </Button>
-              {!isSellerOnly && canPrintLetterInvoice(user?.role, printSaleData) ? (
-                <Button
-                  className="flex-1"
-                  onClick={() => {
-                    if (printSaleData?.sale_id) {
-                      openInvoicePdf(printSaleData.sale_id, printSaleData);
-                    }
-                    setShowPrintPrompt(false);
-                  }}
-                >
-                  PDF membretado
-                </Button>
-              ) : null}
-              {!isSellerOnly && (printSaleData?.payment_status === "partial" || Number(printSaleData?.amount_paid || 0) > 0) ? (
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => {
-                    if (printSaleData?.sale_id) {
-                      openPaymentReceiptPdf(printSaleData.sale_id);
-                    }
-                    setShowPrintPrompt(false);
-                  }}
-                >
-                  Comprobante de abono
-                </Button>
-              ) : null}
-            </div>
-          </div>
+                />
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={isSellerOnly ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => {
+                        if (printSaleData?.sale_id) {
+                          printThermalSale(printSaleData.sale_id);
+                        }
+                        setShowPrintPrompt(false);
+                      }}
+                    >
+                      {msg.primary_label || "Voucher térmico 80mm"}
+                    </Button>
+                    {!isSellerOnly && canPrintLetterInvoice(user?.role, printSaleData) ? (
+                      <Button
+                        className="flex-1"
+                        onClick={() => {
+                          if (printSaleData?.sale_id) {
+                            openInvoicePdf(printSaleData.sale_id, printSaleData);
+                          }
+                          setShowPrintPrompt(false);
+                        }}
+                      >
+                        {msg.secondary_label || "PDF membretado"}
+                      </Button>
+                    ) : null}
+                    {!isSellerOnly && (printSaleData?.payment_status === "partial" || Number(printSaleData?.amount_paid || 0) > 0) ? (
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => {
+                          if (printSaleData?.sale_id) {
+                            openPaymentReceiptPdf(printSaleData.sale_id);
+                          }
+                          setShowPrintPrompt(false);
+                        }}
+                      >
+                        {msg.tertiary_label || "Comprobante de abono"}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

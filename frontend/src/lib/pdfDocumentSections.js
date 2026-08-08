@@ -200,6 +200,7 @@ export const SETTINGS_TAB_OPTIONS = [
   { id: "monedas", label: "Monedas", icon: "DollarSign" },
   { id: "notificaciones", label: "Notificaciones", icon: "Bell" },
   { id: "impresoras", label: "Impresoras", icon: "Printer" },
+  { id: "dialogos", label: "Diálogos", icon: "MessageSquareText" },
 ];
 
 export function buildDefaultPdfDocumentSettings() {

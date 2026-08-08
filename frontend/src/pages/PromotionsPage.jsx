@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -181,10 +182,12 @@ export function PromotionsPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nueva Promoción</DialogTitle>
-              <DialogDescription>Crea una nueva promoción o descuento</DialogDescription>
-            </DialogHeader>
+            <ContextualDialogHeader
+              variant="success"
+              size="inline"
+              title="Nueva Promoción"
+              description="Crea una nueva promoción o descuento"
+            />
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>

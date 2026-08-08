@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import PropTypes from 'prop-types';
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { DialogMessagesProvider } from "./context/DialogMessagesContext";
 import { Toaster } from "./components/ui/sonner";
 import { APP_ENV } from "./lib/env";
 import { canAccessCashier, getRoleHomePath, isCashierRole } from "./lib/roleHome";
@@ -283,12 +284,14 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AntiTamperGuard>
-            <AppRouter />
-            <Toaster position="top-center" richColors />
-          </AntiTamperGuard>
-        </BrowserRouter>
+        <DialogMessagesProvider>
+          <BrowserRouter>
+            <AntiTamperGuard>
+              <AppRouter />
+              <Toaster position="top-center" richColors />
+            </AntiTamperGuard>
+          </BrowserRouter>
+        </DialogMessagesProvider>
       </AuthProvider>
     </ThemeProvider>
   );

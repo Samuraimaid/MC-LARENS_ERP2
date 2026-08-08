@@ -6,6 +6,7 @@ import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { ContextualDialogFooter, ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Checkbox } from "../components/ui/checkbox";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -898,12 +899,12 @@ export function CatalogPage() {
         }
       >
         <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Selecciona el borrador</DialogTitle>
-            <DialogDescription>
-              Elige dónde agregar el producto antes de continuar.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="question"
+            size="hero"
+            title="Selecciona el borrador"
+            description="Elige dónde agregar el producto antes de continuar."
+          />
           <div className="space-y-2">
             {draftDialog.choices.map((tab) => (
               <button
@@ -963,10 +964,12 @@ export function CatalogPage() {
       {/* WhatsApp send dialog */}
       <Dialog open={whatsappDialog.open && !isWarehouseRole} onOpenChange={(open) => setWhatsappDialog((prev) => ({ ...prev, open }))}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Enviar por WhatsApp</DialogTitle>
-            <DialogDescription>Selecciona un cliente o usa el envío por lotes.</DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="hero"
+            title="Enviar por WhatsApp"
+            description="Selecciona un cliente o usa el envío por lotes."
+          />
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <input id="wa-single" type="radio" name="wa_mode" checked={!whatsappDialog.batch} onChange={() => setWhatsappDialog((s) => ({ ...s, batch: false }))} />

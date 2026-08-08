@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ContextualDialogFooter, ContextualDialogHeader } from "@/components/ui/contextual-dialog-header";
 import { cn } from "@/lib/utils";
 import {
   getCameraContextError,
@@ -343,15 +344,13 @@ export function DriverPortalPage() {
 
       <Dialog open={Boolean(proofJob)} onOpenChange={(open) => { if (!open) resetProofDialog(); }}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              Foto-evidencia obligatoria
-            </DialogTitle>
-            <DialogDescription>
-              Capture la entrega con la cámara del celular. Se estampará marca de agua con fecha/hora y GPS del dispositivo.
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="warning"
+            size="hero"
+            icon={Camera}
+            title="Foto-evidencia obligatoria"
+            description="Capture la entrega con la cámara del celular. Se estampará marca de agua con fecha/hora y GPS del dispositivo."
+          />
           <div className="space-y-4">
             <div>
               <Label className="flex items-center gap-2">
@@ -384,12 +383,12 @@ export function DriverPortalPage() {
               </div>
             )}
           </div>
-          <DialogFooter>
+          <ContextualDialogFooter>
             <Button variant="outline" onClick={resetProofDialog}>Cancelar</Button>
             <Button onClick={submitProofDelivery} disabled={cameraBlocked || !proofFile || !gpsCoords || gpsLoading || busyJobId}>
               Confirmar entrega
             </Button>
-          </DialogFooter>
+          </ContextualDialogFooter>
         </DialogContent>
       </Dialog>
     </div>

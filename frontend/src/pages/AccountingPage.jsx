@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { toast } from "sonner";
 import {
   Calculator, RefreshCw, Wallet, AlertTriangle, Download, Plus, CheckCircle2,
@@ -586,10 +587,12 @@ export function AccountingPage() {
 
       <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Nuevo gasto de caja chica</DialogTitle>
-            <DialogDescription>Insumos, viáticos, adelantos, bonos y alimentación</DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            title="Nuevo gasto de caja chica"
+            description="Insumos, viáticos, adelantos, bonos y alimentación"
+          />
           <div className="space-y-3">
             <div className="space-y-2">
               <Label>Categoría</Label>
@@ -619,10 +622,12 @@ export function AccountingPage() {
 
       <Dialog open={showReplenishDialog} onOpenChange={setShowReplenishDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reponer fondo de caja chica</DialogTitle>
-            <DialogDescription>Registra la reposición del fondo autorizado</DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="success"
+            size="inline"
+            title="Reponer fondo de caja chica"
+            description="Registra la reposición del fondo autorizado"
+          />
           <div className="space-y-3">
             <div className="space-y-2"><Label>Monto</Label><Input type="number" min="0" step="0.01" value={replenishForm.amount} onChange={(e) => setReplenishForm((p) => ({ ...p, amount: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Referencia</Label><Input value={replenishForm.reference} onChange={(e) => setReplenishForm((p) => ({ ...p, reference: e.target.value }))} /></div>

@@ -132,10 +132,15 @@ export function detectReviewTransition(prevReview, nextReview) {
   if (prev.status !== "blocked" && next.status === "blocked") {
     return "blocked";
   }
-  if (prev.status !== "released" && next.status === "released") {
+  // Only treat as "released" when coming from an active review cycle.
+  // idle/released → released must NOT notify (page reloads / remounts).
+  if (
+    next.status === "released"
+    && (prev.status === "blocked" || prev.status === "watching")
+  ) {
     return "released";
   }
-  if (prev.status === "blocked" && next.status !== "blocked") {
+  if (prev.status === "blocked" && next.status !== "blocked" && next.status !== "released") {
     return "unblocked";
   }
   return null;

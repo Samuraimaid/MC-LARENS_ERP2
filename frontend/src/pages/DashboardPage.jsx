@@ -10,6 +10,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import {
   Package,
   Download,
@@ -391,9 +392,12 @@ export function DashboardPage() {
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Actualizar Tipo de Cambio</DialogTitle>
-                      </DialogHeader>
+                      <ContextualDialogHeader
+                        variant="warning"
+                        size="inline"
+                        title="Actualizar Tipo de Cambio"
+                        description="Define la nueva tasa NIO por 1 USD."
+                      />
                       <div className="space-y-4">
                         <div>
                           <Label>Nueva Tasa (NIO por 1 USD)</Label>

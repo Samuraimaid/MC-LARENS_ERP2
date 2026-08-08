@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -325,12 +326,12 @@ export function CreditsPage() {
       {/* Register Payment Dialog */}
       <Dialog open={!!showPayment} onOpenChange={() => { setShowPayment(null); resetPaymentForm(); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Pago</DialogTitle>
-            <DialogDescription>
-              Factura {showPayment?.invoice_number} - {showPayment?.customer_name}
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="success"
+            size="inline"
+            title="Registrar Pago"
+            description={`Factura ${showPayment?.invoice_number || ""} — ${showPayment?.customer_name || ""}`}
+          />
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <div className="flex justify-between">
@@ -425,12 +426,12 @@ export function CreditsPage() {
       {/* Payment History Dialog */}
       <Dialog open={!!showHistory} onOpenChange={() => setShowHistory(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Historial de Pagos</DialogTitle>
-            <DialogDescription>
-              Factura {showHistory?.invoice_number} - {showHistory?.customer_name}
-            </DialogDescription>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            title="Historial de Pagos"
+            description={`Factura ${showHistory?.invoice_number || ""} — ${showHistory?.customer_name || ""}`}
+          />
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <div className="flex justify-between">

@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -367,9 +368,12 @@ export function DeliveriesPage() {
       {/* Assign Driver Dialog */}
       <Dialog open={!!showAssign} onOpenChange={() => setShowAssign(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Asignar Conductor</DialogTitle>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="information"
+            size="inline"
+            title="Asignar Conductor"
+            description="Selecciona el conductor que realizará esta entrega."
+          />
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg">
               <p className="font-medium">{showAssign?.customer_name}</p>
@@ -415,9 +419,12 @@ export function DeliveriesPage() {
       {/* Update Status Dialog */}
       <Dialog open={!!showUpdate} onOpenChange={() => setShowUpdate(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Actualizar Estado de Entrega</DialogTitle>
-          </DialogHeader>
+          <ContextualDialogHeader
+            variant="question"
+            size="inline"
+            title="Actualizar Estado de Entrega"
+            description="Cambia el estado y, si aplica, agrega notas del recorrido."
+          />
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg">
               <p className="font-medium">{showUpdate?.customer_name}</p>
