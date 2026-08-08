@@ -686,8 +686,51 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
     "ventas": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups"},
     "cajero": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "cashier"},
     "jefe_vendedores": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "catalog", "samples"},
-    "jefe_tienda": {"sales", "quotations", "credits", "returns", "customers", "vehicles", "followups", "inventory", "inventory_labels", "dispatch", "catalog", "samples", "promotions"},
+    "jefe_tienda": {
+        "sales",
+        "quotations",
+        "credits",
+        "returns",
+        "customers",
+        "vehicles",
+        "followups",
+        "inventory",
+        "inventory_labels",
+        "dispatch",
+        "catalog",
+        "samples",
+        "promotions",
+        "work_orders",
+        "quality_control",
+    },
     "bodegas": {"inventory", "dispatch"},
+    # Ops chain: coordinators assign + QC; technicians progress their own jobs.
+    "coordinador_instalaciones": {
+        "work_orders",
+        "coordinator_instalaciones",
+        "quality_control",
+        "kds",
+        "calendar",
+        "technician_completed_jobs",
+    },
+    "coordinador_polarizados": {
+        "tint_orders",
+        "coordinator_polarizados",
+        "kds",
+        "technician_completed_jobs",
+    },
+    "instalaciones": {
+        "work_orders",
+        "kds",
+        "calendar",
+        "technician_completed_jobs",
+        "warranties",
+        "tint_orders",  # legacy start/window endpoints also allow instalaciones
+    },
+    "electrico": {"work_orders", "kds", "technician_completed_jobs"},
+    "polarizador": {"tint_orders", "kds", "technician_completed_jobs"},
+    "transporte": {"deliveries"},
+    "entregador": {"deliveries"},
 }
 
 ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
@@ -720,6 +763,30 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
     },
     "jefe_tienda": {
         "approvals": {"create": True},
+    },
+    # Operational floors so custom matrices cannot strip core shop-floor actions.
+    "coordinador_instalaciones": {
+        "work_orders": {"view": True, "create": True, "edit": True},
+        "quality_control": {"view": True, "create": True, "edit": True},
+        "coordinator_instalaciones": {"view": True, "edit": True},
+        "kds": {"view": True, "edit": True},
+    },
+    "coordinador_polarizados": {
+        "tint_orders": {"view": True, "create": True, "edit": True},
+        "coordinator_polarizados": {"view": True, "edit": True},
+        "kds": {"view": True, "edit": True},
+    },
+    "instalaciones": {
+        "work_orders": {"view": True, "edit": True},
+        "kds": {"view": True, "edit": True},
+    },
+    "electrico": {
+        "work_orders": {"view": True, "edit": True},
+        "kds": {"view": True, "edit": True},
+    },
+    "polarizador": {
+        "tint_orders": {"view": True, "edit": True},
+        "kds": {"view": True, "edit": True},
     },
 }
 
@@ -8594,6 +8661,23 @@ async def _create_tint_order_from_sale(
         window_options = (product or {}).get("window_options") or []
         if window_options:
             for opt in window_options:
+                # Legacy catalogs may store window_options as plain strings.
+                if isinstance(opt, str):
+                    windows.append(
+                        {
+                            "window_type": opt.strip() or "general",
+                            "material": None,
+                            "shade_percentage": None,
+                            "width_cm": None,
+                            "height_cm": None,
+                            "status": "pending",
+                            "technician_id": None,
+                            "completed_at": None,
+                        }
+                    )
+                    continue
+                if not isinstance(opt, dict):
+                    continue
                 windows.append(
                     {
                         "window_type": opt.get("window_type") or opt.get("type") or "general",
@@ -22836,7 +22920,10 @@ async def assign_tint_order(
 @api_router.put("/tint-orders/{tint_order_id}/start")
 async def start_tint_order(request: Request, tint_order_id: str):
     """Start working on a tint order"""
-    await require_roles(request, ["gerencia", "supervisor", "instalaciones"])
+    await require_roles(
+        request,
+        ["gerencia", "supervisor", "instalaciones", "polarizador", "coordinador_polarizados"],
+    )
 
     order = await db.tint_orders.find_one({"tint_order_id": tint_order_id})
     if not order:
@@ -22860,7 +22947,10 @@ async def update_tint_window(
     request: Request, tint_order_id: str, update: TintWindowUpdate
 ):
     """Update a specific window in tint order"""
-    await require_roles(request, ["gerencia", "supervisor", "instalaciones"])
+    await require_roles(
+        request,
+        ["gerencia", "supervisor", "instalaciones", "polarizador", "coordinador_polarizados"],
+    )
 
     order = await db.tint_orders.find_one({"tint_order_id": tint_order_id})
     if not order:
@@ -22913,7 +23003,10 @@ async def complete_tint_order(
     total_material: float = 0,
 ):
     """Complete a tint order after quality check"""
-    await require_roles(request, ["gerencia", "supervisor"])
+    await require_roles(
+        request,
+        ["gerencia", "supervisor", "coordinador_polarizados", "jefe_tienda"],
+    )
 
     order = await db.tint_orders.find_one({"tint_order_id": tint_order_id})
     if not order:
