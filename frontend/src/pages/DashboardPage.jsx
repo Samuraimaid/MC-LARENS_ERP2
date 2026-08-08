@@ -34,11 +34,15 @@ import {
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
+import { FlowHealthPanel } from "@/components/ops/FlowHealthPanel";
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isWarehouseRole = user?.role === "bodegas";
+  const canSeeFlowHealth = ["gerencia", "supervisor", "programador", "jefe_tienda"].includes(
+    String(user?.role || "").toLowerCase()
+  );
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -275,6 +279,22 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {canSeeFlowHealth ? (
+        <div className="space-y-2">
+          <FlowHealthPanel compact autoRefreshMs={45000} />
+          <div className="flex justify-end">
+            <Button
+              variant="link"
+              className="text-sky-800"
+              onClick={() => navigate("/ops/flow-health")}
+              data-testid="flow-health-open-full"
+            >
+              Ver panel completo de salud del flujo
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-12 gap-4">
         <Card className="col-span-12 lg:col-span-9 border-slate-200 bg-white/90 shadow-sm">

@@ -37,6 +37,7 @@ function lazyNamedPage(loader, exportName) {
 }
 
 const DashboardPage = lazyNamedPage(() => import("./pages/DashboardPage"), "DashboardPage");
+const FlowHealthPage = lazyNamedPage(() => import("./pages/FlowHealthPage"), "FlowHealthPage");
 const SalesPage = lazyNamedPage(() => import("./pages/SalesPage"), "SalesPage");
 const CashierPage = lazyNamedPage(() => import("./pages/CashierPage"), "CashierPage");
 const KDSPage = lazyNamedPage(() => import("./pages/KDSPage"), "KDSPage");
@@ -180,6 +181,7 @@ function AppRouter() {
         }
       >
         <Route path="/dashboard" element={<DashboardOnlyRoute />} />
+        <Route path="/ops/flow-health" element={<FlowHealthPage />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/sales/view/:saleId" element={<DocumentSnapshotView docType="sale" />} />
         <Route path="/sales/:saleId" element={<SalesPage />} />

@@ -31,6 +31,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Calculator,
+  Activity,
 
   PackageCheck,
   ArrowRightLeft,
@@ -57,6 +58,7 @@ import { fetchNodeProfile, getCachedNodeProfile, isRouteEnabledByNodeProfile } f
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["gerencia", "recursos_humanos"] },
+  { name: "Salud del Flujo", href: "/ops/flow-health", icon: Activity, roles: ["gerencia", "supervisor", "programador", "jefe_tienda"] },
   { name: "Buscador ERP", href: "/workbench?tab=search", icon: Search, roles: ["all"] },
   { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "programador", "cajero"] },
@@ -111,6 +113,7 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
 
   const routePermissionMap = {
     "/dashboard": "dashboard",
+    // /ops/flow-health: role-gated only (gerencia/supervisor/programador/jefe_tienda)
     "/notifications": "notifications",
     "/search": "sales",
     "/workbench": "sales",

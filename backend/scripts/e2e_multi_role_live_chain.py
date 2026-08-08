@@ -1041,6 +1041,29 @@ def main() -> int:
         import traceback
         traceback.print_exc()
         code = 2
+    finally:
+        # Always leave operational queues empty after the suite
+        try:
+            try:
+                from backend.scripts.ops_queue_cleanup import run_full_queue_cleanup
+            except Exception:  # pragma: no cover
+                from ops_queue_cleanup import run_full_queue_cleanup  # type: ignore
+
+            print("\n--- Limpieza automática de colas post-suite ---")
+            cleanup = run_full_queue_cleanup(deep=True)
+            REPORT["context"]["queue_cleanup"] = cleanup
+            if cleanup.get("ok"):
+                log_ok(
+                    "Colas limpiadas post-suite",
+                    remaining=cleanup.get("remaining_active_total"),
+                )
+            else:
+                log_warn(
+                    "Limpieza de colas incompleta",
+                    str(cleanup.get("error") or cleanup.get("remaining_active_total")),
+                )
+        except Exception as cleanup_exc:
+            log_warn("No se pudo limpiar colas post-suite", str(cleanup_exc))
 
     print("\n" + "=" * 72)
     print(f"RESUMEN OK={len(REPORT['ok'])} FAIL={len(REPORT['fail'])} WARN={len(REPORT['warnings'])}")
