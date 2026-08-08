@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info } from "lucide-react";
+import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
@@ -17,6 +17,22 @@ import { getRoleHomePath } from "@/lib/roleHome";
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
 const PIN_LENGTH = 8;
+const LOCKOUT_TICK_MS = 50;
+
+/** Format remaining ms as huge countdown with centiseconds: M:SS.cc or SS.cc */
+function formatLockoutCountdown(remainingMs) {
+  const totalMs = Math.max(0, Number(remainingMs) || 0);
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const centiseconds = Math.floor((totalMs % 1000) / 10);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const ss = String(seconds).padStart(2, "0");
+  const cc = String(centiseconds).padStart(2, "0");
+  if (minutes > 0) {
+    return `${minutes}:${ss}.${cc}`;
+  }
+  return `${ss}.${cc}`;
+}
 const ATTENDANCE_KIOSK_SHORTCUT_PIN = (typeof window !== 'undefined' && window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__)
   ? String(window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__)
   : APP_ENV.attendanceKioskShortcutPin;
@@ -36,7 +52,9 @@ export function LoginPage() {
   const [remainingAttempts, setRemainingAttempts] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const [lockoutSeconds, setLockoutSeconds] = useState(null);
+  const [lockoutRemainingMs, setLockoutRemainingMs] = useState(0);
   const [showLoginInfo, setShowLoginInfo] = useState(false);
+  const isPinLocked = Boolean(lockoutUntil && lockoutRemainingMs > 0);
   const buildVersion = APP_ENV.buildVersion;
   const buildTimeRaw = APP_ENV.buildTime;
   const buildTime = buildTimeRaw ? new Date(buildTimeRaw) : null;
@@ -242,6 +260,62 @@ export function LoginPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // High-frequency lockout countdown (centiseconds) for the full-screen red overlay.
+  useEffect(() => {
+    if (!lockoutUntil) {
+      setLockoutRemainingMs(0);
+      setLockoutSeconds(null);
+      return undefined;
+    }
+    const untilMs =
+      lockoutUntil instanceof Date ? lockoutUntil.getTime() : new Date(lockoutUntil).getTime();
+    if (Number.isNaN(untilMs)) {
+      setLockoutUntil(null);
+      setLockoutRemainingMs(0);
+      setLockoutSeconds(null);
+      return undefined;
+    }
+
+    const tick = () => {
+      const remaining = Math.max(0, untilMs - Date.now());
+      setLockoutRemainingMs(remaining);
+      setLockoutSeconds(Math.ceil(remaining / 1000));
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setLockoutRemainingMs(0);
+        setLockoutSeconds(null);
+        setRemainingAttempts(null);
+      }
+    };
+    tick();
+    const timer = setInterval(tick, LOCKOUT_TICK_MS);
+    return () => clearInterval(timer);
+  }, [lockoutUntil]);
+
+  const applyLockoutFromDetail = useCallback((detail) => {
+    if (!detail || typeof detail !== "object") return;
+    if (detail.remaining_attempts !== undefined) {
+      setRemainingAttempts(detail.remaining_attempts);
+    }
+    const seconds = Number(detail.lockout_seconds);
+    if (detail.lockout_until) {
+      const until = new Date(detail.lockout_until);
+      if (!Number.isNaN(until.getTime())) {
+        setLockoutUntil(until);
+        const ms = Math.max(0, until.getTime() - Date.now());
+        setLockoutRemainingMs(ms);
+        setLockoutSeconds(Math.ceil(ms / 1000));
+        return;
+      }
+    }
+    if (Number.isFinite(seconds) && seconds > 0) {
+      const until = new Date(Date.now() + seconds * 1000);
+      setLockoutUntil(until);
+      setLockoutRemainingMs(seconds * 1000);
+      setLockoutSeconds(seconds);
+    }
+  }, []);
+
   const formatTime = (date) => {
     const days = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
     const ddd = days[date.getDay()];
@@ -313,6 +387,15 @@ export function LoginPage() {
 
   const handlePinLogin = useCallback(async (pinOverride = null) => {
     const pinToUse = pinOverride ?? pin;
+    if (isPinLocked) {
+      playTone("warning");
+      toast.error(
+        lockoutRemainingMs > 0
+          ? `Terminal bloqueada. Espera ${formatLockoutCountdown(lockoutRemainingMs)}`
+          : "Terminal bloqueada por intentos fallidos"
+      );
+      return;
+    }
     if (pinToUse === ATTENDANCE_KIOSK_SHORTCUT_PIN) {
       playTone("success");
       toast.success("Abriendo reloj marcador...");
@@ -329,15 +412,19 @@ export function LoginPage() {
 
     setLoading(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
       const response = await axios.post(
         `${API}/auth/pin/login`,
         { pin: pinToUse },
-        { withCredentials: true, signal: controller.signal, timeout: 25000 }
+        { withCredentials: true, signal: controller.signal, timeout: 8000 }
       );
       setAuthStatus("success");
+      setRemainingAttempts(null);
+      setLockoutUntil(null);
+      setLockoutSeconds(null);
+      setLockoutRemainingMs(0);
       // Apply saved theme from server/session if provided
       try {
         const loggedUser = response.data?.user || response.data || {};
@@ -388,15 +475,25 @@ export function LoginPage() {
           ? detail.message
           : "Demasiados intentos desde esta ubicación. Intente más tarde.";
         setRemainingAttempts(0);
-        if (typeof detail === "object" && detail?.retry_after_seconds) {
-          setLockoutSeconds(detail.retry_after_seconds);
+        if (typeof detail === "object") {
+          applyLockoutFromDetail({
+            remaining_attempts: 0,
+            lockout_seconds: detail.retry_after_seconds || detail.lockout_seconds || 60,
+            lockout_until: detail.lockout_until,
+          });
         }
       } else if (detail) {
         if (typeof detail === "object") {
           message = detail.message || message;
-          if (detail.remaining_attempts !== undefined) setRemainingAttempts(detail.remaining_attempts);
-          if (detail.lockout_until) setLockoutUntil(new Date(detail.lockout_until));
-          if (detail.lockout_seconds !== undefined) setLockoutSeconds(detail.lockout_seconds);
+          applyLockoutFromDetail(detail);
+          if (
+            detail.remaining_attempts !== undefined &&
+            Number(detail.remaining_attempts) >= 0 &&
+            !detail.lockout_until &&
+            !(Number(detail.lockout_seconds) > 0)
+          ) {
+            message = `${message}. Intentos restantes: ${detail.remaining_attempts}`;
+          }
         } else {
           message = detail;
         }
@@ -411,9 +508,10 @@ export function LoginPage() {
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [checkAuth, pin, playTone, setMode, setSkin]);
+  }, [applyLockoutFromDetail, checkAuth, isPinLocked, lockoutRemainingMs, pin, playTone, setMode, setSkin]);
 
   const handlePinKeyPress = useCallback((digit) => {
+    if (isPinLocked || loading) return;
     if (authStatus === 'error') setAuthStatus('idle');
     if (showResetWarning) setShowResetWarning(false);
     
@@ -429,25 +527,26 @@ export function LoginPage() {
         setTimeout(() => handlePinLogin(newPin), 50);
       }
     }
-  }, [authStatus, handlePinLogin, pin, playTone, showResetWarning]);
+  }, [authStatus, handlePinLogin, isPinLocked, loading, pin, playTone, showResetWarning]);
 
   const handlePinBackspace = useCallback(() => {
-    if (pin.length === 0) return;
+    if (isPinLocked || loading || pin.length === 0) return;
     playTone("key");
     setPin((prevPin) => prevPin.slice(0, -1));
-  }, [pin.length, playTone]);
+  }, [isPinLocked, loading, pin.length, playTone]);
 
   const handlePinInputChange = useCallback((event) => {
+    if (isPinLocked || loading) return;
     const digits = event.target.value.replace(/\D/g, "").slice(0, PIN_LENGTH);
     setPin(digits);
     if (digits.length === PIN_LENGTH) {
        setTimeout(() => handlePinLogin(digits), 50);
     }
-  }, [handlePinLogin]);
+  }, [handlePinLogin, isPinLocked, loading]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (loading) return;
+      if (loading || isPinLocked) return;
 
       // Normalize numpad keys (key and code) so NumLock on/off still works
       const numpadCodeMap = {
@@ -499,7 +598,7 @@ export function LoginPage() {
     // Capture phase helps when focus is inside buttons or other elements
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [handlePinBackspace, handlePinKeyPress, handlePinLogin, loading, pin.length]);
+  }, [handlePinBackspace, handlePinKeyPress, handlePinLogin, isPinLocked, loading, pin.length]);
 
   // Connectivity check: ping API root and update status
   const checkBackend = useCallback(async (signal) => {
@@ -538,19 +637,12 @@ export function LoginPage() {
     };
   }, [checkBackend]);
 
+  const lockoutCountdownLabel = formatLockoutCountdown(lockoutRemainingMs);
+
   return (
     <div 
-      className="min-h-screen bg-background flex"
+      className="min-h-screen bg-background flex relative"
     >
-      {/* DEBUG BANNER: shows remaining attempts and lockout state for quick visibility */}
-      {(remainingAttempts !== null || lockoutUntil) && (
-        <div className="absolute top-4 right-4 z-50 bg-yellow-50 border border-yellow-300 text-sm p-2 rounded-md shadow">
-          <div className="font-medium">Depuración PIN</div>
-          {remainingAttempts !== null && <div>Intentos restantes: {remainingAttempts}</div>}
-          {lockoutSeconds !== null && <div>Tiempo de bloqueo (s): {lockoutSeconds}</div>}
-          {lockoutUntil && <div>Bloqueado hasta: {lockoutUntil.toLocaleTimeString()}</div>}
-        </div>
-      )}
       <input
         ref={pinInputRef}
         type="tel"
@@ -559,7 +651,7 @@ export function LoginPage() {
         className="sr-only"
         value={pin}
         onChange={handlePinInputChange}
-        disabled={loading}
+        disabled={loading || isPinLocked}
         aria-label="PIN"
       />
 
@@ -884,14 +976,14 @@ export function LoginPage() {
                 ))}
               </div>
 
-              {remainingAttempts !== null && (
-                <div className="text-center text-sm text-muted-foreground mb-2">Intentos restantes: {remainingAttempts}</div>
-              )}
-              {lockoutUntil && (
-                <div className="text-center text-sm text-destructive mb-4">PIN bloqueado hasta {lockoutUntil.toLocaleTimeString()}</div>
+              {remainingAttempts !== null && !isPinLocked && (
+                <div className="text-center text-sm text-muted-foreground mb-2">
+                  Intentos restantes: {remainingAttempts}
+                </div>
               )}
 
               <div className={`grid grid-cols-3 gap-2 max-w-xs mx-auto p-2 rounded-xl transition-all duration-300 ${
+                isPinLocked ? "opacity-40 pointer-events-none" :
                 authStatus === "error" ? "bg-destructive/20 ring-2 ring-destructive animate-shake" :
                 authStatus === "success" ? "bg-green-500/20 ring-2 ring-green-500" :
                 ""
@@ -902,7 +994,7 @@ export function LoginPage() {
                     variant="outline"
                     className="h-14 text-xl font-semibold transition-colors"
                     onClick={() => handlePinKeyPress(String(digit))}
-                    disabled={loading}
+                    disabled={loading || isPinLocked}
                     data-testid={`pin-key-${digit}`}
                   >
                     {digit}
@@ -912,7 +1004,7 @@ export function LoginPage() {
                   variant="outline"
                   className="h-14 text-sm transition-colors"
                   onClick={handlePinBackspace}
-                  disabled={loading || pin.length === 0}
+                  disabled={loading || isPinLocked || pin.length === 0}
                 >
                   Borrar
                 </Button>
@@ -920,7 +1012,7 @@ export function LoginPage() {
                   variant="outline"
                   className="h-14 text-xl font-semibold transition-colors"
                   onClick={() => handlePinKeyPress("0")}
-                  disabled={loading}
+                  disabled={loading || isPinLocked}
                   data-testid="pin-key-0"
                 >
                   0
@@ -928,7 +1020,7 @@ export function LoginPage() {
                 <Button
                   className="h-14"
                   onClick={() => handlePinLogin()}
-                  disabled={loading || pin.length !== PIN_LENGTH || backendStatus === 'down'}
+                  disabled={loading || isPinLocked || pin.length !== PIN_LENGTH || backendStatus === 'down'}
                   data-testid="pin-submit"
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
@@ -939,6 +1031,46 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Full-screen lockout overlay (cashier-style, red, huge countdown with centiseconds) */}
+      {isPinLocked ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center px-4 backdrop-blur-md bg-rose-800/55"
+          data-testid="pin-lockout-overlay"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Terminal bloqueada por intentos fallidos"
+        >
+          <div className="w-full max-w-xl rounded-2xl border-2 border-rose-300/80 bg-rose-950/90 text-rose-50 shadow-2xl p-6 sm:p-10 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-rose-600/40 ring-4 ring-rose-300/40">
+              <Lock className="h-10 w-10 sm:h-14 sm:w-14 text-rose-100" strokeWidth={2.25} aria-hidden="true" />
+            </div>
+            <div className="flex items-center justify-center gap-2 text-sm sm:text-base font-semibold uppercase tracking-wide text-rose-100/90">
+              <ShieldAlert className="h-4 w-4 sm:h-5 sm:w-5" />
+              Terminal bloqueada
+            </div>
+            <p className="mt-3 text-sm sm:text-base text-rose-100/90">
+              Demasiados intentos de PIN fallidos. Espera a que termine el temporizador para reintentar.
+            </p>
+            <div
+              className="mt-6 sm:mt-8 font-mono font-black tabular-nums leading-none tracking-tight text-rose-50 drop-shadow-[0_0_24px_rgba(255,100,100,0.45)]"
+              style={{ fontSize: "clamp(3.5rem, 14vw, 7.5rem)" }}
+              data-testid="pin-lockout-countdown"
+              aria-live="polite"
+            >
+              {lockoutCountdownLabel}
+            </div>
+            <p className="mt-3 text-xs sm:text-sm uppercase tracking-[0.2em] text-rose-200/80">
+              cuenta regresiva
+            </p>
+            {lockoutUntil ? (
+              <p className="mt-4 text-xs sm:text-sm text-rose-200/70">
+                Desbloqueo estimado: {lockoutUntil.toLocaleTimeString()}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

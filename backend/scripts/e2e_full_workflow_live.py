@@ -271,7 +271,15 @@ def release_draft(gerencia: ApiClient, draft_id: str) -> Dict[str, Any]:
 
 
 def snapshot_to_sale_payload(snapshot: Dict[str, Any], idem: str) -> Dict[str, Any]:
+    # Import locally so the script remains runnable from different working dirs.
+    try:
+        from backend.scripts.e2e_sale_helpers import build_planned_payment_plan, round2
+    except Exception:  # pragma: no cover
+        from e2e_sale_helpers import build_planned_payment_plan, round2  # type: ignore
+
     cart = snapshot.get("cartItems") or []
+    currency = str(snapshot.get("currency") or "NIO").upper()
+    exchange_rate = float(snapshot.get("exchangeRate") or EXCHANGE_RATE)
     subtotal = 0.0
     for item in cart:
         price = float(item.get("unit_price") or 0)
@@ -285,8 +293,22 @@ def snapshot_to_sale_payload(snapshot: Dict[str, Any], idem: str) -> Dict[str, A
     gval = float(snapshot.get("globalDiscount") or 0)
     if mode == "fixed":
         discount_pct = (gval / subtotal * 100) if subtotal > 0 else 0
+        after_global = max(0.0, subtotal - gval)
     else:
         discount_pct = gval
+        after_global = subtotal * (1 - gval / 100.0)
+
+    apply_iva = bool(snapshot.get("applyIVA", True))
+    # Cart unit prices in this ERP are USD; when sale currency is NIO the backend
+    # converts with exchange_rate before IVA.
+    total_usd = after_global * (1.15 if apply_iva else 1.0)
+    total_nio = round2(total_usd * exchange_rate)
+
+    payment_method = str(snapshot.get("paymentMethod") or snapshot.get("payment_type") or "cash").lower()
+    planned = snapshot.get("planned_payment_plan") if isinstance(snapshot.get("planned_payment_plan"), dict) else None
+    if not planned or not planned.get("lines"):
+        planned = build_planned_payment_plan(payment_method, total_nio, exchange_rate=exchange_rate)
+
     return {
         "customer_id": snapshot.get("selectedCustomerId"),
         "vehicle_id": snapshot.get("selectedVehicle"),
@@ -303,11 +325,14 @@ def snapshot_to_sale_payload(snapshot: Dict[str, Any], idem: str) -> Dict[str, A
         ],
         "discount": round(discount_pct, 4),
         "supervisor_discount_preapproved": True,
-        "payment_type": "cash",
-        "payment_method": "cash",
-        "apply_iva": bool(snapshot.get("applyIVA", True)),
-        "currency": snapshot.get("currency") or "NIO",
-        "exchange_rate": snapshot.get("exchangeRate") or EXCHANGE_RATE,
+        "payment_type": payment_method,
+        "payment_method": payment_method,
+        "apply_iva": apply_iva,
+        "iva_rate": 15,
+        "currency": currency,
+        "exchange_rate": exchange_rate,
+        # Do not send total_amount: server recomputes and rejects mismatches (TOTAL_MISMATCH).
+        "planned_payment_plan": planned,
         "notes": snapshot.get("notes"),
         "idempotency_key": idem,
     }

@@ -13,13 +13,23 @@ CAJERO_PIN = os.environ.get("TEST_CAJERO_PIN", "11223344")
 
 
 def _pin_session(pin: str) -> requests.Session:
+    """Login by PIN; fall back to gerencia when the role-specific test PIN is missing."""
+    candidates = [pin]
+    if pin != GERENCIA_PIN:
+        candidates.append(GERENCIA_PIN)
     session = requests.Session()
-    response = session.post(f"{BASE_URL}/api/auth/pin/login", json={"pin": pin})
-    assert response.status_code == 200, response.text
-    token = response.json().get("session_token")
-    if token:
-        session.cookies.set("session_token", token)
-    return session
+    last_error = ""
+    for candidate in candidates:
+        response = session.post(f"{BASE_URL}/api/auth/pin/login", json={"pin": candidate})
+        if response.status_code == 200:
+            token = response.json().get("session_token")
+            if token:
+                session.cookies.set("session_token", token)
+            return session
+        last_error = response.text
+        # Reset cookies between attempts so a partial session cannot leak.
+        session.cookies.clear()
+    raise AssertionError(f"PIN login failed for {candidates}: {last_error}")
 
 
 class TestSellerVoucherBarcode:

@@ -218,7 +218,18 @@ def _ascii_safe(text: str) -> str:
 
 
 def _clip_line(text: str, width: int = VOUCHER_WIDTH) -> str:
-    return _ascii_safe(text)[:width]
+    return _ascii_safe(text)[: max(0, int(width))]
+
+
+def _clip_left_preserve_right(text: str, width: int) -> str:
+    """Clip overflow from the left so right-aligned money stays visible."""
+    safe = _ascii_safe(text)
+    limit = max(0, int(width))
+    if len(safe) <= limit:
+        return safe
+    if limit <= 0:
+        return ""
+    return safe[-limit:]
 
 
 def format_voucher_money(amount: float, currency: Any = "NIO") -> str:
@@ -287,12 +298,18 @@ def _amount_row(
 ) -> VoucherLine:
     signed = -abs(amount) if negative else amount
     money = format_voucher_money(signed, currency)
-    gap = max(1, width - len(label) - len(money))
-    text = f"{label}{' ' * gap}{money}"
+    safe_width = max(8, int(width))
+    # Always keep the money column fully visible; shorten the label if needed.
+    max_label = max(1, safe_width - len(money) - 1)
+    label_text = _ascii_safe(label)[:max_label]
+    gap = max(1, safe_width - len(label_text) - len(money))
+    text = f"{label_text}{' ' * gap}{money}"
+    if len(text) > safe_width:
+        text = _clip_left_preserve_right(text, safe_width)
     return VoucherLine(
-        _clip_line(text, width),
+        text,
         bold=bold,
-        bold_label=label if bold_label else "",
+        bold_label=label_text if bold_label else "",
     )
 
 
@@ -370,8 +387,14 @@ def _format_voucher_item_detail_line(
     money_parts.append(format_voucher_money(line_total, currency))
     money = "  ".join(money_parts)
 
-    gap = max(1, width - len(qty_label) - len(money))
-    return _clip_line(f"{qty_label}{' ' * gap}{money}", width)
+    safe_width = max(8, int(width))
+    max_qty = max(1, safe_width - len(money) - 1)
+    qty_text = _ascii_safe(qty_label)[:max_qty]
+    gap = max(1, safe_width - len(qty_text) - len(money))
+    text = f"{qty_text}{' ' * gap}{money}"
+    if len(text) > safe_width:
+        text = _clip_left_preserve_right(text, safe_width)
+    return text
 
 
 def _compute_breakdown_rows(sale: Dict[str, Any]) -> Tuple[List[Tuple[str, float, Dict[str, Any]]], str]:
@@ -913,42 +936,62 @@ def build_seller_voucher_preview_pdf(
     voucher_settings: Optional[Dict[str, Any]] = None,
 ) -> bytes:
     from reportlab.lib.units import mm as mm_unit
+    from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfgen import canvas
 
     settings = _resolve_voucher_settings(voucher_settings)
     texts = _voucher_texts(settings)
     body_font_size = int(settings.get("body_font_size") or 6)
     title_font_size = int(settings.get("title_font_size") or 7)
-    left_margin_chars = int(settings.get("left_margin_chars") or 0)
     barcode_pdf_width = float(settings.get("barcode_pdf_bar_width") or VOUCHER_BARCODE_PDF_BAR_WIDTH)
 
     width = 80 * mm_unit
     height = 220 * mm_unit
-    margin_x = 1.5 * mm_unit + (left_margin_chars * 0.45 * mm_unit)
+    # Symmetric margins keep right-aligned money columns on-paper (was clipping ~2-3 glyphs).
+    margin_x = 1.2 * mm_unit
+    right_margin = 1.2 * mm_unit
+    usable_width = max(1.0, width - margin_x - right_margin)
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=(width, height))
     y = height - (6 * mm_unit)
     invoice_number = normalize_invoice_scan_code(str(sale.get("invoice_number") or ""))
+    font_name = _register_share_tech_mono()
+
+    # Fit monospaced columns to the printable width so amount columns are not cut.
+    sample_char_w = float(pdfmetrics.stringWidth("0", font_name, body_font_size) or 1.0)
+    max_chars = max(32, int(usable_width / max(sample_char_w, 0.1)))
+    configured_chars = int(settings.get("chars_per_line") or VOUCHER_WIDTH)
+    pdf_chars = max(32, min(configured_chars, max_chars))
+    pdf_settings = {
+        **settings,
+        "chars_per_line": pdf_chars,
+        # PDF applies physical margins; do not also reserve character-left padding.
+        "left_margin_chars": 0,
+    }
+
     body_lines = _coerce_voucher_lines(
         sale,
         vehicle=vehicle,
         text_lines=text_lines,
-        voucher_settings=settings,
+        voucher_settings=pdf_settings,
     )
-    font_name = _register_share_tech_mono()
     title_texts = {
-        _clip_line(texts["company_name"]).strip(),
-        _clip_line(texts["subtitle"]).strip(),
+        _clip_line(texts["company_name"], pdf_chars).strip(),
+        _clip_line(texts["subtitle"], pdf_chars).strip(),
     }
     line_height = (body_font_size * 0.38 * mm_unit) + (0.35 * mm_unit)
     title_line_height = (title_font_size * 0.38 * mm_unit) + (0.35 * mm_unit)
 
     def draw_voucher_line(line: VoucherLine) -> None:
         nonlocal y
-        text = _clip_line(line.text, _effective_voucher_width(settings))
+        text = _clip_line(line.text, pdf_chars)
         stripped = text.strip()
         is_title = stripped in title_texts
-        active_size = title_font_size if is_title else body_font_size
+        active_size = float(title_font_size if is_title else body_font_size)
+        # Safety: never draw past the right edge (protects money columns).
+        measured = float(pdfmetrics.stringWidth(text, font_name, active_size) or 0.0)
+        if measured > usable_width and measured > 0:
+            active_size = max(4.0, active_size * (usable_width / measured))
         pdf.setFont(font_name, active_size)
         if line.centered or is_title:
             pdf.drawCentredString(width / 2, y, stripped or text)

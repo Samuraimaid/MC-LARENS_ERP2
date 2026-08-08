@@ -53,7 +53,8 @@ services:
       - HOST_LAN_IP_FILE=/app/backend/data/host_lan_ip.txt
       - SERVER_FRONTEND_PORT=${SERVER_FRONTEND_PORT:-3000}
       - HARDWARE_BEEP_FLAG_PATH=/app/backend/data/hardware_beep.flag
-      - ENABLE_TEST_ENDPOINTS=false
+      # Set ENABLE_TEST_ENDPOINTS=true only for local QA suites (create-session, etc.).
+      - ENABLE_TEST_ENDPOINTS=${ENABLE_TEST_ENDPOINTS:-false}
       - ENABLE_TEST_PIN_SEEDING=false
       - AUTOLOAD_CORE_SEED=true
       - DEFAULT_PIN_USER_EMAIL=xinon@local
@@ -62,7 +63,8 @@ services:
       # Seguridad: por defecto RRHH no puede cambiar/resetear PIN de terceros.
       - ALLOW_RRHH_PIN_MANAGEMENT=false
       # ADVERTENCIA: modificar CORS_ORIGINS puede romper el login (PIN) en el frontend.
-      - CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001,http://127.0.0.1:8001,http://localhost:8001,http://192.168.1.26:3000,http://192.168.1.26:8001,https://192.168.1.26:3443
+      # Incluye HTTP:3000 (PC) y HTTPS:3443 (tablets/cámara escáner — contexto seguro).
+      - CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001,http://127.0.0.1:8001,http://localhost:8001,https://127.0.0.1:3443,https://localhost:3443,http://192.168.1.96:3000,http://192.168.1.96:8001,https://192.168.1.96:3443
       - AUTH_SESSION_DATA_URL=
       - COOKIE_SECURE=false
       - LABEL_PRINT_BRIDGE_URL=http://host.docker.internal:9265
@@ -124,8 +126,9 @@ services:
     container_name: mundo-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"    # 0.0.0.0 — accesible en LAN (ej. 192.168.1.26:3000)
-      - "3443:443"   # 0.0.0.0 — HTTPS LAN
+      # 3000 = HTTP (PC). 3443 = HTTPS (tablets/móvil: cámara y barcode scanner requieren secure context).
+      - "3000:80"    # http://IP:3000
+      - "3443:443"   # https://IP:3443  (NO uses http:// en 3443)
     environment:
       - VITE_BACKEND_URL=
       - VITE_AUTH_URL=/api/auth/login
@@ -135,7 +138,8 @@ services:
       - REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN=50005000
       - HTTPS_CERT_CN=localhost
       - HTTPS_CERT_DNS=localhost
-      - HTTPS_CERT_IPS=${HTTPS_CERT_IPS:-127.0.0.1,192.168.1.26}
+      # Regenerar con: scripts/rebuild-frontend-https.ps1 (detecta IP LAN actual)
+      - HTTPS_CERT_IPS=${HTTPS_CERT_IPS:-127.0.0.1,192.168.1.96}
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
       interval: 30s

@@ -3841,8 +3841,14 @@ def _default_draft_name(flow: str, draft_id: str) -> str:
     return f"{label} {suffix}".strip()
 
 
+DRAFT_GLOBAL_SUPERVISOR_ROLES = {
+    "gerencia",
+    "programador",
+}
+
 DRAFT_BRANCH_SUPERVISOR_ROLES = {
     "gerencia",
+    "programador",
     "supervisor",
     "jefe_vendedores",
     "jefe_tienda",
@@ -3855,6 +3861,10 @@ def _is_draft_branch_supervisor(role: Optional[str]) -> bool:
 
 
 def _draft_visibility_filter(user: User) -> Dict[str, Any]:
+    role = str(user.role or "").strip().lower()
+    # Gerencia/programador see all drafts even without branch_id assignment.
+    if role in DRAFT_GLOBAL_SUPERVISOR_ROLES:
+        return {}
     if _is_draft_branch_supervisor(user.role):
         branch_id = str(user.branch_id or "").strip()
         if branch_id:
@@ -3869,11 +3879,22 @@ def _can_access_draft(user: User, doc: Optional[Dict[str, Any]]) -> bool:
     owner_user_id = str(doc.get("owner_user_id") or doc.get("user_id") or "").strip()
     if owner_user_id == user.user_id:
         return True
+    role = str(user.role or "").strip().lower()
+    if role in DRAFT_GLOBAL_SUPERVISOR_ROLES:
+        return True
     if not _is_draft_branch_supervisor(user.role):
         return False
     doc_branch_id = str(doc.get("branch_id") or "").strip()
     user_branch_id = str(user.branch_id or "").strip()
-    return bool(doc_branch_id and user_branch_id and doc_branch_id == user_branch_id)
+    # Branch supervisors without branch_id cannot see other sellers' drafts.
+    if not user_branch_id:
+        return False
+    # Drafts without branch inherit visibility when supervisor has a branch
+    # only if owner is same branch; empty draft branch is treated as accessible
+    # for branch supervisors so legacy drafts are not orphaned.
+    if not doc_branch_id:
+        return True
+    return doc_branch_id == user_branch_id
 
 
 def _default_draft_review() -> Dict[str, Any]:
