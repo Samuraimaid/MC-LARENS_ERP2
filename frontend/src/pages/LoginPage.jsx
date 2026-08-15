@@ -60,6 +60,7 @@ export function LoginPage() {
   const [unlockPin, setUnlockPin] = useState("");
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState(null);
+  const unlockPinInputRef = useRef(null);
   const isPinLocked = Boolean(lockoutUntil && lockoutRemainingMs > 0);
   const buildVersion = APP_ENV.buildVersion;
   const buildTimeRaw = APP_ENV.buildTime;
@@ -450,10 +451,85 @@ export function LoginPage() {
       setUnlockError(typeof msg === "string" ? msg : "No se pudo desbloquear");
       playTone("error");
       setUnlockPin("");
+      // Keep focus for another attempt without showing digits
+      window.setTimeout(() => unlockPinInputRef.current?.focus(), 50);
     } finally {
       setUnlockLoading(false);
     }
   }, [clearLocalLockout, playTone, unlockPin]);
+
+  const handleUnlockPinInputChange = useCallback(
+    (event) => {
+      if (unlockLoading) return;
+      const digits = String(event.target.value || "").replace(/\D/g, "").slice(0, PIN_LENGTH);
+      setUnlockError(null);
+      setUnlockPin(digits);
+      if (digits.length === PIN_LENGTH) {
+        window.setTimeout(() => handleGerenciaUnlock(digits), 40);
+      }
+    },
+    [handleGerenciaUnlock, unlockLoading],
+  );
+
+  // Focus hidden input when gerencia unlock mode opens
+  useEffect(() => {
+    if (!isPinLocked || !showGerenciaUnlock) return undefined;
+    const t = window.setTimeout(() => unlockPinInputRef.current?.focus(), 80);
+    return () => window.clearTimeout(t);
+  }, [isPinLocked, showGerenciaUnlock]);
+
+  // Keyboard capture for gerencia unlock (physical keyboard / numpad)
+  useEffect(() => {
+    if (!isPinLocked || !showGerenciaUnlock || unlockLoading) return undefined;
+
+    const onKeyDown = (event) => {
+      // Don't steal keys from real inputs (except our hidden unlock field)
+      const tag = String(event.target?.tagName || "").toLowerCase();
+      const isOurInput = event.target === unlockPinInputRef.current;
+      if (tag === "input" && !isOurInput) return;
+      if (tag === "textarea" || tag === "select") return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowGerenciaUnlock(false);
+        setUnlockPin("");
+        setUnlockError(null);
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (unlockPin.length === PIN_LENGTH) handleGerenciaUnlock(unlockPin);
+        return;
+      }
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        setUnlockError(null);
+        setUnlockPin((prev) => prev.slice(0, -1));
+        return;
+      }
+
+      let digit = null;
+      if (/^[0-9]$/.test(event.key)) digit = event.key;
+      else if (event.code?.startsWith("Numpad") && /^Numpad[0-9]$/.test(event.code)) {
+        digit = event.code.replace("Numpad", "");
+      }
+      if (digit == null) return;
+
+      event.preventDefault();
+      setUnlockError(null);
+      setUnlockPin((prev) => {
+        if (prev.length >= PIN_LENGTH) return prev;
+        const next = (prev + digit).slice(0, PIN_LENGTH);
+        if (next.length === PIN_LENGTH) {
+          window.setTimeout(() => handleGerenciaUnlock(next), 40);
+        }
+        return next;
+      });
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [handleGerenciaUnlock, isPinLocked, showGerenciaUnlock, unlockLoading, unlockPin]);
 
   const handlePinLogin = useCallback(async (pinOverride = null) => {
     const pinToUse = pinOverride ?? pin;
@@ -1103,45 +1179,53 @@ export function LoginPage() {
       {/* Full-screen lockout overlay (cashier-style, red, huge countdown with centiseconds) */}
       {isPinLocked ? (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center px-4 backdrop-blur-md bg-rose-800/55"
+          className="fixed inset-0 z-[90] flex items-center justify-center px-3 sm:px-4 backdrop-blur-md bg-rose-800/55"
           data-testid="pin-lockout-overlay"
           role="alertdialog"
           aria-modal="true"
           aria-label="Terminal bloqueada por intentos fallidos"
         >
-          <div className="w-full max-w-xl rounded-2xl border-2 border-rose-300/80 bg-rose-950/90 text-rose-50 shadow-2xl p-6 sm:p-10 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-rose-600/40 ring-4 ring-rose-300/40">
-              <Lock className="h-10 w-10 sm:h-14 sm:w-14 text-rose-100" strokeWidth={2.25} aria-hidden="true" />
+          <div className="w-full max-w-xl min-w-0 rounded-2xl border-2 border-rose-300/80 bg-rose-950/90 text-rose-50 shadow-2xl p-4 sm:p-8 md:p-10 text-center overflow-hidden">
+            <div className="mx-auto mb-3 sm:mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-rose-600/40 ring-4 ring-rose-300/40">
+              <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-rose-100" strokeWidth={2.25} aria-hidden="true" />
             </div>
             <div className="flex items-center justify-center gap-2 text-sm sm:text-base font-semibold uppercase tracking-wide text-rose-100/90">
               <ShieldAlert className="h-4 w-4 sm:h-5 sm:w-5" />
               Terminal bloqueada
             </div>
-            <p className="mt-3 text-sm sm:text-base text-rose-100/90">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-rose-100/90 px-1">
               Demasiados intentos de PIN fallidos. Espera a que termine el temporizador para reintentar.
             </p>
-            <SevenSegCountdown
-              remainingMs={lockoutRemainingMs}
-              showGlow
-              className="mt-6 sm:mt-8 text-rose-100"
-              style={{
-                fontSize: "clamp(3.25rem, 13vw, 6.75rem)",
-                // DSEG italic already slants; slight extra skew matches LED calculator look
-                transform: "skewX(-6deg)",
-              }}
-              data-testid="pin-lockout-countdown"
-            />
-            <p className="mt-3 text-xs sm:text-sm uppercase tracking-[0.2em] text-rose-200/80">
+
+            {/* Dynamic 7-seg size: scales with card width / padding */}
+            <div
+              className="mt-5 sm:mt-6 w-full min-w-0 overflow-hidden px-0.5"
+              style={{ containerType: "inline-size" }}
+            >
+              <SevenSegCountdown
+                remainingMs={lockoutRemainingMs}
+                showGlow
+                className="w-full max-w-full text-rose-100"
+                style={{
+                  // Prefer container query units so digits fit inside card padding
+                  fontSize: "clamp(1.35rem, 16cqi, 4.75rem)",
+                  transform: "skewX(-6deg)",
+                  maxWidth: "100%",
+                }}
+                data-testid="pin-lockout-countdown"
+              />
+            </div>
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm uppercase tracking-[0.2em] text-rose-200/80">
               cuenta regresiva
             </p>
             {lockoutUntil ? (
-              <p className="mt-4 text-xs sm:text-sm text-rose-200/70">
+              <p className="mt-3 text-xs sm:text-sm text-rose-200/70">
                 Desbloqueo estimado: {lockoutUntil.toLocaleTimeString()}
               </p>
             ) : null}
 
-            {/* Gerencia can unlock early so the shared terminal is usable again */}
-            <div className="mt-6 border-t border-rose-300/20 pt-5 text-left">
+            {/* Gerencia unlock: keyboard only, 8 masked slots (no on-screen pinpad) */}
+            <div className="mt-5 sm:mt-6 border-t border-rose-300/20 pt-4 sm:pt-5">
               {!showGerenciaUnlock ? (
                 <Button
                   type="button"
@@ -1158,92 +1242,69 @@ export function LoginPage() {
                   Desbloquear con PIN de gerencia
                 </Button>
               ) : (
-                <div className="space-y-3">
+                <div
+                  className="space-y-3"
+                  onClick={() => unlockPinInputRef.current?.focus()}
+                  role="presentation"
+                >
                   <p className="text-sm text-rose-100/90 text-center">
-                    Ingresa el PIN de <strong>gerencia</strong>, programador o supervisor para liberar la terminal de inmediato.
+                    Teclea el PIN de <strong>gerencia</strong> (no se muestra en pantalla). Enter para confirmar · Esc para cancelar.
                   </p>
-                  <div className="flex justify-center gap-1.5">
+
+                  {/* Hidden password field — real keyboard target; never displays digits */}
+                  <input
+                    ref={unlockPinInputRef}
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    name="gerencia-unlock-pin"
+                    value={unlockPin}
+                    onChange={handleUnlockPinInputChange}
+                    disabled={unlockLoading}
+                    maxLength={PIN_LENGTH}
+                    className="sr-only"
+                    aria-label="PIN de gerencia para desbloquear terminal"
+                    data-testid="gerencia-unlock-input"
+                  />
+
+                  <div className="flex justify-center gap-1.5 sm:gap-2">
                     {[...Array(PIN_LENGTH)].map((_, i) => (
                       <div
                         key={i}
-                        className={`h-10 w-8 sm:h-11 sm:w-9 rounded-md border-2 flex items-center justify-center text-lg font-bold ${
+                        className={`h-11 w-8 sm:h-12 sm:w-10 rounded-md border-2 flex items-center justify-center text-xl font-bold transition-colors ${
                           unlockPin.length > i
                             ? "border-rose-200 bg-rose-800/80 text-rose-50"
-                            : "border-rose-400/40 bg-rose-950/50 text-rose-300/40"
+                            : unlockPin.length === i
+                              ? "border-rose-100 bg-rose-900/60 text-rose-200 ring-2 ring-rose-300/40"
+                              : "border-rose-400/40 bg-rose-950/50 text-rose-300/40"
                         }`}
+                        aria-hidden="true"
                       >
                         {unlockPin.length > i ? "•" : ""}
                       </div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
-                    {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-                      <Button
-                        key={d}
-                        type="button"
-                        variant="outline"
-                        className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800"
-                        disabled={unlockLoading || unlockPin.length >= PIN_LENGTH}
-                        onClick={() => {
-                          setUnlockError(null);
-                          setUnlockPin((prev) => {
-                            const next = (prev + d).slice(0, PIN_LENGTH);
-                            if (next.length === PIN_LENGTH) {
-                              // Defer so state is set before submit with override
-                              window.setTimeout(() => handleGerenciaUnlock(next), 0);
-                            }
-                            return next;
-                          });
-                        }}
-                      >
-                        {d}
-                      </Button>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800 text-xs"
-                      disabled={unlockLoading || unlockPin.length === 0}
-                      onClick={() => {
-                        setUnlockError(null);
-                        setUnlockPin((prev) => prev.slice(0, -1));
-                      }}
-                    >
-                      Borrar
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800"
-                      disabled={unlockLoading || unlockPin.length >= PIN_LENGTH}
-                      onClick={() => {
-                        setUnlockError(null);
-                        setUnlockPin((prev) => {
-                          const next = (prev + "0").slice(0, PIN_LENGTH);
-                          if (next.length === PIN_LENGTH) {
-                            window.setTimeout(() => handleGerenciaUnlock(next), 0);
-                          }
-                          return next;
-                        });
-                      }}
-                    >
-                      0
-                    </Button>
-                    <Button
-                      type="button"
-                      className="h-12 bg-emerald-600 hover:bg-emerald-500 text-white"
-                      disabled={unlockLoading || unlockPin.length !== PIN_LENGTH}
-                      onClick={() => handleGerenciaUnlock()}
-                      data-testid="gerencia-unlock-submit"
-                    >
-                      {unlockLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
-                    </Button>
-                  </div>
+
+                  {unlockLoading ? (
+                    <div className="flex items-center justify-center gap-2 text-sm text-rose-100/80">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Verificando…
+                    </div>
+                  ) : (
+                    <p className="text-center text-xs text-rose-200/70">
+                      {unlockPin.length}/{PIN_LENGTH} dígitos
+                    </p>
+                  )}
+
                   {unlockError ? (
                     <p className="text-center text-sm text-amber-200" data-testid="gerencia-unlock-error">
                       {unlockError}
                     </p>
                   ) : null}
+
                   <Button
                     type="button"
                     variant="ghost"

@@ -40,7 +40,7 @@ export function SevenSegCountdown({
   return (
     <span
       className={cn(
-        "font-seven-seg inline-flex items-baseline justify-center leading-none",
+        "font-seven-seg inline-flex max-w-full items-baseline justify-center leading-none whitespace-nowrap",
         showGlow && "font-seven-seg-glow",
         className,
       )}
@@ -54,10 +54,11 @@ export function SevenSegCountdown({
           <span style={digitStyle}>{minutes}</span>
           <span
             className={cn(
-              "inline-block transition-opacity duration-75",
+              "inline-block text-center transition-opacity duration-75",
               colonOn ? "opacity-100" : "opacity-0",
             )}
-            style={digitStyle}
+            // Keep colon width so digits don't reflow / look spaced when blinking
+            style={{ ...digitStyle, width: "0.55em", minWidth: "0.55em" }}
             aria-hidden="true"
           >
             :
@@ -67,7 +68,7 @@ export function SevenSegCountdown({
       ) : (
         <span style={digitStyle}>{ss}</span>
       )}
-      <span style={digitStyle} aria-hidden="true">
+      <span style={{ ...digitStyle, width: "0.4em", minWidth: "0.4em", textAlign: "center" }} aria-hidden="true">
         .
       </span>
       <span style={digitStyle}>{cc}</span>
