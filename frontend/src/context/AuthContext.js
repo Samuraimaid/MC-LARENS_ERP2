@@ -270,18 +270,40 @@ export function AuthProvider({ children }) {
         const status = error?.response?.status;
         const detail = error?.response?.data?.detail;
         const detailMessage = typeof detail === "string" ? detail : detail?.message;
+        const detailCode = typeof detail === "object" && detail ? detail.code : null;
         const configUrl = error?.config?.url || "";
-        const isLoginAttempt = configUrl.includes("/auth/pin/login");
-        const isInvalidSession =
+        const isLoginAttempt =
+          configUrl.includes("/auth/pin/login") || configUrl.includes("/auth/reauth");
+        const isSessionTimeout =
           status === 401 &&
           !isLoginAttempt &&
-          (detailMessage === "Invalid session" || detailMessage === "Unauthorized");
+          (detailCode === "SESSION_IDLE_TIMEOUT" ||
+            detailCode === "SESSION_EXPIRED" ||
+            detailCode === "SESSION_INVALID" ||
+            detailMessage === "Invalid session" ||
+            detailMessage === "Unauthorized");
 
-        if (isInvalidSession) {
+        if (isSessionTimeout) {
           setUser(null);
           setPermissions(null);
           if (!invalidSessionNotifiedRef.current) {
-            toast.error("Se cerró sesión en otro dispositivo que estaba logueado con tu cuenta");
+            let msg = "Se cerró la sesión. Vuelve a iniciar con tu PIN.";
+            if (detailCode === "SESSION_IDLE_TIMEOUT") {
+              msg =
+                detailMessage ||
+                "Sesión cerrada por inactividad. Inicia sesión de nuevo.";
+            } else if (detailCode === "SESSION_EXPIRED") {
+              msg =
+                detailMessage ||
+                "La sesión ha expirado. Vuelve a iniciar sesión con tu PIN.";
+            } else if (
+              detailMessage === "Invalid session" ||
+              detailMessage === "Unauthorized"
+            ) {
+              msg =
+                "Se cerró sesión en otro dispositivo que estaba logueado con tu cuenta";
+            }
+            toast.error(msg);
             invalidSessionNotifiedRef.current = true;
           }
         }

@@ -311,15 +311,25 @@ export function HyperVisorPage() {
   const downloadExcelBackup = async () => {
     setBusyExport(true);
     try {
+      const { promptReauthToken, withReauthHeader } = await import("@/lib/reauth");
+      const reauthToken = await promptReauthToken(
+        "backup.download",
+        "Confirma con tu PIN de 8 dígitos para descargar el respaldo:",
+      );
       const scopeValue = backupScopes.join(",");
-      const response = await axios.get(`${API}/backup/excel`, {
-        withCredentials: true,
-        responseType: "blob",
-        params: {
-          scopes: scopeValue || undefined,
-          secure: true,
-        },
-      });
+      const response = await axios.get(
+        `${API}/backup/excel`,
+        withReauthHeader(
+          {
+            responseType: "blob",
+            params: {
+              scopes: scopeValue || undefined,
+              secure: true,
+            },
+          },
+          reauthToken,
+        ),
+      );
 
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -334,7 +344,13 @@ export function HyperVisorPage() {
       window.URL.revokeObjectURL(url);
       toast.success("Respaldo seguro descargado");
     } catch (error) {
-      toast.error(error?.response?.data?.detail || "No se pudo descargar respaldo");
+      if (error?.code === "REAUTH_CANCELLED") return;
+      const detail = error?.response?.data?.detail;
+      toast.error(
+        (typeof detail === "object" ? detail?.message : detail) ||
+          error?.message ||
+          "No se pudo descargar respaldo",
+      );
     } finally {
       setBusyExport(false);
     }
@@ -352,16 +368,22 @@ export function HyperVisorPage() {
 
     setBusyImport(true);
     try {
+      const { promptReauthToken, withReauthHeader } = await import("@/lib/reauth");
+      const reauthToken = await promptReauthToken(
+        "backup.restore",
+        "Confirma con tu PIN de 8 dígitos para restaurar el respaldo:",
+      );
       const scopeValue = backupScopes.join(",");
       const formData = new FormData();
       formData.append("file", backupFile);
       if (scopeValue) formData.append("scopes", scopeValue);
       formData.append("overwrite", overwriteImport ? "true" : "false");
 
-      const response = await axios.post(`${API}/backup/excel/import`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        `${API}/backup/excel/import`,
+        formData,
+        withReauthHeader({ headers: { "Content-Type": "multipart/form-data" } }, reauthToken),
+      );
 
       toast.success("Respaldo importado correctamente");
       const sheets = response?.data?.sheets || {};
@@ -376,7 +398,13 @@ export function HyperVisorPage() {
       }
       await fetchData(false);
     } catch (error) {
-      toast.error(error?.response?.data?.detail || "No se pudo importar respaldo");
+      if (error?.code === "REAUTH_CANCELLED") return;
+      const detail = error?.response?.data?.detail;
+      toast.error(
+        (typeof detail === "object" ? detail?.message : detail) ||
+          error?.message ||
+          "No se pudo importar respaldo",
+      );
     } finally {
       setBusyImport(false);
     }

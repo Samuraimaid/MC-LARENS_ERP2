@@ -201,6 +201,7 @@ export const SETTINGS_TAB_OPTIONS = [
   { id: "notificaciones", label: "Notificaciones", icon: "Bell" },
   { id: "impresoras", label: "Impresoras", icon: "Printer" },
   { id: "dialogos", label: "Diálogos", icon: "MessageSquareText" },
+  { id: "seguridad", label: "Seguridad", icon: "Shield" },
 ];
 
 export function buildDefaultPdfDocumentSettings() {

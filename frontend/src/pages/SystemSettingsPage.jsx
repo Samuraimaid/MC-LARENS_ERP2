@@ -289,10 +289,15 @@ export function SystemSettingsContent({ forcedSection = null, showPageHeader = t
   const downloadExcelBackup = async () => {
     setBackingUp(true);
     try {
-      const response = await axios.get(`${API}/backup/excel`, {
-        withCredentials: true,
-        responseType: "blob",
-      });
+      const { promptReauthToken, withReauthHeader } = await import("@/lib/reauth");
+      const reauthToken = await promptReauthToken(
+        "backup.download",
+        "Confirma con tu PIN de 8 dígitos para descargar el respaldo:",
+      );
+      const response = await axios.get(
+        `${API}/backup/excel`,
+        withReauthHeader({ responseType: "blob" }, reauthToken),
+      );
 
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -307,7 +312,13 @@ export function SystemSettingsContent({ forcedSection = null, showPageHeader = t
       window.URL.revokeObjectURL(url);
       toast.success("Respaldo Excel descargado");
     } catch (error) {
-      toast.error(error?.response?.data?.detail || "No se pudo descargar respaldo");
+      if (error?.code === "REAUTH_CANCELLED") return;
+      const detail = error?.response?.data?.detail;
+      toast.error(
+        (typeof detail === "object" ? detail?.message : detail) ||
+          error?.message ||
+          "No se pudo descargar respaldo",
+      );
     } finally {
       setBackingUp(false);
     }

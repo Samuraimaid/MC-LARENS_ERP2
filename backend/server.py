@@ -1576,6 +1576,21 @@ class SessionUnlockRequest(FlexibleModel):
     pin: str
 
 
+class ReauthPinRequest(FlexibleModel):
+    pin: str
+    action: Optional[str] = None
+
+
+class SessionPolicyUpdateRequest(FlexibleModel):
+    idle_minutes: Optional[Dict[str, Any]] = None
+    ttl_hours: Optional[Dict[str, Any]] = None
+    reauth_actions: Optional[Dict[str, Any]] = None
+    reauth_ttl_seconds: Optional[int] = None
+    heartbeat_throttle_seconds: Optional[int] = None
+    single_session: Optional[bool] = None
+    notes: Optional[str] = None
+
+
 class Warehouse(FlexibleModel):
     pass
 
@@ -3734,35 +3749,85 @@ async def start_hardware_monitor_service() -> None:
     logger.info("Hardware monitor service started")
 
 
-async def _get_user_by_session(session_token: str) -> Optional[Dict[str, Any]]:
+_session_policy_cache: Dict[str, Any] = {"ts": 0.0, "policy": None}
+
+
+def _invalidate_session_policy_cache() -> None:
+    _session_policy_cache["ts"] = 0.0
+    _session_policy_cache["policy"] = None
+
+
+async def _load_session_security_policy() -> Dict[str, Any]:
+    from backend.domains.auth.session_policy import (
+        normalize_session_policy,
+        policy_from_env_overlay,
+    )
+
+    import time
+
+    now_ts = time.time()
+    cached = _session_policy_cache.get("policy")
+    if cached is not None and (now_ts - float(_session_policy_cache.get("ts") or 0)) < 15:
+        return cached
+
+    doc = await db.settings.find_one({"type": "session_security_policy"}, {"_id": 0})
+    policy = policy_from_env_overlay(normalize_session_policy(doc if isinstance(doc, dict) else None))
+    _session_policy_cache["policy"] = policy
+    _session_policy_cache["ts"] = now_ts
+    return policy
+
+
+async def _get_session_and_user(
+    session_token: str,
+    *,
+    touch: bool = True,
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], Optional[str], Optional[str]]:
+    """
+    Load session+user and enforce TTL/idle.
+    Returns (session, user_doc, error_code, error_message).
+    """
+    from backend.domains.auth.session_policy import validate_session_freshness
+
     session = await db.sessions.find_one({"session_token": session_token}, {"_id": 0})
     if not session:
-        return None
+        return None, None, "SESSION_INVALID", "Invalid session"
     user_id = session.get("user_id")
     if not user_id:
-        return None
-    # Heartbeat: mark session as recently active for "usuarios en línea" metrics.
-    # Throttle writes to avoid hammering Mongo on every static asset/API poll.
-    try:
-        now = datetime.now(timezone.utc)
-        last_raw = str(session.get("last_seen_at") or "")
-        touch = True
-        if last_raw:
-            try:
-                last_dt = datetime.fromisoformat(last_raw.replace("Z", "+00:00"))
-                if last_dt.tzinfo is None:
-                    last_dt = last_dt.replace(tzinfo=timezone.utc)
-                touch = (now - last_dt).total_seconds() >= 45
-            except Exception:
-                touch = True
-        if touch:
-            await db.sessions.update_one(
-                {"session_token": session_token},
-                {"$set": {"last_seen_at": now.isoformat()}},
-            )
-    except Exception:
-        pass
-    return await db.users.find_one({"user_id": user_id}, {"_id": 0})
+        return None, None, "SESSION_INVALID", "Invalid session"
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not user_doc or user_doc.get("is_active") is False:
+        await db.sessions.delete_many({"session_token": session_token})
+        return None, None, "SESSION_INVALID", "Invalid session"
+
+    policy = await _load_session_security_policy()
+    ok, code, message = validate_session_freshness(
+        session, role=str(user_doc.get("role") or ""), policy=policy
+    )
+    if not ok:
+        await db.sessions.delete_many({"session_token": session_token})
+        return None, None, code, message
+
+    if touch:
+        try:
+            from backend.domains.auth.session_policy import parse_iso_dt
+
+            now = datetime.now(timezone.utc)
+            throttle = int(policy.get("heartbeat_throttle_seconds") or 30)
+            last_dt = parse_iso_dt(session.get("last_seen_at"))
+            should_touch = last_dt is None or (now - last_dt).total_seconds() >= throttle
+            if should_touch:
+                await db.sessions.update_one(
+                    {"session_token": session_token},
+                    {"$set": {"last_seen_at": now.isoformat()}},
+                )
+        except Exception:
+            pass
+    return session, user_doc, None, None
+
+
+async def _get_user_by_session(session_token: str) -> Optional[Dict[str, Any]]:
+    _session, user_doc, _code, _msg = await _get_session_and_user(session_token, touch=True)
+    return user_doc
 
 
 def _extract_session_token(request: Request) -> Optional[str]:
@@ -3801,10 +3866,76 @@ async def require_auth(request: Request) -> User:
         token = request.cookies.get("session_token")
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    user_doc = await _get_user_by_session(token)
+    _session, user_doc, code, message = await _get_session_and_user(token, touch=True)
     if not user_doc:
-        raise HTTPException(status_code=401, detail="Invalid session")
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "message": message or "Invalid session",
+                "code": code or "SESSION_INVALID",
+            },
+        )
+    # Attach token for downstream reauth helpers
+    try:
+        request.state.session_token = token
+        request.state.session_user_id = user_doc.get("user_id")
+    except Exception:
+        pass
     return User(**user_doc)
+
+
+async def require_reauth_pin(request: Request, action_key: str) -> None:
+    """Require a short-lived reauth token (from POST /auth/reauth) for sensitive actions."""
+    from backend.domains.auth.session_policy import action_requires_reauth
+
+    policy = await _load_session_security_policy()
+    if not action_requires_reauth(policy, action_key):
+        return
+    reauth_token = (
+        request.headers.get("X-Reauth-Token")
+        or request.headers.get("x-reauth-token")
+        or ""
+    ).strip()
+    if not reauth_token:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Esta acción requiere confirmación con tu PIN",
+                "code": "REAUTH_REQUIRED",
+                "action": action_key,
+            },
+        )
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user_id = getattr(getattr(request, "state", None), "session_user_id", None)
+    if not user_id:
+        # fallback: re-resolve
+        token = _extract_session_token(request)
+        if token:
+            sess = await db.sessions.find_one({"session_token": token}, {"_id": 0, "user_id": 1})
+            user_id = (sess or {}).get("user_id")
+    doc = await db.reauth_tokens.find_one(
+        {
+            "token": reauth_token,
+            "user_id": user_id,
+            "expires_at": {"$gte": now_iso},
+            "used": {"$ne": True},
+        },
+        {"_id": 0},
+    )
+    if not doc:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Confirmación PIN inválida o expirada. Vuelve a confirmar.",
+                "code": "REAUTH_INVALID",
+                "action": action_key,
+            },
+        )
+    # One-time use
+    await db.reauth_tokens.update_one(
+        {"token": reauth_token},
+        {"$set": {"used": True, "used_at": now_iso, "used_for": action_key}},
+    )
 
 
 async def require_roles(request: Request, roles: List[str]) -> User:
@@ -3879,23 +4010,56 @@ async def _create_session_response(
     user_doc: Dict[str, Any],
     request: Optional[Request] = None,
 ) -> JSONResponse:
+    from backend.domains.auth.session_policy import (
+        idle_minutes_for_role,
+        session_expiry_iso,
+        ttl_hours_for_role,
+    )
+
     user_id = user_doc["user_id"]
+    role = str(user_doc.get("role") or "")
+    policy = await _load_session_security_policy()
 
     # Single-session policy: invalidate any previous sessions for this user
-    await db.sessions.delete_many({"user_id": user_id})
+    if policy.get("single_session", True):
+        await db.sessions.delete_many({"user_id": user_id})
 
     session_token = secrets.token_hex(16)
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    expires_at = session_expiry_iso(policy, role, now=now)
     await db.sessions.insert_one(
         {
             "session_token": session_token,
             "user_id": user_id,
+            "role": role,
             "created_at": now_iso,
             "last_seen_at": now_iso,
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "expires_at": expires_at,
+            "idle_minutes": idle_minutes_for_role(policy, role),
+            "ttl_hours": ttl_hours_for_role(policy, role),
+            "user_agent": (
+                str(request.headers.get("user-agent") or "")[:240] if request else ""
+            ),
+            "ip": (
+                str(
+                    (request.client.host if request and request.client else "")
+                    or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                    if request
+                    else ""
+                )[:80]
+            ),
         }
     )
-    payload = {"user": _sanitize_user_doc(user_doc), "session_token": session_token}
+    payload = {
+        "user": _sanitize_user_doc(user_doc),
+        "session_token": session_token,
+        "session_policy": {
+            "idle_minutes": idle_minutes_for_role(policy, role),
+            "ttl_hours": ttl_hours_for_role(policy, role),
+            "expires_at": expires_at,
+        },
+    }
     response = JSONResponse(payload)
     response.set_cookie("session_token", session_token, **_session_cookie_params(request))
     return response
@@ -4689,17 +4853,33 @@ async def release_user_draft(flow: str, draft_id: str, request: Request):
 
 @api_router.get("/auth/me")
 async def get_auth_me(request: Request):
+    from backend.domains.auth.session_policy import idle_minutes_for_role, ttl_hours_for_role
+
     user = await require_auth(request)
     token = _extract_session_token(request)
     session_locked = False
+    session_meta: Dict[str, Any] = {}
     if token:
         session_doc = await db.sessions.find_one(
             {"session_token": token},
-            {"_id": 0, "locked": 1},
+            {"_id": 0, "locked": 1, "expires_at": 1, "last_seen_at": 1, "created_at": 1},
         )
         session_locked = bool((session_doc or {}).get("locked"))
+        if session_doc:
+            session_meta = {
+                "expires_at": session_doc.get("expires_at"),
+                "last_seen_at": session_doc.get("last_seen_at"),
+                "created_at": session_doc.get("created_at"),
+            }
+    policy = await _load_session_security_policy()
+    role = str(user.role or "")
     payload = user.model_dump()
     payload["session_locked"] = session_locked
+    payload["session_policy"] = {
+        "idle_minutes": idle_minutes_for_role(policy, role),
+        "ttl_hours": ttl_hours_for_role(policy, role),
+        **session_meta,
+    }
     return payload
 
 
@@ -4719,6 +4899,183 @@ async def auth_logout(request: Request):
         samesite=cookie_params["samesite"],
     )
     return response
+
+
+@api_router.post("/auth/reauth")
+async def auth_reauth_with_pin(payload: ReauthPinRequest, request: Request):
+    """Confirm PIN and issue a short-lived one-time reauth token for sensitive actions."""
+    from backend.domains.auth.session_policy import idle_minutes_for_role
+
+    user = await require_auth(request)
+    pin = str(payload.pin or "").strip()
+    if not is_valid_login_pin(pin):
+        raise HTTPException(status_code=400, detail="PIN inválido (8 dígitos)")
+
+    user_doc = await db.users.find_one({"user_id": user.user_id, "is_active": True}, {"_id": 0})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado o inactivo")
+
+    await _validate_login_pin_for_user(user_doc, pin, request)
+
+    policy = await _load_session_security_policy()
+    ttl = int(policy.get("reauth_ttl_seconds") or 120)
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(seconds=ttl)).isoformat()
+    reauth_token = secrets.token_hex(24)
+    action = str(payload.action or "").strip() or None
+    await db.reauth_tokens.insert_one(
+        {
+            "token": reauth_token,
+            "user_id": user.user_id,
+            "role": str(user.role or ""),
+            "action": action,
+            "created_at": now.isoformat(),
+            "expires_at": expires_at,
+            "used": False,
+        }
+    )
+    # Opportunistic cleanup of expired tokens
+    try:
+        await db.reauth_tokens.delete_many({"expires_at": {"$lt": now.isoformat()}})
+    except Exception:
+        pass
+
+    return {
+        "reauth_token": reauth_token,
+        "expires_at": expires_at,
+        "ttl_seconds": ttl,
+        "action": action,
+        "idle_minutes": idle_minutes_for_role(policy, user.role),
+    }
+
+
+@api_router.get("/auth/sessions")
+async def list_active_sessions(request: Request):
+    """List active sessions (gerencia/programador). Includes idle/TTL status."""
+    from backend.domains.auth.session_policy import (
+        idle_minutes_for_role,
+        parse_iso_dt,
+        validate_session_freshness,
+    )
+
+    await require_roles(request, ["gerencia", "programador"])
+    policy = await _load_session_security_policy()
+    now = datetime.now(timezone.utc)
+    rows = await db.sessions.find({}, {"_id": 0}).sort("last_seen_at", -1).to_list(500)
+    user_ids = list({str(r.get("user_id") or "") for r in rows if r.get("user_id")})
+    users_by_id: Dict[str, Dict[str, Any]] = {}
+    if user_ids:
+        async for u in db.users.find(
+            {"user_id": {"$in": user_ids}},
+            {"_id": 0, "user_id": 1, "name": 1, "last_name": 1, "role": 1, "email": 1, "is_active": 1},
+        ):
+            users_by_id[str(u.get("user_id"))] = u
+
+    result = []
+    for sess in rows:
+        uid = str(sess.get("user_id") or "")
+        udoc = users_by_id.get(uid) or {}
+        role = str(udoc.get("role") or sess.get("role") or "")
+        ok, code, message = validate_session_freshness(sess, role=role, policy=policy, now=now)
+        last_seen = parse_iso_dt(sess.get("last_seen_at")) or parse_iso_dt(sess.get("created_at"))
+        idle_min = idle_minutes_for_role(policy, role)
+        idle_seconds = None
+        if last_seen is not None:
+            idle_seconds = max(0, int((now - last_seen).total_seconds()))
+        token = str(sess.get("session_token") or "")
+        result.append(
+            {
+                "session_token_prefix": token[:8] + "…" if len(token) > 8 else token,
+                "session_token": token,  # needed for revoke; only gerencia/programador
+                "user_id": uid,
+                "user_name": " ".join(
+                    p for p in [str(udoc.get("name") or ""), str(udoc.get("last_name") or "")] if p
+                ).strip()
+                or uid,
+                "email": udoc.get("email"),
+                "role": role,
+                "created_at": sess.get("created_at"),
+                "last_seen_at": sess.get("last_seen_at"),
+                "expires_at": sess.get("expires_at"),
+                "idle_minutes_limit": idle_min,
+                "idle_seconds": idle_seconds,
+                "user_agent": sess.get("user_agent") or "",
+                "ip": sess.get("ip") or "",
+                "locked": bool(sess.get("locked")),
+                "fresh": ok,
+                "status_code": code if not ok else "ACTIVE",
+                "status_message": message if not ok else "Activa",
+            }
+        )
+    # Drop stale sessions discovered during listing
+    stale_tokens = [r["session_token"] for r in result if not r.get("fresh") and r.get("session_token")]
+    if stale_tokens:
+        await db.sessions.delete_many({"session_token": {"$in": stale_tokens}})
+        result = [r for r in result if r.get("fresh")]
+
+    return {
+        "sessions": result,
+        "total": len(result),
+        "policy_summary": {
+            "idle_minutes": policy.get("idle_minutes"),
+            "ttl_hours": policy.get("ttl_hours"),
+            "single_session": policy.get("single_session", True),
+        },
+    }
+
+
+@api_router.delete("/auth/sessions/{session_token}")
+async def revoke_session(session_token: str, request: Request):
+    """Revoke a specific session (own session or gerencia/programador for others)."""
+    user = await require_auth(request)
+    await require_reauth_pin(request, "sessions.revoke")
+
+    token = str(session_token or "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="session_token requerido")
+
+    sess = await db.sessions.find_one({"session_token": token}, {"_id": 0})
+    if not sess:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
+    owner_id = str(sess.get("user_id") or "")
+    is_self = owner_id == str(user.user_id)
+    role = str(user.role or "").strip().lower()
+    if not is_self and role not in ("gerencia", "programador"):
+        raise HTTPException(status_code=403, detail="No autorizado para cerrar sesiones ajenas")
+
+    await db.sessions.delete_many({"session_token": token})
+    try:
+        await db.audit_logs.insert_one(
+            {
+                "action": "session.revoke",
+                "actor_id": user.user_id,
+                "actor_name": user.name,
+                "target_user_id": owner_id,
+                "session_token_prefix": token[:8],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+    except Exception:
+        pass
+
+    return {"message": "Sesión cerrada", "session_token_prefix": token[:8], "user_id": owner_id}
+
+
+@api_router.post("/auth/sessions/revoke-user/{user_id}")
+async def revoke_user_sessions(user_id: str, request: Request):
+    """Revoke all sessions for a user (gerencia/programador)."""
+    await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "sessions.revoke")
+    target = str(user_id or "").strip()
+    if not target:
+        raise HTTPException(status_code=400, detail="user_id requerido")
+    result = await db.sessions.delete_many({"user_id": target})
+    return {
+        "message": f"Sesiones cerradas para {target}",
+        "user_id": target,
+        "revoked": int(result.deleted_count or 0),
+    }
 
 
 @api_router.post("/auth/session/lock")
@@ -5079,6 +5436,7 @@ async def list_users_directory(
 @api_router.put("/users/{user_id}/role")
 async def update_user_role(user_id: str, payload: Dict[str, Any], request: Request):
     await require_roles(request, ["gerencia", "programador", "recursos_humanos"])
+    await require_reauth_pin(request, "users.role")
 
     data = payload or {}
     name = data.get("name")
@@ -5170,6 +5528,7 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
 @api_router.post("/users/pin")
 async def create_pin_user(payload: Dict[str, Any], request: Request):
     await require_roles(request, ["gerencia", "programador", "recursos_humanos"])
+    await require_reauth_pin(request, "users.create")
 
     data = payload or {}
     name = data.get("name")
@@ -5316,6 +5675,7 @@ async def create_pin_user(payload: Dict[str, Any], request: Request):
 async def update_user_pin(user_id: str, payload: Dict[str, Any], request: Request):
     """Update attendance PIN (4 digits) for a user."""
     current_user = await require_auth(request)
+    await require_reauth_pin(request, "users.pin_reset")
 
     # Only gerencia (or RRHH when feature flag is enabled) or the user themselves can change PIN
     if current_user.user_id != user_id and not can_manage_other_users_pin(current_user):
@@ -5497,6 +5857,7 @@ async def seed_kiosk_pins_for_testing(payload: Dict[str, Any], request: Request)
 async def update_user_login_pin(user_id: str, payload: Dict[str, Any], request: Request):
     """Update login PIN (8 digits). Only RRHH, Gerencia or Programador roles are allowed."""
     current_user = await require_auth(request)
+    await require_reauth_pin(request, "users.login_pin")
     if not can_manage_login_pin(current_user):
         raise HTTPException(status_code=403, detail="No tienes permiso para cambiar el PIN de inicio de sesión")
 
@@ -5671,6 +6032,7 @@ async def delete_pin_user(user_id: str, request: Request):
 async def reset_user_pin(user_id: str, payload: Dict[str, Any], request: Request):
     """Admin endpoint to reset a user's login PIN. Returns the new PIN to the caller (admin)."""
     current_user = await require_auth(request)
+    await require_reauth_pin(request, "users.pin_reset")
     if not can_manage_login_pin(current_user):
         raise HTTPException(status_code=403, detail="No tienes permiso para cambiar este PIN")
 
@@ -6364,6 +6726,7 @@ async def export_full_backup_excel(
     secure: bool = True,
 ):
     await require_roles(request, ["gerencia", "programador", "recursos_humanos"])
+    await require_reauth_pin(request, "backup.download")
 
     Workbook, _ = _get_openpyxl_symbols()
     wb = Workbook()
@@ -6528,6 +6891,7 @@ async def import_backup_excel(
     overwrite: Optional[str] = Form("false"),
 ):
     actor = await require_hypervisor_access(request, write=True)
+    await require_reauth_pin(request, "backup.restore")
 
     if not file.filename or not file.filename.lower().endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="El respaldo debe ser un archivo .xlsx")
@@ -11357,6 +11721,7 @@ async def _cancel_cashier_invoice_record(
 @api_router.post("/caja/facturas/{sale_id}/anular")
 async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequest, request: Request):
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    await require_reauth_pin(request, "caja.anular")
 
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
@@ -11411,6 +11776,7 @@ async def delete_cashier_invoice(sale_id: str, request: Request):
 async def clear_cashier_invoice_queue(request: Request, body: CashierClearQueueRequest):
     """Anula todas las facturas pendientes sin abonos en la cola de caja."""
     user = await require_roles(request, QUEUE_PURGE_ROLES)
+    await require_reauth_pin(request, "caja.clear_queue")
     effective_branch = str(body.branch_id or user.branch_id or "").strip()
     tab = str(body.tab or "cotizacion").strip().lower()
 
@@ -11562,6 +11928,7 @@ async def request_sale_cancel(sale_id: str, payload: SaleRequestPayload, request
 @api_router.post("/sales/requests/{request_id}/approve-edit")
 async def approve_sale_edit_request(request_id: str, request: Request):
     approver = await require_roles(request, ["gerencia", "recursos_humanos"])
+    await require_reauth_pin(request, "sales.approve_edit")
     req = await db.sale_requests.find_one({"request_id": request_id}, {"_id": 0})
     if not req:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
@@ -11789,6 +12156,7 @@ async def _notify_cancelled_work_order(revert_result: Dict[str, Any]) -> None:
 @api_router.post("/sales/requests/{request_id}/approve-cancel")
 async def approve_sale_cancel_request(request_id: str, request: Request):
     approver = await require_roles(request, ["gerencia", "recursos_humanos"])
+    await require_reauth_pin(request, "sales.approve_cancel")
     req = await db.sale_requests.find_one({"request_id": request_id}, {"_id": 0})
     if not req:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
@@ -12956,6 +13324,7 @@ async def clear_coordinator_queue(
     body: CoordinatorClearQueueRequest,
 ):
     user = await require_roles(request, QUEUE_PURGE_ROLES)
+    await require_reauth_pin(request, "coordinator.clear_queue")
     dept = str(body.department or "").strip().lower()
     if dept not in QUEUE_PURGE_DEPARTMENTS:
         raise HTTPException(status_code=400, detail="Departamento inválido para limpiar cola")
@@ -19681,6 +20050,97 @@ async def convert_currency(amount: float, from_currency: str, to_currency: str):
     }
 
 
+@api_router.get("/settings/session-security")
+async def get_session_security_policy(request: Request):
+    """Read session idle/TTL and reauth policy (gerencia/programador)."""
+    from backend.domains.auth.session_policy import list_reauth_action_catalog
+
+    await require_roles(request, ["gerencia", "programador"])
+    policy = await _load_session_security_policy()
+    return {
+        "policy": policy,
+        "reauth_catalog": list_reauth_action_catalog(),
+        "defaults": {
+            "idle_minutes": {"ventas": 5, "default": 60},
+            "notes": "ventas (piso y VIP) idle 5 min; resto 60 min por defecto",
+        },
+    }
+
+
+@api_router.put("/settings/session-security")
+async def put_session_security_policy(payload: SessionPolicyUpdateRequest, request: Request):
+    """Update session idle/TTL and which actions require PIN reauth."""
+    from backend.domains.auth.session_policy import (
+        POLICY_DOC_TYPE,
+        default_session_policy,
+        normalize_session_policy,
+    )
+
+    actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "settings.session_policy")
+
+    existing = await db.settings.find_one({"type": POLICY_DOC_TYPE}, {"_id": 0}) or {}
+    base = default_session_policy()
+    if isinstance(existing, dict):
+        for key in (
+            "idle_minutes",
+            "ttl_hours",
+            "reauth_actions",
+            "reauth_ttl_seconds",
+            "heartbeat_throttle_seconds",
+            "single_session",
+            "notes",
+        ):
+            if key in existing:
+                base[key] = existing[key]
+
+    data = payload.model_dump(exclude_unset=True) if hasattr(payload, "model_dump") else (payload or {})
+    if data.get("idle_minutes") is not None:
+        base["idle_minutes"] = data["idle_minutes"]
+    if data.get("ttl_hours") is not None:
+        base["ttl_hours"] = data["ttl_hours"]
+    if data.get("reauth_actions") is not None:
+        base["reauth_actions"] = data["reauth_actions"]
+    if data.get("reauth_ttl_seconds") is not None:
+        base["reauth_ttl_seconds"] = data["reauth_ttl_seconds"]
+    if data.get("heartbeat_throttle_seconds") is not None:
+        base["heartbeat_throttle_seconds"] = data["heartbeat_throttle_seconds"]
+    if data.get("single_session") is not None:
+        base["single_session"] = data["single_session"]
+    if data.get("notes") is not None:
+        base["notes"] = data["notes"]
+
+    normalized = normalize_session_policy(base)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    normalized["type"] = POLICY_DOC_TYPE
+    normalized["updated_at"] = now_iso
+    normalized["updated_by"] = actor.user_id
+    normalized["updated_by_name"] = actor.name
+
+    await db.settings.update_one(
+        {"type": POLICY_DOC_TYPE},
+        {"$set": normalized},
+        upsert=True,
+    )
+    _invalidate_session_policy_cache()
+
+    try:
+        await db.audit_logs.insert_one(
+            {
+                "action": "settings.session_policy",
+                "actor_id": actor.user_id,
+                "actor_name": actor.name,
+                "timestamp": now_iso,
+                "idle_minutes": normalized.get("idle_minutes"),
+                "ttl_hours": normalized.get("ttl_hours"),
+            }
+        )
+    except Exception:
+        pass
+
+    return {"message": "Política de sesión actualizada", "policy": normalized}
+
+
 @api_router.get("/settings/currency")
 async def get_system_currency(request: Request):
     """Get system default currency"""
@@ -20085,6 +20545,7 @@ async def get_tutorials_architecture_opinion(request: Request):
 async def put_tutorial_track(track_role: str, payload: Dict[str, Any], request: Request):
     """Replace an entire role track (gerencia/programador)."""
     actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "tutorials.edit")
     from backend.domains.ui.tutorials import TRACK_LABELS, normalize_module
 
     role = str(track_role or "").strip().lower()
@@ -20127,6 +20588,7 @@ async def put_tutorial_module(
     track_role: str, module_id: str, payload: Dict[str, Any], request: Request
 ):
     actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "tutorials.edit")
     from backend.domains.ui.tutorials import normalize_module
 
     role = str(track_role or "").strip().lower()
@@ -20165,6 +20627,7 @@ async def put_tutorial_module(
 @api_router.post("/tutorials/tracks/{track_role}/modules")
 async def create_tutorial_module(track_role: str, payload: Dict[str, Any], request: Request):
     actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "tutorials.edit")
     from backend.domains.ui.tutorials import normalize_module
 
     role = str(track_role or "").strip().lower()
@@ -20194,6 +20657,7 @@ async def create_tutorial_module(track_role: str, payload: Dict[str, Any], reque
 @api_router.delete("/tutorials/tracks/{track_role}/modules/{module_id}")
 async def delete_tutorial_module(track_role: str, module_id: str, request: Request):
     actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "tutorials.edit")
     role = str(track_role or "").strip().lower()
     mid = str(module_id or "").strip()
     curriculum = await _load_tutorials_curriculum()
@@ -20267,6 +20731,7 @@ async def get_tutorial_asset(folder: str, filename: str):
 @api_router.post("/tutorials/reset-defaults")
 async def reset_tutorials_to_defaults(request: Request):
     actor = await require_roles(request, ["gerencia", "programador"])
+    await require_reauth_pin(request, "tutorials.reset")
     from backend.domains.ui.tutorials import default_curriculum
 
     await db.settings.delete_one({"type": "tutorials_curriculum"})
@@ -22925,6 +23390,7 @@ async def create_dispatch_from_sale(request: Request, sale_id: str):
 async def clear_dispatch_queue(request: Request, body: DispatchClearQueueRequest):
     """Remove all pending dispatch orders (gerencia/supervisor/programador only)."""
     user = await require_roles(request, QUEUE_PURGE_ROLES)
+    await require_reauth_pin(request, "dispatch.clear_queue")
     effective_branch = str(body.branch_id or user.branch_id or "").strip()
     effective_warehouse = str(body.warehouse_id or user.warehouse_id or "").strip()
 

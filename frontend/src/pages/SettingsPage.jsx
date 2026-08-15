@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
 import { DialogMessagesSettingsPanel } from "@/components/settings/DialogMessagesSettingsPanel";
+import { SessionSecuritySettingsPanel } from "@/components/settings/SessionSecuritySettingsPanel";
 import { SystemSettingsContent } from "./SystemSettingsPage";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
@@ -64,6 +65,7 @@ const SETTINGS_TAB_ICONS = {
   Bell,
   Printer,
   MessageSquareText,
+  Shield,
 };
 
 const VALID_SETTINGS_TABS = SETTINGS_TAB_OPTIONS.map((tab) => tab.id);
@@ -340,12 +342,21 @@ export function SettingsPage() {
   };
 
   const downloadExcelBackup = async () => {
+    const pin = window.prompt("Confirma con tu PIN de 8 dígitos para descargar el respaldo:");
+    if (!pin) return;
+    const cleanPin = String(pin).replace(/\D/g, "").slice(0, 8);
+    if (cleanPin.length !== 8) {
+      toast.error("El PIN debe tener 8 dígitos");
+      return;
+    }
     setBackingUp(true);
     try {
-      const response = await axios.get(`${API}/backup/excel`, {
-        withCredentials: true,
-        responseType: "blob",
-      });
+      const { requestReauthToken, withReauthHeader } = await import("@/lib/reauth");
+      const { reauth_token } = await requestReauthToken(cleanPin, "backup.download");
+      const response = await axios.get(
+        `${API}/backup/excel`,
+        withReauthHeader({ responseType: "blob" }, reauth_token),
+      );
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
@@ -359,7 +370,11 @@ export function SettingsPage() {
       window.URL.revokeObjectURL(url);
       toast.success("Respaldo Excel descargado");
     } catch (error) {
-      toast.error(error?.response?.data?.detail || "No se pudo descargar respaldo");
+      const detail = error?.response?.data?.detail;
+      toast.error(
+        (typeof detail === "object" ? detail?.message : detail) ||
+          "No se pudo descargar respaldo",
+      );
     } finally {
       setBackingUp(false);
     }
@@ -1450,13 +1465,15 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleSettingsTabChange} className="space-y-4 animate-fade-up-soft">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
           {SETTINGS_TAB_OPTIONS.map((tab) => {
             const Icon = SETTINGS_TAB_ICONS[tab.icon];
+            const isGerenciaOrProg = ["gerencia", "programador"].includes(String(user?.role || "").toLowerCase());
             const hidden =
               (tab.id === "billing" && !canManageBillingSettings)
               || (tab.id === "vehicles" && !canManageVehicleSettings)
               || (tab.id === "dialogos" && !canManageDialogMessages)
+              || (tab.id === "seguridad" && !isGerenciaOrProg)
               || (["monedas", "notificaciones", "impresoras"].includes(tab.id) && !canManageSystemSettings);
             if (hidden) return null;
             return (
@@ -2565,6 +2582,10 @@ export function SettingsPage() {
               </CardHeader>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="seguridad" className="space-y-6">
+          <SessionSecuritySettingsPanel />
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-6">

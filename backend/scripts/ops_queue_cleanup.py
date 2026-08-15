@@ -32,10 +32,44 @@ def login_gerencia(
     return s
 
 
+def obtain_reauth_token(
+    session: requests.Session,
+    *,
+    api: str = DEFAULT_API,
+    pin: str = DEFAULT_PIN,
+    action: Optional[str] = None,
+) -> Optional[str]:
+    """Get a one-time reauth token (X-Reauth-Token) for sensitive admin actions."""
+    try:
+        body: Dict[str, Any] = {"pin": pin}
+        if action:
+            body["action"] = action
+        r = session.post(f"{api}/auth/reauth", json=body, timeout=30)
+        if r.status_code == 200:
+            return str((r.json() or {}).get("reauth_token") or "") or None
+    except Exception:
+        return None
+    return None
+
+
+def _reauth_headers(
+    session: requests.Session,
+    *,
+    api: str,
+    pin: str,
+    action: str,
+) -> Dict[str, str]:
+    token = obtain_reauth_token(session, api=api, pin=pin, action=action)
+    if token:
+        return {"X-Reauth-Token": token}
+    return {}
+
+
 def api_clear_queues(
     session: requests.Session,
     *,
     api: str = DEFAULT_API,
+    pin: str = DEFAULT_PIN,
     branch_id: str = DEFAULT_BRANCH,
     warehouse_id: str = DEFAULT_WAREHOUSE,
     report: Optional[Dict[str, Any]] = None,
@@ -44,9 +78,11 @@ def api_clear_queues(
     detail: Dict[str, Any] = {}
 
     for tab in ("abiertas", "cotizacion", "credito"):
+        headers = _reauth_headers(session, api=api, pin=pin, action="caja.clear_queue")
         r = session.post(
             f"{api}/caja/facturas/clear-queue",
             json={"branch_id": branch_id, "tab": tab},
+            headers=headers,
             timeout=120,
         )
         if r.status_code == 200:
@@ -56,9 +92,11 @@ def api_clear_queues(
         else:
             _log(report, f"Caja {tab} WARN {r.status_code}: {r.text[:160]}")
 
+    headers = _reauth_headers(session, api=api, pin=pin, action="dispatch.clear_queue")
     r = session.post(
         f"{api}/dispatch/clear-queue",
         json={"branch_id": branch_id, "warehouse_id": warehouse_id},
+        headers=headers,
         timeout=120,
     )
     if r.status_code == 200:
@@ -69,9 +107,11 @@ def api_clear_queues(
         _log(report, f"Despacho WARN {r.status_code}: {r.text[:160]}")
 
     for dept in ("instalaciones", "electrico", "polarizados"):
+        headers = _reauth_headers(session, api=api, pin=pin, action="coordinator.clear_queue")
         r = session.post(
             f"{api}/coordinator/clear-queue",
             json={"department": dept, "branch_id": branch_id, "profile": dept},
+            headers=headers,
             timeout=120,
         )
         if r.status_code == 200:
@@ -187,6 +227,45 @@ async def mongo_deep_clear_async() -> Dict[str, Any]:
     )
     out["notifications_deleted"] = int(notif_res.deleted_count or 0)
 
+    # Drop stale / expired / E2E leftover sessions so "online" metrics stay clean
+    now = datetime.now(timezone.utc)
+    sessions = await db.sessions.find({}, {"_id": 0, "session_token": 1, "expires_at": 1, "last_seen_at": 1, "created_at": 1, "role": 1, "user_id": 1}).to_list(5000)
+    stale_tokens = []
+    for sess in sessions:
+        exp_raw = str(sess.get("expires_at") or "")
+        try:
+            exp = datetime.fromisoformat(exp_raw.replace("Z", "+00:00")) if exp_raw else None
+            if exp is not None and exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp is not None and exp < now:
+                stale_tokens.append(sess.get("session_token"))
+                continue
+        except Exception:
+            pass
+        # Sessions older than 14 days without recent activity
+        seen_raw = str(sess.get("last_seen_at") or sess.get("created_at") or "")
+        try:
+            seen = datetime.fromisoformat(seen_raw.replace("Z", "+00:00")) if seen_raw else None
+            if seen is not None and seen.tzinfo is None:
+                seen = seen.replace(tzinfo=timezone.utc)
+            if seen is not None and (now - seen).total_seconds() > 14 * 24 * 3600:
+                stale_tokens.append(sess.get("session_token"))
+        except Exception:
+            pass
+    stale_tokens = [t for t in stale_tokens if t]
+    if stale_tokens:
+        sess_del = await db.sessions.delete_many({"session_token": {"$in": stale_tokens}})
+        out["stale_sessions_deleted"] = int(sess_del.deleted_count or 0)
+    else:
+        out["stale_sessions_deleted"] = 0
+
+    # Expired reauth tokens
+    try:
+        reauth_del = await db.reauth_tokens.delete_many({"expires_at": {"$lt": now.isoformat()}})
+        out["expired_reauth_tokens_deleted"] = int(reauth_del.deleted_count or 0)
+    except Exception:
+        out["expired_reauth_tokens_deleted"] = 0
+
     out["after"] = {
         "active_work_orders": await db.work_orders.count_documents(
             {"status": {"$in": ["pending", "pending_assignment", "in_progress", "quality_check"]}}
@@ -249,6 +328,7 @@ def run_full_queue_cleanup(
         api_clear_queues(
             s,
             api=api,
+            pin=pin,
             branch_id=branch_id,
             warehouse_id=warehouse_id,
             report=report,
