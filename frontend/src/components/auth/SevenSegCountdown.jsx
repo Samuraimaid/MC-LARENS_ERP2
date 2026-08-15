@@ -1,9 +1,19 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
+const SEVEN_SEG_FONT = {
+  fontFamily: "DSEG7Classic, ui-monospace, monospace",
+  fontStyle: "italic",
+  fontWeight: 400,
+  fontVariantNumeric: "tabular-nums",
+  letterSpacing: "0.08em",
+  fontSynthesis: "none",
+};
+
 /**
  * 7-segment countdown with centiseconds.
  * Colon blinks 1 Hz (on 0.5s / off 0.5s) like a digital wristwatch.
+ * Font is applied inline + class so minify/cascade cannot drop DSEG7.
  */
 export function SevenSegCountdown({
   remainingMs = 0,
@@ -23,8 +33,9 @@ export function SevenSegCountdown({
   // Duty cycle 50%: visible first half of each second, hidden second half
   const colonOn = Math.floor(totalMs / 500) % 2 === 0;
 
-  const label =
-    minutes > 0 ? `${minutes}:${ss}.${cc}` : `${ss}.${cc}`;
+  const label = minutes > 0 ? `${minutes}:${ss}.${cc}` : `${ss}.${cc}`;
+
+  const digitStyle = { fontFamily: "inherit", fontStyle: "inherit", fontWeight: "inherit" };
 
   return (
     <span
@@ -33,32 +44,33 @@ export function SevenSegCountdown({
         showGlow && "font-seven-seg-glow",
         className,
       )}
-      style={style}
+      style={{ ...SEVEN_SEG_FONT, ...style }}
       data-testid={testId}
       aria-label={label}
       role="timer"
     >
       {minutes > 0 ? (
         <>
-          <span className="tabular-nums">{minutes}</span>
+          <span style={digitStyle}>{minutes}</span>
           <span
             className={cn(
               "inline-block transition-opacity duration-75",
               colonOn ? "opacity-100" : "opacity-0",
             )}
+            style={digitStyle}
             aria-hidden="true"
           >
             :
           </span>
-          <span className="tabular-nums">{ss}</span>
+          <span style={digitStyle}>{ss}</span>
         </>
       ) : (
-        <span className="tabular-nums">{ss}</span>
+        <span style={digitStyle}>{ss}</span>
       )}
-      <span className="tabular-nums" aria-hidden="true">
+      <span style={digitStyle} aria-hidden="true">
         .
       </span>
-      <span className="tabular-nums">{cc}</span>
+      <span style={digitStyle}>{cc}</span>
     </span>
   );
 }

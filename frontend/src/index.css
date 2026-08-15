@@ -1,12 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Nunito:wght@400;500;600&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@500;600&family=Rubik:wght@400;500&family=Fredoka:wght@500;600&family=Quicksand:wght@400;500;600&display=swap');
 
-/* DSEG7 Classic Italic — 7-segment LCD style (SIL OFL 1.1, keshikan/DSEG) */
+/* DSEG7 Classic Italic — 7-segment LCD (SIL OFL 1.1, keshikan/DSEG)
+   Family name is a single token (no spaces) so CSS minify won't break matching. */
 @font-face {
-  font-family: "DSEG7 Classic";
+  font-family: DSEG7Classic;
   src:
     url("/fonts/DSEG7Classic-Italic.woff2") format("woff2"),
     url("/fonts/DSEG7Classic-Italic.woff") format("woff");
-  font-weight: 400;
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: DSEG7Classic;
+  src:
+    url("/fonts/DSEG7Classic-Italic.woff2") format("woff2"),
+    url("/fonts/DSEG7Classic-Italic.woff") format("woff");
+  font-weight: 400 700;
   font-style: italic;
   font-display: swap;
 }
@@ -17,10 +28,18 @@
 
 @layer utilities {
   .font-seven-seg {
-    font-family: "DSEG7 Classic", "JetBrains Mono", ui-monospace, monospace;
-    font-style: italic;
+    font-family: DSEG7Classic, ui-monospace, monospace !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
+    font-synthesis: none;
+  }
+
+  .font-seven-seg * {
+    font-family: inherit !important;
+    font-style: inherit !important;
+    font-weight: inherit !important;
   }
 
   .font-seven-seg-glow {
