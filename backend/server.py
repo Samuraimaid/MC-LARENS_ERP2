@@ -3741,6 +3741,27 @@ async def _get_user_by_session(session_token: str) -> Optional[Dict[str, Any]]:
     user_id = session.get("user_id")
     if not user_id:
         return None
+    # Heartbeat: mark session as recently active for "usuarios en línea" metrics.
+    # Throttle writes to avoid hammering Mongo on every static asset/API poll.
+    try:
+        now = datetime.now(timezone.utc)
+        last_raw = str(session.get("last_seen_at") or "")
+        touch = True
+        if last_raw:
+            try:
+                last_dt = datetime.fromisoformat(last_raw.replace("Z", "+00:00"))
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
+                touch = (now - last_dt).total_seconds() >= 45
+            except Exception:
+                touch = True
+        if touch:
+            await db.sessions.update_one(
+                {"session_token": session_token},
+                {"$set": {"last_seen_at": now.isoformat()}},
+            )
+    except Exception:
+        pass
     return await db.users.find_one({"user_id": user_id}, {"_id": 0})
 
 
@@ -3864,11 +3885,13 @@ async def _create_session_response(
     await db.sessions.delete_many({"user_id": user_id})
 
     session_token = secrets.token_hex(16)
+    now_iso = datetime.now(timezone.utc).isoformat()
     await db.sessions.insert_one(
         {
             "session_token": session_token,
             "user_id": user_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": now_iso,
+            "last_seen_at": now_iso,
             "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
     )

@@ -6,7 +6,7 @@ import platform
 import shutil
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -385,13 +385,45 @@ def _usb_backup_status(alerts: List[Dict[str, Any]], usb_path: str) -> str:
     return "DISCONNECTED"
 
 
-async def _count_active_users(db) -> int:
-    now_iso = _iso_now()
+async def _count_active_users(db, *, window_minutes: int = 15) -> int:
+    """Count distinct users with recent activity (not just unexpired 7-day sessions).
+
+    Sessions remain valid for days, so counting expires_at alone over-reports
+    'online' users after E2E logins / idle browser tabs.
+    """
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    cutoff = (now - timedelta(minutes=max(1, int(window_minutes)))).isoformat()
     try:
-        return await db.sessions.count_documents({"expires_at": {"$gte": now_iso}})
+        pipeline = [
+            {
+                "$match": {
+                    "expires_at": {"$gte": now_iso},
+                    "$or": [
+                        {"last_seen_at": {"$gte": cutoff}},
+                        # Brand-new sessions without heartbeat yet
+                        {
+                            "last_seen_at": {"$exists": False},
+                            "created_at": {"$gte": cutoff},
+                        },
+                    ],
+                }
+            },
+            {"$group": {"_id": "$user_id"}},
+            {"$count": "n"},
+        ]
+        rows = await db.sessions.aggregate(pipeline).to_list(1)
+        if rows:
+            return int((rows[0] or {}).get("n") or 0)
+        return 0
     except Exception:
         try:
-            return await db.sessions.count_documents({})
+            # Fallback: distinct non-expired sessions (legacy)
+            return len(
+                await db.sessions.distinct(
+                    "user_id", {"expires_at": {"$gte": now_iso}}
+                )
+            )
         except Exception:
             return 0
 

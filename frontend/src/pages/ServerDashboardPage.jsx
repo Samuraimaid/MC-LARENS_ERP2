@@ -1080,7 +1080,9 @@ export function ServerDashboardPage() {
               Usuarios en línea
             </div>
             <p className="mt-2 font-mono text-5xl font-black text-cyan-300">{lan.active_users_count ?? 0}</p>
-            <p className="text-xs text-slate-500 mt-1">{lan.active_connections ?? 0} conexiones TCP</p>
+            <p className="text-xs text-slate-500 mt-1">
+              activos ~15 min · {lan.active_connections ?? 0} sockets TCP
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5 flex flex-col justify-center">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">

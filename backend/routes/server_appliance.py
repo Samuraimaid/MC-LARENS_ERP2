@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -80,13 +80,35 @@ def _disk_usage(path: str) -> Dict[str, Any]:
         return {"path": path, "total_bytes": None, "used_bytes": None, "free_bytes": None, "percent": None}
 
 
-async def _count_active_users(db) -> int:
-    now_iso = datetime.now(timezone.utc).isoformat()
+async def _count_active_users(db, *, window_minutes: int = 15) -> int:
+    """Distinct users with session activity in the last window_minutes."""
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    cutoff = (now - timedelta(minutes=max(1, int(window_minutes)))).isoformat()
     try:
-        return await db.sessions.count_documents({"expires_at": {"$gte": now_iso}})
+        pipeline = [
+            {
+                "$match": {
+                    "expires_at": {"$gte": now_iso},
+                    "$or": [
+                        {"last_seen_at": {"$gte": cutoff}},
+                        {
+                            "last_seen_at": {"$exists": False},
+                            "created_at": {"$gte": cutoff},
+                        },
+                    ],
+                }
+            },
+            {"$group": {"_id": "$user_id"}},
+            {"$count": "n"},
+        ]
+        rows = await db.sessions.aggregate(pipeline).to_list(1)
+        return int((rows[0] or {}).get("n") or 0) if rows else 0
     except Exception:
         try:
-            return await db.sessions.count_documents({})
+            return len(
+                await db.sessions.distinct("user_id", {"expires_at": {"$gte": now_iso}})
+            )
         except Exception:
             return 0
 
