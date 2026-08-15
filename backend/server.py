@@ -19927,48 +19927,329 @@ async def reset_dialog_messages(payload: Dict[str, Any], request: Request):
     }
 
 
-# ============ TUTORIALS (seller academy) ============
+# ============ TUTORIALS (multi-role academy + editor) ============
+
+TUTORIAL_ASSETS_DIR = Path(
+    os.environ.get("TUTORIAL_ASSETS_DIR")
+    or (Path(__file__).resolve().parent / "data" / "tutorial-assets")
+)
+TUTORIAL_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+(TUTORIAL_ASSETS_DIR / "real").mkdir(parents=True, exist_ok=True)
+
+
+async def _load_tutorials_curriculum() -> Dict[str, Any]:
+    from backend.domains.ui.tutorials import merge_curriculum
+
+    doc = await db.settings.find_one({"type": "tutorials_curriculum"}, {"_id": 0})
+    return merge_curriculum(doc if isinstance(doc, dict) else None)
+
+
+async def _save_tutorials_curriculum(
+    curriculum: Dict[str, Any], actor: User
+) -> Dict[str, Any]:
+    from backend.domains.ui.tutorials import curriculum_to_override_doc, merge_curriculum
+
+    payload = curriculum_to_override_doc(
+        curriculum,
+        actor_id=getattr(actor, "user_id", None),
+        actor_name=getattr(actor, "name", None),
+    )
+    await db.settings.update_one(
+        {"type": "tutorials_curriculum"},
+        {"$set": payload},
+        upsert=True,
+    )
+    return merge_curriculum(payload)
 
 
 @api_router.get("/tutorials")
 async def list_tutorials(
     request: Request,
+    track: Optional[str] = None,
     audience: Optional[str] = None,
     level: Optional[str] = None,
     full: bool = False,
 ):
-    """Seller-first tutorial catalog. full=1 returns steps/scenarios for every module."""
-    await require_auth(request)
-    from backend.domains.ui.tutorials import get_full_curriculum, get_tutorials_catalog
+    """Multi-role tutorial catalog. Editors see all tracks; others only their role."""
+    user = await require_auth(request)
+    from backend.domains.ui.tutorials import catalog_for_role
 
-    if full:
-        return get_full_curriculum()
-    return get_tutorials_catalog(audience=audience, level=level)
+    curriculum = await _load_tutorials_curriculum()
+    selected = track or audience
+    catalog = catalog_for_role(
+        curriculum,
+        viewer_role=str(user.role or ""),
+        track_role=selected,
+        full=full,
+    )
+    if level:
+        level_key = str(level).strip().lower()
+        catalog["modules"] = [
+            m for m in catalog.get("modules") or [] if str(m.get("level") or "") == level_key
+        ]
+        if full and catalog.get("modules_full"):
+            catalog["modules_full"] = [
+                m
+                for m in catalog["modules_full"]
+                if str(m.get("level") or "") == level_key
+            ]
+        catalog["total_modules"] = len(catalog.get("modules") or [])
+    return catalog
+
+
+@api_router.get("/tutorials/tracks")
+async def list_tutorial_tracks(request: Request):
+    user = await require_auth(request)
+    from backend.domains.ui.tutorials import can_view_all_tracks
+
+    curriculum = await _load_tutorials_curriculum()
+    labels = curriculum.get("track_labels") or {}
+    roles = list(curriculum.get("track_roles") or [])
+    viewer = str(user.role or "").strip().lower()
+    if not can_view_all_tracks(viewer):
+        roles = [viewer] if viewer in (curriculum.get("tracks") or {}) else roles[:1]
+    return {
+        "tracks": [{"role": r, "label": labels.get(r, r)} for r in roles],
+        "can_edit": can_view_all_tracks(viewer),
+    }
+
+
+@api_router.get("/tutorials/tracks/{track_role}/modules/{module_id}")
+async def get_tutorial_module_detail(track_role: str, module_id: str, request: Request):
+    user = await require_auth(request)
+    from backend.domains.ui.tutorials import can_view_all_tracks, get_module_from_curriculum
+
+    curriculum = await _load_tutorials_curriculum()
+    viewer = str(user.role or "").strip().lower()
+    role = str(track_role or "").strip().lower()
+    if not can_view_all_tracks(viewer) and role != viewer:
+        raise HTTPException(status_code=403, detail="No autorizado para ver este track")
+    module = get_module_from_curriculum(curriculum, role, module_id)
+    if not module:
+        raise HTTPException(status_code=404, detail="Modulo de tutorial no encontrado")
+    return {"track": role, "module": module}
 
 
 @api_router.get("/tutorials/modules/{module_id}")
-async def get_tutorial_module_detail(module_id: str, request: Request):
-    await require_auth(request)
-    from backend.domains.ui.tutorials import get_tutorial_module
+async def get_tutorial_module_detail_legacy(module_id: str, request: Request):
+    """Legacy: resolve module inside the viewer's default track."""
+    user = await require_auth(request)
+    from backend.domains.ui.tutorials import catalog_for_role, get_module_from_curriculum
 
-    module = get_tutorial_module(module_id)
+    curriculum = await _load_tutorials_curriculum()
+    catalog = catalog_for_role(
+        curriculum, viewer_role=str(user.role or ""), full=False
+    )
+    track = str(catalog.get("selected_track") or user.role or "ventas")
+    module = get_module_from_curriculum(curriculum, track, module_id)
     if not module:
-        raise HTTPException(status_code=404, detail="Módulo de tutorial no encontrado")
+        raise HTTPException(status_code=404, detail="Modulo de tutorial no encontrado")
     return module
 
 
 @api_router.get("/tutorials/opinion")
 async def get_tutorials_architecture_opinion(request: Request):
-    """Architecture notes about the tutorials endpoint (also embedded in catalog)."""
     await require_auth(request)
-    from backend.domains.ui.tutorials import get_tutorials_catalog
-
-    catalog = get_tutorials_catalog()
+    curriculum = await _load_tutorials_curriculum()
     return {
-        "version": catalog.get("version"),
-        "opinion": catalog.get("opinion"),
-        "golden_rules": catalog.get("golden_rules"),
+        "version": curriculum.get("version"),
+        "opinion": curriculum.get("opinion"),
+        "golden_rules": curriculum.get("golden_rules"),
     }
+
+
+@api_router.put("/tutorials/tracks/{track_role}")
+async def put_tutorial_track(track_role: str, payload: Dict[str, Any], request: Request):
+    """Replace an entire role track (gerencia/programador)."""
+    actor = await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.ui.tutorials import TRACK_LABELS, normalize_module
+
+    role = str(track_role or "").strip().lower()
+    if not role:
+        raise HTTPException(status_code=400, detail="track_role requerido")
+    data = payload or {}
+    modules_raw = data.get("modules")
+    if not isinstance(modules_raw, list):
+        raise HTTPException(status_code=400, detail="modules debe ser una lista")
+    modules: List[Dict[str, Any]] = []
+    for idx, raw in enumerate(modules_raw, start=1):
+        norm = normalize_module(raw, fallback_order=idx)
+        if norm:
+            modules.append(norm)
+    if not modules:
+        raise HTTPException(status_code=400, detail="Debe haber al menos un modulo valido")
+    modules.sort(key=lambda m: int(m.get("order") or 0))
+
+    curriculum = await _load_tutorials_curriculum()
+    tracks = dict(curriculum.get("tracks") or {})
+    tracks[role] = {
+        "role": role,
+        "label": str(data.get("label") or TRACK_LABELS.get(role) or role),
+        "modules": modules,
+    }
+    curriculum["tracks"] = tracks
+    if role not in (curriculum.get("track_roles") or []):
+        curriculum.setdefault("track_roles", []).append(role)
+    curriculum.setdefault("track_labels", {})[role] = tracks[role]["label"]
+    saved = await _save_tutorials_curriculum(curriculum, actor)
+    return {
+        "message": f"Track {role} guardado",
+        "track": saved.get("tracks", {}).get(role),
+        "version": saved.get("version"),
+    }
+
+
+@api_router.put("/tutorials/tracks/{track_role}/modules/{module_id}")
+async def put_tutorial_module(
+    track_role: str, module_id: str, payload: Dict[str, Any], request: Request
+):
+    actor = await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.ui.tutorials import normalize_module
+
+    role = str(track_role or "").strip().lower()
+    mid = str(module_id or "").strip()
+    body = dict(payload or {})
+    body["id"] = mid
+    norm = normalize_module(body)
+    if not norm:
+        raise HTTPException(status_code=400, detail="Modulo invalido (id y title requeridos)")
+
+    curriculum = await _load_tutorials_curriculum()
+    tracks = dict(curriculum.get("tracks") or {})
+    track = dict(tracks.get(role) or {"role": role, "label": role, "modules": []})
+    modules = list(track.get("modules") or [])
+    found = False
+    for i, m in enumerate(modules):
+        if str(m.get("id")) == mid:
+            modules[i] = norm
+            found = True
+            break
+    if not found:
+        modules.append(norm)
+    modules.sort(key=lambda m: int(m.get("order") or 0))
+    track["modules"] = modules
+    tracks[role] = track
+    curriculum["tracks"] = tracks
+    saved = await _save_tutorials_curriculum(curriculum, actor)
+    return {
+        "message": "Modulo guardado",
+        "module": norm,
+        "track": role,
+        "version": saved.get("version"),
+    }
+
+
+@api_router.post("/tutorials/tracks/{track_role}/modules")
+async def create_tutorial_module(track_role: str, payload: Dict[str, Any], request: Request):
+    actor = await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.ui.tutorials import normalize_module
+
+    role = str(track_role or "").strip().lower()
+    body = dict(payload or {})
+    if not body.get("id"):
+        body["id"] = f"mod_{uuid.uuid4().hex[:8]}"
+    curriculum = await _load_tutorials_curriculum()
+    tracks = dict(curriculum.get("tracks") or {})
+    track = dict(tracks.get(role) or {"role": role, "label": role, "modules": []})
+    modules = list(track.get("modules") or [])
+    max_order = max([int(m.get("order") or 0) for m in modules] or [0])
+    body.setdefault("order", max_order + 1)
+    norm = normalize_module(body, fallback_order=max_order + 1)
+    if not norm:
+        raise HTTPException(status_code=400, detail="Modulo invalido")
+    if any(str(m.get("id")) == norm["id"] for m in modules):
+        raise HTTPException(status_code=400, detail="Ya existe un modulo con ese id")
+    modules.append(norm)
+    modules.sort(key=lambda m: int(m.get("order") or 0))
+    track["modules"] = modules
+    tracks[role] = track
+    curriculum["tracks"] = tracks
+    saved = await _save_tutorials_curriculum(curriculum, actor)
+    return {"message": "Modulo creado", "module": norm, "version": saved.get("version")}
+
+
+@api_router.delete("/tutorials/tracks/{track_role}/modules/{module_id}")
+async def delete_tutorial_module(track_role: str, module_id: str, request: Request):
+    actor = await require_roles(request, ["gerencia", "programador"])
+    role = str(track_role or "").strip().lower()
+    mid = str(module_id or "").strip()
+    curriculum = await _load_tutorials_curriculum()
+    tracks = dict(curriculum.get("tracks") or {})
+    track = dict(tracks.get(role) or {"role": role, "modules": []})
+    before = len(track.get("modules") or [])
+    track["modules"] = [m for m in (track.get("modules") or []) if str(m.get("id")) != mid]
+    if len(track["modules"]) == before:
+        raise HTTPException(status_code=404, detail="Modulo no encontrado")
+    tracks[role] = track
+    curriculum["tracks"] = tracks
+    saved = await _save_tutorials_curriculum(curriculum, actor)
+    return {"message": "Modulo eliminado", "module_id": mid, "version": saved.get("version")}
+
+
+@api_router.post("/tutorials/assets")
+async def upload_tutorial_asset(
+    request: Request,
+    file: UploadFile = File(...),
+    folder: str = "uploads",
+):
+    """Upload a real screenshot/image for tutorials (gerencia/programador)."""
+    await require_roles(request, ["gerencia", "programador"])
+    raw_name = str(file.filename or "capture.png")
+    ext = Path(raw_name).suffix.lower()
+    if ext not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        raise HTTPException(status_code=400, detail="Formato no permitido (png/jpg/webp/gif)")
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Archivo vacio")
+    if len(content) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Imagen demasiado grande (max 8MB)")
+    safe_folder = re.sub(r"[^a-zA-Z0-9_-]+", "", str(folder or "uploads")) or "uploads"
+    target_dir = TUTORIAL_ASSETS_DIR / safe_folder
+    target_dir.mkdir(parents=True, exist_ok=True)
+    stem = re.sub(r"[^a-zA-Z0-9_-]+", "-", Path(raw_name).stem)[:60] or "asset"
+    fname = f"{stem}-{uuid.uuid4().hex[:8]}{ext}"
+    path = target_dir / fname
+    path.write_bytes(content)
+    url = f"/api/tutorials/assets/{safe_folder}/{fname}"
+    return {
+        "message": "Imagen subida",
+        "url": url,
+        "path": str(path),
+        "filename": fname,
+        "folder": safe_folder,
+        "bytes": len(content),
+    }
+
+
+@api_router.get("/tutorials/assets/{folder}/{filename}")
+async def get_tutorial_asset(folder: str, filename: str):
+    """Public asset fetch (auth optional for <img> tags with cookies)."""
+    safe_folder = re.sub(r"[^a-zA-Z0-9_-]+", "", str(folder or ""))
+    safe_name = Path(str(filename or "")).name
+    if not safe_folder or not safe_name or ".." in safe_name:
+        raise HTTPException(status_code=400, detail="Ruta invalida")
+    path = TUTORIAL_ASSETS_DIR / safe_folder / safe_name
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Asset no encontrado")
+    media = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+    }.get(path.suffix.lower(), "application/octet-stream")
+    return FileResponse(path, media_type=media)
+
+
+@api_router.post("/tutorials/reset-defaults")
+async def reset_tutorials_to_defaults(request: Request):
+    actor = await require_roles(request, ["gerencia", "programador"])
+    from backend.domains.ui.tutorials import default_curriculum
+
+    await db.settings.delete_one({"type": "tutorials_curriculum"})
+    curriculum = default_curriculum()
+    saved = await _save_tutorials_curriculum(curriculum, actor)
+    return {"message": "Tutoriales restablecidos a defaults multi-rol", "version": saved.get("version")}
 
 
 from backend.domains.inventory.label_printer import (

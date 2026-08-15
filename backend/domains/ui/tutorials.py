@@ -1,755 +1,841 @@
-"""Seller-first tutorial curriculum served by /api/tutorials.
+"""Multi-role tutorial curriculum: defaults + Mongo overrides.
 
-Content is structured for progressive learning: zero -> first sale -> edge cases.
-Images live under /tutorials/* (frontend public assets).
+Tracks are keyed by role. Gerencia/programador can edit all tracks.
+Images: /tutorials/* (frontend) or /api/tutorials/assets/* (uploaded).
 """
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Set
 
-TUTORIALS_VERSION = "2026.08.seller-v1"
+TUTORIALS_VERSION = "2026.08.multi-role-v2"
+TUTORIAL_EDITOR_ROLES = frozenset({"gerencia", "programador"})
 
-SELLER_MODULES: List[Dict[str, Any]] = [
-    {
-        "id": "01-login-pin",
-        "order": 1,
-        "level": "basico",
-        "duration_min": 4,
-        "title": "Iniciar sesion con PIN",
-        "summary": "Como entrar al ERP de forma segura y que hacer si fallas el PIN.",
-        "image": "/tutorials/01-login-pin.jpg",
-        "image_alt": "Pantalla de login con teclado PIN y contador de intentos",
-        "objectives": [
-            "Ingresar con tu PIN de 8 digitos de login",
-            "Reconocer el bloqueo por intentos fallidos",
-            "Nunca compartir tu PIN",
-        ],
-        "steps": [
-            {
-                "title": "Abre el ERP en el navegador",
-                "detail": "Usa la URL de tu sucursal (HTTP puerto 3000 en PC o HTTPS 3443 si usas camara del celular/tablet).",
-            },
-            {
-                "title": "Ingresa tu PIN de login (8 digitos)",
-                "detail": "Es el PIN de inicio de sesion, no el de marcacion de 4 digitos de RRHH.",
-            },
-            {
-                "title": "Pulsa Entrar / confirmalo",
-                "detail": "Si el PIN es correcto se crea una sesion con cookie segura y entras a tu menu de rol.",
-            },
-            {
-                "title": "Si te equivocas",
-                "detail": "El sistema muestra intentos restantes. Tras varios fallos hay bloqueo temporal con contador en pantalla roja. Espera o pide a gerencia/RRHH desbloqueo.",
-            },
-        ],
-        "dos": [
-            "Cierra sesion al terminar el turno",
-            "Bloquea la terminal si te alejas (candado de sesion)",
-        ],
-        "donts": [
-            "No compartas tu PIN con otro vendedor",
-            "No uses el PIN de otra persona para 'acelerar'",
-        ],
-        "scenarios": [
-            {
-                "name": "PIN bloqueado",
-                "procedure": "No sigas intentando. Espera el tiempo de lockout o avisa a gerencia. Forzar reintentos alarga el bloqueo.",
-            },
-            {
-                "name": "Sesion caducada",
-                "procedure": "Vuelve a login con tu PIN. Los borradores de venta se conservan en tu usuario si no los borraste.",
-            },
-        ],
-        "related_routes": ["/login"],
-    },
-    {
-        "id": "02-mapa-menu",
-        "order": 2,
-        "level": "basico",
-        "duration_min": 5,
-        "title": "Mapa del menu del vendedor",
-        "summary": "Que pantallas usas a diario y cuales no te corresponden.",
-        "image": "/tutorials/02-menu-vendedor.jpg",
-        "image_alt": "Barra lateral del ERP resaltando modulos de ventas",
-        "objectives": [
-            "Ubicar Ventas, Cotizaciones, Clientes, Vehiculos, Creditos y Devoluciones",
-            "Saber que Caja, Despacho y QC no son de tu rol",
-        ],
-        "steps": [
-            {
-                "title": "Centro Unificado / Ventas",
-                "detail": "Tu base de trabajo: borradores, carrito, envio a caja.",
-            },
-            {
-                "title": "Clientes y Vehiculos",
-                "detail": "Alta y busqueda de clientes; registro de placas y datos del vehiculo antes de vender con instalacion.",
-            },
-            {
-                "title": "Cotizaciones",
-                "detail": "Ofertas con vigencia; luego se convierten a venta si el cliente acepta.",
-            },
-            {
-                "title": "Tutoriales (esta guia)",
-                "detail": "Siempre disponible en el menu para repasar procedimientos.",
-            },
-        ],
-        "dos": ["Usa solo modulos con permiso; si ves 403 es normal"],
-        "donts": [
-            "No intentes entrar a Caja, Despacho o listado de PIN de personal",
-            "No uses gerencia de otro usuario",
-        ],
-        "scenarios": [
-            {
-                "name": "Menu vacio o incompleto",
-                "procedure": "Cierra sesion y vuelve a entrar. Si persiste, tu rol no tiene el modulo o la sucursal lo deshabilito (node profile).",
-            }
-        ],
-        "related_routes": ["/sales", "/customers", "/vehicles", "/quotations", "/help/tutorials"],
-    },
-    {
-        "id": "03-cliente-vehiculo",
-        "order": 3,
-        "level": "basico",
-        "duration_min": 8,
-        "title": "Cliente y vehiculo (obligatorios bien hechos)",
-        "summary": "Sin cliente/vehiculo correctos la instalacion y la entrega fallan despues.",
-        "image": "/tutorials/03-cliente-vehiculo.jpg",
-        "image_alt": "Formulario de cliente y selector de vehiculo con placa",
-        "objectives": [
-            "Buscar o crear cliente natural/empresa",
-            "Asociar o registrar vehiculo con placa valida",
-            "Validar telefono y datos de credito si aplica",
-        ],
-        "steps": [
-            {
-                "title": "Busca al cliente (Alt+C en venta)",
-                "detail": "Por nombre, telefono o cedula/RUC. Evita duplicados: confirma si ya existe.",
-            },
-            {
-                "title": "Si es nuevo, registralo completo",
-                "detail": "Nombre, telefono formato 0000-0000, tipo natural/empresa. Empresas pueden llevar retencion IR.",
-            },
-            {
-                "title": "Selecciona o crea el vehiculo",
-                "detail": "Marca, modelo, anio, color y placa. La placa correcta evita confusiones en taller y polarizados.",
-            },
-            {
-                "title": "Credito (solo si el cliente ya tiene limite)",
-                "detail": "Si no tiene limite aprobado, no elijas pago a credito: gerencia debe configurar el perfil primero.",
-            },
-        ],
-        "dos": [
-            "Verifica el telefono con el cliente en voz alta",
-            "Confirma que el vehiculo es el que esta en el patio",
-        ],
-        "donts": [
-            "No inventes placas",
-            "No uses un cliente generico para 'terminar mas rapido'",
-        ],
-        "scenarios": [
-            {
-                "name": "Cliente empresa con retencion",
-                "procedure": "Marca tipo empresa. En venta activa retencion si aplica (1%/2%) y el sistema puede forzar factura carta.",
-            },
-            {
-                "name": "Cliente sin vehiculo aun",
-                "procedure": "Puedes cotizar, pero para instalacion/polarizado registra el vehiculo antes de enviar a caja.",
-            },
-        ],
-        "related_routes": ["/customers", "/vehicles", "/sales"],
-    },
-    {
-        "id": "04-borrador-venta",
-        "order": 4,
-        "level": "basico",
-        "duration_min": 10,
-        "title": "Borrador de venta desde cero",
-        "summary": "El borrador es tu espacio de trabajo seguro: guarda solo, no cobra.",
-        "image": "/tutorials/04-borrador-venta.jpg",
-        "image_alt": "Pestanas de borradores y carrito de venta",
-        "objectives": [
-            "Crear y nombrar borradores",
-            "Usar autoguardado y Ctrl+S",
-            "Manejar varios borradores en paralelo",
-        ],
-        "steps": [
-            {
-                "title": "Abre Ventas / Nueva venta",
-                "detail": "Se crea o reanuda un borrador. Puedes tener varias pestanas (varios clientes).",
-            },
-            {
-                "title": "Selecciona cliente y vehiculo",
-                "detail": "Usa Alt+C para clientes. Confirma datos en el encabezado del borrador.",
-            },
-            {
-                "title": "Agrega productos (Alt+P)",
-                "detail": "Busca por nombre o SKU. Enter agrega la linea. Ajusta cantidad e instalacion por linea.",
-            },
-            {
-                "title": "Guarda con Ctrl+S si pausas",
-                "detail": "Hay autoguardado, pero Ctrl+S da certeza al cambiar de conversacion.",
-            },
-        ],
-        "dos": ["Un borrador por cliente activo", "Nombra el borrador con apellido del cliente"],
-        "donts": [
-            "No mezcles dos clientes en el mismo borrador",
-            "No borres un borrador en revision de supervision",
-        ],
-        "scenarios": [
-            {
-                "name": "Se fue la luz / se cerro el navegador",
-                "procedure": "Vuelve a entrar: el borrador reaparece en tus pestanas. Revisa carrito y totales antes de continuar.",
-            },
-            {
-                "name": "Borrador en revision por supervision",
-                "procedure": "No liberes tu el borrador. Espera watch/release de supervisor/gerencia. Algunas lineas quedan bloqueadas.",
-            },
-        ],
-        "related_routes": ["/sales"],
-        "shortcuts": [
-            {"keys": "Alt + C", "action": "Buscar cliente"},
-            {"keys": "Alt + P", "action": "Buscar producto"},
-            {"keys": "Ctrl + S", "action": "Guardar borrador"},
-        ],
-    },
-    {
-        "id": "05-productos-instalacion",
-        "order": 5,
-        "level": "intermedio",
-        "duration_min": 12,
-        "title": "Productos, stock e instalacion",
-        "summary": "Como armar el carrito sin sobreventa y con instalacion correcta por departamento.",
-        "image": "/tutorials/05-productos-instalacion.jpg",
-        "image_alt": "Busqueda de productos con switch de instalacion",
-        "objectives": [
-            "Buscar y agregar productos con stock",
-            "Marcar con instalacion cuando aplica",
-            "Entender que polarizado/electrico/instalaciones se separan en taller",
-        ],
-        "steps": [
-            {
-                "title": "Busca por nombre o SKU",
-                "detail": "Filtra en el catalogo. Si no hay stock suficiente el sistema rechazara la venta al facturar.",
-            },
-            {
-                "title": "Activa 'con instalacion' cuando el cliente lo pide o el producto lo exige",
-                "detail": "Productos de polarizado suelen requerir instalacion. Accesorios electronicos van a departamento electrico.",
-            },
-            {
-                "title": "Revisa precio de instalacion en la linea",
-                "detail": "Se suma al subtotal. El catalogo esta en USD; la liquidacion se muestra en C$ con tipo de cambio.",
-            },
-            {
-                "title": "No fuerces cantidades enormes",
-                "detail": "Cantidad <= 0 o stock insuficiente = error. Ajusta a lo disponible o pide reposicion a bodega.",
-            },
-        ],
-        "dos": [
-            "Confirma compatibilidad con el vehiculo del cliente",
-            "Separa en la nota si algo es 'solo para llevar'",
-        ],
-        "donts": [
-            "No prometas stock que no ves en el sistema",
-            "No desactives instalacion en polarizado si el trabajo se hara en taller",
-        ],
-        "scenarios": [
-            {
-                "name": "Producto solo para llevar + cliente pide instalacion",
-                "procedure": "Requiere autorizacion de gerencia (codigo manager). No improvises: solicita el codigo o cambia el producto.",
-            },
-            {
-                "name": "Venta mixta (accesorio + radio + polarizado)",
-                "procedure": "Es valido. Tras el cobro se crean OT por departamento (instalaciones, electrico, polarizados) y despacho de fisicos.",
-            },
-        ],
-        "related_routes": ["/sales", "/catalog"],
-    },
-    {
-        "id": "06-precios-y-tiers",
-        "order": 6,
-        "level": "intermedio",
-        "duration_min": 12,
-        "title": "Precios: Precio 1, Precio 2 y politicas",
-        "summary": "Reglas de tarifa para vendedores de piso vs VIP y cuando pedir aprobacion.",
-        "image": "/tutorials/06-precios-tiers.jpg",
-        "image_alt": "Selector de niveles de precio y aviso de aprobacion Precio 2",
-        "objectives": [
-            "Usar Precio 1 como tarifa base de piso",
-            "Solicitar y esperar aprobacion de Precio 2",
-            "No inventar precios negativos o cero",
-        ],
-        "steps": [
-            {
-                "title": "Trabaja en Precio 1 por defecto",
-                "detail": "Es la tarifa estandar del vendedor de piso.",
-            },
-            {
-                "title": "Si aplicas Precio 2 en lineas",
-                "detail": "Debes solicitar aprobacion a supervision/gerencia con motivo. Sin aprobacion no puedes enviar a caja.",
-            },
-            {
-                "title": "Espera el estado 'aprobado'",
-                "detail": "El indicador de Precio 2 debe pasar de pendiente a listo. No reenvies a caja en pendiente.",
-            },
-            {
-                "title": "Cambios de precio por linea",
-                "detail": "Bajar demasiado o subir sobre Precio 1 sin permiso puede ser bloqueado por el servidor.",
-            },
-        ],
-        "dos": [
-            "Documenta el motivo de Precio 2 (campana, cliente frecuente, etc.)",
-            "Verifica el total en C$ antes de hablar del precio final al cliente",
-        ],
-        "donts": [
-            "No pongas unit_price <= 0",
-            "No uses Precio 2 'por costumbre' sin aprobacion",
-        ],
-        "scenarios": [
-            {
-                "name": "Cliente pide descuento fuerte",
-                "procedure": "Usa descuento global dentro del tope de vendedor o pide a supervision que entre al borrador (watch), ajuste y libere.",
-            },
-            {
-                "name": "Vendedor VIP",
-                "procedure": "Politica distinta: no modifica precios por linea libremente; usa la tarifa establecida. Si no eres VIP, no copies su practica.",
-            },
-        ],
-        "related_routes": ["/sales", "/approvals"],
-    },
-    {
-        "id": "07-descuentos-supervision",
-        "order": 7,
-        "level": "intermedio",
-        "duration_min": 10,
-        "title": "Descuentos y revision de supervision",
-        "summary": "Tope de descuento del vendedor y flujo watch -> ajuste -> release.",
-        "image": "/tutorials/07-descuentos-supervision.jpg",
-        "image_alt": "Borrador en revision por supervision con descuento global",
-        "objectives": [
-            "Respetar el tope de descuento global del vendedor",
-            "Entender que puede y no puede editar tras la liberacion",
-            "Comunicar al cliente solo totales ya autorizados",
-        ],
-        "steps": [
-            {
-                "title": "Descuento global de vendedor",
-                "detail": "Hay un maximo % y/o monto en C$. Si lo excedes, el servidor responde error de politica.",
-            },
-            {
-                "title": "Cuando supervision toma el borrador (watch)",
-                "detail": "Pueden aplicar descuento de linea o global. Tu veras notificaciones de cambio/liberacion.",
-            },
-            {
-                "title": "Tras release con cambios",
-                "detail": "Algunos campos quedan bloqueados (pago, retencion, descuentos). Puedes agregar productos permitidos y enviar a caja.",
-            },
-            {
-                "title": "Confirma el total final en pantalla",
-                "detail": "Subtotal, descuento, IVA y neto a cobrar deben cuadrar con lo dicho al cliente.",
-            },
-        ],
-        "dos": ["Pide supervision por el canal interno antes de prometer descuentos grandes"],
-        "donts": [
-            "No intentes liberar tu propio borrador (sale bloqueado)",
-            "No edites a escondidas un borrador ya liberado con cambios de supervision",
-        ],
-        "scenarios": [
-            {
-                "name": "Descuento en pago con tarjeta",
-                "procedure": "Tarjeta puede anular descuentos por politica. El sistema avisa. Coordina con caja/gerencia; no pelees el total en piso.",
-            }
-        ],
-        "related_routes": ["/sales"],
-    },
-    {
-        "id": "08-entrega-y-paso2",
-        "order": 8,
-        "level": "intermedio",
-        "duration_min": 8,
-        "title": "Entrega, retiro en tienda y Paso 2",
-        "summary": "Configura bien el modo de entrega para no romper logistica.",
-        "image": "/tutorials/08-entrega-paso2.jpg",
-        "image_alt": "Selector de modo de entrega y datos de mensajeria",
-        "objectives": [
-            "Elegir retiro en tienda vs delivery",
-            "Completar datos de delivery cuando aplica",
-            "No dejar el Paso 2 vacio",
-        ],
-        "steps": [
-            {
-                "title": "Define si es para llevar / taller / delivery",
-                "detail": "El flujo de entrega aparece segun el caso. Si ocultas el selector, igual debes tener un modo valido.",
-            },
-            {
-                "title": "Delivery: direccion y mensajero si el sistema lo pide",
-                "detail": "Datos incompletos = error al validar. Completa antes de enviar a caja.",
-            },
-            {
-                "title": "Instalacion en sucursal",
-                "detail": "El cliente deja el vehiculo: confirma que la OT saldra tras el cobro en caja.",
-            },
-        ],
-        "dos": ["Lee en voz alta la direccion de delivery al cliente"],
-        "donts": ["No marques delivery 'por si acaso' sin direccion"],
-        "scenarios": [
-            {
-                "name": "Paso 2 no se ve",
-                "procedure": "Vuelve a elegir el modo de flujo de vehiculo/entrega. Si el picker esta oculto, el modo guardado debe ser valido; reinicia el paso desde el encabezado del borrador.",
-            }
-        ],
-        "related_routes": ["/sales", "/deliveries"],
-    },
-    {
-        "id": "09-pago-y-envio-caja",
-        "order": 9,
-        "level": "intermedio",
-        "duration_min": 12,
-        "title": "Forma de pago y envio a caja",
-        "summary": "El vendedor no cobra: prepara el plan y manda la factura a caja.",
-        "image": "/tutorials/09-envio-caja.jpg",
-        "image_alt": "Dialogo de confirmacion enviar a caja y resumen de totales",
-        "objectives": [
-            "Elegir efectivo, tarjeta, transferencia, credito o mixto",
-            "Confirmar el dialogo de envio a caja",
-            "Entender que el cobro lo hace el cajero",
-        ],
-        "steps": [
-            {
-                "title": "Elige metodo de pago",
-                "detail": "Cash, card, transfer, credit o mixed. Credito exige limite y dias del cliente.",
-            },
-            {
-                "title": "Revisa neto a cobrar en C$",
-                "detail": "El servidor calcula IVA, descuentos y tipo de cambio. El plan de pago debe cuadrar (el sistema puede auto-ajustar centavos).",
-            },
-            {
-                "title": "Confirma 'Enviar a caja'",
-                "detail": "Aparece un dialogo de confirmacion (no es el voucher termico). Confirma solo si el cliente esta de acuerdo con el total.",
-            },
-            {
-                "title": "Entrega el numero de factura al cajero/cliente",
-                "detail": "El cajero cobra en su modulo. Tras el pago se disparan despacho y OT de taller automaticamente.",
-            },
-        ],
-        "dos": [
-            "Usa el dialogo de confirmacion como checklist final",
-            "Acompana al cliente a caja si es su primera visita",
-        ],
-        "donts": [
-            "No digas 'ya esta pagado' hasta que caja confirme",
-            "No intentes cobrar en efectivo por fuera del sistema",
-        ],
-        "scenarios": [
-            {
-                "name": "Error TOTAL_MISMATCH o PAYMENT_PLAN_MISMATCH",
-                "procedure": "No pelees con el total a mano. Recarga totales / reenvia: el servidor manda. Si persiste, pide a supervision revisar el borrador.",
-            },
-            {
-                "name": "Pago mixto",
-                "procedure": "Define las lineas del plan (ej. parte efectivo + transferencia) que sumen el neto. Caja cobrara segun el plan.",
-            },
-            {
-                "name": "Factura ya pagada: editar?",
-                "procedure": "No se puede solicitar edicion de factura pagada. Anulacion o ajuste solo con gerencia y justificacion.",
-            },
-        ],
-        "related_routes": ["/sales", "/cashier"],
-    },
-    {
-        "id": "10-cotizaciones",
-        "order": 10,
-        "level": "intermedio",
-        "duration_min": 8,
-        "title": "Cotizaciones: crear, PDF y convertir",
-        "summary": "Cuando el cliente aun no decide comprar.",
-        "image": "/tutorials/10-cotizaciones.jpg",
-        "image_alt": "Pantalla de cotizacion con vigencia y boton convertir a venta",
-        "objectives": [
-            "Crear cotizacion con vigencia",
-            "Compartir/imprimir PDF",
-            "Convertir a venta solo si esta aprobada y vigente",
-        ],
-        "steps": [
-            {
-                "title": "Nueva cotizacion",
-                "detail": "Cliente, vehiculo, productos, moneda y dias de validez.",
-            },
-            {
-                "title": "Revisa PDF con el cliente",
-                "detail": "Ajusta precios/descuentos antes de que se venza.",
-            },
-            {
-                "title": "Convierte a venta",
-                "detail": "Solo cotizaciones aprobadas y no vencidas. Luego el flujo sigue como venta normal a caja.",
-            },
-        ],
-        "dos": ["Anota la fecha de validez en la conversacion con el cliente"],
-        "donts": ["No conviertas cotizaciones vencidas 'a la fuerza'"],
-        "scenarios": [
-            {
-                "name": "Cotizacion vencida",
-                "procedure": "Crea una nueva o pide a supervision renovar politica; no uses la vieja.",
-            }
-        ],
-        "related_routes": ["/quotations", "/sales"],
-    },
-    {
-        "id": "11-creditos-devoluciones",
-        "order": 11,
-        "level": "avanzado",
-        "duration_min": 8,
-        "title": "Creditos y devoluciones (lo que si te toca)",
-        "summary": "Consulta y solicita; no forces anulaciones de facturas pagadas.",
-        "image": "/tutorials/11-creditos-devoluciones.jpg",
-        "image_alt": "Listado de creditos y formulario de devolucion",
-        "objectives": [
-            "Ver estado de credito del cliente",
-            "Iniciar devolucion segun politica",
-            "Escalar anulaciones a supervision",
-        ],
-        "steps": [
-            {
-                "title": "Modulo Creditos",
-                "detail": "Consulta saldos y ventas a credito del cliente. No aumentes limites: eso es gerencia.",
-            },
-            {
-                "title": "Devoluciones",
-                "detail": "Sigue el formulario con factura y motivo. Productos instalados tienen reglas distintas.",
-            },
-            {
-                "title": "Anulacion de factura",
-                "detail": "Solicitud con razon de al menos 10 caracteres. Facturas pagadas no se anulan por el flujo simple de vendedor.",
-            },
-        ],
-        "dos": ["Documenta evidencia (foto, nota) en devoluciones"],
-        "donts": ["No prometas reembolso en efectivo sin caja/gerencia"],
-        "scenarios": [
-            {
-                "name": "Cliente quiere anular ya cobrado",
-                "procedure": "Explica el proceso formal. Abre solicitud o llama a gerencia. No borres registros.",
-            }
-        ],
-        "related_routes": ["/credits", "/returns", "/sales"],
-    },
-    {
-        "id": "12-despues-del-cobro",
-        "order": 12,
-        "level": "avanzado",
-        "duration_min": 6,
-        "title": "Que pasa despues del cobro (para explicar al cliente)",
-        "summary": "No operas taller, pero debes orientar al cliente con el flujo real.",
-        "image": "/tutorials/12-post-cobro.jpg",
-        "image_alt": "Diagrama venta pagada -> despacho -> OT -> QC -> entrega",
-        "objectives": [
-            "Explicar despacho de bodega",
-            "Explicar OT de instalaciones / electrico / polarizados",
-            "Explicar control de calidad antes de entrega",
-        ],
-        "steps": [
-            {
-                "title": "Caja cobra y se dispara el fulfillment",
-                "detail": "Se crea despacho de productos fisicos y ordenes de trabajo por departamento si hay instalacion.",
-            },
-            {
-                "title": "Bodega surte el material",
-                "detail": "El despachador entrega items. Sin esto el taller puede esperar material.",
-            },
-            {
-                "title": "Taller trabaja y pasa por QC",
-                "detail": "Instalador/electrico/polarizador marcan avance; coordinacion aprueba calidad; luego se entrega el vehiculo.",
-            },
-        ],
-        "dos": ["Da tiempos realistas: no inventes 'en 20 minutos' sin consultar taller"],
-        "donts": ["No digas que 'ya esta listo' solo porque se pago"],
-        "scenarios": [
-            {
-                "name": "Cliente pregunta por polarizado",
-                "procedure": "Hay OT de polarizados + detalle de ventanas. Coordinacion de polarizados asigna tecnico.",
-            }
-        ],
-        "related_routes": ["/sales"],
-    },
-    {
-        "id": "13-errores-comunes",
-        "order": 13,
-        "level": "avanzado",
-        "duration_min": 10,
-        "title": "Errores comunes y como resolverlos",
-        "summary": "Tabla de sintomas -> causa -> procedimiento correcto.",
-        "image": "/tutorials/13-errores-comunes.jpg",
-        "image_alt": "Lista de mensajes de error frecuentes del ERP",
-        "objectives": [
-            "Identificar mensajes del servidor",
-            "Aplicar el fix correcto sin saltarse politicas",
-        ],
-        "steps": [
-            {
-                "title": "Lee el mensaje completo del toast/dialogo",
-                "detail": "Suele traer la causa exacta (stock, credito, precio, plan de pago).",
-            },
-            {
-                "title": "Corrige en el borrador, no en un papel aparte",
-                "detail": "Todo debe quedar en el sistema para caja y taller.",
-            },
-            {
-                "title": "Si es politica (Precio 2, descuento, credito), escala",
-                "detail": "Supervision/gerencia. No busques atajos de PIN ajenos.",
-            },
-        ],
-        "dos": ["Captura o anota el codigo de error si vas a pedir soporte"],
-        "donts": ["No reinicies el PC como primer recurso"],
-        "scenarios": [
-            {
-                "name": "Insufficient inventory",
-                "procedure": "Baja cantidad o cambia bodega/producto. Pide stock a bodega.",
-            },
-            {
-                "name": "Precio 2 requiere aprobacion",
-                "procedure": "Envia solicitud con motivo y espera aprobacion antes de caja.",
-            },
-            {
-                "name": "Exceeds credit limit",
-                "procedure": "Cambia a contado o pide a gerencia ampliar limite del cliente.",
-            },
-            {
-                "name": "403 en un modulo",
-                "procedure": "Tu rol no tiene permiso. Es correcto; no es un bug de red.",
-            },
-            {
-                "name": "Toasts duplicados al recargar",
-                "procedure": "Ignora duplicados de estado ya visto; si es persistente reporta a programador con hora exacta.",
-            },
-        ],
-        "related_routes": ["/sales", "/help/tutorials"],
-    },
-    {
-        "id": "14-atajos-checklist",
-        "order": 14,
-        "level": "basico",
-        "duration_min": 5,
-        "title": "Atajos y checklist de cierre de venta",
-        "summary": "Memoriza atajos y el checklist final antes de caja.",
-        "image": "/tutorials/14-atajos-checklist.jpg",
-        "image_alt": "Checklist visual de cierre de venta",
-        "objectives": [
-            "Usar atajos de teclado",
-            "Pasar el checklist de 8 puntos antes de enviar a caja",
-        ],
-        "steps": [
-            {
-                "title": "Atajos principales",
-                "detail": "Alt+C cliente · Alt+P producto · Ctrl+S guardar · Enter seleccionar · Esc cerrar busqueda · Tab siguiente campo.",
-            },
-            {
-                "title": "Checklist final",
-                "detail": "1) Cliente correcto 2) Vehiculo/placa 3) Productos y qty 4) Instalacion marcada 5) Precio/tier OK 6) Descuentos autorizados 7) Metodo de pago 8) Total en C$ acordado.",
-            },
-            {
-                "title": "Envia a caja y acompana",
-                "detail": "Confirma el dialogo y da el numero de factura.",
-            },
-        ],
-        "dos": ["Imprime mentalmente el checklist en cada venta grande"],
-        "donts": ["No saltes el dialogo de confirmacion sin leer el total"],
-        "scenarios": [],
-        "related_routes": ["/sales"],
-        "shortcuts": [
-            {"keys": "Alt + C", "action": "Buscar cliente"},
-            {"keys": "Alt + P", "action": "Buscar producto"},
-            {"keys": "Ctrl + S", "action": "Guardar borrador"},
-            {"keys": "Up / Down", "action": "Mover seleccion en listas"},
-            {"keys": "Enter", "action": "Seleccionar / agregar"},
-            {"keys": "Esc", "action": "Cerrar busqueda"},
-            {"keys": "Tab", "action": "Siguiente campo"},
-            {"keys": "Shift + Tab", "action": "Campo anterior"},
-        ],
-    },
+# Roles that have a dedicated training track
+TRACK_ROLES: List[str] = [
+    "ventas",
+    "cajero",
+    "supervisor",
+    "bodegas",
+    "coordinador_instalaciones",
+    "coordinador_polarizados",
+    "instalaciones",
+    "electrico",
+    "polarizador",
+    "jefe_tienda",
+    "jefe_vendedores",
+    "gerencia",
 ]
 
+TRACK_LABELS: Dict[str, str] = {
+    "ventas": "Vendedor",
+    "cajero": "Cajero",
+    "supervisor": "Supervisor",
+    "bodegas": "Despacho / Bodega",
+    "coordinador_instalaciones": "Coord. Instalaciones",
+    "coordinador_polarizados": "Coord. Polarizados",
+    "instalaciones": "Instalador",
+    "electrico": "Tecnico electrico",
+    "polarizador": "Polarizador",
+    "jefe_tienda": "Jefe de tienda",
+    "jefe_vendedores": "Jefe de vendedores",
+    "gerencia": "Gerencia",
+}
 
-def _all_modules() -> List[Dict[str, Any]]:
-    return deepcopy(SELLER_MODULES)
 
-
-def get_tutorials_catalog(
+def _mod(
+    mid: str,
+    order: int,
+    level: str,
+    mins: int,
+    title: str,
+    summary: str,
+    image: str,
+    steps: List[Dict[str, str]],
     *,
-    audience: Optional[str] = None,
-    level: Optional[str] = None,
+    dos: Optional[List[str]] = None,
+    donts: Optional[List[str]] = None,
+    scenarios: Optional[List[Dict[str, str]]] = None,
+    objectives: Optional[List[str]] = None,
+    related_routes: Optional[List[str]] = None,
+    shortcuts: Optional[List[Dict[str, str]]] = None,
+    image_alt: str = "",
 ) -> Dict[str, Any]:
-    modules = _all_modules()
-    if level:
-        level_key = str(level).strip().lower()
-        modules = [m for m in modules if str(m.get("level") or "") == level_key]
+    return {
+        "id": mid,
+        "order": order,
+        "level": level,
+        "duration_min": mins,
+        "title": title,
+        "summary": summary,
+        "image": image,
+        "image_alt": image_alt or title,
+        "objectives": objectives or [s["title"] for s in steps[:3]],
+        "steps": steps,
+        "dos": dos or [],
+        "donts": donts or [],
+        "scenarios": scenarios or [],
+        "related_routes": related_routes or [],
+        "shortcuts": shortcuts or [],
+    }
 
-    _ = audience
+
+def _shared_login() -> Dict[str, Any]:
+    return _mod(
+        "login-pin",
+        1,
+        "basico",
+        4,
+        "Iniciar sesion con PIN",
+        "Entrar al ERP de forma segura y manejar bloqueos.",
+        "/api/tutorials/assets/real/login.png",
+        [
+            {"title": "Abre la URL de tu sucursal", "detail": "HTTP :3000 en PC o HTTPS :3443 para camara movil."},
+            {"title": "Ingresa tu PIN de login (8 digitos)", "detail": "No es el PIN de marcacion de 4 digitos."},
+            {"title": "Confirma Entrar", "detail": "Se crea sesion con cookie. Si fallas, veras intentos restantes y posible bloqueo."},
+        ],
+        dos=["Cierra sesion al terminar el turno", "Bloquea la terminal si te alejas"],
+        donts=["No compartas tu PIN", "No uses el PIN de otra persona"],
+        scenarios=[
+            {
+                "name": "PIN bloqueado",
+                "procedure": "Espera el contador o pide desbloqueo a gerencia/RRHH. No sigas intentando.",
+            }
+        ],
+        related_routes=["/login"],
+        image_alt="Captura real: pantalla de login PIN",
+    )
+
+
+def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
+    ventas = [
+        _shared_login(),
+        _mod(
+            "ventas-menu",
+            2,
+            "basico",
+            5,
+            "Menu del vendedor",
+            "Donde trabajar a diario y que modulos no te corresponden.",
+            "/api/tutorials/assets/real/ventas-home.png",
+            [
+                {"title": "Entra a Ventas / Centro Unificado", "detail": "Ahi estan borradores y carrito."},
+                {"title": "Clientes y vehiculos", "detail": "Alta y busqueda antes de facturar con instalacion."},
+                {"title": "Cotizaciones, creditos, devoluciones", "detail": "Usa solo lo permitido a tu rol."},
+            ],
+            donts=["No entres a Caja ni Despacho", "No listes usuarios PIN de personal"],
+            related_routes=["/sales", "/customers", "/vehicles", "/quotations"],
+        ),
+        _mod(
+            "ventas-cliente-vehiculo",
+            3,
+            "basico",
+            8,
+            "Cliente y vehiculo",
+            "Datos correctos evitan fallos en taller y entrega.",
+            "/api/tutorials/assets/real/ventas-clientes.png",
+            [
+                {"title": "Busca o crea el cliente (Alt+C)", "detail": "Nombre, telefono 0000-0000, tipo natural/empresa."},
+                {"title": "Asocia o registra el vehiculo", "detail": "Marca, modelo, anio, color y placa real."},
+                {"title": "Credito solo si hay limite", "detail": "Sin limite aprobado no uses pago a credito."},
+            ],
+            related_routes=["/customers", "/vehicles", "/sales"],
+        ),
+        _mod(
+            "ventas-borrador",
+            4,
+            "basico",
+            10,
+            "Borrador y carrito",
+            "El borrador guarda; no cobra. Usa Ctrl+S y varias pestanas.",
+            "/api/tutorials/assets/real/ventas-sales.png",
+            [
+                {"title": "Nueva venta / borrador", "detail": "Un borrador por cliente activo."},
+                {"title": "Agrega productos (Alt+P)", "detail": "Enter agrega linea; marca instalacion si aplica."},
+                {"title": "Guarda con Ctrl+S", "detail": "Hay autoguardado; confirma antes de pausar."},
+            ],
+            shortcuts=[
+                {"keys": "Alt + C", "action": "Cliente"},
+                {"keys": "Alt + P", "action": "Producto"},
+                {"keys": "Ctrl + S", "action": "Guardar borrador"},
+            ],
+            related_routes=["/sales"],
+        ),
+        _mod(
+            "ventas-precios",
+            5,
+            "intermedio",
+            12,
+            "Precios y Precio 2",
+            "Precio 1 base; Precio 2 requiere aprobacion de supervision.",
+            "/api/tutorials/assets/real/ventas-sales.png",
+            [
+                {"title": "Trabaja en Precio 1", "detail": "Tarifa estandar de piso."},
+                {"title": "Si usas Precio 2", "detail": "Solicita aprobacion con motivo y espera estado aprobado."},
+                {"title": "No envies a caja en pendiente", "detail": "El servidor bloquea facturacion sin aprobacion."},
+            ],
+            donts=["No pongas precio <= 0", "No inventes descuentos fuera de tope"],
+            scenarios=[
+                {
+                    "name": "Cliente pide descuento fuerte",
+                    "procedure": "Pide a supervision watch del borrador, ajuste y release.",
+                }
+            ],
+            related_routes=["/sales", "/approvals"],
+        ),
+        _mod(
+            "ventas-caja",
+            6,
+            "intermedio",
+            12,
+            "Envio a caja",
+            "El vendedor no cobra: confirma total y envia factura a caja.",
+            "/api/tutorials/assets/real/ventas-sales.png",
+            [
+                {"title": "Elige metodo de pago", "detail": "Efectivo, tarjeta, transferencia, credito o mixto."},
+                {"title": "Revisa neto en C$", "detail": "IVA y tipo de cambio los calcula el servidor."},
+                {"title": "Confirma 'Enviar a caja'", "detail": "Dialogo de confirmacion (no es el voucher termico)."},
+                {"title": "Da el numero de factura", "detail": "El cajero cobra; luego se crean despacho y OT."},
+            ],
+            scenarios=[
+                {
+                    "name": "TOTAL_MISMATCH / plan de pago",
+                    "procedure": "Reenvia con totales del servidor; no pelees a mano.",
+                },
+                {
+                    "name": "Factura pagada: editar?",
+                    "procedure": "No se edita por vendedor. Anulacion solo con gerencia.",
+                },
+            ],
+            related_routes=["/sales"],
+        ),
+        _mod(
+            "ventas-post-cobro",
+            7,
+            "avanzado",
+            6,
+            "Despues del cobro",
+            "Explica al cliente: despacho -> OT -> QC -> entrega.",
+            "/api/tutorials/assets/real/ventas-sales.png",
+            [
+                {"title": "Caja cobra y corre fulfillment", "detail": "Despacho de fisicos + OT por departamento."},
+                {"title": "Taller y polarizados", "detail": "Cada depto avanza y pasa QC antes de entregar."},
+            ],
+            donts=["No digas 'ya esta listo' solo porque pago"],
+            related_routes=["/sales"],
+        ),
+    ]
+
+    cajero = [
+        _shared_login(),
+        _mod(
+            "caja-menu",
+            2,
+            "basico",
+            5,
+            "Modulo de caja",
+            "Sesion de caja, facturas abiertas y cobro.",
+            "/api/tutorials/assets/real/cajero-cashier.png",
+            [
+                {"title": "Abre sesion de caja", "detail": "Sin sesion activa no cobras. Verifica tipo de cambio."},
+                {"title": "Lista facturas abiertas", "detail": "Pestaña abiertas / credito segun el caso."},
+                {"title": "Cobra con el metodo acordado", "detail": "Efectivo, tarjeta, transferencia o mixto. Usa sesion_id correcto."},
+            ],
+            donts=["No cobres dos veces la misma factura", "No anules facturas sin autorizacion"],
+            related_routes=["/cashier"],
+        ),
+        _mod(
+            "caja-cobro",
+            3,
+            "intermedio",
+            10,
+            "Cobro e idempotencia",
+            "Evita dobles cobros y cierra el ciclo hacia despacho/OT.",
+            "/api/tutorials/assets/real/cajero-cashier.png",
+            [
+                {"title": "Selecciona la factura", "detail": "Por numero o busqueda de cliente."},
+                {"title": "Confirma monto y metodo", "detail": "El neto debe coincidir con el plan de pago."},
+                {"title": "Tras cobrar", "detail": "Se dispara fulfillment: despacho y OT de instalacion/polarizado."},
+            ],
+            scenarios=[
+                {
+                    "name": "Factura ya pagada",
+                    "procedure": "El sistema responde 409. No reintentes cobro.",
+                }
+            ],
+            related_routes=["/cashier"],
+        ),
+        _mod(
+            "caja-cola",
+            4,
+            "avanzado",
+            5,
+            "Cola y limpieza",
+            "Solo supervision/gerencia limpia colas masivas.",
+            "/api/tutorials/assets/real/cajero-cashier.png",
+            [
+                {"title": "Facturas huerfanas", "detail": "Reporta a gerencia; no borres datos por tu cuenta."},
+            ],
+            related_routes=["/cashier"],
+        ),
+    ]
+
+    supervisor = [
+        _shared_login(),
+        _mod(
+            "sup-borradores",
+            2,
+            "basico",
+            8,
+            "Revisar borradores (watch/release)",
+            "Entra al borrador del vendedor, ajusta y libera.",
+            "/api/tutorials/assets/real/supervisor-home.png",
+            [
+                {"title": "Watch del borrador", "detail": "Solo supervision puede revisar borradores ajenos."},
+                {"title": "Aplica descuentos autorizados", "detail": "Linea o global; documenta el motivo."},
+                {"title": "Release al vendedor", "detail": "El vendedor no puede liberarse a si mismo."},
+            ],
+            related_routes=["/sales"],
+        ),
+        _mod(
+            "sup-aprobaciones",
+            3,
+            "intermedio",
+            8,
+            "Aprobaciones Precio 2 y solicitudes",
+            "Aprueba o rechaza con criterio de impacto.",
+            "/api/tutorials/assets/real/supervisor-approvals.png",
+            [
+                {"title": "Revisa solicitudes pendientes", "detail": "Precio 2, edicion, descuentos POS."},
+                {"title": "Valida motivo e impacto", "detail": "No apruebes sin justificacion."},
+            ],
+            related_routes=["/approvals"],
+        ),
+        _mod(
+            "sup-salud",
+            4,
+            "intermedio",
+            5,
+            "Salud del flujo",
+            "Monitorea colas de caja, despacho, OT y QC.",
+            "/api/tutorials/assets/real/supervisor-flow-health.png",
+            [
+                {"title": "Abre Salud del Flujo", "detail": "Cuellos de botella y alertas."},
+                {"title": "Escala backlog", "detail": "OT sin asignar, QC pendiente, caja abierta."},
+            ],
+            related_routes=["/ops/flow-health"],
+        ),
+    ]
+
+    bodegas = [
+        _shared_login(),
+        _mod(
+            "bodega-despacho",
+            2,
+            "basico",
+            8,
+            "Cola de despacho",
+            "Inicia y entrega items de facturas cobradas.",
+            "/api/tutorials/assets/real/bodegas-dispatch.png",
+            [
+                {"title": "Abre Despacho o KDS Bodega", "detail": "Solo ves tu bodega asignada."},
+                {"title": "Start del despacho", "detail": "Luego entrega item por item."},
+                {"title": "Confirma surtido", "detail": "Estado completed cuando todo salio."},
+            ],
+            scenarios=[
+                {
+                    "name": "403 otra bodega",
+                    "procedure": "Tu usuario no tiene warehouse_id de esa orden. Pide a gerencia reasignar bodega.",
+                }
+            ],
+            related_routes=["/dispatch", "/kds/bodega"],
+        ),
+        _mod(
+            "bodega-kds",
+            3,
+            "intermedio",
+            5,
+            "KDS de bodega",
+            "Pantalla de cocina para priorizar pedidos.",
+            "/api/tutorials/assets/real/bodegas-kds.png",
+            [
+                {"title": "Prioriza por antigüedad/prioridad", "detail": "No dejes despachos pending sin atender."},
+            ],
+            related_routes=["/kds/bodega"],
+        ),
+    ]
+
+    coord_inst = [
+        _shared_login(),
+        _mod(
+            "coord-inst-cola",
+            2,
+            "basico",
+            8,
+            "Cola de asignacion",
+            "Asigna OT de instalaciones y electrico a tecnicos disponibles.",
+            "/api/tutorials/assets/real/coord-inst.png",
+            [
+                {"title": "Abre Coord. Instalaciones", "detail": "Veras OT pending_assignment."},
+                {"title": "Revisa semaforo de tecnicos", "detail": "Asistencia (clock-in) y carga de trabajos."},
+                {"title": "Asigna tecnico", "detail": "No asignes a ausentes o sobrecargados."},
+            ],
+            related_routes=["/coordinator/instalaciones"],
+        ),
+        _mod(
+            "coord-inst-qc",
+            3,
+            "intermedio",
+            8,
+            "Control de calidad",
+            "Inspecciona OT en quality_check y aprueba o devuelve.",
+            "/api/tutorials/assets/real/coord-inst-qc.png",
+            [
+                {"title": "OT en quality_check", "detail": "El tecnico envio el trabajo a QC."},
+                {"title": "Registra QC aprobado/rechazado", "detail": "Sin QC no hay completed/delivered."},
+            ],
+            related_routes=["/quality-control", "/work-orders"],
+        ),
+    ]
+
+    coord_pol = [
+        _shared_login(),
+        _mod(
+            "coord-pol-ot",
+            2,
+            "basico",
+            8,
+            "OT de polarizados",
+            "Polarizado genera OT + detalle de ventanas (tint).",
+            "/api/tutorials/assets/real/coord-pol.png",
+            [
+                {"title": "Cola polarizados", "detail": "Asigna polarizador a la OT department=polarizados."},
+                {"title": "Tint detail", "detail": "Ventanas y materiales en la orden de polarizado."},
+            ],
+            related_routes=["/coordinator/polarizados", "/tint-orders"],
+        ),
+        _mod(
+            "coord-pol-qc",
+            3,
+            "intermedio",
+            6,
+            "QC polarizados",
+            "Aprueba calidad y cierra la OT/tint.",
+            "/api/tutorials/assets/real/coord-pol.png",
+            [
+                {"title": "Inspeccion visual", "detail": "Burbujas, bordes, visibilidad."},
+                {"title": "Completa QC", "detail": "OT a delivered / tint completed."},
+            ],
+            related_routes=["/coordinator/polarizados", "/quality-control"],
+        ),
+    ]
+
+    tech_inst = [
+        _shared_login(),
+        _mod(
+            "tech-marcacion",
+            2,
+            "basico",
+            4,
+            "Marcacion y disponibilidad",
+            "Sin clock-in no te asignan trabajos.",
+            "/api/tutorials/assets/real/tech-home.png",
+            [
+                {"title": "Marca entrada (asistencia)", "detail": "Kiosko o flujo RRHH segun sucursal."},
+                {"title": "Revisa trabajos asignados", "detail": "Kiosko tecnico u OT pendientes."},
+            ],
+            related_routes=["/technician", "/work-orders", "/attendance-clock"],
+        ),
+        _mod(
+            "tech-flujo-ot",
+            3,
+            "intermedio",
+            10,
+            "Flujo de la OT",
+            "pending -> in_progress -> quality_check. No marques completed tu mismo.",
+            "/api/tutorials/assets/real/tech-wo.png",
+            [
+                {"title": "Inicia trabajo (in_progress)", "detail": "Solo cuando tengas material y vehiculo."},
+                {"title": "Envia a quality_check", "detail": "Coordinacion hace QC; tu no apruebas solo."},
+            ],
+            donts=["No marques completed/delivered como tecnico de piso"],
+            related_routes=["/technician", "/work-orders"],
+        ),
+    ]
+
+    tech_elec = [
+        _shared_login(),
+        _mod(
+            "elec-ot",
+            2,
+            "basico",
+            8,
+            "OT electricas",
+            "Trabajos de audio/seguridad/electronica.",
+            "/api/tutorials/assets/real/electrico-home.png",
+            [
+                {"title": "Solo OT department=electrico", "detail": "Asignadas por coord. instalaciones."},
+                {"title": "Mismo flujo de estados", "detail": "in_progress -> quality_check."},
+            ],
+            related_routes=["/work-orders", "/technician"],
+        ),
+    ]
+
+    tech_pol = [
+        _shared_login(),
+        _mod(
+            "pol-ot-tint",
+            2,
+            "basico",
+            10,
+            "OT y ventanas de polarizado",
+            "Trabaja la OT y completa ventanas del tint.",
+            "/api/tutorials/assets/real/polarizador-home.png",
+            [
+                {"title": "Acepta OT polarizados", "detail": "Asignada por coord. polarizados."},
+                {"title": "Start y ventanas", "detail": "Marca cada ventana completada."},
+                {"title": "Envia a QC", "detail": "No entregues sin aprobacion."},
+            ],
+            related_routes=["/tint-orders", "/kds/polarizados", "/work-orders"],
+        ),
+    ]
+
+    jefe = [
+        _shared_login(),
+        _mod(
+            "jefe-supervision",
+            2,
+            "basico",
+            8,
+            "Supervision de piso",
+            "Apoya vendedores, stock y colas operativas.",
+            "/api/tutorials/assets/real/jefe-home.png",
+            [
+                {"title": "Apoya ventas y aprobaciones", "detail": "Segun permisos de jefe_tienda / jefe_vendedores."},
+                {"title": "Revisa inventario y despacho", "detail": "Jefe de tienda ve mas operacion de bodega."},
+            ],
+            related_routes=["/sales", "/inventory", "/dispatch"],
+        ),
+    ]
+
+    gerencia = [
+        _shared_login(),
+        _mod(
+            "ger-dashboard",
+            2,
+            "basico",
+            6,
+            "Dashboard y salud del flujo",
+            "Vision global de colas y KPIs.",
+            "/api/tutorials/assets/real/gerencia-dashboard.png",
+            [
+                {"title": "Dashboard", "detail": "KPI del dia y alertas."},
+                {"title": "Salud del Flujo", "detail": "Caja, despacho, OT, QC, polarizados."},
+            ],
+            related_routes=["/dashboard", "/ops/flow-health"],
+        ),
+        _mod(
+            "ger-tutoriales",
+            3,
+            "intermedio",
+            8,
+            "Editar tutoriales multi-rol",
+            "Gerencia y programador editan todos los tracks.",
+            "/api/tutorials/assets/real/gerencia-tutorials-edit.png",
+            [
+                {"title": "Abre Tutoriales", "detail": "Selector de rol para revisar cada track."},
+                {"title": "Modo edicion", "detail": "Agrega modulos, pasos, imagenes y guarda."},
+                {"title": "Sube capturas reales", "detail": "Adjunta PNG/JPG del ERP actualizado."},
+            ],
+            related_routes=["/help/tutorials"],
+        ),
+        _mod(
+            "ger-usuarios-politicas",
+            4,
+            "avanzado",
+            8,
+            "Usuarios, permisos y politicas",
+            "PIN, roles, descuentos y precios.",
+            "/api/tutorials/assets/real/gerencia-users.png",
+            [
+                {"title": "Usuarios PIN", "detail": "Alta, rol, sucursal, bodega."},
+                {"title": "Politicas comerciales", "detail": "Descuentos y precio 2 se reflejan en tutoriales: mantenlos alineados."},
+            ],
+            related_routes=["/users", "/settings"],
+        ),
+    ]
 
     return {
+        "ventas": {"role": "ventas", "label": TRACK_LABELS["ventas"], "modules": ventas},
+        "cajero": {"role": "cajero", "label": TRACK_LABELS["cajero"], "modules": cajero},
+        "supervisor": {"role": "supervisor", "label": TRACK_LABELS["supervisor"], "modules": supervisor},
+        "bodegas": {"role": "bodegas", "label": TRACK_LABELS["bodegas"], "modules": bodegas},
+        "coordinador_instalaciones": {
+            "role": "coordinador_instalaciones",
+            "label": TRACK_LABELS["coordinador_instalaciones"],
+            "modules": coord_inst,
+        },
+        "coordinador_polarizados": {
+            "role": "coordinador_polarizados",
+            "label": TRACK_LABELS["coordinador_polarizados"],
+            "modules": coord_pol,
+        },
+        "instalaciones": {
+            "role": "instalaciones",
+            "label": TRACK_LABELS["instalaciones"],
+            "modules": tech_inst,
+        },
+        "electrico": {"role": "electrico", "label": TRACK_LABELS["electrico"], "modules": tech_elec},
+        "polarizador": {
+            "role": "polarizador",
+            "label": TRACK_LABELS["polarizador"],
+            "modules": tech_pol,
+        },
+        "jefe_tienda": {"role": "jefe_tienda", "label": TRACK_LABELS["jefe_tienda"], "modules": jefe},
+        "jefe_vendedores": {
+            "role": "jefe_vendedores",
+            "label": TRACK_LABELS["jefe_vendedores"],
+            "modules": jefe,
+        },
+        "gerencia": {"role": "gerencia", "label": TRACK_LABELS["gerencia"], "modules": gerencia},
+    }
+
+
+def default_curriculum() -> Dict[str, Any]:
+    tracks = _build_default_tracks()
+    return {
         "version": TUTORIALS_VERSION,
-        "title": "Academia del Vendedor - ERP Mundo de Accesorios",
-        "subtitle": (
-            "Aprende el sistema desde cero: del login al envio a caja "
-            "y que pasa despues del cobro."
-        ),
-        "audience_default": "ventas",
-        "locale": "es-NI",
-        "total_modules": len(modules),
-        "estimated_minutes": sum(int(m.get("duration_min") or 0) for m in modules),
-        "levels": ["basico", "intermedio", "avanzado"],
-        "modules": [
-            {
-                "id": m["id"],
-                "order": m["order"],
-                "level": m["level"],
-                "duration_min": m["duration_min"],
-                "title": m["title"],
-                "summary": m["summary"],
-                "image": m.get("image"),
-                "image_alt": m.get("image_alt"),
-            }
-            for m in sorted(modules, key=lambda x: int(x.get("order") or 0))
-        ],
+        "tracks": tracks,
+        "track_roles": list(TRACK_ROLES),
+        "track_labels": dict(TRACK_LABELS),
         "golden_rules": [
-            "Tu PIN es personal: no se comparte.",
-            "El vendedor no cobra: envia a caja con total autorizado.",
+            "PIN personal: no se comparte.",
+            "Vendedor no cobra: envia a caja.",
             "Precio 2 y descuentos fuera de tope = supervision.",
-            "Sin stock / sin credito / sin datos de delivery = no improvises.",
-            "Factura pagada no se edita por vendedor.",
-            "Despues del cobro: despacho + OT + QC; no digas 'listo' solo por pagar.",
+            "OT: tecnico envia a QC; no se auto-aprueba completed.",
+            "Factura pagada no se edita por piso.",
         ],
         "opinion": {
-            "headline": "Opinion de arquitectura sobre este endpoint",
+            "headline": "Opinion de arquitectura (tutoriales multi-rol)",
             "points": [
-                "El valor esta en el contenido versionado y consumible por la UI, no en PDFs sueltos.",
-                "Conviene que /tutorials sea la fuente de verdad (como dialog-messages): gerencia/programador podra editar modulos sin redeploy del front.",
-                "Las capturas deben vivir en /tutorials/* con nombres estables; el front solo renderiza lo que manda la API.",
-                "Proximo paso natural: progreso por usuario (modulo completado), quiz corto y forzar onboarding en el primer login del vendedor.",
-                "No mezclar tutoriales de caja/taller en el track de ventas: tracks por rol evitan confusion y permisos cruzados.",
-                "Metrica util: % de vendedores que completaron modulos basicos antes de la primera venta del mes.",
-            ],
-            "risks": [
-                "Contenido desactualizado si cambia un flujo y nadie versiona TUTORIALS_VERSION.",
-                "Imagenes pesadas: preferir WebP/JPG optimizado < 300KB por modulo.",
-                "Si solo es estatico en el front, cada cambio exige rebuild de imagen Docker.",
+                "Un track por rol evita que el vendedor aprenda botones con 403.",
+                "Gerencia/programador deben ver y editar todos los tracks (auditoria de procedimientos).",
+                "Capturas reales del ERP > mockups: se desactualizan menos si hay pipeline Playwright.",
+                "Persistir overrides en Mongo permite corregir sin redeploy del frontend.",
+                "Imagenes subidas deben servirse por API (/tutorials/assets) con nombres estables.",
             ],
             "recommendation": (
-                "Mantener API + assets versionados; anadir mas adelante overrides en Mongo "
-                "(como dialog_messages) solo para textos, no para logica de negocio. "
-                "Ideal: pipeline de capturas reales con Playwright autenticado por rol."
+                "Mantener defaults en codigo + overrides Mongo; regenerar capturas reales "
+                "con el script capture_tutorial_screenshots al cambiar UI critica."
             ),
         },
     }
 
 
-def get_tutorial_module(module_id: str) -> Optional[Dict[str, Any]]:
-    key = str(module_id or "").strip()
-    for module in _all_modules():
-        if module.get("id") == key:
-            return module
+def can_edit_tutorials(role: Optional[str]) -> bool:
+    return str(role or "").strip().lower() in TUTORIAL_EDITOR_ROLES
+
+
+def can_view_all_tracks(role: Optional[str]) -> bool:
+    return can_edit_tutorials(role)
+
+
+def normalize_module(raw: Any, *, fallback_order: int = 1) -> Optional[Dict[str, Any]]:
+    if not isinstance(raw, dict):
+        return None
+    mid = str(raw.get("id") or "").strip()
+    title = str(raw.get("title") or "").strip()
+    if not mid or not title:
+        return None
+    steps_in = raw.get("steps") if isinstance(raw.get("steps"), list) else []
+    steps: List[Dict[str, str]] = []
+    for s in steps_in:
+        if not isinstance(s, dict):
+            continue
+        st = str(s.get("title") or "").strip()
+        if not st:
+            continue
+        steps.append({"title": st, "detail": str(s.get("detail") or "").strip()})
+    scenarios_in = raw.get("scenarios") if isinstance(raw.get("scenarios"), list) else []
+    scenarios: List[Dict[str, str]] = []
+    for sc in scenarios_in:
+        if not isinstance(sc, dict):
+            continue
+        name = str(sc.get("name") or "").strip()
+        if not name:
+            continue
+        scenarios.append(
+            {"name": name, "procedure": str(sc.get("procedure") or "").strip()}
+        )
+    try:
+        order = int(raw.get("order") or fallback_order)
+    except (TypeError, ValueError):
+        order = fallback_order
+    try:
+        duration = int(raw.get("duration_min") or 5)
+    except (TypeError, ValueError):
+        duration = 5
+    level = str(raw.get("level") or "basico").strip().lower()
+    if level not in {"basico", "intermedio", "avanzado"}:
+        level = "basico"
+
+    def _str_list(key: str) -> List[str]:
+        val = raw.get(key)
+        if not isinstance(val, list):
+            return []
+        return [str(x).strip() for x in val if str(x).strip()]
+
+    shortcuts = []
+    for sh in raw.get("shortcuts") or []:
+        if isinstance(sh, dict) and sh.get("keys"):
+            shortcuts.append(
+                {"keys": str(sh.get("keys")), "action": str(sh.get("action") or "")}
+            )
+
+    return {
+        "id": mid,
+        "order": order,
+        "level": level,
+        "duration_min": max(1, duration),
+        "title": title,
+        "summary": str(raw.get("summary") or "").strip(),
+        "image": str(raw.get("image") or "").strip(),
+        "image_alt": str(raw.get("image_alt") or title).strip(),
+        "objectives": _str_list("objectives"),
+        "steps": steps,
+        "dos": _str_list("dos"),
+        "donts": _str_list("donts"),
+        "scenarios": scenarios,
+        "related_routes": _str_list("related_routes"),
+        "shortcuts": shortcuts,
+    }
+
+
+def merge_curriculum(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    base = default_curriculum()
+    if not overrides or not isinstance(overrides, dict):
+        return base
+    # version note
+    if overrides.get("version"):
+        base["version"] = f"{base['version']}+custom"
+    if isinstance(overrides.get("golden_rules"), list):
+        base["golden_rules"] = [str(x) for x in overrides["golden_rules"] if str(x).strip()]
+    ov_tracks = overrides.get("tracks")
+    if not isinstance(ov_tracks, dict):
+        return base
+    for role, track in ov_tracks.items():
+        role_key = str(role or "").strip().lower()
+        if not role_key:
+            continue
+        if not isinstance(track, dict):
+            continue
+        modules_raw = track.get("modules")
+        if not isinstance(modules_raw, list):
+            continue
+        modules: List[Dict[str, Any]] = []
+        for idx, raw in enumerate(modules_raw, start=1):
+            norm = normalize_module(raw, fallback_order=idx)
+            if norm:
+                modules.append(norm)
+        modules.sort(key=lambda m: int(m.get("order") or 0))
+        base["tracks"][role_key] = {
+            "role": role_key,
+            "label": track.get("label") or TRACK_LABELS.get(role_key, role_key),
+            "modules": modules,
+        }
+        if role_key not in base["track_roles"]:
+            base["track_roles"].append(role_key)
+            base["track_labels"][role_key] = base["tracks"][role_key]["label"]
+    return base
+
+
+def catalog_for_role(
+    curriculum: Dict[str, Any],
+    *,
+    viewer_role: str,
+    track_role: Optional[str] = None,
+    full: bool = False,
+) -> Dict[str, Any]:
+    viewer = str(viewer_role or "").strip().lower()
+    can_all = can_view_all_tracks(viewer)
+    available = list(curriculum.get("track_roles") or TRACK_ROLES)
+    labels = curriculum.get("track_labels") or TRACK_LABELS
+
+    if can_all:
+        selected = str(track_role or viewer or "ventas").strip().lower()
+        visible_roles = available
+    else:
+        selected = viewer if viewer in (curriculum.get("tracks") or {}) else "ventas"
+        if selected not in (curriculum.get("tracks") or {}):
+            # fallback: first available
+            selected = available[0] if available else "ventas"
+        visible_roles = [selected]
+
+    tracks = curriculum.get("tracks") or {}
+    track = tracks.get(selected) or {"role": selected, "label": labels.get(selected, selected), "modules": []}
+    modules = track.get("modules") or []
+    modules_sorted = sorted(modules, key=lambda m: int(m.get("order") or 0))
+
+    payload: Dict[str, Any] = {
+        "version": curriculum.get("version"),
+        "title": f"Academia {track.get('label') or selected} - ERP Mundo de Accesorios",
+        "subtitle": "Procedimientos correctos con capturas reales del sistema.",
+        "audience_default": selected,
+        "viewer_role": viewer,
+        "can_edit": can_edit_tutorials(viewer),
+        "can_view_all_tracks": can_all,
+        "selected_track": selected,
+        "available_tracks": [
+            {"role": r, "label": labels.get(r, r)} for r in visible_roles
+        ],
+        "locale": "es-NI",
+        "total_modules": len(modules_sorted),
+        "estimated_minutes": sum(int(m.get("duration_min") or 0) for m in modules_sorted),
+        "levels": ["basico", "intermedio", "avanzado"],
+        "modules": [
+            {
+                "id": m.get("id"),
+                "order": m.get("order"),
+                "level": m.get("level"),
+                "duration_min": m.get("duration_min"),
+                "title": m.get("title"),
+                "summary": m.get("summary"),
+                "image": m.get("image"),
+                "image_alt": m.get("image_alt"),
+            }
+            for m in modules_sorted
+        ],
+        "golden_rules": curriculum.get("golden_rules") or [],
+        "opinion": curriculum.get("opinion") or {},
+    }
+    if full:
+        payload["modules_full"] = modules_sorted
+    return payload
+
+
+def get_module_from_curriculum(
+    curriculum: Dict[str, Any], track_role: str, module_id: str
+) -> Optional[Dict[str, Any]]:
+    track = (curriculum.get("tracks") or {}).get(str(track_role).strip().lower()) or {}
+    for m in track.get("modules") or []:
+        if str(m.get("id")) == str(module_id):
+            return m
     return None
 
 
-def get_full_curriculum() -> Dict[str, Any]:
-    catalog = get_tutorials_catalog()
-    catalog["modules_full"] = _all_modules()
-    return catalog
+def curriculum_to_override_doc(
+    curriculum: Dict[str, Any],
+    *,
+    actor_id: Optional[str] = None,
+    actor_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    return {
+        "type": "tutorials_curriculum",
+        "version": curriculum.get("version") or TUTORIALS_VERSION,
+        "tracks": curriculum.get("tracks") or {},
+        "golden_rules": curriculum.get("golden_rules") or [],
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": actor_id,
+        "updated_by_name": actor_name,
+    }
