@@ -319,12 +319,16 @@ def resolve_vehicle_thumbnail_slug(
     if fuzzy_slug:
         return fuzzy_slug
     if model_slug and (not direct or direct in WEAK_PRESET_SLUGS or model_slug != direct):
-        # Prefer model family (Hilux→pickup) over stale vehicle_type=sedan/hatchback
+        # Prefer model family (Hilux→pickup, Civic→sedan) over stale vehicle_type
         if not direct or direct in WEAK_PRESET_SLUGS:
             return model_slug
-        if model_slug.startswith("camioneta") and direct in WEAK_PRESET_SLUGS | {"convertible"}:
+        if model_slug.startswith("camioneta") and direct in WEAK_PRESET_SLUGS | {"convertible", "suv"}:
             return model_slug
-        if model_slug == "suv" and direct in WEAK_PRESET_SLUGS:
+        if model_slug == "suv" and direct in WEAK_PRESET_SLUGS | {"convertible"}:
+            return model_slug
+        if model_slug == "sedan" and direct in {"hatchback", "convertible", "suv", "station-wagon"}:
+            return model_slug
+        if model_slug == "hatchback" and direct in {"sedan", "convertible", "suv"}:
             return model_slug
     if model_slug and not direct:
         return model_slug
@@ -349,26 +353,39 @@ def resolve_vehicle_record_slug(vehicle: dict[str, Any] | None, *, allow_default
     if not brand and not model:
         return preset if preset and preset != DEFAULT_SLUG else None
 
+    vehicle_type = str(
+        vehicle.get("vehicle_type") or vehicle.get("type") or vehicle.get("body_type") or ""
+    )
+    descriptor = str(vehicle.get("descriptor") or "")
     inferred = resolve_vehicle_thumbnail_slug(
-        str(vehicle.get("vehicle_type") or vehicle.get("type") or vehicle.get("body_type") or ""),
+        vehicle_type,
         brand=brand,
         model=model,
-        descriptor=str(vehicle.get("descriptor") or ""),
+        descriptor=descriptor,
         body_class=str(vehicle.get("body_class") or vehicle.get("vpic_body_class") or ""),
         allow_default=False,
     )
+    model_slug = infer_slug_from_model_text(model=model, brand=brand, descriptor=descriptor)
 
-    # Strong model/catalog inference overrides stale hatchback/sedan presets on old records.
-    if inferred and inferred not in WEAK_PRESET_SLUGS:
+    # Model/catalog inference always beats a stored vehicle_type_slug when they conflict.
+    # NOTE: "sedan"/"hatchback" are weak as *presets*, but valid as *inferred* results
+    # (e.g. Civic → sedan must win over stale vehicle_type_slug=hatchback).
+    if inferred:
         if not preset or preset in WEAK_PRESET_SLUGS or preset == DEFAULT_SLUG:
             return inferred
-        if preset != inferred and preset in WEAK_PRESET_SLUGS:
-            return inferred
-        # Even if preset is non-weak, prefer model inference when preset is clearly wrong hatch for pickups
-        if inferred.startswith("camioneta") and preset in {"hatchback", "sedan", "convertible"}:
-            return inferred
-        if inferred == "suv" and preset in {"hatchback", "sedan"}:
-            return inferred
+        if preset != inferred:
+            if model_slug and model_slug == inferred:
+                return inferred
+            if inferred.startswith("camioneta") and preset in {"hatchback", "sedan", "convertible", "suv"}:
+                return inferred
+            if inferred == "suv" and preset in {"hatchback", "sedan", "convertible"}:
+                return inferred
+            if inferred == "sedan" and preset in {"hatchback", "convertible", "suv", "station-wagon"}:
+                return inferred
+            if inferred == "hatchback" and preset in {"sedan", "convertible", "suv"}:
+                # Only keep hatchback inference when model text implies hatch (not pure sedan tokens)
+                if model_slug == "hatchback":
+                    return inferred
 
     if preset and preset != DEFAULT_SLUG:
         return preset

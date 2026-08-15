@@ -246,24 +246,26 @@ export function resolveVehicleTypeSlug(vehicle) {
   );
 
   // Catalog / model family first (Hilux → camioneta, Civic → sedan, X-Trail → SUV)
-  const strongInferred = fromDescriptor || fromFuzzy || fromModel;
+  // Prefer explicit model-token (civic→sedan) over fuzzy catalog when both exist.
+  const strongInferred = fromModel || fromDescriptor || fromFuzzy;
 
   if (strongInferred && KNOWN_SLUGS.has(strongInferred)) {
+    // Weak presets (hatchback/sedan/default) never block a solid inference
     if (!presetSlug || WEAK_PRESET_SLUGS.has(presetSlug)) {
       return strongInferred;
     }
-    // Override clearly wrong body-class presets on pickups/SUVs/sedans
-    if (strongInferred.startsWith("camioneta") && ["hatchback", "sedan", "convertible"].includes(presetSlug)) {
-      return strongInferred;
-    }
-    if (strongInferred === "suv" && ["hatchback", "sedan"].includes(presetSlug)) {
-      return strongInferred;
-    }
-    if (strongInferred === "sedan" && ["hatchback", "convertible", "suv"].includes(presetSlug)) {
-      return strongInferred;
-    }
-    // Model-token inference always beats a conflicting weak/generic body type
+    // Model token always wins when it matches the inference (Civic → sedan beats slug=hatchback)
     if (fromModel && fromModel === strongInferred && presetSlug !== strongInferred) {
+      return strongInferred;
+    }
+    // Override clearly wrong body-class presets
+    if (strongInferred.startsWith("camioneta") && ["hatchback", "sedan", "convertible", "suv"].includes(presetSlug)) {
+      return strongInferred;
+    }
+    if (strongInferred === "suv" && ["hatchback", "sedan", "convertible"].includes(presetSlug)) {
+      return strongInferred;
+    }
+    if (strongInferred === "sedan" && ["hatchback", "convertible", "suv", "station-wagon"].includes(presetSlug)) {
       return strongInferred;
     }
   }
@@ -345,9 +347,9 @@ export function vehicleIdentityFromLabel(label, fallback = null) {
   if (fallback && hasVehicleIdentity(fallback)) return fallback;
   const text = String(label || "").trim();
   if (!text) return null;
-  // "TOYOTA HILUX 2023 • M 211 877 • AZUL"
-  const head = text.split("•")[0].trim();
-  const parts = head.split(/\s+/).filter(Boolean);
+  // "TOYOTA HILUX 2023 • M 211 877 • AZUL" or middle-dot "·"
+  const head = text.split(/[•·|]/)[0].trim();
+  const parts = head.split(/\s+/).filter((p) => p && !/^[•·|]+$/.test(p));
   if (parts.length < 2) return { brand: parts[0] || "", model: parts.slice(1).join(" ") };
   const yearIdx = parts.findIndex((p) => /^\d{4}$/.test(p));
   if (yearIdx > 0) {
