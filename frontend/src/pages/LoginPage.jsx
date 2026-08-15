@@ -17,7 +17,8 @@ import { getRoleHomePath } from "@/lib/roleHome";
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
 const PIN_LENGTH = 8;
-const LOCKOUT_TICK_MS = 50;
+/** Tick every 0.01s so centiseconds scroll fluidly on the 7-segment display. */
+const LOCKOUT_TICK_MS = 10;
 
 /** Format remaining ms as huge countdown with centiseconds: M:SS.cc or SS.cc */
 function formatLockoutCountdown(remainingMs) {
@@ -1053,10 +1054,14 @@ export function LoginPage() {
               Demasiados intentos de PIN fallidos. Espera a que termine el temporizador para reintentar.
             </p>
             <div
-              className="mt-6 sm:mt-8 font-mono font-black tabular-nums leading-none tracking-tight text-rose-50 drop-shadow-[0_0_24px_rgba(255,100,100,0.45)]"
-              style={{ fontSize: "clamp(3.5rem, 14vw, 7.5rem)" }}
+              className="mt-6 sm:mt-8 font-seven-seg font-seven-seg-glow leading-none text-rose-100"
+              style={{
+                fontSize: "clamp(3.25rem, 13vw, 6.75rem)",
+                // DSEG italic already slants; slight extra skew matches LED calculator look
+                transform: "skewX(-6deg)",
+              }}
               data-testid="pin-lockout-countdown"
-              aria-live="polite"
+              aria-live="off"
             >
               {lockoutCountdownLabel}
             </div>

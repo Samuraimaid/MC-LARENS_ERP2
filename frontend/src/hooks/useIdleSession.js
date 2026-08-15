@@ -19,6 +19,21 @@ export function formatCountdown(totalSeconds) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
+/** Fluid display with centiseconds (for 7-segment idle UI). */
+export function formatCountdownMs(remainingMs) {
+  const totalMs = Math.max(0, Number(remainingMs) || 0);
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const centiseconds = Math.floor((totalMs % 1000) / 10);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const ss = String(seconds).padStart(2, "0");
+  const cc = String(centiseconds).padStart(2, "0");
+  if (minutes > 0) {
+    return `${minutes}:${ss}.${cc}`;
+  }
+  return `${ss}.${cc}`;
+}
+
 /**
  * Client-side idle tracking aligned with server session_policy.idle_minutes.
  * On expire, caller should logout (free shared terminal) rather than lock with PIN.
@@ -116,12 +131,25 @@ export function useIdleSession({
     };
   }, [enabled, paused, markActivity]);
 
-  // 1s tick
+  // 0.01s tick while in warning window for fluid 7-seg; 1s otherwise to save CPU
   useEffect(() => {
     if (!enabled) return undefined;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [enabled]);
+    let id = null;
+    const schedule = () => {
+      if (id != null) window.clearInterval(id);
+      const elapsed = Date.now() - lastActivityRef.current;
+      const remaining = idleMs - elapsed;
+      const inWarn = remaining <= warnMs + 2000;
+      id = window.setInterval(() => setNow(Date.now()), inWarn ? 10 : 1000);
+    };
+    schedule();
+    // Re-evaluate interval cadence every second
+    const cadenceId = window.setInterval(schedule, 1000);
+    return () => {
+      if (id != null) window.clearInterval(id);
+      window.clearInterval(cadenceId);
+    };
+  }, [enabled, idleMs, warnMs]);
 
   const elapsed = now - lastActivityRef.current;
   const remainingMs = Math.max(0, idleMs - elapsed);
@@ -148,6 +176,7 @@ export function useIdleSession({
       markActivity,
       stayActive,
       formatRemaining: formatCountdown(remainingSeconds),
+      formatRemainingFluid: formatCountdownMs(remainingMs),
     }),
     [
       idleMs,

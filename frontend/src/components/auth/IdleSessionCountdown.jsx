@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AlertTriangle, LogOut, MousePointerClick, Timer } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useIdleSession, formatCountdown } from "@/hooks/useIdleSession";
+import { useIdleSession, formatCountdownMs } from "@/hooks/useIdleSession";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +98,12 @@ export function IdleSessionCountdown({ paused = false } = {}) {
             <div className="min-w-0">
               <p className="font-semibold leading-tight">
                 Inactividad: cierra en{" "}
-                <span className="font-mono text-lg tabular-nums">{idle.formatRemaining}</span>
+                <span
+                  className="font-seven-seg inline-block text-xl sm:text-2xl"
+                  style={{ transform: "skewX(-4deg)" }}
+                >
+                  {idle.formatRemainingFluid}
+                </span>
               </p>
               <p className="text-xs sm:text-sm opacity-90">
                 {isSharedTerminal
@@ -159,8 +164,11 @@ export function IdleSessionCountdown({ paused = false } = {}) {
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Quedan{" "}
-                  <span className="font-mono font-bold text-destructive text-xl">
-                    {formatCountdown(idle.remainingSeconds)}
+                  <span
+                    className="font-seven-seg font-seven-seg-glow inline-block text-destructive text-2xl sm:text-3xl"
+                    style={{ transform: "skewX(-6deg)" }}
+                  >
+                    {formatCountdownMs(idle.remainingMs)}
                   </span>
                   . Si no respondes, se cierra el login para que otro pueda usar el terminal.
                 </p>

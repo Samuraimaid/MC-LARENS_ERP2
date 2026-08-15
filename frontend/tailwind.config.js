@@ -10,6 +10,7 @@ module.exports = {
         heading: ['Barlow Condensed', 'sans-serif'],
         body: ['Public Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        'seven-seg': ['"DSEG7 Classic"', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         background: "hsl(var(--background))",

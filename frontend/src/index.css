@@ -1,8 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Nunito:wght@400;500;600&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@500;600&family=Rubik:wght@400;500&family=Fredoka:wght@500;600&family=Quicksand:wght@400;500;600&display=swap');
 
+/* DSEG7 Classic Italic — 7-segment LCD style (SIL OFL 1.1, keshikan/DSEG) */
+@font-face {
+  font-family: "DSEG7 Classic";
+  src:
+    url("/fonts/DSEG7Classic-Italic.woff2") format("woff2"),
+    url("/fonts/DSEG7Classic-Italic.woff") format("woff");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .font-seven-seg {
+    font-family: "DSEG7 Classic", "JetBrains Mono", ui-monospace, monospace;
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+  }
+
+  .font-seven-seg-glow {
+    text-shadow:
+      0 0 8px rgba(255, 80, 80, 0.55),
+      0 0 22px rgba(255, 40, 40, 0.35),
+      0 0 40px rgba(200, 0, 0, 0.25);
+  }
+}
 
 @layer base {
     :root {
