@@ -13,6 +13,7 @@ import { playLoginPinpadSound } from "@/lib/uiSounds";
 import { useDevice } from "../hooks/useDevice";
 import { formatCurrency } from "../lib/utils";
 import { getRoleHomePath } from "@/lib/roleHome";
+import { SevenSegCountdown } from "@/components/auth/SevenSegCountdown";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -638,8 +639,6 @@ export function LoginPage() {
     };
   }, [checkBackend]);
 
-  const lockoutCountdownLabel = formatLockoutCountdown(lockoutRemainingMs);
-
   return (
     <div 
       className="min-h-screen bg-background flex relative"
@@ -1053,18 +1052,17 @@ export function LoginPage() {
             <p className="mt-3 text-sm sm:text-base text-rose-100/90">
               Demasiados intentos de PIN fallidos. Espera a que termine el temporizador para reintentar.
             </p>
-            <div
-              className="mt-6 sm:mt-8 font-seven-seg font-seven-seg-glow leading-none text-rose-100"
+            <SevenSegCountdown
+              remainingMs={lockoutRemainingMs}
+              showGlow
+              className="mt-6 sm:mt-8 text-rose-100"
               style={{
                 fontSize: "clamp(3.25rem, 13vw, 6.75rem)",
                 // DSEG italic already slants; slight extra skew matches LED calculator look
                 transform: "skewX(-6deg)",
               }}
               data-testid="pin-lockout-countdown"
-              aria-live="off"
-            >
-              {lockoutCountdownLabel}
-            </div>
+            />
             <p className="mt-3 text-xs sm:text-sm uppercase tracking-[0.2em] text-rose-200/80">
               cuenta regresiva
             </p>
