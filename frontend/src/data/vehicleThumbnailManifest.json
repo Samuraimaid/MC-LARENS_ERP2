@@ -84,14 +84,14 @@
     },
     "camioneta-1-cabina": {
       "file": "camioneta-1-cabina.png",
-      "source": "sheet-silhouette-catalog-v2",
-      "sheet_label": "PICKUP",
+      "source": "sheet-pickup-cab-types",
+      "sheet_label": "regular_cab",
       "url": "/api/vehicle-thumbnails/camioneta-1-cabina.png"
     },
     "camioneta-cabina-y-media": {
       "file": "camioneta-cabina-y-media.png",
-      "source": "sheet-silhouette-catalog-v2",
-      "sheet_label": "PICKUP",
+      "source": "sheet-pickup-cab-types",
+      "sheet_label": "double_cab",
       "url": "/api/vehicle-thumbnails/camioneta-cabina-y-media.png"
     },
     "microbus-carga": {
@@ -232,6 +232,14 @@
         "camion-carga": "TRUCK",
         "cabezal": "BIG TRUCK",
         "default": "SEDAN"
+      }
+    },
+    "sheet-pickup-cab-types": {
+      "file": "sheet-pickup-cab-types.png",
+      "description": "Pickup body types: double/extended/regular cab + chassis",
+      "slug_map": {
+        "camioneta-cabina-y-media": "double_cab",
+        "camioneta-1-cabina": "regular_cab"
       }
     }
   }
