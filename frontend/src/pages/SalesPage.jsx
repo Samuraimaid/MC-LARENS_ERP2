@@ -988,7 +988,9 @@ export function SalesPage() {
       markDraftSaved();
     } catch (error) {
       if (error.response?.status === 423) {
-        toast.warning("Este borrador está en revisión por supervisión.");
+        toast.warning(
+          "Este borrador está en revisión por supervisión. El formulario se ocultó; al liberarlo usa «Mostrar formulario» o «Abrir borrador».",
+        );
         setShowNewSale(false);
       }
       markDraftSaveError();

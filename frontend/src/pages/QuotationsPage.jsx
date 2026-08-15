@@ -642,7 +642,9 @@ export function QuotationsPage() {
       markDraftSaved();
     } catch (error) {
       if (error.response?.status === 423) {
-        toast.warning("Este borrador está en revisión por supervisión.");
+        toast.warning(
+          "Este borrador está en revisión por supervisión. El formulario se ocultó; al liberarlo usa «Mostrar formulario» o «Abrir borrador».",
+        );
         setShowNewQuote(false);
       }
       throw error;
@@ -1379,6 +1381,30 @@ export function QuotationsPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="quotations-page">
+      {!showNewQuote ? (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">Formulario de cotización oculto</p>
+              <p className="text-xs text-muted-foreground">
+                Usa el botón para volver a cotizar, o abre un borrador del tablero.
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => {
+                playSelectionFeedbackSound();
+                toggleEmbeddedQuoteForm();
+              }}
+              data-testid="show-quote-form-banner-btn"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Mostrar formulario
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {showNewQuote ? (
         <Card ref={quoteFormAnchorRef} className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">

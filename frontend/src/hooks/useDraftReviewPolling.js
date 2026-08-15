@@ -136,10 +136,15 @@ export function useDraftReviewPolling({
           );
 
           if (transition === "blocked") {
-            toast.warning("Tu borrador fue bloqueado: supervisión está revisando cambios.", {
-              id: `draft-blocked-${draftId}`,
-              duration: 6000,
-            });
+            toast.warning(
+              "Tu borrador fue bloqueado: supervisión está revisando cambios. El formulario se ocultó hasta que lo liberen.",
+              {
+                id: `draft-blocked-${draftId}`,
+                duration: 7000,
+              },
+            );
+            // Hide form so seller doesn't keep editing a locked draft.
+            // Recovery: "Mostrar formulario" / "Abrir borrador" when released.
             if (activeDraftIdRef.current === draftId && showFormRef.current) {
               setShowForm(false);
             }
@@ -154,11 +159,19 @@ export function useDraftReviewPolling({
               rememberReleasedToast(eventKey);
               releaseBatch.push(draftId);
             }
+            // Auto re-open form for the active draft so sellers are not left
+            // on a board-only screen without a recovery control.
+            if (typeof setShowForm === "function" && activeDraftIdRef.current === draftId) {
+              setShowForm(true);
+            }
           } else if (transition === "unblocked" && prevStatus === "blocked") {
-            toast.success("Tu borrador ya no está en revisión.", {
+            toast.success("Tu borrador ya no está en revisión. Puedes abrir el formulario de nuevo.", {
               id: `draft-unblocked-${draftId}`,
-              duration: 4000,
+              duration: 5000,
             });
+            if (typeof setShowForm === "function" && activeDraftIdRef.current === draftId) {
+              setShowForm(true);
+            }
           }
 
           const prevFingerprint = prev.fingerprint;
