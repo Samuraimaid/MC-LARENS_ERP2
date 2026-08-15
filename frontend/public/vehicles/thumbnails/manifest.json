@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "default_slug": "default",
   "canvas": {
     "width": 640,
@@ -54,86 +54,74 @@
   "assets": {
     "hatchback": {
       "file": "hatchback.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 1,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "HATCHBACK",
       "url": "/api/vehicle-thumbnails/hatchback.png"
     },
     "sedan": {
       "file": "sedan.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 2,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "SEDAN",
       "url": "/api/vehicle-thumbnails/sedan.png"
     },
     "convertible": {
       "file": "convertible.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 3,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "CABRIOLET",
       "url": "/api/vehicle-thumbnails/convertible.png"
     },
     "suv": {
       "file": "suv.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 4,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "SUV",
       "url": "/api/vehicle-thumbnails/suv.png"
     },
     "station-wagon": {
       "file": "station-wagon.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 5,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "STATION WAGON",
       "url": "/api/vehicle-thumbnails/station-wagon.png"
-    },
-    "microbus-pasajeros": {
-      "file": "microbus-pasajeros.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 6,
-      "url": "/api/vehicle-thumbnails/microbus-pasajeros.png"
     },
     "camioneta-1-cabina": {
       "file": "camioneta-1-cabina.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 7,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "PICKUP",
       "url": "/api/vehicle-thumbnails/camioneta-1-cabina.png"
     },
     "camioneta-cabina-y-media": {
       "file": "camioneta-cabina-y-media.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 8,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "PICKUP",
       "url": "/api/vehicle-thumbnails/camioneta-cabina-y-media.png"
     },
     "microbus-carga": {
       "file": "microbus-carga.png",
-      "source": "sheet-b-grid",
-      "row": 8,
-      "col": 3,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "VAN",
       "url": "/api/vehicle-thumbnails/microbus-carga.png"
+    },
+    "microbus-pasajeros": {
+      "file": "microbus-pasajeros.png",
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "MINIVAN",
+      "url": "/api/vehicle-thumbnails/microbus-pasajeros.png"
     },
     "camion-carga": {
       "file": "camion-carga.png",
-      "source": "sheet-b-grid",
-      "row": 8,
-      "col": 5,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "TRUCK",
       "url": "/api/vehicle-thumbnails/camion-carga.png"
     },
     "cabezal": {
       "file": "cabezal.png",
-      "source": "sheet-b-grid",
-      "row": 8,
-      "col": 8,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "BIG TRUCK",
       "url": "/api/vehicle-thumbnails/cabezal.png"
     },
     "default": {
       "file": "default.png",
-      "source": "sheet-b-grid",
-      "row": 2,
-      "col": 2,
+      "source": "sheet-silhouette-catalog-v2",
+      "sheet_label": "SEDAN",
       "url": "/api/vehicle-thumbnails/default.png"
     }
   },
@@ -175,66 +163,76 @@
     "camioneta": "camioneta-1-cabina",
     "hatchback large": "hatchback",
     "large car": "sedan",
-    "small sport utility vehicle": "suv"
+    "small sport utility vehicle": "suv",
+    "micro": "hatchback",
+    "coupe": "sedan",
+    "coupé": "sedan",
+    "roadster": "convertible",
+    "muscle car": "sedan",
+    "sport car": "convertible",
+    "super car": "convertible",
+    "limousine": "sedan",
+    "cuv": "suv",
+    "minivan": "microbus-pasajeros",
+    "van": "microbus-carga",
+    "campervan": "microbus-carga",
+    "bus": "microbus-pasajeros",
+    "mini truck": "camion-carga",
+    "monster truck": "camion-carga",
+    "big truck": "cabezal"
   },
   "sources": {
-    "sheet-b-grid": {
-      "file": "sheet-truck-set.jpg",
-      "description": "Pack multi-fila (Adobe 2042059554): hatchback, sedan, coupe, SUV, vans y camiones",
-      "cells": {
-        "hatchback": [
-          2,
-          1
+    "sheet-silhouette-catalog-v2": {
+      "file": "sheet-silhouette-catalog-v2.png",
+      "description": "Black silhouette vehicle type catalog (micro, sedan, hatch, pickup, SUV, vans, trucks)",
+      "labels": [
+        [
+          "MICRO",
+          "SEDAN",
+          "HATCHBACK",
+          "COUPE",
+          "STATION WAGON"
         ],
-        "sedan": [
-          2,
-          2
+        [
+          "ROADSTER",
+          "CABRIOLET",
+          "MUSCLE CAR",
+          "SPORT CAR",
+          "SUPER CAR"
         ],
-        "convertible": [
-          2,
-          3
+        [
+          "LIMOUSINE",
+          "CUV",
+          "PICKUP",
+          "SUV"
         ],
-        "suv": [
-          2,
-          4
+        [
+          "MINIVAN",
+          "VAN",
+          "CAMPERVAN",
+          "BUS"
         ],
-        "station-wagon": [
-          2,
-          5
-        ],
-        "microbus-pasajeros": [
-          2,
-          6
-        ],
-        "camioneta-1-cabina": [
-          2,
-          7
-        ],
-        "camioneta-cabina-y-media": [
-          2,
-          8
-        ],
-        "microbus-carga": [
-          8,
-          3
-        ],
-        "camion-carga": [
-          8,
-          5
-        ],
-        "cabezal": [
-          8,
-          8
-        ],
-        "default": [
-          2,
-          2
+        [
+          "MONSTER TRUCK",
+          "MINI TRUCK",
+          "TRUCK",
+          "BIG TRUCK"
         ]
+      ],
+      "slug_map": {
+        "sedan": "SEDAN",
+        "hatchback": "HATCHBACK",
+        "station-wagon": "STATION WAGON",
+        "convertible": "CABRIOLET",
+        "suv": "SUV",
+        "camioneta-1-cabina": "PICKUP",
+        "camioneta-cabina-y-media": "PICKUP",
+        "microbus-pasajeros": "MINIVAN",
+        "microbus-carga": "VAN",
+        "camion-carga": "TRUCK",
+        "cabezal": "BIG TRUCK",
+        "default": "SEDAN"
       }
-    },
-    "sheet-a": {
-      "file": "sheet-sedan-suv-set.jpg",
-      "description": "Respaldo legacy (4 siluetas)"
     }
   }
 }
