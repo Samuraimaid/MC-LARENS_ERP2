@@ -13,7 +13,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from backend.db.distributed import ping_central_database, resolve_central_mongo_uri
-from backend.domains.deployment.lan_identity import resolve_lan_ip
+from backend.domains.deployment.lan_identity import refresh_host_lan_ip, resolve_lan_ip, write_host_lan_ip_file
 from backend.domains.deployment.node_profile import build_node_profile
 from backend.services.hardware_monitor import get_active_alerts, get_last_scan_at, scan_hardware_health
 
@@ -135,6 +135,39 @@ def get_server_appliance_router(db, require_auth=None, require_roles=None):
             "access_url": f"http://{lan_ip}:{port}",
             "dashboard_url": f"http://{lan_ip}:{port}/server-dashboard",
             "qr_target_url": f"http://{lan_ip}:{port}",
+        }
+
+    @router.post("/server-appliance/refresh-lan-ip")
+    async def server_appliance_refresh_lan_ip(request: Request):
+        """Re-detect host LAN IP and persist host_lan_ip.txt (gerencia/programador).
+
+        Inside Docker, auto-detect often fails (no host NIC). Options:
+        - run `python backend/scripts/detect_host_lan_ip.py` on the Windows host
+        - POST {"lan_ip": "192.168.x.x"} to force the appliance IP
+        """
+        if require_roles is not None:
+            await require_roles(request, ADMIN_ROLES)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        forced = str((body or {}).get("lan_ip") or "").strip()
+        if forced:
+            path = write_host_lan_ip_file(forced)
+            if not path:
+                raise HTTPException(status_code=400, detail="IP LAN invalida o no privada")
+            source = "manual"
+        else:
+            _ip, source = refresh_host_lan_ip()
+        lan_ip, lan_ip_source = resolve_lan_ip(persist_detected=False)
+        port = int(os.environ.get("SERVER_FRONTEND_PORT") or 3000)
+        return {
+            "message": "IP LAN actualizada",
+            "lan_ip": lan_ip,
+            "lan_ip_source": lan_ip_source,
+            "refresh_source": source,
+            "access_url": f"http://{lan_ip}:{port}",
+            "dashboard_url": f"http://{lan_ip}:{port}/server-dashboard",
         }
 
     @router.get("/server-appliance/dashboard")
