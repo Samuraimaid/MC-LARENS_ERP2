@@ -2477,6 +2477,54 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         </Card>
       ) : (
       <>
+      {/* Sellers need a way to re-open the form when it was hidden (toggle used to be manager-only). */}
+      {canViewSales && canCreateSales && !showNewSale ? (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">Formulario de venta oculto</p>
+              <p className="text-xs text-muted-foreground">
+                Puedes abrirlo de nuevo o cargar un borrador desde el tablero inferior.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  playSelectionFeedbackSound();
+                  toggleEmbeddedSaleForm();
+                }}
+                data-testid="show-sale-form-banner-btn"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Mostrar formulario
+              </Button>
+              {visibleDraftTabs.length > 0 && activeDraftId ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    playSelectionFeedbackSound();
+                    const tab = draftTabs.find((entry) => entry.id === activeDraftId) || draftTabs[0];
+                    if (tab) openDraftTab(tab);
+                  }}
+                >
+                  Abrir borrador activo
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {canViewSales && !canCreateSales ? (
+        <Card>
+          <CardContent className="py-4 text-sm text-muted-foreground">
+            No tienes permiso para crear ventas. Pide a gerencia el permiso <strong>Ventas → Crear</strong>.
+          </CardContent>
+        </Card>
+      ) : null}
+
       {showNewSale && canCreateSales ? (
         <Card ref={saleFormAnchorRef} className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
@@ -2662,7 +2710,44 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         </Card>
       ) : null}
 
-      {/* Filters and Search */}
+      {/* Form show/hide — all roles that can create sales (incl. vendedores) */}
+      {canCreateSales ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant={showNewSale ? "outline" : "default"}
+            onClick={() => {
+              playSelectionFeedbackSound();
+              toggleEmbeddedSaleForm();
+            }}
+            className="ui-interactive"
+            title={showNewSale ? "Ocultar formulario" : "Mostrar formulario"}
+            aria-label={showNewSale ? "Ocultar formulario de venta" : "Mostrar formulario de venta"}
+            data-testid="toggle-sale-form-btn"
+          >
+            {showNewSale ? (
+              <>
+                <XCircle className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Ocultar formulario</span>
+                <span className="sm:hidden">Ocultar</span>
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Mostrar formulario</span>
+                <span className="sm:hidden">Formulario</span>
+              </>
+            )}
+          </Button>
+          {!showNewSale ? (
+            <span className="text-xs text-muted-foreground">
+              Formulario oculto — usa el botón para volver a vender.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Filters and Search (management / jefes) */}
       {canSeeAdvancedFilters && <div className="flex gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -2673,29 +2758,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             className="pl-9"
           />
         </div>
-        <Button
-          type="button"
-          variant={showNewSale ? "outline" : "default"}
-          onClick={() => {
-            playSelectionFeedbackSound();
-            toggleEmbeddedSaleForm();
-          }}
-          className="ui-interactive"
-          title={showNewSale ? "Ocultar formulario" : "Mostrar formulario"}
-          aria-label={showNewSale ? "Ocultar formulario de venta" : "Mostrar formulario de venta"}
-        >
-          {showNewSale ? (
-            <>
-              <XCircle className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Ocultar formulario</span>
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Mostrar formulario</span>
-            </>
-          )}
-        </Button>
         <Select value={filterPayment} onValueChange={setFilterPayment}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Tipo pago" />
