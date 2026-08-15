@@ -19927,6 +19927,50 @@ async def reset_dialog_messages(payload: Dict[str, Any], request: Request):
     }
 
 
+# ============ TUTORIALS (seller academy) ============
+
+
+@api_router.get("/tutorials")
+async def list_tutorials(
+    request: Request,
+    audience: Optional[str] = None,
+    level: Optional[str] = None,
+    full: bool = False,
+):
+    """Seller-first tutorial catalog. full=1 returns steps/scenarios for every module."""
+    await require_auth(request)
+    from backend.domains.ui.tutorials import get_full_curriculum, get_tutorials_catalog
+
+    if full:
+        return get_full_curriculum()
+    return get_tutorials_catalog(audience=audience, level=level)
+
+
+@api_router.get("/tutorials/modules/{module_id}")
+async def get_tutorial_module_detail(module_id: str, request: Request):
+    await require_auth(request)
+    from backend.domains.ui.tutorials import get_tutorial_module
+
+    module = get_tutorial_module(module_id)
+    if not module:
+        raise HTTPException(status_code=404, detail="Módulo de tutorial no encontrado")
+    return module
+
+
+@api_router.get("/tutorials/opinion")
+async def get_tutorials_architecture_opinion(request: Request):
+    """Architecture notes about the tutorials endpoint (also embedded in catalog)."""
+    await require_auth(request)
+    from backend.domains.ui.tutorials import get_tutorials_catalog
+
+    catalog = get_tutorials_catalog()
+    return {
+        "version": catalog.get("version"),
+        "opinion": catalog.get("opinion"),
+        "golden_rules": catalog.get("golden_rules"),
+    }
+
+
 from backend.domains.inventory.label_printer import (
     fetch_label_bridge_setup,
     fetch_label_printer_status,
