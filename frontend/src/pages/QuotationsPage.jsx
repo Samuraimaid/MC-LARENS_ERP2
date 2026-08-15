@@ -311,13 +311,36 @@ export function QuotationsPage() {
   const getDraftPreview = (draft) => {
     if (!draft) return { image: null, items: [], vehicle: null, previewVehicle: null };
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
-    const vehicle = getVehicleById(draft.selectedVehicle);
-    const previewNames = items.slice(0, 3).map((item) => item.product_name || "Producto");
+    const rawSelected = draft.selectedVehicle;
+    let vehicle =
+      rawSelected && typeof rawSelected === "object"
+        ? rawSelected
+        : getVehicleById(rawSelected);
+    if (!vehicle && draft.vehicle && typeof draft.vehicle === "object") {
+      vehicle = draft.vehicle;
+    }
+    // Identity-only for watermark (brand/model → correct silhouette, e.g. Civic → sedan)
+    const previewVehicle = vehicle
+      ? {
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          descriptor: vehicle.descriptor,
+          vehicle_cab_variant: vehicle.vehicle_cab_variant,
+        }
+      : null;
+    const previewNames = items.slice(0, 2).map((item) => item.product_name || "Producto");
+    if (items.length > 2) previewNames.push(`+${items.length - 2}`);
+    const vehicleLabel =
+      getVehicleLabel(typeof rawSelected === "object" ? rawSelected?.vehicle_id || rawSelected?.id : rawSelected) ||
+      (previewVehicle
+        ? [previewVehicle.brand, previewVehicle.model, previewVehicle.year].filter(Boolean).join(" ")
+        : null);
     return {
       image: null,
-      previewVehicle: vehicle || null,
+      previewVehicle,
       items: previewNames,
-      vehicle: getVehicleLabel(draft.selectedVehicle),
+      vehicle: vehicleLabel,
     };
   };
 
@@ -329,9 +352,15 @@ export function QuotationsPage() {
     const currencyDraft = draft?.currency || "NIO";
     const itemsCount = Array.isArray(draft?.cartItems) ? draft.cartItems.length : 0;
     const updatedAt = draft?.updatedAt || tab.updatedAt;
+    const title = customerName || "Sin cliente";
+    const rawSubtitle = String(tab.name || "").trim();
+    const subtitleLooksRedundant =
+      !rawSubtitle ||
+      rawSubtitle === title ||
+      rawSubtitle.replace(/^(venta|cotizaci[oó]n)\s*[-–—:]\s*/i, "").trim() === title;
     return {
-      title: customerName || "Sin cliente",
-      subtitle: tab.name,
+      title,
+      subtitle: subtitleLooksRedundant ? null : rawSubtitle,
       total: totals.total,
       currency: currencyDraft,
       itemsCount,

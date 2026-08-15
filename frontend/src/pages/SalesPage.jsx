@@ -901,23 +901,40 @@ export function SalesPage() {
   const getDraftPreview = (draft) => {
     if (!draft) return { image: null, items: [], vehicle: null, previewVehicle: null };
     const items = Array.isArray(draft.cartItems) ? draft.cartItems : [];
-    const vehicle = getVehicleById(draft.selectedVehicle);
-    // Prefer live brand/model for watermark; ignore stale hatchback/sedan slug on old records
+    const rawSelected = draft.selectedVehicle;
+    // selectedVehicle may be id string or embedded vehicle object from older drafts
+    let vehicle =
+      rawSelected && typeof rawSelected === "object"
+        ? rawSelected
+        : getVehicleById(rawSelected);
+    if (!vehicle && draft.vehicle && typeof draft.vehicle === "object") {
+      vehicle = draft.vehicle;
+    }
+    // Identity-only payload: brand/model drive silhouette (avoid stale hatchback presets)
     const previewVehicle = vehicle
       ? {
-          ...vehicle,
-          // Force re-resolution from brand/model (see resolveVehicleTypeSlug weak presets)
-          vehicle_type_slug: vehicle.vehicle_type_slug,
-          thumbnail_slug: vehicle.thumbnail_slug,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          descriptor: vehicle.descriptor,
+          vehicle_cab_variant: vehicle.vehicle_cab_variant,
         }
       : null;
     const image = getVehicleThumbnail(previewVehicle);
-    const previewNames = items.slice(0, 3).map((item) => item.product_name || "Producto");
+    const previewNames = items.slice(0, 2).map((item) => item.product_name || "Producto");
+    if (items.length > 2) {
+      previewNames.push(`+${items.length - 2}`);
+    }
+    const vehicleLabel =
+      getVehicleLabel(typeof rawSelected === "object" ? rawSelected?.vehicle_id || rawSelected?.id : rawSelected) ||
+      (previewVehicle
+        ? [previewVehicle.brand, previewVehicle.model, previewVehicle.year].filter(Boolean).join(" ")
+        : null);
     return {
       image,
       previewVehicle,
       items: previewNames,
-      vehicle: getVehicleLabel(draft.selectedVehicle),
+      vehicle: vehicleLabel,
     };
   };
 
@@ -929,9 +946,16 @@ export function SalesPage() {
     const currencyDraft = draft?.currency || "NIO";
     const itemsCount = Array.isArray(draft?.cartItems) ? draft.cartItems.length : 0;
     const updatedAt = draft?.updatedAt || tab.updatedAt;
+    // Avoid redundant "Venta - CustomerName" when title is already the customer
+    const rawSubtitle = String(tab.name || "").trim();
+    const title = customerName || "Sin cliente";
+    const subtitleLooksRedundant =
+      !rawSubtitle ||
+      rawSubtitle === title ||
+      rawSubtitle.replace(/^(venta|cotizaci[oó]n)\s*[-–—:]\s*/i, "").trim() === title;
     return {
-      title: customerName || "Sin cliente",
-      subtitle: tab.name,
+      title,
+      subtitle: subtitleLooksRedundant ? null : rawSubtitle,
       total: totals.total,
       currency: currencyDraft,
       itemsCount,

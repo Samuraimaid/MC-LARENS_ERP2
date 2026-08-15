@@ -92,6 +92,16 @@ const MODEL_TOKEN_DEFAULTS = {
   civic: "sedan",
   accord: "sedan",
   sentra: "sedan",
+  altima: "sedan",
+  maxima: "sedan",
+  jetta: "sedan",
+  passat: "sedan",
+  lancer: "sedan",
+  mazda3: "sedan",
+  "mazda 3": "sedan",
+  elantra: "sedan",
+  sonata: "sedan",
+  rio: "sedan",
   yaris: "hatchback",
   swift: "hatchback",
   spark: "hatchback",
@@ -235,18 +245,25 @@ export function resolveVehicleTypeSlug(vehicle) {
     vehicle?.descriptor,
   );
 
-  // Catalog / model family first (Hilux → camioneta, X-Trail → SUV)
+  // Catalog / model family first (Hilux → camioneta, Civic → sedan, X-Trail → SUV)
   const strongInferred = fromDescriptor || fromFuzzy || fromModel;
 
   if (strongInferred && KNOWN_SLUGS.has(strongInferred)) {
     if (!presetSlug || WEAK_PRESET_SLUGS.has(presetSlug)) {
       return strongInferred;
     }
-    // Override clearly wrong body-class presets on pickups/SUVs
+    // Override clearly wrong body-class presets on pickups/SUVs/sedans
     if (strongInferred.startsWith("camioneta") && ["hatchback", "sedan", "convertible"].includes(presetSlug)) {
       return strongInferred;
     }
     if (strongInferred === "suv" && ["hatchback", "sedan"].includes(presetSlug)) {
+      return strongInferred;
+    }
+    if (strongInferred === "sedan" && ["hatchback", "convertible", "suv"].includes(presetSlug)) {
+      return strongInferred;
+    }
+    // Model-token inference always beats a conflicting weak/generic body type
+    if (fromModel && fromModel === strongInferred && presetSlug !== strongInferred) {
       return strongInferred;
     }
   }
