@@ -235,10 +235,14 @@ class PinLoginGuard:
         }
 
     async def supervisor_unlock_terminal(self, request: Request, unlock_pin: str) -> Dict[str, Any]:
-        """Clear terminal/IP lockout after verifying a gerencia/programador login PIN."""
+        """Clear terminal/IP lockout after verifying a gerencia (or programador/supervisor) login PIN.
+
+        Used when a floor terminal is locked for a long progressive timeout and
+        management needs the station usable again without waiting the full countdown.
+        """
         pin = str(unlock_pin or "").strip()
         if not (pin.isdigit() and len(pin) == 8):
-            raise HTTPException(status_code=400, detail="PIN de desbloqueo inválido")
+            raise HTTPException(status_code=400, detail="PIN de desbloqueo inválido (8 dígitos)")
 
         # Lazy import to avoid circular imports with server helpers.
         from backend.server import compute_pin_index, get_login_pin_hash, verify_pin_hash
@@ -254,13 +258,50 @@ class PinLoginGuard:
             {"_id": 0, "user_id": 1, "role": 1, "name": 1, "login_pin_hash": 1},
         )
         if not user_doc or not verify_pin_hash(pin, get_login_pin_hash(user_doc)):
-            raise HTTPException(status_code=403, detail="PIN de supervisor inválido")
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "message": "PIN de gerencia/supervisor inválido",
+                    "code": "SUPERVISOR_UNLOCK_DENIED",
+                },
+            )
 
+        ip = client_ip(request)
         await self.clear_anonymous_lockout(request)
+        # Also clear short-window IP attempt counters so unlock is immediately usable
+        try:
+            await self._ip_attempts_collection().delete_many({"ip": ip})
+        except Exception:
+            pass
+
+        try:
+            await self.audit_service.log_pin_auth_attempt(
+                user_doc.get("user_id"),
+                ip,
+                True,
+            )
+        except Exception:
+            pass
+        try:
+            await self.db.pin_auth_logs.insert_one(
+                {
+                    "action": "terminal.supervisor_unlock",
+                    "user_id": user_doc.get("user_id"),
+                    "role": user_doc.get("role"),
+                    "name": user_doc.get("name"),
+                    "ip": ip,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+        except Exception:
+            pass
+
         return {
-            "message": "Terminal desbloqueada",
+            "message": "Terminal desbloqueada por gerencia/supervisor",
             "unlocked_by": user_doc.get("user_id"),
+            "unlocked_by_name": user_doc.get("name"),
             "role": user_doc.get("role"),
+            "ip": ip,
         }
 
     async def record_ip_failure(

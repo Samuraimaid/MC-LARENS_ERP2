@@ -56,6 +56,10 @@ export function LoginPage() {
   const [lockoutSeconds, setLockoutSeconds] = useState(null);
   const [lockoutRemainingMs, setLockoutRemainingMs] = useState(0);
   const [showLoginInfo, setShowLoginInfo] = useState(false);
+  const [showGerenciaUnlock, setShowGerenciaUnlock] = useState(false);
+  const [unlockPin, setUnlockPin] = useState("");
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState(null);
   const isPinLocked = Boolean(lockoutUntil && lockoutRemainingMs > 0);
   const buildVersion = APP_ENV.buildVersion;
   const buildTimeRaw = APP_ENV.buildTime;
@@ -294,6 +298,16 @@ export function LoginPage() {
     return () => clearInterval(timer);
   }, [lockoutUntil]);
 
+  const clearLocalLockout = useCallback(() => {
+    setLockoutUntil(null);
+    setLockoutSeconds(null);
+    setLockoutRemainingMs(0);
+    setRemainingAttempts(null);
+    setShowGerenciaUnlock(false);
+    setUnlockPin("");
+    setUnlockError(null);
+  }, []);
+
   const applyLockoutFromDetail = useCallback((detail) => {
     if (!detail || typeof detail !== "object") return;
     if (detail.remaining_attempts !== undefined) {
@@ -317,6 +331,27 @@ export function LoginPage() {
       setLockoutSeconds(seconds);
     }
   }, []);
+
+  // Restore terminal lockout after refresh (server-side IP lock)
+  useEffect(() => {
+    let cancelled = false;
+    const loadTerminalStatus = async () => {
+      try {
+        const res = await axios.get(`${API}/auth/pin/terminal-status`, { timeout: 5000 });
+        if (cancelled) return;
+        const data = res.data || {};
+        if (data.locked && data.lockout_until) {
+          applyLockoutFromDetail(data);
+        }
+      } catch {
+        // ignore — login page still works offline from client state
+      }
+    };
+    loadTerminalStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [applyLockoutFromDetail]);
 
   const formatTime = (date) => {
     const days = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
@@ -386,6 +421,39 @@ export function LoginPage() {
   const playTone = useCallback((kind) => {
     playLoginPinpadSound(kind);
   }, []);
+
+  const handleGerenciaUnlock = useCallback(async (pinOverride = null) => {
+    const pinToUse = String(pinOverride ?? unlockPin).replace(/\D/g, "").slice(0, 8);
+    if (pinToUse.length !== PIN_LENGTH) {
+      setUnlockError("Ingresa el PIN de gerencia (8 dígitos)");
+      playTone("warning");
+      return;
+    }
+    setUnlockLoading(true);
+    setUnlockError(null);
+    try {
+      const res = await axios.post(
+        `${API}/auth/pin/terminal-unlock`,
+        { unlock_pin: pinToUse },
+        { timeout: 10000 },
+      );
+      clearLocalLockout();
+      setPin("");
+      playTone("success");
+      const who = res.data?.unlocked_by_name || res.data?.role || "gerencia";
+      toast.success(`Terminal desbloqueada (${who}). Ya pueden iniciar sesión.`);
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      const msg =
+        (typeof detail === "object" ? detail?.message : detail) ||
+        "PIN de gerencia inválido";
+      setUnlockError(typeof msg === "string" ? msg : "No se pudo desbloquear");
+      playTone("error");
+      setUnlockPin("");
+    } finally {
+      setUnlockLoading(false);
+    }
+  }, [clearLocalLockout, playTone, unlockPin]);
 
   const handlePinLogin = useCallback(async (pinOverride = null) => {
     const pinToUse = pinOverride ?? pin;
@@ -1071,6 +1139,127 @@ export function LoginPage() {
                 Desbloqueo estimado: {lockoutUntil.toLocaleTimeString()}
               </p>
             ) : null}
+
+            {/* Gerencia can unlock early so the shared terminal is usable again */}
+            <div className="mt-6 border-t border-rose-300/20 pt-5 text-left">
+              {!showGerenciaUnlock ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-rose-200/40 bg-rose-900/40 text-rose-50 hover:bg-rose-800/60 hover:text-white"
+                  onClick={() => {
+                    setShowGerenciaUnlock(true);
+                    setUnlockPin("");
+                    setUnlockError(null);
+                  }}
+                  data-testid="gerencia-unlock-open"
+                >
+                  <ShieldAlert className="h-4 w-4 mr-2" />
+                  Desbloquear con PIN de gerencia
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-rose-100/90 text-center">
+                    Ingresa el PIN de <strong>gerencia</strong>, programador o supervisor para liberar la terminal de inmediato.
+                  </p>
+                  <div className="flex justify-center gap-1.5">
+                    {[...Array(PIN_LENGTH)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-10 w-8 sm:h-11 sm:w-9 rounded-md border-2 flex items-center justify-center text-lg font-bold ${
+                          unlockPin.length > i
+                            ? "border-rose-200 bg-rose-800/80 text-rose-50"
+                            : "border-rose-400/40 bg-rose-950/50 text-rose-300/40"
+                        }`}
+                      >
+                        {unlockPin.length > i ? "•" : ""}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
+                    {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+                      <Button
+                        key={d}
+                        type="button"
+                        variant="outline"
+                        className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800"
+                        disabled={unlockLoading || unlockPin.length >= PIN_LENGTH}
+                        onClick={() => {
+                          setUnlockError(null);
+                          setUnlockPin((prev) => {
+                            const next = (prev + d).slice(0, PIN_LENGTH);
+                            if (next.length === PIN_LENGTH) {
+                              // Defer so state is set before submit with override
+                              window.setTimeout(() => handleGerenciaUnlock(next), 0);
+                            }
+                            return next;
+                          });
+                        }}
+                      >
+                        {d}
+                      </Button>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800 text-xs"
+                      disabled={unlockLoading || unlockPin.length === 0}
+                      onClick={() => {
+                        setUnlockError(null);
+                        setUnlockPin((prev) => prev.slice(0, -1));
+                      }}
+                    >
+                      Borrar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 border-rose-300/30 bg-rose-900/50 text-rose-50 hover:bg-rose-800"
+                      disabled={unlockLoading || unlockPin.length >= PIN_LENGTH}
+                      onClick={() => {
+                        setUnlockError(null);
+                        setUnlockPin((prev) => {
+                          const next = (prev + "0").slice(0, PIN_LENGTH);
+                          if (next.length === PIN_LENGTH) {
+                            window.setTimeout(() => handleGerenciaUnlock(next), 0);
+                          }
+                          return next;
+                        });
+                      }}
+                    >
+                      0
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-12 bg-emerald-600 hover:bg-emerald-500 text-white"
+                      disabled={unlockLoading || unlockPin.length !== PIN_LENGTH}
+                      onClick={() => handleGerenciaUnlock()}
+                      data-testid="gerencia-unlock-submit"
+                    >
+                      {unlockLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
+                    </Button>
+                  </div>
+                  {unlockError ? (
+                    <p className="text-center text-sm text-amber-200" data-testid="gerencia-unlock-error">
+                      {unlockError}
+                    </p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-rose-200/80 hover:text-rose-50 hover:bg-rose-900/40"
+                    disabled={unlockLoading}
+                    onClick={() => {
+                      setShowGerenciaUnlock(false);
+                      setUnlockPin("");
+                      setUnlockError(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : null}
