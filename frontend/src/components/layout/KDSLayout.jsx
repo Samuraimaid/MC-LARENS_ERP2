@@ -6,6 +6,7 @@ import { ArrowLeft, Sun, Moon, RefreshCw } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { KDSNav, getKdsScreenMeta } from "../kds/KDSNav";
 import { dispatchKdsRefresh } from "@/lib/kdsHelpers";
+import { IdleSessionCountdown } from "../auth/IdleSessionCountdown";
 
 export function KDSLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -23,6 +24,8 @@ export function KDSLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Idle countdown: free shared terminals instead of trapping with PIN lock */}
+      {!isAttendanceKiosk ? <IdleSessionCountdown /> : null}
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border">
         <div className="flex h-14 items-center justify-between px-4">

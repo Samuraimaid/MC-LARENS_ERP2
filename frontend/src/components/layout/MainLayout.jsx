@@ -25,6 +25,7 @@ import {
   usesRestrictedNavigation,
 } from "../../lib/roleHome";
 import { formatRoleBadgeLabel } from "../../lib/priceTiers";
+import { IdleSessionCountdown } from "../auth/IdleSessionCountdown";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -577,6 +578,7 @@ export function MainLayout() {
 
   return (
     <div className="relative h-screen overflow-hidden bg-background">
+      <IdleSessionCountdown paused={isSessionLocked} />
       <div className={cn("flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
         {!isMobile && !hideNavigationChrome ? (
           <Sidebar
