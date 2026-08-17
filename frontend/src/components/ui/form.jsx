@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 const Form = FormProvider
 
 const FormFieldContext = React.createContext({})
+const FormItemContext = React.createContext({})
 
 const FormField = (
   {
@@ -43,8 +44,6 @@ const useFormField = () => {
     ...fieldState,
   }
 }
-
-const FormItemContext = React.createContext({})
 
 const FormItem = React.forwardRef(({ className, ...props }, ref) => {
   const id = React.useId()

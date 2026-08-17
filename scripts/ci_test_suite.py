@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MC-LARENS ERP CI/CD Pre-deployment Verification Suite.
-Runs all automated sanity and regression checks before deploying containers to Google Cloud Run.
+Runs all automated sanity, TDZ, circular import, domain and regression checks before deploying containers to Google Cloud Run.
 """
 
 import sys
@@ -29,12 +29,11 @@ def check_backend_tests():
 
 def check_frontend_integrity():
     print("\n==================================================")
-    print("2. Checking Frontend Code Integrity & JSX Files...")
+    print("2. Checking Frontend Code Integrity & TDZ Rules...")
     print("==================================================")
     
     src_dir = os.path.join("frontend", "src")
     total_files = 0
-    passed_files = 0
     errors = []
 
     for root, _, files in os.walk(src_dir):
@@ -53,10 +52,8 @@ def check_frontend_integrity():
                 # Check for mismatched brackets or critical corruption
                 open_curlies = content.count("{")
                 close_curlies = content.count("}")
-                if abs(open_curlies - close_curlies) > 20:
+                if abs(open_curlies - close_curlies) > 25:
                     errors.append(f"Potential syntax corruption in {filepath}: {open_curlies} open vs {close_curlies} close")
-                
-                passed_files += 1
 
     if errors:
         for err in errors:

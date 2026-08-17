@@ -6,6 +6,13 @@ import axios from "axios";
 import { getPriorityColor, WORK_ORDER_STATUS } from "../lib/utils";
 import { formatQuincenaLabel } from "../lib/payrollPeriods";
 import { TechnicianKioskNav } from "../components/technician/TechnicianKioskNav";
+
+const ROLE_LABELS = {
+  instalaciones: "Instalador",
+  instalador: "Instalador",
+  electrico: "Eléctrico",
+  polarizador: "Polarizador",
+};
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -518,9 +525,4 @@ export function TechnicianMobilePage() {
   );
 }
 
-const ROLE_LABELS = {
-  instalaciones: "Instalador",
-  instalador: "Instalador",
-  electrico: "Eléctrico",
-  polarizador: "Polarizador",
-};
+export default TechnicianMobilePage;

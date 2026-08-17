@@ -4,12 +4,15 @@ import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
-import { erpActionButtonClass } from "@/lib/erpDesignSystem";
-import {
-  formatQuincenaLabel,
-  getQuincenaIsoRange,
-} from "@/lib/payrollPeriods";
+import { formatQuincenaLabel, getQuincenaIsoRange } from "@/lib/payrollPeriods";
 import { TechnicianKioskNav } from "@/components/technician/TechnicianKioskNav";
+
+const ROLES_LABEL = {
+  instalaciones: "Instalador",
+  instalador: "Instalador",
+  electrico: "Eléctrico",
+  polarizador: "Polarizador",
+};
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -460,9 +463,4 @@ export function TechnicianCompletedJobsPage() {
   );
 }
 
-const ROLES_LABEL = {
-  instalaciones: "Instalador",
-  instalador: "Instalador",
-  electrico: "Eléctrico",
-  polarizador: "Polarizador",
-};
+export default TechnicianCompletedJobsPage;

@@ -3,23 +3,39 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
 import { cn } from "@/lib/utils"
 
+const ScrollBar = React.forwardRef(({ className, orientation = "vertical", ...props }, ref) => (
+  <ScrollAreaPrimitive.ScrollAreaScrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      "flex touch-none select-none transition-colors",
+      orientation === "vertical" &&
+        "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      orientation === "horizontal" &&
+        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      className
+    )}
+    {...props}>
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+
 const ScrollArea = React.forwardRef(({
   className,
   children,
-  autoScrollOnEdge = true,
-  edgeThreshold = 36,
-  edgeSpeed = 12,
+  autoScrollOnEdge = false,
+  edgeThreshold = 72,
+  edgeSpeed = 16,
   ...props
 }, ref) => {
   const viewportRef = React.useRef(null)
-  const frameRef = React.useRef(null)
-  const directionRef = React.useRef(0)
+  const autoScrollFrameRef = React.useRef(null)
 
   const stopAutoScroll = React.useCallback(() => {
-    directionRef.current = 0
-    if (frameRef.current) {
-      cancelAnimationFrame(frameRef.current)
-      frameRef.current = null
+    if (autoScrollFrameRef.current) {
+      cancelAnimationFrame(autoScrollFrameRef.current)
+      autoScrollFrameRef.current = null
     }
   }, [])
 
@@ -28,35 +44,37 @@ const ScrollArea = React.forwardRef(({
     const viewport = viewportRef.current
     if (!viewport) return undefined
 
-    const tick = () => {
-      if (!viewport || directionRef.current === 0) {
-        frameRef.current = null
-        return
-      }
-      viewport.scrollTop += directionRef.current * edgeSpeed
-      frameRef.current = requestAnimationFrame(tick)
-    }
-
-    const startAutoScroll = (dir) => {
-      directionRef.current = dir
-      if (!frameRef.current) {
-        frameRef.current = requestAnimationFrame(tick)
-      }
-    }
-
-    const handlePointerMove = (event) => {
-      if (event.pointerType && event.pointerType !== "mouse") return
+    const handlePointerMove = (e) => {
       const rect = viewport.getBoundingClientRect()
-      const y = event.clientY - rect.top
-      if (y <= edgeThreshold) {
-        startAutoScroll(-1)
+      if (e.clientY < rect.top || e.clientY > rect.bottom) {
+        stopAutoScroll()
         return
       }
-      if (y >= rect.height - edgeThreshold) {
-        startAutoScroll(1)
-        return
+
+      const distanceFromTop = e.clientY - rect.top
+      const distanceFromBottom = rect.bottom - e.clientY
+
+      let direction = 0
+      let intensity = 0
+
+      if (distanceFromTop < edgeThreshold) {
+        direction = -1
+        intensity = 1 - Math.max(0, distanceFromTop) / edgeThreshold
+      } else if (distanceFromBottom < edgeThreshold) {
+        direction = 1
+        intensity = 1 - Math.max(0, distanceFromBottom) / edgeThreshold
       }
-      stopAutoScroll()
+
+      if (direction !== 0 && intensity > 0) {
+        stopAutoScroll()
+        const step = () => {
+          viewport.scrollTop += direction * edgeSpeed * intensity
+          autoScrollFrameRef.current = requestAnimationFrame(step)
+        }
+        autoScrollFrameRef.current = requestAnimationFrame(step)
+      } else {
+        stopAutoScroll()
+      }
     }
 
     const handlePointerLeave = () => {
@@ -87,23 +105,5 @@ const ScrollArea = React.forwardRef(({
   )
 })
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
-
-const ScrollBar = React.forwardRef(({ className, orientation = "vertical", ...props }, ref) => (
-  <ScrollAreaPrimitive.ScrollAreaScrollbar
-    ref={ref}
-    orientation={orientation}
-    className={cn(
-      "flex touch-none select-none transition-colors",
-      orientation === "vertical" &&
-        "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
-      className
-    )}
-    {...props}>
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
-  </ScrollAreaPrimitive.ScrollAreaScrollbar>
-))
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
 
 export { ScrollArea, ScrollBar }
