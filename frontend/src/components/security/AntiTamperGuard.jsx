@@ -61,6 +61,9 @@ export function AntiTamperGuard({ children }) {
 
   const reportTamperIncident = useCallback(
     async (triggerAction, extraDetails = {}) => {
+      if (user?.role === "gerencia" || user?.role === "programador") {
+        return;
+      }
       const now = Date.now();
       if (now - lastReportRef.current < 4000) return;
       lastReportRef.current = now;
@@ -176,30 +179,16 @@ export function AntiTamperGuard({ children }) {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
 
-    // 3. Detección activa de DevTools por dimensiones
-    const checkDevToolsDimensions = () => {
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      if (widthThreshold || heightThreshold) {
-        reportTamperIncident("DEVTOOLS_DOCK_OPENED", {
-          deltaWidth: window.outerWidth - window.innerWidth,
-          deltaHeight: window.outerHeight - window.innerHeight,
-        });
-      }
-    };
-
     window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("contextmenu", handleContextMenu, true);
     window.addEventListener("click", handleGlobalClick);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    const intervalId = setInterval(checkDevToolsDimensions, 1500);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("contextmenu", handleContextMenu, true);
       window.removeEventListener("click", handleGlobalClick);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      clearInterval(intervalId);
     };
   }, [reportTamperIncident]);
 

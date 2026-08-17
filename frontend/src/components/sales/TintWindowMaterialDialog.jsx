@@ -18,20 +18,16 @@ import {
   Link,
   Unlink,
   Sun,
-  Shield,
-  Plus,
-  Trash2,
-  Car,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
 // Zonas y Nombres Oficiales
 const ZONES = [
-  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del.", color: "sky" },
-  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del.", color: "amber" },
-  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras.", color: "orange" },
-  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras.", color: "purple" },
+  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del." },
+  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del." },
+  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras." },
+  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras." },
 ];
 
 export default function TintWindowMaterialDialog({
@@ -123,7 +119,6 @@ export default function TintWindowMaterialDialog({
             setLinkSides(mats.front_sides === mats.rear_sides);
           }
         } else {
-          // Defaults recomendados
           setSelectedMaterials({
             windshield: "std_70",
             front_sides: "std_20",
@@ -262,28 +257,28 @@ export default function TintWindowMaterialDialog({
         windows: {
           windshield: {
             material_id: selectedMaterials.windshield,
-            material_name: quoteData.rolls_consumed.find((r) => r.zone === "windshield" && r.layer === 1)?.material_name,
+            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "windshield" && r.layer === 1)?.material_name,
             size_band: quoteData.vehicle_size_bands?.windshield,
             override_size_band: overrideFlags.windshield,
             second_layer: secondLayers.windshield.enabled ? secondLayers.windshield : null,
           },
           front_sides: {
             material_id: selectedMaterials.front_sides,
-            material_name: quoteData.rolls_consumed.find((r) => r.zone === "front_sides" && r.layer === 1)?.material_name,
+            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "front_sides" && r.layer === 1)?.material_name,
             size_band: quoteData.vehicle_size_bands?.front_sides,
             override_size_band: overrideFlags.front_sides,
             second_layer: secondLayers.front_sides.enabled ? secondLayers.front_sides : null,
           },
           rear_sides: {
             material_id: selectedMaterials.rear_sides,
-            material_name: quoteData.rolls_consumed.find((r) => r.zone === "rear_sides" && r.layer === 1)?.material_name,
+            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "rear_sides" && r.layer === 1)?.material_name,
             size_band: quoteData.vehicle_size_bands?.rear_sides,
             override_size_band: overrideFlags.rear_sides,
             second_layer: secondLayers.rear_sides.enabled ? secondLayers.rear_sides : null,
           },
           rear: {
             material_id: selectedMaterials.rear,
-            material_name: quoteData.rolls_consumed.find((r) => r.zone === "rear" && r.layer === 1)?.material_name,
+            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "rear" && r.layer === 1)?.material_name,
             size_band: quoteData.vehicle_size_bands?.rear,
             override_size_band: overrideFlags.rear,
             second_layer: secondLayers.rear.enabled ? secondLayers.rear : null,
@@ -432,7 +427,7 @@ export default function TintWindowMaterialDialog({
                   {secondLayers.windshield?.enabled ? " + 2da" : ""}
                 </text>
 
-                {/* 2. VENTANAS DELANTERAS (Front Sides) */}
+                {/* 2. VENTANAS DELANTERAS */}
                 <path
                   d="M48,135 L62,135 L60,190 L46,190 Z"
                   fill="url(#glassFrontSides)"
@@ -450,7 +445,7 @@ export default function TintWindowMaterialDialog({
                   onClick={() => setActiveZone("front_sides")}
                 />
 
-                {/* 3. VENTANAS TRASERAS (Rear Sides) */}
+                {/* 3. VENTANAS TRASERAS */}
                 <path
                   d="M46,195 L60,195 L58,245 L44,245 Z"
                   fill="url(#glassRearSides)"
@@ -468,7 +463,7 @@ export default function TintWindowMaterialDialog({
                   onClick={() => setActiveZone("rear_sides")}
                 />
 
-                {/* 4. PARABRISAS TRASERO (Rear) */}
+                {/* 4. PARABRISAS TRASERO */}
                 <path
                   d="M66,252 L134,252 L128,290 L72,290 Z"
                   fill="url(#glassRear)"
@@ -572,7 +567,7 @@ export default function TintWindowMaterialDialog({
                   </span>
                 </div>
 
-                {/* Toggle de Vinculación de Laterales (Delanteras + Traseras) */}
+                {/* Toggle de Vinculación de Laterales */}
                 {(activeZone === "front_sides" || activeZone === "rear_sides") && (
                   <div className="flex items-center gap-1.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-lg px-2.5 py-1">
                     {linkSides ? (
@@ -588,7 +583,6 @@ export default function TintWindowMaterialDialog({
                       onCheckedChange={(checked) => {
                         setLinkSides(checked);
                         if (checked) {
-                          // Al vincular, igualar traseras con delanteras
                           setSelectedMaterials((prev) => ({
                             ...prev,
                             rear_sides: prev.front_sides,
@@ -663,7 +657,7 @@ export default function TintWindowMaterialDialog({
 
               {/* SECCIÓN ADICIONAL: Segunda Capa y Bandas de Sol */}
               <div className="mt-3 pt-2.5 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
-                {/* Control 2da Capa (Doble Polarizado) */}
+                {/* Control 2da Capa */}
                 <div className="rounded-lg border border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20 p-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -684,7 +678,6 @@ export default function TintWindowMaterialDialog({
                     />
                   </div>
 
-                  {/* Selector de material para 2da Capa */}
                   {secondLayers[activeZone]?.enabled && (
                     <div className="mt-2 pt-2 border-t border-amber-200/50 dark:border-amber-900/40 flex items-center justify-between gap-2">
                       <Label className="text-[11px] text-amber-900 dark:text-amber-200">
@@ -705,7 +698,7 @@ export default function TintWindowMaterialDialog({
                   )}
                 </div>
 
-                {/* Controles de Bandas de Sol (Solo para Parabrisas Delantero y Parabrisas Trasero) */}
+                {/* Controles de Bandas de Sol */}
                 {(activeZone === "windshield" || activeZone === "rear") && (
                   <div className="rounded-lg border border-sky-200/70 bg-sky-50/40 dark:border-sky-900/50 dark:bg-sky-950/20 p-2.5 space-y-2">
                     <div className="flex items-center gap-1.5">
@@ -716,7 +709,6 @@ export default function TintWindowMaterialDialog({
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      {/* Banda Superior */}
                       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
                         <div>
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">
@@ -733,7 +725,6 @@ export default function TintWindowMaterialDialog({
                         />
                       </div>
 
-                      {/* Banda Inferior */}
                       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
                         <div>
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">

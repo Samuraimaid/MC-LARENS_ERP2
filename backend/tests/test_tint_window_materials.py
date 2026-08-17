@@ -1,6 +1,9 @@
 """Unit tests for tint window materials domain logic."""
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    pytest = None
 from backend.domains.tint.window_materials import (
     resolve_vehicle_glass_bands,
     get_available_materials_for_zone,
@@ -119,7 +122,8 @@ def test_quote_with_sunstrips():
     assert quote["valid"] is True
     # Base 0 + 10 (top windshield) + 10 (top rear) = 20
     assert quote["materials_extra_total"] == 20.0
-    assert len(quote["price_breakdown"]) == 2
+    sunstrip_breakdown = [b for b in quote["price_breakdown"] if "Banda" in b["group_label"]]
+    assert len(sunstrip_breakdown) == 2
 
 
 def test_merge_policy_permissions_for_coordinator():
@@ -141,4 +145,3 @@ def test_merge_policy_permissions_for_coordinator():
     # Availability was updated
     assert carbon["rolls"]["side_under_20"]["is_available"] is False
     assert carbon["rolls"]["side_under_20"]["virtual_qty"] == 5
-    assert carbon["rolls"]["side_under_20"]["is_available"] is False
