@@ -3,9 +3,7 @@ import { Clock, Eye, Lock, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ErpRollingCurrency } from "@/components/erp/ErpRollingNumber";
-import { cn } from "@/lib/utils";
-import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
+import { cn, formatCurrency } from "@/lib/utils";
 
 const DRAFT_SUPERVISOR_ROLES = new Set([
   "gerencia",
@@ -36,23 +34,6 @@ function formatRelativeTime(isoDate, nowMs = Date.now()) {
   if (hours < 24) return `hace ${hours} h`;
   const days = Math.floor(hours / 24);
   return `hace ${days} d`;
-}
-
-function resolveVehicleIdentity(label) {
-  const text = String(label || "").trim();
-  if (!text) return null;
-  const head = text.split(/[•·|]/)[0].trim();
-  const parts = head.split(/\s+/).filter((p) => p && !/^[•·|]+$/.test(p));
-  if (parts.length < 2) return { brand: parts[0] || "", model: parts.slice(1).join(" ") };
-  const yearIdx = parts.findIndex((p) => /^\d{4}$/.test(p));
-  if (yearIdx > 0) {
-    return {
-      brand: parts[0],
-      model: parts.slice(1, yearIdx).join(" ") || parts[1],
-      year: parts[yearIdx],
-    };
-  }
-  return { brand: parts[0], model: parts.slice(1).join(" ") };
 }
 
 function cleanSubtitle(title, subtitle) {
@@ -101,20 +82,6 @@ export function DraftBoardCard({
   const hasPreviewItems = Boolean(meta?.previewItems?.length);
   const subtitle = cleanSubtitle(meta?.title, meta?.subtitle);
 
-  const watermarkVehicle = useMemo(() => {
-    const record = meta?.previewVehicleRecord;
-    if (record && (record.brand || record.model)) {
-      return {
-        brand: record.brand,
-        model: record.model,
-        year: record.year,
-        descriptor: record.descriptor,
-        vehicle_cab_variant: record.vehicle_cab_variant,
-      };
-    }
-    return resolveVehicleIdentity(meta?.previewVehicle);
-  }, [meta?.previewVehicle, meta?.previewVehicleRecord]);
-
   let statusLabel = null;
   let StatusIcon = null;
   let statusClassName = "";
@@ -149,13 +116,13 @@ export function DraftBoardCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition",
+        "relative overflow-hidden transition select-none",
         isBlocked
           ? DRAFT_TONES.draftBlocked
           : isReleasedRestricted
             ? DRAFT_TONES.draftReleased
             : isActive
-              ? "border-primary"
+              ? "border-primary shadow-sm"
               : isOwn
                 ? DRAFT_TONES.draftOwn
                 : DRAFT_TONES.draftOther
@@ -168,7 +135,6 @@ export function DraftBoardCard({
             : undefined
       }
     >
-      <VehicleThumbnailWatermark vehicle={watermarkVehicle} />
       <CardContent className="relative p-0">
         <div
           role="button"
@@ -245,12 +211,16 @@ export function DraftBoardCard({
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 rounded-md border border-dashed border-border/70 bg-muted/20 px-2 py-1.5">
               <p className="text-xs font-semibold inline-flex items-baseline gap-1">
                 <span className="text-muted-foreground font-medium">Total</span>
-                <ErpRollingCurrency value={meta?.total || 0} currency={meta?.currency || "NIO"} />
+                <span className="font-mono font-bold text-foreground">
+                  {formatCurrency(meta?.total || 0, meta?.currency || "NIO")}
+                </span>
               </p>
               {meta?.totalDiscounts > 0 ? (
                 <p className="text-[11px] text-green-700 dark:text-green-400 inline-flex items-baseline gap-1">
                   <span>−</span>
-                  <ErpRollingCurrency value={meta.totalDiscounts} currency={meta.currency} />
+                  <span className="font-mono">
+                    {formatCurrency(meta.totalDiscounts, meta?.currency || "NIO")}
+                  </span>
                 </p>
               ) : null}
             </div>

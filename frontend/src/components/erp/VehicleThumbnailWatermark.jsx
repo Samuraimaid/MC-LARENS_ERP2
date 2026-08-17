@@ -10,15 +10,25 @@ export function VehicleThumbnailWatermark({
   positionClassName = "right-[-2%] top-1/2 h-[72%] w-[58%] -translate-y-1/2",
 }) {
   const { watermarkOpacity } = useTheme();
-  const url = getVehicleWatermarkUrl(vehicle);
+
+  const watermarkData = useMemo(() => {
+    try {
+      if (!vehicle) return { url: null, confidence: 0.65 };
+      const url = getVehicleWatermarkUrl(vehicle);
+      const confidence = getWatermarkConfidenceMultiplier(vehicle);
+      return { url, confidence: Number.isFinite(confidence) ? confidence : 0.65 };
+    } catch (_) {
+      return { url: null, confidence: 0.65 };
+    }
+  }, [vehicle]);
+
   const resolvedOpacity = useMemo(() => {
     if (opacityClassName) return null;
     const base = Number.isFinite(watermarkOpacity) ? watermarkOpacity : 0.13;
-    const confidence = getWatermarkConfidenceMultiplier(vehicle);
-    return Math.min(0.3, Math.max(0.04, base * confidence));
-  }, [opacityClassName, watermarkOpacity, vehicle]);
+    return Math.min(0.3, Math.max(0.04, base * watermarkData.confidence));
+  }, [opacityClassName, watermarkOpacity, watermarkData.confidence]);
 
-  if (!url) return null;
+  if (!watermarkData.url) return null;
 
   return (
     <div
@@ -32,10 +42,12 @@ export function VehicleThumbnailWatermark({
           positionClassName
         )}
         style={{
-          backgroundImage: `url("${url}")`,
+          backgroundImage: `url("${watermarkData.url}")`,
           ...(resolvedOpacity != null ? { opacity: resolvedOpacity } : {}),
         }}
       />
     </div>
   );
 }
+
+export default VehicleThumbnailWatermark;

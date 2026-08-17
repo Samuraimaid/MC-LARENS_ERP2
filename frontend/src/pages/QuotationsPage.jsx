@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock } from "lucide-react";
 import DraftBoardCard from "@/components/erp/DraftBoardCard";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
-import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/erpDesignSystem";
+import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/roleHome";
 import { useDraftReviewPolling } from "@/hooks/useDraftReviewPolling";
 import {
   canSellerDeleteDraft,
