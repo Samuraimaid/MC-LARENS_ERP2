@@ -145,13 +145,14 @@ function jsxSourcePlugin() {
 module.exports = defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const isDevServer = command === "serve";
+  const buildTimestamp = new Date().toISOString();
   const envProcess = {
     NODE_ENV: mode === "production" ? "production" : "development",
     REACT_APP_BACKEND_URL: env.REACT_APP_BACKEND_URL || env.VITE_BACKEND_URL || "",
     REACT_APP_AUTH_URL: env.REACT_APP_AUTH_URL || env.VITE_AUTH_URL || "",
-    REACT_APP_VERSION: env.REACT_APP_VERSION || env.npm_package_version || "0.2.0-beta.0",
-    REACT_APP_BUILD_TIME: env.REACT_APP_BUILD_TIME || "",
-    REACT_APP_BUILD_ID: env.REACT_APP_BUILD_ID || "",
+    REACT_APP_VERSION: env.REACT_APP_VERSION || env.npm_package_version || "0.2.0-cloud",
+    REACT_APP_BUILD_TIME: env.REACT_APP_BUILD_TIME || buildTimestamp,
+    REACT_APP_BUILD_ID: env.REACT_APP_BUILD_ID || buildTimestamp,
     REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN: env.REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN || env.VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN || "",
   };
 

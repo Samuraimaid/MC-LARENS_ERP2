@@ -123,11 +123,26 @@ export function MainLayout() {
     }
     return userFirstName || branding.brandName;
   }, [userFirstName, userLastName, branding.brandName]);
-  const buildVersion = APP_ENV.buildVersion;
+  const buildVersion = APP_ENV.buildVersion || "0.2.0-cloud";
   const buildTime = APP_ENV.buildTime;
-  const buildTimeLabel = buildTime
-    ? new Date(buildTime).toLocaleString("es-NI", { dateStyle: "short", timeStyle: "short" })
-    : "hora desconocida";
+  const buildTimeLabel = useMemo(() => {
+    if (!buildTime) return "Build Activo";
+    try {
+      const d = new Date(buildTime);
+      return isNaN(d.getTime())
+        ? String(buildTime)
+        : d.toLocaleString("es-NI", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+    } catch {
+      return "Build Activo";
+    }
+  }, [buildTime]);
   const isMobile = viewportWidth < 1024;
   const isSellerRole = isSellerRoleHelper(user?.role);
   const isCashierKiosk = isCashierKioskRole(user?.role);
