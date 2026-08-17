@@ -1,12 +1,17 @@
 /**
  * Vehicle top-down category and silhouette resolver for MC-LARENS ERP
+ * Supporting full range of 9+ vehicle body types with real high-res top-down renders.
  */
 
 export const VEHICLE_CATEGORIES = [
   { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
-  { id: "suv", label: "SUV / Camioneta", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png" },
+  { id: "suv", label: "SUV / Camioneta Doble Cabina", shortLabel: "SUV / Doble Cab.", image: "/vehicles/clean_suv.png" },
+  { id: "camioneta_cabina_media", label: "Camioneta Cabina y Media", shortLabel: "Cabina y Media", image: "/vehicles/clean_camioneta_cabina_media.png" },
+  { id: "camioneta_1_cabina", label: "Camioneta 1 Cabina", shortLabel: "Camioneta 1 Cab.", image: "/vehicles/clean_camioneta_1_cabina.png" },
+  { id: "camion_1_cabina", label: "Camión de 1 Cabina", shortLabel: "Camión 1 Cab.", image: "/vehicles/clean_camion_1_cabina.png" },
   { id: "station_wagon", label: "Station Wagon", shortLabel: "Station Wagon", image: "/vehicles/clean_station_wagon.png" },
-  { id: "microbus_pasajeros", label: "Microbús Pasajeros", shortLabel: "Microbús", image: "/vehicles/clean_microbus_pasajeros.png" },
+  { id: "microbus_pasajeros", label: "Microbús Pasajeros", shortLabel: "Microbús Pas.", image: "/vehicles/clean_microbus_pasajeros.png" },
+  { id: "microbus_techo_alto", label: "Microbús Techo Alto", shortLabel: "Techo Alto", image: "/vehicles/clean_microbus_techo_alto.png" },
   { id: "microbus_carga", label: "Microbús Panel Carga", shortLabel: "Panel Carga", image: "/vehicles/clean_microbus_carga.png" },
 ];
 
@@ -27,7 +32,49 @@ export function resolveVehicleCategory(vehicle) {
   const model = String(vehicle.model || "").toLowerCase();
   const text = `${slug} ${brand} ${model}`;
 
-  // 1. Panel de Carga / Furgón
+  // 1. Camión de 1 Cabina / Camioncito
+  if (
+    text.includes("camion") ||
+    text.includes("camión") ||
+    text.includes("k2700") ||
+    text.includes("k2500") ||
+    text.includes("k3000") ||
+    text.includes("porter") ||
+    text.includes("h100") ||
+    text.includes("dyna") ||
+    text.includes("canter") ||
+    text.includes("camion-carga") ||
+    text.includes("cabezal")
+  ) {
+    return "camion_1_cabina";
+  }
+
+  // 2. Camioneta Cabina y Media (Extra Cab / Crew Cab / Extended Cab)
+  if (
+    text.includes("media") ||
+    text.includes("cabina y media") ||
+    text.includes("extra cab") ||
+    text.includes("king cab") ||
+    text.includes("supercab") ||
+    text.includes("club cab") ||
+    text.includes("camioneta-cabina-y-media")
+  ) {
+    return "camioneta_cabina_media";
+  }
+
+  // 3. Camioneta 1 Cabina (Single Cab / Regular Cab / Pickup 1 Cabina)
+  if (
+    text.includes("1 cabina") ||
+    text.includes("una cabina") ||
+    text.includes("single cab") ||
+    text.includes("regular cab") ||
+    text.includes("cabina sencilla") ||
+    text.includes("camioneta-1-cabina")
+  ) {
+    return "camioneta_1_cabina";
+  }
+
+  // 4. Panel de Carga / Furgón
   if (
     text.includes("panel") ||
     text.includes("carga") ||
@@ -39,7 +86,17 @@ export function resolveVehicleCategory(vehicle) {
     return "microbus_carga";
   }
 
-  // 2. Microbús / Minibús / Minivan / Bus
+  // 5. Microbús Techo Alto (Hiace High Roof, Urvan Techo Alto, Coaster)
+  if (
+    text.includes("techo alto") ||
+    text.includes("high roof") ||
+    text.includes("gran hiace") ||
+    text.includes("coaster")
+  ) {
+    return "microbus_techo_alto";
+  }
+
+  // 6. Microbús / Minibús / Minivan / Van de Pasajeros
   if (
     text.includes("microbus") ||
     text.includes("microbús") ||
@@ -49,26 +106,26 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("van") ||
     text.includes("hiace") ||
     text.includes("urvan") ||
-    text.includes("coaster") ||
     text.includes("pasajero") ||
     text.includes("microbus-pasajeros")
   ) {
     return "microbus_pasajeros";
   }
 
-  // 3. Station Wagon / Familiar
+  // 7. Station Wagon / Familiar
   if (
     text.includes("station") ||
     text.includes("wagon") ||
     text.includes("familiar") ||
     text.includes("probox") ||
     text.includes("ad expert") ||
+    text.includes("succeed") ||
     text.includes("station-wagon")
   ) {
     return "station_wagon";
   }
 
-  // 4. SUV / Camioneta / 4x4 / Pick-up
+  // 8. SUV / Camioneta Doble Cabina / 4x4 / Pick-up
   if (
     text.includes("suv") ||
     text.includes("camioneta") ||
@@ -89,13 +146,12 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("patrol") ||
     text.includes("4x4") ||
     text.includes("crossover") ||
-    text.includes("camioneta-1-cabina") ||
-    text.includes("camioneta-cabina-y-media")
+    text.includes("doble cabina")
   ) {
     return "suv";
   }
 
-  // 5. Default -> Sedán / Hatchback
+  // 9. Default -> Sedán / Hatchback
   return "sedan";
 }
 
@@ -151,6 +207,72 @@ export const VEHICLE_GLASS_GEOMETRY = {
       subY: 297,
     },
   },
+  camioneta_cabina_media: {
+    windshield: {
+      d: "M52,76 L148,76 L140,134 L60,134 Z",
+      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
+      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      textY: 104,
+      subY: 117,
+    },
+    front_sides: [
+      { d: "M44,138 L60,138 L58,192 L42,192 Z" },
+      { d: "M140,138 L156,138 L158,192 L142,192 Z" },
+    ],
+    rear_sides: [
+      { d: "M42,196 L56,196 L54,232 L40,232 Z" },
+      { d: "M144,196 L158,196 L160,232 L146,232 Z" },
+    ],
+    rear: {
+      d: "M60,228 L140,228 L138,244 L62,244 Z",
+      topStrip: "M60,228 L140,228 L139,234 L61,234 Z",
+      bottomStrip: "M61,238 L139,238 L138,244 L62,244 Z",
+      textY: 236,
+      subY: 242,
+    },
+  },
+  camioneta_1_cabina: {
+    windshield: {
+      d: "M52,76 L148,76 L140,134 L60,134 Z",
+      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
+      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      textY: 104,
+      subY: 117,
+    },
+    front_sides: [
+      { d: "M44,138 L60,138 L58,198 L42,198 Z" },
+      { d: "M140,138 L156,138 L158,198 L142,198 Z" },
+    ],
+    rear_sides: [],
+    rear: {
+      d: "M60,198 L140,198 L138,214 L62,214 Z",
+      topStrip: "M60,198 L140,198 L139,204 L61,204 Z",
+      bottomStrip: "M61,208 L139,208 L138,214 L62,214 Z",
+      textY: 206,
+      subY: 212,
+    },
+  },
+  camion_1_cabina: {
+    windshield: {
+      d: "M50,70 L150,70 L144,130 L56,130 Z",
+      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
+      bottomStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      textY: 100,
+      subY: 113,
+    },
+    front_sides: [
+      { d: "M42,134 L58,134 L56,196 L40,196 Z" },
+      { d: "M142,134 L158,134 L160,196 L144,196 Z" },
+    ],
+    rear_sides: [],
+    rear: {
+      d: "M60,196 L140,196 L138,214 L62,214 Z",
+      topStrip: "M60,196 L140,196 L139,202 L61,202 Z",
+      bottomStrip: "M61,208 L139,208 L138,214 L62,214 Z",
+      textY: 205,
+      subY: 211,
+    },
+  },
   station_wagon: {
     windshield: {
       d: "M54,76 L146,76 L138,130 L62,130 Z",
@@ -197,6 +319,30 @@ export const VEHICLE_GLASS_GEOMETRY = {
       bottomStrip: "M61,314 L139,314 L138,322 L62,322 Z",
       textY: 300,
       subY: 313,
+    },
+  },
+  microbus_techo_alto: {
+    windshield: {
+      d: "M50,68 L150,68 L144,128 L56,128 Z",
+      topStrip: "M50,68 L150,68 L148,80 L52,80 Z",
+      bottomStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      textY: 98,
+      subY: 111,
+    },
+    front_sides: [
+      { d: "M42,132 L58,132 L56,188 L40,188 Z" },
+      { d: "M142,132 L158,132 L160,188 L144,188 Z" },
+    ],
+    rear_sides: [
+      { d: "M40,192 L56,192 L54,284 L38,284 Z" },
+      { d: "M144,192 L160,192 L162,284 L146,284 Z" },
+    ],
+    rear: {
+      d: "M58,286 L142,286 L138,326 L62,326 Z",
+      topStrip: "M58,286 L142,286 L141,294 L59,294 Z",
+      bottomStrip: "M61,318 L139,318 L138,326 L62,326 Z",
+      textY: 304,
+      subY: 317,
     },
   },
   microbus_carga: {
