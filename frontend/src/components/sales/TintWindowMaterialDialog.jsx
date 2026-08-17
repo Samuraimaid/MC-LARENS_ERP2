@@ -22,6 +22,11 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
+import {
+  resolveVehicleCategory,
+  VEHICLE_CATEGORIES,
+  VEHICLE_GLASS_GEOMETRY,
+} from "@/lib/vehicleSilhouette";
 
 // Zonas y Nombres Oficiales
 const ZONES = [
@@ -44,6 +49,16 @@ export default function TintWindowMaterialDialog({
   const [config, setConfig] = useState(null);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
+
+  // Categoría de Vehículo Dinámica
+  const detectedCategory = useMemo(() => resolveVehicleCategory(vehicle), [vehicle]);
+  const [selectedVehicleType, setSelectedVehicleType] = useState(detectedCategory);
+
+  useEffect(() => {
+    if (vehicle) {
+      setSelectedVehicleType(resolveVehicleCategory(vehicle));
+    }
+  }, [vehicle]);
 
   // Materiales Capa 1 (Base)
   const [selectedMaterials, setSelectedMaterials] = useState({
@@ -340,180 +355,252 @@ export default function TintWindowMaterialDialog({
           </div>
         </div>
 
-        {/* Cuerpo: Diagrama Interactivo de Auto AZUL + Selector de Material */}
+        {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
-          {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería AZUL */}
-          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-5 flex flex-col items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/40 select-none">
-            <div className="text-center w-full">
-              <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block">
-                Esquema del Vehículo
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                Toca cualquier cristal para cambiar material o agregar 2da capa / bandas
-              </span>
+          {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería Real Dinámica */}
+          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/40 select-none">
+            <div className="text-center w-full space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                  Carrocería: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Sedán"}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  {vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : "Interactivo"}
+                </span>
+              </div>
+
+              {/* Selector Rápido de Silueta / Tipo de Carrocería */}
+              <div className="flex items-center justify-center gap-1 p-1 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full">
+                {VEHICLE_CATEGORIES.map((cat) => {
+                  const isCur = selectedVehicleType === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedVehicleType(cat.id)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all ${
+                        isCur
+                          ? "bg-white text-blue-700 dark:bg-zinc-900 dark:text-blue-300 shadow-xs ring-1 ring-blue-500/30 font-bold"
+                          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                      }`}
+                      title={cat.label}
+                    >
+                      {cat.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* SVG Diagram: Carrocería AZUL METÁLICO */}
-            <div className="relative w-44 h-76 my-2 select-none">
-              <svg viewBox="0 0 200 360" className="w-full h-full drop-shadow-xl">
-                {/* Sombras / Ruedas */}
-                <rect x="18" y="55" width="14" height="42" rx="6" fill="#0f172a" />
-                <rect x="168" y="55" width="14" height="42" rx="6" fill="#0f172a" />
-                <rect x="18" y="245" width="14" height="42" rx="6" fill="#0f172a" />
-                <rect x="168" y="245" width="14" height="42" rx="6" fill="#0f172a" />
+            {/* Canvas del Vehículo: Imagen Real Superior + SVG Glass Overlays */}
+            <div className="relative w-48 h-80 my-2 select-none flex items-center justify-center">
+              {/* 1. Imagen Top-Down Realista de la Carrocería */}
+              <img
+                src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_sedan.png"}
+                alt="Vehículo Top-Down"
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-md transition-all duration-300"
+              />
 
-                {/* Espejos Retrovisores */}
-                <ellipse cx="25" cy="115" rx="8" ry="12" fill="#1e3a8a" stroke="#1d4ed8" strokeWidth="1.5" />
-                <ellipse cx="175" cy="115" rx="8" ry="12" fill="#1e3a8a" stroke="#1d4ed8" strokeWidth="1.5" />
+              {/* 2. Capa SVG Interactiva de Cristales */}
+              {(() => {
+                const geom = VEHICLE_GLASS_GEOMETRY[selectedVehicleType] || VEHICLE_GLASS_GEOMETRY.sedan;
 
-                {/* CARROCERÍA AZUL METÁLICO */}
-                <path
-                  d="M40,65 C40,25 70,15 100,15 C130,15 160,25 160,65 L165,130 C168,170 168,230 165,280 C160,330 130,345 100,345 C70,345 40,330 35,280 C32,230 32,170 35,130 Z"
-                  fill="url(#blueCarGradient)"
-                  stroke="#1e40af"
-                  strokeWidth="2.5"
-                />
+                const getShade = (zoneKey) => {
+                  const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
+                  if (mat.includes("70")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
+                  if (mat.includes("35")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
+                  if (mat.includes("05")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
+                  return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
+                };
 
-                {/* Líneas de Capó y Maletero */}
-                <path d="M55,60 C70,45 130,45 145,60" fill="none" stroke="#60a5fa" strokeWidth="1.5" opacity="0.6" />
-                <path d="M50,290 C70,310 130,310 150,290" fill="none" stroke="#1e3a8a" strokeWidth="1.5" opacity="0.8" />
+                const shadeWindshield = getShade("windshield");
+                const shadeFrontSides = getShade("front_sides");
+                const shadeRearSides = getShade("rear_sides");
+                const shadeRear = getShade("rear");
 
-                {/* GRADIENTES */}
-                <defs>
-                  <linearGradient id="blueCarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#1e3a8a" />
-                    <stop offset="40%" stopColor="#2563eb" />
-                    <stop offset="70%" stopColor="#1d4ed8" />
-                    <stop offset="100%" stopColor="#1e3a8a" />
-                  </linearGradient>
-                  {/* Parabrisas delantero */}
-                  <linearGradient id="glassWindshield" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#0284c7" stopOpacity="0.95" />
-                  </linearGradient>
-                  {/* Ventanas Delanteras */}
-                  <linearGradient id="glassFrontSides" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#fde047" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#eab308" stopOpacity="0.95" />
-                  </linearGradient>
-                  {/* Ventanas Traseras */}
-                  <linearGradient id="glassRearSides" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#fb923c" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#f97316" stopOpacity="0.95" />
-                  </linearGradient>
-                  {/* Parabrisas Trasero */}
-                  <linearGradient id="glassRear" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#c084fc" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#9333ea" stopOpacity="0.95" />
-                  </linearGradient>
-                </defs>
+                return (
+                  <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
+                    <defs>
+                      <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#38bdf8" floodOpacity="0.9" />
+                      </filter>
+                      <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#eab308" floodOpacity="0.9" />
+                      </filter>
+                      <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f97316" floodOpacity="0.9" />
+                      </filter>
+                      <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#a855f7" floodOpacity="0.9" />
+                      </filter>
+                    </defs>
 
-                {/* 1. PARABRISAS DELANTERO */}
-                <path
-                  d="M56,80 L144,80 L136,130 L64,130 Z"
-                  fill="url(#glassWindshield)"
-                  stroke={activeZone === "windshield" ? "#ffffff" : "#0369a1"}
-                  strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("windshield")}
-                />
-                {/* Banda Superior Parabrisas */}
-                {sunstrips.windshield_top?.enabled && (
-                  <path d="M56,80 L144,80 L142,92 L58,92 Z" fill="#090d16" opacity="0.88" />
-                )}
-                {/* Banda Inferior Parabrisas */}
-                {sunstrips.windshield_bottom?.enabled && (
-                  <path d="M63,120 L137,120 L136,130 L64,130 Z" fill="#090d16" opacity="0.88" />
-                )}
-                {/* Texto Parabrisas */}
-                <text x="100" y="104" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="bold" className="pointer-events-none select-none drop-shadow">
-                  Parabrisas del.
-                </text>
-                <text x="100" y="116" textAnchor="middle" fill="#e0f2fe" fontSize="7.5" fontWeight="600" className="pointer-events-none select-none">
-                  {selectedMaterials.windshield?.includes("70") ? "70%" : selectedMaterials.windshield?.includes("35") ? "35%" : "20%"}
-                  {secondLayers.windshield?.enabled ? " + 2da" : ""}
-                </text>
+                    {/* 1. PARABRISAS DELANTERO */}
+                    <path
+                      d={geom.windshield.d}
+                      fill={shadeWindshield.fill}
+                      fillOpacity={shadeWindshield.opacity}
+                      stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
+                      strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
+                      filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
+                      className="cursor-pointer transition-all hover:opacity-90"
+                      onClick={() => setActiveZone("windshield")}
+                    />
+                    {/* Banda Superior Parabrisas */}
+                    {sunstrips.windshield_top?.enabled && geom.windshield.topStrip && (
+                      <path d={geom.windshield.topStrip} fill="#020617" opacity="0.95" />
+                    )}
+                    {/* Banda Inferior Parabrisas */}
+                    {sunstrips.windshield_bottom?.enabled && geom.windshield.bottomStrip && (
+                      <path d={geom.windshield.bottomStrip} fill="#020617" opacity="0.95" />
+                    )}
+                    {/* Textos Parabrisas */}
+                    <text
+                      x="100"
+                      y={geom.windshield.textY}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      fontSize="7.5"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none drop-shadow"
+                    >
+                      Parabrisas del.
+                    </text>
+                    <text
+                      x="100"
+                      y={geom.windshield.subY}
+                      textAnchor="middle"
+                      fill="#e0f2fe"
+                      fontSize="7"
+                      fontWeight="600"
+                      className="pointer-events-none select-none"
+                    >
+                      {selectedMaterials.windshield?.includes("70")
+                        ? "70%"
+                        : selectedMaterials.windshield?.includes("35")
+                        ? "35%"
+                        : "20%"}
+                      {secondLayers.windshield?.enabled ? " + 2da" : ""}
+                    </text>
 
-                {/* 2. VENTANAS DELANTERAS */}
-                <path
-                  d="M48,135 L62,135 L60,190 L46,190 Z"
-                  fill="url(#glassFrontSides)"
-                  stroke={activeZone === "front_sides" ? "#ffffff" : "#ca8a04"}
-                  strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("front_sides")}
-                />
-                <path
-                  d="M138,135 L152,135 L154,190 L140,190 Z"
-                  fill="url(#glassFrontSides)"
-                  stroke={activeZone === "front_sides" ? "#ffffff" : "#ca8a04"}
-                  strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("front_sides")}
-                />
+                    {/* 2. VENTANAS DELANTERAS */}
+                    {geom.front_sides.map((p, idx) => (
+                      <path
+                        key={`fs-${idx}`}
+                        d={p.d}
+                        fill={shadeFrontSides.fill}
+                        fillOpacity={shadeFrontSides.opacity}
+                        stroke={activeZone === "front_sides" ? "#eab308" : shadeFrontSides.border}
+                        strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
+                        filter={activeZone === "front_sides" ? "url(#neonGlowYellow)" : undefined}
+                        className="cursor-pointer transition-all hover:opacity-90"
+                        onClick={() => setActiveZone("front_sides")}
+                      />
+                    ))}
 
-                {/* 3. VENTANAS TRASERAS */}
-                <path
-                  d="M46,195 L60,195 L58,245 L44,245 Z"
-                  fill="url(#glassRearSides)"
-                  stroke={activeZone === "rear_sides" ? "#ffffff" : "#ea580c"}
-                  strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("rear_sides")}
-                />
-                <path
-                  d="M140,195 L154,195 L156,245 L142,245 Z"
-                  fill="url(#glassRearSides)"
-                  stroke={activeZone === "rear_sides" ? "#ffffff" : "#ea580c"}
-                  strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("rear_sides")}
-                />
+                    {/* 3. VENTANAS TRASERAS */}
+                    {geom.rear_sides.map((p, idx) => (
+                      <path
+                        key={`rs-${idx}`}
+                        d={p.d}
+                        fill={shadeRearSides.fill}
+                        fillOpacity={shadeRearSides.opacity}
+                        stroke={activeZone === "rear_sides" ? "#f97316" : shadeRearSides.border}
+                        strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
+                        filter={activeZone === "rear_sides" ? "url(#neonGlowOrange)" : undefined}
+                        className="cursor-pointer transition-all hover:opacity-90"
+                        onClick={() => setActiveZone("rear_sides")}
+                      />
+                    ))}
 
-                {/* 4. PARABRISAS TRASERO */}
-                <path
-                  d="M66,252 L134,252 L128,290 L72,290 Z"
-                  fill="url(#glassRear)"
-                  stroke={activeZone === "rear" ? "#ffffff" : "#7e22ce"}
-                  strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
-                  className="cursor-pointer transition-all hover:opacity-90"
-                  onClick={() => setActiveZone("rear")}
-                />
-                {/* Banda Superior Trasera */}
-                {sunstrips.rear_top?.enabled && (
-                  <path d="M66,252 L134,252 L133,260 L67,260 Z" fill="#090d16" opacity="0.88" />
-                )}
-                {/* Banda Inferior Trasera */}
-                {sunstrips.rear_bottom?.enabled && (
-                  <path d="M71,282 L129,282 L128,290 L72,290 Z" fill="#090d16" opacity="0.88" />
-                )}
-                {/* Texto Parabrisas Trasero */}
-                <text x="100" y="270" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="bold" className="pointer-events-none select-none drop-shadow">
-                  Parabrisas Tras.
-                </text>
-                <text x="100" y="282" textAnchor="middle" fill="#f3e8ff" fontSize="7.5" fontWeight="600" className="pointer-events-none select-none">
-                  {selectedMaterials.rear?.includes("70") ? "70%" : selectedMaterials.rear?.includes("35") ? "35%" : "20%"}
-                  {secondLayers.rear?.enabled ? " + 2da" : ""}
-                </text>
-              </svg>
+                    {/* 4. PARABRISAS TRASERO */}
+                    <path
+                      d={geom.rear.d}
+                      fill={shadeRear.fill}
+                      fillOpacity={shadeRear.opacity}
+                      stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
+                      strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
+                      filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
+                      className="cursor-pointer transition-all hover:opacity-90"
+                      onClick={() => setActiveZone("rear")}
+                    />
+                    {/* Banda Superior Trasera */}
+                    {sunstrips.rear_top?.enabled && geom.rear.topStrip && (
+                      <path d={geom.rear.topStrip} fill="#020617" opacity="0.95" />
+                    )}
+                    {/* Banda Inferior Trasera */}
+                    {sunstrips.rear_bottom?.enabled && geom.rear.bottomStrip && (
+                      <path d={geom.rear.bottomStrip} fill="#020617" opacity="0.95" />
+                    )}
+                    {/* Textos Trasero */}
+                    <text
+                      x="100"
+                      y={geom.rear.textY}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      fontSize="7.5"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none drop-shadow"
+                    >
+                      Parabrisas Tras.
+                    </text>
+                    <text
+                      x="100"
+                      y={geom.rear.subY}
+                      textAnchor="middle"
+                      fill="#f3e8ff"
+                      fontSize="7"
+                      fontWeight="600"
+                      className="pointer-events-none select-none"
+                    >
+                      {selectedMaterials.rear?.includes("70")
+                        ? "70%"
+                        : selectedMaterials.rear?.includes("35")
+                        ? "35%"
+                        : "20%"}
+                      {secondLayers.rear?.enabled ? " + 2da" : ""}
+                    </text>
+                  </svg>
+                );
+              })()}
             </div>
 
             {/* Leyenda de Colores con Nombres Oficiales */}
             <div className="grid grid-cols-2 gap-1.5 text-[10px] w-full max-w-xs font-medium pt-1 border-t border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveZone("windshield")}>
-                <span className="h-2.5 w-2.5 rounded-full bg-sky-400 ring-1 ring-sky-600" />
+              <div
+                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
+                  activeZone === "windshield" ? "bg-sky-100 dark:bg-sky-950/60 font-bold text-sky-800 dark:text-sky-300" : ""
+                }`}
+                onClick={() => setActiveZone("windshield")}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-sky-400 ring-1 ring-sky-600 shrink-0" />
                 <span className="text-zinc-700 dark:text-zinc-300">Parabrisas delantero</span>
               </div>
-              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveZone("front_sides")}>
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 ring-1 ring-yellow-600" />
+              <div
+                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
+                  activeZone === "front_sides" ? "bg-yellow-100 dark:bg-yellow-950/60 font-bold text-yellow-800 dark:text-yellow-300" : ""
+                }`}
+                onClick={() => setActiveZone("front_sides")}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 ring-1 ring-yellow-600 shrink-0" />
                 <span className="text-zinc-700 dark:text-zinc-300">Ventanas Delanteras</span>
               </div>
-              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveZone("rear_sides")}>
-                <span className="h-2.5 w-2.5 rounded-full bg-orange-400 ring-1 ring-orange-600" />
+              <div
+                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
+                  activeZone === "rear_sides" ? "bg-orange-100 dark:bg-orange-950/60 font-bold text-orange-800 dark:text-orange-300" : ""
+                }`}
+                onClick={() => setActiveZone("rear_sides")}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-orange-400 ring-1 ring-orange-600 shrink-0" />
                 <span className="text-zinc-700 dark:text-zinc-300">Ventanas Traseras</span>
               </div>
-              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveZone("rear")}>
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-400 ring-1 ring-purple-600" />
+              <div
+                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
+                  activeZone === "rear" ? "bg-purple-100 dark:bg-purple-950/60 font-bold text-purple-800 dark:text-purple-300" : ""
+                }`}
+                onClick={() => setActiveZone("rear")}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-purple-400 ring-1 ring-purple-600 shrink-0" />
                 <span className="text-zinc-700 dark:text-zinc-300">Parabrisas Trasero</span>
               </div>
             </div>
