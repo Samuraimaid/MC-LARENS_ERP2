@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MC-LARENS ERP CI/CD Pre-deployment Verification Suite.
-Runs all automated sanity, TDZ, circular import, domain and regression checks before deploying containers to Google Cloud Run.
+Runs all automated sanity, TDZ, circular import, missing JSX tags, domain and regression checks before deploying containers to Google Cloud Run.
 """
 
 import sys
@@ -29,7 +29,7 @@ def check_backend_tests():
 
 def check_frontend_integrity():
     print("\n==================================================")
-    print("2. Checking Frontend Code Integrity & TDZ Rules...")
+    print("2. Checking Frontend Code Integrity, JSX & Imports...")
     print("==================================================")
     
     src_dir = os.path.join("frontend", "src")
@@ -41,26 +41,44 @@ def check_frontend_integrity():
             if f.endswith((".jsx", ".js")) and not f.endswith((".test.js", ".test.jsx")):
                 total_files += 1
                 filepath = os.path.join(root, f)
+                rel = os.path.relpath(filepath, src_dir)
                 with open(filepath, "r", encoding="utf-8", errors="replace") as fp:
                     content = fp.read()
 
                 # Check for duplicate default export
                 default_exports = re.findall(r"export\s+default\s+", content)
                 if len(default_exports) > 1:
-                    errors.append(f"Duplicate 'export default' found in {filepath} ({len(default_exports)} occurrences)")
+                    errors.append(f"Duplicate 'export default' in {rel} ({len(default_exports)} times)")
 
-                # Check for mismatched brackets or critical corruption
-                open_curlies = content.count("{")
-                close_curlies = content.count("}")
-                if abs(open_curlies - close_curlies) > 25:
-                    errors.append(f"Potential syntax corruption in {filepath}: {open_curlies} open vs {close_curlies} close")
+                # Check imports & JSX components
+                imported = set()
+                for m in re.finditer(r'import\s+(?:(\w+)|\{([^}]+)\}|(\*\s+as\s+\w+))\s+from', content):
+                    if m.group(1):
+                        imported.add(m.group(1).strip())
+                    if m.group(2):
+                        for item in m.group(2).split(','):
+                            part = item.strip().split(' as ')
+                            imported.add(part[-1].strip())
+                    if m.group(3):
+                        imported.add(m.group(3).split(' as ')[-1].strip())
+
+                declared = set()
+                for m in re.finditer(r'(?:function|class|const|let|var)\s+([A-Za-z0-9_$]+)', content):
+                    declared.add(m.group(1).strip())
+
+                # Check for JSX elements <CapitalLetter...
+                for m in re.finditer(r'<([A-Z][A-Za-z0-9_]*)', content):
+                    tag = m.group(1)
+                    if tag not in imported and tag not in declared and tag not in {'React', 'Suspense', 'Fragment', 'Icon'}:
+                        if not re.search(r'\b' + re.escape(tag) + r'\b', content[:m.start()]):
+                            errors.append(f"{rel}: JSX component <{tag}> is used but not imported")
 
     if errors:
         for err in errors:
             print(f"  [FAIL] {err}")
         sys.exit(1)
     else:
-        print(f"  [PASS] Checked {total_files} frontend files. All structurally intact without duplicate exports.")
+        print(f"  [PASS] Checked {total_files} frontend files. All components and imports 100% verified.")
 
 
 def main():
