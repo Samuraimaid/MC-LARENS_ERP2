@@ -24389,6 +24389,10 @@ if frontend_build_dir.exists():
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+    assets_dir = frontend_build_dir / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         if full_path.startswith("api/"):
@@ -24402,6 +24406,7 @@ if frontend_build_dir.exists():
             return FileResponse(candidate)
 
         return FileResponse(frontend_build_dir / "index.html")
+
 
 
 @app.on_event("shutdown")
