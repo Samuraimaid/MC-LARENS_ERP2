@@ -2874,7 +2874,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                       isActive={isActive}
                       currentUserId={user?.user_id}
                       currentUserRole={user?.role}
-                      nowMs={now}
                       openLabel="Abrir borrador"
                       onOpen={openDraft}
                       onDelete={() => closeDraftTab(tab.id)}

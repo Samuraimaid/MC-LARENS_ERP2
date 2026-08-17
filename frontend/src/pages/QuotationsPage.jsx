@@ -1737,7 +1737,6 @@ export function QuotationsPage() {
                       isActive={isActive}
                       currentUserId={user?.user_id}
                       currentUserRole={user?.role}
-                      nowMs={now}
                       emptyProductsLabel="Sin productos aún"
                       onOpen={openDraft}
                       onDelete={() => closeDraftTab(tab.id)}
