@@ -3370,7 +3370,7 @@ async def seed_default_pin_user() -> None:
     try:
         xinon_email = os.environ.get("DEFAULT_PIN_USER_EMAIL", "xinon@local")
         xinon_attendance_pin = os.environ.get("DEFAULT_PIN_USER_PIN", "0101")
-        xinon_login_pin = os.environ.get("DEFAULT_LOGIN_PIN_USER_PIN", "01010101")
+        xinon_login_pin = os.environ.get("DEFAULT_LOGIN_PIN_USER_PIN", "01011990")
         now_iso = datetime.now(timezone.utc).isoformat()
 
         xinon = await db.users.find_one(
@@ -3403,9 +3403,8 @@ async def seed_default_pin_user() -> None:
                 }
             )
             logger.info("Seeded default PIN user Xinon")
-            # re-fetch the user we just inserted so later accessors are not None
             xinon = await db.users.find_one({"$or": [{"email": xinon_email}, {"name": "Xinon"}]}, {"_id": 0})
-            # continue to also ensure test users for each role exist
+
         if not xinon:
             logger.warning("Default PIN user Xinon not found after seeding; skipping update")
             return
@@ -3420,7 +3419,7 @@ async def seed_default_pin_user() -> None:
         }
 
         attendance_pin_hash = get_attendance_pin_hash(xinon)
-        if not attendance_pin_hash or not verify_pin_hash(xinon_attendance_pin, attendance_pin_hash):
+        if not attendance_pin_hash:
             updates["attendance_pin_hash"] = hash_pin(xinon_attendance_pin)
             updates["attendance_pin_index"] = compute_pin_index(xinon_attendance_pin)
             updates["attendance_pin_last_set_at"] = now_iso
@@ -3430,7 +3429,7 @@ async def seed_default_pin_user() -> None:
             updates["pin_last_set_at"] = now_iso
 
         login_pin_hash = get_login_pin_hash(xinon)
-        if not login_pin_hash or not verify_pin_hash(xinon_login_pin, login_pin_hash):
+        if not login_pin_hash:
             updates["login_pin_hash"] = hash_pin(xinon_login_pin)
             updates["login_pin_index"] = compute_pin_index(xinon_login_pin)
             updates["login_pin_last_set_at"] = now_iso
@@ -3464,10 +3463,10 @@ async def seed_default_pin_user() -> None:
                 {"$or": [{"email": test_email}, {"name": display_name}]}, {"_id": 0}
             )
             if existing:
-                # Ensure PIN is up-to-date for existing test users
+                # Ensure PIN is only set if missing
                 try:
                     updates: Dict[str, Any] = {}
-                    if not verify_pin_hash(attendance_pin, get_attendance_pin_hash(existing)):
+                    if not get_attendance_pin_hash(existing):
                         attendance_pin_hash = hash_pin(attendance_pin)
                         attendance_pin_index = compute_pin_index(attendance_pin)
                         updates["attendance_pin_hash"] = attendance_pin_hash
@@ -3477,7 +3476,7 @@ async def seed_default_pin_user() -> None:
                         updates["pin_hash"] = attendance_pin_hash
                         updates["pin_index"] = attendance_pin_index
                         updates["pin_last_set_at"] = updates["attendance_pin_last_set_at"]
-                    if not verify_pin_hash(login_pin, get_login_pin_hash(existing)):
+                    if not get_login_pin_hash(existing):
                         updates["login_pin_hash"] = hash_pin(login_pin)
                         updates["login_pin_index"] = compute_pin_index(login_pin)
                         updates["login_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
@@ -3578,7 +3577,7 @@ async def seed_default_pin_user() -> None:
 
                 if existing:
                     updates = dict(leader_doc)
-                    if not verify_pin_hash(attendance_pin, get_attendance_pin_hash(existing)):
+                    if not get_attendance_pin_hash(existing):
                         updates["attendance_pin_hash"] = hash_pin(attendance_pin)
                         updates["attendance_pin_index"] = compute_pin_index(attendance_pin)
                         updates["attendance_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
@@ -3586,7 +3585,7 @@ async def seed_default_pin_user() -> None:
                         updates["pin_hash"] = updates["attendance_pin_hash"]
                         updates["pin_index"] = updates["attendance_pin_index"]
                         updates["pin_last_set_at"] = updates["attendance_pin_last_set_at"]
-                    if not verify_pin_hash(login_pin, get_login_pin_hash(existing)):
+                    if not get_login_pin_hash(existing):
                         updates["login_pin_hash"] = hash_pin(login_pin)
                         updates["login_pin_index"] = compute_pin_index(login_pin)
                         updates["login_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
@@ -3659,7 +3658,7 @@ async def seed_floor_and_vip_sellers() -> None:
             }
             if existing:
                 updates = dict(seller_doc)
-                if not verify_pin_hash(attendance_pin, get_attendance_pin_hash(existing)):
+                if not get_attendance_pin_hash(existing):
                     updates["attendance_pin_hash"] = hash_pin(attendance_pin)
                     updates["attendance_pin_index"] = compute_pin_index(attendance_pin)
                     updates["attendance_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
@@ -3667,7 +3666,7 @@ async def seed_floor_and_vip_sellers() -> None:
                     updates["pin_hash"] = updates["attendance_pin_hash"]
                     updates["pin_index"] = updates["attendance_pin_index"]
                     updates["pin_last_set_at"] = updates["attendance_pin_last_set_at"]
-                if not verify_pin_hash(login_pin, get_login_pin_hash(existing)):
+                if not get_login_pin_hash(existing):
                     updates["login_pin_hash"] = hash_pin(login_pin)
                     updates["login_pin_index"] = compute_pin_index(login_pin)
                     updates["login_pin_last_set_at"] = datetime.now(timezone.utc).isoformat()
