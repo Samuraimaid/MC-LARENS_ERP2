@@ -22,6 +22,8 @@ from backend.domains.tint.window_materials import (
 class WindowPlanPayload(BaseModel):
     vehicle_id: Optional[str] = None
     windows: Dict[str, Any] = Field(..., description="Plan per window zone")
+    sunstrips: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Sunstrips configuration")
+    link_sides: Optional[bool] = True
     notes: Optional[str] = None
 
 
@@ -77,6 +79,7 @@ def get_tint_materials_router(
             )
             zones_config[zone] = {
                 "zone": zone,
+                "label": ZONE_LABELS.get(zone, zone),
                 "group": ZONE_TO_GROUP.get(zone, "sides"),
                 "size_band": band,
                 "size_band_info": SIZE_BANDS.get(band, {}),
@@ -88,9 +91,14 @@ def get_tint_materials_router(
             "vehicle_name": f"{vehicle_doc.get('brand', '')} {vehicle_doc.get('model', '')}".strip() if vehicle_doc else "Vehículo Estándar",
             "vehicle_size_bands": bands,
             "zones": zones_config,
+            "zone_labels": ZONE_LABELS,
+            "sunstrip_pricing": policy.get("sunstrip_pricing", DEFAULT_TINT_WINDOW_MATERIALS_POLICY["sunstrip_pricing"]),
             "policy": {
                 "require_plan_on_installed_sale": policy.get("require_plan_on_installed_sale", False),
-                "max_materials_per_vehicle": policy.get("max_materials_per_vehicle", 3),
+                "max_materials_per_vehicle": policy.get("max_materials_per_vehicle", 4),
+                "default_link_sides": policy.get("default_link_sides", True),
+                "sunstrip_pricing": policy.get("sunstrip_pricing", DEFAULT_TINT_WINDOW_MATERIALS_POLICY["sunstrip_pricing"]),
+                "second_layer_policy": policy.get("second_layer_policy", {"allow_second_layer": True}),
             },
         }
 

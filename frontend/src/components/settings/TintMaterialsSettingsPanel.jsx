@@ -169,6 +169,117 @@ export default function TintMaterialsSettingsPanel() {
               disabled={!canEditPrices}
             />
           </div>
+
+          <div className="rounded-xl border p-3.5 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-3">
+            <div>
+              <Label className="text-sm font-semibold">Precios de Bandas de Sol / Viseras (USD)</Label>
+              <p className="text-xs text-muted-foreground">
+                Costo adicional cobrado al activar viseras superiores o inferiores en parabrisas delantero y trasero.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <span className="text-[11px] text-muted-foreground block mb-1">Superior Delantero:</span>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={policy.sunstrip_pricing?.top_windshield_strip_usd ?? 10}
+                    onChange={(e) => {
+                      if (!canEditPrices) return;
+                      const val = Math.max(0, parseFloat(e.target.value) || 0);
+                      setPolicy((prev) => ({
+                        ...prev,
+                        sunstrip_pricing: {
+                          ...(prev.sunstrip_pricing || {}),
+                          top_windshield_strip_usd: val,
+                        },
+                      }));
+                    }}
+                    disabled={!canEditPrices}
+                    className="pl-6 text-xs font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block mb-1">Inferior Delantero:</span>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={policy.sunstrip_pricing?.bottom_windshield_strip_usd ?? 10}
+                    onChange={(e) => {
+                      if (!canEditPrices) return;
+                      const val = Math.max(0, parseFloat(e.target.value) || 0);
+                      setPolicy((prev) => ({
+                        ...prev,
+                        sunstrip_pricing: {
+                          ...(prev.sunstrip_pricing || {}),
+                          bottom_windshield_strip_usd: val,
+                        },
+                      }));
+                    }}
+                    disabled={!canEditPrices}
+                    className="pl-6 text-xs font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block mb-1">Superior Trasero:</span>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={policy.sunstrip_pricing?.top_rear_strip_usd ?? 10}
+                    onChange={(e) => {
+                      if (!canEditPrices) return;
+                      const val = Math.max(0, parseFloat(e.target.value) || 0);
+                      setPolicy((prev) => ({
+                        ...prev,
+                        sunstrip_pricing: {
+                          ...(prev.sunstrip_pricing || {}),
+                          top_rear_strip_usd: val,
+                        },
+                      }));
+                    }}
+                    disabled={!canEditPrices}
+                    className="pl-6 text-xs font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block mb-1">Inferior Trasero:</span>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={policy.sunstrip_pricing?.bottom_rear_strip_usd ?? 10}
+                    onChange={(e) => {
+                      if (!canEditPrices) return;
+                      const val = Math.max(0, parseFloat(e.target.value) || 0);
+                      setPolicy((prev) => ({
+                        ...prev,
+                        sunstrip_pricing: {
+                          ...(prev.sunstrip_pricing || {}),
+                          bottom_rear_strip_usd: val,
+                        },
+                      }));
+                    }}
+                    disabled={!canEditPrices}
+                    className="pl-6 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -205,7 +316,7 @@ export default function TintMaterialsSettingsPanel() {
                 </Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <span className="text-[11px] text-muted-foreground block mb-1">Parabrisas:</span>
+                    <span className="text-[11px] text-muted-foreground block mb-1">Parabrisas delantero:</span>
                     <div className="relative">
                       <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
                       <Input
@@ -221,7 +332,7 @@ export default function TintMaterialsSettingsPanel() {
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-muted-foreground block mb-1">Laterales (Ambos lados):</span>
+                    <span className="text-[11px] text-muted-foreground block mb-1">Ventanas Laterales (Del. + Tras.):</span>
                     <div className="relative">
                       <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
                       <Input
@@ -237,7 +348,7 @@ export default function TintMaterialsSettingsPanel() {
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-muted-foreground block mb-1">Medallón Trasero:</span>
+                    <span className="text-[11px] text-muted-foreground block mb-1">Parabrisas Trasero:</span>
                     <div className="relative">
                       <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">$</span>
                       <Input
