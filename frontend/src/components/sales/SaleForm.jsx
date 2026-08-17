@@ -1065,63 +1065,6 @@ export default function SaleForm({
     }, 850);
   }, [clearProductTransferAnimation]);
 
-  const handleApplyTintPlan = useCallback(({ tint_window_plan, materials_extra }) => {
-    if (tintDialogCartItem) {
-      updateCartItem(tintDialogCartItem.product_id, "materials_extra", materials_extra, {
-        patch: { tint_window_plan },
-        persist: true,
-      });
-      toast.success("Plan de polarizado actualizado");
-    } else if (tintDialogProduct) {
-      const product = tintDialogProduct;
-      const installationType = product.installation_type || "optional";
-      const installationPrice = product.installation_price || 0;
-      const withInstallation = installationType === "required";
-      const nextCartItems = [
-        ...normalizedCartItems,
-        {
-          product_id: product.product_id,
-          product_name: product.name,
-          sku: product.sku || "",
-          image: product.images?.[0] || null,
-          quantity: 1,
-          unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
-          original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
-          price_tier: activePriceTier,
-          price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
-          price_edit_history: [],
-          price_edit_count: 0,
-          discount: 0,
-          installation_type: installationType,
-          installation_price: installationPrice,
-          with_installation: hasSelectedVehicle ? withInstallation : false,
-          materials_extra: materials_extra || 0,
-          tint_window_plan: tint_window_plan || null,
-          ...(sellerReleasedRestricted ? { added_after_release: true } : {}),
-        },
-      ];
-      clearProductSearchAfterCartUpdateRef.current = true;
-      flashCartLanding();
-      setCartItems(nextCartItems);
-      persistDraftSnapshot({ cartItems: nextCartItems, productSearch: "" });
-      playCartPickupSound();
-      toast.success("Polarizado configurado y agregado al carrito");
-    }
-    setTintDialogOpen(false);
-    setTintDialogProduct(null);
-    setTintDialogCartItem(null);
-  }, [
-    activePriceTier,
-    effectivePricingContext,
-    hasSelectedVehicle,
-    normalizedCartItems,
-    persistDraftSnapshot,
-    sellerReleasedRestricted,
-    tintDialogCartItem,
-    tintDialogProduct,
-    updateCartItem,
-  ]);
-
   const addToCart = (product, options = {}) => {
     const { sourceElement = null } = options;
     const localStock = getLocalStoreStockValue(product);
@@ -2520,6 +2463,63 @@ export default function SaleForm({
     const nextQuantity = Math.max(1, currentQuantity + delta);
     updateCartItem(productId, "quantity", nextQuantity, { persist: true });
   }, [normalizedCartItems, updateCartItem]);
+
+  const handleApplyTintPlan = useCallback(({ tint_window_plan, materials_extra }) => {
+    if (tintDialogCartItem) {
+      updateCartItem(tintDialogCartItem.product_id, "materials_extra", materials_extra, {
+        patch: { tint_window_plan },
+        persist: true,
+      });
+      toast.success("Plan de polarizado actualizado");
+    } else if (tintDialogProduct) {
+      const product = tintDialogProduct;
+      const installationType = product.installation_type || "optional";
+      const installationPrice = product.installation_price || 0;
+      const withInstallation = installationType === "required";
+      const nextCartItems = [
+        ...normalizedCartItems,
+        {
+          product_id: product.product_id,
+          product_name: product.name,
+          sku: product.sku || "",
+          image: product.images?.[0] || null,
+          quantity: 1,
+          unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
+          original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
+          price_tier: activePriceTier,
+          price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
+          price_edit_history: [],
+          price_edit_count: 0,
+          discount: 0,
+          installation_type: installationType,
+          installation_price: installationPrice,
+          with_installation: hasSelectedVehicle ? withInstallation : false,
+          materials_extra: materials_extra || 0,
+          tint_window_plan: tint_window_plan || null,
+          ...(sellerReleasedRestricted ? { added_after_release: true } : {}),
+        },
+      ];
+      clearProductSearchAfterCartUpdateRef.current = true;
+      flashCartLanding();
+      setCartItems(nextCartItems);
+      persistDraftSnapshot({ cartItems: nextCartItems, productSearch: "" });
+      playCartPickupSound();
+      toast.success("Polarizado configurado y agregado al carrito");
+    }
+    setTintDialogOpen(false);
+    setTintDialogProduct(null);
+    setTintDialogCartItem(null);
+  }, [
+    activePriceTier,
+    effectivePricingContext,
+    hasSelectedVehicle,
+    normalizedCartItems,
+    persistDraftSnapshot,
+    sellerReleasedRestricted,
+    tintDialogCartItem,
+    tintDialogProduct,
+    updateCartItem,
+  ]);
 
   const priceEditorItem = useMemo(
     () => normalizedCartItems.find((item) => item.product_id === priceEditorItemId) || null,
