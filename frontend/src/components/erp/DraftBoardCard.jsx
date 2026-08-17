@@ -6,23 +6,16 @@ import { Button } from "@/components/ui/button";
 import { ErpRollingCurrency } from "@/components/erp/ErpRollingNumber";
 import { cn } from "@/lib/utils";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
-import {
-  ERP_SEMANTIC_TONES,
-  formatErpRelativeTime,
-} from "@/lib/erpDesignSystem";
-import {
-  isErpDraftSupervisor,
-  isOwnErpDraft,
-} from "@/lib/roleHome";
-import {
-  canSellerDeleteDraft,
-  isDraftBlockedForSeller,
-  isDraftReleasedWithRestrictions,
-  isDraftSupervisorTouched,
-} from "@/lib/draftReview";
-import { vehicleIdentityFromLabel } from "@/lib/vehicleThumbnail";
 
-const FALLBACK_TONES = {
+const DRAFT_SUPERVISOR_ROLES = new Set([
+  "gerencia",
+  "supervisor",
+  "jefe_vendedores",
+  "jefe_tienda",
+  "recursos_humanos",
+]);
+
+const DRAFT_TONES = {
   draftOwn: "border-border",
   draftOther: "border-dashed border-amber-400/60 dark:border-amber-500/40",
   draftBlocked: "opacity-55 saturate-50 pointer-events-none border-amber-300/70 dark:border-amber-500/40",
@@ -31,7 +24,37 @@ const FALLBACK_TONES = {
   releasedBadge: "border-violet-400/50 bg-violet-50 text-violet-900 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-100",
 };
 
-/** Drop redundant subtitle like "Venta - Same Customer Name" */
+function formatRelativeTime(isoDate, nowMs = Date.now()) {
+  if (!isoDate) return null;
+  const parsed = new Date(isoDate).getTime();
+  if (!Number.isFinite(parsed)) return null;
+  const diffMs = Math.max(0, nowMs - parsed);
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "hace un momento";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} d`;
+}
+
+function resolveVehicleIdentity(label) {
+  const text = String(label || "").trim();
+  if (!text) return null;
+  const head = text.split(/[•·|]/)[0].trim();
+  const parts = head.split(/\s+/).filter((p) => p && !/^[•·|]+$/.test(p));
+  if (parts.length < 2) return { brand: parts[0] || "", model: parts.slice(1).join(" ") };
+  const yearIdx = parts.findIndex((p) => /^\d{4}$/.test(p));
+  if (yearIdx > 0) {
+    return {
+      brand: parts[0],
+      model: parts.slice(1, yearIdx).join(" ") || parts[1],
+      year: parts[yearIdx],
+    };
+  }
+  return { brand: parts[0], model: parts.slice(1).join(" ") };
+}
+
 function cleanSubtitle(title, subtitle) {
   try {
     const t = String(title || "").trim().toLowerCase();
@@ -62,25 +85,25 @@ export function DraftBoardCard({
   onDelete,
   nowMs = Date.now(),
 }) {
-  const tones = ERP_SEMANTIC_TONES || FALLBACK_TONES;
-  const isOwn = isOwnErpDraft(tab, currentUserId);
-  const isSupervisorViewer = isErpDraftSupervisor(currentUserRole);
+  const isOwn = !tab?.ownerUserId || String(tab.ownerUserId) === String(currentUserId || "");
+  const isSupervisorViewer = DRAFT_SUPERVISOR_ROLES.has(String(currentUserRole || "").toLowerCase());
   const resolvedOpenLabel = isSupervisorViewer && !isOwn ? "Editar borrador" : openLabel;
   const review = tab?.review || meta?.review || null;
-  const isBlocked = isOwn && isDraftBlockedForSeller(review);
-  const isReleasedRestricted = isOwn && isDraftReleasedWithRestrictions(review);
-  const isSupervisorTouched = isOwn && isDraftSupervisorTouched(review);
-  const canDelete = canSellerDeleteDraft(tab, review, currentUserId, currentUserRole);
+  const reviewStatus = String(review?.status || "idle").toLowerCase();
+  const supervisorChanged = Boolean(review?.supervisor_changed);
+  const isBlocked = isOwn && reviewStatus === "blocked";
+  const isReleasedRestricted = isOwn && reviewStatus === "released" && supervisorChanged;
+  const isSupervisorTouched = isOwn && supervisorChanged;
+  
+  const canDelete = isSupervisorViewer ? true : (!isOwn ? false : !supervisorChanged);
   const deleteDisabled = isBlocked || !canDelete;
-  const relativeTime = formatErpRelativeTime(meta?.updatedAt, nowMs);
+  const relativeTime = formatRelativeTime(meta?.updatedAt, nowMs);
   const hasPreviewItems = Boolean(meta?.previewItems?.length);
   const subtitle = cleanSubtitle(meta?.title, meta?.subtitle);
 
-  // Prefer structured vehicle record; fall back to parsing the label text
   const watermarkVehicle = useMemo(() => {
     const record = meta?.previewVehicleRecord;
     if (record && (record.brand || record.model)) {
-      // Strip stale type slugs so brand/model re-inference wins (e.g. Civic → sedan)
       return {
         brand: record.brand,
         model: record.model,
@@ -89,21 +112,20 @@ export function DraftBoardCard({
         vehicle_cab_variant: record.vehicle_cab_variant,
       };
     }
-    return vehicleIdentityFromLabel(meta?.previewVehicle);
+    return resolveVehicleIdentity(meta?.previewVehicle);
   }, [meta?.previewVehicle, meta?.previewVehicleRecord]);
 
-  // One status badge: En revisión | Liberado | Revisado | Activo
   let statusLabel = null;
   let StatusIcon = null;
   let statusClassName = "";
   if (isBlocked) {
     statusLabel = "En revisión";
     StatusIcon = Eye;
-    statusClassName = tones.reviewBadge;
+    statusClassName = DRAFT_TONES.reviewBadge;
   } else if (isReleasedRestricted) {
     statusLabel = "Liberado";
     StatusIcon = Lock;
-    statusClassName = tones.releasedBadge;
+    statusClassName = DRAFT_TONES.releasedBadge;
   } else if (isSupervisorTouched) {
     statusLabel = "Revisado";
     StatusIcon = Lock;
@@ -129,14 +151,14 @@ export function DraftBoardCard({
       className={cn(
         "relative overflow-hidden transition",
         isBlocked
-          ? tones.draftBlocked
+          ? DRAFT_TONES.draftBlocked
           : isReleasedRestricted
-            ? tones.draftReleased
+            ? DRAFT_TONES.draftReleased
             : isActive
               ? "border-primary"
               : isOwn
-                ? tones.draftOwn
-                : tones.draftOther
+                ? DRAFT_TONES.draftOwn
+                : DRAFT_TONES.draftOther
       )}
       title={
         isBlocked
@@ -184,7 +206,6 @@ export function DraftBoardCard({
                 </Badge>
               ) : null}
               {meta?.currency ? <Badge variant="secondary">{meta.currency}</Badge> : null}
-              {/* Seller name only when viewing someone else's draft */}
               {!isOwn && meta?.sellerName ? (
                 <Badge
                   variant="outline"
