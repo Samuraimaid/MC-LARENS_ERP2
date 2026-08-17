@@ -1,0 +1,74 @@
+# ==============================================================================
+# MC-LARENS ERP 2.0 - Docker Compose para Despliegue en Servidor en la Nube
+# ==============================================================================
+# Uso en Google Compute Engine (VM) o Servidor Cloud:
+# docker compose -f deploy/docker-compose.cloud.yml --env-file deploy/.env up -d --build
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: mclarens-erp-backend:cloud-latest
+    container_name: mclarens-cloud-backend
+    restart: always
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      - cloud_uploads:/app/uploads
+      - cloud_backups:/app/backups
+      - ../backend/data/vehicle-thumbnails:/app/backend/data/vehicle-thumbnails
+      - ../backend/data/vehicle-descriptor-types.json:/app/backend/data/vehicle-descriptor-types.json:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - mclarens-cloud-network
+
+  # Frontend Web (React SPA servido con Nginx)
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ""
+        VITE_AUTH_URL: /api/auth/login
+        VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN: "${VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN:-50005000}"
+    image: mclarens-erp-frontend:cloud-latest
+    container_name: mclarens-cloud-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - VITE_BACKEND_URL=
+      - VITE_AUTH_URL=/api/auth/login
+      - VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN=${VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN:-50005000}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mclarens-cloud-network
+
+volumes:
+  cloud_uploads:
+  cloud_backups:
+
+networks:
+  mclarens-cloud-network:
+    driver: bridge

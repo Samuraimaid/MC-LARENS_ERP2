@@ -24341,7 +24341,6 @@ cors_origins_env = os.environ.get("CORS_ORIGINS")
 if cors_origins_env:
     cors_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
 else:
-    # ADVERTENCIA: modificar estos orígenes afecta el login (PIN) desde el frontend.
     cors_origins = [
         "http://127.0.0.1:3000",
         "http://localhost:3000",
@@ -24349,17 +24348,25 @@ else:
         "http://localhost:3001",
         "http://localhost:8001",
         "http://127.0.0.1:8001",
-        "http://192.168.1.26:3000",
-        "http://192.168.1.26:8001",
-        "https://192.168.1.26:3443",
+        "https://localhost:3443",
+        "https://127.0.0.1:3443",
     ]
 
+# Permitir URLs públicas configuradas como orígenes permitidos
+for public_url_key in ("PUBLIC_TUNNEL_URL_MAIN", "PUBLIC_TUNNEL_URL_NORTH", "PUBLIC_TUNNEL_URL_SOUTH", "CLOUD_FRONTEND_URL"):
+    pub_url = (os.environ.get(public_url_key) or "").strip().rstrip("/")
+    if pub_url and pub_url not in cors_origins:
+        cors_origins.append(pub_url)
+
 cors_origins = list(dict.fromkeys(cors_origins))
-# Permite credenciales desde cualquier IP privada LAN (192.168.x.x, 10.x, 172.16-31).
-cors_origin_regex = (
+
+# Regex para permitir LAN privada, localhost y subdominios cloud/run.app/mclarenerp.com
+default_cors_regex = (
     r"https?://(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|"
-    r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(?::\d+)?$"
+    r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|"
+    r".*\.run\.app|.*\.mclarenerp\.com)(?::\d+)?$"
 )
+cors_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", default_cors_regex)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24369,6 +24376,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 from backend.middlewares.emergency_standby import EmergencyStandbyMiddleware
 

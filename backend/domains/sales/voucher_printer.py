@@ -142,12 +142,16 @@ async def send_escpos_to_pos_voucher_printer(
         "data_base64": base64.b64encode(escpos_payload).decode("ascii"),
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(
-            f"{bridge_url}/print",
-            json=payload,
-            headers=_bridge_headers(include_token=True),
-        )
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        try:
+            response = await client.post(
+                f"{bridge_url}/print",
+                json=payload,
+                headers=_bridge_headers(include_token=True),
+            )
+        except Exception as exc:
+            raise RuntimeError(f"No se pudo contactar el puente POS en {bridge_url}: {exc}") from exc
+
         if response.status_code >= 400:
             detail = response.text
             try:

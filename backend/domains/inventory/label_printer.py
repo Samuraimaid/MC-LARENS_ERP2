@@ -218,12 +218,16 @@ async def send_tspl_to_label_printer(
     else:
         payload["data"] = tspl_payload
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(
-            f"{bridge_url}/print",
-            json=payload,
-            headers=_bridge_headers(include_token=True),
-        )
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        try:
+            response = await client.post(
+                f"{bridge_url}/print",
+                json=payload,
+                headers=_bridge_headers(include_token=True),
+            )
+        except Exception as exc:
+            raise RuntimeError(f"No se pudo contactar el puente de etiquetas en {bridge_url}: {exc}") from exc
+
         if response.status_code >= 400:
             detail = response.text
             try:
@@ -231,4 +235,4 @@ async def send_tspl_to_label_printer(
             except Exception:
                 pass
             raise RuntimeError(str(detail))
-        return response.json()
+        return response.json()

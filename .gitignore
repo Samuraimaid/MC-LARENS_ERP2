@@ -148,3 +148,27 @@ temporary_cleanup_validation/**/*venv*/pyvenv.cfg
 # Historical backups and bundled installers (very large)
 backend/scripts/back-ups/
 backend/scripts/**/installers/
+
+# Transient dumps, logs, and backup snapshots
+*.log
+*.bak*
+*.txt.bak
+ERP_TREE.txt
+FRONTEND_TREE.txt
+FRONTEND_SALES_FILES.txt
+server.txt
+committed_server_snip.txt
+pytest_voucher_out.txt
+qa_dbg.txt
+qa_inv_post.txt
+voucher_*.txt
+cookies*.txt
+sale_breakdown_inspect.txt
+backend_test.py
+docker_test.txt
+endpoint_qa_check*.json
+formal_close_result.json
+pdf_graphics_check.json
+post_deploy_result.json
+qa_suite_result.json
+workshop_suite_result.json
