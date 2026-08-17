@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_BASE as API } from "@/lib/api";
 
 // Zonas y Nombres Oficiales
 const ZONES = [
@@ -85,7 +86,11 @@ export default function TintWindowMaterialDialog({
       try {
         const vehicleId = vehicle?.vehicle_id || vehicle?.id || "";
         const res = await axios.get(
-          `/api/tint/window-config?vehicle_id=${vehicleId}&allow_override=true`
+          `${API}/tint/window-config`,
+          {
+            params: { vehicle_id: vehicleId, allow_override: true },
+            withCredentials: true,
+          }
         );
         setConfig(res.data);
 
@@ -171,7 +176,9 @@ export default function TintWindowMaterialDialog({
       };
 
       try {
-        const res = await axios.post("/api/tint/window-plan/quote", planPayload);
+        const res = await axios.post(`${API}/tint/window-plan/quote`, planPayload, {
+          withCredentials: true,
+        });
         setQuoteData(res.data);
       } catch (err) {
         console.warn("Quote error", err?.response?.data);

@@ -24,6 +24,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { API_BASE as API } from "@/lib/api";
 
 export default function TintMaterialsSettingsPanel() {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export default function TintMaterialsSettingsPanel() {
   const fetchPolicy = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/tint/window-materials/policy");
+      const res = await axios.get(`${API}/tint/window-materials/policy`, { withCredentials: true });
       setPolicy(res.data?.policy || {});
     } catch (err) {
       console.error("Error fetching tint policy", err);
@@ -59,17 +60,13 @@ export default function TintMaterialsSettingsPanel() {
 
   const handlePriceChange = (materialId, group, value) => {
     if (!canEditPrices) return;
-    const num = Math.max(0, parseFloat(value) || 0);
+    const num = Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
     setPolicy((prev) => {
       const materials = (prev.materials || []).map((m) => {
         if (m.id === materialId) {
-          return {
-            ...m,
-            price_by_zone_group: {
-              ...(m.price_by_zone_group || {}),
-              [group]: num,
-            },
-          };
+          const price_by_zone_group = { ...(m.price_by_zone_group || {}) };
+          price_by_zone_group[group] = num;
+          return { ...m, price_by_zone_group };
         }
         return m;
       });
@@ -77,16 +74,12 @@ export default function TintMaterialsSettingsPanel() {
     });
   };
 
-  const handleRollAvailabilityChange = (materialId, bandKey, isAvailable) => {
+  const handleAvailabilityToggle = (materialId, checked) => {
     if (!canEditAvailability) return;
     setPolicy((prev) => {
       const materials = (prev.materials || []).map((m) => {
         if (m.id === materialId) {
-          const rolls = { ...(m.rolls || {}) };
-          if (rolls[bandKey]) {
-            rolls[bandKey] = { ...rolls[bandKey], is_available: isAvailable };
-          }
-          return { ...m, rolls };
+          return { ...m, is_active: checked };
         }
         return m;
       });
@@ -94,9 +87,9 @@ export default function TintMaterialsSettingsPanel() {
     });
   };
 
-  const handleRollQtyChange = (materialId, bandKey, qty) => {
+  const handleRollQtyChange = (materialId, bandKey, value) => {
     if (!canEditAvailability) return;
-    const num = Math.max(0, parseInt(qty, 10) || 0);
+    const num = Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
     setPolicy((prev) => {
       const materials = (prev.materials || []).map((m) => {
         if (m.id === materialId) {
@@ -115,7 +108,7 @@ export default function TintMaterialsSettingsPanel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.put("/api/tint/window-materials/policy", { policy });
+      const res = await axios.put(`${API}/tint/window-materials/policy`, { policy }, { withCredentials: true });
       setPolicy(res.data?.policy || policy);
       toast.success("Política de polarizados actualizada con éxito");
     } catch (err) {

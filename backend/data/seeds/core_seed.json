@@ -1996,20 +1996,73 @@
         "compatibility": {},
         "cost": 10.0,
         "created_at": "2026-03-28T15:09:25.801651+00:00",
-        "description": "Servicio de remoción de polarizado viejo y limpieza de vidrios",
+        "description": "Servicio de remoción de polarizado viejo y limpieza de vidrios (Despolarizado)",
         "images": [],
         "installation_price": 0,
         "installation_required": true,
         "installation_time_minutes": 90,
         "is_active": true,
-        "name": "Limpieza/Remoción de Polarizado",
+        "name": "Despolarizado / Limpieza de Vidrios",
         "price": 45.0,
         "product_type": "service",
         "sku": "POL-LIM-001",
-        "subcategory": "Limpieza de Polarizado",
+        "subcategory": "Despolarizado",
         "warranty_months": 0,
         "window_options": [
           "completo"
+        ]
+      },
+      {
+        "product_id": "prod_pol_007",
+        "brand": "3M",
+        "category": "polarizados",
+        "compatibility": {},
+        "cost": 35.0,
+        "created_at": "2026-03-28T15:09:25.801660+00:00",
+        "description": "Polarizado completo sin parabrisas delantero (Solo laterales y vidrio trasero)",
+        "images": [
+          "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"
+        ],
+        "installation_price": 0,
+        "installation_required": true,
+        "installation_time_minutes": 90,
+        "is_active": true,
+        "name": "Polarizado Completo Sin Sellado",
+        "polarizado_type": "3M FX Premium 20%",
+        "price": 85.0,
+        "product_type": "service",
+        "sku": "POL-CSS-001",
+        "subcategory": "Sin Sellado",
+        "warranty_months": 60,
+        "window_options": [
+          "laterales",
+          "trasero"
+        ]
+      },
+      {
+        "product_id": "prod_pol_008",
+        "brand": "3M",
+        "category": "polarizados",
+        "compatibility": {},
+        "cost": 5.0,
+        "created_at": "2026-03-28T15:09:25.801670+00:00",
+        "description": "Polarizado para una o más ventanas individuales del vehículo",
+        "images": [
+          "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"
+        ],
+        "installation_price": 0,
+        "installation_required": true,
+        "installation_time_minutes": 25,
+        "is_active": true,
+        "name": "Polarizado Ventana Individual",
+        "polarizado_type": "3M FX Premium 20%",
+        "price": 18.0,
+        "product_type": "service",
+        "sku": "POL-VEN-001",
+        "subcategory": "Ventana Individual",
+        "warranty_months": 60,
+        "window_options": [
+          "lateral"
         ]
       },
       {

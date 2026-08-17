@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from backend.domains.tint.window_materials import (
     DEFAULT_TINT_WINDOW_MATERIALS_POLICY,
     GLASS_ZONES,
+    ZONE_LABELS,
     ZONE_TO_GROUP,
     SIZE_BANDS,
     resolve_vehicle_glass_bands,
