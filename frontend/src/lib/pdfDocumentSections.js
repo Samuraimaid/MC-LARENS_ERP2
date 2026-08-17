@@ -197,6 +197,7 @@ export const SETTINGS_TAB_OPTIONS = [
   { id: "general", label: "General", icon: "Settings2" },
   { id: "billing", label: "Facturación", icon: "ReceiptText" },
   { id: "vehicles", label: "Vehículos", icon: "Car" },
+  { id: "polarizado", label: "Polarizado", icon: "Layers" },
   { id: "monedas", label: "Monedas", icon: "DollarSign" },
   { id: "notificaciones", label: "Notificaciones", icon: "Bell" },
   { id: "impresoras", label: "Impresoras", icon: "Printer" },

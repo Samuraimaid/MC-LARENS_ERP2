@@ -16,11 +16,13 @@ export const defaultApplyIvaForCustomer = (customer) => isCompanyCustomerType(cu
 export const normalizeCartItemForTotals = (item) => {
   const originalRaw = Number(item?.original_unit_price);
   const unitPrice = Number(item?.unit_price || 0);
+  const materialsExtra = Number(item?.materials_extra || 0);
   return {
     ...item,
     quantity: item?.quantity || 1,
     discount: item?.discount || 0,
     unit_price: unitPrice,
+    materials_extra: materialsExtra,
     original_unit_price: Number.isFinite(originalRaw) && originalRaw > 0 ? originalRaw : unitPrice,
     installation_type: item?.installation_type || "optional",
     installation_price: item?.installation_price || 0,
@@ -65,8 +67,9 @@ export const computeSaleTotals = ({
     const effectiveItemDiscount = discountsBlockedByPayment ? 0 : (item.discount || 0);
     const unitPriceInCurrency = convertPrice(item.unit_price, currency, pricingRate);
     const originalUnitPriceInCurrency = convertPrice(item.original_unit_price, currency, pricingRate);
-    const currentLineBase = unitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
-    const originalLineBase = originalUnitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100);
+    const materialsExtraInCurrency = convertPrice(item.materials_extra || 0, currency, pricingRate) * item.quantity;
+    const currentLineBase = (unitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100)) + materialsExtraInCurrency;
+    const originalLineBase = (originalUnitPriceInCurrency * item.quantity * (1 - effectiveItemDiscount / 100)) + materialsExtraInCurrency;
     const installType = item.installation_type || "optional";
     const wantsInstall = hasSelectedVehicle && (installType === "required" || Boolean(item.with_installation));
     const installTotal = installType !== "not_available" && wantsInstall

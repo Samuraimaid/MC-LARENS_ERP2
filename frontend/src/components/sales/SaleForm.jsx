@@ -55,6 +55,7 @@ import {
   Wrench,
   PackageSearch,
   ScanBarcode,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +151,7 @@ import {
 import PriceTierSelector from "@/components/sales/PriceTierSelector";
 import PriceTierCompare from "@/components/sales/PriceTierCompare";
 import DocumentAuditPanel from "@/components/sales/DocumentAuditPanel";
+import TintWindowMaterialDialog from "@/components/sales/TintWindowMaterialDialog";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -379,6 +381,9 @@ export default function SaleForm({
   const [commercialIncludeInstallation, setCommercialIncludeInstallation] = useState(false);
   const [commercialIncludeDelivery, setCommercialIncludeDelivery] = useState(false);
   const [requestingPrecio2Approval, setRequestingPrecio2Approval] = useState(false);
+  const [tintDialogOpen, setTintDialogOpen] = useState(false);
+  const [tintDialogProduct, setTintDialogProduct] = useState(null);
+  const [tintDialogCartItem, setTintDialogCartItem] = useState(null);
   const priceEditorAmountRef = useRef(null);
   const priceEditorPercentRef = useRef(null);
   const [newCustomer, setNewCustomer] = useState({
@@ -1060,6 +1065,63 @@ export default function SaleForm({
     }, 850);
   }, [clearProductTransferAnimation]);
 
+  const handleApplyTintPlan = useCallback(({ tint_window_plan, materials_extra }) => {
+    if (tintDialogCartItem) {
+      updateCartItem(tintDialogCartItem.product_id, "materials_extra", materials_extra, {
+        patch: { tint_window_plan },
+        persist: true,
+      });
+      toast.success("Plan de polarizado actualizado");
+    } else if (tintDialogProduct) {
+      const product = tintDialogProduct;
+      const installationType = product.installation_type || "optional";
+      const installationPrice = product.installation_price || 0;
+      const withInstallation = installationType === "required";
+      const nextCartItems = [
+        ...normalizedCartItems,
+        {
+          product_id: product.product_id,
+          product_name: product.name,
+          sku: product.sku || "",
+          image: product.images?.[0] || null,
+          quantity: 1,
+          unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
+          original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
+          price_tier: activePriceTier,
+          price_tier_label: TIER_LABELS[activePriceTier] || activePriceTier,
+          price_edit_history: [],
+          price_edit_count: 0,
+          discount: 0,
+          installation_type: installationType,
+          installation_price: installationPrice,
+          with_installation: hasSelectedVehicle ? withInstallation : false,
+          materials_extra: materials_extra || 0,
+          tint_window_plan: tint_window_plan || null,
+          ...(sellerReleasedRestricted ? { added_after_release: true } : {}),
+        },
+      ];
+      clearProductSearchAfterCartUpdateRef.current = true;
+      flashCartLanding();
+      setCartItems(nextCartItems);
+      persistDraftSnapshot({ cartItems: nextCartItems, productSearch: "" });
+      playCartPickupSound();
+      toast.success("Polarizado configurado y agregado al carrito");
+    }
+    setTintDialogOpen(false);
+    setTintDialogProduct(null);
+    setTintDialogCartItem(null);
+  }, [
+    activePriceTier,
+    effectivePricingContext,
+    hasSelectedVehicle,
+    normalizedCartItems,
+    persistDraftSnapshot,
+    sellerReleasedRestricted,
+    tintDialogCartItem,
+    tintDialogProduct,
+    updateCartItem,
+  ]);
+
   const addToCart = (product, options = {}) => {
     const { sourceElement = null } = options;
     const localStock = getLocalStoreStockValue(product);
@@ -1086,6 +1148,20 @@ export default function SaleForm({
       });
       return;
     }
+
+    const isTintProduct =
+      String(product.product_id || "").toUpperCase().startsWith("POL-")
+      || String(product.sku || "").toUpperCase().startsWith("POL-")
+      || String(product.category || "").toLowerCase().includes("polariz")
+      || String(product.name || "").toLowerCase().includes("polarizado");
+
+    if (isTintProduct && hasSelectedVehicle && !existing && !options.skipTintDialog) {
+      setTintDialogProduct(product);
+      setTintDialogCartItem(null);
+      setTintDialogOpen(true);
+      return;
+    }
+
     const label = existing
       ? `Se redujo la cantidad de "${product.name}"`
       : `Se quitó "${product.name}" del carrito`;
@@ -4264,6 +4340,12 @@ export default function SaleForm({
                   {item.sample_status === "requested" && (
                     <Badge variant="outline" className="border-violet-300 bg-violet-50/50 px-1.5 py-0 text-[10px] text-violet-700">Muestra</Badge>
                   )}
+                  {item.tint_window_plan && (
+                    <Badge variant="outline" className="border-blue-300 bg-blue-50/70 text-blue-800 text-[10px] py-0 px-1.5 flex items-center gap-1">
+                      <Layers className="h-3 w-3" />
+                      Plan Ventanas (+${Number(item.materials_extra || 0).toFixed(2)} USD)
+                    </Badge>
+                  )}
                 </div>
                 {/* stock disponible */}
                 {(() => {
@@ -4404,6 +4486,21 @@ export default function SaleForm({
                         className="h-7 w-7 text-sky-700 hover:bg-sky-100/70 hover:text-sky-800 ui-interactive"
                       >
                         <PencilLine className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                    {item.tint_window_plan ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Ajustar polarizado por ventana"
+                        onClick={() => {
+                          setTintDialogCartItem(item);
+                          setTintDialogProduct(productsById.get(item.product_id) || item);
+                          setTintDialogOpen(true);
+                        }}
+                        className="h-7 w-7 text-blue-700 hover:bg-blue-100/70 hover:text-blue-800 ui-interactive"
+                      >
+                        <Layers className="h-3.5 w-3.5" />
                       </Button>
                     ) : null}
                     <Button
@@ -5498,6 +5595,21 @@ export default function SaleForm({
         onScan={handleBarcodeScan}
         title="Escanear producto"
         description="Apunta al código de barras o QR. En móvil toca Activar cámara y permite el acceso."
+      />
+
+      <TintWindowMaterialDialog
+        isOpen={tintDialogOpen}
+        onClose={() => {
+          setTintDialogOpen(false);
+          setTintDialogProduct(null);
+          setTintDialogCartItem(null);
+        }}
+        onApplyPlan={handleApplyTintPlan}
+        vehicle={selectedVehicleData}
+        product={tintDialogProduct}
+        initialPlan={tintDialogCartItem?.tint_window_plan}
+        currency={currency}
+        exchangeRate={exchangeRate}
       />
     </div>
   );

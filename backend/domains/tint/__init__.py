@@ -1,0 +1,1 @@
+"""Tint (Polarizados) Domain Package."""
