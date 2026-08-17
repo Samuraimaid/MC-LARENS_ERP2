@@ -358,19 +358,29 @@ export default function TintWindowMaterialDialog({
         {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería Real Dinámica */}
-          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/40 select-none">
+          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-3.5 flex flex-col items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/40 select-none">
             <div className="text-center w-full space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                  Carrocería: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Sedán"}
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
+                  Modelo: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Sedán"}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  {vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : "Interactivo"}
-                </span>
+                
+                {/* Desplegable directo de modelos */}
+                <select
+                  value={selectedVehicleType}
+                  onChange={(e) => setSelectedVehicleType(e.target.value)}
+                  className="text-[11px] font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs focus:ring-1 focus:ring-blue-500"
+                >
+                  {VEHICLE_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Selector Rápido de Silueta / Tipo de Carrocería */}
-              <div className="flex items-center justify-center gap-1 p-1 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full">
+              {/* Selector Rápido de Silueta / Tipo de Carrocería Scrollable */}
+              <div className="flex items-center gap-1 p-1 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full scrollbar-thin">
                 {VEHICLE_CATEGORIES.map((cat) => {
                   const isCur = selectedVehicleType === cat.id;
                   return (
@@ -378,7 +388,7 @@ export default function TintWindowMaterialDialog({
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedVehicleType(cat.id)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all ${
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all shrink-0 ${
                         isCur
                           ? "bg-white text-blue-700 dark:bg-zinc-900 dark:text-blue-300 shadow-xs ring-1 ring-blue-500/30 font-bold"
                           : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
