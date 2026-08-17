@@ -125,9 +125,9 @@ def get_security_audit_router(
     async def list_security_incidents(
         request: Request,
         limit: int = 50,
-        user: Dict[str, Any] = Depends(require_roles(["gerencia", "programador"])),
     ):
         """List recent tamper incidents for management review."""
+        await require_roles(request, ["gerencia", "programador"])
         incidents = (
             await db.security_incidents.find({}, {"_id": 0})
             .sort("created_at", -1)
