@@ -293,22 +293,29 @@ export function AntiTamperGuard({ children }) {
     window.location.reload(true);
   };
 
-  // Captura de Pantalla
+  // Captura de Pantalla (Carga dinámica de html2canvas / fallback nativo)
   const handleCaptureScreen = async (e) => {
     e.stopPropagation();
     closeContextMenu();
     setScreenshotModal({ isOpen: true, imageUrl: "", isCapturing: true });
 
     try {
-      let html2canvas;
-      try {
-        html2canvas = (await import("html2canvas")).default;
-      } catch {
-        html2canvas = null;
-      }
+      // 1. Intentar cargar html2canvas dinámicamente si no está presente
+      const getHtml2Canvas = () =>
+        new Promise((resolve) => {
+          if (window.html2canvas) return resolve(window.html2canvas);
+          const script = document.createElement("script");
+          script.src =
+            "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+          script.onload = () => resolve(window.html2canvas);
+          script.onerror = () => resolve(null);
+          document.head.appendChild(script);
+        });
 
-      if (html2canvas) {
-        const canvas = await html2canvas(document.body, {
+      const h2c = await getHtml2Canvas();
+
+      if (h2c) {
+        const canvas = await h2c(document.body, {
           useCORS: true,
           allowTaint: true,
           scale: window.devicePixelRatio || 1.5,
