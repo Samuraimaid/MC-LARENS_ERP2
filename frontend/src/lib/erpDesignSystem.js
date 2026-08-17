@@ -16,6 +16,13 @@
 
 import { CarFront, CreditCard, Package, ShoppingCart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ERP_DRAFT_SUPERVISOR_ROLES,
+  isErpDraftSupervisor,
+  isOwnErpDraft,
+} from "@/lib/roleHome";
+
+export { ERP_DRAFT_SUPERVISOR_ROLES, isErpDraftSupervisor, isOwnErpDraft };
 
 /** Iconos contextuales por paso del flujo de venta/cotización */
 export const ERP_SALE_FLOW_STEP_ICONS = {
@@ -25,14 +32,6 @@ export const ERP_SALE_FLOW_STEP_ICONS = {
   4: ShoppingCart,
   5: CreditCard,
 };
-
-import {
-  ERP_DRAFT_SUPERVISOR_ROLES,
-  isErpDraftSupervisor,
-  isOwnErpDraft,
-} from "@/lib/roleHome";
-
-export { ERP_DRAFT_SUPERVISOR_ROLES, isErpDraftSupervisor, isOwnErpDraft };
 
 /** Botones de barra de formulario embebido — misma geometría en todo el ERP */
 export const ERP_ACTION_BUTTONS = {
