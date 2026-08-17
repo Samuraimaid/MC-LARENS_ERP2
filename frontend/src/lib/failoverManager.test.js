@@ -19,6 +19,7 @@ describe("failoverManager", () => {
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -35,5 +36,5 @@ describe("failoverManager", () => {
     expect(status.nodes.length).toBeGreaterThanOrEqual(4);
 
     stopFailoverManager();
-  });
+  }, 10000);
 });

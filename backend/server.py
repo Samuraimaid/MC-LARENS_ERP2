@@ -24334,6 +24334,11 @@ petty_cash_accounting_router = get_petty_cash_accounting_router(
 )
 api_router.include_router(petty_cash_accounting_router)
 
+from backend.routes.security_audit import get_security_audit_router
+
+security_audit_router = get_security_audit_router(db, require_auth, require_roles)
+api_router.include_router(security_audit_router)
+
 app.include_router(api_router)
 
 cors_origins_env = os.environ.get("CORS_ORIGINS")

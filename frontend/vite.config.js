@@ -223,6 +223,8 @@ module.exports = defineConfig(({ mode, command }) => {
     test: {
       environment: "jsdom",
       globals: true,
+      include: ["src/**/*.{test,spec}.{js,jsx}"],
+      exclude: ["e2e/**", "tests/**", "node_modules/**", "build/**"],
     },
   };
 });
