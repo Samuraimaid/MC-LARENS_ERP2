@@ -9,9 +9,11 @@ import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWate
 import {
   ERP_SEMANTIC_TONES,
   formatErpRelativeTime,
+} from "@/lib/erpDesignSystem";
+import {
   isErpDraftSupervisor,
   isOwnErpDraft,
-} from "@/lib/erpDesignSystem";
+} from "@/lib/roleHome";
 import {
   canSellerDeleteDraft,
   isDraftBlockedForSeller,
@@ -20,32 +22,35 @@ import {
 } from "@/lib/draftReview";
 import { vehicleIdentityFromLabel } from "@/lib/vehicleThumbnail";
 
+const FALLBACK_TONES = {
+  draftOwn: "border-border",
+  draftOther: "border-dashed border-amber-400/60 dark:border-amber-500/40",
+  draftBlocked: "opacity-55 saturate-50 pointer-events-none border-amber-300/70 dark:border-amber-500/40",
+  draftReleased: "border-violet-300/60 dark:border-violet-500/35",
+  reviewBadge: "border-amber-400/60 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100",
+  releasedBadge: "border-violet-400/50 bg-violet-50 text-violet-900 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-100",
+};
+
 /** Drop redundant subtitle like "Venta - Same Customer Name" */
 function cleanSubtitle(title, subtitle) {
-  const t = String(title || "").trim();
-  const s = String(subtitle || "").trim();
-  if (!s) return null;
-  if (!t) return s;
-  const norm = (v) =>
-    String(v)
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toLowerCase()
-      .replace(/\s+/g, " ")
+  try {
+    const t = String(title || "").trim().toLowerCase();
+    const s = String(subtitle || "").trim();
+    if (!s) return null;
+    if (!t) return s;
+    const sLower = s.toLowerCase();
+    if (sLower === t) return null;
+    const stripped = sLower
+      .replace(/^(venta|cotizacion|cotización|quote|draft|borrador)\s*[-–—:]\s*/i, "")
       .trim();
-  const nt = norm(t);
-  const ns = norm(s);
-  if (ns === nt) return null;
-  // "Venta - Luis Alberto" / "Cotizacion - Luis Alberto" when title is the customer
-  const stripped = ns
-    .replace(/^(venta|cotizacion|cotización|quote|draft|borrador)\s*[-–—:]\s*/i, "")
-    .trim();
-  if (stripped && stripped === nt) return null;
-  if (ns.includes(nt) && ns.length < nt.length + 12) return null;
-  return s;
+    if (stripped && stripped === t) return null;
+    return s;
+  } catch (_) {
+    return subtitle || null;
+  }
 }
 
-export default function DraftBoardCard({
+export function DraftBoardCard({
   tab,
   meta,
   isActive = false,
@@ -57,6 +62,7 @@ export default function DraftBoardCard({
   onDelete,
   nowMs = Date.now(),
 }) {
+  const tones = ERP_SEMANTIC_TONES || FALLBACK_TONES;
   const isOwn = isOwnErpDraft(tab, currentUserId);
   const isSupervisorViewer = isErpDraftSupervisor(currentUserRole);
   const resolvedOpenLabel = isSupervisorViewer && !isOwn ? "Editar borrador" : openLabel;
@@ -93,11 +99,11 @@ export default function DraftBoardCard({
   if (isBlocked) {
     statusLabel = "En revisión";
     StatusIcon = Eye;
-    statusClassName = ERP_SEMANTIC_TONES.reviewBadge;
+    statusClassName = tones.reviewBadge;
   } else if (isReleasedRestricted) {
     statusLabel = "Liberado";
     StatusIcon = Lock;
-    statusClassName = ERP_SEMANTIC_TONES.releasedBadge;
+    statusClassName = tones.releasedBadge;
   } else if (isSupervisorTouched) {
     statusLabel = "Revisado";
     StatusIcon = Lock;
@@ -123,14 +129,14 @@ export default function DraftBoardCard({
       className={cn(
         "relative overflow-hidden transition",
         isBlocked
-          ? ERP_SEMANTIC_TONES.draftBlocked
+          ? tones.draftBlocked
           : isReleasedRestricted
-            ? ERP_SEMANTIC_TONES.draftReleased
+            ? tones.draftReleased
             : isActive
               ? "border-primary"
               : isOwn
-                ? ERP_SEMANTIC_TONES.draftOwn
-                : ERP_SEMANTIC_TONES.draftOther
+                ? tones.draftOwn
+                : tones.draftOther
       )}
       title={
         isBlocked
@@ -267,3 +273,5 @@ export default function DraftBoardCard({
     </Card>
   );
 }
+
+export default DraftBoardCard;

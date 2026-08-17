@@ -3193,7 +3193,7 @@ export default function SaleForm({
   return (
     <div className="space-y-4">
       {sellerReleasedRestricted ? (
-        <div className={ERP_SEMANTIC_TONES.restrictedBanner}>
+        <div className={ERP_SEMANTIC_TONES?.restrictedBanner || "rounded-lg border border-violet-300/70 bg-violet-50/80 px-3 py-2 text-xs text-violet-900 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-100"}>
           Borrador liberado por supervisión. Cliente, vehículo, líneas existentes, método de pago y retención IR están bloqueados; puedes agregar productos nuevos y ajustar montos del plan de cobro acordado.
         </div>
       ) : null}

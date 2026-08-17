@@ -26,23 +26,13 @@ export const ERP_SALE_FLOW_STEP_ICONS = {
   5: CreditCard,
 };
 
-/** Roles que ven borradores de otros vendedores de la sucursal */
-export const ERP_DRAFT_SUPERVISOR_ROLES = [
-  "gerencia",
-  "supervisor",
-  "jefe_vendedores",
-  "jefe_tienda",
-  "recursos_humanos",
-];
+import {
+  ERP_DRAFT_SUPERVISOR_ROLES,
+  isErpDraftSupervisor,
+  isOwnErpDraft,
+} from "@/lib/roleHome";
 
-export function isErpDraftSupervisor(role) {
-  return ERP_DRAFT_SUPERVISOR_ROLES.includes(String(role || "").toLowerCase());
-}
-
-export function isOwnErpDraft(tab, currentUserId) {
-  if (!tab?.ownerUserId) return true;
-  return String(tab.ownerUserId) === String(currentUserId || "");
-}
+export { ERP_DRAFT_SUPERVISOR_ROLES, isErpDraftSupervisor, isOwnErpDraft };
 
 /** Botones de barra de formulario embebido — misma geometría en todo el ERP */
 export const ERP_ACTION_BUTTONS = {

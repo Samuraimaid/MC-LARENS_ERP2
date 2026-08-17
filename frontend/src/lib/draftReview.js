@@ -1,4 +1,4 @@
-import { isErpDraftSupervisor } from "@/lib/erpDesignSystem";
+import { isErpDraftSupervisor } from "@/lib/roleHome";
 
 export const SELLER_GLOBAL_DISCOUNT_MAX_PERCENT = 2;
 export const SELLER_GLOBAL_DISCOUNT_MAX_NIO = 500;

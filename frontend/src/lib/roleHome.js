@@ -62,6 +62,23 @@ export function getRoleHomePath(role) {
   return "/workbench";
 }
 
+export const ERP_DRAFT_SUPERVISOR_ROLES = [
+  "gerencia",
+  "supervisor",
+  "jefe_vendedores",
+  "jefe_tienda",
+  "recursos_humanos",
+];
+
+export function isErpDraftSupervisor(role) {
+  return ERP_DRAFT_SUPERVISOR_ROLES.includes(String(role || "").toLowerCase());
+}
+
+export function isOwnErpDraft(tab, currentUserId) {
+  if (!tab?.ownerUserId) return true;
+  return String(tab.ownerUserId) === String(currentUserId || "");
+}
+
 export const ROLE_HOME_MATRIX = [
   { role: "cajero", home: "/cashier", restrictedNav: true, canAccessCashier: true },
   { role: "ventas", home: "/workbench", restrictedNav: true, canAccessCashier: false },
