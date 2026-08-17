@@ -16,6 +16,7 @@ import { KDSLayout } from "./components/layout/KDSLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { AuthCallback } from "./pages/AuthCallback";
 import { AntiTamperGuard } from "./components/security/AntiTamperGuard";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 // Fonts
 import "@fontsource/barlow-condensed/600.css";
@@ -284,18 +285,20 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <DialogMessagesProvider>
-          <BrowserRouter>
-            <AntiTamperGuard>
-              <AppRouter />
-              <Toaster position="top-center" richColors />
-            </AntiTamperGuard>
-          </BrowserRouter>
-        </DialogMessagesProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <DialogMessagesProvider>
+            <BrowserRouter>
+              <AntiTamperGuard>
+                <AppRouter />
+                <Toaster position="top-center" richColors />
+              </AntiTamperGuard>
+            </BrowserRouter>
+          </DialogMessagesProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
