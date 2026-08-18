@@ -5240,7 +5240,7 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
         if payload.user_id:
             await pin_login_guard.record_ip_failure(request)
             await audit_service.log_pin_auth_attempt(
-                None,
+                payload.user_id,
                 request.client.host if request.client else "unknown",
                 False,
             )
@@ -5248,6 +5248,12 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
         # Si no hubo coincidencia de usuario, aplicar protección anónima
         await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
         await pin_login_guard.record_anonymous_failure(request, pin_policy)
+        await audit_service.log_pin_auth_attempt(
+            None,
+            request.client.host if request.client else "unknown",
+            False,
+        )
+        raise HTTPException(status_code=401, detail="PIN incorrecto")
 
     # Si el login fue exitoso, limpiar cualquier bloqueo anónimo previo de la IP
     if not payload.user_id:

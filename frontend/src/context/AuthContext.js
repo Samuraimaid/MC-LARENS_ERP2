@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { API_BASE as API } from "@/lib/api";
+import { API_BASE as API, getStoredSessionToken, setStoredSessionToken, getStoredUser, setStoredUser } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { toast } from "sonner";
 import { TOPCAR_BRANCH_IDS } from "../lib/branding";
@@ -254,10 +254,10 @@ export function AuthProvider({ children }) {
       const cleanup = observeDraftsAutoSync();
       return cleanup;
     }, []);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getStoredUser());
   const [permissions, setPermissions] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const invalidSessionNotifiedRef = useRef(false);
+  const [loading, setLoading] = useState(() => !getStoredUser());
+  const invalidSessionNotifiedRef.current = false;
 
   useEffect(() => {
     checkAuth();
@@ -285,6 +285,8 @@ export function AuthProvider({ children }) {
 
         if (isSessionTimeout) {
           setUser(null);
+          setStoredUser(null);
+          setStoredSessionToken(null);
           setPermissions(null);
           if (!invalidSessionNotifiedRef.current) {
             let msg = "Se cerró la sesión. Vuelve a iniciar con tu PIN.";
@@ -323,6 +325,10 @@ export function AuthProvider({ children }) {
         withCredentials: true,
       });
       setUser(response.data);
+      setStoredUser(response.data);
+      if (response.data?.session_token) {
+        setStoredSessionToken(response.data.session_token);
+      }
       invalidSessionNotifiedRef.current = false;
       try {
         const permsRes = await axios.get(`${API}/permissions/me`, { withCredentials: true });
@@ -340,6 +346,8 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       setUser(null);
+      setStoredUser(null);
+      setStoredSessionToken(null);
       setPermissions(null);
     } finally {
       setLoading(false);
@@ -361,6 +369,10 @@ export function AuthProvider({ children }) {
         { withCredentials: true }
       );
       setUser(response.data);
+      setStoredUser(response.data);
+      if (response.data?.session_token) {
+        setStoredSessionToken(response.data.session_token);
+      }
       invalidSessionNotifiedRef.current = false;
       try {
         const permsRes = await axios.get(`${API}/permissions/me`, { withCredentials: true });
@@ -402,6 +414,8 @@ export function AuthProvider({ children }) {
       console.error("Logout error:", error);
     } finally {
       setUser(null);
+      setStoredUser(null);
+      setStoredSessionToken(null);
       setPermissions(null);
       invalidSessionNotifiedRef.current = false;
     }

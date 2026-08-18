@@ -7,7 +7,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server } from "lucide-react";
-import { API_BASE as API } from "@/lib/api";
+import { API_BASE as API, setStoredSessionToken, setStoredUser } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
 import { useDevice } from "../hooks/useDevice";
@@ -573,9 +573,19 @@ export function LoginPage() {
       setLockoutUntil(null);
       setLockoutSeconds(null);
       setLockoutRemainingMs(0);
+
+      const loggedUser = response.data?.user || response.data || {};
+      const sessionToken = response.data?.session_token;
+
+      if (sessionToken) {
+        setStoredSessionToken(sessionToken);
+      }
+      if (loggedUser && (loggedUser.user_id || loggedUser.id || loggedUser.name)) {
+        setStoredUser(loggedUser);
+      }
+
       // Apply saved theme from server/session if provided
       try {
-        const loggedUser = response.data?.user || response.data || {};
         const serverMode = loggedUser.theme_mode || loggedUser.mode;
         const serverSkin = loggedUser.theme_skin || loggedUser.skin;
         if (serverMode) setMode(serverMode);
@@ -583,16 +593,20 @@ export function LoginPage() {
       } catch (e) {
         // ignore
       }
-      toast.success(`Bienvenido, ${(response.data?.user || response.data)?.name || "usuario"}`);
+      toast.success(`Bienvenido, ${loggedUser.name || "usuario"}`);
       playTone("success");
       
       // Attempt auth check but don't block widely if it delays
-      Promise.race([
-        checkAuth(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-      ]).catch(() => null);
+      try {
+        await Promise.race([
+          checkAuth(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 4000)),
+        ]);
+      } catch (_) {
+        // ignore timeout
+      }
 
-      const loggedRole = (response.data?.user || response.data)?.role;
+      const loggedRole = loggedUser.role;
       const nextPath = new URLSearchParams(window.location.search).get("next");
       window.location.href = nextPath && nextPath.startsWith("/") ? nextPath : getRoleHomePath(loggedRole);
     } catch (error) {
