@@ -1,5 +1,5 @@
-import React from "react";
-import { Building2, Car, User } from "lucide-react";
+import React, { useState } from "react";
+import { Building2, Car, User, Camera, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import SearchableSelect from "@/components/ui/searchable-select";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
 import { isPickupCatalogModel } from "@/lib/vehicleCatalog";
 import { PRICING_PROFILES } from "@/lib/priceTiers";
+import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
 
 export default function CustomerVehicleFormTabs({
   formData,
@@ -276,6 +277,33 @@ export default function CustomerVehicleFormTabs({
       </TabsContent>
 
       <TabsContent value="vehicle" className={vehicleContentClassName}>
+        {/* Banner de Escaneo OCR de Tarjeta de Circulación */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/60 dark:bg-sky-950/30">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+              <Camera className="h-4 w-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-sky-900 dark:text-sky-200 block">
+                Escaneo OCR de Tarjeta de Circulación
+              </span>
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                Lee Chasis (VIN), Placa, Color y auto-completa el vehículo
+              </span>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => setShowOcrModal(true)}
+            className="h-8 gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md shadow-sky-600/20"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Escanear Tarjeta (OCR)
+          </Button>
+        </div>
+
         <div>
           <Label>Placa *</Label>
           <div className="flex gap-2">
@@ -408,6 +436,12 @@ export default function CustomerVehicleFormTabs({
           </p>
         </div>
       </TabsContent>
+
+      <CirculationCardOcrScannerModal
+        isOpen={showOcrModal}
+        onClose={() => setShowOcrModal(false)}
+        onApply={handleApplyOcr}
+      />
     </Tabs>
   );
 }

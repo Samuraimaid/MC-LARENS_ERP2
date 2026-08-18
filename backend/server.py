@@ -7624,6 +7624,35 @@ async def decode_vehicle_vin(vin: str, request: Request):
         vehicle_type = pickup_resolution.get("vehicle_type_label") or vehicle_type
         cab_variant = pickup_resolution.get("vehicle_cab_variant") or cab_variant
 
+    trim = (decoded.get("Trim") or decoded.get("Trim2") or "").strip()
+    series = (decoded.get("Series") or "").strip()
+    drive_type = (decoded.get("DriveType") or "").strip()
+    displacement = (decoded.get("DisplacementL") or "").strip()
+    fuel_type = (decoded.get("FuelTypePrimary") or "").strip()
+
+    # Clasificar nivel de versión (base, intermedio, full)
+    version_text = f"{trim} {series} {model}".lower()
+    full_kw = [
+        "limited", "platinum", "touring", "sport", "gt", "full", "high country",
+        "laramie", "lariat", "denali", "rubicon", "titanium", "premier", "overland",
+        "elite", "signature", "grand touring", "luxury", "summit", "prestige",
+        "amg", "m sport", "trd pro", "wilderness", "king ranch", "xse"
+    ]
+    base_kw = [
+        "base", "work truck", "wt", "standard", "estandar", "classic", "entry",
+        "tradesman", "fleet", "flotilla", "s ", " l ", " lx"
+    ]
+    
+    if any(k in version_text for k in full_kw):
+        version_level = "full"
+        version_label = f"Full ({trim})" if trim else "Full / Premium"
+    elif any(k in version_text for k in base_kw):
+        version_level = "base"
+        version_label = f"Base ({trim})" if trim else "Base / Estándar"
+    else:
+        version_level = "intermedio"
+        version_label = f"Intermedio ({trim})" if trim else "Intermedio / Estándar"
+
     return {
         "vin": normalized_vin,
         "brand": brand.upper() if brand else "",
@@ -7634,7 +7663,52 @@ async def decode_vehicle_vin(vin: str, request: Request):
         "vehicle_type_slug": vehicle_type_slug,
         "vehicle_cab_variant": cab_variant,
         "body_class": body_class,
+        "trim": trim,
+        "series": series,
+        "drive_type": drive_type,
+        "displacement_l": displacement,
+        "fuel_type": fuel_type,
+        "version_level": version_level,
+        "version_label": version_label,
         "source": "vpic_nhtsa",
+    }
+
+
+@api_router.post("/vehicles/ocr-circulation-card")
+async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
+    """
+    Procesa el texto OCR extraído de una tarjeta de circulación de vehículo,
+    extrae Chasis, Placa, Color, Año y enriquece con decodificación de VIN vPIC.
+    """
+    await require_auth(request)
+    raw_text = payload.get("raw_text") or payload.get("text") or ""
+    
+    from backend.domains.vehicles.circulation_ocr import parse_circulation_card_text
+    parsed = parse_circulation_card_text(raw_text)
+    
+    vin = parsed.get("vin")
+    extended_info = {}
+    if vin:
+        try:
+            extended_info = await decode_vehicle_vin(vin, request)
+        except Exception:
+            pass
+
+    return {
+        "vin": vin or "",
+        "plate": parsed.get("plate") or payload.get("plate") or "",
+        "brand": extended_info.get("brand") or parsed.get("brand") or "",
+        "model": extended_info.get("model") or "",
+        "year": extended_info.get("year") or parsed.get("year"),
+        "color": parsed.get("color") or "No especificado",
+        "vehicle_type": extended_info.get("vehicle_type") or "Sedán / Automóvil",
+        "vehicle_type_slug": extended_info.get("vehicle_type_slug") or "sedan",
+        "vehicle_cab_variant": extended_info.get("vehicle_cab_variant"),
+        "trim": extended_info.get("trim") or "",
+        "version_level": extended_info.get("version_level") or "intermedio",
+        "version_label": extended_info.get("version_label") or "Intermedio / Estándar",
+        "confidence_score": parsed.get("confidence_score", 0),
+        "raw_text_snippet": parsed.get("raw_text_snippet", ""),
     }
 
 

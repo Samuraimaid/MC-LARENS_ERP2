@@ -56,9 +56,12 @@ import {
   PackageSearch,
   ScanBarcode,
   Layers,
+  Camera,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
 import {
   formatVehicleIdentityHint,
   getVehicleSelectOptionsByBrandYear,
@@ -322,6 +325,7 @@ export default function SaleForm({
   const [isVehiclePickerVisible, setIsVehiclePickerVisible] = useState(true);
   const [useVehicleVinDecoder, setUseVehicleVinDecoder] = useState(false);
   const [isDecodingVehicleVin, setIsDecodingVehicleVin] = useState(false);
+  const [showSaleOcrModal, setShowSaleOcrModal] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [pendingCustomerId, setPendingCustomerId] = useState(null);
   const draftSnapshotRef = useRef(null);
@@ -1260,6 +1264,33 @@ export default function SaleForm({
     });
     setUseVehicleVinDecoder(false);
     setIsDecodingVehicleVin(false);
+  };
+
+  const handleApplySaleOcr = (ocrVehicle) => {
+    const nextVehicle = { ...newVehicle };
+    if (ocrVehicle.vin) nextVehicle.chasis = ocrVehicle.vin;
+    if (ocrVehicle.brand) nextVehicle.brand = ocrVehicle.brand;
+    if (ocrVehicle.model) nextVehicle.model = ocrVehicle.model;
+    if (ocrVehicle.year) nextVehicle.year = String(ocrVehicle.year);
+    if (ocrVehicle.color && ocrVehicle.color !== "No especificado") nextVehicle.color = ocrVehicle.color;
+    if (ocrVehicle.vehicle_type) nextVehicle.vehicle_type = ocrVehicle.vehicle_type;
+    if (ocrVehicle.vehicle_type_slug) nextVehicle.vehicle_type_slug = ocrVehicle.vehicle_type_slug;
+    if (ocrVehicle.version_level) nextVehicle.version_level = ocrVehicle.version_level;
+    if (ocrVehicle.trim) nextVehicle.trim = ocrVehicle.trim;
+
+    if (ocrVehicle.plate) {
+      const rawPlate = ocrVehicle.plate.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      const prefixMatch = rawPlate.match(/^([A-Za-z]{1,2})(\d+)$/);
+      if (prefixMatch && PLATE_PREFIXES.includes(prefixMatch[1])) {
+        nextVehicle.plate_prefix = prefixMatch[1];
+        nextVehicle.plate_number = formatPlateNumber(prefixMatch[1], prefixMatch[2]);
+      } else {
+        nextVehicle.plate_number = ocrVehicle.plate;
+      }
+    }
+
+    setNewVehicle(nextVehicle);
+    persistDraftSnapshot({ newVehicle: nextVehicle });
   };
 
   const decodeNewCustomerVin = async () => {
@@ -5333,10 +5364,34 @@ export default function SaleForm({
             size="inline"
             icon={PlusCircle}
             title="Registrar Vehículo"
-            description="Registra un nuevo vehículo para el cliente seleccionado usando marca, año y modelo del catálogo."
-          />
-
           <div className="space-y-3">
+            {/* Banner de Escaneo OCR de Tarjeta de Circulación */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/60 dark:bg-sky-950/30">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                  <Camera className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-xs text-sky-900 dark:text-sky-200 block">
+                    Escaneo OCR de Tarjeta de Circulación
+                  </span>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Lee Chasis (VIN), Placa, Color y auto-completa el vehículo
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setShowSaleOcrModal(true)}
+                className="h-8 gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md shadow-sky-600/20"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Escanear Tarjeta (OCR)
+              </Button>
+            </div>
+
             <div>
               <Label>Placa *</Label>
               <div className="flex gap-2">
@@ -5494,6 +5549,12 @@ export default function SaleForm({
           </div>
         </DialogContent>
       </Dialog>
+
+      <CirculationCardOcrScannerModal
+        isOpen={showSaleOcrModal}
+        onClose={() => setShowSaleOcrModal(false)}
+        onApply={handleApplySaleOcr}
+      />
 
       <Dialog
         open={showNewCustomer}
