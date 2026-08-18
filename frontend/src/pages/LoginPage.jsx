@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -41,6 +42,7 @@ const ATTENDANCE_KIOSK_SHORTCUT_PIN = (typeof window !== 'undefined' && window._
   : APP_ENV.attendanceKioskShortcutPin;
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const { checkAuth } = useAuth();
   const { resolvedMode, toggleMode, setMode, setSkin, watermarkOpacity } = useTheme();
   const device = useDevice();
@@ -620,7 +622,8 @@ export function LoginPage() {
 
       const loggedRole = loggedUser.role;
       const nextPath = new URLSearchParams(window.location.search).get("next");
-      window.location.href = nextPath && nextPath.startsWith("/") ? nextPath : getRoleHomePath(loggedRole);
+      const targetPath = nextPath && nextPath.startsWith("/") ? nextPath : getRoleHomePath(loggedRole);
+      navigate(targetPath, { replace: true });
     } catch (error) {
       setAuthStatus("error");
       setShowResetWarning(true);
@@ -971,6 +974,16 @@ export function LoginPage() {
             <div className="relative z-10">
             <div className="relative mb-4">
               <div className="flex items-center justify-end gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12"
+                  onClick={() => setShowServerConfig(true)}
+                  aria-label="Configurar servidor"
+                  title="Estado del Servidor"
+                >
+                  <Server className="h-4 w-4 text-sky-500 hover:text-sky-400" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

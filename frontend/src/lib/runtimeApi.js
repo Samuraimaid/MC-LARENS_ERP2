@@ -2,12 +2,33 @@ import { APP_ENV } from "./env";
 
 function readWindowBase() {
   if (typeof window === "undefined") return "";
-  return String(window.__FAILOVER_API_BASE__ || window.__API_BASE__ || "").trim();
+  const failover = String(window.__FAILOVER_API_BASE__ || "").trim();
+  if (failover && (failover.startsWith("http://") || failover.startsWith("https://"))) {
+    return failover;
+  }
+  const apiBase = String(window.__API_BASE__ || "").trim();
+  if (apiBase && (apiBase.startsWith("http://") || apiBase.startsWith("https://"))) {
+    return apiBase;
+  }
+  return "";
 }
 
 export function getRuntimeApiBase() {
+  // 1. Priorizar URL personalizada en localStorage si existe
+  if (typeof window !== "undefined") {
+    try {
+      const custom = window.localStorage?.getItem("erp_custom_api_base");
+      if (custom && (custom.startsWith("http://") || custom.startsWith("https://"))) {
+        return custom.replace(/\/$/, "");
+      }
+    } catch {}
+  }
+
+  // 2. Ventana de runtime si es URL absoluta
   const dynamic = readWindowBase();
   if (dynamic) return dynamic.replace(/\/$/, "");
+
+  // 3. APP_ENV.apiBase configurado
   return String(APP_ENV.apiBase || "/api").replace(/\/$/, "");
 }
 

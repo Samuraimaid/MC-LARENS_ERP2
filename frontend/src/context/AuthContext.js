@@ -353,10 +353,20 @@ export function AuthProvider({ children }) {
         // ignore
       }
     } catch (error) {
-      setUser(null);
-      setStoredUser(null);
-      setStoredSessionToken(null);
-      setPermissions(null);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setUser(null);
+        setStoredUser(null);
+        setStoredSessionToken(null);
+        setPermissions(null);
+      } else {
+        const cachedUser = getStoredUser();
+        if (cachedUser) {
+          setUser(cachedUser);
+        } else {
+          setUser(null);
+          setPermissions(null);
+        }
+      }
     } finally {
       setLoading(false);
     }

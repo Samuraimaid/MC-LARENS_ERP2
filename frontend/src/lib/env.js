@@ -6,17 +6,35 @@ export const PRODUCTION_CLOUD_RUN_API = "https://mclarens-erp-836176703716.us-ce
 
 export function isCapacitorNative() {
   if (typeof window === "undefined") return false;
-  const isCap = Boolean(
-    metaEnv.VITE_IS_CAPACITOR === "true" ||
-    processEnv.VITE_IS_CAPACITOR === "true" ||
+
+  // 1. Global Capacitor runtime
+  if (
     window.Capacitor?.isNativePlatform?.() ||
     window.Capacitor?.getPlatform?.() === "android" ||
-    window.Capacitor?.getPlatform?.() === "ios" ||
-    window.location?.protocol === "capacitor:" ||
-    (window.location?.hostname === "localhost" && !window.location?.port && (navigator?.userAgent?.includes("Android") || navigator?.userAgent?.includes("wv") || navigator?.userAgent?.includes("Mobile"))) ||
-    (window.location?.origin === "https://localhost" && (navigator?.userAgent?.includes("Android") || navigator?.userAgent?.includes("Mobile") || navigator?.userAgent?.includes("wv")))
-  );
-  return isCap;
+    window.Capacitor?.getPlatform?.() === "ios"
+  ) {
+    return true;
+  }
+
+  // 2. Protocolos nativos
+  if (window.location?.protocol === "capacitor:" || window.location?.protocol === "ionic:") {
+    return true;
+  }
+
+  // 3. WebView de Android en Capacitor (corre en localhost o https://localhost sin puerto)
+  const hostname = window.location?.hostname || "";
+  const port = window.location?.port || "";
+  const origin = window.location?.origin || "";
+  if ((hostname === "localhost" || hostname === "127.0.0.1" || origin === "https://localhost") && !port) {
+    return true;
+  }
+
+  // 4. Bandera de compilación Capacitor
+  if (metaEnv.VITE_IS_CAPACITOR === "true" || processEnv.VITE_IS_CAPACITOR === "true") {
+    return true;
+  }
+
+  return false;
 }
 
 function readEnv(...keys) {
