@@ -212,8 +212,10 @@ export const VEHICLE_GLASS_GEOMETRY = {
   sedan: {
     windshield: {
       d: "M54,78 L146,78 L138,132 L62,132 Z",
-      topStrip: "M54,78 L146,78 L144,90 L56,90 Z",
-      bottomStrip: "M61,122 L139,122 L138,132 L62,132 Z",
+      // Banda Superior (Visera de Sol pegada al Techo / abajo en vista zenital)
+      topStrip: "M61,120 L139,120 L138,132 L62,132 Z",
+      // Banda Inferior (Pegada al Capó y Limpiaparabrisas / arriba en vista zenital)
+      bottomStrip: "M54,78 L146,78 L144,90 L56,90 Z",
       textY: 105,
       subY: 118,
     },
@@ -226,18 +228,19 @@ export const VEHICLE_GLASS_GEOMETRY = {
       { d: "M142,196 L156,196 L158,248 L144,248 Z" },
     ],
     rear: {
-      d: "M66,252 L134,252 L128,294 L72,294 Z",
-      topStrip: "M66,252 L134,252 L133,260 L67,260 Z",
-      bottomStrip: "M71,286 L129,286 L128,294 L72,294 Z",
-      textY: 271,
-      subY: 284,
+      // Parabrisas trasero extendido hacia el baúl/bumper en sedanes fastback
+      d: "M66,250 L134,250 L130,326 L70,326 Z",
+      topStrip: "M66,250 L134,250 L133,260 L67,260 Z",
+      bottomStrip: "M69,316 L131,316 L130,326 L70,326 Z",
+      textY: 280,
+      subY: 294,
     },
   },
   suv: {
     windshield: {
       d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
+      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
       textY: 104,
       subY: 117,
     },
@@ -250,18 +253,19 @@ export const VEHICLE_GLASS_GEOMETRY = {
       { d: "M142,200 L158,200 L160,262 L144,262 Z" },
     ],
     rear: {
-      d: "M62,266 L138,266 L132,308 L68,308 Z",
-      topStrip: "M62,266 L138,266 L137,274 L63,274 Z",
-      bottomStrip: "M67,300 L133,300 L132,308 L68,308 Z",
-      textY: 284,
-      subY: 297,
+      // Parabrisas trasero de SUV cerca del bumper posterior
+      d: "M62,264 L138,264 L134,328 L66,328 Z",
+      topStrip: "M62,264 L138,264 L137,274 L63,274 Z",
+      bottomStrip: "M65,318 L135,318 L134,328 L66,328 Z",
+      textY: 290,
+      subY: 304,
     },
   },
   camioneta_doble_cabina: {
     windshield: {
       d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
+      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
       textY: 104,
       subY: 117,
     },
@@ -284,8 +288,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   camioneta_cabina_media: {
     windshield: {
       d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
+      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
       textY: 104,
       subY: 117,
     },
@@ -308,8 +312,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   camioneta_1_cabina: {
     windshield: {
       d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      bottomStrip: "M59,124 L141,124 L140,134 L60,134 Z",
+      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
+      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
       textY: 104,
       subY: 117,
     },
@@ -329,8 +333,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   camion_1_cabina: {
     windshield: {
       d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      bottomStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
       textY: 100,
       subY: 113,
     },
@@ -350,8 +354,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   camion_2_cabinas: {
     windshield: {
       d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      bottomStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
       textY: 100,
       subY: 113,
     },
@@ -374,8 +378,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   camion_carga_furgon: {
     windshield: {
       d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      bottomStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
+      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
       textY: 100,
       subY: 113,
     },
@@ -395,8 +399,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   station_wagon: {
     windshield: {
       d: "M54,76 L146,76 L138,130 L62,130 Z",
-      topStrip: "M54,76 L146,76 L144,88 L56,88 Z",
-      bottomStrip: "M61,120 L139,120 L138,130 L62,130 Z",
+      topStrip: "M61,118 L139,118 L138,130 L62,130 Z",
+      bottomStrip: "M54,76 L146,76 L144,88 L56,88 Z",
       textY: 102,
       subY: 115,
     },
@@ -409,18 +413,18 @@ export const VEHICLE_GLASS_GEOMETRY = {
       { d: "M142,196 L156,196 L158,268 L144,268 Z" },
     ],
     rear: {
-      d: "M64,272 L136,272 L130,314 L70,314 Z",
-      topStrip: "M64,272 L136,272 L135,280 L65,280 Z",
-      bottomStrip: "M69,306 L131,306 L130,314 L70,314 Z",
-      textY: 290,
-      subY: 303,
+      d: "M64,270 L136,270 L132,328 L68,328 Z",
+      topStrip: "M64,270 L136,270 L135,280 L65,280 Z",
+      bottomStrip: "M67,318 L133,318 L132,328 L68,328 Z",
+      textY: 292,
+      subY: 306,
     },
   },
   microbus_pasajeros: {
     windshield: {
       d: "M50,70 L150,70 L144,128 L56,128 Z",
-      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      bottomStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      topStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
       textY: 98,
       subY: 111,
     },
@@ -443,8 +447,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   microbus_techo_alto: {
     windshield: {
       d: "M50,68 L150,68 L144,128 L56,128 Z",
-      topStrip: "M50,68 L150,68 L148,80 L52,80 Z",
-      bottomStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      topStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      bottomStrip: "M50,68 L150,68 L148,80 L52,80 Z",
       textY: 98,
       subY: 111,
     },
@@ -467,8 +471,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   microbus_carga: {
     windshield: {
       d: "M50,70 L150,70 L144,128 L56,128 Z",
-      topStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      bottomStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      topStrip: "M55,118 L145,118 L144,128 L56,128 Z",
+      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
       textY: 98,
       subY: 111,
     },
@@ -491,8 +495,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   bus_mediano_coaster: {
     windshield: {
       d: "M50,56 L150,56 L146,110 L54,110 Z",
-      topStrip: "M50,56 L150,56 L148,68 L52,68 Z",
-      bottomStrip: "M55,100 L145,100 L146,110 L54,110 Z",
+      topStrip: "M55,100 L145,100 L146,110 L54,110 Z",
+      bottomStrip: "M50,56 L150,56 L148,68 L52,68 Z",
       textY: 82,
       subY: 96,
     },
@@ -515,8 +519,8 @@ export const VEHICLE_GLASS_GEOMETRY = {
   bus_grande_marcopolo: {
     windshield: {
       d: "M52,50 L148,50 L144,115 L56,115 Z",
-      topStrip: "M52,50 L148,50 L146,65 L54,65 Z",
-      bottomStrip: "M57,105 L143,105 L144,115 L56,115 Z",
+      topStrip: "M57,105 L143,105 L144,115 L56,115 Z",
+      bottomStrip: "M52,50 L148,50 L146,65 L54,65 Z",
       textY: 85,
       subY: 100,
     },

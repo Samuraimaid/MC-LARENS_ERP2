@@ -816,7 +816,7 @@ export default function TintWindowMaterialDialog({
                       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
                         <div>
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">
-                            Banda Superior
+                            {activeZone === "windshield" ? "Banda Superior (Visera Techo)" : "Banda Superior (Línea Techo)"}
                           </span>
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                             +$10.00 USD
@@ -832,7 +832,7 @@ export default function TintWindowMaterialDialog({
                       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
                         <div>
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">
-                            Banda Inferior
+                            {activeZone === "windshield" ? "Banda Inferior (Base Capó)" : "Banda Inferior (Línea Bumper)"}
                           </span>
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                             +$10.00 USD
