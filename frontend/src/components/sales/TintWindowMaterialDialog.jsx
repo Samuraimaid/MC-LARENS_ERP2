@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Layers,
   Sparkles,
@@ -19,6 +20,10 @@ import {
   Unlink,
   Sun,
   Car,
+  RotateCw,
+  Search,
+  ShieldCheck,
+  Flame,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -31,10 +36,10 @@ import {
 
 // Zonas y Nombres Oficiales
 const ZONES = [
-  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del." },
-  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del." },
-  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras." },
-  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras." },
+  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del.", dotColor: "bg-sky-400", activeBg: "bg-sky-500", ringColor: "ring-sky-400" },
+  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del.", dotColor: "bg-yellow-400", activeBg: "bg-yellow-500", ringColor: "ring-yellow-400" },
+  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras.", dotColor: "bg-orange-400", activeBg: "bg-orange-500", ringColor: "ring-orange-400" },
+  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras.", dotColor: "bg-purple-400", activeBg: "bg-purple-500", ringColor: "ring-purple-400" },
 ];
 
 export default function TintWindowMaterialDialog({
@@ -50,6 +55,9 @@ export default function TintWindowMaterialDialog({
   const [config, setConfig] = useState(null);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
+  const [orientation, setOrientation] = useState("horizontal"); // "horizontal" | "vertical"
+  const [familyFilter, setFamilyFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Categoría de Vehículo Dinámica
   const detectedCategory = useMemo(() => resolveVehicleCategory(vehicle), [vehicle]);
@@ -323,10 +331,34 @@ export default function TintWindowMaterialDialog({
   const activeMaterials = activeZoneConfig?.materials || [];
   const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
 
+  // Filtrado de materiales por familia y búsqueda
+  const families = useMemo(() => {
+    const list = new Set();
+    activeMaterials.forEach((m) => {
+      if (m.family) list.add(m.family);
+    });
+    return ["all", ...Array.from(list)];
+  }, [activeMaterials]);
+
+  const filteredMaterials = useMemo(() => {
+    return activeMaterials.filter((m) => {
+      const matchFamily = familyFilter === "all" || m.family === familyFilter;
+      const matchSearch =
+        !searchTerm.trim() ||
+        m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.family?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.tech_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchFamily && matchSearch;
+    });
+  }, [activeMaterials, familyFilter, searchTerm]);
+
+  const isVehicleHorizontal = orientation === "horizontal";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
-        {/* Encabezado Responsivo: En móvil es una sola línea ultra-compacta; en PC es el banner completo */}
+        {/* Encabezado Responsivo */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3 py-2 sm:p-3.5 md:px-6 md:py-3.5 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -346,7 +378,7 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo</span>
+              <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
               <span className="text-sm sm:text-lg md:text-xl font-black text-white">
                 +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
                 <span className="text-[10px] sm:text-xs font-medium text-blue-200">USD</span>
@@ -359,296 +391,318 @@ export default function TintWindowMaterialDialog({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols en PC / Arriba en Móvil): Diagrama Interactivo SVG */}
           <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-3 lg:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
-            {/* Header del Vehículo sin redundancias: Modelo fijo detectado automáticamente */}
-            <div className="w-full flex items-center justify-between px-1 pb-1">
+            {/* Header del Vehículo con selector y botón de rotación horizontal */}
+            <div className="w-full flex items-center justify-between px-1 pb-1 gap-1">
               <span className="text-[11px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate flex items-center gap-1.5">
                 <Car className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                 {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.label || "Camioneta Doble Cabina"}
               </span>
 
-              {/* Selector sutil de cambio manual solo si es necesario */}
-              <select
-                value={selectedVehicleType}
-                onChange={(e) => setSelectedVehicleType(e.target.value)}
-                className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                title="Cambiar tipo de carrocería si difiere del detectado"
-              >
-                {VEHICLE_CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.shortLabel}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Botón de cambio de orientación horizontal/vertical en móvil */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
+                  className="h-6 px-1.5 text-[10px] md:hidden bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700"
+                  title="Alternar entre silueta horizontal y vertical"
+                >
+                  <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
+                  {isVehicleHorizontal ? "Horizontal" : "Vertical"}
+                </Button>
+
+                {/* Selector sutil de cambio manual de carrocería */}
+                <select
+                  value={selectedVehicleType}
+                  onChange={(e) => setSelectedVehicleType(e.target.value)}
+                  className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                  title="Cambiar tipo de carrocería si difiere del detectado"
+                >
+                  {VEHICLE_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.shortLabel}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Canvas del Vehículo: Imagen Real Superior + Capa SVG con Vidrios y Franjas Táctiles */}
-            <div className="relative w-44 h-[195px] sm:w-52 sm:h-[230px] md:w-72 md:h-[420px] lg:w-80 lg:h-[460px] xl:w-96 xl:h-[490px] my-auto select-none flex items-center justify-center shrink-0">
-              {/* 1. Imagen Top-Down Realista de la Carrocería */}
-              <img
-                src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
-                alt="Vehículo Top-Down"
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg transition-all duration-300"
-              />
-
-              {/* 2. Capa SVG Interactiva de Cristales */}
-              {(() => {
-                const geom = VEHICLE_GLASS_GEOMETRY[selectedVehicleType] || VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina || VEHICLE_GLASS_GEOMETRY.sedan;
-
-                const getShade = (zoneKey) => {
-                  const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
-                  if (mat.includes("70")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
-                  if (mat.includes("35")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
-                  if (mat.includes("05")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
-                  return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
-                };
-
-                const shadeWindshield = getShade("windshield");
-                const shadeFrontSides = getShade("front_sides");
-                const shadeRearSides = getShade("rear_sides");
-                const shadeRear = getShade("rear");
-
+            {/* Leyenda Compacta con Puntos de Colores Interactiva y Táctil (Solicitada por el usuario) */}
+            <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-xs font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 my-1 shrink-0 shadow-inner">
+              {ZONES.map((z) => {
+                const isActive = activeZone === z.id;
                 return (
-                  <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
-                    <defs>
-                      <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#38bdf8" floodOpacity="0.9" />
-                      </filter>
-                      <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#eab308" floodOpacity="0.9" />
-                      </filter>
-                      <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f97316" floodOpacity="0.9" />
-                      </filter>
-                      <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#a855f7" floodOpacity="0.9" />
-                      </filter>
-                    </defs>
-
-                    {/* 1. PARABRISAS DELANTERO */}
-                    <path
-                      d={geom.windshield.d}
-                      fill={shadeWindshield.fill}
-                      fillOpacity={shadeWindshield.opacity}
-                      stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
-                      strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
-                      filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
-                      className="cursor-pointer transition-all hover:opacity-90"
-                      onClick={() => setActiveZone("windshield")}
-                    />
-
-                    {/* Banda Superior Parabrisas (Visera Techo - Táctil) */}
-                    {geom.windshield.topStrip && (
-                      <path
-                        d={geom.windshield.topStrip}
-                        fill={sunstrips.windshield_top?.enabled ? "#020617" : "transparent"}
-                        fillOpacity={sunstrips.windshield_top?.enabled ? 0.95 : 0.01}
-                        stroke={sunstrips.windshield_top?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
-                        strokeWidth={sunstrips.windshield_top?.enabled ? "1.5" : "0.5"}
-                        strokeDasharray={sunstrips.windshield_top?.enabled ? undefined : "2,2"}
-                        className="cursor-pointer transition-all hover:opacity-80"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveZone("windshield");
-                          handleToggleSunstrip("windshield_top", !sunstrips.windshield_top?.enabled);
-                        }}
-                      />
-                    )}
-
-                    {/* Banda Inferior Parabrisas (Base Capó - Táctil) */}
-                    {geom.windshield.bottomStrip && (
-                      <path
-                        d={geom.windshield.bottomStrip}
-                        fill={sunstrips.windshield_bottom?.enabled ? "#020617" : "transparent"}
-                        fillOpacity={sunstrips.windshield_bottom?.enabled ? 0.95 : 0.01}
-                        stroke={sunstrips.windshield_bottom?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
-                        strokeWidth={sunstrips.windshield_bottom?.enabled ? "1.5" : "0.5"}
-                        strokeDasharray={sunstrips.windshield_bottom?.enabled ? undefined : "2,2"}
-                        className="cursor-pointer transition-all hover:opacity-80"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveZone("windshield");
-                          handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
-                        }}
-                      />
-                    )}
-
-                    {/* Textos Parabrisas */}
-                    <text
-                      x="100"
-                      y={geom.windshield.textY}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="7.5"
-                      fontWeight="bold"
-                      className="pointer-events-none select-none drop-shadow"
-                    >
-                      Parabrisas del.
-                    </text>
-                    <text
-                      x="100"
-                      y={geom.windshield.subY}
-                      textAnchor="middle"
-                      fill="#e0f2fe"
-                      fontSize="7"
-                      fontWeight="600"
-                      className="pointer-events-none select-none"
-                    >
-                      {selectedMaterials.windshield?.includes("70")
-                        ? "70%"
-                        : selectedMaterials.windshield?.includes("35")
-                        ? "35%"
-                        : "20%"}
-                      {secondLayers.windshield?.enabled ? " + 2da" : ""}
-                    </text>
-
-                    {/* 2. VENTANAS DELANTERAS */}
-                    {geom.front_sides.map((p, idx) => (
-                      <path
-                        key={`fs-${idx}`}
-                        d={p.d}
-                        fill={shadeFrontSides.fill}
-                        fillOpacity={shadeFrontSides.opacity}
-                        stroke={activeZone === "front_sides" ? "#eab308" : shadeFrontSides.border}
-                        strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
-                        filter={activeZone === "front_sides" ? "url(#neonGlowYellow)" : undefined}
-                        className="cursor-pointer transition-all hover:opacity-90"
-                        onClick={() => setActiveZone("front_sides")}
-                      />
-                    ))}
-
-                    {/* 3. VENTANAS TRASERAS */}
-                    {geom.rear_sides.map((p, idx) => (
-                      <path
-                        key={`rs-${idx}`}
-                        d={p.d}
-                        fill={shadeRearSides.fill}
-                        fillOpacity={shadeRearSides.opacity}
-                        stroke={activeZone === "rear_sides" ? "#f97316" : shadeRearSides.border}
-                        strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
-                        filter={activeZone === "rear_sides" ? "url(#neonGlowOrange)" : undefined}
-                        className="cursor-pointer transition-all hover:opacity-90"
-                        onClick={() => setActiveZone("rear_sides")}
-                      />
-                    ))}
-
-                    {/* 4. PARABRISAS TRASERO */}
-                    <path
-                      d={geom.rear.d}
-                      fill={shadeRear.fill}
-                      fillOpacity={shadeRear.opacity}
-                      stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
-                      strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
-                      filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
-                      className="cursor-pointer transition-all hover:opacity-90"
-                      onClick={() => setActiveZone("rear")}
-                    />
-
-                    {/* Banda Superior Trasera (Táctil) */}
-                    {geom.rear.topStrip && (
-                      <path
-                        d={geom.rear.topStrip}
-                        fill={sunstrips.rear_top?.enabled ? "#020617" : "transparent"}
-                        fillOpacity={sunstrips.rear_top?.enabled ? 0.95 : 0.01}
-                        stroke={sunstrips.rear_top?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
-                        strokeWidth={sunstrips.rear_top?.enabled ? "1.5" : "0.5"}
-                        strokeDasharray={sunstrips.rear_top?.enabled ? undefined : "2,2"}
-                        className="cursor-pointer transition-all hover:opacity-80"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveZone("rear");
-                          handleToggleSunstrip("rear_top", !sunstrips.rear_top?.enabled);
-                        }}
-                      />
-                    )}
-
-                    {/* Banda Inferior Trasera (Táctil) */}
-                    {geom.rear.bottomStrip && (
-                      <path
-                        d={geom.rear.bottomStrip}
-                        fill={sunstrips.rear_bottom?.enabled ? "#020617" : "transparent"}
-                        fillOpacity={sunstrips.rear_bottom?.enabled ? 0.95 : 0.01}
-                        stroke={sunstrips.rear_bottom?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
-                        strokeWidth={sunstrips.rear_bottom?.enabled ? "1.5" : "0.5"}
-                        strokeDasharray={sunstrips.rear_bottom?.enabled ? undefined : "2,2"}
-                        className="cursor-pointer transition-all hover:opacity-80"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveZone("rear");
-                          handleToggleSunstrip("rear_bottom", !sunstrips.rear_bottom?.enabled);
-                        }}
-                      />
-                    )}
-
-                    {/* Textos Trasero */}
-                    <text
-                      x="100"
-                      y={geom.rear.textY}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="7.5"
-                      fontWeight="bold"
-                      className="pointer-events-none select-none drop-shadow"
-                    >
-                      Parabrisas Tras.
-                    </text>
-                    <text
-                      x="100"
-                      y={geom.rear.subY}
-                      textAnchor="middle"
-                      fill="#f3e8ff"
-                      fontSize="7"
-                      fontWeight="600"
-                      className="pointer-events-none select-none"
-                    >
-                      {selectedMaterials.rear?.includes("70")
-                        ? "70%"
-                        : selectedMaterials.rear?.includes("35")
-                        ? "35%"
-                        : "20%"}
-                      {secondLayers.rear?.enabled ? " + 2da" : ""}
-                    </text>
-                  </svg>
+                  <button
+                    key={z.id}
+                    type="button"
+                    className={`flex-1 flex items-center justify-center gap-1 py-1 px-1 rounded-lg transition-all ${
+                      isActive
+                        ? `${z.activeBg} text-white font-bold shadow-sm ${z.ringColor} ring-1`
+                        : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50"
+                    }`}
+                    onClick={() => setActiveZone(z.id)}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${isActive ? "bg-white" : z.dotColor} shrink-0`} />
+                    <span className="truncate">{z.shortLabel}</span>
+                  </button>
                 );
-              })()}
+              })}
             </div>
 
-            {/* Leyenda de Colores Interactiva y Táctil */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 gap-1 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-xs font-medium pt-1 border-t border-zinc-200 dark:border-zinc-800">
+            {/* Canvas del Vehículo: Soporte Horizontal en Móvil para maximizar área táctil */}
+            <div
+              className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-xl bg-zinc-950/10 dark:bg-zinc-950/40 border border-zinc-200/60 dark:border-zinc-800/60 my-auto ${
+                isVehicleHorizontal
+                  ? "w-full max-w-[340px] sm:max-w-[380px] h-[160px] sm:h-[180px] md:w-72 md:h-[400px] lg:w-80 lg:h-[440px] xl:w-96 xl:h-[480px]"
+                  : "w-44 h-[195px] sm:w-52 sm:h-[230px] md:w-72 md:h-[400px] lg:w-80 lg:h-[440px] xl:w-96 xl:h-[480px]"
+              }`}
+            >
+              {/* Contenedor con Rotación Dinámica para Móvil */}
               <div
-                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
-                  activeZone === "windshield" ? "bg-sky-100 dark:bg-sky-950/60 font-bold text-sky-800 dark:text-sky-300 ring-1 ring-sky-400" : ""
+                className={`transition-all duration-300 shrink-0 ${
+                  isVehicleHorizontal
+                    ? "relative w-[200px] h-[360px] transform -rotate-90 origin-center scale-[0.82] sm:scale-[0.92] md:transform-none md:scale-100"
+                    : "relative w-full h-full"
                 }`}
-                onClick={() => setActiveZone("windshield")}
               >
-                <span className="h-2.5 w-2.5 rounded-full bg-sky-400 ring-1 ring-sky-600 shrink-0" />
-                <span className="truncate">Parabrisas del.</span>
-              </div>
-              <div
-                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
-                  activeZone === "front_sides" ? "bg-yellow-100 dark:bg-yellow-950/60 font-bold text-yellow-800 dark:text-yellow-300 ring-1 ring-yellow-400" : ""
-                }`}
-                onClick={() => setActiveZone("front_sides")}
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 ring-1 ring-yellow-600 shrink-0" />
-                <span className="truncate">Ventanas Del.</span>
-              </div>
-              <div
-                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
-                  activeZone === "rear_sides" ? "bg-orange-100 dark:bg-orange-950/60 font-bold text-orange-800 dark:text-orange-300 ring-1 ring-orange-400" : ""
-                }`}
-                onClick={() => setActiveZone("rear_sides")}
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-orange-400 ring-1 ring-orange-600 shrink-0" />
-                <span className="truncate">Ventanas Tras.</span>
-              </div>
-              <div
-                className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
-                  activeZone === "rear" ? "bg-purple-100 dark:bg-purple-950/60 font-bold text-purple-800 dark:text-purple-300 ring-1 ring-purple-400" : ""
-                }`}
-                onClick={() => setActiveZone("rear")}
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-400 ring-1 ring-purple-600 shrink-0" />
-                <span className="truncate">Parabrisas Tras.</span>
+                {/* 1. Imagen Top-Down Realista de la Carrocería */}
+                <img
+                  src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
+                  alt="Vehículo Top-Down"
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg transition-all duration-300"
+                />
+
+                {/* 2. Capa SVG Interactiva de Cristales */}
+                {(() => {
+                  const geom =
+                    VEHICLE_GLASS_GEOMETRY[selectedVehicleType] ||
+                    VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
+                    VEHICLE_GLASS_GEOMETRY.sedan;
+
+                  const getShade = (zoneKey) => {
+                    const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
+                    if (mat.includes("70")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
+                    if (mat.includes("35")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
+                    if (mat.includes("05") || mat.includes("04") || mat.includes("06")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
+                    return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
+                  };
+
+                  const shadeWindshield = getShade("windshield");
+                  const shadeFrontSides = getShade("front_sides");
+                  const shadeRearSides = getShade("rear_sides");
+                  const shadeRear = getShade("rear");
+
+                  // Text rotation for horizontal mobile mode
+                  const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
+
+                  return (
+                    <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
+                      <defs>
+                        <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#38bdf8" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#eab308" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f97316" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#a855f7" floodOpacity="0.9" />
+                        </filter>
+                      </defs>
+
+                      {/* 1. PARABRISAS DELANTERO */}
+                      <path
+                        d={geom.windshield.d}
+                        fill={shadeWindshield.fill}
+                        fillOpacity={shadeWindshield.opacity}
+                        stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
+                        strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
+                        filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
+                        className="cursor-pointer transition-all hover:opacity-90"
+                        onClick={() => setActiveZone("windshield")}
+                      />
+
+                      {/* Banda Superior Parabrisas (Visera Techo - Táctil) */}
+                      {geom.windshield.topStrip && (
+                        <path
+                          d={geom.windshield.topStrip}
+                          fill={sunstrips.windshield_top?.enabled ? "#020617" : "transparent"}
+                          fillOpacity={sunstrips.windshield_top?.enabled ? 0.95 : 0.01}
+                          stroke={sunstrips.windshield_top?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
+                          strokeWidth={sunstrips.windshield_top?.enabled ? "1.5" : "0.5"}
+                          strokeDasharray={sunstrips.windshield_top?.enabled ? undefined : "2,2"}
+                          className="cursor-pointer transition-all hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveZone("windshield");
+                            handleToggleSunstrip("windshield_top", !sunstrips.windshield_top?.enabled);
+                          }}
+                        />
+                      )}
+
+                      {/* Banda Inferior Parabrisas (Base Capó - Táctil) */}
+                      {geom.windshield.bottomStrip && (
+                        <path
+                          d={geom.windshield.bottomStrip}
+                          fill={sunstrips.windshield_bottom?.enabled ? "#020617" : "transparent"}
+                          fillOpacity={sunstrips.windshield_bottom?.enabled ? 0.95 : 0.01}
+                          stroke={sunstrips.windshield_bottom?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
+                          strokeWidth={sunstrips.windshield_bottom?.enabled ? "1.5" : "0.5"}
+                          strokeDasharray={sunstrips.windshield_bottom?.enabled ? undefined : "2,2"}
+                          className="cursor-pointer transition-all hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveZone("windshield");
+                            handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
+                          }}
+                        />
+                      )}
+
+                      {/* Textos Parabrisas Delantero */}
+                      <text
+                        x="100"
+                        y={geom.windshield.textY}
+                        textAnchor="middle"
+                        fill="#ffffff"
+                        fontSize="7.5"
+                        fontWeight="bold"
+                        transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
+                        className="pointer-events-none select-none drop-shadow"
+                      >
+                        Parabrisas del.
+                      </text>
+                      <text
+                        x="100"
+                        y={geom.windshield.subY}
+                        textAnchor="middle"
+                        fill="#e0f2fe"
+                        fontSize="7"
+                        fontWeight="600"
+                        transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
+                        className="pointer-events-none select-none"
+                      >
+                        {selectedMaterials.windshield?.includes("70")
+                          ? "70%"
+                          : selectedMaterials.windshield?.includes("35")
+                          ? "35%"
+                          : "20%"}
+                        {secondLayers.windshield?.enabled ? " + 2da" : ""}
+                      </text>
+
+                      {/* 2. VENTANAS DELANTERAS */}
+                      {geom.front_sides.map((p, idx) => (
+                        <path
+                          key={`fs-${idx}`}
+                          d={p.d}
+                          fill={shadeFrontSides.fill}
+                          fillOpacity={shadeFrontSides.opacity}
+                          stroke={activeZone === "front_sides" ? "#eab308" : shadeFrontSides.border}
+                          strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
+                          filter={activeZone === "front_sides" ? "url(#neonGlowYellow)" : undefined}
+                          className="cursor-pointer transition-all hover:opacity-90"
+                          onClick={() => setActiveZone("front_sides")}
+                        />
+                      ))}
+
+                      {/* 3. VENTANAS TRASERAS */}
+                      {geom.rear_sides.map((p, idx) => (
+                        <path
+                          key={`rs-${idx}`}
+                          d={p.d}
+                          fill={shadeRearSides.fill}
+                          fillOpacity={shadeRearSides.opacity}
+                          stroke={activeZone === "rear_sides" ? "#f97316" : shadeRearSides.border}
+                          strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
+                          filter={activeZone === "rear_sides" ? "url(#neonGlowOrange)" : undefined}
+                          className="cursor-pointer transition-all hover:opacity-90"
+                          onClick={() => setActiveZone("rear_sides")}
+                        />
+                      ))}
+
+                      {/* 4. PARABRISAS TRASERO */}
+                      <path
+                        d={geom.rear.d}
+                        fill={shadeRear.fill}
+                        fillOpacity={shadeRear.opacity}
+                        stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
+                        strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
+                        filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
+                        className="cursor-pointer transition-all hover:opacity-90"
+                        onClick={() => setActiveZone("rear")}
+                      />
+
+                      {/* Banda Superior Trasera (Táctil) */}
+                      {geom.rear.topStrip && (
+                        <path
+                          d={geom.rear.topStrip}
+                          fill={sunstrips.rear_top?.enabled ? "#020617" : "transparent"}
+                          fillOpacity={sunstrips.rear_top?.enabled ? 0.95 : 0.01}
+                          stroke={sunstrips.rear_top?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
+                          strokeWidth={sunstrips.rear_top?.enabled ? "1.5" : "0.5"}
+                          strokeDasharray={sunstrips.rear_top?.enabled ? undefined : "2,2"}
+                          className="cursor-pointer transition-all hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveZone("rear");
+                            handleToggleSunstrip("rear_top", !sunstrips.rear_top?.enabled);
+                          }}
+                        />
+                      )}
+
+                      {/* Banda Inferior Trasera (Táctil) */}
+                      {geom.rear.bottomStrip && (
+                        <path
+                          d={geom.rear.bottomStrip}
+                          fill={sunstrips.rear_bottom?.enabled ? "#020617" : "transparent"}
+                          fillOpacity={sunstrips.rear_bottom?.enabled ? 0.95 : 0.01}
+                          stroke={sunstrips.rear_bottom?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
+                          strokeWidth={sunstrips.rear_bottom?.enabled ? "1.5" : "0.5"}
+                          strokeDasharray={sunstrips.rear_bottom?.enabled ? undefined : "2,2"}
+                          className="cursor-pointer transition-all hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveZone("rear");
+                            handleToggleSunstrip("rear_bottom", !sunstrips.rear_bottom?.enabled);
+                          }}
+                        />
+                      )}
+
+                      {/* Textos Parabrisas Trasero */}
+                      <text
+                        x="100"
+                        y={geom.rear.textY}
+                        textAnchor="middle"
+                        fill="#ffffff"
+                        fontSize="7.5"
+                        fontWeight="bold"
+                        transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
+                        className="pointer-events-none select-none drop-shadow"
+                      >
+                        Parabrisas Tras.
+                      </text>
+                      <text
+                        x="100"
+                        y={geom.rear.subY}
+                        textAnchor="middle"
+                        fill="#f3e8ff"
+                        fontSize="7"
+                        fontWeight="600"
+                        transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
+                        className="pointer-events-none select-none"
+                      >
+                        {selectedMaterials.rear?.includes("70")
+                          ? "70%"
+                          : selectedMaterials.rear?.includes("35")
+                          ? "35%"
+                          : "20%"}
+                        {secondLayers.rear?.enabled ? " + 2da" : ""}
+                      </text>
+                    </svg>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -656,7 +710,7 @@ export default function TintWindowMaterialDialog({
           {/* Lado Derecho (7 cols en PC / Abajo en Móvil): Lista de Materiales de la Zona Activa */}
           <div className="md:col-span-7 p-2 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
             <div>
-              {/* Barra de Control de la Zona Activa (Reemplaza los botones redundantes) */}
+              {/* Barra de Control de la Zona Activa */}
               <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
@@ -767,7 +821,7 @@ export default function TintWindowMaterialDialog({
                   <select
                     value={secondLayers[activeZone]?.material_id || "carbon_20"}
                     onChange={(e) => handleSelectSecondLayerMaterial(activeZone, e.target.value)}
-                    className="text-[11px] rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-1 text-zinc-900 dark:text-white"
+                    className="text-[11px] rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-1 text-zinc-900 dark:text-white font-medium"
                   >
                     {activeMaterials.map((m) => (
                       <option key={m.material_id} value={m.material_id}>
@@ -778,23 +832,68 @@ export default function TintWindowMaterialDialog({
                 </div>
               )}
 
-              {/* Lista de Films / Materiales Disponibles (Capa 1) */}
+              {/* Filtro de Familias y Búsqueda de Catálogo Oficial */}
+              <div className="space-y-1.5 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="relative flex-1">
+                    <Search className="h-3 w-3 absolute left-2 top-2 text-zinc-400" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por tono, marca o tecnología..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-7 text-[10px] pl-6 pr-2 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                    />
+                  </div>
+                  {searchTerm && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSearchTerm("")}
+                      className="h-7 px-1.5 text-[10px]"
+                    >
+                      Limpiar
+                    </Button>
+                  )}
+                </div>
+
+                {/* Filtro de píldoras de familias de Solar Gard & 3M */}
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
+                  {families.map((fam) => (
+                    <button
+                      key={fam}
+                      type="button"
+                      onClick={() => setFamilyFilter(fam)}
+                      className={`px-2 py-0.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                        familyFilter === fam
+                          ? "bg-blue-600 text-white font-bold shadow-xs"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      }`}
+                    >
+                      {fam === "all" ? "Todas las Líneas" : fam}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lista de Films / Materiales Disponibles del Catálogo Oficial */}
               <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-72 overflow-y-auto pr-1">
-                {activeMaterials.map((mat) => {
+                {filteredMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
                   return (
                     <div
                       key={mat.material_id}
                       onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
-                      className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-1.5 ${
                         isSelected
                           ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-start gap-2.5 min-w-0">
                         <div
-                          className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                          className={`h-4 w-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
                             isSelected
                               ? "border-blue-600 bg-blue-600 text-white"
                               : "border-zinc-400 bg-transparent"
@@ -802,32 +901,58 @@ export default function TintWindowMaterialDialog({
                         >
                           {isSelected && <Check className="h-2.5 w-2.5" />}
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] sm:text-xs text-zinc-900 dark:text-white truncate">
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] sm:text-xs text-zinc-900 dark:text-white font-bold truncate">
                               {mat.name}
                             </span>
-                            <Badge variant="secondary" className="text-[9px] px-1 py-0 font-mono shrink-0">
-                              {mat.family}
-                            </Badge>
+                            {mat.tech_type && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
+                                {mat.tech_type}
+                              </Badge>
+                            )}
                           </div>
-                          <span className="text-[10px] text-muted-foreground font-mono block truncate">
-                            Stock: {mat.virtual_qty} u
-                          </span>
+
+                          {/* Métricas y Especificaciones Técnicas del Catálogo */}
+                          <div className="flex flex-wrap items-center gap-1 text-[9px] pt-0.5">
+                            {mat.ir_rejection_pct ? (
+                              <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-red-500/10 text-red-600 dark:text-red-400 font-mono font-bold">
+                                <Flame className="h-2.5 w-2.5" /> {mat.ir_rejection_pct}% IR
+                              </span>
+                            ) : null}
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-semibold">
+                              ☀️ {mat.uv_rejection_pct || 99}% UV
+                            </span>
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-semibold">
+                              {mat.vlt}% VLT
+                            </span>
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+                              <ShieldCheck className="h-2.5 w-2.5" /> 5a Gar.
+                            </span>
+                          </div>
+
+                          {mat.description && (
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                              {mat.description}
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0">
                         <span
                           className={`text-xs ${
                             mat.price_extra_usd > 0
-                              ? "text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs sm:text-sm"
+                              ? "text-emerald-600 dark:text-emerald-400 font-mono font-black text-xs sm:text-sm"
                               : "text-zinc-500 font-medium text-[11px]"
                           }`}
                         >
                           {mat.price_extra_usd > 0
                             ? `+$${mat.price_extra_usd.toFixed(2)} USD`
                             : "Incluido"}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-mono">
+                          Stock: {mat.virtual_qty} u
                         </span>
                       </div>
                     </div>
