@@ -92,6 +92,7 @@ const UniversalSearchPage = lazyNamedPage(() => import("./pages/UniversalSearchP
 const DocumentSnapshotView = lazyNamedPage(() => import("./components/sales/DocumentSnapshotView"), "DocumentSnapshotView");
 const ServerDashboardPage = lazyNamedPage(() => import("./pages/ServerDashboardPage"), "ServerDashboardPage");
 const DriverPortalPage = lazyNamedPage(() => import("./pages/DriverPortalPage"), "DriverPortalPage");
+const PublicOrderTrackingPage = lazyNamedPage(() => import("./pages/PublicOrderTrackingPage"), "PublicOrderTrackingPage");
 
 function RouteLoading() {
   return (
@@ -172,6 +173,8 @@ function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/server-dashboard" element={<ServerDashboardPage />} />
       <Route path="/driver" element={<DriverPortalPage />} />
+      <Route path="/track/:trackingId" element={<PublicOrderTrackingPage />} />
+      <Route path="/seguimiento/:trackingId" element={<PublicOrderTrackingPage />} />
 
       {/* Protected Routes with Main Layout */}
       <Route

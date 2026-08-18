@@ -22,17 +22,12 @@ def build_invoice_qr_payload(
     invoice_number: str,
     base_url: str = "",
 ) -> str:
-    payload = {
-        "invoice_id": str(sale_id or "").strip(),
-        "invoice_number": normalize_invoice_scan_code(invoice_number),
-    }
+    s_id = str(sale_id or "").strip()
+    inv_num = normalize_invoice_scan_code(invoice_number)
+    target_key = s_id or inv_num
     if base_url:
-        sep = "&" if "?" in base_url else "?"
-        return (
-            f"{base_url.rstrip('/')}{sep}"
-            f"invoice_id={payload['invoice_id']}&invoice_number={payload['invoice_number']}"
-        )
-    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        return f"{base_url.rstrip('/')}/track/{target_key}"
+    return f"https://mclarens.app/track/{target_key}"
 
 
 def _try_parse_json_scan(raw: str) -> Optional[Dict[str, str]]:

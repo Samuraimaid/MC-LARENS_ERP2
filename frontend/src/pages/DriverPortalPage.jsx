@@ -101,11 +101,74 @@ export function DriverPortalPage() {
   const [notes, setNotes] = useState("");
   const [proofJob, setProofJob] = useState(null);
   const [proofFile, setProofFile] = useState(null);
-  const [gpsCoords, setGpsCoords] = useState(null);
-  const [gpsLoading, setGpsLoading] = useState(false);
+  const [liveGpsEnabled, setLiveGpsEnabled] = useState(true);
+  const [lastGpsPing, setLastGpsPing] = useState(null);
+  const [gpsSpeed, setGpsSpeed] = useState(0);
   const fileInputRef = useRef(null);
   const cameraContextError = getCameraContextError();
   const cameraBlocked = !isSecureCameraContext() || Boolean(cameraContextError);
+
+  // Background Live GPS ping loop
+  useEffect(() => {
+    if (!user || !liveGpsEnabled) return;
+
+    let watchId = null;
+
+    const transmitLocation = async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const spd = (pos.coords.speed || 0) * 3.6; // convert m/s to km/h
+      const heading = pos.coords.heading || 0;
+      const accuracy = pos.coords.accuracy || 0;
+
+      setGpsSpeed(spd);
+      setLastGpsPing(new Date());
+
+      const activeJobIds = (jobsPayload?.active || jobsPayload?.jobs || [])
+        .filter((j) => String(j.status || "").toLowerCase() !== "entregado" && String(j.status || "").toLowerCase() !== "delivered")
+        .map((j) => j.job_id || j.entity_id);
+
+      try {
+        await axios.post(
+          `${API}/delivery/driver-location`,
+          {
+            driver_id: user.user_id || user.username,
+            driver_name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username,
+            latitude: lat,
+            longitude: lng,
+            speed: spd,
+            heading,
+            accuracy,
+            active_job_ids: activeJobIds,
+            branch_id: user.branch_id,
+          },
+          { withCredentials: true }
+        );
+      } catch (err) {
+        // silent retry
+      }
+    };
+
+    if (navigator?.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => transmitLocation(pos),
+        () => {},
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => transmitLocation(pos),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+      );
+    }
+
+    return () => {
+      if (watchId !== null && navigator?.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [user, liveGpsEnabled, jobsPayload]);
 
   useEffect(() => {
     const link = document.querySelector('link[rel="manifest"][data-driver-portal]');
@@ -293,7 +356,33 @@ export function DriverPortalPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg px-4 pt-4 space-y-6">
+      <main className="mx-auto max-w-lg px-4 pt-4 space-y-4">
+        {/* Live GPS Telemetry Status Card */}
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <span className={`relative flex h-3 w-3`}>
+              {liveGpsEnabled ? <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /> : null}
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${liveGpsEnabled ? "bg-emerald-500" : "bg-slate-500"}`} />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {liveGpsEnabled ? "GPS en Vivo Transmitiendo" : "GPS Pausado"}
+              </p>
+              <p className="text-[10px] text-white/50 font-mono">
+                {lastGpsPing ? `Último ping: ${lastGpsPing.toLocaleTimeString()} • ${gpsSpeed.toFixed(0)} km/h` : "Conectando satélites..."}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant={liveGpsEnabled ? "outline" : "default"}
+            onClick={() => setLiveGpsEnabled(!liveGpsEnabled)}
+            className="text-xs h-7 border-slate-700 hover:bg-slate-800"
+          >
+            {liveGpsEnabled ? "Pausar" : "Transmitir"}
+          </Button>
+        </div>
+
         {cameraBlocked ? (
           <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
             {cameraContextError || INSECURE_CAMERA_NETWORK_ALERT}

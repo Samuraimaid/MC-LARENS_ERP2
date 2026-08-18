@@ -15,8 +15,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { toast } from "sonner";
 import { 
   Truck, Search, RefreshCw, MapPin, Phone, User,
-  Clock, CheckCircle2, XCircle, AlertCircle, Play, Navigation
+  Clock, CheckCircle2, XCircle, AlertCircle, Play, Navigation, Activity
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LiveFleetTrackingRadar } from "@/components/delivery/LiveFleetTrackingRadar";
 import { API_BASE as API } from "@/lib/api";
 
 const DELIVERY_STATUSES = {
@@ -33,6 +35,7 @@ export function DeliveriesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [activeTab, setActiveTab] = useState("list");
   const [showAssign, setShowAssign] = useState(null);
   const [showUpdate, setShowUpdate] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState("");
@@ -153,8 +156,8 @@ export function DeliveriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Entregas</h1>
-          <p className="text-muted-foreground">Gestión de entregas a domicilio</p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Entregas y Logística</h1>
+          <p className="text-muted-foreground">Gestión de entregas a domicilio y monitoreo GPS de flota en tiempo real</p>
         </div>
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -162,7 +165,24 @@ export function DeliveriesPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="list" className="gap-2">
+            <Truck className="h-4 w-4" />
+            Pedidos de Entrega
+          </TabsTrigger>
+          <TabsTrigger value="radar" className="gap-2">
+            <Activity className="h-4 w-4 text-sky-500" />
+            Radar GPS en Vivo
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="radar" className="space-y-4">
+          <LiveFleetTrackingRadar height="620px" />
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6">
+          {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="cursor-pointer hover:border-primary/50 transition" onClick={() => setFilterStatus("pending")}>
           <CardHeader className="pb-2">
@@ -364,6 +384,8 @@ export function DeliveriesPage() {
           </Table>
         </CardContent>
       </Card>
+      </TabsContent>
+      </Tabs>
 
       {/* Assign Driver Dialog */}
       <Dialog open={!!showAssign} onOpenChange={() => setShowAssign(null)}>

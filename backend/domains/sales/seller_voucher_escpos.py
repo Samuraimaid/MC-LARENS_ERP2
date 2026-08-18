@@ -787,10 +787,26 @@ def _is_skipped_voucher_footer_line(
     return lower in legacy_footer
 
 
+def _escpos_qr(qr_data: str, *, module_size: int = 4) -> bytes:
+    data_bytes = str(qr_data or "").encode("utf-8")
+    length = len(data_bytes) + 3
+    pL = length % 256
+    pH = length // 256
+
+    model_cmd = bytes([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00])
+    size_cmd = bytes([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, max(1, min(16, module_size))])
+    ec_cmd = bytes([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31])
+    store_cmd = bytes([0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30]) + data_bytes
+    print_cmd = bytes([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30])
+
+    return model_cmd + size_cmd + ec_cmd + store_cmd + print_cmd
+
+
 def _append_voucher_footer(
     chunks: List[bytes],
     invoice_number: str,
     *,
+    sale_id: str = "",
     settings: Optional[Dict[str, Any]] = None,
 ) -> None:
     resolved = _resolve_voucher_settings(settings)
@@ -821,6 +837,18 @@ def _append_voucher_footer(
         chunks.append(_escpos_code128(invoice_number, module_width=module_width))
         centered_invoice = _manual_center_text(invoice_number, width=max(8, width - margin))
         chunks.append(_apply_left_margin(centered_invoice, margin).encode("ascii", "replace") + b"\n")
+
+    # QR de seguimiento en tiempo real para el cliente
+    tracking_key = str(sale_id or invoice_number).strip()
+    if tracking_key:
+        chunks.append(b"\n")
+        chunks.append(_render_escpos_line(VoucherLine("[ SEGUIMIENTO EN VIVO ]", centered=True), settings=resolved))
+        chunks.append(_render_escpos_line(VoucherLine("Escanee para estado y ruta", centered=True), settings=resolved))
+        tracking_url = f"https://mclarens.app/track/{tracking_key}"
+        chunks.append(_escpos_align(1))
+        chunks.append(_escpos_qr(tracking_url, module_size=4))
+        chunks.append(_escpos_align(0))
+
     if show_footer_valid:
         chunks.append(
             _render_escpos_line(
@@ -861,6 +889,7 @@ def build_seller_voucher_escpos(
     settings = _resolve_voucher_settings(voucher_settings)
     texts = _voucher_texts(settings)
     invoice_number = normalize_invoice_scan_code(str(sale.get("invoice_number") or ""))
+    sale_id = str(sale.get("sale_id") or "")
     body_lines = _coerce_voucher_lines(
         sale,
         vehicle=vehicle,
@@ -881,7 +910,7 @@ def build_seller_voucher_escpos(
             continue
         chunks.append(_render_escpos_line(line, settings=settings))
 
-    _append_voucher_footer(chunks, invoice_number, settings=settings)
+    _append_voucher_footer(chunks, invoice_number, sale_id=sale_id, settings=settings)
     return b"".join(chunks)
 
 

@@ -16905,6 +16905,186 @@ async def get_work_order_thermal(work_order_id: str, request: Request):
     return Response(content=content, media_type="text/plain")
 
 
+# ---------------------------------------------------------------------------
+# LIVE GPS DELIVERY TRACKING & PUBLIC QR VEHICLE TRACEABILITY
+# ---------------------------------------------------------------------------
+
+@api_router.get("/public/tracking/{tracking_key}")
+async def get_public_order_tracking(tracking_key: str):
+    """
+    Public tracking endpoint for customers scanning the QR code on receipt/voucher.
+    Returns real-time vehicle workshop stages, delivery status, and live driver GPS coords.
+    """
+    from backend.domains.delivery.live_tracking import build_public_tracking_payload
+
+    key = str(tracking_key or "").strip()
+    if not key:
+        raise HTTPException(status_code=400, detail="Clave de seguimiento inválida")
+
+    # Lookup sale by sale_id or invoice_number
+    sale = await db.sales.find_one({"sale_id": key}, {"_id": 0})
+    if not sale:
+        sale = await db.sales.find_one({"invoice_number": key}, {"_id": 0})
+    if not sale and not key.startswith("INV-"):
+        sale = await db.sales.find_one({"invoice_number": f"INV-{key}"}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Orden o vehículo no encontrado")
+
+    # Fetch vehicle data if linked
+    vehicle = None
+    if sale.get("vehicle_id"):
+        vehicle = await db.vehicles.find_one({"vehicle_id": sale["vehicle_id"]}, {"_id": 0})
+
+    # Fetch driver live location if order is assigned to a messenger / driver
+    driver_location = None
+    deliv = sale.get("delivery_info") or {}
+    driver_id = deliv.get("messenger_id") or deliv.get("driver_id") or sale.get("assigned_driver_id")
+    if driver_id:
+        driver_location = await db.driver_live_locations.find_one({"driver_id": driver_id}, {"_id": 0})
+
+    # Fetch branch info
+    branch = None
+    if sale.get("branch_id"):
+        branch = await db.branches.find_one({"branch_id": sale["branch_id"]}, {"_id": 0})
+
+    return build_public_tracking_payload(
+        sale,
+        vehicle=vehicle,
+        driver_location=driver_location,
+        branch=branch,
+    )
+
+
+@api_router.post("/delivery/driver-location")
+async def update_driver_live_location(request: Request):
+    """
+    Endpoint for driver / messenger mobile app to report live GPS coordinates.
+    Updates MongoDB live location for fleet radar and customer tracking.
+    """
+    body = await request.json()
+    driver_id = str(body.get("driver_id") or "").strip()
+    if not driver_id:
+        raise HTTPException(status_code=400, detail="driver_id requerido")
+
+    latitude = float(body.get("latitude") or 0.0)
+    longitude = float(body.get("longitude") or 0.0)
+    if abs(latitude) < 0.0001 and abs(longitude) < 0.0001:
+        raise HTTPException(status_code=400, detail="Coordenadas GPS inválidas")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    doc = {
+        "driver_id": driver_id,
+        "driver_name": body.get("driver_name") or driver_id,
+        "latitude": latitude,
+        "longitude": longitude,
+        "speed": float(body.get("speed") or 0.0),
+        "heading": float(body.get("heading") or 0.0),
+        "altitude": float(body.get("altitude") or 0.0) if body.get("altitude") is not None else None,
+        "accuracy": float(body.get("accuracy") or 0.0) if body.get("accuracy") is not None else None,
+        "battery_level": float(body.get("battery_level") or 0.0) if body.get("battery_level") is not None else None,
+        "is_charging": bool(body.get("is_charging")),
+        "active_job_ids": body.get("active_job_ids") or [],
+        "branch_id": body.get("branch_id"),
+        "updated_at": now_iso,
+    }
+
+    await db.driver_live_locations.update_one(
+        {"driver_id": driver_id},
+        {"$set": doc},
+        upsert=True,
+    )
+
+    # Push to recent breadcrumbs history (capped to last 50 points)
+    await db.driver_location_history.update_one(
+        {"driver_id": driver_id},
+        {
+            "$push": {
+                "points": {
+                    "$each": [{"lat": latitude, "lng": longitude, "t": now_iso, "spd": doc["speed"]}],
+                    "$slice": -50,
+                }
+            }
+        },
+        upsert=True,
+    )
+
+    return {"ok": True, "driver_id": driver_id, "updated_at": now_iso}
+
+
+@api_router.get("/delivery/live-fleet")
+async def get_live_fleet_radar(request: Request):
+    """
+    Returns live positions of all active drivers/messengers for Management, HR, Sales and Supervisors.
+    """
+    user = await require_auth(request)
+    role = str(user.role or "").lower()
+    if role not in {"gerencia", "ventas", "rrhh", "supervisor", "jefe_tienda", "programador", "cajero", "bodeguero"}:
+        raise HTTPException(status_code=403, detail="Acceso denegado a telemetría de flota")
+
+    locations = await db.driver_live_locations.find({}, {"_id": 0}).to_list(length=100)
+
+    # Enrich with driver profiles from erp_drivers
+    drivers_cur = db.erp_drivers.find({}, {"_id": 0})
+    drivers_map = {d.get("driver_id"): d async for d in drivers_cur}
+
+    enriched = []
+    now_ts = datetime.now(timezone.utc).timestamp()
+    for loc in locations:
+        did = loc.get("driver_id")
+        d_profile = drivers_map.get(did) or {}
+        updated_at = loc.get("updated_at")
+        is_online = False
+        if updated_at:
+            try:
+                dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+                is_online = (now_ts - dt.timestamp()) < 600  # 10 minutes
+            except Exception:
+                is_online = False
+
+        enriched.append({
+            **loc,
+            "driver_name": d_profile.get("name") or loc.get("driver_name") or did,
+            "driver_type": d_profile.get("driver_type") or "delivery_last_mile",
+            "phone": d_profile.get("phone") or "",
+            "vehicle_plate": d_profile.get("vehicle_plate") or "",
+            "status": d_profile.get("status") or ("en_ruta" if loc.get("active_job_ids") else "disponible"),
+            "is_online": is_online,
+        })
+
+    return {"fleet": enriched, "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@api_router.patch("/work-orders/stage/{sale_id}")
+async def update_work_order_stage(sale_id: str, request: Request):
+    """
+    Updates the physical progress of the vehicle (Recepción -> En Taller -> Control Calidad -> Listo).
+    """
+    user = await require_auth(request)
+    body = await request.json()
+    stage = str(body.get("stage") or "").strip()
+    if not stage:
+        raise HTTPException(status_code=400, detail="Stage requerido")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    update_fields = {
+        "vehicle_work_stage": stage,
+        "vehicle_work_stage_updated_at": now_iso,
+        "vehicle_work_stage_updated_by": user.username,
+    }
+    if body.get("notes"):
+        update_fields["vehicle_work_stage_notes"] = body["notes"]
+
+    result = await db.sales.update_one(
+        {"sale_id": sale_id},
+        {"$set": update_fields}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Venta/Orden no encontrada")
+
+    return {"ok": True, "sale_id": sale_id, "stage": stage, "updated_at": now_iso}
+
+
 @api_router.get("/print/invoice-pdf/{sale_id}")
 async def get_invoice_pdf(sale_id: str, request: Request):
     user = await require_auth(request)
