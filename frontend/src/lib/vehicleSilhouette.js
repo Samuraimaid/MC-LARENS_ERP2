@@ -3,6 +3,8 @@
  * Supporting full comprehensive range of 14 vehicle body types with real high-res top-down renders.
  */
 
+import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
+
 export const VEHICLE_CATEGORIES = [
   { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
   { id: "suv", label: "SUV / Crossover 4x4", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png" },
@@ -20,62 +22,128 @@ export const VEHICLE_CATEGORIES = [
   { id: "bus_grande_marcopolo", label: "Bus Grande (Estilo Marcopolo)", shortLabel: "Bus Grande", image: "/vehicles/clean_bus_grande_marcopolo.png" },
 ];
 
+const KNOWN_CATEGORIES = new Set(VEHICLE_CATEGORIES.map((c) => c.id));
+
+const CATEGORY_ALIASES = {
+  hatchback: "sedan",
+  coupe: "sedan",
+  coupé: "sedan",
+  convertible: "sedan",
+  cabriolet: "sedan",
+  pickup: "camioneta_doble_cabina",
+  "pick-up": "camioneta_doble_cabina",
+  "pickup-doble-cabina": "camioneta_doble_cabina",
+  "pickup-cabina-media": "camioneta_cabina_media",
+  "pickup-1-cabina": "camioneta_1_cabina",
+  furgon: "microbus_carga",
+  furgón: "microbus_carga",
+  panel: "microbus_carga",
+  minivan: "microbus_pasajeros",
+  minibus: "microbus_pasajeros",
+  minibús: "microbus_pasajeros",
+  camion: "camion_1_cabina",
+  camión: "camion_1_cabina",
+  bus: "bus_mediano_coaster",
+};
+
 /**
- * Resolves the vehicle category based on vehicle object metadata
+ * Resolves the vehicle category based on vehicle object metadata and comprehensive ERP vehicle catalog
  */
 export function resolveVehicleCategory(vehicle) {
   if (!vehicle) return "sedan";
-  const slug = String(
+
+  // 1. Direct assigned slug validation
+  const directSlug = String(
     vehicle.vehicle_type_slug ||
     vehicle.type ||
     vehicle.body_type ||
     vehicle.category ||
     ""
-  ).toLowerCase();
-  
-  const brand = String(vehicle.brand || "").toLowerCase();
-  const model = String(vehicle.model || "").toLowerCase();
-  const text = `${slug} ${brand} ${model}`;
+  ).toLowerCase().trim();
 
-  // 1. Bus Grande (Marcopolo, Autobús, Bus Interlocal)
+  if (KNOWN_CATEGORIES.has(directSlug)) return directSlug;
+  if (CATEGORY_ALIASES[directSlug]) return CATEGORY_ALIASES[directSlug];
+
+  const brand = String(vehicle.brand || "").trim().toUpperCase();
+  const descriptor = String(vehicle.descriptor || vehicle.model || "").trim();
+  const normBrand = brand.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
+  // 2. Exact match in ERP Vehicle Descriptor Catalog
+  if (normBrand && descriptor) {
+    const key = `${normBrand}::${descriptor}`;
+    const catalogSlug = vehicleDescriptorTypes.entries?.[key]?.default_silhouette_slug;
+    if (catalogSlug && KNOWN_CATEGORIES.has(catalogSlug)) return catalogSlug;
+    if (catalogSlug && CATEGORY_ALIASES[catalogSlug]) return CATEGORY_ALIASES[catalogSlug];
+  }
+
+  // 3. Fuzzy match in ERP Vehicle Descriptor Catalog by Brand + Model
+  const model = String(vehicle.model || "").trim();
+  if (normBrand && model) {
+    const modelToken = model.split("(")[0].trim().toUpperCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    if (modelToken.length >= 2) {
+      const entries = vehicleDescriptorTypes.entries || {};
+      for (const [key, profile] of Object.entries(entries)) {
+        if (!key.startsWith(`${normBrand}::`)) continue;
+        const entryDesc = key.slice(normBrand.length + 2).toUpperCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+        if (entryDesc.includes(modelToken) || entryDesc.startsWith(modelToken)) {
+          const slug = String(profile?.default_silhouette_slug || "").trim();
+          if (KNOWN_CATEGORIES.has(slug)) return slug;
+          if (CATEGORY_ALIASES[slug]) return CATEGORY_ALIASES[slug];
+        }
+      }
+    }
+  }
+
+  // 4. Exhaustive Text Token Matching covering all ERP vehicles
+  const text = `${directSlug} ${brand.toLowerCase()} ${model.toLowerCase()}`;
+
+  // 4.1 Bus Grande (Marcopolo, Autobús, Bus Interlocal, Pullman)
   if (
     text.includes("marcopolo") ||
     text.includes("bus grande") ||
     text.includes("autobus") ||
     text.includes("autobús") ||
     text.includes("pullman") ||
-    text.includes("g8")
+    text.includes("viaggio") ||
+    text.includes("paradiso") ||
+    text.includes("irizar") ||
+    text.includes("busscar") ||
+    text.includes("blue bird") ||
+    text.includes("g8") ||
+    text.includes("g7")
   ) {
     return "bus_grande_marcopolo";
   }
 
-  // 2. Bus Mediano (Coaster, Civilian, Rosa)
+  // 4.2 Bus Mediano (Coaster, Civilian, Rosa, County, Cosmos)
   if (
     text.includes("coaster") ||
     text.includes("civilian") ||
     text.includes("rosa") ||
+    text.includes("county") ||
+    text.includes("cosmos") ||
     text.includes("bus mediano")
   ) {
     return "bus_mediano_coaster";
   }
 
-  // 3. Camión 2 Cabinas / Doble Cabina
+  // 4.3 Camión 2 Cabinas / Doble Cabina
   if (
     (text.includes("camion") || text.includes("camión")) &&
-    (text.includes("doble") || text.includes("2 cabina") || text.includes("dos cabina"))
+    (text.includes("doble") || text.includes("2 cabina") || text.includes("dos cabina") || text.includes("crew"))
   ) {
     return "camion_2_cabinas";
   }
 
-  // 4. Camión Furgón / Carga Cerrada
+  // 4.4 Camión Furgón / Carga Cerrada
   if (
     (text.includes("camion") || text.includes("camión")) &&
-    (text.includes("furgon") || text.includes("furgón") || text.includes("caja") || text.includes("termico") || text.includes("frio"))
+    (text.includes("furgon") || text.includes("furgón") || text.includes("caja") || text.includes("termico") || text.includes("frio") || text.includes("frío"))
   ) {
     return "camion_carga_furgon";
   }
 
-  // 5. Camión 1 Cabina / Baranda / Plataforma
+  // 4.5 Camión 1 Cabina / Baranda / Plataforma
   if (
     text.includes("camion") ||
     text.includes("camión") ||
@@ -84,15 +152,24 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("k3000") ||
     text.includes("porter") ||
     text.includes("h100") ||
+    text.includes("h-100") ||
     text.includes("dyna") ||
     text.includes("canter") ||
+    text.includes("dutro") ||
+    text.includes("npr") ||
+    text.includes("nqr") ||
+    text.includes("nhr") ||
+    text.includes("forward") ||
+    text.includes("hd72") ||
+    text.includes("hd65") ||
+    text.includes("cabstar") ||
     text.includes("camion-carga") ||
     text.includes("cabezal")
   ) {
     return "camion_1_cabina";
   }
 
-  // 6. Camioneta Cabina y Media (Extra Cab / King Cab)
+  // 4.6 Camioneta Cabina y Media (Extra Cab / King Cab)
   if (
     text.includes("media") ||
     text.includes("cabina y media") ||
@@ -100,12 +177,13 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("king cab") ||
     text.includes("supercab") ||
     text.includes("club cab") ||
+    text.includes("space cab") ||
     text.includes("camioneta-cabina-y-media")
   ) {
     return "camioneta_cabina_media";
   }
 
-  // 7. Camioneta 1 Cabina (Single Cab / Regular Cab)
+  // 4.7 Camioneta 1 Cabina (Single Cab / Regular Cab)
   if (
     text.includes("1 cabina") ||
     text.includes("una cabina") ||
@@ -117,7 +195,7 @@ export function resolveVehicleCategory(vehicle) {
     return "camioneta_1_cabina";
   }
 
-  // 8. Camioneta Doble Cabina / Pick-up (Hilux, Frontier, D-Max, L200, Ranger, etc.)
+  // 4.8 Camioneta Doble Cabina / Pick-up (Hilux, Frontier, D-Max, L200, Ranger, etc.)
   if (
     text.includes("doble cabina") ||
     text.includes("double cab") ||
@@ -130,6 +208,8 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("ranger") ||
     text.includes("amarok") ||
     text.includes("tacoma") ||
+    text.includes("tundra") ||
+    text.includes("titan") ||
     text.includes("bt-50") ||
     text.includes("bt50") ||
     text.includes("navara") ||
@@ -137,26 +217,44 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("silverado") ||
     text.includes("f-150") ||
     text.includes("f150") ||
+    text.includes("f-250") ||
+    text.includes("f250") ||
+    text.includes("ram 1500") ||
+    text.includes("ram 2500") ||
     text.includes("ram") ||
+    text.includes("poer") ||
+    text.includes("wingle") ||
+    text.includes("t60") ||
+    text.includes("t90") ||
+    text.includes("cannon") ||
+    text.includes("gladiator") ||
+    text.includes("ridgeline") ||
+    text.includes("alaskan") ||
+    text.includes("musso") ||
     text.includes("pickup") ||
     text.includes("pick-up")
   ) {
     return "camioneta_doble_cabina";
   }
 
-  // 9. Panel de Carga / Furgón
+  // 4.9 Panel de Carga / Furgón
   if (
     text.includes("panel") ||
     text.includes("carga") ||
     text.includes("furgon") ||
     text.includes("furgón") ||
     text.includes("van carga") ||
+    text.includes("nv200") ||
+    text.includes("partner") ||
+    text.includes("berlingo") ||
+    text.includes("kangoo") ||
+    text.includes("caddy") ||
     text.includes("microbus-carga")
   ) {
     return "microbus_carga";
   }
 
-  // 10. Microbús Techo Alto (Hiace High Roof, Urvan Techo Alto)
+  // 4.10 Microbús Techo Alto (Hiace High Roof, Urvan Techo Alto)
   if (
     text.includes("techo alto") ||
     text.includes("high roof") ||
@@ -165,7 +263,7 @@ export function resolveVehicleCategory(vehicle) {
     return "microbus_techo_alto";
   }
 
-  // 11. Microbús / Minibús / Minivan / Van de Pasajeros
+  // 4.11 Microbús / Minibús / Minivan / Van de Pasajeros
   if (
     text.includes("microbus") ||
     text.includes("microbús") ||
@@ -175,53 +273,137 @@ export function resolveVehicleCategory(vehicle) {
     text.includes("van") ||
     text.includes("hiace") ||
     text.includes("urvan") ||
+    text.includes("nv350") ||
+    text.includes("h-1") ||
+    text.includes("starex") ||
+    text.includes("caravan") ||
+    text.includes("grace") ||
+    text.includes("transit") ||
+    text.includes("sprinter") ||
+    text.includes("carnival") ||
+    text.includes("sedona") ||
+    text.includes("sienna") ||
+    text.includes("odyssey") ||
+    text.includes("pacifica") ||
+    text.includes("ertiga") ||
+    text.includes("avanza") ||
+    text.includes("xpander") ||
     text.includes("pasajero") ||
     text.includes("microbus-pasajeros")
   ) {
     return "microbus_pasajeros";
   }
 
-  // 12. Station Wagon / Familiar
+  // 4.12 Station Wagon / Familiar
   if (
     text.includes("station") ||
     text.includes("wagon") ||
     text.includes("familiar") ||
     text.includes("probox") ||
-    text.includes("ad expert") ||
     text.includes("succeed") ||
+    text.includes("ad expert") ||
+    text.includes("caldina") ||
+    text.includes("wingroad") ||
+    text.includes("fielder") ||
     text.includes("station-wagon")
   ) {
     return "station_wagon";
   }
 
-  // 13. SUV / Camioneta Cerrada 4x4 / Crossover
+  // 4.13 SUV / Camioneta Cerrada 4x4 / Crossover
   if (
     text.includes("suv") ||
     text.includes("camioneta") ||
+    text.includes("crossover") ||
+    text.includes("4x4") ||
+    text.includes("4wd") ||
+    text.includes("awd") ||
     text.includes("prado") ||
     text.includes("land cruiser") ||
     text.includes("rav4") ||
+    text.includes("rav-4") ||
     text.includes("cr-v") ||
     text.includes("crv") ||
     text.includes("tucson") ||
     text.includes("sportage") ||
+    text.includes("santa fe") ||
+    text.includes("santafe") ||
+    text.includes("sorento") ||
     text.includes("patrol") ||
+    text.includes("pathfinder") ||
     text.includes("fortuner") ||
     text.includes("4runner") ||
     text.includes("everest") ||
     text.includes("montero") ||
+    text.includes("pajero") ||
+    text.includes("outlander") ||
+    text.includes("asx") ||
     text.includes("explorer") ||
-    text.includes("tahoe") ||
+    text.includes("edge") ||
+    text.includes("escape") ||
+    text.includes("cherokee") ||
+    text.includes("compass") ||
+    text.includes("renegade") ||
+    text.includes("forester") ||
+    text.includes("outback") ||
+    text.includes("crosstrek") ||
     text.includes("qashqai") ||
-    text.includes("santa fe") ||
-    text.includes("santafe") ||
-    text.includes("4x4") ||
-    text.includes("crossover")
+    text.includes("x-trail") ||
+    text.includes("xtrail") ||
+    text.includes("kicks") ||
+    text.includes("duster") ||
+    text.includes("captur") ||
+    text.includes("tracker") ||
+    text.includes("tahoe") ||
+    text.includes("suburban") ||
+    text.includes("equinox") ||
+    text.includes("traverse") ||
+    text.includes("creta") ||
+    text.includes("venue") ||
+    text.includes("palisade") ||
+    text.includes("seltos") ||
+    text.includes("telluride") ||
+    text.includes("cx-3") ||
+    text.includes("cx-30") ||
+    text.includes("cx-5") ||
+    text.includes("cx-50") ||
+    text.includes("cx-60") ||
+    text.includes("cx-9") ||
+    text.includes("cx-90") ||
+    text.includes("tiguan") ||
+    text.includes("touareg") ||
+    text.includes("taos") ||
+    text.includes("t-cross") ||
+    text.includes("nivus") ||
+    text.includes("x1") ||
+    text.includes("x3") ||
+    text.includes("x5") ||
+    text.includes("q3") ||
+    text.includes("q5") ||
+    text.includes("q7") ||
+    text.includes("glc") ||
+    text.includes("gle") ||
+    text.includes("macan") ||
+    text.includes("cayenne") ||
+    text.includes("defender") ||
+    text.includes("discovery") ||
+    text.includes("evoque") ||
+    text.includes("velar") ||
+    text.includes("range rover") ||
+    text.includes("rush") ||
+    text.includes("terios") ||
+    text.includes("jimny") ||
+    text.includes("vitara") ||
+    text.includes("grand vitara") ||
+    text.includes("fronx") ||
+    text.includes("haval") ||
+    text.includes("tiggo") ||
+    text.includes("coolray")
   ) {
     return "suv";
   }
 
-  // 14. Default -> Sedán / Hatchback
+  // 4.14 Default -> Sedán / Automóvil / Hatchback (Corolla, Civic, Yaris, Sentra, Elantra, etc.)
   return "sedan";
 }
 

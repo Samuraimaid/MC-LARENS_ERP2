@@ -321,7 +321,9 @@ export default function TintWindowMaterialDialog({
 
   const activeZoneConfig = config?.zones?.[activeZone];
   const activeMaterials = activeZoneConfig?.materials || [];
-  const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || active  return (
+  const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
+
+  return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
         {/* Encabezado Responsivo: En móvil es una sola línea ultra-compacta; en PC es el banner completo */}
