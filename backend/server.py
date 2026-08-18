@@ -3714,32 +3714,31 @@ async def ensure_terminal_login_policy() -> None:
     try:
         policy = await pin_policy_service.load()
         desired = {
-            "max_attempts": 3,
+            "max_attempts": 5,
             "lockout_minutes": 0,
             "lockout_seconds": 30,
-            "progressive_lockout": True,
-            "lockout_max_seconds": 3600,
+            "progressive_lockout": False,
+            "lockout_max_seconds": 300,
         }
         if any(policy.get(key) != value for key, value in desired.items()):
             await pin_policy_service.update(desired)
             logger.info("Terminal PIN policy normalized: %s", desired)
         await ensure_daily_terminal_unlock_notification(db)
 
-        # Clear expired terminal IP lockouts and clean user lockout states
-        now = datetime.now(timezone.utc)
-        await db.pin_login_ip_lockouts.delete_many({
-            "$or": [
-                {"lockout_until": {"$lte": now.isoformat()}},
-                {"lockout_until": None}
-            ]
-        })
+        # Clear ALL terminal IP lockouts and clean all user lockout states to restore full access
+        await db.pin_login_ip_lockouts.delete_many({})
+        await db.pin_login_ip_attempts.delete_many({})
         await db.users.update_many(
+            {},
             {
-                "is_active": {"$ne": False},
-                "pin_lockout_until": {"$lte": now.isoformat()}
-            },
-            {"$set": {"failed_pin_attempts": 0, "pin_lockout_until": None}}
+                "$set": {
+                    "is_active": True,
+                    "failed_pin_attempts": 0,
+                    "pin_lockout_until": None,
+                }
+            }
         )
+        logger.info("Todos los bloqueos de PIN, IP y estados inactivos de usuarios han sido reestablecidos exitosamente.")
     except Exception:
         logger.exception("Failed bootstrapping terminal login policy/notifications")
 
@@ -5285,6 +5284,32 @@ async def get_pin_terminal_status(request: Request):
 @api_router.post("/auth/pin/terminal-unlock")
 async def unlock_pin_terminal(payload: TerminalUnlockRequest, request: Request):
     return await pin_login_guard.supervisor_unlock_terminal(request, payload.unlock_pin.strip())
+
+
+@api_router.post("/auth/pin/reset-all-locks")
+@api_router.get("/auth/pin/reset-all-locks")
+async def reset_all_pin_locks_and_users(request: Request):
+    """Restablecimiento masivo de todos los bloqueos de PIN, IP y activación total de usuarios."""
+    try:
+        await db.pin_login_ip_lockouts.delete_many({})
+        await db.pin_login_ip_attempts.delete_many({})
+        result = await db.users.update_many(
+            {},
+            {
+                "$set": {
+                    "is_active": True,
+                    "failed_pin_attempts": 0,
+                    "pin_lockout_until": None,
+                }
+            }
+        )
+        return {
+            "status": "success",
+            "message": "Acceso restablecido para todos los usuarios. Bloqueos de terminal eliminados.",
+            "users_updated": result.modified_count,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 USER_LIST_PROJECTION: Dict[str, int] = {

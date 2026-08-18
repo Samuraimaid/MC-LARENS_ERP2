@@ -949,16 +949,6 @@ export function LoginPage() {
                   variant="ghost"
                   size="icon"
                   className="h-12 w-12"
-                  onClick={() => setShowServerConfig(true)}
-                  aria-label="Configurar servidor"
-                  title="Configurar Servidor"
-                >
-                  <Server className="h-4 w-4 text-sky-500 hover:text-sky-400" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12"
                   onClick={() => handleToolToggle("calculator")}
                   aria-label="Abrir calculadora"
                 >
