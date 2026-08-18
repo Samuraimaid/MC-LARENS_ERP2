@@ -816,7 +816,7 @@ export function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen bg-background flex relative"
+      className="min-h-screen bg-background flex relative safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
     >
       <input
         ref={pinInputRef}

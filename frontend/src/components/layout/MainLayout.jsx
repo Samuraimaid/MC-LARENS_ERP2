@@ -606,8 +606,12 @@ export function MainLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "sticky top-0 z-30 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80",
-              isPhone ? "min-h-[52px] py-1.5" : !isMobile && isSidebarCollapsed ? "h-20 min-h-0 py-0" : "min-h-[72px] py-3"
+              "sticky top-0 z-30 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 safe-area-top",
+              isPhone
+                ? "min-h-[52px] pt-[max(0.375rem,env(safe-area-inset-top,0px))] pb-1.5"
+                : !isMobile && isSidebarCollapsed
+                  ? "h-20 min-h-0 py-0"
+                  : "min-h-[72px] py-3"
             )}
           >
             <div className="flex h-full items-center justify-between gap-3">

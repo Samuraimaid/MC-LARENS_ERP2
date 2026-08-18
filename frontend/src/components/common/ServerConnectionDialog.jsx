@@ -25,8 +25,8 @@ export default function ServerConnectionDialog({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleTestConnection = async (urlToTest) => {
-    const target = (urlToTest || inputUrl).trim().replace(/\/$/, "");
-    if (!target || (!target.startsWith("http://") && !target.startsWith("https://"))) {
+    const rawTarget = (urlToTest || inputUrl).trim().replace(/\/$/, "");
+    if (!rawTarget || (!rawTarget.startsWith("http://") && !rawTarget.startsWith("https://"))) {
       toast.error("Ingresa una URL válida (ej. https://... o http://192.168.1.50:8001/api)");
       return;
     }
@@ -35,41 +35,42 @@ export default function ServerConnectionDialog({ isOpen, onClose }) {
     setTestResult(null);
     const start = performance.now();
 
-    try {
-      // Intentar ping al health check o root de API
-      const pingUrl = target.endsWith("/api") ? `${target}/health` : `${target}/api/health`;
-      const res = await axios.get(pingUrl, { timeout: 6000 });
-      const elapsed = Math.round(performance.now() - start);
+    const normalizedApi = rawTarget.endsWith("/api") ? rawTarget : `${rawTarget}/api`;
+    const urlsToTry = [
+      `${normalizedApi}/health`,
+      `${normalizedApi}/`,
+      normalizedApi,
+      `${normalizedApi}/auth/csrf-token`,
+      rawTarget,
+    ];
 
-      setTestResult({
-        success: true,
-        status: res.status,
-        latency: elapsed,
-        data: res.data,
-      });
-      toast.success(`Conexión exitosa (${elapsed}ms)`);
-    } catch (err) {
-      // Fallback a test simple de /api/auth/csrf-token o /
+    let lastError = null;
+    for (const url of urlsToTry) {
       try {
-        const altUrl = target.endsWith("/api") ? target : `${target}/api`;
-        const res2 = await axios.get(`${altUrl}/auth/csrf-token`, { timeout: 6000 });
-        const elapsed2 = Math.round(performance.now() - start);
-        setTestResult({
-          success: true,
-          status: res2.status,
-          latency: elapsed2,
-        });
-        toast.success(`Conexión exitosa (${elapsed2}ms)`);
-      } catch (err2) {
-        setTestResult({
-          success: false,
-          error: err2.message || "No responde el servidor",
-        });
-        toast.error("No se pudo conectar con el servidor indicado");
+        const res = await axios.get(url, { timeout: 5000 });
+        if (res.status >= 200 && res.status < 400) {
+          const elapsed = Math.round(performance.now() - start);
+          setTestResult({
+            success: true,
+            status: res.status,
+            latency: elapsed,
+            data: res.data,
+          });
+          toast.success(`Conexión exitosa (${elapsed}ms)`);
+          setTesting(false);
+          return;
+        }
+      } catch (err) {
+        lastError = err;
       }
-    } finally {
-      setTesting(false);
     }
+
+    setTestResult({
+      success: false,
+      error: lastError?.message || "No responde el servidor",
+    });
+    toast.error("No se pudo conectar con el servidor indicado");
+    setTesting(false);
   };
 
   const handleApply = (urlToSave) => {

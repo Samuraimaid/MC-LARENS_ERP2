@@ -100,10 +100,18 @@ app = FastAPI()
 
 api_router = APIRouter(prefix="/api")
 
-# Basic API root for health/checks
+# Basic API root & health checks
 @api_router.get("/")
+@api_router.get("/health")
+@api_router.get("/ping")
 async def api_root():
-    return JSONResponse({"message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
+    return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
+
+@app.get("/")
+@app.get("/health")
+@app.get("/ping")
+async def app_health_root():
+    return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
 
 
 # Drafts backup endpoints - scoped by authenticated user.
