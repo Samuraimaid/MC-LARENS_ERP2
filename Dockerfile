@@ -11,9 +11,10 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
-RUN npm ci || npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 COPY frontend/ ./
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV VITE_BACKEND_URL=""
 ENV VITE_AUTH_URL="/api/auth/login"
 ENV VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN="50005000"

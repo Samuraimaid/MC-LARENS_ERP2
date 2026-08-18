@@ -1,0 +1,11 @@
+#!include:.gitignore
+#!include:.dockerignore
+.gcloudignore
+.git
+.github
+node_modules/
+frontend/node_modules/
+.venv/
+backend/.venv/
+deploy/.env
+*.log
