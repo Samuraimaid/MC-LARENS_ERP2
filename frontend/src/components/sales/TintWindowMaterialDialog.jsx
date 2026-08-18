@@ -324,32 +324,32 @@ export default function TintWindowMaterialDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
+      <DialogContent className="w-[96vw] max-w-6xl md:max-w-7xl max-h-[95vh] h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
         {/* Encabezado */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-6 py-3.5 text-white shrink-0">
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-6 py-4 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30">
-                <Layers className="h-5 w-5 text-blue-300" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30">
+                <Layers className="h-6 w-6 text-blue-300" />
               </div>
               <div>
-                <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+                <DialogTitle className="text-lg font-bold text-white flex items-center gap-2.5">
                   Seleccionador de Materiales de Polarizado
-                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[10px] uppercase font-mono">
+                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-xs uppercase font-mono px-2 py-0.5">
                     Personalizado
                   </Badge>
                 </DialogTitle>
-                <p className="text-xs text-blue-200/80">
+                <p className="text-xs text-blue-200/90 mt-0.5">
                   {vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Vehículo Asignado"} ·{" "}
                   Bandas: {config?.vehicle_size_bands?.windshield || "≤40\""} / {config?.vehicle_size_bands?.front_sides || "≤20\""}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
-              <span className="text-xl font-bold text-white">
+              <span className="text-[11px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
+              <span className="text-2xl font-black text-white">
                 +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
-                <span className="text-xs font-normal text-blue-200">USD</span>
+                <span className="text-sm font-medium text-blue-200">USD</span>
               </span>
             </div>
           </div>
@@ -358,10 +358,10 @@ export default function TintWindowMaterialDialog({
         {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería Real Dinámica */}
-          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-3.5 flex flex-col items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/40 select-none">
-            <div className="text-center w-full space-y-1.5">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
+          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-4 lg:p-6 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
+            <div className="text-center w-full space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
                   Modelo: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Sedán"}
                 </span>
                 
@@ -369,7 +369,7 @@ export default function TintWindowMaterialDialog({
                 <select
                   value={selectedVehicleType}
                   onChange={(e) => setSelectedVehicleType(e.target.value)}
-                  className="text-[11px] font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs focus:ring-1 focus:ring-blue-500"
+                  className="text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs focus:ring-2 focus:ring-blue-500"
                 >
                   {VEHICLE_CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -380,7 +380,7 @@ export default function TintWindowMaterialDialog({
               </div>
 
               {/* Selector Rápido de Silueta / Tipo de Carrocería Scrollable */}
-              <div className="flex items-center gap-1 p-1 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full scrollbar-thin">
+              <div className="flex items-center gap-1.5 p-1.5 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full scrollbar-thin">
                 {VEHICLE_CATEGORIES.map((cat) => {
                   const isCur = selectedVehicleType === cat.id;
                   return (
@@ -388,9 +388,9 @@ export default function TintWindowMaterialDialog({
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedVehicleType(cat.id)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all shrink-0 ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all shrink-0 ${
                         isCur
-                          ? "bg-white text-blue-700 dark:bg-zinc-900 dark:text-blue-300 shadow-xs ring-1 ring-blue-500/30 font-bold"
+                          ? "bg-white text-blue-700 dark:bg-zinc-900 dark:text-blue-300 shadow-sm ring-1 ring-blue-500/30 font-bold"
                           : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                       }`}
                       title={cat.label}
@@ -402,13 +402,13 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
 
-            {/* Canvas del Vehículo: Imagen Real Superior + SVG Glass Overlays */}
-            <div className="relative w-48 h-80 my-2 select-none flex items-center justify-center">
+            {/* Canvas del Vehículo: Imagen Real Superior Grande + SVG Glass Overlays */}
+            <div className="relative w-64 h-[380px] sm:w-72 sm:h-[420px] md:w-72 md:h-[440px] lg:w-80 lg:h-[480px] xl:w-96 xl:h-[510px] my-auto select-none flex items-center justify-center">
               {/* 1. Imagen Top-Down Realista de la Carrocería */}
               <img
                 src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_sedan.png"}
                 alt="Vehículo Top-Down"
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-md transition-all duration-300"
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg transition-all duration-300"
               />
 
               {/* 2. Capa SVG Interactiva de Cristales */}
@@ -617,19 +617,19 @@ export default function TintWindowMaterialDialog({
           </div>
 
           {/* Lado Derecho (7 cols): Selección de Material, 2da Capa y Bandas */}
-          <div className="md:col-span-7 p-5 flex flex-col justify-between space-y-3 overflow-y-auto">
+          <div className="md:col-span-7 p-6 flex flex-col justify-between space-y-4 overflow-y-auto">
             <div>
               {/* Selector de Pestañas de Zona */}
-              <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-2.5 mb-3">
-                <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-3.5">
+                <div className="flex flex-wrap gap-1.5">
                   {ZONES.map((z) => (
                     <button
                       key={z.id}
                       type="button"
                       onClick={() => setActiveZone(z.id)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         activeZone === z.id
-                          ? "bg-primary text-white shadow-sm"
+                          ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-500"
                           : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
                       }`}
                     >
@@ -642,28 +642,28 @@ export default function TintWindowMaterialDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  size="xs"
+                  size="sm"
                   onClick={() => handleApplyAll(selectedMaterials[activeZone])}
-                  className="text-[10px] h-6 px-2 text-zinc-600 dark:text-zinc-400"
+                  className="text-xs h-7 px-2.5 text-zinc-700 dark:text-zinc-300 font-semibold"
                   title="Aplicar el material de esta zona a todo el vehículo"
                 >
-                  <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
                   Aplicar a todos
                 </Button>
               </div>
 
               {/* Título de la Zona y Control de Vinculación de Laterales */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div>
-                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                     {activeZoneLabel}
                     {secondLayers[activeZone]?.enabled && (
-                      <Badge className="bg-amber-600 text-white text-[9px] px-1.5 py-0">
+                      <Badge className="bg-amber-600 text-white text-[10px] px-2 py-0.5">
                         + Doble Capa
                       </Badge>
                     )}
                   </h4>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Rollo requerido:{" "}
                     <strong className="text-zinc-800 dark:text-zinc-200 font-mono">
                       {activeZoneConfig?.size_band_info?.name || "Estándar"}
@@ -673,13 +673,13 @@ export default function TintWindowMaterialDialog({
 
                 {/* Toggle de Vinculación de Laterales */}
                 {(activeZone === "front_sides" || activeZone === "rear_sides") && (
-                  <div className="flex items-center gap-1.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-lg px-2.5 py-1">
+                  <div className="flex items-center gap-2 bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-xl px-3 py-1.5 shadow-2xs">
                     {linkSides ? (
-                      <Link className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <Link className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     ) : (
-                      <Unlink className="h-3.5 w-3.5 text-zinc-400" />
+                      <Unlink className="h-4 w-4 text-zinc-400" />
                     )}
-                    <span className="text-[11px] font-medium text-blue-900 dark:text-blue-200">
+                    <span className="text-xs font-semibold text-blue-900 dark:text-blue-200">
                       Vincular Ventanas Laterales
                     </span>
                     <Switch
@@ -687,7 +687,7 @@ export default function TintWindowMaterialDialog({
                       onCheckedChange={(checked) => {
                         setLinkSides(checked);
                         if (checked) {
-                          setSelectedMaterials((prev) => ({
+                           setSelectedMaterials((prev) => ({
                             ...prev,
                             rear_sides: prev.front_sides,
                           }));
@@ -702,41 +702,41 @@ export default function TintWindowMaterialDialog({
                 )}
               </div>
 
-              {/* Lista de Films / Materiales Disponibles (Capa 1) */}
-              <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+              {/* Lista de Films / Materiales Disponibles (Capa 1) con mayor visibilidad */}
+              <div className="space-y-2 max-h-56 lg:max-h-64 overflow-y-auto pr-1">
                 {activeMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
                   return (
                     <div
                       key={mat.material_id}
                       onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
-                      className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                         isSelected
-                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 dark:border-blue-500 shadow-sm"
+                          ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/30"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-3">
                         <div
-                          className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                          className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
                             isSelected
                               ? "border-blue-600 bg-blue-600 text-white"
                               : "border-zinc-400 bg-transparent"
                           }`}
                         >
-                          {isSelected && <Check className="h-2.5 w-2.5" />}
+                          {isSelected && <Check className="h-3 w-3" />}
                         </div>
                         <div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-zinc-900 dark:text-white">
                               {mat.name}
                             </span>
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
+                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-mono">
                               {mat.family}
                             </Badge>
                           </div>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            Stock: {mat.virtual_qty} u
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            Stock Disponible: {mat.virtual_qty} u
                           </span>
                         </div>
                       </div>
@@ -745,8 +745,8 @@ export default function TintWindowMaterialDialog({
                         <span
                           className={`text-xs font-bold ${
                             mat.price_extra_usd > 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-zinc-500"
+                              ? "text-emerald-600 dark:text-emerald-400 font-mono text-sm"
+                              : "text-zinc-500 font-medium"
                           }`}
                         >
                           {mat.price_extra_usd > 0
