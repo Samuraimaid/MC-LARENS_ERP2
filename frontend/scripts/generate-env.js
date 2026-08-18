@@ -5,10 +5,11 @@ const path = require('path');
 const publicDir = path.resolve(__dirname, '..', 'public');
 const outFile = path.join(publicDir, 'env.js');
 
-const configuredBackendUrl = process.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || '';
+const isCapacitorBuild = process.env.VITE_IS_CAPACITOR === 'true' || process.env.CAPACITOR === 'true';
+const configuredBackendUrl = process.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || (isCapacitorBuild ? 'https://mclarens-erp-836176703716.us-central1.run.app' : '');
 const apiBaseExpression = configuredBackendUrl
   ? `'${String(configuredBackendUrl).replace(/\/$/, '')}/api'`
-  : `'/api'`;
+  : `(typeof window !== 'undefined' && (window.Capacitor?.isNativePlatform?.() || window.location?.protocol === 'capacitor:' || (window.location?.hostname === 'localhost' && !window.location?.port && (navigator?.userAgent?.includes('Android') || navigator?.userAgent?.includes('wv') || navigator?.userAgent?.includes('Mobile'))))) ? 'https://mclarens-erp-836176703716.us-central1.run.app/api' : '/api'`;
 const attendanceKioskShortcutPin = process.env.VITE_ATTENDANCE_KIOSK_SHORTCUT_PIN || process.env.REACT_APP_ATTENDANCE_KIOSK_SHORTCUT_PIN || '';
 const buildTime = process.env.VITE_APP_BUILD_TIME || process.env.REACT_APP_BUILD_TIME || new Date().toISOString();
 const buildId = process.env.VITE_APP_BUILD_ID || process.env.REACT_APP_BUILD_ID || (() => {

@@ -568,21 +568,33 @@ export function LoginPage() {
         { pin: pinToUse },
         { withCredentials: true, signal: controller.signal, timeout: 8000 }
       );
+
+      const resData = response.data;
+      if (
+        !resData ||
+        typeof resData !== "object" ||
+        typeof resData === "string" ||
+        (!resData.user && !resData.user_id && !resData.session_token)
+      ) {
+        throw new Error("Respuesta inválida del servidor. Verifique la conexión.");
+      }
+
+      const loggedUser = resData?.user || resData;
+      if (!loggedUser || (!loggedUser.user_id && !loggedUser.id && !loggedUser.name)) {
+        throw new Error("No se pudo obtener la información del usuario.");
+      }
+
       setAuthStatus("success");
       setRemainingAttempts(null);
       setLockoutUntil(null);
       setLockoutSeconds(null);
       setLockoutRemainingMs(0);
 
-      const loggedUser = response.data?.user || response.data || {};
-      const sessionToken = response.data?.session_token;
-
+      const sessionToken = resData?.session_token;
       if (sessionToken) {
         setStoredSessionToken(sessionToken);
       }
-      if (loggedUser && (loggedUser.user_id || loggedUser.id || loggedUser.name)) {
-        setStoredUser(loggedUser);
-      }
+      setStoredUser(loggedUser);
 
       // Apply saved theme from server/session if provided
       try {
@@ -617,7 +629,7 @@ export function LoginPage() {
       setTimeout(() => setAuthStatus("idle"), 500);
 
       const detail = error.response?.data?.detail;
-      let message = "PIN incorrecto";
+      let message = error.message || "PIN incorrecto";
       if (error.response?.status) {
         setBackendStatus("ok");
       }

@@ -324,6 +324,14 @@ export function AuthProvider({ children }) {
       const response = await axios.get(`${API}/auth/me`, {
         withCredentials: true,
       });
+      if (
+        !response.data ||
+        typeof response.data !== "object" ||
+        typeof response.data === "string" ||
+        (!response.data.user_id && !response.data.id && !response.data.role && !response.data.name)
+      ) {
+        throw new Error("Invalid session user");
+      }
       setUser(response.data);
       setStoredUser(response.data);
       if (response.data?.session_token) {

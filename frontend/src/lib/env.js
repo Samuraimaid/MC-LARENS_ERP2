@@ -2,13 +2,21 @@ const runtimeWindow = typeof window !== "undefined" ? window : undefined;
 const metaEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const processEnv = typeof process !== "undefined" && process.env ? process.env : {};
 
+export const PRODUCTION_CLOUD_RUN_API = "https://mclarens-erp-836176703716.us-central1.run.app/api";
+
 export function isCapacitorNative() {
   if (typeof window === "undefined") return false;
-  return Boolean(
+  const isCap = Boolean(
+    metaEnv.VITE_IS_CAPACITOR === "true" ||
+    processEnv.VITE_IS_CAPACITOR === "true" ||
     window.Capacitor?.isNativePlatform?.() ||
+    window.Capacitor?.getPlatform?.() === "android" ||
+    window.Capacitor?.getPlatform?.() === "ios" ||
     window.location?.protocol === "capacitor:" ||
-    (window.location?.hostname === "localhost" && !window.location?.port && navigator?.userAgent?.includes("Android"))
+    (window.location?.hostname === "localhost" && !window.location?.port && (navigator?.userAgent?.includes("Android") || navigator?.userAgent?.includes("wv") || navigator?.userAgent?.includes("Mobile"))) ||
+    (window.location?.origin === "https://localhost" && (navigator?.userAgent?.includes("Android") || navigator?.userAgent?.includes("Mobile") || navigator?.userAgent?.includes("wv")))
   );
+  return isCap;
 }
 
 function readEnv(...keys) {
@@ -23,11 +31,7 @@ function readEnv(...keys) {
 }
 
 function buildApiBase() {
-  if (runtimeWindow?.__API_BASE__) {
-    return runtimeWindow.__API_BASE__;
-  }
-
-  // Si hay una URL de API personalizada guardada en el dispositivo móvil
+  // 1. Si hay una URL de API personalizada guardada en el dispositivo móvil
   try {
     const custom = runtimeWindow?.localStorage?.getItem("erp_custom_api_base");
     if (custom && (custom.startsWith("http://") || custom.startsWith("https://"))) {
@@ -35,18 +39,27 @@ function buildApiBase() {
     }
   } catch {}
 
+  // 2. Si corre como app nativa Android/iOS en Capacitor, conectar a producción Cloud Run por defecto
+  if (isCapacitorNative()) {
+    return PRODUCTION_CLOUD_RUN_API;
+  }
+
+  // 3. Si hay variable de entorno explícita configurada con URL absoluta
   const backendUrl = readEnv("VITE_BACKEND_URL", "REACT_APP_BACKEND_URL");
-  if (backendUrl) {
+  if (backendUrl && (backendUrl.startsWith("http://") || backendUrl.startsWith("https://"))) {
     return `${String(backendUrl).replace(/\/$/, "")}/api`;
   }
 
-  // Si corre como app nativa Android en Capacitor, conectar a producción Cloud Run por defecto
-  if (isCapacitorNative()) {
-    return "https://mclarens-erp-836176703716.us-central1.run.app/api";
+  // 4. Runtime window __API_BASE__ solo si es una URL absoluta
+  if (
+    runtimeWindow?.__API_BASE__ &&
+    runtimeWindow.__API_BASE__ !== "/api" &&
+    (runtimeWindow.__API_BASE__.startsWith("http://") || runtimeWindow.__API_BASE__.startsWith("https://"))
+  ) {
+    return runtimeWindow.__API_BASE__;
   }
 
-  // Same-origin /api: nginx (Docker) o proxy de Vite reenvían al backend.
-  // Evita cookies cross-origin en acceso LAN (ej. http://192.168.1.26:3000).
+  // 5. Fallback web same-origin /api (nginx Docker o Vite proxy)
   return "/api";
 }
 

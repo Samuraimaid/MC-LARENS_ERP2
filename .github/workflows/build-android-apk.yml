@@ -52,6 +52,9 @@ jobs:
 
       - name: Build Web Application Bundle (Vite)
         working-directory: frontend
+        env:
+          VITE_BACKEND_URL: https://mclarens-erp-836176703716.us-central1.run.app
+          VITE_IS_CAPACITOR: "true"
         run: |
           npm run build
 
