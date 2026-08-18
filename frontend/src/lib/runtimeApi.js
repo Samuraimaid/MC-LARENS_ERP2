@@ -27,6 +27,13 @@ export function setRuntimeApiBase(nextBase) {
   if (typeof window !== "undefined") {
     window.__FAILOVER_API_BASE__ = normalized;
     window.__API_BASE__ = normalized;
+    try {
+      if (normalized) {
+        window.localStorage?.setItem("erp_custom_api_base", normalized);
+      } else {
+        window.localStorage?.removeItem("erp_custom_api_base");
+      }
+    } catch {}
     window.dispatchEvent(new CustomEvent("erp:api-base-changed", { detail: { apiBase: normalized } }));
   }
 }

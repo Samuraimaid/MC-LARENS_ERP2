@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert } from "lucide-react";
+import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
@@ -14,6 +14,7 @@ import { useDevice } from "../hooks/useDevice";
 import { formatCurrency } from "../lib/utils";
 import { getRoleHomePath } from "@/lib/roleHome";
 import { SevenSegCountdown } from "@/components/auth/SevenSegCountdown";
+import ServerConnectionDialog from "../components/common/ServerConnectionDialog";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -56,6 +57,7 @@ export function LoginPage() {
   const [lockoutSeconds, setLockoutSeconds] = useState(null);
   const [lockoutRemainingMs, setLockoutRemainingMs] = useState(0);
   const [showLoginInfo, setShowLoginInfo] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(false);
   const [showGerenciaUnlock, setShowGerenciaUnlock] = useState(false);
   const [unlockPin, setUnlockPin] = useState("");
   const [unlockLoading, setUnlockLoading] = useState(false);
@@ -947,6 +949,16 @@ export function LoginPage() {
                   variant="ghost"
                   size="icon"
                   className="h-12 w-12"
+                  onClick={() => setShowServerConfig(true)}
+                  aria-label="Configurar servidor"
+                  title="Configurar Servidor"
+                >
+                  <Server className="h-4 w-4 text-sky-500 hover:text-sky-400" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12"
                   onClick={() => handleToolToggle("calculator")}
                   aria-label="Abrir calculadora"
                 >
@@ -1324,6 +1336,12 @@ export function LoginPage() {
           </div>
         </div>
       ) : null}
+
+      {/* Modal de Configuración y Diagnóstico de Servidor */}
+      <ServerConnectionDialog
+        isOpen={showServerConfig}
+        onClose={() => setShowServerConfig(false)}
+      />
     </div>
   );
 }

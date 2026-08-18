@@ -11,16 +11,35 @@ const config: CapacitorConfig = {
     allowNavigation: [
       "192.168.*",
       "10.*",
+      "172.16.*",
       "127.0.0.1",
       "localhost",
       "*.mclarenerp.com",
       "mclarenerp.com",
+      "*.run.app",
+      "mclarens-erp-836176703716.us-central1.run.app",
     ],
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: false,
+    backgroundColor: "#09090b",
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1800,
+      launchAutoHide: true,
+      backgroundColor: "#09090b",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: "DARK",
+      backgroundColor: "#09090b",
+    },
   },
 };
 
