@@ -916,11 +916,11 @@ export function SalesPage() {
     }
     try {
       const [salesRes, customersRes, productsRes, warehousesRes, vehiclesRes, inventoryRes, crossBranchRes, usersRes, branchesRes, cashierRes] = await Promise.all([
-        axios.get(`${API}/sales`, { withCredentials: true }),
-        axios.get(`${API}/customers`, { withCredentials: true }),
-        axios.get(`${API}/products`, { withCredentials: true }),
+        axios.get(`${API}/sales`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/customers`, { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get(`${API}/products`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/warehouses`, { withCredentials: true }).catch(() => ({ data: [] })),
-        axios.get(`${API}/vehicles`, { withCredentials: true }),
+        axios.get(`${API}/vehicles`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/inventory/other-branches`, { withCredentials: true }).catch(() => ({ data: { items: [] } })),
         axios.get(`${API}/users`, { withCredentials: true }).catch(() => ({ data: [] })),
@@ -936,22 +936,24 @@ export function SalesPage() {
             }).catch(() => ({ data: { rows: [] } }))
           : Promise.resolve({ data: { rows: [] } }),
       ]);
-      setSales(salesRes.data);
+      setSales(Array.isArray(salesRes?.data) ? salesRes.data : (Array.isArray(salesRes?.data?.sales) ? salesRes.data.sales : []));
       setOpenCashierInvoices(Array.isArray(cashierRes?.data?.rows) ? cashierRes.data.rows : []);
-      setCustomers(customersRes.data);
-      setProducts(productsRes.data);
-      setWarehouses(warehousesRes.data);
-      setVehicles(vehiclesRes.data);
-      setInventory(inventoryRes.data);
+      setCustomers(Array.isArray(customersRes?.data) ? customersRes.data : (Array.isArray(customersRes?.data?.customers) ? customersRes.data.customers : []));
+      setProducts(Array.isArray(productsRes?.data) ? productsRes.data : (Array.isArray(productsRes?.data?.products) ? productsRes.data.products : []));
+      const warehousesList = Array.isArray(warehousesRes?.data) ? warehousesRes.data : (Array.isArray(warehousesRes?.data?.warehouses) ? warehousesRes.data.warehouses : []);
+      setWarehouses(warehousesList);
+      setVehicles(Array.isArray(vehiclesRes?.data) ? vehiclesRes.data : (Array.isArray(vehiclesRes?.data?.vehicles) ? vehiclesRes.data.vehicles : []));
+      setInventory(Array.isArray(inventoryRes?.data) ? inventoryRes.data : (Array.isArray(inventoryRes?.data?.inventory) ? inventoryRes.data.inventory : []));
       setCrossBranchInventory(Array.isArray(crossBranchRes?.data?.items) ? crossBranchRes.data.items : []);
-      setSellers(usersRes.data.filter(u => u.role === "ventas" || u.role === "gerencia"));
-      setBranches(branchesRes.data);
-      if (warehousesRes.data.length > 0) {
+      const rawUsers = Array.isArray(usersRes?.data) ? usersRes.data : (Array.isArray(usersRes?.data?.users) ? usersRes.data.users : []);
+      setSellers(rawUsers.filter(u => u && (u.role === "ventas" || u.role === "gerencia")));
+      setBranches(Array.isArray(branchesRes?.data) ? branchesRes.data : (Array.isArray(branchesRes?.data?.branches) ? branchesRes.data.branches : []));
+      if (warehousesList.length > 0) {
         setSelectedWarehouse((currentWarehouseId) => {
-          if (currentWarehouseId && warehousesRes.data.some((warehouse) => warehouse.warehouse_id === currentWarehouseId)) {
+          if (currentWarehouseId && warehousesList.some((warehouse) => warehouse?.warehouse_id === currentWarehouseId)) {
             return currentWarehouseId;
           }
-          return warehousesRes.data[0].warehouse_id;
+          return warehousesList[0].warehouse_id;
         });
       }
     } catch (error) {
@@ -1760,44 +1762,50 @@ export function SalesPage() {
 
   // Filtered customers based on search
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch) return customers.slice(0, 10);
+    const list = Array.isArray(customers) ? customers : [];
+    if (!customerSearch) return list.slice(0, 10);
     const searchLower = customerSearch.toLowerCase();
-    return customers.filter(c => 
-      c.name?.toLowerCase().includes(searchLower) ||
-      c.phone?.includes(customerSearch) ||
-      c.tax_id?.includes(customerSearch)
+    return list.filter(c => 
+      c?.name?.toLowerCase().includes(searchLower) ||
+      c?.phone?.includes(customerSearch) ||
+      c?.tax_id?.includes(customerSearch)
     ).slice(0, 20);
   }, [customers, customerSearch]);
 
   // Filtered products based on search
   const filteredProducts = useMemo(() => {
-    if (!productSearch) return products.slice(0, 20);
+    const list = Array.isArray(products) ? products : [];
+    if (!productSearch) return list.slice(0, 20);
     const searchLower = productSearch.toLowerCase();
-    return products.filter(p => 
-      p.name?.toLowerCase().includes(searchLower) ||
-      p.sku?.toLowerCase().includes(searchLower)
+    return list.filter(p => 
+      p?.name?.toLowerCase().includes(searchLower) ||
+      p?.sku?.toLowerCase().includes(searchLower)
     ).slice(0, 30);
   }, [products, productSearch]);
 
   // Get vehicles for selected customer
   const customerVehicles = useMemo(() => {
     if (!selectedCustomer) return [];
-    return vehicles.filter(v => v.customer_id === selectedCustomer.customer_id);
+    const list = Array.isArray(vehicles) ? vehicles : [];
+    return list.filter(v => v?.customer_id === selectedCustomer.customer_id);
   }, [vehicles, selectedCustomer]);
 
   // Get stock for a product in a specific warehouse
   const getProductStock = (productId, warehouseId) => {
-    const inv = inventory.find(i => i.product_id === productId && i.warehouse_id === warehouseId);
+    const list = Array.isArray(inventory) ? inventory : [];
+    const inv = list.find(i => i?.product_id === productId && i?.warehouse_id === warehouseId);
     return inv?.quantity || 0;
   };
 
   // Get stock in other warehouses
   const getOtherWarehouseStock = (productId, currentWarehouseId) => {
-    return inventory
-      .filter(i => i.product_id === productId && i.warehouse_id !== currentWarehouseId && i.quantity > 0)
+    const invList = Array.isArray(inventory) ? inventory : [];
+    const whList = Array.isArray(warehouses) ? warehouses : [];
+    return invList
+      .filter(i => i?.product_id === productId && i?.warehouse_id !== currentWarehouseId && i?.quantity > 0)
       .map(i => ({
         warehouse_id: i.warehouse_id,
-        warehouse_name: warehouses.find(w => w.warehouse_id === i.warehouse_id)?.name || i.warehouse_id,
+        warehouse_name: whList.find(w => w?.warehouse_id === i.warehouse_id)?.name || i.warehouse_id,
         quantity: i.quantity
       }));
   };
@@ -2257,9 +2265,10 @@ export function SalesPage() {
 
   const totals = calculateTotals();
 
-  const filteredSales = sales.filter(sale => {
-    const matchesSearch = sale.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
-                         sale.customer_name?.toLowerCase().includes(search.toLowerCase());
+  const filteredSales = (Array.isArray(sales) ? sales : []).filter(sale => {
+    if (!sale) return false;
+    const matchesSearch = (sale.invoice_number || "")?.toLowerCase().includes(search.toLowerCase()) ||
+                         (sale.customer_name || "")?.toLowerCase().includes(search.toLowerCase());
     const matchesPayment = filterPayment === "all" || sale.payment_type === filterPayment;
     const matchesStatus = filterStatus === "all" || sale.status === filterStatus;
     const matchesSeller = filterSeller === "all" || sale.seller_id === filterSeller || sale.created_by === filterSeller;
@@ -2269,11 +2278,12 @@ export function SalesPage() {
 
   const openInvoicesInCash = useMemo(() => {
     const salesById = new Map(
-      filteredSales.map((sale) => [String(sale.sale_id || ""), sale])
+      (Array.isArray(filteredSales) ? filteredSales : []).map((sale) => [String(sale?.sale_id || ""), sale])
     );
-    const cashierRows = openCashierInvoices.length
+    const cashierRows = (Array.isArray(openCashierInvoices) ? openCashierInvoices : []).length
       ? openCashierInvoices
-      : filteredSales.filter((sale) => {
+      : (Array.isArray(filteredSales) ? filteredSales : []).filter((sale) => {
+          if (!sale) return false;
           const invoiceState = String(sale.invoice_state || "").toLowerCase();
           const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
           if (invoiceState === "cancelled") return false;
@@ -2281,9 +2291,9 @@ export function SalesPage() {
           return Boolean(sale.cash_session_id) && paymentStatus !== "paid";
         });
 
-    return cashierRows
+    return (Array.isArray(cashierRows) ? cashierRows : [])
       .map((row) => {
-        const saleId = String(row.sale_id || "");
+        const saleId = String(row?.sale_id || "");
         const saleDetails = salesById.get(saleId) || {};
         return {
           ...saleDetails,
@@ -2291,10 +2301,11 @@ export function SalesPage() {
           sale_id: saleId || saleDetails.sale_id,
         };
       })
-      .filter((sale) => sale.sale_id);
+      .filter((sale) => sale?.sale_id);
   }, [filteredSales, openCashierInvoices]);
 
-  const closedInvoicesToday = filteredSales.filter((sale) => {
+  const closedInvoicesToday = (Array.isArray(filteredSales) ? filteredSales : []).filter((sale) => {
+    if (!sale) return false;
     const invoiceState = String(sale.invoice_state || "").toLowerCase();
     const paymentStatus = String(sale.payment_status || sale.status || "").toLowerCase();
     if (invoiceState === "cancelled") return false;

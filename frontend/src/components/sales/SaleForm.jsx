@@ -577,7 +577,8 @@ export default function SaleForm({
   const customerVehicles = useMemo(() => {
     if (!selectedCustomer) return [];
     const selectedCustomerId = normalizeCustomerId(selectedCustomer.customer_id);
-    return localVehicles.filter((v) => normalizeCustomerId(v.customer_id) === selectedCustomerId);
+    const list = Array.isArray(localVehicles) ? localVehicles : [];
+    return list.filter((v) => normalizeCustomerId(v?.customer_id) === selectedCustomerId);
   }, [localVehicles, normalizeCustomerId, selectedCustomer]);
 
   const normalizeVehicleId = useCallback((value) => {
@@ -587,7 +588,8 @@ export default function SaleForm({
 
   const customerVehicleCountById = useMemo(() => {
     const counts = {};
-    localVehicles.forEach((vehicle) => {
+    const list = Array.isArray(localVehicles) ? localVehicles : [];
+    list.forEach((vehicle) => {
       if (!vehicle?.customer_id) return;
       counts[vehicle.customer_id] = (counts[vehicle.customer_id] || 0) + 1;
     });
@@ -2781,18 +2783,20 @@ export default function SaleForm({
   }, [draftKey]);
 
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch) return localCustomers;
+    const list = Array.isArray(localCustomers) ? localCustomers : [];
+    if (!customerSearch) return list;
     const searchLower = customerSearch.toLowerCase();
-    return localCustomers.filter(c =>
-      c.name?.toLowerCase().includes(searchLower) ||
-      c.phone?.includes(customerSearch) ||
-      c.tax_id?.includes(customerSearch)
+    return list.filter(c =>
+      c?.name?.toLowerCase().includes(searchLower) ||
+      c?.phone?.includes(customerSearch) ||
+      c?.tax_id?.includes(customerSearch)
     );
   }, [localCustomers, customerSearch]);
 
   const filteredProducts = useMemo(() => {
-    if (!productSearch) return products;
-    return products.filter((product) => productMatchesSearch(product, productSearch));
+    const list = Array.isArray(products) ? products : [];
+    if (!productSearch) return list;
+    return list.filter((product) => productMatchesSearch(product, productSearch));
   }, [products, productSearch]);
 
   const warehouseById = useMemo(
@@ -3358,9 +3362,9 @@ export default function SaleForm({
                     disabled={sellerFlowLocked}
                     precio2ApprovalStatus={precio2ApprovalStatus}
                   />
-                  {auditEvents.some((e) => e.event_type === "tier_change") ? (
+                  {Array.isArray(auditEvents) && auditEvents.some((e) => e?.event_type === "tier_change") ? (
                     <DocumentAuditPanel
-                      events={auditEvents.filter((e) => e.event_type === "tier_change").slice(0, 3)}
+                      events={auditEvents.filter((e) => e?.event_type === "tier_change").slice(0, 3)}
                       activePriceTier={activePriceTier}
                       activePriceTierLabel={TIER_LABELS[activePriceTier]}
                     />
