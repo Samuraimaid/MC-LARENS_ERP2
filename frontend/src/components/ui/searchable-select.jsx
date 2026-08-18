@@ -51,7 +51,7 @@ export default function SearchableSelect({
   const listRef = React.useRef(null);
 
   const normalizedOptions = React.useMemo(
-    () => options.map(normalizeOption).filter(Boolean),
+    () => (Array.isArray(options) ? options : []).map(normalizeOption).filter(Boolean),
     [options]
   );
 

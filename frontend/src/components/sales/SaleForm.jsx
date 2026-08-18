@@ -1222,7 +1222,7 @@ export default function SaleForm({
       notifySellerParamsLocked();
       return;
     }
-    const nextAppliedDiscounts = appliedDiscounts.filter(d => d.code !== code);
+    const nextAppliedDiscounts = (Array.isArray(appliedDiscounts) ? appliedDiscounts : []).filter(d => d?.code !== code);
     setAppliedDiscounts(nextAppliedDiscounts);
     persistDraftSnapshot({ appliedDiscounts: nextAppliedDiscounts });
   };
@@ -1685,16 +1685,16 @@ export default function SaleForm({
       persistDraftSnapshot({ mixedPaymentMethods: nextMethods });
       return;
     }
-    const linesForMethod = paymentPlanLines.filter(
-      (line) => normalizePaymentMethodCode(line.metodo) === method,
+    const linesForMethod = (Array.isArray(paymentPlanLines) ? paymentPlanLines : []).filter(
+      (line) => normalizePaymentMethodCode(line?.metodo) === method,
     );
     if (linesForMethod.length > 1) {
       toast.error("Quita las líneas adicionales de este método antes de desmarcarlo");
       return;
     }
-    const nextMethods = normalizedMixedPaymentMethods.filter((item) => item !== method);
-    const nextLines = paymentPlanLines.filter(
-      (line) => normalizePaymentMethodCode(line.metodo) !== method,
+    const nextMethods = (Array.isArray(normalizedMixedPaymentMethods) ? normalizedMixedPaymentMethods : []).filter((item) => item !== method);
+    const nextLines = (Array.isArray(paymentPlanLines) ? paymentPlanLines : []).filter(
+      (line) => normalizePaymentMethodCode(line?.metodo) !== method,
     );
     setMixedPaymentMethods(nextMethods);
     setPaymentPlanLines(nextMethods.length ? nextLines : []);
@@ -1705,11 +1705,11 @@ export default function SaleForm({
   const handlePlanLineRemoved = (removedLine, nextLines) => {
     if (normalizedPaymentMethod !== "mixed" || !removedLine) return;
     const method = normalizePaymentMethodCode(removedLine.metodo);
-    const remainingForMethod = nextLines.filter(
-      (line) => normalizePaymentMethodCode(line.metodo) === method,
+    const remainingForMethod = (Array.isArray(nextLines) ? nextLines : []).filter(
+      (line) => normalizePaymentMethodCode(line?.metodo) === method,
     ).length;
     if (remainingForMethod > 0) return;
-    const nextMethods = normalizedMixedPaymentMethods.filter((item) => item !== method);
+    const nextMethods = (Array.isArray(normalizedMixedPaymentMethods) ? normalizedMixedPaymentMethods : []).filter((item) => item !== method);
     setMixedPaymentMethods(nextMethods);
     if (!nextMethods.length) {
       setPaymentPlanLines([]);

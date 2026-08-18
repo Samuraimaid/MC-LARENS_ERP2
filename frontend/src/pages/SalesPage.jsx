@@ -1229,7 +1229,7 @@ export function SalesPage() {
   const isDraftSnapshotEmpty = (draft) => !isSaleDraftSaveEligible(draft);
 
   const visibleDraftTabs = useMemo(() => (
-    draftTabs.filter((tab) => isSaleDraftSaveEligible(readDraft(tab.id)))
+    (Array.isArray(draftTabs) ? draftTabs : []).filter((tab) => isSaleDraftSaveEligible(readDraft(tab.id)))
   ), [draftTabs, draftContentRevision]);
 
   const createEmptyDraftSnapshot = () => ({ updatedAt: new Date().toISOString() });
