@@ -45,6 +45,10 @@ def check_frontend_integrity():
                 with open(filepath, "r", encoding="utf-8", errors="replace") as fp:
                     content = fp.read()
 
+                # Check for invalid const/let property declarations (e.g. const obj.prop = ...)
+                for m in re.finditer(r'(?:const|let|var)\s+([A-Za-z0-9_$]+)\.([A-Za-z0-9_$]+)', content):
+                    errors.append(f"Invalid declaration syntax '{m.group(0)}' in {rel}")
+
                 # Check for duplicate default export
                 default_exports = re.findall(r"export\s+default\s+", content)
                 if len(default_exports) > 1:

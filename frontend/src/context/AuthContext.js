@@ -257,7 +257,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [permissions, setPermissions] = useState(null);
   const [loading, setLoading] = useState(() => !getStoredUser());
-  const invalidSessionNotifiedRef.current = false;
+  const invalidSessionNotifiedRef = useRef(false);
 
   useEffect(() => {
     checkAuth();
