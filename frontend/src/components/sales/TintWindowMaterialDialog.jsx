@@ -324,32 +324,32 @@ export default function TintWindowMaterialDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] max-w-6xl md:max-w-7xl max-h-[95vh] h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
-        {/* Encabezado */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 p-3.5 sm:p-5 md:px-6 md:py-4 text-white shrink-0 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30">
-                <Layers className="h-5 w-5 sm:h-6 sm:w-6 text-blue-300" />
+      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
+        {/* Encabezado Responsivo */}
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 p-2.5 sm:p-4 md:px-6 md:py-4 text-white shrink-0 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30 shrink-0">
+                <Layers className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-300" />
               </div>
-              <div>
-                <DialogTitle className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  Seleccionador de Materiales
-                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[10px] sm:text-xs uppercase font-mono px-1.5 py-0.5">
+              <div className="min-w-0">
+                <DialogTitle className="text-sm sm:text-base md:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate">
+                  <span>Seleccionador de Materiales</span>
+                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] md:text-xs uppercase font-mono px-1 py-0 sm:px-1.5 sm:py-0.5 shrink-0">
                     Personalizado
                   </Badge>
                 </DialogTitle>
-                <p className="text-[11px] sm:text-xs text-blue-200/90 mt-0.5">
+                <p className="text-[10px] sm:text-xs text-blue-200/90 truncate">
                   {vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Vehículo Asignado"} ·{" "}
                   Bandas: {config?.vehicle_size_bands?.windshield || "≤40\""} / {config?.vehicle_size_bands?.front_sides || "≤20\""}
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] sm:text-[11px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
-              <span className="text-xl sm:text-2xl font-black text-white">
+            <div className="text-right shrink-0">
+              <span className="text-[9px] sm:text-[10px] md:text-[11px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
+              <span className="text-base sm:text-xl md:text-2xl font-black text-white">
                 +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
-                <span className="text-xs sm:text-sm font-medium text-blue-200">USD</span>
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium text-blue-200">USD</span>
               </span>
             </div>
           </div>
@@ -358,10 +358,10 @@ export default function TintWindowMaterialDialog({
         {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería Real Dinámica */}
-          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
-            <div className="text-center w-full space-y-2">
+          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2.5 sm:p-4 lg:p-6 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
+            <div className="text-center w-full space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
+                <span className="text-[11px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
                   Modelo: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Sedán"}
                 </span>
                 
@@ -369,7 +369,7 @@ export default function TintWindowMaterialDialog({
                 <select
                   value={selectedVehicleType}
                   onChange={(e) => setSelectedVehicleType(e.target.value)}
-                  className="text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs focus:ring-2 focus:ring-blue-500"
+                  className="text-[11px] sm:text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-0.5 sm:px-2.5 sm:py-1 text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs focus:ring-2 focus:ring-blue-500"
                 >
                   {VEHICLE_CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -380,7 +380,7 @@ export default function TintWindowMaterialDialog({
               </div>
 
               {/* Selector Rápido de Silueta / Tipo de Carrocería Scrollable */}
-              <div className="flex items-center gap-1.5 p-1.5 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full scrollbar-thin">
+              <div className="flex items-center gap-1 p-1 sm:p-1.5 bg-zinc-200/70 dark:bg-zinc-800/80 rounded-xl overflow-x-auto max-w-full scrollbar-thin">
                 {VEHICLE_CATEGORIES.map((cat) => {
                   const isCur = selectedVehicleType === cat.id;
                   return (
@@ -388,7 +388,7 @@ export default function TintWindowMaterialDialog({
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedVehicleType(cat.id)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all shrink-0 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold whitespace-nowrap transition-all shrink-0 ${
                         isCur
                           ? "bg-white text-blue-700 dark:bg-zinc-900 dark:text-blue-300 shadow-sm ring-1 ring-blue-500/30 font-bold"
                           : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
@@ -402,8 +402,8 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
 
-            {/* Canvas del Vehículo: Imagen Real Superior Grande + SVG Glass Overlays */}
-            <div className="relative w-64 h-[380px] sm:w-72 sm:h-[420px] md:w-72 md:h-[440px] lg:w-80 lg:h-[480px] xl:w-96 xl:h-[510px] my-auto select-none flex items-center justify-center">
+            {/* Canvas del Vehículo: Imagen Real Superior Adaptable a Móvil y PC */}
+            <div className="relative w-44 h-[210px] sm:w-56 sm:h-[260px] md:w-72 md:h-[440px] lg:w-80 lg:h-[480px] xl:w-96 xl:h-[510px] my-1 sm:my-2 md:my-auto select-none flex items-center justify-center shrink-0">
               {/* 1. Imagen Top-Down Realista de la Carrocería */}
               <img
                 src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_sedan.png"}
@@ -576,7 +576,7 @@ export default function TintWindowMaterialDialog({
             </div>
 
             {/* Leyenda de Colores con Nombres Oficiales */}
-            <div className="grid grid-cols-2 gap-1.5 text-[10px] w-full max-w-xs font-medium pt-1 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-xs font-medium pt-1 border-t border-zinc-200 dark:border-zinc-800">
               <div
                 className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
                   activeZone === "windshield" ? "bg-sky-100 dark:bg-sky-950/60 font-bold text-sky-800 dark:text-sky-300" : ""
@@ -584,7 +584,7 @@ export default function TintWindowMaterialDialog({
                 onClick={() => setActiveZone("windshield")}
               >
                 <span className="h-2.5 w-2.5 rounded-full bg-sky-400 ring-1 ring-sky-600 shrink-0" />
-                <span className="text-zinc-700 dark:text-zinc-300">Parabrisas delantero</span>
+                <span className="text-zinc-700 dark:text-zinc-300 truncate">Parabrisas del.</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
@@ -593,7 +593,7 @@ export default function TintWindowMaterialDialog({
                 onClick={() => setActiveZone("front_sides")}
               >
                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 ring-1 ring-yellow-600 shrink-0" />
-                <span className="text-zinc-700 dark:text-zinc-300">Ventanas Delanteras</span>
+                <span className="text-zinc-700 dark:text-zinc-300 truncate">Ventanas Del.</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
@@ -602,7 +602,7 @@ export default function TintWindowMaterialDialog({
                 onClick={() => setActiveZone("rear_sides")}
               >
                 <span className="h-2.5 w-2.5 rounded-full bg-orange-400 ring-1 ring-orange-600 shrink-0" />
-                <span className="text-zinc-700 dark:text-zinc-300">Ventanas Traseras</span>
+                <span className="text-zinc-700 dark:text-zinc-300 truncate">Ventanas Tras.</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 cursor-pointer p-1 rounded-md transition-all ${
@@ -611,23 +611,23 @@ export default function TintWindowMaterialDialog({
                 onClick={() => setActiveZone("rear")}
               >
                 <span className="h-2.5 w-2.5 rounded-full bg-purple-400 ring-1 ring-purple-600 shrink-0" />
-                <span className="text-zinc-700 dark:text-zinc-300">Parabrisas Trasero</span>
+                <span className="text-zinc-700 dark:text-zinc-300 truncate">Parabrisas Tras.</span>
               </div>
             </div>
           </div>
 
           {/* Lado Derecho (7 cols): Selección de Material, 2da Capa y Bandas */}
-          <div className="md:col-span-7 p-3.5 sm:p-5 lg:p-6 flex flex-col justify-between space-y-4 overflow-y-auto">
+          <div className="md:col-span-7 p-2.5 sm:p-5 lg:p-6 flex flex-col justify-between space-y-3 sm:space-y-4 overflow-y-auto">
             <div>
               {/* Selector de Pestañas de Zona */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-3.5">
-                <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2.5 sm:pb-3 mb-2.5 sm:mb-3.5">
+                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-full scrollbar-none py-0.5">
                   {ZONES.map((z) => (
                     <button
                       key={z.id}
                       type="button"
                       onClick={() => setActiveZone(z.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
                         activeZone === z.id
                           ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-500"
                           : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -644,26 +644,26 @@ export default function TintWindowMaterialDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => handleApplyAll(selectedMaterials[activeZone])}
-                  className="text-xs h-7 px-2.5 text-zinc-700 dark:text-zinc-300 font-semibold"
+                  className="text-[10px] sm:text-xs h-6 sm:h-7 px-2 sm:px-2.5 text-zinc-700 dark:text-zinc-300 font-semibold shrink-0"
                   title="Aplicar el material de esta zona a todo el vehículo"
                 >
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                  <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 text-amber-500" />
                   Aplicar a todos
                 </Button>
               </div>
 
               {/* Título de la Zona y Control de Vinculación de Laterales */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                 <div>
-                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
                     {activeZoneLabel}
                     {secondLayers[activeZone]?.enabled && (
-                      <Badge className="bg-amber-600 text-white text-[10px] px-2 py-0.5">
+                      <Badge className="bg-amber-600 text-white text-[9px] sm:text-[10px] px-1.5 py-0 sm:px-2 sm:py-0.5">
                         + Doble Capa
                       </Badge>
                     )}
                   </h4>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">
                     Rollo requerido:{" "}
                     <strong className="text-zinc-800 dark:text-zinc-200 font-mono">
                       {activeZoneConfig?.size_band_info?.name || "Estándar"}
@@ -673,14 +673,14 @@ export default function TintWindowMaterialDialog({
 
                 {/* Toggle de Vinculación de Laterales */}
                 {(activeZone === "front_sides" || activeZone === "rear_sides") && (
-                  <div className="flex items-center gap-2 bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-xl px-3 py-1.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-xl px-2.5 py-1 sm:px-3 sm:py-1.5 shadow-2xs">
                     {linkSides ? (
-                      <Link className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <Link className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
                     ) : (
-                      <Unlink className="h-4 w-4 text-zinc-400" />
+                      <Unlink className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-400" />
                     )}
-                    <span className="text-xs font-semibold text-blue-900 dark:text-blue-200">
-                      Vincular Ventanas Laterales
+                    <span className="text-[10px] sm:text-xs font-semibold text-blue-900 dark:text-blue-200">
+                      Vincular Laterales
                     </span>
                     <Switch
                       checked={linkSides}
@@ -703,50 +703,50 @@ export default function TintWindowMaterialDialog({
               </div>
 
               {/* Lista de Films / Materiales Disponibles (Capa 1) con mayor visibilidad */}
-              <div className="space-y-2 max-h-56 lg:max-h-64 overflow-y-auto pr-1">
+              <div className="space-y-1.5 sm:space-y-2 max-h-44 sm:max-h-56 lg:max-h-64 overflow-y-auto pr-1">
                 {activeMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
                   return (
                     <div
                       key={mat.material_id}
                       onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
-                      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                      className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl border cursor-pointer transition-all ${
                         isSelected
                           ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/30"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <div
-                          className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
+                          className={`h-4 w-4 sm:h-4.5 sm:w-4.5 rounded-full border flex items-center justify-center shrink-0 ${
                             isSelected
                               ? "border-blue-600 bg-blue-600 text-white"
                               : "border-zinc-400 bg-transparent"
                           }`}
                         >
-                          {isSelected && <Check className="h-3 w-3" />}
+                          {isSelected && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <span className="text-[11px] sm:text-xs font-bold text-zinc-900 dark:text-white truncate">
                               {mat.name}
                             </span>
-                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-mono">
+                            <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1.5 py-0 font-mono shrink-0">
                               {mat.family}
                             </Badge>
                           </div>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            Stock Disponible: {mat.virtual_qty} u
+                          <span className="text-[10px] sm:text-[11px] text-muted-foreground font-mono block truncate">
+                            Stock: {mat.virtual_qty} u
                           </span>
                         </div>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span
                           className={`text-xs font-bold ${
                             mat.price_extra_usd > 0
-                              ? "text-emerald-600 dark:text-emerald-400 font-mono text-sm"
-                              : "text-zinc-500 font-medium"
+                              ? "text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm"
+                              : "text-zinc-500 font-medium text-[11px] sm:text-xs"
                           }`}
                         >
                           {mat.price_extra_usd > 0
@@ -760,17 +760,17 @@ export default function TintWindowMaterialDialog({
               </div>
 
               {/* SECCIÓN ADICIONAL: Segunda Capa y Bandas de Sol */}
-              <div className="mt-3 pt-2.5 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+              <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
                 {/* Control 2da Capa */}
-                <div className="rounded-lg border border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20 p-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      <div>
-                        <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                <div className="rounded-lg border border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20 p-2 sm:p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-[11px] sm:text-xs font-bold text-amber-900 dark:text-amber-200 block truncate">
                           Segunda Capa de Material (Doble Capa)
                         </span>
-                        <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">
+                        <p className="text-[9px] sm:text-[10px] text-amber-700/80 dark:text-amber-400/80 truncate">
                           Instala una segunda lámina sobre {activeZoneLabel}
                         </p>
                       </div>
@@ -778,19 +778,19 @@ export default function TintWindowMaterialDialog({
                     <Switch
                       checked={Boolean(secondLayers[activeZone]?.enabled)}
                       onCheckedChange={(checked) => handleToggleSecondLayer(activeZone, checked)}
-                      className="scale-75"
+                      className="scale-75 shrink-0"
                     />
                   </div>
 
                   {secondLayers[activeZone]?.enabled && (
                     <div className="mt-2 pt-2 border-t border-amber-200/50 dark:border-amber-900/40 flex items-center justify-between gap-2">
-                      <Label className="text-[11px] text-amber-900 dark:text-amber-200">
+                      <Label className="text-[10px] sm:text-[11px] text-amber-900 dark:text-amber-200">
                         Material de 2da Capa:
                       </Label>
                       <select
                         value={secondLayers[activeZone]?.material_id || "carbon_20"}
                         onChange={(e) => handleSelectSecondLayerMaterial(activeZone, e.target.value)}
-                        className="text-xs rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-1 text-zinc-900 dark:text-white"
+                        className="text-[11px] sm:text-xs rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-0.5 sm:py-1 text-zinc-900 dark:text-white"
                       >
                         {activeMaterials.map((m) => (
                           <option key={m.material_id} value={m.material_id}>
@@ -804,44 +804,44 @@ export default function TintWindowMaterialDialog({
 
                 {/* Controles de Bandas de Sol */}
                 {(activeZone === "windshield" || activeZone === "rear") && (
-                  <div className="rounded-lg border border-sky-200/70 bg-sky-50/40 dark:border-sky-900/50 dark:bg-sky-950/20 p-2.5 space-y-2">
+                  <div className="rounded-lg border border-sky-200/70 bg-sky-50/40 dark:border-sky-900/50 dark:bg-sky-950/20 p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
                     <div className="flex items-center gap-1.5">
-                      <Sun className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
-                      <span className="text-xs font-bold text-sky-900 dark:text-sky-200">
+                      <Sun className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-bold text-sky-900 dark:text-sky-200 truncate">
                         Bandas de Sol (Viseras) en {activeZoneLabel}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
-                        <div>
-                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-xs">
+                      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-1.5 sm:p-2 gap-2">
+                        <div className="min-w-0">
+                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[10px] sm:text-[11px] block truncate">
                             {activeZone === "windshield" ? "Banda Superior (Visera Techo)" : "Banda Superior (Línea Techo)"}
                           </span>
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
+                          <span className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                             +$10.00 USD
                           </span>
                         </div>
                         <Switch
                           checked={Boolean(sunstrips[`${activeZone}_top`]?.enabled)}
                           onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_top`, checked)}
-                          className="scale-75"
+                          className="scale-75 shrink-0"
                         />
                       </div>
 
-                      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-2">
-                        <div>
-                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[11px] block">
+                      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-md border p-1.5 sm:p-2 gap-2">
+                        <div className="min-w-0">
+                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[10px] sm:text-[11px] block truncate">
                             {activeZone === "windshield" ? "Banda Inferior (Base Capó)" : "Banda Inferior (Línea Bumper)"}
                           </span>
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
+                          <span className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                             +$10.00 USD
                           </span>
                         </div>
                         <Switch
                           checked={Boolean(sunstrips[`${activeZone}_bottom`]?.enabled)}
                           onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_bottom`, checked)}
-                          className="scale-75"
+                          className="scale-75 shrink-0"
                         />
                       </div>
                     </div>
@@ -851,20 +851,20 @@ export default function TintWindowMaterialDialog({
             </div>
 
             {/* Resumen del Plan y Desglose de Precios */}
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/50 text-xs shrink-0">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-2 sm:p-2.5 dark:border-zinc-800 dark:bg-zinc-900/50 text-[11px] sm:text-xs shrink-0">
               <div className="flex items-center justify-between font-semibold text-zinc-700 dark:text-zinc-300 pb-1 border-b border-zinc-200 dark:border-zinc-800">
                 <span>Desglose de Recargo Total:</span>
                 <span className="text-primary font-mono font-bold">
                   +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"} USD
                 </span>
               </div>
-              <div className="mt-1.5 space-y-0.5 max-h-20 overflow-y-auto text-[11px] text-muted-foreground pr-1">
+              <div className="mt-1 space-y-0.5 max-h-16 sm:max-h-20 overflow-y-auto text-[10px] sm:text-[11px] text-muted-foreground pr-1">
                 {(quoteData?.price_breakdown || []).map((b, i) => (
                   <div key={i} className="flex justify-between items-center py-0.5">
-                    <span>
+                    <span className="truncate pr-2">
                       {b.group_label} ({b.material_name}):
                     </span>
-                    <span className="font-mono text-zinc-800 dark:text-zinc-200 font-medium">
+                    <span className="font-mono text-zinc-800 dark:text-zinc-200 font-medium shrink-0">
                       +${b.price_extra_usd.toFixed(2)} USD
                     </span>
                   </div>
@@ -877,29 +877,29 @@ export default function TintWindowMaterialDialog({
           </div>
         </div>
 
-        {/* Footer */}
-        <DialogFooter className="bg-zinc-100/90 dark:bg-zinc-900/90 px-6 py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
-          <div className="text-xs text-muted-foreground">
+        {/* Footer Responsivo */}
+        <DialogFooter className="bg-zinc-100/90 dark:bg-zinc-900/90 px-3.5 sm:px-6 py-2 sm:py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-2 shrink-0">
+          <div className="text-[11px] sm:text-xs text-muted-foreground w-full sm:w-auto text-center sm:text-left">
             {quoteData?.valid ? (
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-center sm:justify-start gap-1">
                 <Check className="h-3.5 w-3.5" /> Plan completo y validado
               </span>
             ) : (
-              <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+              <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center justify-center sm:justify-start gap-1">
                 <AlertCircle className="h-3.5 w-3.5" /> {quoteData?.error || "Verifique selección"}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onClose} size="sm">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={onClose} size="sm" className="flex-1 sm:flex-initial h-8 sm:h-8 text-xs">
               Cancelar
             </Button>
             <Button
               onClick={handleApply}
               disabled={!quoteData?.valid}
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-white font-bold"
+              className="flex-1 sm:flex-initial h-8 sm:h-8 text-xs bg-primary hover:bg-primary/90 text-white font-bold"
             >
               Aplicar al Carrito (+${quoteData?.materials_extra_total?.toFixed(2) || "0.00"} USD)
             </Button>
