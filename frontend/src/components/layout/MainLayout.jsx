@@ -740,17 +740,17 @@ export function MainLayout() {
             </div>
           </div>
 
-          <main className={cn("flex-1 overflow-auto relative", isPhone && isWorkbenchRoute ? "pb-16" : "")}>
+          <main className={cn("flex-1 overflow-auto relative p-2 sm:p-4 md:p-6", isPhone && isWorkbenchRoute ? "pb-24" : isPhone ? "pb-20" : "")}>
             {/* Watermark: store logo fixed in the content area */}
             <div className="pointer-events-none sticky top-0 z-0 w-full" style={{ height: 0 }}>
-              <div className="flex items-center justify-center overflow-hidden p-6" style={{ height: "100vh" }}>
+              <div className="flex items-center justify-center overflow-hidden p-4 sm:p-6" style={{ height: "100vh" }}>
                 <img
                   src={branding.logo}
                   alt=""
                   aria-hidden="true"
                   draggable={false}
                   className="w-full h-full select-none object-contain"
-                  style={{ mixBlendMode: "multiply", opacity: watermarkOpacity }}
+                  style={{ mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply", opacity: watermarkOpacity }}
                 />
               </div>
             </div>

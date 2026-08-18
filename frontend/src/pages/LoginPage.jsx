@@ -926,17 +926,17 @@ export function LoginPage() {
       </div>
 
       {/* Right side - Login */}
-      <div className="relative flex-1 flex items-center justify-center overflow-hidden p-8">
-        <Card className="relative z-10 w-full max-w-md border-0 shadow-xl">
-          <CardContent className="relative overflow-hidden pt-8 pb-8 px-8">
-            <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-6">
+      <div className="relative flex-1 flex items-center justify-center overflow-hidden p-3 sm:p-6 md:p-8">
+        <Card className="relative z-10 w-full max-w-md border border-border/80 dark:border-zinc-800 bg-card/95 dark:bg-zinc-900/95 shadow-2xl backdrop-blur-md">
+          <CardContent className="relative overflow-hidden p-4 sm:p-6 md:p-8">
+            <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-4 sm:p-6">
               <img
                 src="/logo-big.png"
                 alt=""
                 aria-hidden="true"
                 draggable={false}
                 className="h-auto w-[78%] max-w-lg select-none object-contain"
-                style={{ mixBlendMode: "multiply", opacity: watermarkOpacity }}
+                style={{ mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply", opacity: watermarkOpacity }}
               />
             </div>
 

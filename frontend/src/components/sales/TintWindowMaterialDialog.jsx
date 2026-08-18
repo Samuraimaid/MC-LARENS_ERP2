@@ -326,30 +326,30 @@ export default function TintWindowMaterialDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[96vw] max-w-6xl md:max-w-7xl max-h-[95vh] h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
         {/* Encabezado */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-6 py-4 text-white shrink-0 shadow-sm">
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 p-3.5 sm:p-5 md:px-6 md:py-4 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30">
-                <Layers className="h-6 w-6 text-blue-300" />
+              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30">
+                <Layers className="h-5 w-5 sm:h-6 sm:w-6 text-blue-300" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-white flex items-center gap-2.5">
-                  Seleccionador de Materiales de Polarizado
-                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-xs uppercase font-mono px-2 py-0.5">
+                <DialogTitle className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  Seleccionador de Materiales
+                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[10px] sm:text-xs uppercase font-mono px-1.5 py-0.5">
                     Personalizado
                   </Badge>
                 </DialogTitle>
-                <p className="text-xs text-blue-200/90 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-blue-200/90 mt-0.5">
                   {vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Vehículo Asignado"} ·{" "}
                   Bandas: {config?.vehicle_size_bands?.windshield || "≤40\""} / {config?.vehicle_size_bands?.front_sides || "≤20\""}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[11px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-[10px] sm:text-[11px] uppercase text-blue-300 font-mono block">Recargo Materiales</span>
+              <span className="text-xl sm:text-2xl font-black text-white">
                 +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
-                <span className="text-sm font-medium text-blue-200">USD</span>
+                <span className="text-xs sm:text-sm font-medium text-blue-200">USD</span>
               </span>
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function TintWindowMaterialDialog({
         {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols): Diagrama Vectorial con Carrocería Real Dinámica */}
-          <div className="md:col-span-5 border-r border-zinc-200 dark:border-zinc-800 p-4 lg:p-6 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
+          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
             <div className="text-center w-full space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
@@ -617,7 +617,7 @@ export default function TintWindowMaterialDialog({
           </div>
 
           {/* Lado Derecho (7 cols): Selección de Material, 2da Capa y Bandas */}
-          <div className="md:col-span-7 p-6 flex flex-col justify-between space-y-4 overflow-y-auto">
+          <div className="md:col-span-7 p-3.5 sm:p-5 lg:p-6 flex flex-col justify-between space-y-4 overflow-y-auto">
             <div>
               {/* Selector de Pestañas de Zona */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-3.5">

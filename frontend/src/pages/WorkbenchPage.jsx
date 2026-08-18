@@ -98,7 +98,7 @@ export function WorkbenchPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3 animate-fade-up-soft">
         {/* Tablet-only tab strip: visible on 640–1023px. Phones use BottomNav; desktop uses header tabs. */}
         <div className="hidden w-full pb-1 sm:block lg:hidden">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border/80 bg-card/90 dark:border-zinc-800 dark:bg-zinc-900/90 p-2 sm:grid-cols-4">
             {TAB_CONFIG.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -121,7 +121,7 @@ export function WorkbenchPage() {
           const PageComponent = tab.component;
           return (
             <TabsContent key={tab.key} value={tab.key} className="mt-0">
-              <div className="rounded-md border bg-background p-1 sm:p-2 ui-panel animate-fade-up-soft">
+              <div className="rounded-xl border border-border/80 bg-card/40 dark:border-zinc-800 dark:bg-zinc-900/40 p-2 sm:p-3 ui-panel animate-fade-up-soft">
                 <Suspense
                   fallback={
                     <div className="min-h-[30vh] flex items-center justify-center">

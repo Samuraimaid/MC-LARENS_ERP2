@@ -3094,14 +3094,13 @@ def get_attendance_pin_hash(user_doc: Dict[str, Any]) -> Optional[str]:
 
 
 def get_login_pin_hash(user_doc: Dict[str, Any]) -> Optional[str]:
-    return user_doc.get("login_pin_hash")
+    return user_doc.get("login_pin_hash") or user_doc.get("pin_hash") or user_doc.get("attendance_pin_hash")
 
 
 def _users_missing_login_pin_index_query(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Pin users that still rely on bcrypt lookup because login_pin_index was never set."""
     query: Dict[str, Any] = {
-        "is_pin_user": True,
-        "is_active": True,
+        "is_active": {"$ne": False},
         "$or": [
             {"login_pin_index": {"$exists": False}},
             {"login_pin_index": None},
@@ -3120,7 +3119,8 @@ async def _find_pin_user_by_legacy_scan(
 ) -> Optional[Dict[str, Any]]:
     """Match PIN only among users missing login_pin_index (avoids scanning the full directory)."""
     async for candidate in db.users.find(_users_missing_login_pin_index_query(extra_filter), {"_id": 0}):
-        if verify_pin_hash(pin, get_login_pin_hash(candidate)):
+        hash_val = get_login_pin_hash(candidate)
+        if hash_val and verify_pin_hash(pin, hash_val):
             return cast(Dict[str, Any], candidate)
     return None
 
@@ -3724,6 +3724,22 @@ async def ensure_terminal_login_policy() -> None:
             await pin_policy_service.update(desired)
             logger.info("Terminal PIN policy normalized: %s", desired)
         await ensure_daily_terminal_unlock_notification(db)
+
+        # Clear expired terminal IP lockouts and clean user lockout states
+        now = datetime.now(timezone.utc)
+        await db.pin_login_ip_lockouts.delete_many({
+            "$or": [
+                {"lockout_until": {"$lte": now.isoformat()}},
+                {"lockout_until": None}
+            ]
+        })
+        await db.users.update_many(
+            {
+                "is_active": {"$ne": False},
+                "pin_lockout_until": {"$lte": now.isoformat()}
+            },
+            {"$set": {"failed_pin_attempts": 0, "pin_lockout_until": None}}
+        )
     except Exception:
         logger.exception("Failed bootstrapping terminal login policy/notifications")
 
@@ -5182,7 +5198,6 @@ async def get_pin_users(request: Request):
 
 
 @api_router.post("/auth/pin/login")
-
 async def login_with_pin(payload: PinLoginRequest, request: Request):
     pin = payload.pin.strip()
     if not is_valid_login_pin(pin):
@@ -5190,27 +5205,25 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
 
     pin_policy = await pin_policy_service.load()
     await pin_login_guard.enforce_ip_rate_limit(request, pin_policy)
-    if not payload.user_id:
-        await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
 
     user_doc: Optional[Dict[str, Any]] = None
+    login_index = compute_pin_index(pin)
+
     # Si se provee user_id, se valida contra ese usuario y aplica pin_policy (max_attempts / lockout).
     if payload.user_id:
         user_doc = await db.users.find_one({
             "user_id": payload.user_id,
-            "is_pin_user": True,
-            "is_active": True
+            "is_active": {"$ne": False}
         }, {
             "_id": 0
         })
         if user_doc:
             await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
     else:
-        login_index = compute_pin_index(pin)
+        # Búsqueda directa por índice SHA-256 (O(1))
         user_doc = await db.users.find_one(
             {
-                "is_pin_user": True,
-                "is_active": True,
+                "is_active": {"$ne": False},
                 "login_pin_index": login_index,
             },
             {"_id": 0},
@@ -5218,6 +5231,7 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
         if user_doc:
             await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
         else:
+            # Fallback a búsqueda bcrypt sobre usuarios activos
             legacy_user = await _find_pin_user_by_legacy_scan(pin)
             if legacy_user:
                 user_doc = legacy_user
@@ -5232,10 +5246,32 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
                 False,
             )
             raise HTTPException(status_code=401, detail="PIN incorrecto")
+        # Si no hubo coincidencia de usuario, aplicar protección anónima
+        await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
         await pin_login_guard.record_anonymous_failure(request, pin_policy)
 
+    # Si el login fue exitoso, limpiar cualquier bloqueo anónimo previo de la IP
     if not payload.user_id:
         await pin_login_guard.clear_anonymous_lockout(request)
+
+    # Auto-curación del documento de usuario (garantiza login instantáneo en el futuro)
+    if user_doc and (not user_doc.get("login_pin_index") or not user_doc.get("login_pin_hash") or not user_doc.get("is_pin_user")):
+        try:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            await db.users.update_one(
+                {"user_id": user_doc.get("user_id")},
+                {
+                    "$set": {
+                        "login_pin_index": login_index,
+                        "login_pin_hash": hash_pin(pin),
+                        "login_pin_last_set_at": now_iso,
+                        "is_pin_user": True,
+                        "is_active": True,
+                    }
+                }
+            )
+        except Exception:
+            pass
 
     return await _create_session_response(user_doc, request)
 

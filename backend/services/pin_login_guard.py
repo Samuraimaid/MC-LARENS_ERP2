@@ -370,22 +370,6 @@ class PinLoginGuard:
 
         await self.db.users.update_one({"user_id": user_id}, {"$set": update})
         await self.record_ip_failure(request, user_id=user_id or None)
-        # Mirror failures on terminal/IP guard for public-keypad protection.
-        try:
-            await self._ip_lockouts_collection().update_one(
-                {"ip": client_ip(request)},
-                {
-                    "$set": {
-                        "ip": client_ip(request),
-                        "failed_attempts": failed,
-                        "lockout_until": lockout_until_value,
-                        "updated_at": now.isoformat(),
-                    }
-                },
-                upsert=True,
-            )
-        except Exception:
-            pass
         await self.audit_service.log_pin_auth_attempt(user_id, client_ip(request), False)
 
         remaining = 0 if lockout_until_value else remaining_attempts_for_failed_count(failed, max_attempts)
