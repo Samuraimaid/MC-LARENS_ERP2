@@ -117,11 +117,29 @@ export function resolveVehicleCategory(vehicle) {
     return "camioneta_1_cabina";
   }
 
-  // 8. Camioneta Doble Cabina
+  // 8. Camioneta Doble Cabina / Pick-up (Hilux, Frontier, D-Max, L200, Ranger, etc.)
   if (
     text.includes("doble cabina") ||
     text.includes("double cab") ||
-    text.includes("crew cab")
+    text.includes("crew cab") ||
+    text.includes("hilux") ||
+    text.includes("frontier") ||
+    text.includes("d-max") ||
+    text.includes("dmax") ||
+    text.includes("l200") ||
+    text.includes("ranger") ||
+    text.includes("amarok") ||
+    text.includes("tacoma") ||
+    text.includes("bt-50") ||
+    text.includes("bt50") ||
+    text.includes("navara") ||
+    text.includes("colorado") ||
+    text.includes("silverado") ||
+    text.includes("f-150") ||
+    text.includes("f150") ||
+    text.includes("ram") ||
+    text.includes("pickup") ||
+    text.includes("pick-up")
   ) {
     return "camioneta_doble_cabina";
   }
@@ -176,25 +194,27 @@ export function resolveVehicleCategory(vehicle) {
     return "station_wagon";
   }
 
-  // 13. SUV / Camioneta 4x4 / Crossover / Pick-up
+  // 13. SUV / Camioneta Cerrada 4x4 / Crossover
   if (
     text.includes("suv") ||
     text.includes("camioneta") ||
-    text.includes("pickup") ||
-    text.includes("pick-up") ||
-    text.includes("hilux") ||
     text.includes("prado") ||
     text.includes("land cruiser") ||
     text.includes("rav4") ||
     text.includes("cr-v") ||
     text.includes("crv") ||
-    text.includes("d-max") ||
-    text.includes("dmax") ||
-    text.includes("frontier") ||
-    text.includes("l200") ||
     text.includes("tucson") ||
     text.includes("sportage") ||
     text.includes("patrol") ||
+    text.includes("fortuner") ||
+    text.includes("4runner") ||
+    text.includes("everest") ||
+    text.includes("montero") ||
+    text.includes("explorer") ||
+    text.includes("tahoe") ||
+    text.includes("qashqai") ||
+    text.includes("santa fe") ||
+    text.includes("santafe") ||
     text.includes("4x4") ||
     text.includes("crossover")
   ) {
