@@ -5364,6 +5364,7 @@ export default function SaleForm({
             size="inline"
             icon={PlusCircle}
             title="Registrar Vehículo"
+          />
           <div className="space-y-3">
             {/* Banner de Escaneo OCR de Tarjeta de Circulación */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/60 dark:bg-sky-950/30">
