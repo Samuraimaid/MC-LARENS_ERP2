@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MC-LARENS | WiFi Clientes VIP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #09090b;
+      color: #f4f4f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 1.5rem;
+      padding: 2rem 1.75rem;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      background: rgba(14, 165, 233, 0.12);
+      color: #38bdf8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.25rem;
+    }
+    .logo-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 0.875rem;
+      color: #a1a1aa;
+      margin-bottom: 1.75rem;
+      line-height: 1.45;
+    }
+    .device-box {
+      background: #27272a;
+      border-radius: 0.875rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .device-label { color: #71717a; }
+    .device-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #38bdf8; }
+    .form-group {
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #d4d4d8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.4rem;
+    }
+    .form-input {
+      width: 100%;
+      background: #09090b;
+      border: 1px solid #3f3f46;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #0284c7;
+    }
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 0.875rem;
+      padding: 0.875rem 1.5rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px -4px rgba(2, 132, 199, 0.5);
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+    .policy-tag {
+      margin-top: 1.25rem;
+      font-size: 0.75rem;
+      color: #71717a;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      ⚡ Red de Clientes VIP
+    </div>
+    <h1 class="logo-title">MC-LARENS</h1>
+    <p class="subtitle">{{ welcome_message }}</p>
+
+    <div class="device-box">
+      <span class="device-label">Dispositivo:</span>
+      <span class="device-val">{{ client_mac }}</span>
+    </div>
+
+    <form method="POST" action="/connect">
+      <input type="hidden" name="mac" value="{{ client_mac }}">
+      <input type="hidden" name="ip" value="{{ client_ip }}">
+
+      <div class="form-group">
+        <label>Nombre del Cliente (Opcional)</label>
+        <input type="text" name="customer_name" class="form-input" placeholder="Ej. Carlos Mendoza">
+      </div>
+
+      <div class="form-group">
+        <label>N° Factura / Orden (Opcional)</label>
+        <input type="text" name="invoice_number" class="form-input" placeholder="Ej. INV-20260818-0001">
+      </div>
+
+      <button type="submit" class="btn-submit">
+        Conectarse a Internet
+      </button>
+    </form>
+
+    <p class="policy-tag">
+      {{ expiration_notice }}
+    </p>
+  </div>
+</body>
+</html>

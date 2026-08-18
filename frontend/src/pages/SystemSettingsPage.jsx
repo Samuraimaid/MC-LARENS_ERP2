@@ -14,8 +14,9 @@ import { Switch } from "../components/ui/switch";
 import { toast } from "sonner";
 import { 
   DollarSign, RefreshCw, Globe, Bell, Printer, 
-  CheckCircle2, ArrowRightLeft, Save, Download, AlertCircle, Barcode
+  CheckCircle2, ArrowRightLeft, Save, Download, AlertCircle, Barcode, Wifi
 } from "lucide-react";
+import { HotspotManagementPanel } from "@/components/hotspot/HotspotManagementPanel";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import {

@@ -16,12 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import {
   Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
   Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
-  MessageSquareText, Layers,
+  MessageSquareText, Layers, Wifi,
 } from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
 import { DialogMessagesSettingsPanel } from "@/components/settings/DialogMessagesSettingsPanel";
 import { SessionSecuritySettingsPanel } from "@/components/settings/SessionSecuritySettingsPanel";
 import TintMaterialsSettingsPanel from "@/components/settings/TintMaterialsSettingsPanel";
+import { HotspotManagementPanel } from "@/components/hotspot/HotspotManagementPanel";
 import { SystemSettingsContent } from "./SystemSettingsPage";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
@@ -66,6 +67,7 @@ const SETTINGS_TAB_ICONS = {
   DollarSign,
   Bell,
   Printer,
+  Wifi,
   MessageSquareText,
   Shield,
 };
@@ -2843,6 +2845,10 @@ export function SettingsPage() {
 
         <TabsContent value="polarizado" className="space-y-6">
           <TintMaterialsSettingsPanel />
+        </TabsContent>
+
+        <TabsContent value="hotspot" className="space-y-6">
+          <HotspotManagementPanel />
         </TabsContent>
       </Tabs>
     </div>

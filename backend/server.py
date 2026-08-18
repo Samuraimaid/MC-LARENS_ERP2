@@ -17085,6 +17085,201 @@ async def update_work_order_stage(sale_id: str, request: Request):
     return {"ok": True, "sale_id": sale_id, "stage": stage, "updated_at": now_iso}
 
 
+# ---------------------------------------------------------------------------
+# WIFI HOTSPOT FOR CUSTOMERS (MINI PC HP APPLIANCE & ERP CONTROL)
+# ---------------------------------------------------------------------------
+
+@api_router.get("/hotspot/settings")
+async def get_hotspot_settings(request: Request):
+    user = await require_auth(request)
+    from backend.domains.hotspot.manager import DEFAULT_HOTSPOT_SETTINGS
+
+    branch_id = getattr(user, "branch_id", None) or "default"
+    doc = await db.hotspot_settings.find_one({"branch_id": branch_id}, {"_id": 0})
+    if not doc:
+        doc = {"branch_id": branch_id, **DEFAULT_HOTSPOT_SETTINGS}
+    return doc
+
+
+@api_router.put("/hotspot/settings")
+async def update_hotspot_settings(payload: Dict[str, Any], request: Request):
+    user = await require_auth(request)
+    role = str(user.role or "").lower()
+    if role not in {"gerencia", "programador", "supervisor", "jefe_tienda"}:
+        raise HTTPException(status_code=403, detail="Solo Gerencia o Supervisión puede configurar el Hotspot")
+
+    branch_id = getattr(user, "branch_id", None) or payload.get("branch_id") or "default"
+    update_data = {
+        "branch_id": branch_id,
+        "enabled": bool(payload.get("enabled", True)),
+        "ssid_name": str(payload.get("ssid_name") or "MC-LARENS Clientes VIP"),
+        "expiration_mode": str(payload.get("expiration_mode") or "closing_time"),
+        "closing_time_str": str(payload.get("closing_time_str") or "19:00"),
+        "duration_hours": int(payload.get("duration_hours") or 24),
+        "require_invoice": bool(payload.get("require_invoice", False)),
+        "welcome_message": str(payload.get("welcome_message") or ""),
+        "download_speed_limit_mbps": int(payload.get("download_speed_limit_mbps") or 15),
+        "upload_speed_limit_mbps": int(payload.get("upload_speed_limit_mbps") or 5),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": user.username,
+    }
+
+    await db.hotspot_settings.update_one(
+        {"branch_id": branch_id},
+        {"$set": update_data},
+        upsert=True,
+    )
+    return {"ok": True, "settings": update_data}
+
+
+@api_router.get("/hotspot/clients")
+async def list_hotspot_clients(request: Request):
+    user = await require_auth(request)
+    branch_id = getattr(user, "branch_id", None)
+    query: Dict[str, Any] = {}
+    if branch_id and branch_id != "default":
+        query["branch_id"] = branch_id
+
+    clients = await db.hotspot_active_sessions.find(query, {"_id": 0}).sort("connected_at", -1).to_list(length=100)
+    return {"clients": clients, "count": len(clients)}
+
+
+@api_router.post("/hotspot/appliance/heartbeat")
+async def hotspot_appliance_heartbeat(payload: Dict[str, Any], request: Request):
+    """
+    Heartbeat called by the Python daemon on the HP Mini PC.
+    Updates the list of actively connected devices, data usage, and returns disconnect commands.
+    """
+    branch_id = str(payload.get("branch_id") or "default")
+    clients = payload.get("clients") or []
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    for client in clients:
+        mac = str(client.get("mac_address") or "").upper()
+        if not mac:
+            continue
+        client_doc = {
+            "branch_id": branch_id,
+            "mac_address": mac,
+            "ip_address": client.get("ip_address"),
+            "hostname": client.get("hostname"),
+            "customer_name": client.get("customer_name") or "Cliente en Sala",
+            "sale_id": client.get("sale_id"),
+            "connected_at": client.get("connected_at") or now_iso,
+            "expires_at": client.get("expires_at"),
+            "bytes_in": int(client.get("bytes_in") or 0),
+            "bytes_out": int(client.get("bytes_out") or 0),
+            "last_seen": now_iso,
+            "status": "authorized" if client.get("authorized") else "pending_portal",
+        }
+        await db.hotspot_active_sessions.update_one(
+            {"mac_address": mac},
+            {"$set": client_doc},
+            upsert=True,
+        )
+
+    disconnect_docs = await db.hotspot_pending_disconnects.find(
+        {"branch_id": branch_id, "processed": False},
+        {"_id": 0}
+    ).to_list(length=50)
+
+    disconnect_macs = [d["mac_address"] for d in disconnect_docs if d.get("mac_address")]
+    if disconnect_macs:
+        await db.hotspot_pending_disconnects.update_many(
+            {"mac_address": {"$in": disconnect_macs}},
+            {"$set": {"processed": True, "processed_at": now_iso}}
+        )
+
+    return {
+        "ok": True,
+        "disconnect_macs": disconnect_macs,
+        "server_time": now_iso,
+    }
+
+
+@api_router.post("/hotspot/appliance/authorize")
+async def hotspot_appliance_authorize_client(payload: Dict[str, Any]):
+    """
+    Called by captive portal to authorize a client WiFi device.
+    Calculates expiration based on branch closing time or 24h duration.
+    """
+    from backend.domains.hotspot.manager import (
+        DEFAULT_HOTSPOT_SETTINGS,
+        calculate_session_expiration,
+        sanitize_mac,
+    )
+
+    mac = sanitize_mac(payload.get("mac_address") or "")
+    if not mac:
+        raise HTTPException(status_code=400, detail="Dirección MAC requerida")
+
+    branch_id = str(payload.get("branch_id") or "default")
+    settings = await db.hotspot_settings.find_one({"branch_id": branch_id}, {"_id": 0})
+    if not settings:
+        settings = DEFAULT_HOTSPOT_SETTINGS
+
+    invoice_number = str(payload.get("invoice_number") or "").strip()
+    sale_match = None
+    if invoice_number:
+        sale_match = await db.sales.find_one(
+            {"$or": [{"invoice_number": invoice_number}, {"sale_id": invoice_number}]},
+            {"_id": 0}
+        )
+
+    now = datetime.now(timezone.utc)
+    expires_at = calculate_session_expiration(settings, now)
+
+    session_doc = {
+        "branch_id": branch_id,
+        "mac_address": mac,
+        "ip_address": payload.get("ip_address"),
+        "hostname": payload.get("hostname"),
+        "customer_name": payload.get("customer_name") or (sale_match.get("customer_name") if sale_match else "Cliente en Sala"),
+        "sale_id": sale_match.get("sale_id") if sale_match else None,
+        "invoice_number": invoice_number or (sale_match.get("invoice_number") if sale_match else None),
+        "authorized": True,
+        "status": "authorized",
+        "connected_at": now.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "download_limit_mbps": settings.get("download_speed_limit_mbps", 15),
+        "upload_limit_mbps": settings.get("upload_speed_limit_mbps", 5),
+    }
+
+    await db.hotspot_active_sessions.update_one(
+        {"mac_address": mac},
+        {"$set": session_doc},
+        upsert=True,
+    )
+
+    return {
+        "ok": True,
+        "authorized": True,
+        "mac_address": mac,
+        "expires_at": expires_at.isoformat(),
+        "message": "Dispositivo autorizado para acceso a Internet",
+    }
+
+
+@api_router.post("/hotspot/clients/{mac_address}/disconnect")
+async def disconnect_hotspot_client(mac_address: str, request: Request):
+    user = await require_auth(request)
+    from backend.domains.hotspot.manager import sanitize_mac
+
+    mac = sanitize_mac(mac_address)
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    await db.hotspot_active_sessions.delete_one({"mac_address": mac})
+    await db.hotspot_pending_disconnects.insert_one({
+        "mac_address": mac,
+        "branch_id": getattr(user, "branch_id", "default"),
+        "requested_by": user.username,
+        "requested_at": now_iso,
+        "processed": False,
+    })
+
+    return {"ok": True, "mac_address": mac, "message": "Orden de desconexión enviada al Hotspot"}
+
+
 @api_router.get("/print/invoice-pdf/{sale_id}")
 async def get_invoice_pdf(sale_id: str, request: Request):
     user = await require_auth(request)

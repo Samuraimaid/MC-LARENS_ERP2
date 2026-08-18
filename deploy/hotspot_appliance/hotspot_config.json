@@ -1,0 +1,13 @@
+{
+  "erp_api_base": "http://192.168.1.100:8001/api",
+  "branch_id": "branch_main",
+  "wifi_interface": "wlan0",
+  "hotspot_ip": "10.50.0.1",
+  "portal_port": 8080,
+  "expiration_mode": "closing_time",
+  "closing_time_str": "19:00",
+  "duration_hours": 24,
+  "welcome_message": "¡Bienvenido a MC-LARENS Taller & Accesorios! Disfrute de nuestra red de alta velocidad mientras atendemos su vehículo.",
+  "sync_interval_seconds": 10,
+  "dry_run": false
+}
