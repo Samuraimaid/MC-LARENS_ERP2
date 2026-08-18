@@ -32,7 +32,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Set up Gradle Tooling
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
@@ -58,14 +60,19 @@ jobs:
         run: |
           npx cap sync android
 
-      - name: Grant Execute Permission for Gradlew
+      - name: Ensure Gradle Wrapper JAR exists
+        working-directory: frontend/android
         run: |
-          chmod +x frontend/android/gradlew
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -sLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x gradlew
 
       - name: Build Android Debug APK with Gradle
         working-directory: frontend/android
         run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace || gradle assembleDebug --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
