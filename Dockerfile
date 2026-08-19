@@ -5,9 +5,14 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
+# Fase 0: Extracción de herramientas de MongoDB
+# ------------------------------------------------------------------------------
+FROM mongo:7.0 AS mongo-tools
+
+# ------------------------------------------------------------------------------
 # Fase 1: Compilación del Frontend (Node 20 + Vite)
 # ------------------------------------------------------------------------------
-FROM node:20-alpine AS frontend-builder
+FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
@@ -23,7 +28,6 @@ RUN npm run build
 # ------------------------------------------------------------------------------
 # Fase 2: Imagen Final Backend + Frontend Estático (Python 3.11)
 # ------------------------------------------------------------------------------
-FROM mongo:7.0 AS mongo-tools
 FROM python:3.11-slim
 
 WORKDIR /app
