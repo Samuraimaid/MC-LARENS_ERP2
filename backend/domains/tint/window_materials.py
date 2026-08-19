@@ -54,7 +54,27 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
         "toyota_rav4": {"windshield": "windshield_under_40", "sides": "side_over_20", "rear": "side_over_20"},
     },
     "materials": [
-        # --- SOLAR GARD SMOKE ---
+        # --- 1. SOLAR GARD SMOKE ---
+        {
+            "id": "std_05",
+            "name": "Solar Gard Smoke 5% (HP)",
+            "brand": "Solar Gard",
+            "family": "Smoke",
+            "vlt": 5,
+            "ir_rejection_pct": 99,
+            "uv_rejection_pct": 99,
+            "tech_type": "HP High Performance",
+            "description": "Máximo control térmico (99% IR) y total privacidad (Limo).",
+            "warranty_years": {"regular": 1, "original": 5},
+            "is_active": True,
+            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "rolls": {
+                "windshield_under_40": {"sku": "ROLL-SG-SMK-05-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-SG-SMK-05-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SMK-05-S20", "virtual_qty": 80, "is_available": True, "qty_per_job": 1.0},
+                "side_over_20": {"sku": "ROLL-SG-SMK-05-S40", "virtual_qty": 60, "is_available": True, "qty_per_job": 1.0},
+            },
+        },
         {
             "id": "std_20",
             "name": "Solar Gard Smoke 20%",
@@ -90,34 +110,14 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-35-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
-                "windshield_over_40": {"sku": "ROLL-SG-SMK-20-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-SG-SMK-35-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_under_20": {"sku": "ROLL-SG-SMK-35-S20", "virtual_qty": 80, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SMK-35-S40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
             },
         },
         {
-            "id": "std_05",
-            "name": "Solar Gard Smoke 5% (HP)",
-            "brand": "Solar Gard",
-            "family": "Smoke",
-            "vlt": 5,
-            "ir_rejection_pct": 99,
-            "uv_rejection_pct": 99,
-            "tech_type": "HP High Performance",
-            "description": "Máximo control térmico (99% IR) y total privacidad (Limo).",
-            "warranty_years": {"regular": 1, "original": 5},
-            "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
-            "rolls": {
-                "windshield_under_40": {"sku": "ROLL-SG-SMK-05-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
-                "windshield_over_40": {"sku": "ROLL-SG-SMK-05-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
-                "side_under_20": {"sku": "ROLL-SG-SMK-05-S20", "virtual_qty": 80, "is_available": True, "qty_per_job": 1.0},
-                "side_over_20": {"sku": "ROLL-SG-SMK-05-S40", "virtual_qty": 60, "is_available": True, "qty_per_job": 1.0},
-            },
-        },
-        {
             "id": "std_70",
-            "name": "Solar Gard Estándar 70% (Claro)",
+            "name": "Solar Gard Smoke 70% (Claro)",
             "brand": "Solar Gard",
             "family": "Smoke",
             "vlt": 70,
@@ -136,10 +136,10 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD NANO CERÁMICO SUPREME ---
+        # --- 2. SOLAR GARD NANO CERÁMICO SUPREME ---
         {
             "id": "sg_supreme_04",
-            "name": "Nano Cerámico Supreme 4%",
+            "name": "Solar Gard Supreme 4%",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 4,
@@ -159,7 +159,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
         },
         {
             "id": "sg_supreme_10",
-            "name": "Nano Cerámico Supreme 10%",
+            "name": "Solar Gard Supreme 10%",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 10,
@@ -178,8 +178,8 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
-            "id": "nano_ceramic_20",
-            "name": "Nano Cerámico Supreme 14%",
+            "id": "sg_supreme_14",
+            "name": "Solar Gard Supreme 14%",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 14,
@@ -198,8 +198,28 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
+            "id": "sg_supreme_15",
+            "name": "Solar Gard Supreme 15%",
+            "brand": "Solar Gard",
+            "family": "Nano Cerámico Supreme",
+            "vlt": 15,
+            "ir_rejection_pct": 55,
+            "uv_rejection_pct": 99,
+            "tech_type": "Nano Cerámico",
+            "description": "Claridad, confort y elegancia en un solo polarizado, perfecto para el día a día.",
+            "warranty_years": {"regular": 1, "original": 5},
+            "is_active": True,
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
+            "rolls": {
+                "windshield_under_40": {"sku": "ROLL-SG-SUP-15-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-SG-SUP-15-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SUP-15-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
+                "side_over_20": {"sku": "ROLL-SG-SUP-15-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
+            },
+        },
+        {
             "id": "sg_supreme_16",
-            "name": "Nano Cerámico Supreme 16% (HP)",
+            "name": "Solar Gard Supreme 16% (HP)",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 16,
@@ -219,7 +239,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
         },
         {
             "id": "sg_supreme_22",
-            "name": "Nano Cerámico Supreme 22%",
+            "name": "Solar Gard Supreme 22%",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 22,
@@ -238,15 +258,15 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
-            "id": "nano_ceramic_35",
-            "name": "Nano Cerámico Supreme 35%",
+            "id": "sg_supreme_35",
+            "name": "Solar Gard Supreme 35%",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 35,
             "ir_rejection_pct": 40,
             "uv_rejection_pct": 99,
             "tech_type": "Nano Cerámico",
-            "description": "Claridad total con protección solar y estética elegante.",
+            "description": "Claridad total con protección solar y estética elegante sin oscurecer el vehículo.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
             "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
@@ -258,8 +278,8 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
-            "id": "nano_ceramic_70",
-            "name": "Nano Cerámico Supreme 42% (Ultra Claro)",
+            "id": "sg_supreme_42",
+            "name": "Solar Gard Supreme 42% (Ultra Claro)",
             "brand": "Solar Gard",
             "family": "Nano Cerámico Supreme",
             "vlt": 42,
@@ -278,9 +298,9 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD CHARCOAL ---
+        # --- 3. SOLAR GARD CHARCOAL ---
         {
-            "id": "carbon_20",
+            "id": "sg_charcoal_06",
             "name": "Solar Gard Charcoal 6% (HP)",
             "brand": "Solar Gard",
             "family": "Charcoal",
@@ -300,6 +320,26 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
+            "id": "sg_charcoal_06_std",
+            "name": "Solar Gard Charcoal 6% (Estándar)",
+            "brand": "Solar Gard",
+            "family": "Charcoal",
+            "vlt": 6,
+            "ir_rejection_pct": 65,
+            "uv_rejection_pct": 99,
+            "tech_type": "Estándar Carbón",
+            "description": "Negro profundo resistente y estético para máxima privacidad sin metales.",
+            "warranty_years": {"regular": 1, "original": 5},
+            "is_active": True,
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
+            "rolls": {
+                "windshield_under_40": {"sku": "ROLL-CRB-06-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-CRB-06-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-CRB-06-S20", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
+                "side_over_20": {"sku": "ROLL-CRB-06-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
+            },
+        },
+        {
             "id": "sg_charcoal_07",
             "name": "Solar Gard Charcoal 7% (HC)",
             "brand": "Solar Gard",
@@ -307,7 +347,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "vlt": 7,
             "ir_rejection_pct": 60,
             "uv_rejection_pct": 99,
-            "tech_type": "HC Carbón",
+            "tech_type": "HC Hard Coated",
             "description": "Negro profundo resistente a rayaduras sin tecnología metalizada.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
@@ -320,14 +360,14 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
         {
-            "id": "carbon_35",
+            "id": "sg_charcoal_20",
             "name": "Solar Gard Charcoal 20% (HC)",
             "brand": "Solar Gard",
             "family": "Charcoal",
             "vlt": 20,
             "ir_rejection_pct": 55,
             "uv_rejection_pct": 99,
-            "tech_type": "HC Carbón",
+            "tech_type": "HC Hard Coated",
             "description": "Balance ideal entre privacidad, visibilidad y estética para uso diario.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
@@ -339,8 +379,28 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
                 "side_over_20": {"sku": "ROLL-CRB-35-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
+        {
+            "id": "sg_charcoal_35",
+            "name": "Solar Gard Charcoal 35% (HC)",
+            "brand": "Solar Gard",
+            "family": "Charcoal",
+            "vlt": 35,
+            "ir_rejection_pct": 50,
+            "uv_rejection_pct": 99,
+            "tech_type": "HC Hard Coated",
+            "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
+            "warranty_years": {"regular": 1, "original": 5},
+            "is_active": True,
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
+            "rolls": {
+                "windshield_under_40": {"sku": "ROLL-CRB-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-CRB-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-CRB-35-S20", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
+                "side_over_20": {"sku": "ROLL-CRB-35-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
+            },
+        },
 
-        # --- SOLAR GARD QUANTUM ORIGINAL ---
+        # --- 4. SOLAR GARD QUANTUM ORIGINAL ---
         {
             "id": "sg_quantum_orig_14",
             "name": "Solar Gard Quantum Original 14%",
@@ -389,7 +449,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "vlt": 28,
             "ir_rejection_pct": 72,
             "uv_rejection_pct": 99,
-            "tech_type": "Metalizada Sputtered",
+            "tech_type": "HP High Performance",
             "description": "Tono claro y sutil: 72% IR sin oscurecer el auto. Máxima visibilidad.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
@@ -402,7 +462,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD QUANTUM REGULAR ---
+        # --- 5. SOLAR GARD QUANTUM REGULAR ---
         {
             "id": "sg_quantum_reg_05",
             "name": "Solar Gard Quantum Regular 5%",
@@ -432,7 +492,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "ir_rejection_pct": 72,
             "uv_rejection_pct": 99,
             "tech_type": "Metalizada Sputtered",
-            "description": "Nitidez superior al polarizado tintado convencional y alto rechazo térmico.",
+            "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
             "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
@@ -464,7 +524,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD CAMALEÓN ---
+        # --- 6. SOLAR GARD CAMALEÓN ---
         {
             "id": "sg_camaleon_20",
             "name": "Solar Gard Camaleón 20%",
@@ -486,7 +546,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD TITANIUM ---
+        # --- 7. SOLAR GARD TITANIUM ---
         {
             "id": "sg_titanium_26",
             "name": "Solar Gard Titanium 26%",
@@ -508,7 +568,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD GALAXIE ---
+        # --- 8. SOLAR GARD GALAXIE ---
         {
             "id": "sg_galaxie_12",
             "name": "Solar Gard Galaxie 12%",
@@ -530,7 +590,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD ENDEAVOR ---
+        # --- 9. SOLAR GARD ENDEAVOR ---
         {
             "id": "sg_endeavor_05",
             "name": "Solar Gard Endeavor 5%",
@@ -572,7 +632,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- SOLAR GARD ENDEAVOR SOLSTICE ---
+        # --- 10. SOLAR GARD ENDEAVOR SOLSTICE ---
         {
             "id": "sg_solstice_05",
             "name": "Endeavor Solstice 5%",
@@ -614,7 +674,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             },
         },
 
-        # --- 3M NANO ---
+        # --- 11. 3M NANO ---
         {
             "id": "3m_nano_20",
             "name": "3M Nano HX5-2090 LSX 20%",
@@ -779,36 +839,37 @@ def get_available_materials_for_zone(
         effective_band = size_band
 
         if not roll_info or not roll_info.get("is_available", True):
-            if allow_override:
-                if size_band == "windshield_under_40" and "windshield_over_40" in rolls:
-                    roll_info = rolls.get("windshield_over_40")
-                    effective_band = "windshield_over_40"
-                    override_used = True
-                elif size_band == "side_under_20" and "side_over_20" in rolls:
-                    roll_info = rolls.get("side_over_20")
-                    effective_band = "side_over_20"
-                    override_used = True
+            if rolls:
+                # Usar cualquier rollo disponible del material
+                for r_band, r_data in rolls.items():
+                    if isinstance(r_data, dict) and r_data.get("is_available", True):
+                        roll_info = r_data
+                        effective_band = r_band
+                        override_used = True
+                        break
+            if not roll_info:
+                roll_info = {"sku": f"ROLL-{mat.get('id')}", "virtual_qty": 50, "is_available": True}
+                override_used = True
 
-        if roll_info and roll_info.get("is_available", True):
-            price_extra = float((mat.get("price_by_zone_group") or {}).get(group, 0.0))
-            available.append({
-                "material_id": mat.get("id"),
-                "name": mat.get("name"),
-                "brand": mat.get("brand", "Solar Gard"),
-                "family": mat.get("family"),
-                "vlt": mat.get("vlt"),
-                "ir_rejection_pct": mat.get("ir_rejection_pct"),
-                "uv_rejection_pct": mat.get("uv_rejection_pct", 99),
-                "tech_type": mat.get("tech_type"),
-                "description": mat.get("description"),
-                "warranty_years": mat.get("warranty_years", {"regular": 1, "original": 5}),
-                "zone_group": group,
-                "price_extra_usd": price_extra,
-                "size_band": effective_band,
-                "is_override": override_used,
-                "sku": roll_info.get("sku"),
-                "virtual_qty": roll_info.get("virtual_qty", 0),
-            })
+        price_extra = float((mat.get("price_by_zone_group") or {}).get(group, 0.0))
+        available.append({
+            "material_id": mat.get("id"),
+            "name": mat.get("name"),
+            "brand": mat.get("brand", "Solar Gard"),
+            "family": mat.get("family"),
+            "vlt": mat.get("vlt"),
+            "ir_rejection_pct": mat.get("ir_rejection_pct"),
+            "uv_rejection_pct": mat.get("uv_rejection_pct", 99),
+            "tech_type": mat.get("tech_type"),
+            "description": mat.get("description"),
+            "warranty_years": mat.get("warranty_years", {"regular": 1, "original": 5}),
+            "zone_group": group,
+            "price_extra_usd": price_extra,
+            "size_band": effective_band,
+            "is_override": override_used,
+            "sku": roll_info.get("sku", f"ROLL-{mat.get('id')}"),
+            "virtual_qty": roll_info.get("virtual_qty", 50),
+        })
 
     return available
 

@@ -79,10 +79,10 @@ export default function TintWindowMaterialDialog({
 
   // Materiales Capa 2 (Doble Capa)
   const [secondLayers, setSecondLayers] = useState({
-    windshield: { enabled: false, material_id: "carbon_20" },
-    front_sides: { enabled: false, material_id: "carbon_20" },
-    rear_sides: { enabled: false, material_id: "carbon_20" },
-    rear: { enabled: false, material_id: "carbon_20" },
+    windshield: { enabled: false, material_id: "sg_charcoal_20" },
+    front_sides: { enabled: false, material_id: "sg_charcoal_20" },
+    rear_sides: { enabled: false, material_id: "sg_charcoal_20" },
+    rear: { enabled: false, material_id: "sg_charcoal_20" },
   });
 
   // Bandas de Sol (Sunstrips)
@@ -129,10 +129,10 @@ export default function TintWindowMaterialDialog({
             if (initialPlan.windows[z]?.second_layer) {
               secs[z] = {
                 enabled: Boolean(initialPlan.windows[z]?.second_layer?.enabled),
-                material_id: initialPlan.windows[z]?.second_layer?.material_id || "carbon_20",
+                material_id: initialPlan.windows[z]?.second_layer?.material_id || "sg_charcoal_20",
               };
             } else {
-              secs[z] = { enabled: false, material_id: "carbon_20" };
+              secs[z] = { enabled: false, material_id: "sg_charcoal_20" };
             }
           });
           setSelectedMaterials(mats);
@@ -225,7 +225,7 @@ export default function TintWindowMaterialDialog({
   // Manejar segunda capa
   const handleToggleSecondLayer = (zone, enabled) => {
     setSecondLayers((prev) => {
-      const current = prev[zone] || { material_id: "carbon_20" };
+      const current = prev[zone] || { material_id: "sg_charcoal_20" };
       if (linkSides && (zone === "front_sides" || zone === "rear_sides")) {
         return {
           ...prev,
@@ -357,7 +357,7 @@ export default function TintWindowMaterialDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
+      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
         {/* Encabezado Responsivo */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3 py-2 sm:p-3.5 md:px-6 md:py-3.5 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between gap-2">
@@ -390,46 +390,75 @@ export default function TintWindowMaterialDialog({
         {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5 cols en PC / Arriba en Móvil): Diagrama Interactivo SVG */}
-          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-3 lg:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none">
-            {/* Header del Vehículo con selector y botón de rotación horizontal */}
-            <div className="w-full flex items-center justify-between px-1 pb-1 gap-1">
-              <span className="text-[11px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate flex items-center gap-1.5">
-                <Car className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.label || "Camioneta Doble Cabina"}
-              </span>
+          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-3 lg:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2">
+            {/* Header del Vehículo con Botones Rápidos de Categoría y Rotación */}
+            <div className="w-full space-y-1.5 px-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate flex items-center gap-1.5">
+                  <Car className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  MODELO: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.label || "Camioneta Doble Cabina"}
+                </span>
 
-              <div className="flex items-center gap-1 shrink-0">
-                {/* Botón de cambio de orientación horizontal/vertical en móvil */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
-                  className="h-6 px-1.5 text-[10px] md:hidden bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 font-semibold"
-                  title="Alternar entre silueta horizontal y vertical"
-                >
-                  <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
-                  {isVehicleHorizontal ? "Horizontal" : "Vertical"}
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Botón de cambio de orientación horizontal/vertical (PC y Móvil) */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
+                    className="h-6 px-1.5 text-[10px] bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 font-semibold"
+                    title="Alternar entre silueta horizontal y vertical"
+                  >
+                    <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
+                    {isVehicleHorizontal ? "Horizontal" : "Vertical"}
+                  </Button>
 
-                {/* Selector sutil de cambio manual de carrocería */}
-                <select
-                  value={selectedVehicleType}
-                  onChange={(e) => setSelectedVehicleType(e.target.value)}
-                  className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                  title="Cambiar tipo de carrocería si difiere del detectado"
-                >
-                  {VEHICLE_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.shortLabel}
-                    </option>
-                  ))}
-                </select>
+                  {/* Selector sutil de cambio manual de carrocería */}
+                  <select
+                    value={selectedVehicleType}
+                    onChange={(e) => setSelectedVehicleType(e.target.value)}
+                    className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer max-w-[130px] truncate"
+                    title="Cambiar tipo de carrocería si difiere del detectado"
+                  >
+                    {VEHICLE_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Botones de Categorías Rápidas de Carrocería (Alineados en PC y Móvil) */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
+                {[
+                  { id: "sedan", label: "Sedán" },
+                  { id: "suv_crossover", label: "SUV / 4x4" },
+                  { id: "camioneta_doble_cabina", label: "Doble Cabina" },
+                  { id: "camioneta_cabina_media", label: "Cabina y Media" },
+                  { id: "camioneta_cabina_sencilla", label: "Camioneta 1 Cab." },
+                ].map((cat) => {
+                  const isSelected = selectedVehicleType === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedVehicleType(cat.id)}
+                      className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap transition-all flex-1 text-center ${
+                        isSelected
+                          ? "bg-blue-600 text-white font-bold shadow-xs ring-1 ring-blue-500"
+                          : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Leyenda Compacta con Puntos de Colores Interactiva y Táctil (Solicitada por el usuario) */}
-            <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-xs font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 my-1 shrink-0 shadow-inner">
+            {/* Leyenda Compacta con Puntos de Colores Interactiva y Táctil */}
+            <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-md font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shrink-0 shadow-inner">
               {ZONES.map((z) => {
                 const isActive = activeZone === z.id;
                 return (
@@ -450,19 +479,19 @@ export default function TintWindowMaterialDialog({
               })}
             </div>
 
-            {/* Canvas del Vehículo: Soporte Horizontal en Móvil para maximizar área táctil */}
+            {/* Canvas del Vehículo: Soporte Horizontal y Vertical Dinámico */}
             <div
               className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-xl bg-zinc-950/10 dark:bg-zinc-950/40 border border-zinc-200/60 dark:border-zinc-800/60 my-auto ${
                 isVehicleHorizontal
-                  ? "w-full max-w-[340px] sm:max-w-[380px] h-[160px] sm:h-[180px] md:w-72 md:h-[400px] lg:w-80 lg:h-[440px] xl:w-96 xl:h-[480px]"
-                  : "w-44 h-[195px] sm:w-52 sm:h-[230px] md:w-72 md:h-[400px] lg:w-80 lg:h-[440px] xl:w-96 xl:h-[480px]"
+                  ? "w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] h-[160px] sm:h-[180px] md:h-[220px]"
+                  : "w-48 sm:w-56 md:w-72 h-[220px] sm:h-[280px] md:h-[380px]"
               }`}
             >
-              {/* Contenedor con Rotación Dinámica para Móvil */}
+              {/* Contenedor con Rotación Dinámica */}
               <div
                 className={`transition-all duration-300 shrink-0 ${
                   isVehicleHorizontal
-                    ? "relative w-[200px] h-[360px] transform -rotate-90 origin-center scale-[0.82] sm:scale-[0.92] md:transform-none md:scale-100"
+                    ? "relative w-[200px] h-[360px] transform -rotate-90 origin-center scale-[0.82] sm:scale-[0.92] md:scale-[0.96]"
                     : "relative w-full h-full"
                 }`}
               >
@@ -482,9 +511,9 @@ export default function TintWindowMaterialDialog({
 
                   const getShade = (zoneKey) => {
                     const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
-                    if (mat.includes("70")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
-                    if (mat.includes("35")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
-                    if (mat.includes("05") || mat.includes("04") || mat.includes("06")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
+                    if (mat.includes("70") || mat.includes("42")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
+                    if (mat.includes("35") || mat.includes("28") || mat.includes("26") || mat.includes("25")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
+                    if (mat.includes("05") || mat.includes("04") || mat.includes("06") || mat.includes("07")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
                     return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
                   };
 
@@ -493,7 +522,7 @@ export default function TintWindowMaterialDialog({
                   const shadeRearSides = getShade("rear_sides");
                   const shadeRear = getShade("rear");
 
-                  // Text rotation for horizontal mobile mode
+                  // Text rotation for horizontal mode
                   const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
 
                   // Resaltado de las 4 ventanas laterales vinculadas con aro amarillo neón
@@ -725,7 +754,7 @@ export default function TintWindowMaterialDialog({
           </div>
 
           {/* Lado Derecho (7 cols en PC / Abajo en Móvil): Lista de Materiales de la Zona Activa */}
-          <div className="md:col-span-7 p-2 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
+          <div className="md:col-span-7 p-2.5 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
             <div>
               {/* Barra de Control de la Zona Activa */}
               <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-2 mb-2">
@@ -850,7 +879,7 @@ export default function TintWindowMaterialDialog({
                     Material 2da Capa:
                   </Label>
                   <select
-                    value={secondLayers[activeZone]?.material_id || "carbon_20"}
+                    value={secondLayers[activeZone]?.material_id || "sg_charcoal_20"}
                     onChange={(e) => handleSelectSecondLayerMaterial(activeZone, e.target.value)}
                     className="text-[11px] rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-1 text-zinc-900 dark:text-white font-medium"
                   >
@@ -909,7 +938,7 @@ export default function TintWindowMaterialDialog({
               </div>
 
               {/* Lista de Films / Materiales Disponibles del Catálogo Oficial */}
-              <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-72 overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-80 overflow-y-auto pr-1">
                 {filteredMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
                   const is3M = mat.brand === "3M" || String(mat.id).includes("3m") || String(mat.family).includes("3M");

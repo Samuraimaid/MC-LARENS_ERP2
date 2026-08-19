@@ -79,8 +79,16 @@ def get_tint_materials_router(
                     merged_materials.append(custom_mat)
 
             merged["materials"] = merged_materials
-        else:
-            merged["materials"] = default_policy.get("materials", [])
+        # Si la base de datos tenía menos materiales que el catálogo por defecto, actualizarla
+        if not doc or len(db_materials or []) < len(default_policy.get("materials", [])):
+            try:
+                await db.settings.update_one(
+                    {"type": "tint_window_materials"},
+                    {"$set": {"type": "tint_window_materials", "policy": merged}},
+                    upsert=True
+                )
+            except Exception as e:
+                logger.warning(f"No se pudo sincronizar catalogo de polarizados en db: {e}")
 
         return merged
 
