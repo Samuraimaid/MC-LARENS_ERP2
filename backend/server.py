@@ -107,7 +107,6 @@ api_router = APIRouter(prefix="/api")
 async def api_root():
     return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
 
-@app.get("/")
 @app.get("/health")
 @app.get("/ping")
 async def app_health_root():
@@ -24964,7 +24963,10 @@ from backend.middlewares.emergency_standby import EmergencyStandbyMiddleware
 app.add_middleware(EmergencyStandbyMiddleware)
 
 
-frontend_build_dir = ROOT_DIR.parent / "frontend" / "build"
+frontend_build_dir = Path("/app/frontend/build")
+if not frontend_build_dir.exists():
+    frontend_build_dir = Path(__file__).resolve().parent.parent / "frontend" / "build"
+
 if frontend_build_dir.exists():
     static_dir = frontend_build_dir / "static"
     if static_dir.exists():
@@ -24974,12 +24976,20 @@ if frontend_build_dir.exists():
     if assets_dir.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
+    brands_dir = frontend_build_dir / "brands"
+    if brands_dir.exists():
+        app.mount("/brands", StaticFiles(directory=str(brands_dir)), name="brands")
+
+    vehicles_dir = frontend_build_dir / "vehicles"
+    if vehicles_dir.exists():
+        app.mount("/vehicles", StaticFiles(directory=str(vehicles_dir)), name="vehicles")
+
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="Not Found")
+        if full_path.startswith("api/") or full_path == "api":
+            raise HTTPException(status_code=404, detail="API route not found")
 
-        if not full_path:
+        if not full_path or full_path == "":
             return FileResponse(frontend_build_dir / "index.html")
 
         candidate = frontend_build_dir / full_path
@@ -24987,6 +24997,10 @@ if frontend_build_dir.exists():
             return FileResponse(candidate)
 
         return FileResponse(frontend_build_dir / "index.html")
+else:
+    @app.get("/")
+    async def fallback_api_root():
+        return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
 
 
 
