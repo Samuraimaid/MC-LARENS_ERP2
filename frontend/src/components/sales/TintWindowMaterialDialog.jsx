@@ -405,7 +405,7 @@ export default function TintWindowMaterialDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
-                  className="h-6 px-1.5 text-[10px] md:hidden bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700"
+                  className="h-6 px-1.5 text-[10px] md:hidden bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 font-semibold"
                   title="Alternar entre silueta horizontal y vertical"
                 >
                   <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
@@ -496,6 +496,11 @@ export default function TintWindowMaterialDialog({
                   // Text rotation for horizontal mobile mode
                   const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
 
+                  // Resaltado de las 4 ventanas laterales vinculadas con aro amarillo neón
+                  const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
+                  const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
+                  const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
+
                   return (
                     <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
                       <defs>
@@ -525,7 +530,7 @@ export default function TintWindowMaterialDialog({
                         onClick={() => setActiveZone("windshield")}
                       />
 
-                      {/* Banda Superior Parabrisas (Visera Techo - Táctil) */}
+                      {/* Banda Superior Parabrisas (Táctil) */}
                       {geom.windshield.topStrip && (
                         <path
                           d={geom.windshield.topStrip}
@@ -543,7 +548,7 @@ export default function TintWindowMaterialDialog({
                         />
                       )}
 
-                      {/* Banda Inferior Parabrisas (Base Capó - Táctil) */}
+                      {/* Banda Inferior Parabrisas (Táctil) */}
                       {geom.windshield.bottomStrip && (
                         <path
                           d={geom.windshield.bottomStrip}
@@ -592,31 +597,43 @@ export default function TintWindowMaterialDialog({
                         {secondLayers.windshield?.enabled ? " + 2da" : ""}
                       </text>
 
-                      {/* 2. VENTANAS DELANTERAS */}
+                      {/* 2. VENTANAS DELANTERAS (Resaltadas con aro amarillo si vinculadas) */}
                       {geom.front_sides.map((p, idx) => (
                         <path
                           key={`fs-${idx}`}
                           d={p.d}
                           fill={shadeFrontSides.fill}
                           fillOpacity={shadeFrontSides.opacity}
-                          stroke={activeZone === "front_sides" ? "#eab308" : shadeFrontSides.border}
-                          strokeWidth={activeZone === "front_sides" ? "3.5" : "1.5"}
-                          filter={activeZone === "front_sides" ? "url(#neonGlowYellow)" : undefined}
+                          stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
+                          strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
+                          filter={isFrontSidesActive ? "url(#neonGlowYellow)" : undefined}
                           className="cursor-pointer transition-all hover:opacity-90"
                           onClick={() => setActiveZone("front_sides")}
                         />
                       ))}
 
-                      {/* 3. VENTANAS TRASERAS */}
+                      {/* 3. VENTANAS TRASERAS (Resaltadas con aro amarillo si vinculadas, o naranja si independiente) */}
                       {geom.rear_sides.map((p, idx) => (
                         <path
                           key={`rs-${idx}`}
                           d={p.d}
                           fill={shadeRearSides.fill}
                           fillOpacity={shadeRearSides.opacity}
-                          stroke={activeZone === "rear_sides" ? "#f97316" : shadeRearSides.border}
-                          strokeWidth={activeZone === "rear_sides" ? "3.5" : "1.5"}
-                          filter={activeZone === "rear_sides" ? "url(#neonGlowOrange)" : undefined}
+                          stroke={
+                            isSidesLinkedActive
+                              ? "#eab308"
+                              : activeZone === "rear_sides"
+                              ? "#f97316"
+                              : shadeRearSides.border
+                          }
+                          strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
+                          filter={
+                            isSidesLinkedActive
+                              ? "url(#neonGlowYellow)"
+                              : activeZone === "rear_sides"
+                              ? "url(#neonGlowOrange)"
+                              : undefined
+                          }
                           className="cursor-pointer transition-all hover:opacity-90"
                           onClick={() => setActiveZone("rear_sides")}
                         />
@@ -752,7 +769,7 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
-              {/* Controles Rápidos: Vincular Laterales y Doble Capa */}
+              {/* Controles Rápidos: Vincular Laterales, Doble Capa, Banda Superior y Banda Inferior */}
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {(activeZone === "front_sides" || activeZone === "rear_sides") && (
                   <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-lg px-2 py-1">
@@ -796,19 +813,33 @@ export default function TintWindowMaterialDialog({
                   />
                 </div>
 
-                {/* Franjas / Viseras rápidas si es Parabrisas */}
+                {/* Bandas Superior e Inferior para Parabrisas Delantero y Trasero */}
                 {(activeZone === "windshield" || activeZone === "rear") && (
-                  <div className="flex items-center gap-1.5 bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 rounded-lg px-2 py-1">
-                    <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
-                      Visera Techo
-                    </span>
-                    <Switch
-                      checked={Boolean(sunstrips[`${activeZone}_top`]?.enabled)}
-                      onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_top`, checked)}
-                      className="scale-75"
-                    />
-                  </div>
+                  <>
+                    <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
+                      <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
+                        Banda Superior
+                      </span>
+                      <Switch
+                        checked={Boolean(sunstrips[`${activeZone}_top`]?.enabled)}
+                        onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_top`, checked)}
+                        className="scale-75"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
+                      <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
+                        Banda Inferior
+                      </span>
+                      <Switch
+                        checked={Boolean(sunstrips[`${activeZone}_bottom`]?.enabled)}
+                        onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_bottom`, checked)}
+                        className="scale-75"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -881,17 +912,31 @@ export default function TintWindowMaterialDialog({
               <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-72 overflow-y-auto pr-1">
                 {filteredMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
+                  const is3M = mat.brand === "3M" || String(mat.id).includes("3m") || String(mat.family).includes("3M");
+
                   return (
                     <div
                       key={mat.material_id}
                       onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-1.5 ${
+                      className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-1.5 overflow-hidden ${
                         isSelected
-                          ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
+                          ? "border-blue-600 bg-blue-50/75 dark:bg-blue-950/60 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      <div className="flex items-start gap-2.5 min-w-0">
+                      {/* Marca de agua a color del logotipo de la marca (Solar Gard / 3M) */}
+                      <div className="absolute right-2 bottom-1 w-24 sm:w-28 h-10 sm:h-12 overflow-hidden pointer-events-none opacity-20 dark:opacity-15 flex items-center justify-end select-none">
+                        <img
+                          src={is3M ? "/brands/3m_logo.jpg" : "/brands/solargard_logo.png"}
+                          alt={mat.brand || "Solar Gard"}
+                          className="h-full max-w-full object-contain"
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex items-start gap-2.5 min-w-0 z-10">
                         <div
                           className={`h-4 w-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
                             isSelected
@@ -907,7 +952,7 @@ export default function TintWindowMaterialDialog({
                               {mat.name}
                             </span>
                             {mat.tech_type && (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
                                 {mat.tech_type}
                               </Badge>
                             )}
@@ -916,18 +961,18 @@ export default function TintWindowMaterialDialog({
                           {/* Métricas y Especificaciones Técnicas del Catálogo */}
                           <div className="flex flex-wrap items-center gap-1 text-[9px] pt-0.5">
                             {mat.ir_rejection_pct ? (
-                              <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-red-500/10 text-red-600 dark:text-red-400 font-mono font-bold">
-                                <Flame className="h-2.5 w-2.5" /> {mat.ir_rejection_pct}% IR
+                              <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-red-500/15 text-red-700 dark:text-red-300 font-mono font-bold">
+                                <Flame className="h-2.5 w-2.5 text-red-500" /> {mat.ir_rejection_pct}% IR
                               </span>
                             ) : null}
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-semibold">
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono font-semibold">
                               ☀️ {mat.uv_rejection_pct || 99}% UV
                             </span>
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-semibold">
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 font-mono font-semibold">
                               {mat.vlt}% VLT
                             </span>
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
-                              <ShieldCheck className="h-2.5 w-2.5" /> 5a Gar.
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-mono">
+                              <ShieldCheck className="h-2.5 w-2.5 text-emerald-500" /> 5a Gar.
                             </span>
                           </div>
 
@@ -939,7 +984,7 @@ export default function TintWindowMaterialDialog({
                         </div>
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10">
                         <span
                           className={`text-xs ${
                             mat.price_extra_usd > 0

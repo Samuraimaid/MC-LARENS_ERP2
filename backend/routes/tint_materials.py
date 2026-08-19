@@ -43,11 +43,45 @@ def get_tint_materials_router(
 
     async def _load_tint_policy() -> Dict[str, Any]:
         doc = await db.settings.find_one({"type": "tint_window_materials"}, {"_id": 0})
+        default_policy = dict(DEFAULT_TINT_WINDOW_MATERIALS_POLICY)
         if not doc or not isinstance(doc, dict):
-            return dict(DEFAULT_TINT_WINDOW_MATERIALS_POLICY)
-        # Asegurar defaults si faltan campos
-        merged = dict(DEFAULT_TINT_WINDOW_MATERIALS_POLICY)
-        merged.update(doc.get("policy") or doc)
+            return default_policy
+
+        saved_data = doc.get("policy") or doc
+        merged = dict(default_policy)
+        merged.update({k: v for k, v in saved_data.items() if k != "materials"})
+
+        # Fusión inteligente de materiales para asegurar catálogo completo
+        db_materials = saved_data.get("materials")
+        if isinstance(db_materials, list) and len(db_materials) > 0:
+            db_map = {m.get("id"): m for m in db_materials if isinstance(m, dict) and m.get("id")}
+            merged_materials = []
+            for def_mat in default_policy.get("materials", []):
+                mat_id = def_mat.get("id")
+                if mat_id in db_map:
+                    # Conservar precio/stock personalizado de la BD pero asegurar todos los metadatos nuevos
+                    m = dict(def_mat)
+                    saved_m = db_map[mat_id]
+                    if "price_by_zone_group" in saved_m:
+                        m["price_by_zone_group"] = saved_m["price_by_zone_group"]
+                    if "is_active" in saved_m:
+                        m["is_active"] = saved_m["is_active"]
+                    if "rolls" in saved_m:
+                        m["rolls"] = saved_m["rolls"]
+                    merged_materials.append(m)
+                else:
+                    merged_materials.append(dict(def_mat))
+
+            # Agregar materiales personalizados adicionales que no estén en los defaults
+            default_ids = {dm["id"] for dm in default_policy.get("materials", [])}
+            for mat_id, custom_mat in db_map.items():
+                if mat_id not in default_ids:
+                    merged_materials.append(custom_mat)
+
+            merged["materials"] = merged_materials
+        else:
+            merged["materials"] = default_policy.get("materials", [])
+
         return merged
 
     @router.get("/window-config")

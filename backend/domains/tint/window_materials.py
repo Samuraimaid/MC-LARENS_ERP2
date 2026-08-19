@@ -90,7 +90,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-35-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
-                "windshield_over_40": {"sku": "ROLL-SG-SMK-35-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
+                "windshield_over_40": {"sku": "ROLL-SG-SMK-20-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_under_20": {"sku": "ROLL-SG-SMK-35-S20", "virtual_qty": 80, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SMK-35-S40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
             },
@@ -131,7 +131,8 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-STD-70-W40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-STD-70-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
-                "side_under_20": {"sku": "ROLL-STD-70-S20", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-STD-70-S20", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
+                "side_over_20": {"sku": "ROLL-STD-70-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
 
@@ -152,6 +153,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-04-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-04-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SUP-04-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SUP-04-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -171,6 +173,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SUP-10-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SUP-10-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -190,6 +193,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CER-20-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CER-20-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-CER-20-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-CER-20-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -209,6 +213,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-16-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-16-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SUP-16-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SUP-16-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -228,6 +233,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-22-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-22-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SUP-22-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SUP-22-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -247,6 +253,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CER-35-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CER-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-CER-35-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-CER-35-S40", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -266,6 +273,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CER-70-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CER-70-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-CER-70-S20", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-CER-70-S40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -349,6 +357,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-14-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-14-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTO-14-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTO-14-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -368,6 +377,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-19-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-19-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTO-19-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTO-19-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -387,6 +397,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-28-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-28-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTO-28-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTO-28-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -408,6 +419,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-05-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTR-05-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTR-05-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -427,6 +439,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTR-10-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTR-10-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -446,6 +459,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-25-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-25-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-QTR-25-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-QTR-25-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -467,6 +481,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-CAM-20-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-CAM-20-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-CAM-20-S20", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-CAM-20-S40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -488,6 +503,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-TIT-26-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-TIT-26-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-TIT-26-S20", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-TIT-26-S40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -531,6 +547,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-05-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-END-05-S20", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-END-05-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -550,6 +567,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-END-35-S20", "virtual_qty": 35, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-END-35-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -571,6 +589,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SLS-05-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SLS-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SLS-05-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SLS-05-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -590,6 +609,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SLS-35-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SLS-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-SG-SLS-35-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-SG-SLS-35-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
@@ -611,6 +631,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-3M-LSX-20-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-3M-LSX-20-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
+                "side_under_20": {"sku": "ROLL-3M-LSX-20-S20", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "side_over_20": {"sku": "ROLL-3M-LSX-20-S40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
             },
         },
