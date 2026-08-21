@@ -24,6 +24,10 @@ import {
   Search,
   ShieldCheck,
   Flame,
+  Crown,
+  Shield,
+  BadgePercent,
+  CheckCircle2,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -42,6 +46,58 @@ const ZONES = [
   { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras.", dotColor: "bg-purple-400", activeBg: "bg-purple-500", ringColor: "ring-purple-400" },
 ];
 
+// Las 4 Gamas Oficiales de Polarizados (De izquierda más económica a derecha más premium)
+const OFFICIAL_GAMAS = [
+  {
+    id: "gama_economica",
+    name: "1. Gama Económica",
+    shortName: "Económica",
+    order: 1,
+    badgeColor: "bg-emerald-600 text-white",
+    borderColor: "border-emerald-500",
+    dotColor: "bg-emerald-400",
+    icon: BadgePercent,
+    description: "Q1 (5%, 20%), Raybar 60\"",
+    tierPill: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
+  },
+  {
+    id: "tinmax",
+    name: "2. Tinmax",
+    shortName: "Tinmax",
+    order: 2,
+    badgeColor: "bg-blue-600 text-white",
+    borderColor: "border-blue-500",
+    dotColor: "bg-blue-400",
+    icon: Shield,
+    description: "Smoke, Charcoal, Raybar 40\", 3M, Quantum Regular",
+    tierPill: "text-blue-700 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800",
+  },
+  {
+    id: "nano_ceramico",
+    name: "3. Nano Cerámico",
+    shortName: "Nano Cerámico",
+    order: 3,
+    badgeColor: "bg-purple-600 text-white",
+    borderColor: "border-purple-500",
+    dotColor: "bg-purple-400",
+    icon: Flame,
+    description: "Supreme (4% - 42%), Solstice, Camaleón, Titanium",
+    tierPill: "text-purple-700 bg-purple-50 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300 dark:border-purple-800",
+  },
+  {
+    id: "gama_premium",
+    name: "4. Gama Premium",
+    shortName: "Gama Premium",
+    order: 4,
+    badgeColor: "bg-amber-500 text-black font-black",
+    borderColor: "border-amber-500",
+    dotColor: "bg-amber-400",
+    icon: Crown,
+    description: "Quantum Original (14%, 19%, 28%), Endeavor",
+    tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
+  },
+];
+
 export default function TintWindowMaterialDialog({
   isOpen,
   onClose,
@@ -56,6 +112,7 @@ export default function TintWindowMaterialDialog({
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
   const [orientation, setOrientation] = useState("horizontal"); // "horizontal" | "vertical"
+  const [selectedGama, setSelectedGama] = useState("all"); // "all" | "gama_economica" | "tinmax" | "nano_ceramico" | "gama_premium"
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -331,27 +388,21 @@ export default function TintWindowMaterialDialog({
   const activeMaterials = activeZoneConfig?.materials || [];
   const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
 
-  // Filtrado de materiales por familia y búsqueda
-  const families = useMemo(() => {
-    const list = new Set();
-    activeMaterials.forEach((m) => {
-      if (m.family) list.add(m.family);
-    });
-    return ["all", ...Array.from(list)];
-  }, [activeMaterials]);
-
+  // Filtrado de materiales por Gama Oficial, Familia y Búsqueda
   const filteredMaterials = useMemo(() => {
     return activeMaterials.filter((m) => {
+      const matchGama = selectedGama === "all" || m.gama === selectedGama;
       const matchFamily = familyFilter === "all" || m.family === familyFilter;
       const matchSearch =
         !searchTerm.trim() ||
         m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.family?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.gama_label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.tech_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchFamily && matchSearch;
+      return matchGama && matchFamily && matchSearch;
     });
-  }, [activeMaterials, familyFilter, searchTerm]);
+  }, [activeMaterials, selectedGama, familyFilter, searchTerm]);
 
   const isVehicleHorizontal = orientation === "horizontal";
 
@@ -369,11 +420,11 @@ export default function TintWindowMaterialDialog({
                 <DialogTitle className="text-xs sm:text-base md:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate">
                   <span>{vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Seleccionador de Materiales"}</span>
                   <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] uppercase font-mono px-1 py-0 shrink-0">
-                    {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Personalizado"}
+                    {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Pick-Up"}
                   </Badge>
                 </DialogTitle>
                 <p className="hidden sm:block text-[11px] text-blue-200/90 truncate">
-                  Bandas requeridas: {config?.vehicle_size_bands?.windshield || "≤40\""} / {config?.vehicle_size_bands?.front_sides || "≤20\""}
+                  Bandas requeridas: {config?.vehicle_size_bands?.windshield || "Parabrisas >40\""} / {config?.vehicle_size_bands?.front_sides || "Laterales >20\""}
                 </p>
               </div>
             </div>
@@ -512,7 +563,7 @@ export default function TintWindowMaterialDialog({
                   const getShade = (zoneKey) => {
                     const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
                     if (mat.includes("70") || mat.includes("42")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
-                    if (mat.includes("35") || mat.includes("28") || mat.includes("26") || mat.includes("25")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
+                    if (mat.includes("35") || mat.includes("28") || mat.includes("26") || mat.includes("25") || mat.includes("30")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
                     if (mat.includes("05") || mat.includes("04") || mat.includes("06") || mat.includes("07")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
                     return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
                   };
@@ -522,10 +573,8 @@ export default function TintWindowMaterialDialog({
                   const shadeRearSides = getShade("rear_sides");
                   const shadeRear = getShade("rear");
 
-                  // Text rotation for horizontal mode
                   const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
 
-                  // Resaltado de las 4 ventanas laterales vinculadas con aro amarillo neón
                   const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                   const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                   const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
@@ -626,7 +675,7 @@ export default function TintWindowMaterialDialog({
                         {secondLayers.windshield?.enabled ? " + 2da" : ""}
                       </text>
 
-                      {/* 2. VENTANAS DELANTERAS (Resaltadas con aro amarillo si vinculadas) */}
+                      {/* 2. VENTANAS DELANTERAS */}
                       {geom.front_sides.map((p, idx) => (
                         <path
                           key={`fs-${idx}`}
@@ -641,7 +690,7 @@ export default function TintWindowMaterialDialog({
                         />
                       ))}
 
-                      {/* 3. VENTANAS TRASERAS (Resaltadas con aro amarillo si vinculadas, o naranja si independiente) */}
+                      {/* 3. VENTANAS TRASERAS */}
                       {geom.rear_sides.map((p, idx) => (
                         <path
                           key={`rs-${idx}`}
@@ -753,7 +802,7 @@ export default function TintWindowMaterialDialog({
             </div>
           </div>
 
-          {/* Lado Derecho (7 cols en PC / Abajo en Móvil): Lista de Materiales de la Zona Activa */}
+          {/* Lado Derecho (7 cols en PC / Abajo en Móvil): Selector de Gamas y Materiales */}
           <div className="md:col-span-7 p-2.5 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
             <div>
               {/* Barra de Control de la Zona Activa */}
@@ -892,14 +941,68 @@ export default function TintWindowMaterialDialog({
                 </div>
               )}
 
-              {/* Filtro de Familias y Búsqueda de Catálogo Oficial */}
+              {/* ============================================================================== */}
+              {/* LAS 4 GAMAS OFICIALES (De izquierda a derecha según hoja oficial de catálogo) */}
+              {/* ============================================================================== */}
+              <div className="mb-2.5 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                    Gamas de Polarizados:
+                  </span>
+                  {selectedGama !== "all" && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGama("all")}
+                      className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                    >
+                      Ver todas las gamas
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {OFFICIAL_GAMAS.map((gama) => {
+                    const isSelected = selectedGama === gama.id;
+                    const IconComp = gama.icon;
+                    return (
+                      <button
+                        key={gama.id}
+                        type="button"
+                        onClick={() => setSelectedGama(isSelected ? "all" : gama.id)}
+                        className={`flex flex-col items-start p-2 rounded-xl border text-left transition-all relative overflow-hidden ${
+                          isSelected
+                            ? `${gama.borderColor} bg-blue-50/90 dark:bg-zinc-800/90 ring-2 ring-blue-500 shadow-md font-bold`
+                            : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full gap-1">
+                          <span className="text-[10.5px] sm:text-[11.5px] font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 truncate">
+                            <span className={`h-2.5 w-2.5 rounded-full ${gama.dotColor} shrink-0`} />
+                            {gama.name}
+                          </span>
+                          {isSelected && (
+                            <Badge className="bg-blue-600 text-white text-[8px] px-1 py-0 font-mono shrink-0">
+                              Activo
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-muted-foreground truncate w-full mt-0.5">
+                          {gama.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Búsqueda Rápida */}
               <div className="space-y-1.5 mb-2">
                 <div className="flex items-center gap-1.5">
                   <div className="relative flex-1">
                     <Search className="h-3 w-3 absolute left-2 top-2 text-zinc-400" />
                     <Input
                       type="text"
-                      placeholder="Buscar por tono, marca o tecnología..."
+                      placeholder="Buscar tono, medida o tecnología (ej. 5%, 20%, 40\", Supreme)..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="h-7 text-[10px] pl-6 pr-2 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
@@ -917,55 +1020,37 @@ export default function TintWindowMaterialDialog({
                     </Button>
                   )}
                 </div>
-
-                {/* Filtro de píldoras de familias de Solar Gard & 3M */}
-                <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
-                  {families.map((fam) => (
-                    <button
-                      key={fam}
-                      type="button"
-                      onClick={() => setFamilyFilter(fam)}
-                      className={`px-2 py-0.5 rounded-full font-medium whitespace-nowrap transition-all ${
-                        familyFilter === fam
-                          ? "bg-blue-600 text-white font-bold shadow-xs"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                      }`}
-                    >
-                      {fam === "all" ? "Todas las Líneas" : fam}
-                    </button>
-                  ))}
-                </div>
               </div>
 
-              {/* Lista de Films / Materiales Disponibles del Catálogo Oficial */}
+              {/* Lista de Films / Materiales de la Gama y Carrocería Seleccionada */}
               <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-80 overflow-y-auto pr-1">
+                {filteredMaterials.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
+                    No hay materiales que coincidan con los filtros seleccionados.
+                  </div>
+                ) : null}
+
                 {filteredMaterials.map((mat) => {
                   const isSelected = selectedMaterials[activeZone] === mat.material_id;
                   const is3M = mat.brand === "3M" || String(mat.id).includes("3m") || String(mat.family).includes("3M");
+                  const isSolarGard = mat.brand === "Solar Gard" || (!is3M && mat.brand !== "Q1" && mat.brand !== "Raybar");
+                  const isRaybar = mat.brand === "Raybar" || String(mat.id).includes("raybar");
+                  const isQ1 = mat.brand === "Q1" || String(mat.id).includes("q1");
+
+                  const matchedGama = OFFICIAL_GAMAS.find((g) => g.id === mat.gama);
 
                   return (
                     <div
                       key={mat.material_id}
                       onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
-                      className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-1.5 overflow-hidden ${
+                      className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-2 overflow-hidden ${
                         isSelected
                           ? "border-blue-600 bg-blue-50/75 dark:bg-blue-950/60 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      {/* Marca de agua a color del logotipo de la marca (Solar Gard / 3M) */}
-                      <div className="absolute right-2 bottom-1 w-24 sm:w-28 h-10 sm:h-12 overflow-hidden pointer-events-none opacity-20 dark:opacity-15 flex items-center justify-end select-none">
-                        <img
-                          src={is3M ? "/brands/3m_logo.jpg" : "/brands/solargard_logo.png"}
-                          alt={mat.brand || "Solar Gard"}
-                          className="h-full max-w-full object-contain"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex items-start gap-2.5 min-w-0 z-10">
+                      {/* Contenido Principal Izquierdo */}
+                      <div className="flex items-start gap-2.5 min-w-0 z-10 flex-1">
                         <div
                           className={`h-4 w-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
                             isSelected
@@ -975,20 +1060,30 @@ export default function TintWindowMaterialDialog({
                         >
                           {isSelected && <Check className="h-2.5 w-2.5" />}
                         </div>
-                        <div className="min-w-0 space-y-0.5">
+
+                        <div className="min-w-0 space-y-1 flex-1">
+                          {/* Cabecera de la Tarjeta con Nombre, Gama y Emblema de Marca Nítido */}
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-[11px] sm:text-xs text-zinc-900 dark:text-white font-bold truncate">
                               {mat.name}
                             </span>
+
+                            {/* Badge de la Gama Oficial correspondiente */}
+                            {matchedGama && (
+                              <Badge variant="outline" className={`text-[8.5px] px-1.5 py-0 font-mono shrink-0 ${matchedGama.tierPill}`}>
+                                {matchedGama.shortName}
+                              </Badge>
+                            )}
+
                             {mat.tech_type && (
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
+                              <Badge variant="outline" className="text-[8.5px] px-1.5 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
                                 {mat.tech_type}
                               </Badge>
                             )}
                           </div>
 
                           {/* Métricas y Especificaciones Técnicas del Catálogo */}
-                          <div className="flex flex-wrap items-center gap-1 text-[9px] pt-0.5">
+                          <div className="flex flex-wrap items-center gap-1 text-[9px]">
                             {mat.ir_rejection_pct ? (
                               <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-red-500/15 text-red-700 dark:text-red-300 font-mono font-bold">
                                 <Flame className="h-2.5 w-2.5 text-red-500" /> {mat.ir_rejection_pct}% IR
@@ -1013,7 +1108,29 @@ export default function TintWindowMaterialDialog({
                         </div>
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10">
+                      {/* Contenedor Derecho Aislado (Precios, Stock y Emblema de Marca Limpio) */}
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10 space-y-0.5 min-w-[80px]">
+                        {/* Emblema Nítido de Marca (Ubicado en zona limpia sin solapamiento) */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {is3M ? (
+                            <span className="text-[9px] font-black font-mono text-red-600 bg-red-50 dark:bg-red-950/60 px-1 py-0.5 rounded border border-red-200 dark:border-red-900">
+                              3M™
+                            </span>
+                          ) : isSolarGard ? (
+                            <span className="text-[9px] font-bold font-mono text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 px-1 py-0.5 rounded border border-sky-200 dark:border-sky-900">
+                              SOLAR GARD®
+                            </span>
+                          ) : isRaybar ? (
+                            <span className="text-[9px] font-bold font-mono text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1 py-0.5 rounded border border-amber-200 dark:border-amber-900">
+                              RAYBAR
+                            </span>
+                          ) : isQ1 ? (
+                            <span className="text-[9px] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
+                              Q1
+                            </span>
+                          ) : null}
+                        </div>
+
                         <span
                           className={`text-xs ${
                             mat.price_extra_usd > 0
@@ -1055,7 +1172,7 @@ export default function TintWindowMaterialDialog({
                   </div>
                 ))}
                 {(!quoteData?.price_breakdown || quoteData.price_breakdown.length === 0) && (
-                  <div className="text-zinc-500 italic">Sin recargos adicionales (Films Estándar).</div>
+                  <div className="text-zinc-500 italic">Sin recargos adicionales (Films Estándar / Económicos).</div>
                 )}
               </div>
             </div>

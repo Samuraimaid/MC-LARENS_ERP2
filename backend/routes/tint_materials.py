@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from backend.domains.tint.window_materials import (
     DEFAULT_TINT_WINDOW_MATERIALS_POLICY,
+    TINT_GAMAS,
     GLASS_ZONES,
     ZONE_LABELS,
     ZONE_TO_GROUP,
@@ -135,6 +136,7 @@ def get_tint_materials_router(
             "vehicle_size_bands": bands,
             "zones": zones_config,
             "zone_labels": ZONE_LABELS,
+            "gamas": TINT_GAMAS,
             "sunstrip_pricing": policy.get("sunstrip_pricing", DEFAULT_TINT_WINDOW_MATERIALS_POLICY["sunstrip_pricing"]),
             "policy": {
                 "require_plan_on_installed_sale": policy.get("require_plan_on_installed_sale", False),
