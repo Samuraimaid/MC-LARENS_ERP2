@@ -155,6 +155,81 @@ import PriceTierSelector from "@/components/sales/PriceTierSelector";
 import PriceTierCompare from "@/components/sales/PriceTierCompare";
 import DocumentAuditPanel from "@/components/sales/DocumentAuditPanel";
 import TintWindowMaterialDialog from "@/components/sales/TintWindowMaterialDialog";
+import { resolveVehicleCategory } from "@/lib/vehicleSilhouette";
+
+export function getProductVehicleCompatibility(product, vehicle) {
+  if (!vehicle) return { isCompatible: true, isSpecificTint: false };
+
+  const sku = String(product?.sku || "").toUpperCase();
+  const name = String(product?.name || "").toLowerCase();
+  const category = resolveVehicleCategory(vehicle);
+
+  const isTintProduct =
+    sku.startsWith("POL-") ||
+    name.includes("polarizado") ||
+    String(product?.category || "").toLowerCase().includes("polarizado");
+
+  if (!isTintProduct) {
+    return { isCompatible: true, isSpecificTint: false };
+  }
+
+  const isSedanGroup = ["sedan", "hatchback", "convertible"].includes(category);
+  const isSuvPickupGroup = [
+    "suv",
+    "camioneta_doble_cabina",
+    "camioneta_cabina_media",
+    "camioneta_1_cabina",
+    "pickup",
+    "station_wagon",
+  ].includes(category);
+  const isHeavyGroup = [
+    "camion_1_cabina",
+    "camion_2_cabinas",
+    "camion_carga_furgon",
+    "microbus_pasajeros",
+    "microbus_techo_alto",
+    "microbus_carga",
+    "bus_mediano_coaster",
+    "bus_grande_marcopolo",
+  ].includes(category);
+
+  const isSedanTint =
+    sku.includes("-SED-") ||
+    name.includes("sedán") ||
+    name.includes("sedan") ||
+    name.includes("automóvil") ||
+    name.includes("automovil");
+
+  const isSuvTint =
+    sku.includes("-SUV-") ||
+    (sku.includes("-CAM-") && (name.includes("suv") || name.includes("camioneta"))) ||
+    name.includes("suv") ||
+    name.includes("camioneta") ||
+    name.includes("pickup") ||
+    name.includes("4x4");
+
+  const isHeavyTint =
+    (sku.includes("-CAM-") && !name.includes("camioneta") && !name.includes("suv")) ||
+    name.includes("camión") ||
+    name.includes("camion") ||
+    name.includes("microbús") ||
+    name.includes("microbus") ||
+    name.includes("coaster") ||
+    name.includes("bus");
+
+  if (isSedanGroup) {
+    if (isSedanTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Sedán / Auto)" };
+    if (isSuvTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, badge: "Para SUV / Camioneta" };
+  } else if (isSuvPickupGroup) {
+    if (isSuvTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Camioneta / SUV)" };
+    if (isSedanTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, badge: "Para Sedán / Auto" };
+  } else if (isHeavyGroup) {
+    if (isHeavyTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Camión / Bus)" };
+    if (isSedanTint || isSuvTint) return { isCompatible: false, isSpecificTint: true, badge: "Para Vehículo Liviano" };
+  }
+
+  return { isCompatible: true, isSpecificTint: true, badge: "Compatible" };
+}
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -2796,8 +2871,21 @@ export default function SaleForm({
   const filteredProducts = useMemo(() => {
     const list = Array.isArray(products) ? products : [];
     if (!productSearch) return list;
-    return list.filter((product) => productMatchesSearch(product, productSearch));
-  }, [products, productSearch]);
+    const matched = list.filter((product) => productMatchesSearch(product, productSearch));
+
+    // Si hay un vehículo seleccionado en modo Instalado, priorizamos y ordenamos los productos compatibles
+    if (selectedVehicleData && logisticMode === "installed") {
+      return [...matched].sort((a, b) => {
+        const compA = getProductVehicleCompatibility(a, selectedVehicleData);
+        const compB = getProductVehicleCompatibility(b, selectedVehicleData);
+        if (compA.isCompatible && !compB.isCompatible) return -1;
+        if (!compA.isCompatible && compB.isCompatible) return 1;
+        return 0;
+      });
+    }
+
+    return matched;
+  }, [products, productSearch, selectedVehicleData, logisticMode]);
 
   const warehouseById = useMemo(
     () => new Map((warehouses || []).map((warehouse) => [String(warehouse.warehouse_id), warehouse])),
@@ -3947,7 +4035,22 @@ export default function SaleForm({
                   {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
                   <div className="min-w-0 self-start">
                     <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{p.name}</p>
-                    <p className={cn("mt-0.5 text-[11px]", tone.sku)}>{p.sku}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <p className={cn("text-[11px]", tone.sku)}>{p.sku}</p>
+                      {selectedVehicleData && logisticMode === "installed" && (() => {
+                        const comp = getProductVehicleCompatibility(p, selectedVehicleData);
+                        if (!comp.isSpecificTint) return null;
+                        return comp.isCompatible ? (
+                          <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                            ✓ {comp.badge || "Compatible"}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 opacity-75">
+                            {comp.badge || "Otra categoría"}
+                          </span>
+                        );
+                      })()}
+                    </div>
                     {p.installation_type === "not_available" && (
                       <Badge variant="secondary" className="mt-2 text-[10px]">Solo para llevar</Badge>
                     )}
