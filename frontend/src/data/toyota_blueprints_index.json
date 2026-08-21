@@ -1,0 +1,5077 @@
+[
+  {
+    "file": "TOYOTA (1).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (1).png",
+    "raw_text": "Hbce GL (20\")",
+    "width": 400,
+    "height": 407
+  },
+  {
+    "file": "TOYOTA (10).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (10).png",
+    "raw_text": "Twots H20 vm (1977)",
+    "width": 400,
+    "height": 359
+  },
+  {
+    "file": "TOYOTA (100).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (100).png",
+    "raw_text": "TRD PRO (2020)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA (101).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (101).png",
+    "raw_text": "(2008)",
+    "width": 400,
+    "height": 266
+  },
+  {
+    "file": "TOYOTA (102).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (102).png",
+    "raw_text": "Toyota Land Cnseg BUO \"O (1979)",
+    "width": 400,
+    "height": 266
+  },
+  {
+    "file": "TOYOTA (103).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (103).png",
+    "raw_text": "Meérn (2017)",
+    "width": 400,
+    "height": 265
+  },
+  {
+    "file": "TOYOTA (104).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (104).png",
+    "raw_text": "(2017)",
+    "width": 400,
+    "height": 265
+  },
+  {
+    "file": "TOYOTA (105).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (105).png",
+    "raw_text": "Twoc. Nort (2009)",
+    "width": 400,
+    "height": 265
+  },
+  {
+    "file": "TOYOTA (106).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (106).png",
+    "raw_text": "(2007)",
+    "width": 400,
+    "height": 265
+  },
+  {
+    "file": "TOYOTA (107).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (107).png",
+    "raw_text": "(20 t 7)",
+    "width": 400,
+    "height": 265
+  },
+  {
+    "file": "TOYOTA (108).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (108).png",
+    "raw_text": "C«uis« SO (1975)",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (109).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (109).png",
+    "raw_text": "Calber FJ4SW (1964)",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (11).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (11).png",
+    "raw_text": "(2019)",
+    "width": 400,
+    "height": 357
+  },
+  {
+    "file": "TOYOTA (110).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (110).png",
+    "raw_text": "crt&e« (2004)",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (111).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (111).png",
+    "raw_text": "Cé (2012)",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (112).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (112).png",
+    "raw_text": "Ceb SSR.X (1992)",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (113).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (113).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 264
+  },
+  {
+    "file": "TOYOTA (114).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (114).png",
+    "raw_text": "(2003)",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (115).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (115).png",
+    "raw_text": "DX (1983)",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (116).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (116).png",
+    "raw_text": "CO (2001)",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (117).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (117).png",
+    "raw_text": "KD-1100G",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (118).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (118).png",
+    "raw_text": "(2013)",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (119).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (119).png",
+    "raw_text": "GR OKR Hilux 217",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (12).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (12).png",
+    "raw_text": "LIHt @19)",
+    "width": 400,
+    "height": 357
+  },
+  {
+    "file": "TOYOTA (120).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (120).png",
+    "raw_text": "GR DKR 201",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (121).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (121).png",
+    "raw_text": "TWO Cotoae Verso (2006)",
+    "width": 400,
+    "height": 263
+  },
+  {
+    "file": "TOYOTA (122).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (122).png",
+    "raw_text": "vn•y GR spat (2021)",
+    "width": 400,
+    "height": 262
+  },
+  {
+    "file": "TOYOTA (123).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (123).png",
+    "raw_text": "RAV4 (2009)",
+    "width": 400,
+    "height": 262
+  },
+  {
+    "file": "TOYOTA (124).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (124).png",
+    "raw_text": "Towe Lmd Cmiset J79 (2012)",
+    "width": 400,
+    "height": 262
+  },
+  {
+    "file": "TOYOTA (125).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (125).png",
+    "raw_text": "TWO Land Ccubet (QO)",
+    "width": 400,
+    "height": 262
+  },
+  {
+    "file": "TOYOTA (126).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (126).png",
+    "raw_text": "Toyoeo TRDPto (2025)",
+    "width": 400,
+    "height": 262
+  },
+  {
+    "file": "TOYOTA (127).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (127).png",
+    "raw_text": "Toyob Lend Cn,m, KXR (2011)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (128).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (128).png",
+    "raw_text": "TWO Cn.He« (2008)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (129).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (129).png",
+    "raw_text": "caser 250 (2023)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (13).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (13).png",
+    "raw_text": "70 GXL (2024)",
+    "width": 400,
+    "height": 355
+  },
+  {
+    "file": "TOYOTA (130).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (130).png",
+    "raw_text": "Cruisu 250 (2024)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (131).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (131).png",
+    "raw_text": "Cn-b% 100 (2007)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (132).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (132).png",
+    "raw_text": "TWO AWcd G (2005)",
+    "width": 400,
+    "height": 261
+  },
+  {
+    "file": "TOYOTA (133).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (133).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (134).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (134).png",
+    "raw_text": "(2010)",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (135).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (135).png",
+    "raw_text": "(2007)",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (136).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (136).png",
+    "raw_text": "Twe Ccube« v8 Amume (2014)",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (137).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (137).png",
+    "raw_text": "Double 4x4",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (138).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (138).png",
+    "raw_text": "DX E70 (190)",
+    "width": 400,
+    "height": 260
+  },
+  {
+    "file": "TOYOTA (139).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (139).png",
+    "raw_text": "Tmc* (2016)",
+    "width": 400,
+    "height": 257
+  },
+  {
+    "file": "TOYOTA (14).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (14).png",
+    "raw_text": "Crubet JtO (2008)",
+    "width": 400,
+    "height": 355
+  },
+  {
+    "file": "TOYOTA (140).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (140).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 255
+  },
+  {
+    "file": "TOYOTA (141).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (141).png",
+    "raw_text": "Twa Lend Cruäe« PfMo 150",
+    "width": 400,
+    "height": 259
+  },
+  {
+    "file": "TOYOTA (142).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (142).png",
+    "raw_text": "GR$pott (2021)",
+    "width": 400,
+    "height": 259
+  },
+  {
+    "file": "TOYOTA (143).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (143).png",
+    "raw_text": "'md (20N)",
+    "width": 400,
+    "height": 259
+  },
+  {
+    "file": "TOYOTA (144).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (144).png",
+    "raw_text": "(H200) (2013)",
+    "width": 400,
+    "height": 259
+  },
+  {
+    "file": "TOYOTA (145).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (145).png",
+    "raw_text": "TRD Pro (2019)",
+    "width": 400,
+    "height": 259
+  },
+  {
+    "file": "TOYOTA (146).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (146).png",
+    "raw_text": "(20N)",
+    "width": 400,
+    "height": 258
+  },
+  {
+    "file": "TOYOTA (147).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (147).png",
+    "raw_text": "Lend 100 (1998)",
+    "width": 400,
+    "height": 258
+  },
+  {
+    "file": "TOYOTA (148).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (148).png",
+    "raw_text": "KNO",
+    "width": 400,
+    "height": 258
+  },
+  {
+    "file": "TOYOTA (149).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (149).png",
+    "raw_text": "\"SST 4",
+    "width": 400,
+    "height": 258
+  },
+  {
+    "file": "TOYOTA (15).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (15).png",
+    "raw_text": "TWe HIO pestene« van (1967)",
+    "width": 400,
+    "height": 355
+  },
+  {
+    "file": "TOYOTA (150).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (150).png",
+    "raw_text": "RAV4 (1999)",
+    "width": 400,
+    "height": 258
+  },
+  {
+    "file": "TOYOTA (151).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (151).png",
+    "raw_text": "cn.ée« (2021)",
+    "width": 400,
+    "height": 257
+  },
+  {
+    "file": "TOYOTA (152).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (152).png",
+    "raw_text": "TW' Lend 3m (2022)",
+    "width": 400,
+    "height": 257
+  },
+  {
+    "file": "TOYOTA (153).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (153).png",
+    "raw_text": "4Runnet",
+    "width": 400,
+    "height": 257
+  },
+  {
+    "file": "TOYOTA (154).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (154).png",
+    "raw_text": "Can* (2020)",
+    "width": 400,
+    "height": 256
+  },
+  {
+    "file": "TOYOTA (155).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (155).png",
+    "raw_text": "C.ase€ eo vx (1 m",
+    "width": 400,
+    "height": 256
+  },
+  {
+    "file": "TOYOTA (156).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (156).png",
+    "raw_text": "FJ Cnge« (20B)",
+    "width": 400,
+    "height": 256
+  },
+  {
+    "file": "TOYOTA (157).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (157).png",
+    "raw_text": "FJ ca.öe« (2012)",
+    "width": 400,
+    "height": 256
+  },
+  {
+    "file": "TOYOTA (158).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (158).png",
+    "raw_text": "Cn.öe« (2023)",
+    "width": 400,
+    "height": 255
+  },
+  {
+    "file": "TOYOTA (159).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (159).png",
+    "raw_text": "Las (2018)",
+    "width": 400,
+    "height": 255
+  },
+  {
+    "file": "TOYOTA (16).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (16).png",
+    "raw_text": "HI (19951998)",
+    "width": 400,
+    "height": 352
+  },
+  {
+    "file": "TOYOTA (160).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (160).png",
+    "raw_text": "sum (2005)",
+    "width": 400,
+    "height": 255
+  },
+  {
+    "file": "TOYOTA (161).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (161).png",
+    "raw_text": "TW' (2012)",
+    "width": 400,
+    "height": 254
+  },
+  {
+    "file": "TOYOTA (162).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (162).png",
+    "raw_text": "TRO (2020)",
+    "width": 400,
+    "height": 254
+  },
+  {
+    "file": "TOYOTA (163).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (163).png",
+    "raw_text": "Sud 4Rumet (1991)",
+    "width": 400,
+    "height": 254
+  },
+  {
+    "file": "TOYOTA (164).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (164).png",
+    "raw_text": "Em (201 S)",
+    "width": 400,
+    "height": 254
+  },
+  {
+    "file": "TOYOTA (165).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (165).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 254
+  },
+  {
+    "file": "TOYOTA (166).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (166).png",
+    "raw_text": "mc (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (167).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (167).png",
+    "raw_text": "Yens Veto",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (168).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (168).png",
+    "raw_text": "mc (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (169).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (169).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (17).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (17).png",
+    "raw_text": "Ceui*f —b pickw WR JN",
+    "width": 400,
+    "height": 351
+  },
+  {
+    "file": "TOYOTA (170).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (170).png",
+    "raw_text": "Toyota mc (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (171).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (171).png",
+    "raw_text": "Yetis Sedm (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (172).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (172).png",
+    "raw_text": "(2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (173).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (173).png",
+    "raw_text": "Yens Seden (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (174).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (174).png",
+    "raw_text": "Yub Sedn (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (175).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (175).png",
+    "raw_text": "Yens h8t&eck US (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (176).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (176).png",
+    "raw_text": "Toyote Yetis GR (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (177).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (177).png",
+    "raw_text": "Yetis (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (178).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (178).png",
+    "raw_text": "Yens Cogs (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (179).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (179).png",
+    "raw_text": "Yer6 Coss (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (18).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (18).png",
+    "raw_text": "cry vm (2022)",
+    "width": 400,
+    "height": 349
+  },
+  {
+    "file": "TOYOTA (180).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (180).png",
+    "raw_text": "Yens Cogs (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (181).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (181).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (182).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (182).png",
+    "raw_text": "(2008)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (183).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (183).png",
+    "raw_text": "(2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (184).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (184).png",
+    "raw_text": "Yaris",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (185).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (185).png",
+    "raw_text": "(2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (186).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (186).png",
+    "raw_text": "Yeti (2015)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (187).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (187).png",
+    "raw_text": "Yub (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (188).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (188).png",
+    "raw_text": "Yetis (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (189).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (189).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (19).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (19).png",
+    "raw_text": "'nd (2024)",
+    "width": 400,
+    "height": 346
+  },
+  {
+    "file": "TOYOTA (190).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (190).png",
+    "raw_text": "(2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (191).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (191).png",
+    "raw_text": "(2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (192).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (192).png",
+    "raw_text": "voxy (2014) -2",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (193).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (193).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (194).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (194).png",
+    "raw_text": "5-000' (2003)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (195).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (195).png",
+    "raw_text": "(2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (196).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (196).png",
+    "raw_text": "Moe (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (197).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (197).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (198).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (198).png",
+    "raw_text": "Verso S",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (199).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (199).png",
+    "raw_text": "(2011)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (2).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (2).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 405
+  },
+  {
+    "file": "TOYOTA (20).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (20).png",
+    "raw_text": "Twoee (2020)",
+    "width": 400,
+    "height": 345
+  },
+  {
+    "file": "TOYOTA (200).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (200).png",
+    "raw_text": "Venze (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (201).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (201).png",
+    "raw_text": "(2015)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (202).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (202).png",
+    "raw_text": "Vebz (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (203).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (203).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (204).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (204).png",
+    "raw_text": "Ufben Cruiser (2025)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (205).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (205).png",
+    "raw_text": "Uren Cniwt (2011 )",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (206).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (206).png",
+    "raw_text": "Twots Ufben Cruisec (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (207).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (207).png",
+    "raw_text": "TSO$ Hy\" Guoo (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (208).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (208).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (209).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (209).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (21).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (21).png",
+    "raw_text": "Tme J70 1",
+    "width": 400,
+    "height": 345
+  },
+  {
+    "file": "TOYOTA (210).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (210).png",
+    "raw_text": "Fb&d (2\")",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (211).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (211).png",
+    "raw_text": "(1982-1988)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (212).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (212).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (213).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (213).png",
+    "raw_text": "uC SOO",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (214).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (214).png",
+    "raw_text": "Tenk (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (215).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (215).png",
+    "raw_text": "CO Bed TRD Pro (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (216).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (216).png",
+    "raw_text": "(1969)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (217).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (217).png",
+    "raw_text": "Temnu (1996)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (218).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (218).png",
+    "raw_text": "Supa Ceet II (199S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (219).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (219).png",
+    "raw_text": "Supt8 kn (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (22).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (22).png",
+    "raw_text": "TW' Hieee Paseo* VM JP.spec H 100 (1999)",
+    "width": 400,
+    "height": 345
+  },
+  {
+    "file": "TOYOTA (220).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (220).png",
+    "raw_text": "Supt8 (1992)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (221).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (221).png",
+    "raw_text": "TWs Supt8 Top Secret",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (222).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (222).png",
+    "raw_text": "supre RE (1996)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (223).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (223).png",
+    "raw_text": "SuX. SupaOT GTSOO",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (224).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (224).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (225).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (225).png",
+    "raw_text": "Supt8 R#ket Burt/\"",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (226).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (226).png",
+    "raw_text": "sux. mo (1%9)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (227).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (227).png",
+    "raw_text": "Supt8 Mic.08 (1994)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (228).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (228).png",
+    "raw_text": "Supte MS'.'V ASO The ANEk",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (229).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (229).png",
+    "raw_text": "Swe k. ETC (19%)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (23).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (23).png",
+    "raw_text": "cay (2020)",
+    "width": 400,
+    "height": 344
+  },
+  {
+    "file": "TOYOTA (230).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (230).png",
+    "raw_text": "Suya Wc. 4 umex X (19N)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (231).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (231).png",
+    "raw_text": "Swa k. 4 (1994)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (232).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (232).png",
+    "raw_text": "Sume Mk",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (233).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (233).png",
+    "raw_text": "Supt8 kA70 (1%)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (234).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (234).png",
+    "raw_text": "supt. LB.WORKS (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (235).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (235).png",
+    "raw_text": "supta GT4 (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (236).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (236).png",
+    "raw_text": "supt8 HKS Bo&,• Kit (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (237).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (237).png",
+    "raw_text": "Swe JOTC (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (238).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (238).png",
+    "raw_text": "Swe GR Lbetty Wk",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (239).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (239).png",
+    "raw_text": "Twots Suye GR GT4",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (24).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (24).png",
+    "raw_text": "J7S",
+    "width": 400,
+    "height": 344
+  },
+  {
+    "file": "TOYOTA (240).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (240).png",
+    "raw_text": "supt8 FT-I",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (241).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (241).png",
+    "raw_text": "Supt8 JZA80 (2015",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (242).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (242).png",
+    "raw_text": "swe 2021 TSUKUBAEVARTOI SAWN",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (243).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (243).png",
+    "raw_text": "Supt8 Bdm Fast Fu%us *.08 JZÆO (1994)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (244).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (244).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (245).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (245).png",
+    "raw_text": "Supt8 (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (246).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (246).png",
+    "raw_text": "Supte W'. 4 wing (1994)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (247).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (247).png",
+    "raw_text": "Succeed",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (248).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (248).png",
+    "raw_text": "SMM XT (1923)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (249).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (249).png",
+    "raw_text": "SWX",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (25).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (25).png",
+    "raw_text": "SQ.* (2023)",
+    "width": 400,
+    "height": 341
+  },
+  {
+    "file": "TOYOTA (250).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (250).png",
+    "raw_text": "SwX Top EP82",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (251).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (251).png",
+    "raw_text": "Sww Gbtue V EPSI",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (252).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (252).png",
+    "raw_text": "souet JZ30 2.%T (2000)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (253).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (253).png",
+    "raw_text": "APEX (198)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (254).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (254).png",
+    "raw_text": "Spot' 800 (INS)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (255).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (255).png",
+    "raw_text": "TruemAE88",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (256).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (256).png",
+    "raw_text": "SieNe",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (257).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (257).png",
+    "raw_text": "(2007",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (258).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (258).png",
+    "raw_text": "(2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (259).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (259).png",
+    "raw_text": "(2010)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (26).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (26).png",
+    "raw_text": "Ano x (2026)",
+    "width": 400,
+    "height": 340
+  },
+  {
+    "file": "TOYOTA (260).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (260).png",
+    "raw_text": "SM' (199\"996)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (261).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (261).png",
+    "raw_text": "SFR Cooeept (2M S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (262).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (262).png",
+    "raw_text": "S (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (263).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (263).png",
+    "raw_text": "(2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (264).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (264).png",
+    "raw_text": "Twot8 (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (265).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (265).png",
+    "raw_text": "RSC (2002)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (266).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (266).png",
+    "raw_text": "GRX133 (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (267).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (267).png",
+    "raw_text": "eots»",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (268).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (268).png",
+    "raw_text": "RAV4 (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (269).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (269).png",
+    "raw_text": "RAV4 (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (27).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (27).png",
+    "raw_text": "TWO RO",
+    "width": 400,
+    "height": 339
+  },
+  {
+    "file": "TOYOTA (270).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (270).png",
+    "raw_text": "RAV4 cawe (1994)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (271).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (271).png",
+    "raw_text": "RAV4 cub (1998)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (272).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (272).png",
+    "raw_text": "RAV4 S-Doo« (19%) /r7 DDB",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (273).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (273).png",
+    "raw_text": "(2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (274).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (274).png",
+    "raw_text": "RAV4 (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (275).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (275).png",
+    "raw_text": "RAV4 (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (276).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (276).png",
+    "raw_text": "Reab (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (277).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (277).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (278).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (278).png",
+    "raw_text": "PIO",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (279).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (279).png",
+    "raw_text": "TWE Custom Usage",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (28).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (28).png",
+    "raw_text": "ToyMe Ano X GR spal (2026)",
+    "width": 400,
+    "height": 336
+  },
+  {
+    "file": "TOYOTA (280).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (280).png",
+    "raw_text": "160 (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (281).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (281).png",
+    "raw_text": "(2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (282).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (282).png",
+    "raw_text": "(2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (283).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (283).png",
+    "raw_text": "Præoe (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (284).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (284).png",
+    "raw_text": "Pü v (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (285).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (285).png",
+    "raw_text": "Pros Prime XLE Ptuø-h t•Wbdd (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (286).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (286).png",
+    "raw_text": "m.\" PW GR spal (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (287).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (287).png",
+    "raw_text": "PW GR spotl (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (288).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (288).png",
+    "raw_text": "Pros (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (289).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (289).png",
+    "raw_text": "G (2009) 1",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (29).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (29).png",
+    "raw_text": "(2024)",
+    "width": 400,
+    "height": 334
+  },
+  {
+    "file": "TOYOTA (290).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (290).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (291).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (291).png",
+    "raw_text": "GR sport (202')",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (292).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (292).png",
+    "raw_text": "CX (20\")",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (293).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (293).png",
+    "raw_text": "(2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (294).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (294).png",
+    "raw_text": "(201S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (295).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (295).png",
+    "raw_text": "m.\" (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (296).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (296).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (297).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (297).png",
+    "raw_text": "(2007)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (298).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (298).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (299).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (299).png",
+    "raw_text": "(2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (3).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (3).png",
+    "raw_text": "cn.ö« 3..dox (2013)",
+    "width": 400,
+    "height": 382
+  },
+  {
+    "file": "TOYOTA (30).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (30).png",
+    "raw_text": "TWO RAV4 Mwaute (ü6)",
+    "width": 400,
+    "height": 331
+  },
+  {
+    "file": "TOYOTA (300).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (300).png",
+    "raw_text": "(1993)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (301).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (301).png",
+    "raw_text": "(2014",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (302).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (302).png",
+    "raw_text": "T\"d8 Preno (2010)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (303).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (303).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (304).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (304).png",
+    "raw_text": "(1998)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (305).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (305).png",
+    "raw_text": "Passo Seoe (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (306).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (306).png",
+    "raw_text": "Passo (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (307).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (307).png",
+    "raw_text": "(2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (308).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (308).png",
+    "raw_text": "Potw (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (309).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (309).png",
+    "raw_text": "Noeh GR spon (203)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (31).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (31).png",
+    "raw_text": "come cogs (2025)",
+    "width": 400,
+    "height": 331
+  },
+  {
+    "file": "TOYOTA (310).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (310).png",
+    "raw_text": "(ö14)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (311).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (311).png",
+    "raw_text": "MRS Vddde",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (312).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (312).png",
+    "raw_text": "z.zeao (1999 • 2007)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (313).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (313).png",
+    "raw_text": "MR.2 Mk. 3 (2005)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (314).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (314).png",
+    "raw_text": "MR2 Superchuged (1967)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (315).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (315).png",
+    "raw_text": "AWII (1989)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (316).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (316).png",
+    "raw_text": "MR2 mo (1995)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (317).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (317).png",
+    "raw_text": "Mini (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (318).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (318).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (319).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (319).png",
+    "raw_text": "Mati)' (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (32).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (32).png",
+    "raw_text": "RAV4 GR spott (2026)",
+    "width": 400,
+    "height": 327
+  },
+  {
+    "file": "TOYOTA (320).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (320).png",
+    "raw_text": "X Zb (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (321).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (321).png",
+    "raw_text": "Metk X Prenum 3.SL (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (322).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (322).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (323).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (323).png",
+    "raw_text": "X (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (324).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (324).png",
+    "raw_text": "It xeo (1992)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (325).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (325).png",
+    "raw_text": "II (2002)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (326).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (326).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (327).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (327).png",
+    "raw_text": "Live",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (328).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (328).png",
+    "raw_text": "120",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (329).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (329).png",
+    "raw_text": "Cnhe« JYO (1990 r",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (33).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (33).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 326
+  },
+  {
+    "file": "TOYOTA (330).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (330).png",
+    "raw_text": "'Md Cruiser FJO",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (331).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (331).png",
+    "raw_text": "Laid Cruiser BJ70 /",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (332).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (332).png",
+    "raw_text": "Two' 78 (2004)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (333).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (333).png",
+    "raw_text": "Cn.be« (1960)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (334).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (334).png",
+    "raw_text": "Twots Kjjang Kriste (2000) Ch",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (335).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (335).png",
+    "raw_text": "(2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (336).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (336).png",
+    "raw_text": "JPN Taxi (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (337).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (337).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (338).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (338).png",
+    "raw_text": "Spa",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (339).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (339).png",
+    "raw_text": "EV (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (34).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (34).png",
+    "raw_text": "(3089)",
+    "width": 400,
+    "height": 326
+  },
+  {
+    "file": "TOYOTA (340).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (340).png",
+    "raw_text": "(2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (341).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (341).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (342).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (342).png",
+    "raw_text": "Innova KjjM9 (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (343).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (343).png",
+    "raw_text": "Ianova (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (344).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (344).png",
+    "raw_text": "(2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (345).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (345).png",
+    "raw_text": "R.W Ceb (1978)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (346).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (346).png",
+    "raw_text": "Ceb (2003)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (347).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (347).png",
+    "raw_text": "Imow",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (348).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (348).png",
+    "raw_text": "(2005)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (349).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (349).png",
+    "raw_text": "HAD( (1983)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (35).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (35).png",
+    "raw_text": "RAV4 GR snR (2026)",
+    "width": 400,
+    "height": 325
+  },
+  {
+    "file": "TOYOTA (350).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (350).png",
+    "raw_text": "(1989)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (351).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (351).png",
+    "raw_text": "(1972)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (352).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (352).png",
+    "raw_text": "(1968)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (353).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (353).png",
+    "raw_text": "H$hlmdet (201 t)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (354).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (354).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (355).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (355).png",
+    "raw_text": "Hbee Super Custom (2011 )",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (356).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (356).png",
+    "raw_text": "Pnd ( 199k\")",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (357).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (357).png",
+    "raw_text": "TW' Connutec Bus",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (358).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (358).png",
+    "raw_text": "Huriz@14)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (359).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (359).png",
+    "raw_text": "Hemet (1998)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (36).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (36).png",
+    "raw_text": "uV4 (2026)",
+    "width": 400,
+    "height": 324
+  },
+  {
+    "file": "TOYOTA (360).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (360).png",
+    "raw_text": "T\"d8 GTS6 Rock* Bmny v3 Pndem (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (361).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (361).png",
+    "raw_text": "v3 (201 t)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (362).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (362).png",
+    "raw_text": "CS.R3 (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (363).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (363).png",
+    "raw_text": "TS020 (190",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (364).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (364).png",
+    "raw_text": "(TS020) (1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (365).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (365).png",
+    "raw_text": "GT 86 (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (366).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (366).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (367).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (367).png",
+    "raw_text": "Twote GR Yaris R#ket Bunny PeMem",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (368).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (368).png",
+    "raw_text": "(2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (369).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (369).png",
+    "raw_text": "GR Editha RZ (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (37).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (37).png",
+    "raw_text": "cocou GR spal (2026)",
+    "width": 400,
+    "height": 324
+  },
+  {
+    "file": "TOYOTA (370).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (370).png",
+    "raw_text": "GR8 (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (371).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (371).png",
+    "raw_text": "GR (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (372).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (372).png",
+    "raw_text": "GR (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (373).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (373).png",
+    "raw_text": "GR Supe GT300",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (374).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (374).png",
+    "raw_text": "GR RZ (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (375).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (375).png",
+    "raw_text": "GR Supra Red' Coooepe (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (376).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (376).png",
+    "raw_text": "GR suxe (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (377).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (377).png",
+    "raw_text": "GR Supra Pmdem VIS (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (378).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (378).png",
+    "raw_text": "GR SUX. LB (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (379).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (379).png",
+    "raw_text": "GR SUX. VI (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (38).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (38).png",
+    "raw_text": "C.HR• (2006)",
+    "width": 400,
+    "height": 323
+  },
+  {
+    "file": "TOYOTA (380).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (380).png",
+    "raw_text": "GR sun (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (381).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (381).png",
+    "raw_text": "GR Sun DI 2019 90 TOYOTIRES",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (382).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (382).png",
+    "raw_text": "GR supre (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (383).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (383).png",
+    "raw_text": "GR 86 RZ (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (384).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (384).png",
+    "raw_text": "FT4X (2017",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (385).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (385).png",
+    "raw_text": "Fonner (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (386).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (386).png",
+    "raw_text": "(2015",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (387).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (387).png",
+    "raw_text": "FCV (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (388).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (388).png",
+    "raw_text": "Ebos Sedan",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (389).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (389).png",
+    "raw_text": "EMa",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (39).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (39).png",
+    "raw_text": "bZ4X (2026)",
+    "width": 400,
+    "height": 323
+  },
+  {
+    "file": "TOYOTA (390).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (390).png",
+    "raw_text": "Esql.*e (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (391).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (391).png",
+    "raw_text": "EIIO",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (392).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (392).png",
+    "raw_text": "CSS Coneß (2003)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (393).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (393).png",
+    "raw_text": "Toyote spm PHEV RS (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (394).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (394).png",
+    "raw_text": "Supt SIIO (1%2)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (395).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (395).png",
+    "raw_text": "SCO (IWI)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (396).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (396).png",
+    "raw_text": "SSO (1967)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (397).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (397).png",
+    "raw_text": "S40 (1962)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (398).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (398).png",
+    "raw_text": "Suo (1993)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (399).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (399).png",
+    "raw_text": "S130 (1991)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (4).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (4).png",
+    "raw_text": "Tw«e HIOO (1992)",
+    "width": 400,
+    "height": 381
+  },
+  {
+    "file": "TOYOTA (40).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (40).png",
+    "raw_text": "BZ3X (2026)",
+    "width": 400,
+    "height": 321
+  },
+  {
+    "file": "TOYOTA (400).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (400).png",
+    "raw_text": "TWE Rwe Seoon $120 (1983)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (401).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (401).png",
+    "raw_text": "Twots Piatlnum (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (402).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (402).png",
+    "raw_text": "(S210) Meg* 14 (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (403).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (403).png",
+    "raw_text": "(1979)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (404).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (404).png",
+    "raw_text": "Lhüed (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (405).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (405).png",
+    "raw_text": "RSD aaaD",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (406).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (406).png",
+    "raw_text": "SISO (1997)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (407).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (407).png",
+    "raw_text": "TWE SIO (1995)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (408).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (408).png",
+    "raw_text": "(2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (409).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (409).png",
+    "raw_text": "3.S Royd seooa GRS204 (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (41).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (41).png",
+    "raw_text": "Cab (2024)",
+    "width": 400,
+    "height": 320
+  },
+  {
+    "file": "TOYOTA (410).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (410).png",
+    "raw_text": "(2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (411).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (411).png",
+    "raw_text": "Cree Tanc V JDOO (1992)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (412).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (412).png",
+    "raw_text": "Credo GX61",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (413).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (413).png",
+    "raw_text": "2.SG (1991)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (414).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (414).png",
+    "raw_text": "II XBO (1%9)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (415).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (415).png",
+    "raw_text": "Edm (1975)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (416).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (416).png",
+    "raw_text": "Cocoaa turnac",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (417).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (417).png",
+    "raw_text": "Come kC (190",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (418).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (418).png",
+    "raw_text": "Cocou EIO (19%-1970)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (419).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (419).png",
+    "raw_text": "TWa VRC",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (42).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (42).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 319
+  },
+  {
+    "file": "TOYOTA (420).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (420).png",
+    "raw_text": "Cocou verso (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (421).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (421).png",
+    "raw_text": "Cocou (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (422).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (422).png",
+    "raw_text": "US (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (423).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (423).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (424).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (424).png",
+    "raw_text": "SRS (1973)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (425).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (425).png",
+    "raw_text": "Cocou Tm*9 (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (426).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (426).png",
+    "raw_text": "Cocou HSE (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (427).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (427).png",
+    "raw_text": "Comle Sedn (200S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (428).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (428).png",
+    "raw_text": "(2010)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (429).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (429).png",
+    "raw_text": "SR (1984)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (43).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (43).png",
+    "raw_text": "(2023)",
+    "width": 400,
+    "height": 317
+  },
+  {
+    "file": "TOYOTA (430).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (430).png",
+    "raw_text": "cocou RunX (2005)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (431).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (431).png",
+    "raw_text": "Cocou sedrt (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (432).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (432).png",
+    "raw_text": "Com• GT.*æx AEW (19B)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (433).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (433).png",
+    "raw_text": "Comle AE92 GT Apx Koun",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (434).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (434).png",
+    "raw_text": "Comea AEU (19%)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (435).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (435).png",
+    "raw_text": "Comea AEU (19%)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (436).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (436).png",
+    "raw_text": "(1922)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (437).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (437).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (438).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (438).png",
+    "raw_text": "Cocou 'wbt% (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (439).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (439).png",
+    "raw_text": "Cocou haect&ci' S.Dmt T*æm AE82",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (44).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (44).png",
+    "raw_text": "Twot' Probox DX wn (2020)",
+    "width": 400,
+    "height": 314
+  },
+  {
+    "file": "TOYOTA (440).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (440).png",
+    "raw_text": "Hatetbeck (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (441).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (441).png",
+    "raw_text": "Cocou Hat*tbeck (2019)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (442).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (442).png",
+    "raw_text": "Cocou Hat*' (2013) 1",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (443).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (443).png",
+    "raw_text": "GTS (198)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (444).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (444).png",
+    "raw_text": "TWO Coc& GT Cm (1988)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (445).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (445).png",
+    "raw_text": "GR (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (446).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (446).png",
+    "raw_text": "Fie\"et (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (447).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (447).png",
+    "raw_text": "EU (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (448).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (448).png",
+    "raw_text": "Comea EU (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (449).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (449).png",
+    "raw_text": "Comb ESO 4.Doot (1990)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (45).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (45).png",
+    "raw_text": "(2024)",
+    "width": 400,
+    "height": 314
+  },
+  {
+    "file": "TOYOTA (450).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (450).png",
+    "raw_text": "Comea",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (451).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (451).png",
+    "raw_text": "E120 (us)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (452).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (452).png",
+    "raw_text": "EIO (1966-1970)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (453).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (453).png",
+    "raw_text": "Comea E 110 (1997 • 1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (454).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (454).png",
+    "raw_text": "CfW8 Style (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (455).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (455).png",
+    "raw_text": "(2007)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (456).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (456).png",
+    "raw_text": "c«ola (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (457).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (457).png",
+    "raw_text": "Cocou AE92",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (458).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (458).png",
+    "raw_text": "AEW",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (459).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (459).png",
+    "raw_text": "Comle AEC6 Truem 200' GT",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (46).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (46).png",
+    "raw_text": "GR (2025)",
+    "width": 400,
+    "height": 313
+  },
+  {
+    "file": "TOYOTA (460).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (460).png",
+    "raw_text": "(1983)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (461).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (461).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (462).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (462).png",
+    "raw_text": "(1982)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (463).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (463).png",
+    "raw_text": "Coco& 400t (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (464).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (464).png",
+    "raw_text": "Coco& 400' (1990)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (465).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (465).png",
+    "raw_text": "Comb W S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (466).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (466).png",
+    "raw_text": "Twa come (2015)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (467).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (467).png",
+    "raw_text": "Cocou (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (468).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (468).png",
+    "raw_text": "coole (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (469).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (469).png",
+    "raw_text": "(2010)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (47).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (47).png",
+    "raw_text": "O (2023)",
+    "width": 400,
+    "height": 310
+  },
+  {
+    "file": "TOYOTA (470).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (470).png",
+    "raw_text": "(1992)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (471).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (471).png",
+    "raw_text": "Cote* (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (472).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (472).png",
+    "raw_text": "Chowc Toug (1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (473).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (473).png",
+    "raw_text": "Ctewt",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (474).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (474).png",
+    "raw_text": "Cek' XX 2\"GT (1%2)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (475).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (475).png",
+    "raw_text": "Cee• RC CuW Sde (1991)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (476).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (476).png",
+    "raw_text": "TWO Celica Tubo 4x4 (199!)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (477).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (477).png",
+    "raw_text": "Ceke •ae.ide",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (478).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (478).png",
+    "raw_text": "Cua suxe 2800GT (1982)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (479).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (479).png",
+    "raw_text": "ST TAO (1979)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (48).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (48).png",
+    "raw_text": "Y\" mc (2024)",
+    "width": 400,
+    "height": 307
+  },
+  {
+    "file": "TOYOTA (480).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (480).png",
+    "raw_text": "ST 20S GT",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (481).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (481).png",
+    "raw_text": "ST (1990)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (482).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (482).png",
+    "raw_text": "ST 18S GT",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (483).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (483).png",
+    "raw_text": "ST (190)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (484).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (484).png",
+    "raw_text": "(2003)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (485).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (485).png",
+    "raw_text": "Ceee Sau (1\"3)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (486).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (486).png",
+    "raw_text": "LB (1975)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (487).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (487).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (488).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (488).png",
+    "raw_text": "wac",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (489).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (489).png",
+    "raw_text": "Ceöæ GT4",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (49).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (49).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 305
+  },
+  {
+    "file": "TOYOTA (490).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (490).png",
+    "raw_text": "cu SuOS",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (491).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (491).png",
+    "raw_text": "(1992)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (492).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (492).png",
+    "raw_text": "CT Pikes",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (493).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (493).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (494).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (494).png",
+    "raw_text": "2.0 GTI (IWI)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (495).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (495).png",
+    "raw_text": "C— 16006T",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (496).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (496).png",
+    "raw_text": "(2004)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (497).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (497).png",
+    "raw_text": "(1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (498).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (498).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (499).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (499).png",
+    "raw_text": "SUPRA (1997)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (5).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (5).png",
+    "raw_text": "Præ• Cer '*no (2025)",
+    "width": 400,
+    "height": 372
+  },
+  {
+    "file": "TOYOTA (50).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (50).png",
+    "raw_text": "TRD PRO",
+    "width": 400,
+    "height": 304
+  },
+  {
+    "file": "TOYOTA (500).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (500).png",
+    "raw_text": "Cahe ED (19\")",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (501).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (501).png",
+    "raw_text": "cauy XVSO CIS-spec (2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (502).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (502).png",
+    "raw_text": "TWE CMYY (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (503).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (503).png",
+    "raw_text": "cavy XSE (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (504).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (504).png",
+    "raw_text": "Cenvy (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (505).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (505).png",
+    "raw_text": "Toyote cenyy NASCAR No 11 (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (506).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (506).png",
+    "raw_text": "Toyote cenyy NASCAR No 23 (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (507).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (507).png",
+    "raw_text": "Toyote curry NASCAR (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (508).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (508).png",
+    "raw_text": "JDM (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (509).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (509).png",
+    "raw_text": "Twots Cenvy (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (51).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (51).png",
+    "raw_text": "cavy XSE NASCAR (2025)",
+    "width": 400,
+    "height": 298
+  },
+  {
+    "file": "TOYOTA (510).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (510).png",
+    "raw_text": "Cemcy (2015)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (511).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (511).png",
+    "raw_text": "CUY (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (512).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (512).png",
+    "raw_text": "(1992-1996)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (513).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (513).png",
+    "raw_text": "T\"d8 Cmvy (2007)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (514).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (514).png",
+    "raw_text": "car«y (2008)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (515).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (515).png",
+    "raw_text": "(1996-2001)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (516).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (516).png",
+    "raw_text": "T%d8CmvyV20 (1991)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (517).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (517).png",
+    "raw_text": "CÜN (1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (518).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (518).png",
+    "raw_text": "C.HR hybM (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (519).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (519).png",
+    "raw_text": "C.HR GR spon (2023)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (52).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (52).png",
+    "raw_text": "Twota Laod FJ40",
+    "width": 400,
+    "height": 293
+  },
+  {
+    "file": "TOYOTA (520).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (520).png",
+    "raw_text": "GR (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (521).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (521).png",
+    "raw_text": "C.HR (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (522).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (522).png",
+    "raw_text": "C.HR (2020)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (523).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (523).png",
+    "raw_text": "(2017)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (524).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (524).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (525).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (525).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (526).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (526).png",
+    "raw_text": "BZ C«rvea mnæpq (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (527).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (527).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (528).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (528).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (529).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (529).png",
+    "raw_text": "bB",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (53).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (53).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 288
+  },
+  {
+    "file": "TOYOTA (530).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (530).png",
+    "raw_text": "TWs BMe (2006)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (531).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (531).png",
+    "raw_text": "Ano X (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (532).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (532).png",
+    "raw_text": "(2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (533).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (533).png",
+    "raw_text": "Ano 300' (2018)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (534).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (534).png",
+    "raw_text": "Ano (2014)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (535).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (535).png",
+    "raw_text": "3-00% (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (536).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (536).png",
+    "raw_text": "Ano (2018) III",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (537).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (537).png",
+    "raw_text": "Ano (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (538).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (538).png",
+    "raw_text": "Awasis (2016)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (539).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (539).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (54).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (54).png",
+    "raw_text": "GRE Yuzu (2026)",
+    "width": 400,
+    "height": 286
+  },
+  {
+    "file": "TOYOTA (540).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (540).png",
+    "raw_text": "Awnsb Verso (2003)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (541).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (541).png",
+    "raw_text": "7220 (1997)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (542).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (542).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (543).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (543).png",
+    "raw_text": "Aw«t8b Estate (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (544).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (544).png",
+    "raw_text": "Awua Woz (2022)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (545).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (545).png",
+    "raw_text": "Awua (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (546).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (546).png",
+    "raw_text": "Awua (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (547).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (547).png",
+    "raw_text": "Awua (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (548).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (548).png",
+    "raw_text": "TWO Awba (201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (549).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (549).png",
+    "raw_text": "Awua (2010)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (55).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (55).png",
+    "raw_text": "Toyoea Land Crwet Offood (2005)",
+    "width": 400,
+    "height": 285
+  },
+  {
+    "file": "TOYOTA (550).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (550).png",
+    "raw_text": "(201S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (551).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (551).png",
+    "raw_text": "AYSon (1996)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (552).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (552).png",
+    "raw_text": "*azb (2009)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (553).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (553).png",
+    "raw_text": "Auris Touring (2015)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (554).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (554).png",
+    "raw_text": "Azb 3&oc",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (555).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (555).png",
+    "raw_text": "(201 S)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (556).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (556).png",
+    "raw_text": "Vu (2000)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (557).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (557).png",
+    "raw_text": "XP210 Z (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (558).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (558).png",
+    "raw_text": "XP210 G (2024)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (559).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (559).png",
+    "raw_text": "GR Spal (2021)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (56).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (56).png",
+    "raw_text": "TWa Lmd Cab\" JYO (IW)",
+    "width": 400,
+    "height": 284
+  },
+  {
+    "file": "TOYOTA (560).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (560).png",
+    "raw_text": "Gite AS300 (2001)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (561).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (561).png",
+    "raw_text": "(2008)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (562).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (562).png",
+    "raw_text": "Sptne« True-to Zean",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (563).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (563).png",
+    "raw_text": "N2",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (564).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (564).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (565).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (565).png",
+    "raw_text": "ee Group 4 (201s)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (566).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (566).png",
+    "raw_text": "ee (2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (567).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (567).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (568).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (568).png",
+    "raw_text": "4Rtnnet (201 t)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (569).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (569).png",
+    "raw_text": "4Runne« (2013)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (57).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (57).png",
+    "raw_text": "curuy (2024)",
+    "width": 400,
+    "height": 283
+  },
+  {
+    "file": "TOYOTA (570).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (570).png",
+    "raw_text": "4Runnet (1999)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (571).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (571).png",
+    "raw_text": "4Runnet (19B)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (572).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (572).png",
+    "raw_text": "2220 (1%)",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (573).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (573).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (574).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (574).png",
+    "raw_text": "Sup€8Snake dfit cat",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (575).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (575).png",
+    "raw_text": "Ryan GT4see",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (576).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (576).png",
+    "raw_text": "EMinu 30 Aetos",
+    "width": 400,
+    "height": 253
+  },
+  {
+    "file": "TOYOTA (577).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (577).png",
+    "raw_text": "\"O FJ4SL (ten)",
+    "width": 400,
+    "height": 252
+  },
+  {
+    "file": "TOYOTA (578).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (578).png",
+    "raw_text": "(2021)",
+    "width": 400,
+    "height": 252
+  },
+  {
+    "file": "TOYOTA (579).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (579).png",
+    "raw_text": "cob (20\")",
+    "width": 400,
+    "height": 252
+  },
+  {
+    "file": "TOYOTA (58).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (58).png",
+    "raw_text": "IISST Prone S Phtu 12 we",
+    "width": 400,
+    "height": 280
+  },
+  {
+    "file": "TOYOTA (580).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (580).png",
+    "raw_text": "RAV4 TRD (2019)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (581).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (581).png",
+    "raw_text": "RAV4 Adwntute (2018)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (582).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (582).png",
+    "raw_text": "Two Loog (2017)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (583).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (583).png",
+    "raw_text": "(2017)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (584).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (584).png",
+    "raw_text": "Twoe Ccutet v8 (2008)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (585).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (585).png",
+    "raw_text": "xn (2021)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (586).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (586).png",
+    "raw_text": "eoet)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (587).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (587).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (588).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (588).png",
+    "raw_text": "Fortunet Y2 (2021)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (589).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (589).png",
+    "raw_text": "Coss (2020)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (59).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (59).png",
+    "raw_text": "Twee CnÄt J20 Caw— Top (1958)",
+    "width": 400,
+    "height": 277
+  },
+  {
+    "file": "TOYOTA (590).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (590).png",
+    "raw_text": "TwMe Coc& Coss GRS (2022)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (591).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (591).png",
+    "raw_text": "curry XSE 2021",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (592).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (592).png",
+    "raw_text": "cerrry SE (2021)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (593).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (593).png",
+    "raw_text": "BZ3 (2023)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (594).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (594).png",
+    "raw_text": "Twe 4rume« Tr*mtæ (QS)",
+    "width": 400,
+    "height": 251
+  },
+  {
+    "file": "TOYOTA (595).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (595).png",
+    "raw_text": "TWe V&endet (2020)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (596).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (596).png",
+    "raw_text": "Vecu (2020)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (597).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (597).png",
+    "raw_text": "RAV4 (2021)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (598).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (598).png",
+    "raw_text": "TWO Cruiser .J$O",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (599).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (599).png",
+    "raw_text": "TWO Lmd Cruiser 300' (2011)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (6).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (6).png",
+    "raw_text": "PfÄ Woo (2025)",
+    "width": 400,
+    "height": 369
+  },
+  {
+    "file": "TOYOTA (60).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (60).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 277
+  },
+  {
+    "file": "TOYOTA (600).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (600).png",
+    "raw_text": "200 (2013)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (601).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (601).png",
+    "raw_text": "Hi9Nendet XU20",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (602).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (602).png",
+    "raw_text": "Hemet (2022)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (603).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (603).png",
+    "raw_text": "TWe Herr* (2020)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (604).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (604).png",
+    "raw_text": "(2020)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (605).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (605).png",
+    "raw_text": "GR (202')",
+    "width": 400,
+    "height": 243
+  },
+  {
+    "file": "TOYOTA (606).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (606).png",
+    "raw_text": "Fonut•n« (2023)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (607).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (607).png",
+    "raw_text": "TWO Fonurn« (2021 )",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (608).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (608).png",
+    "raw_text": "TWO RS $220 Muk IS (2018)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (609).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (609).png",
+    "raw_text": "TWe Conle Cross HEV (2024)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (61).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (61).png",
+    "raw_text": "FJ45 Crube",
+    "width": 400,
+    "height": 277
+  },
+  {
+    "file": "TOYOTA (610).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (610).png",
+    "raw_text": "Co«ee Cross (2022)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (611).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (611).png",
+    "raw_text": "bZ4X (2022)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (612).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (612).png",
+    "raw_text": "TWe Autis (20tS)",
+    "width": 400,
+    "height": 250
+  },
+  {
+    "file": "TOYOTA (613).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (613).png",
+    "raw_text": "RAV4 GR spal (2023)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (614).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (614).png",
+    "raw_text": "MV4 (2018)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (615).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (615).png",
+    "raw_text": "JYO (20N)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (616).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (616).png",
+    "raw_text": "CO (2021)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (617).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (617).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (618).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (618).png",
+    "raw_text": "(2017)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (619).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (619).png",
+    "raw_text": "Twee Ceayy XSE (2024)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (62).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (62).png",
+    "raw_text": "Toyu Cftöe« FJ 40 SOR bop",
+    "width": 400,
+    "height": 276
+  },
+  {
+    "file": "TOYOTA (620).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (620).png",
+    "raw_text": "TWO Aphud (2015)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (621).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (621).png",
+    "raw_text": "4Runn« ( 1995)",
+    "width": 400,
+    "height": 249
+  },
+  {
+    "file": "TOYOTA (622).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (622).png",
+    "raw_text": "Venu (2013)",
+    "width": 400,
+    "height": 248
+  },
+  {
+    "file": "TOYOTA (623).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (623).png",
+    "raw_text": "RAV4 (2018)",
+    "width": 400,
+    "height": 248
+  },
+  {
+    "file": "TOYOTA (624).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (624).png",
+    "raw_text": "Twote *nie (2024)",
+    "width": 400,
+    "height": 248
+  },
+  {
+    "file": "TOYOTA (625).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (625).png",
+    "raw_text": "(2002)",
+    "width": 400,
+    "height": 248
+  },
+  {
+    "file": "TOYOTA (626).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (626).png",
+    "raw_text": "Towe Tuodre (2013)",
+    "width": 400,
+    "height": 247
+  },
+  {
+    "file": "TOYOTA (627).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (627).png",
+    "raw_text": "Cab (2012)",
+    "width": 400,
+    "height": 247
+  },
+  {
+    "file": "TOYOTA (628).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (628).png",
+    "raw_text": "LeM Crt*' 200 .aauoa (2008)",
+    "width": 400,
+    "height": 247
+  },
+  {
+    "file": "TOYOTA (629).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (629).png",
+    "raw_text": "CO SRS (1999)",
+    "width": 400,
+    "height": 246
+  },
+  {
+    "file": "TOYOTA (63).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (63).png",
+    "raw_text": "'ISST Pma 4 16",
+    "width": 400,
+    "height": 276
+  },
+  {
+    "file": "TOYOTA (630).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (630).png",
+    "raw_text": "Xn Bed PreRumet (2024)",
+    "width": 400,
+    "height": 246
+  },
+  {
+    "file": "TOYOTA (631).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (631).png",
+    "raw_text": "Dowe Cab (20 t S)",
+    "width": 400,
+    "height": 246
+  },
+  {
+    "file": "TOYOTA (632).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (632).png",
+    "raw_text": "Twoe Hi9hbMet (2020)",
+    "width": 400,
+    "height": 246
+  },
+  {
+    "file": "TOYOTA (633).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (633).png",
+    "raw_text": "cavy XLE (2024)",
+    "width": 400,
+    "height": 246
+  },
+  {
+    "file": "TOYOTA (634).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (634).png",
+    "raw_text": "TWO (2024)",
+    "width": 400,
+    "height": 245
+  },
+  {
+    "file": "TOYOTA (635).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (635).png",
+    "raw_text": "Twe \"Nx (2014)",
+    "width": 400,
+    "height": 245
+  },
+  {
+    "file": "TOYOTA (636).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (636).png",
+    "raw_text": "curry NASCAR (2018)",
+    "width": 400,
+    "height": 245
+  },
+  {
+    "file": "TOYOTA (637).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (637).png",
+    "raw_text": "Cenvy Kyi' N018 NASCA (2020)",
+    "width": 400,
+    "height": 245
+  },
+  {
+    "file": "TOYOTA (638).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (638).png",
+    "raw_text": "TWO 4Run0'f (2005)",
+    "width": 400,
+    "height": 245
+  },
+  {
+    "file": "TOYOTA (639).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (639).png",
+    "raw_text": "Twe Cant (2015)",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (64).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (64).png",
+    "raw_text": "Lend $400' J70 ( 1990)",
+    "width": 400,
+    "height": 275
+  },
+  {
+    "file": "TOYOTA (640).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (640).png",
+    "raw_text": "Hib' R\" 2018",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (641).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (641).png",
+    "raw_text": "TWO R\" 2015",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (642).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (642).png",
+    "raw_text": "XSE (2024)",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (643).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (643).png",
+    "raw_text": "TRD (2019)",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (644).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (644).png",
+    "raw_text": "(2020)",
+    "width": 400,
+    "height": 244
+  },
+  {
+    "file": "TOYOTA (645).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (645).png",
+    "raw_text": "TRO (2018)",
+    "width": 400,
+    "height": 243
+  },
+  {
+    "file": "TOYOTA (646).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (646).png",
+    "raw_text": "200 W (2015)",
+    "width": 400,
+    "height": 243
+  },
+  {
+    "file": "TOYOTA (647).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (647).png",
+    "raw_text": "S. 2015",
+    "width": 400,
+    "height": 243
+  },
+  {
+    "file": "TOYOTA (648).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (648).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 243
+  },
+  {
+    "file": "TOYOTA (649).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (649).png",
+    "raw_text": "TRD (2024)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (65).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (65).png",
+    "raw_text": "Htoo (1992)",
+    "width": 400,
+    "height": 275
+  },
+  {
+    "file": "TOYOTA (650).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (650).png",
+    "raw_text": "PRO (2021)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (651).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (651).png",
+    "raw_text": "Tocotr (1995)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (652).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (652).png",
+    "raw_text": "(2005)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (653).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (653).png",
+    "raw_text": "eote»",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (654).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (654).png",
+    "raw_text": "(2016)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (655).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (655).png",
+    "raw_text": "Twe Gcmd (2023)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (656).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (656).png",
+    "raw_text": "(2Q3)",
+    "width": 400,
+    "height": 242
+  },
+  {
+    "file": "TOYOTA (657).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (657).png",
+    "raw_text": "(2018)",
+    "width": 400,
+    "height": 241
+  },
+  {
+    "file": "TOYOTA (658).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (658).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 241
+  },
+  {
+    "file": "TOYOTA (659).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (659).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 241
+  },
+  {
+    "file": "TOYOTA (66).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (66).png",
+    "raw_text": "(1979)",
+    "width": 400,
+    "height": 275
+  },
+  {
+    "file": "TOYOTA (660).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (660).png",
+    "raw_text": "TW' 4mnor (2025)",
+    "width": 400,
+    "height": 241
+  },
+  {
+    "file": "TOYOTA (661).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (661).png",
+    "raw_text": "(2016)",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (662).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (662).png",
+    "raw_text": "TRD Red (2@4)",
+    "width": 400,
+    "height": 240
+  },
+  {
+    "file": "TOYOTA (663).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (663).png",
+    "raw_text": "Tocoæ (20tS)",
+    "width": 400,
+    "height": 240
+  },
+  {
+    "file": "TOYOTA (664).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (664).png",
+    "raw_text": "L.md (202",
+    "width": 400,
+    "height": 240
+  },
+  {
+    "file": "TOYOTA (665).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (665).png",
+    "raw_text": "'nd Sooo' (2011)",
+    "width": 400,
+    "height": 240
+  },
+  {
+    "file": "TOYOTA (666).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (666).png",
+    "raw_text": "RASCAR True (2022)",
+    "width": 400,
+    "height": 230
+  },
+  {
+    "file": "TOYOTA (667).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (667).png",
+    "raw_text": "Ceb TRD (2020)",
+    "width": 400,
+    "height": 239
+  },
+  {
+    "file": "TOYOTA (668).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (668).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 239
+  },
+  {
+    "file": "TOYOTA (669).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (669).png",
+    "raw_text": "(2021)",
+    "width": 400,
+    "height": 239
+  },
+  {
+    "file": "TOYOTA (67).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (67).png",
+    "raw_text": "300 sva (2005)",
+    "width": 400,
+    "height": 275
+  },
+  {
+    "file": "TOYOTA (670).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (670).png",
+    "raw_text": "Twe (2013)",
+    "width": 400,
+    "height": 239
+  },
+  {
+    "file": "TOYOTA (671).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (671).png",
+    "raw_text": "(2013)",
+    "width": 400,
+    "height": 238
+  },
+  {
+    "file": "TOYOTA (672).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (672).png",
+    "raw_text": "TWO Teeoæ Pites",
+    "width": 400,
+    "height": 238
+  },
+  {
+    "file": "TOYOTA (673).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (673).png",
+    "raw_text": "CO TRD (2020)",
+    "width": 400,
+    "height": 238
+  },
+  {
+    "file": "TOYOTA (674).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (674).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 238
+  },
+  {
+    "file": "TOYOTA (675).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (675).png",
+    "raw_text": "TW' HEV sedm (2024)",
+    "width": 400,
+    "height": 238
+  },
+  {
+    "file": "TOYOTA (676).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (676).png",
+    "raw_text": "(2024)",
+    "width": 400,
+    "height": 237
+  },
+  {
+    "file": "TOYOTA (677).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (677).png",
+    "raw_text": "(2003)",
+    "width": 400,
+    "height": 237
+  },
+  {
+    "file": "TOYOTA (678).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (678).png",
+    "raw_text": "(2020)",
+    "width": 400,
+    "height": 237
+  },
+  {
+    "file": "TOYOTA (679).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (679).png",
+    "raw_text": "2 (2024)",
+    "width": 400,
+    "height": 237
+  },
+  {
+    "file": "TOYOTA (68).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (68).png",
+    "raw_text": "Puno (2023)",
+    "width": 400,
+    "height": 274
+  },
+  {
+    "file": "TOYOTA (680).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (680).png",
+    "raw_text": "Tundra NASCAR (",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (681).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (681).png",
+    "raw_text": "Tundt8 NASCAR (2020)",
+    "width": 400,
+    "height": 228
+  },
+  {
+    "file": "TOYOTA (682).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (682).png",
+    "raw_text": "Cab (2004)",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (683).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (683).png",
+    "raw_text": "(2012)",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (684).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (684).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (685).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (685).png",
+    "raw_text": "s.i8",
+    "width": 400,
+    "height": 236
+  },
+  {
+    "file": "TOYOTA (686).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (686).png",
+    "raw_text": "TRD PRO eon)",
+    "width": 400,
+    "height": 235
+  },
+  {
+    "file": "TOYOTA (687).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (687).png",
+    "raw_text": "TRD Pro",
+    "width": 400,
+    "height": 235
+  },
+  {
+    "file": "TOYOTA (688).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (688).png",
+    "raw_text": "4x4 CO (2010)",
+    "width": 400,
+    "height": 235
+  },
+  {
+    "file": "TOYOTA (689).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (689).png",
+    "raw_text": "(2024)",
+    "width": 400,
+    "height": 234
+  },
+  {
+    "file": "TOYOTA (69).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (69).png",
+    "raw_text": "cn,.ö« BJ44V \"O (1979)",
+    "width": 400,
+    "height": 274
+  },
+  {
+    "file": "TOYOTA (690).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (690).png",
+    "raw_text": "Segno@13)",
+    "width": 400,
+    "height": 234
+  },
+  {
+    "file": "TOYOTA (691).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (691).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 234
+  },
+  {
+    "file": "TOYOTA (692).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (692).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 234
+  },
+  {
+    "file": "TOYOTA (693).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (693).png",
+    "raw_text": "TWO",
+    "width": 400,
+    "height": 234
+  },
+  {
+    "file": "TOYOTA (694).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (694).png",
+    "raw_text": "(2024)",
+    "width": 400,
+    "height": 233
+  },
+  {
+    "file": "TOYOTA (695).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (695).png",
+    "raw_text": "(2020)",
+    "width": 400,
+    "height": 233
+  },
+  {
+    "file": "TOYOTA (696).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (696).png",
+    "raw_text": "(20B)",
+    "width": 400,
+    "height": 233
+  },
+  {
+    "file": "TOYOTA (697).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (697).png",
+    "raw_text": "CO (2011)",
+    "width": 400,
+    "height": 232
+  },
+  {
+    "file": "TOYOTA (698).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (698).png",
+    "raw_text": "TONE (2018)",
+    "width": 400,
+    "height": 232
+  },
+  {
+    "file": "TOYOTA (699).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (699).png",
+    "raw_text": "Two Aveoa (2012)",
+    "width": 400,
+    "height": 232
+  },
+  {
+    "file": "TOYOTA (7).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (7).png",
+    "raw_text": "Pro CiW Emric Ven (2022)",
+    "width": 400,
+    "height": 367
+  },
+  {
+    "file": "TOYOTA (70).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (70).png",
+    "raw_text": "CruQt JOO (1996)",
+    "width": 400,
+    "height": 273
+  },
+  {
+    "file": "TOYOTA (700).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (700).png",
+    "raw_text": "Shon Cab@86)",
+    "width": 400,
+    "height": 231
+  },
+  {
+    "file": "TOYOTA (701).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (701).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 231
+  },
+  {
+    "file": "TOYOTA (702).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (702).png",
+    "raw_text": "cavy NASCAR (2015)",
+    "width": 400,
+    "height": 231
+  },
+  {
+    "file": "TOYOTA (703).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (703).png",
+    "raw_text": "Toyoe Tune. NASCAR Truck",
+    "width": 400,
+    "height": 230
+  },
+  {
+    "file": "TOYOTA (704).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (704).png",
+    "raw_text": "C.O SR5",
+    "width": 400,
+    "height": 230
+  },
+  {
+    "file": "TOYOTA (705).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (705).png",
+    "raw_text": "Cmtl.q (2024",
+    "width": 400,
+    "height": 230
+  },
+  {
+    "file": "TOYOTA (706).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (706).png",
+    "raw_text": "TRD (2019)",
+    "width": 400,
+    "height": 229
+  },
+  {
+    "file": "TOYOTA (707).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (707).png",
+    "raw_text": "eoto",
+    "width": 400,
+    "height": 229
+  },
+  {
+    "file": "TOYOTA (708).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (708).png",
+    "raw_text": "Rwd (2006)",
+    "width": 400,
+    "height": 220
+  },
+  {
+    "file": "TOYOTA (709).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (709).png",
+    "raw_text": "Tmeo Toeoa»",
+    "width": 400,
+    "height": 228
+  },
+  {
+    "file": "TOYOTA (71).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (71).png",
+    "raw_text": "vm LIH3 (2013)",
+    "width": 400,
+    "height": 273
+  },
+  {
+    "file": "TOYOTA (710).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (710).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 225
+  },
+  {
+    "file": "TOYOTA (711).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (711).png",
+    "raw_text": "Su (2022)",
+    "width": 400,
+    "height": 223
+  },
+  {
+    "file": "TOYOTA (712).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (712).png",
+    "raw_text": "TRD",
+    "width": 400,
+    "height": 223
+  },
+  {
+    "file": "TOYOTA (713).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (713).png",
+    "raw_text": "Tope Tm (2018)",
+    "width": 400,
+    "height": 222
+  },
+  {
+    "file": "TOYOTA (714).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (714).png",
+    "raw_text": "(20 t 2)",
+    "width": 400,
+    "height": 221
+  },
+  {
+    "file": "TOYOTA (715).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (715).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 216
+  },
+  {
+    "file": "TOYOTA (716).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (716).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 216
+  },
+  {
+    "file": "TOYOTA (717).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (717).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 211
+  },
+  {
+    "file": "TOYOTA (718).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (718).png",
+    "raw_text": "Toe— TRO Dön Deign",
+    "width": 400,
+    "height": 205
+  },
+  {
+    "file": "TOYOTA (719).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (719).png",
+    "raw_text": "HO FbN",
+    "width": 400,
+    "height": 201
+  },
+  {
+    "file": "TOYOTA (72).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (72).png",
+    "raw_text": "350 (2005)",
+    "width": 400,
+    "height": 273
+  },
+  {
+    "file": "TOYOTA (720).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (720).png",
+    "raw_text": "QOI n",
+    "width": 400,
+    "height": 202
+  },
+  {
+    "file": "TOYOTA (721).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (721).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 202
+  },
+  {
+    "file": "TOYOTA (722).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (722).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 192
+  },
+  {
+    "file": "TOYOTA (723).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (723).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 174
+  },
+  {
+    "file": "TOYOTA (724).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (724).png",
+    "raw_text": "",
+    "width": 235,
+    "height": 136
+  },
+  {
+    "file": "TOYOTA (73).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (73).png",
+    "raw_text": "coco. væo (2008)",
+    "width": 400,
+    "height": 273
+  },
+  {
+    "file": "TOYOTA (74).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (74).png",
+    "raw_text": "TWs Lnd Cnhe« J20 (1 SSS)",
+    "width": 400,
+    "height": 272
+  },
+  {
+    "file": "TOYOTA (75).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (75).png",
+    "raw_text": "280 SW (2004)",
+    "width": 400,
+    "height": 272
+  },
+  {
+    "file": "TOYOTA (76).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (76).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 272
+  },
+  {
+    "file": "TOYOTA (77).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (77).png",
+    "raw_text": "Toyota Land Cnbet Urited Nations (1991)",
+    "width": 400,
+    "height": 271
+  },
+  {
+    "file": "TOYOTA (78).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (78).png",
+    "raw_text": "",
+    "width": 400,
+    "height": 271
+  },
+  {
+    "file": "TOYOTA (79).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (79).png",
+    "raw_text": "Twot8 FJ40 Imd Cruiwt (1980)",
+    "width": 400,
+    "height": 271
+  },
+  {
+    "file": "TOYOTA (8).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (8).png",
+    "raw_text": "TWO i•ece HSO wa (1982)",
+    "width": 400,
+    "height": 362
+  },
+  {
+    "file": "TOYOTA (80).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (80).png",
+    "raw_text": "Lend Crt*' FJ80 (19%)",
+    "width": 400,
+    "height": 270
+  },
+  {
+    "file": "TOYOTA (81).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (81).png",
+    "raw_text": "T\"\" Crubee FJ40 Open",
+    "width": 400,
+    "height": 270
+  },
+  {
+    "file": "TOYOTA (82).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (82).png",
+    "raw_text": "TW' Woe Pni SW' (1999-2005)",
+    "width": 400,
+    "height": 270
+  },
+  {
+    "file": "TOYOTA (83).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (83).png",
+    "raw_text": "(1997)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (84).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (84).png",
+    "raw_text": "GQO)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (85).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (85).png",
+    "raw_text": "Toyota LeM Cnøec US-smc J60 (1%7)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (86).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (86).png",
+    "raw_text": "FSS",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (87).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (87).png",
+    "raw_text": "Twota L\" Cn±« 300' JIO (1990)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (88).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (88).png",
+    "raw_text": "Tope Cnöe« 3-00* (2003)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (89).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (89).png",
+    "raw_text": "Totoea EW (2017)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (9).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (9).png",
+    "raw_text": "Caset J70 (1990)",
+    "width": 400,
+    "height": 360
+  },
+  {
+    "file": "TOYOTA (90).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (90).png",
+    "raw_text": "TWOO Von HIO (1967)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (91).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (91).png",
+    "raw_text": "(1982)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (92).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (92).png",
+    "raw_text": "BJ 40 (1980)",
+    "width": 400,
+    "height": 269
+  },
+  {
+    "file": "TOYOTA (93).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (93).png",
+    "raw_text": "(2004)",
+    "width": 400,
+    "height": 268
+  },
+  {
+    "file": "TOYOTA (94).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (94).png",
+    "raw_text": "Land Cn.±et 200 V8 Amuone (201S)",
+    "width": 400,
+    "height": 268
+  },
+  {
+    "file": "TOYOTA (95).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (95).png",
+    "raw_text": "2020)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA (96).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (96).png",
+    "raw_text": "Toyota LeM J90 30« (1996)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA (97).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (97).png",
+    "raw_text": "Lmd Cnge« 300' (20N)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA (98).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (98).png",
+    "raw_text": "mux Pe-Up Mk (1997)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA (99).png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA (99).png",
+    "raw_text": "300 Wtg (20M)",
+    "width": 400,
+    "height": 267
+  },
+  {
+    "file": "TOYOTA.png",
+    "path": "/vehicles/blueprints/toyota/TOYOTA.png",
+    "raw_text": "(2014)",
+    "width": 400,
+    "height": 479
+  }
+]

@@ -755,7 +755,7 @@ export default function TintWindowMaterialDialog({
 
                         {/* Ventana Delantera Lateral */}
                         <path
-                          d="M 236,136 L 310,136 L 310,198 L 212,198 Z"
+                          d="M 216,92 L 302,92 L 302,138 L 186,138 Z"
                           fill={shadeFrontSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeFrontSides.fill}
                           fillOpacity={shadeFrontSides.opacity}
                           stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
@@ -767,7 +767,7 @@ export default function TintWindowMaterialDialog({
 
                         {/* Ventana Trasera Lateral */}
                         <path
-                          d="M 316,136 L 382,136 L 376,198 L 316,198 Z"
+                          d="M 326,92 L 388,92 L 419,133 L 419,138 L 326,138 Z"
                           fill={shadeRearSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeRearSides.fill}
                           fillOpacity={shadeRearSides.opacity}
                           stroke={isRearSidesActive ? "#f97316" : shadeRearSides.border}
@@ -779,8 +779,8 @@ export default function TintWindowMaterialDialog({
 
                         {/* Etiquetas de Tonalidad en los Cristales */}
                         <text
-                          x="260"
-                          y="172"
+                          x="250"
+                          y="118"
                           textAnchor="middle"
                           fill="#ffffff"
                           fontSize="10.5"
@@ -790,8 +790,8 @@ export default function TintWindowMaterialDialog({
                           Del. {shadeFrontSides.label}
                         </text>
                         <text
-                          x="346"
-                          y="172"
+                          x="368"
+                          y="118"
                           textAnchor="middle"
                           fill="#ffffff"
                           fontSize="10.5"
@@ -1391,22 +1391,6 @@ export default function TintWindowMaterialDialog({
                           Stock: {mat.virtual_qty} u
                         </span>
                       </div>
-
-                      {/* Marca de agua sutil de la marca en la esquina inferior */}
-                      {is3M && (
-                        <img
-                          src="/brands/3m.png"
-                          alt=""
-                          className="absolute -right-2 -bottom-2 h-12 opacity-5 dark:opacity-10 pointer-events-none object-contain select-none"
-                        />
-                      )}
-                      {isSolarGard && (
-                        <img
-                          src="/brands/solargard.png"
-                          alt=""
-                          className="absolute -right-2 -bottom-2 h-14 opacity-5 dark:opacity-10 pointer-events-none object-contain select-none"
-                        />
-                      )}
                     </div>
                   );
                 })}
