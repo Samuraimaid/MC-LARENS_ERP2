@@ -592,68 +592,7 @@ export default function TintWindowMaterialDialog({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           {/* Lado Izquierdo (5.5 cols en PC): Diagrama Interactivo Grande */}
           <div className="md:col-span-5 lg:col-span-6 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2">
-            {/* Header del Vehículo con Botones Rápidos de Categoría y Rotación */}
-            <div className="w-full space-y-1.5 px-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[11px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate flex items-center gap-1.5">
-                  <Car className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  MODELO: {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.label || "Camioneta Doble Cabina"}
-                </span>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
-                    className="h-6 px-1.5 text-[10px] bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 font-semibold"
-                    title="Alternar orientación de la silueta"
-                  >
-                    <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
-                    {isVehicleHorizontal ? "Horizontal" : "Vertical"}
-                  </Button>
-
-                  <select
-                    value={selectedVehicleType}
-                    onChange={(e) => setSelectedVehicleType(e.target.value)}
-                    className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer max-w-[130px] truncate"
-                  >
-                    {VEHICLE_CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Botones de Categorías Rápidas de Carrocería */}
-              <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
-                {[
-                  { id: "sedan", label: "Sedán" },
-                  { id: "suv_crossover", label: "SUV / 4x4" },
-                  { id: "camioneta_doble_cabina", label: "Doble Cabina" },
-                  { id: "camioneta_cabina_media", label: "Cabina y Media" },
-                  { id: "camioneta_cabina_sencilla", label: "Camioneta 1 Cab." },
-                ].map((cat) => {
-                  const isSelected = selectedVehicleType === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedVehicleType(cat.id)}
-                      className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap transition-all flex-1 text-center ${
-                        isSelected
-                          ? "bg-blue-600 text-white font-bold shadow-xs ring-1 ring-blue-500"
-                          : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Leyenda Interactiva y Táctil */}
             <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-md font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shrink-0 shadow-inner">
@@ -721,17 +660,17 @@ export default function TintWindowMaterialDialog({
 
             {/* Canvas Grande del Vehículo con Sombras Hiper-Realistas */}
             <div
-              className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-2xl bg-zinc-950/15 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 my-auto shadow-inner ${
+              className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-2xl bg-zinc-950/15 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 my-auto shadow-inner w-full ${
                 viewMode === "lateral"
-                  ? "w-full max-w-[380px] sm:max-w-[460px] md:max-w-[500px] h-[200px] sm:h-[240px] md:h-[280px]"
+                  ? "max-w-[540px] h-[240px] sm:h-[280px] md:h-[320px]"
                   : isVehicleHorizontal
-                  ? "w-full max-w-[360px] sm:max-w-[440px] md:max-w-[500px] h-[190px] sm:h-[220px] md:h-[270px]"
-                  : "w-52 sm:w-64 md:w-80 h-[260px] sm:h-[320px] md:h-[420px]"
+                  ? "max-w-[540px] h-[240px] sm:h-[280px] md:h-[320px]"
+                  : "w-56 sm:w-72 md:w-80 h-[300px] sm:h-[360px] md:h-[440px]"
               }`}
             >
               {viewMode === "lateral" ? (
                 /* ================= VISTA LATERAL (PERFIL REAL) ================= */
-                <div className="relative w-full h-full max-w-[500px] aspect-[16/9] flex items-center justify-center p-2">
+                <div className="relative w-full h-full max-w-[540px] aspect-[16/9] flex items-center justify-center p-2">
                   {/* Silueta Lateral Real del Vehículo */}
                   <img
                     src={LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
@@ -830,7 +769,7 @@ export default function TintWindowMaterialDialog({
                 <div
                   className={`transition-all duration-300 shrink-0 ${
                     isVehicleHorizontal
-                      ? "relative w-[210px] h-[380px] transform -rotate-90 origin-center scale-[0.88] sm:scale-[0.98] md:scale-[1.05]"
+                      ? "relative w-[210px] h-[380px] transform -rotate-90 origin-center scale-[1.0] sm:scale-[1.12] md:scale-[1.20]"
                       : "relative w-full h-full"
                   }`}
                 >
