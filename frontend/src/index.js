@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
 import axios from "axios";
-import { startFailoverManager } from "./lib/failoverManager.js";
+import { startFailoverManager } from "@/lib/failoverManager.js";
 
 // Sesión por cookie HTTP: obligatorio en login PIN y acceso LAN.
 axios.defaults.withCredentials = true;

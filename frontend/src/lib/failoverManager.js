@@ -1,6 +1,6 @@
 import axios from "axios";
 import { toast } from "sonner";
-import { getRuntimeApiBase, getRuntimeOrigin, setRuntimeApiBase } from "@/lib/runtimeApi";
+import { getRuntimeApiBase, getRuntimeOrigin, setRuntimeApiBase } from "@/lib/runtimeApi.js";
 
 const HEARTBEAT_MS = 5000;
 const FAILURE_THRESHOLD = 2;
