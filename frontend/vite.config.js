@@ -172,6 +172,7 @@ module.exports = defineConfig(({ mode, command }) => {
       alias: {
         "@": path.resolve(__dirname, "src"),
       },
+      extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
     },
     publicDir: path.resolve(__dirname, "public"),
     server: {
