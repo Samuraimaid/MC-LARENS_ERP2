@@ -743,3 +743,82 @@ export const VEHICLE_GLASS_GEOMETRY = {
     },
   },
 };
+
+/**
+ * Coordenadas de polígonos SVG laterales calibradas por categoría de vehículo (viewBox 0 0 640 360)
+ */
+export const LATERAL_GLASS_GEOMETRY = {
+  camioneta_doble_cabina: {
+    front: "M 216,92 L 302,92 L 302,138 L 186,138 Z",
+    rear: "M 326,92 L 388,92 L 419,133 L 419,138 L 326,138 Z",
+    frontText: { x: 250, y: 118 },
+    rearText: { x: 368, y: 118 },
+  },
+  pickup: {
+    front: "M 216,92 L 302,92 L 302,138 L 186,138 Z",
+    rear: "M 326,92 L 388,92 L 419,133 L 419,138 L 326,138 Z",
+    frontText: { x: 250, y: 118 },
+    rearText: { x: 368, y: 118 },
+  },
+  camioneta_cabina_media: {
+    front: "M 216,92 L 302,92 L 302,138 L 186,138 Z",
+    rear: "M 326,92 L 388,92 L 419,133 L 419,138 L 326,138 Z",
+    frontText: { x: 250, y: 118 },
+    rearText: { x: 368, y: 118 },
+  },
+  camioneta_1_cabina: {
+    front: "M 216,92 L 320,92 L 320,138 L 186,138 Z",
+    rear: "",
+    frontText: { x: 260, y: 118 },
+    rearText: { x: 0, y: 0 },
+  },
+  sedan: {
+    front: "M 188,102 L 272,102 L 272,146 L 168,146 Z",
+    rear: "M 284,102 L 368,102 L 416,138 L 416,146 L 284,146 Z",
+    frontText: { x: 232, y: 126 },
+    rearText: { x: 348, y: 126 },
+  },
+  hatchback: {
+    front: "M 188,102 L 272,102 L 272,146 L 168,146 Z",
+    rear: "M 284,102 L 368,102 L 416,138 L 416,146 L 284,146 Z",
+    frontText: { x: 232, y: 126 },
+    rearText: { x: 348, y: 126 },
+  },
+  suv: {
+    front: "M 205,96 L 288,96 L 288,142 L 180,142 Z",
+    rear: "M 300,96 L 380,96 L 420,135 L 420,142 L 300,142 Z",
+    frontText: { x: 246, y: 120 },
+    rearText: { x: 360, y: 120 },
+  },
+  station_wagon: {
+    front: "M 205,96 L 288,96 L 288,142 L 180,142 Z",
+    rear: "M 300,96 L 380,96 L 420,135 L 420,142 L 300,142 Z",
+    frontText: { x: 246, y: 120 },
+    rearText: { x: 360, y: 120 },
+  },
+  microbus_pasajeros: {
+    front: "M 160,90 L 250,90 L 250,142 L 130,142 Z",
+    rear: "M 260,90 L 460,90 L 460,142 L 260,142 Z",
+    frontText: { x: 200, y: 120 },
+    rearText: { x: 360, y: 120 },
+  },
+  microbus_carga: {
+    front: "M 160,90 L 250,90 L 250,142 L 130,142 Z",
+    rear: "",
+    frontText: { x: 200, y: 120 },
+    rearText: { x: 0, y: 0 },
+  },
+  camion_1_cabina: {
+    front: "M 160,90 L 260,90 L 260,142 L 130,142 Z",
+    rear: "",
+    frontText: { x: 200, y: 120 },
+    rearText: { x: 0, y: 0 },
+  },
+  camion_2_cabinas: {
+    front: "M 160,90 L 240,90 L 240,142 L 130,142 Z",
+    rear: "M 250,90 L 330,90 L 330,142 L 250,142 Z",
+    frontText: { x: 195, y: 120 },
+    rearText: { x: 290, y: 120 },
+  },
+};
+

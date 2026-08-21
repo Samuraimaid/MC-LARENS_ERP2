@@ -39,6 +39,7 @@ import {
   resolveVehicleCategory,
   VEHICLE_CATEGORIES,
   VEHICLE_GLASS_GEOMETRY,
+  LATERAL_GLASS_GEOMETRY,
 } from "@/lib/vehicleSilhouette";
 
 // Zonas y Nombres Oficiales
@@ -525,13 +526,22 @@ export default function TintWindowMaterialDialog({
   };
 
   const activeZoneConfig = config?.zones?.[activeZone];
-  const activeMaterials = activeZoneConfig?.materials || [];
+  const allZoneMaterials = Object.values(config?.zones || {}).flatMap((z) => z?.materials || []);
+  const uniqueAllMaterials = Array.from(new Map(allZoneMaterials.map((m) => [m.id, m])).values());
+  const activeMaterials = (activeZoneConfig?.materials && activeZoneConfig.materials.length > 0)
+    ? activeZoneConfig.materials
+    : uniqueAllMaterials;
   const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
 
   // Filtrado de materiales por Gama Oficial, Familia y Búsqueda
   const filteredMaterials = useMemo(() => {
     return activeMaterials.filter((m) => {
-      const matchGama = selectedGama === "all" || m.gama === selectedGama;
+      const matchGama =
+        selectedGama === "all" ||
+        m.gama === selectedGama ||
+        (selectedGama === "gama_economica" && (m.gama === "economica" || m.gama === "gama_economica")) ||
+        (selectedGama === "gama_premium" && (m.gama === "premium" || m.gama === "gama_premium")) ||
+        (selectedGama === "nano_ceramico" && (m.gama === "nano_ceramico" || m.gama === "nano_ceramica" || m.gama === "ceramico" || m.gama === "ceramica"));
       const matchFamily = familyFilter === "all" || m.family === familyFilter;
       const matchSearch =
         !searchTerm.trim() ||
@@ -736,6 +746,9 @@ export default function TintWindowMaterialDialog({
                     const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                     const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                     const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
+                    const latGeom =
+                      LATERAL_GLASS_GEOMETRY[selectedVehicleType] ||
+                      LATERAL_GLASS_GEOMETRY.camioneta_doble_cabina;
 
                     return (
                       <svg viewBox="0 0 640 360" className="absolute inset-0 w-full h-full select-none">
@@ -754,52 +767,60 @@ export default function TintWindowMaterialDialog({
                         </defs>
 
                         {/* Ventana Delantera Lateral */}
-                        <path
-                          d="M 216,92 L 302,92 L 302,138 L 186,138 Z"
-                          fill={shadeFrontSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeFrontSides.fill}
-                          fillOpacity={shadeFrontSides.opacity}
-                          stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
-                          strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
-                          filter={isFrontSidesActive ? "url(#neonGlowYellowLat)" : undefined}
-                          className="cursor-pointer transition-all hover:opacity-90"
-                          onClick={() => setActiveZone("front_sides")}
-                        />
+                        {latGeom.front && (
+                          <path
+                            d={latGeom.front}
+                            fill={shadeFrontSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeFrontSides.fill}
+                            fillOpacity={shadeFrontSides.opacity}
+                            stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
+                            strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
+                            filter={isFrontSidesActive ? "url(#neonGlowYellowLat)" : undefined}
+                            className="cursor-pointer transition-all hover:opacity-90"
+                            onClick={() => setActiveZone("front_sides")}
+                          />
+                        )}
 
                         {/* Ventana Trasera Lateral */}
-                        <path
-                          d="M 326,92 L 388,92 L 419,133 L 419,138 L 326,138 Z"
-                          fill={shadeRearSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeRearSides.fill}
-                          fillOpacity={shadeRearSides.opacity}
-                          stroke={isRearSidesActive ? "#f97316" : shadeRearSides.border}
-                          strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
-                          filter={isRearSidesActive ? "url(#neonGlowOrangeLat)" : undefined}
-                          className="cursor-pointer transition-all hover:opacity-90"
-                          onClick={() => setActiveZone("rear_sides")}
-                        />
+                        {latGeom.rear && (
+                          <path
+                            d={latGeom.rear}
+                            fill={shadeRearSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeRearSides.fill}
+                            fillOpacity={shadeRearSides.opacity}
+                            stroke={isRearSidesActive ? "#f97316" : shadeRearSides.border}
+                            strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
+                            filter={isRearSidesActive ? "url(#neonGlowOrangeLat)" : undefined}
+                            className="cursor-pointer transition-all hover:opacity-90"
+                            onClick={() => setActiveZone("rear_sides")}
+                          />
+                        )}
 
                         {/* Etiquetas de Tonalidad en los Cristales */}
-                        <text
-                          x="250"
-                          y="118"
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          fontSize="10.5"
-                          fontWeight="bold"
-                          className="pointer-events-none select-none drop-shadow"
-                        >
-                          Del. {shadeFrontSides.label}
-                        </text>
-                        <text
-                          x="368"
-                          y="118"
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          fontSize="10.5"
-                          fontWeight="bold"
-                          className="pointer-events-none select-none drop-shadow"
-                        >
-                          Tras. {shadeRearSides.label}
-                        </text>
+                        {latGeom.frontText && (
+                          <text
+                            x={latGeom.frontText.x}
+                            y={latGeom.frontText.y}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize="10.5"
+                            fontWeight="bold"
+                            className="pointer-events-none select-none drop-shadow"
+                          >
+                            Del. {shadeFrontSides.label}
+                          </text>
+                        )}
+                        {latGeom.rearText && latGeom.rearText.x > 0 && (
+                          <text
+                            x={latGeom.rearText.x}
+                            y={latGeom.rearText.y}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize="10.5"
+                            fontWeight="bold"
+                            className="pointer-events-none select-none drop-shadow"
+                          >
+                            Tras. {shadeRearSides.label}
+                          </text>
+                        )}
                       </svg>
                     );
                   })()}
