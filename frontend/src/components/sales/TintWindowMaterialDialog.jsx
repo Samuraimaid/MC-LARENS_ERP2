@@ -1095,7 +1095,7 @@ export default function TintWindowMaterialDialog({
                     <Search className="h-3 w-3 absolute left-2 top-2 text-zinc-400" />
                     <Input
                       type="text"
-                      placeholder="Buscar tono, medida o tecnología (ej. 5%, 20%, 40\", Supreme)..."
+                      placeholder={'Buscar tono, medida o tecnología (ej. 5%, 20%, 40", Supreme)...'}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="h-7 text-[10px] pl-6 pr-2 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
