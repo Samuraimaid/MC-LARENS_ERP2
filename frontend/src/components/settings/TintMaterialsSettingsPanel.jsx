@@ -474,10 +474,12 @@ export default function TintMaterialsSettingsPanel() {
             <CardHeader className="py-3 px-4 bg-zinc-50/70 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
+                  {mat.brand === "3M" || String(mat.id).includes("3m") ? (
+                    <img src="/brands/3m.png" alt="3M" className="h-5 max-w-[55px] object-contain drop-shadow-sm" />
+                  ) : (
+                    <img src="/brands/solargard.png" alt="Solar Gard" className="h-5 max-w-[65px] object-contain drop-shadow-sm" />
+                  )}
                   <span className="font-bold text-sm text-zinc-900 dark:text-white">{mat.name}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono">
-                    {mat.brand || "Solar Gard"}
-                  </Badge>
                   <Badge variant="secondary" className="text-[10px]">
                     {mat.gama_label || mat.family}
                   </Badge>

@@ -183,20 +183,42 @@ export function getRealisticTintShade(materialId, secondLayerEnabled = false) {
   };
 }
 
+// Mapeo de siluetas laterales de vehículos en alta definición
+export const LATERAL_VEHICLE_IMAGES = {
+  sedan: "/vehicles/thumbnails/sedan.png",
+  suv: "/vehicles/thumbnails/suv.png",
+  suv_crossover: "/vehicles/thumbnails/suv.png",
+  camioneta_doble_cabina: "/vehicles/thumbnails/camioneta-doble-cabina.png",
+  camioneta_cabina_media: "/vehicles/thumbnails/camioneta-cabina-y-media.png",
+  camioneta_cabina_sencilla: "/vehicles/thumbnails/camioneta-1-cabina.png",
+  camioneta_1_cabina: "/vehicles/thumbnails/camioneta-1-cabina.png",
+  microbus_pasajeros: "/vehicles/thumbnails/microbus-pasajeros.png",
+  microbus_carga: "/vehicles/thumbnails/microbus-carga.png",
+  microbus_techo_alto: "/vehicles/thumbnails/microbus-pasajeros.png",
+  camion_1_cabina: "/vehicles/thumbnails/camion-carga.png",
+  camion_2_cabinas: "/vehicles/thumbnails/camion-carga.png",
+  camion_carga_furgon: "/vehicles/thumbnails/camion-carga.png",
+  station_wagon: "/vehicles/thumbnails/station-wagon.png",
+  hatchback: "/vehicles/thumbnails/hatchback.png",
+  convertible: "/vehicles/thumbnails/convertible.png",
+  bus_mediano_coaster: "/vehicles/thumbnails/microbus-pasajeros.png",
+  bus_grande_marcopolo: "/vehicles/thumbnails/cabezal.png",
+};
+
 export default function TintWindowMaterialDialog({
   isOpen,
   onClose,
+  vehicle,
+  initialPlan,
   onApplyPlan,
-  vehicle = null,
-  initialPlan = null,
-  currency = "NIO",
-  exchangeRate = 36.5,
+  salePrice = 0,
 }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState(null);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
+  const [viewMode, setViewMode] = useState("lateral"); // "lateral" | "top"
   const [orientation, setOrientation] = useState("horizontal"); // "horizontal" | "vertical"
   const [selectedGama, setSelectedGama] = useState("all");
   const [familyFilter, setFamilyFilter] = useState("all");
@@ -645,241 +667,373 @@ export default function TintWindowMaterialDialog({
               })}
             </div>
 
+            {/* Selector de Modo de Vista: Lateral (Perfil Real) vs Superior (Planta) */}
+            <div className="flex items-center justify-between w-full max-w-sm md:max-w-md gap-2 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shadow-xs">
+              <div className="flex items-center gap-1 flex-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("lateral")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-[10.5px] font-bold transition-all ${
+                    viewMode === "lateral"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  }`}
+                >
+                  <span>🚗 Vista Lateral</span>
+                  <span className="text-[8.5px] opacity-80">(Perfil Real)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("top")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-[10.5px] font-bold transition-all ${
+                    viewMode === "top"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  }`}
+                >
+                  <span>🛸 Vista Superior</span>
+                  <span className="text-[8.5px] opacity-80">(Planta)</span>
+                </button>
+              </div>
+
+              {viewMode === "top" && (
+                <button
+                  type="button"
+                  onClick={() => setOrientation((prev) => (prev === "horizontal" ? "vertical" : "horizontal"))}
+                  className="flex items-center gap-1 px-2 py-1 text-[9.5px] font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-2xs hover:bg-zinc-50"
+                  title="Cambiar orientación"
+                >
+                  <RotateCw className="h-2.5 w-2.5" />
+                  <span>{orientation === "horizontal" ? "Vertical" : "Horizontal"}</span>
+                </button>
+              )}
+            </div>
+
             {/* Canvas Grande del Vehículo con Sombras Hiper-Realistas */}
             <div
               className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-2xl bg-zinc-950/15 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 my-auto shadow-inner ${
-                isVehicleHorizontal
+                viewMode === "lateral"
+                  ? "w-full max-w-[380px] sm:max-w-[460px] md:max-w-[500px] h-[200px] sm:h-[240px] md:h-[280px]"
+                  : isVehicleHorizontal
                   ? "w-full max-w-[360px] sm:max-w-[440px] md:max-w-[500px] h-[190px] sm:h-[220px] md:h-[270px]"
                   : "w-52 sm:w-64 md:w-80 h-[260px] sm:h-[320px] md:h-[420px]"
               }`}
             >
-              <div
-                className={`transition-all duration-300 shrink-0 ${
-                  isVehicleHorizontal
-                    ? "relative w-[210px] h-[380px] transform -rotate-90 origin-center scale-[0.88] sm:scale-[0.98] md:scale-[1.05]"
-                    : "relative w-full h-full"
-                }`}
-              >
-                {/* 1. Imagen Top-Down Realista de la Carrocería */}
-                <img
-                  src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
-                  alt="Vehículo Top-Down"
-                  className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
-                />
+              {viewMode === "lateral" ? (
+                /* ================= VISTA LATERAL (PERFIL REAL) ================= */
+                <div className="relative w-full h-full max-w-[500px] aspect-[16/9] flex items-center justify-center p-2">
+                  {/* Silueta Lateral Real del Vehículo */}
+                  <img
+                    src={LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
+                    alt="Silueta Lateral Vehículo"
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-all duration-300"
+                  />
 
-                {/* 2. Capa SVG Interactiva con Shaders Hiper-Realistas */}
-                {(() => {
-                  const geom =
-                    VEHICLE_GLASS_GEOMETRY[selectedVehicleType] ||
-                    VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
-                    VEHICLE_GLASS_GEOMETRY.sedan;
+                  {/* Capa SVG Interactiva para Ventanas Laterales */}
+                  {(() => {
+                    const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
+                    const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
+                    const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
+                    const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
+                    const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
 
-                  const shadeWindshield = getRealisticTintShade(selectedMaterials.windshield, secondLayers.windshield?.enabled);
-                  const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
-                  const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
-                  const shadeRear = getRealisticTintShade(selectedMaterials.rear, secondLayers.rear?.enabled);
+                    return (
+                      <svg viewBox="0 0 640 360" className="absolute inset-0 w-full h-full select-none">
+                        <defs>
+                          <linearGradient id="camaleonGradientLateral" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
+                            <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
+                            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
+                          </linearGradient>
+                          <filter id="neonGlowYellowLat" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#eab308" floodOpacity="0.95" />
+                          </filter>
+                          <filter id="neonGlowOrangeLat" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#f97316" floodOpacity="0.95" />
+                          </filter>
+                        </defs>
 
-                  const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
-
-                  const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
-                  const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
-                  const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
-
-                  return (
-                    <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
-                      <defs>
-                        {/* Gradiente Tornasol para Camaleón 20% */}
-                        <linearGradient id="camaleonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
-                          <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
-                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
-                        </linearGradient>
-
-                        {/* Filtros de Neón para Zona Activa */}
-                        <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.95" />
-                        </filter>
-                        <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#eab308" floodOpacity="0.95" />
-                        </filter>
-                        <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#f97316" floodOpacity="0.95" />
-                        </filter>
-                        <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#a855f7" floodOpacity="0.95" />
-                        </filter>
-                      </defs>
-
-                      {/* 1. PARABRISAS DELANTERO */}
-                      <path
-                        d={geom.windshield.d}
-                        fill={shadeWindshield.fill}
-                        fillOpacity={shadeWindshield.opacity}
-                        stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
-                        strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
-                        filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
-                        className="cursor-pointer transition-all hover:opacity-90"
-                        onClick={() => setActiveZone("windshield")}
-                      />
-
-                      {/* Bandas de Sol Parabrisas */}
-                      {geom.windshield.topStrip && (
+                        {/* Ventana Delantera Lateral */}
                         <path
-                          d={geom.windshield.topStrip}
-                          fill={sunstrips.windshield_top?.enabled ? "#020617" : "transparent"}
-                          fillOpacity={sunstrips.windshield_top?.enabled ? 0.95 : 0.01}
-                          stroke={sunstrips.windshield_top?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
-                          strokeWidth={sunstrips.windshield_top?.enabled ? "1.5" : "0.5"}
-                          strokeDasharray={sunstrips.windshield_top?.enabled ? undefined : "2,2"}
-                          className="cursor-pointer transition-all hover:opacity-80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveZone("windshield");
-                            handleToggleSunstrip("windshield_top", !sunstrips.windshield_top?.enabled);
-                          }}
-                        />
-                      )}
-
-                      {geom.windshield.bottomStrip && (
-                        <path
-                          d={geom.windshield.bottomStrip}
-                          fill={sunstrips.windshield_bottom?.enabled ? "#020617" : "transparent"}
-                          fillOpacity={sunstrips.windshield_bottom?.enabled ? 0.95 : 0.01}
-                          stroke={sunstrips.windshield_bottom?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
-                          strokeWidth={sunstrips.windshield_bottom?.enabled ? "1.5" : "0.5"}
-                          strokeDasharray={sunstrips.windshield_bottom?.enabled ? undefined : "2,2"}
-                          className="cursor-pointer transition-all hover:opacity-80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveZone("windshield");
-                            handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
-                          }}
-                        />
-                      )}
-
-                      <text
-                        x="100"
-                        y={geom.windshield.textY}
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        fontSize="7.5"
-                        fontWeight="bold"
-                        transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
-                        className="pointer-events-none select-none drop-shadow"
-                      >
-                        Parabrisas del.
-                      </text>
-                      <text
-                        x="100"
-                        y={geom.windshield.subY}
-                        textAnchor="middle"
-                        fill="#e0f2fe"
-                        fontSize="7"
-                        fontWeight="600"
-                        transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
-                        className="pointer-events-none select-none"
-                      >
-                        {shadeWindshield.label}
-                        {secondLayers.windshield?.enabled ? " + 2da" : ""}
-                      </text>
-
-                      {/* 2. VENTANAS DELANTERAS */}
-                      {geom.front_sides.map((p, idx) => (
-                        <path
-                          key={`fs-${idx}`}
-                          d={p.d}
-                          fill={shadeFrontSides.fill}
+                          d="M 236,136 L 310,136 L 310,198 L 212,198 Z"
+                          fill={shadeFrontSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeFrontSides.fill}
                           fillOpacity={shadeFrontSides.opacity}
                           stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
                           strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
-                          filter={isFrontSidesActive ? "url(#neonGlowYellow)" : undefined}
+                          filter={isFrontSidesActive ? "url(#neonGlowYellowLat)" : undefined}
                           className="cursor-pointer transition-all hover:opacity-90"
                           onClick={() => setActiveZone("front_sides")}
                         />
-                      ))}
 
-                      {/* 3. VENTANAS TRASERAS */}
-                      {geom.rear_sides.map((p, idx) => (
+                        {/* Ventana Trasera Lateral */}
                         <path
-                          key={`rs-${idx}`}
-                          d={p.d}
-                          fill={shadeRearSides.fill}
+                          d="M 316,136 L 382,136 L 376,198 L 316,198 Z"
+                          fill={shadeRearSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeRearSides.fill}
                           fillOpacity={shadeRearSides.opacity}
-                          stroke={
-                            isSidesLinkedActive
-                              ? "#eab308"
-                              : activeZone === "rear_sides"
-                              ? "#f97316"
-                              : shadeRearSides.border
-                          }
+                          stroke={isRearSidesActive ? "#f97316" : shadeRearSides.border}
                           strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
-                          filter={
-                            isSidesLinkedActive
-                              ? "url(#neonGlowYellow)"
-                              : activeZone === "rear_sides"
-                              ? "url(#neonGlowOrange)"
-                              : undefined
-                          }
+                          filter={isRearSidesActive ? "url(#neonGlowOrangeLat)" : undefined}
                           className="cursor-pointer transition-all hover:opacity-90"
                           onClick={() => setActiveZone("rear_sides")}
                         />
-                      ))}
 
-                      {/* 4. PARABRISAS TRASERO */}
-                      <path
-                        d={geom.rear.d}
-                        fill={shadeRear.fill}
-                        fillOpacity={shadeRear.opacity}
-                        stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
-                        strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
-                        filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
-                        className="cursor-pointer transition-all hover:opacity-90"
-                        onClick={() => setActiveZone("rear")}
-                      />
+                        {/* Etiquetas de Tonalidad en los Cristales */}
+                        <text
+                          x="260"
+                          y="172"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="10.5"
+                          fontWeight="bold"
+                          className="pointer-events-none select-none drop-shadow"
+                        >
+                          Del. {shadeFrontSides.label}
+                        </text>
+                        <text
+                          x="346"
+                          y="172"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="10.5"
+                          fontWeight="bold"
+                          className="pointer-events-none select-none drop-shadow"
+                        >
+                          Tras. {shadeRearSides.label}
+                        </text>
+                      </svg>
+                    );
+                  })()}
+                </div>
+              ) : (
+                /* ================= VISTA SUPERIOR (PLANTA) ================= */
+                <div
+                  className={`transition-all duration-300 shrink-0 ${
+                    isVehicleHorizontal
+                      ? "relative w-[210px] h-[380px] transform -rotate-90 origin-center scale-[0.88] sm:scale-[0.98] md:scale-[1.05]"
+                      : "relative w-full h-full"
+                  }`}
+                >
+                  {/* 1. Imagen Top-Down Realista de la Carrocería */}
+                  <img
+                    src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
+                    alt="Vehículo Top-Down"
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
+                  />
 
-                      {/* Línea visual de empalme horizontal si está activo */}
-                      {empalmeRear && (
-                        <line
-                          x1="70"
-                          y1={geom.rear.textY}
-                          x2="130"
-                          y2={geom.rear.textY}
-                          stroke="#f59e0b"
-                          strokeWidth="1"
-                          strokeDasharray="2,2"
-                          className="pointer-events-none"
+                  {/* 2. Capa SVG Interactiva con Shaders Hiper-Realistas */}
+                  {(() => {
+                    const geom =
+                      VEHICLE_GLASS_GEOMETRY[selectedVehicleType] ||
+                      VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
+                      VEHICLE_GLASS_GEOMETRY.sedan;
+
+                    const shadeWindshield = getRealisticTintShade(selectedMaterials.windshield, secondLayers.windshield?.enabled);
+                    const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
+                    const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
+                    const shadeRear = getRealisticTintShade(selectedMaterials.rear, secondLayers.rear?.enabled);
+
+                    const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
+
+                    const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
+                    const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
+                    const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
+
+                    return (
+                      <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
+                        <defs>
+                          {/* Gradiente Tornasol para Camaleón 20% */}
+                          <linearGradient id="camaleonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
+                            <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
+                            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
+                          </linearGradient>
+
+                          {/* Filtros de Neón para Zona Activa */}
+                          <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.95" />
+                          </filter>
+                          <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#eab308" floodOpacity="0.95" />
+                          </filter>
+                          <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#f97316" floodOpacity="0.95" />
+                          </filter>
+                          <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#a855f7" floodOpacity="0.95" />
+                          </filter>
+                        </defs>
+
+                        {/* 1. PARABRISAS DELANTERO */}
+                        <path
+                          d={geom.windshield.d}
+                          fill={shadeWindshield.fill}
+                          fillOpacity={shadeWindshield.opacity}
+                          stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
+                          strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
+                          filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
+                          className="cursor-pointer transition-all hover:opacity-90"
+                          onClick={() => setActiveZone("windshield")}
                         />
-                      )}
 
-                      <text
-                        x="100"
-                        y={geom.rear.textY}
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        fontSize="7.5"
-                        fontWeight="bold"
-                        transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
-                        className="pointer-events-none select-none drop-shadow"
-                      >
-                        Parabrisas Tras.
-                      </text>
-                      <text
-                        x="100"
-                        y={geom.rear.subY}
-                        textAnchor="middle"
-                        fill="#f3e8ff"
-                        fontSize="7"
-                        fontWeight="600"
-                        transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
-                        className="pointer-events-none select-none"
-                      >
-                        {empalmeRear ? "Empalme 2x20\"" : shadeRear.label}
-                        {secondLayers.rear?.enabled ? " + 2da" : ""}
-                      </text>
-                    </svg>
-                  );
-                })()}
-              </div>
+                        {/* Bandas de Sol Parabrisas */}
+                        {geom.windshield.topStrip && (
+                          <path
+                            d={geom.windshield.topStrip}
+                            fill={sunstrips.windshield_top?.enabled ? "#020617" : "transparent"}
+                            fillOpacity={sunstrips.windshield_top?.enabled ? 0.95 : 0.01}
+                            stroke={sunstrips.windshield_top?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
+                            strokeWidth={sunstrips.windshield_top?.enabled ? "1.5" : "0.5"}
+                            strokeDasharray={sunstrips.windshield_top?.enabled ? undefined : "2,2"}
+                            className="cursor-pointer transition-all hover:opacity-80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveZone("windshield");
+                              handleToggleSunstrip("windshield_top", !sunstrips.windshield_top?.enabled);
+                            }}
+                          />
+                        )}
+
+                        {geom.windshield.bottomStrip && (
+                          <path
+                            d={geom.windshield.bottomStrip}
+                            fill={sunstrips.windshield_bottom?.enabled ? "#020617" : "transparent"}
+                            fillOpacity={sunstrips.windshield_bottom?.enabled ? 0.95 : 0.01}
+                            stroke={sunstrips.windshield_bottom?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
+                            strokeWidth={sunstrips.windshield_bottom?.enabled ? "1.5" : "0.5"}
+                            strokeDasharray={sunstrips.windshield_bottom?.enabled ? undefined : "2,2"}
+                            className="cursor-pointer transition-all hover:opacity-80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveZone("windshield");
+                              handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
+                            }}
+                          />
+                        )}
+
+                        <text
+                          x="100"
+                          y={geom.windshield.textY}
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="7.5"
+                          fontWeight="bold"
+                          transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
+                          className="pointer-events-none select-none drop-shadow"
+                        >
+                          Parabrisas del.
+                        </text>
+                        <text
+                          x="100"
+                          y={geom.windshield.subY}
+                          textAnchor="middle"
+                          fill="#e0f2fe"
+                          fontSize="7"
+                          fontWeight="600"
+                          transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
+                          className="pointer-events-none select-none"
+                        >
+                          {shadeWindshield.label}
+                          {secondLayers.windshield?.enabled ? " + 2da" : ""}
+                        </text>
+
+                        {/* 2. VENTANAS DELANTERAS */}
+                        {geom.front_sides.map((p, idx) => (
+                          <path
+                            key={`fs-${idx}`}
+                            d={p.d}
+                            fill={shadeFrontSides.fill}
+                            fillOpacity={shadeFrontSides.opacity}
+                            stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
+                            strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
+                            filter={isFrontSidesActive ? "url(#neonGlowYellow)" : undefined}
+                            className="cursor-pointer transition-all hover:opacity-90"
+                            onClick={() => setActiveZone("front_sides")}
+                          />
+                        ))}
+
+                        {/* 3. VENTANAS TRASERAS */}
+                        {geom.rear_sides.map((p, idx) => (
+                          <path
+                            key={`rs-${idx}`}
+                            d={p.d}
+                            fill={shadeRearSides.fill}
+                            fillOpacity={shadeRearSides.opacity}
+                            stroke={
+                              isSidesLinkedActive
+                                ? "#eab308"
+                                : activeZone === "rear_sides"
+                                ? "#f97316"
+                                : shadeRearSides.border
+                            }
+                            strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
+                            filter={
+                              isSidesLinkedActive
+                                ? "url(#neonGlowYellow)"
+                                : activeZone === "rear_sides"
+                                ? "url(#neonGlowOrange)"
+                                : undefined
+                            }
+                            className="cursor-pointer transition-all hover:opacity-90"
+                            onClick={() => setActiveZone("rear_sides")}
+                          />
+                        ))}
+
+                        {/* 4. PARABRISAS TRASERO */}
+                        <path
+                          d={geom.rear.d}
+                          fill={shadeRear.fill}
+                          fillOpacity={shadeRear.opacity}
+                          stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
+                          strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
+                          filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
+                          className="cursor-pointer transition-all hover:opacity-90"
+                          onClick={() => setActiveZone("rear")}
+                        />
+
+                        {/* Línea visual de empalme horizontal si está activo */}
+                        {empalmeRear && (
+                          <line
+                            x1="70"
+                            y1={geom.rear.textY}
+                            x2="130"
+                            y2={geom.rear.textY}
+                            stroke="#f59e0b"
+                            strokeWidth="1"
+                            strokeDasharray="2,2"
+                            className="pointer-events-none"
+                          />
+                        )}
+
+                        <text
+                          x="100"
+                          y={geom.rear.textY}
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="7.5"
+                          fontWeight="bold"
+                          transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
+                          className="pointer-events-none select-none drop-shadow"
+                        >
+                          Parabrisas Tras.
+                        </text>
+                        <text
+                          x="100"
+                          y={geom.rear.subY}
+                          textAnchor="middle"
+                          fill="#f3e8ff"
+                          fontSize="7"
+                          fontWeight="600"
+                          transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
+                          className="pointer-events-none select-none"
+                        >
+                          {empalmeRear ? "Empalme 2x20\"" : shadeRear.label}
+                          {secondLayers.rear?.enabled ? " + 2da" : ""}
+                        </text>
+                      </svg>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1197,22 +1351,26 @@ export default function TintWindowMaterialDialog({
                         </div>
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10 space-y-0.5 min-w-[80px]">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10 space-y-1 min-w-[90px]">
                         <div className="flex items-center gap-1 shrink-0">
                           {is3M ? (
-                            <span className="text-[9px] font-black font-mono text-red-600 bg-red-50 dark:bg-red-950/60 px-1 py-0.5 rounded border border-red-200 dark:border-red-900">
-                              3M™
-                            </span>
+                            <img
+                              src="/brands/3m.png"
+                              alt="3M"
+                              className="h-4 sm:h-5 max-w-[60px] object-contain drop-shadow-sm"
+                            />
                           ) : isSolarGard ? (
-                            <span className="text-[9px] font-bold font-mono text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 px-1 py-0.5 rounded border border-sky-200 dark:border-sky-900">
-                              SOLAR GARD®
-                            </span>
+                            <img
+                              src="/brands/solargard.png"
+                              alt="Solar Gard"
+                              className="h-4 sm:h-5 max-w-[70px] object-contain drop-shadow-sm"
+                            />
                           ) : isRaybar ? (
-                            <span className="text-[9px] font-bold font-mono text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1 py-0.5 rounded border border-amber-200 dark:border-amber-900">
+                            <span className="text-[9px] font-bold font-mono text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900">
                               RAYBAR
                             </span>
                           ) : isQ1 ? (
-                            <span className="text-[9px] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
+                            <span className="text-[9px] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
                               Q1
                             </span>
                           ) : null}
@@ -1233,6 +1391,22 @@ export default function TintWindowMaterialDialog({
                           Stock: {mat.virtual_qty} u
                         </span>
                       </div>
+
+                      {/* Marca de agua sutil de la marca en la esquina inferior */}
+                      {is3M && (
+                        <img
+                          src="/brands/3m.png"
+                          alt=""
+                          className="absolute -right-2 -bottom-2 h-12 opacity-5 dark:opacity-10 pointer-events-none object-contain select-none"
+                        />
+                      )}
+                      {isSolarGard && (
+                        <img
+                          src="/brands/solargard.png"
+                          alt=""
+                          className="absolute -right-2 -bottom-2 h-14 opacity-5 dark:opacity-10 pointer-events-none object-contain select-none"
+                        />
+                      )}
                     </div>
                   );
                 })}
