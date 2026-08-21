@@ -9,3 +9,10 @@ frontend/node_modules/
 backend/.venv/
 deploy/.env
 *.log
+backend/data/blueprints_raw/
+backend/data/blueprints_clean/
+*.zip
+*.pdf
+*.eps
+*.ai
+

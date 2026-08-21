@@ -16,3 +16,10 @@ frontend/dist
 .DS_Store
 Thumbs.db
 *.log
+backend/data/blueprints_raw
+backend/data/blueprints_clean
+*.zip
+*.pdf
+*.eps
+*.ai
+
