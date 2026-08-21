@@ -4,6 +4,7 @@
  */
 
 import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
+import masterBlueprintCatalog from "@/data/vehicle_blueprints_master_index.json";
 
 export const VEHICLE_CATEGORIES = [
   { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
@@ -47,6 +48,65 @@ const CATEGORY_ALIASES = {
 };
 
 /**
+ * Searches the 8,692-blueprint master catalog for a specific vehicle brand, model, and year.
+ * Returns the exact blueprint match if available, or null.
+ */
+export function findMatchingVehicleBlueprint(vehicle) {
+  if (!vehicle) return null;
+  const brand = String(vehicle.brand || "").toLowerCase().trim();
+  const model = String(vehicle.model || vehicle.descriptor || "").toLowerCase().trim();
+  const year = parseInt(vehicle.year, 10) || null;
+
+  const blueprints = masterBlueprintCatalog?.blueprints || [];
+  if (!blueprints.length) return null;
+
+  const normBrand = brand.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
+  const brandMatches = blueprints.filter((b) => {
+    const bSlug = String(b.brand_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return bSlug === normBrand || normBrand.includes(bSlug) || bSlug.includes(normBrand);
+  });
+
+  if (brandMatches.length === 0) return null;
+
+  const modelTokens = model
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .split(/[\s\-_/()\[\]]+/)
+    .filter((t) => t.length >= 2 && !["de", "del", "la", "el", "los", "las", "cabina", "doble", "4x4", "4x2", "ano", "año"].includes(t));
+
+  let bestMatch = null;
+  let bestScore = -1;
+
+  for (const b of brandMatches) {
+    let score = 0;
+    const bModel = String(b.model_name || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+    const bRaw = String(b.raw_header_text || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+    for (const token of modelTokens) {
+      if (bModel.includes(token) || bRaw.includes(token)) {
+        score += 10;
+      }
+    }
+
+    if (year && b.year_start) {
+      if (year >= b.year_start && (!b.year_end || year <= b.year_end)) {
+        score += 15;
+      } else if (Math.abs(year - b.year_start) <= 3) {
+        score += 5;
+      }
+    }
+
+    if (score > bestScore && score >= 10) {
+      bestScore = score;
+      bestMatch = b;
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
  * Resolves the vehicle category based on vehicle object metadata and comprehensive ERP vehicle catalog
  */
 export function resolveVehicleCategory(vehicle) {
@@ -63,6 +123,15 @@ export function resolveVehicleCategory(vehicle) {
 
   if (KNOWN_CATEGORIES.has(directSlug)) return directSlug;
   if (CATEGORY_ALIASES[directSlug]) return CATEGORY_ALIASES[directSlug];
+
+  // 1.1 Match from 8,692-blueprint Master Engineering Catalog
+  const matchedBp = findMatchingVehicleBlueprint(vehicle);
+  if (matchedBp?.category && KNOWN_CATEGORIES.has(matchedBp.category)) {
+    return matchedBp.category;
+  }
+  if (matchedBp?.category && CATEGORY_ALIASES[matchedBp.category]) {
+    return CATEGORY_ALIASES[matchedBp.category];
+  }
 
   const brand = String(vehicle.brand || "").trim().toUpperCase();
   const descriptor = String(vehicle.descriptor || vehicle.model || "").trim();

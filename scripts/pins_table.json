@@ -1,0 +1,506 @@
+[
+  {
+    "name": "Ariana Joaquin",
+    "role": "bodegas",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.bodegas@pin.local",
+    "login_pin": "41310001",
+    "attendance_pin": "4131"
+  },
+  {
+    "name": "Leonardo Mariana",
+    "role": "bodegas",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.bodegas@pin.local",
+    "login_pin": "41200002",
+    "attendance_pin": "4120"
+  },
+  {
+    "name": "Mia Andres",
+    "role": "bodegas",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.bodegas@pin.local",
+    "login_pin": "41090003",
+    "attendance_pin": "4109"
+  },
+  {
+    "name": "Test Bodegas",
+    "role": "bodegas",
+    "branch": "Todas / Central",
+    "email": "test_bodegas@local",
+    "login_pin": "00110004",
+    "attendance_pin": "0011"
+  },
+  {
+    "name": "Emiliano Mia",
+    "role": "cajero",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.cajero@pin.local",
+    "login_pin": "41040005",
+    "attendance_pin": "4104"
+  },
+  {
+    "name": "Martina Iker",
+    "role": "cajero",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.cajero@pin.local",
+    "login_pin": "41150006",
+    "attendance_pin": "4115"
+  },
+  {
+    "name": "Sebastian Isabela",
+    "role": "cajero",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.cajero@pin.local",
+    "login_pin": "41260007",
+    "attendance_pin": "4126"
+  },
+  {
+    "name": "Test Cajero",
+    "role": "cajero",
+    "branch": "Todas / Central",
+    "email": "test_cajero@local",
+    "login_pin": "00040008",
+    "attendance_pin": "0004"
+  },
+  {
+    "name": "Test Coord. Instalaciones",
+    "role": "coordinador_instalaciones",
+    "branch": "Todas / Central",
+    "email": "test_coordinador_instalaciones@local",
+    "login_pin": "00130009",
+    "attendance_pin": "0013"
+  },
+  {
+    "name": "Test Coord. Polarizados",
+    "role": "coordinador_polarizados",
+    "branch": "Todas / Central",
+    "email": "test_coordinador_polarizados@local",
+    "login_pin": "00140000",
+    "attendance_pin": "0014"
+  },
+  {
+    "name": "Emiliano Valeria",
+    "role": "electrico",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.electrico@pin.local",
+    "login_pin": "41280001",
+    "attendance_pin": "4128"
+  },
+  {
+    "name": "Joaquin Sofia",
+    "role": "electrico",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.electrico@pin.local",
+    "login_pin": "41060002",
+    "attendance_pin": "4106"
+  },
+  {
+    "name": "Julia Bruno",
+    "role": "electrico",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.electrico@pin.local",
+    "login_pin": "41170003",
+    "attendance_pin": "4117"
+  },
+  {
+    "name": "Test Eléctrico",
+    "role": "electrico",
+    "branch": "Todas / Central",
+    "email": "test_electrico@local",
+    "login_pin": "00080004",
+    "attendance_pin": "0008"
+  },
+  {
+    "name": "Test Entregador",
+    "role": "entregador",
+    "branch": "Todas / Central",
+    "email": "test_entregador@local",
+    "login_pin": "00150005",
+    "attendance_pin": "0015"
+  },
+  {
+    "name": "Mateo Sara",
+    "role": "gerencia",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.gerencia@pin.local",
+    "login_pin": "41120006",
+    "attendance_pin": "4112"
+  },
+  {
+    "name": "Noelia Samuel",
+    "role": "gerencia",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.gerencia@pin.local",
+    "login_pin": "41230007",
+    "attendance_pin": "4123"
+  },
+  {
+    "name": "Test Admin",
+    "role": "gerencia",
+    "branch": "Todas / Central",
+    "email": "test.admin@mundodeaccesorios.com",
+    "login_pin": "10000018",
+    "attendance_pin": "1018"
+  },
+  {
+    "name": "Test Gerencia",
+    "role": "gerencia",
+    "branch": "Todas / Central",
+    "email": "test_gerencia@local",
+    "login_pin": "00010009",
+    "attendance_pin": "0001"
+  },
+  {
+    "name": "Valeria Emiliano",
+    "role": "gerencia",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.gerencia@pin.local",
+    "login_pin": "41010000",
+    "attendance_pin": "4101"
+  },
+  {
+    "name": "Xinon",
+    "role": "gerencia",
+    "branch": "Todas / Central",
+    "email": "xinon@local",
+    "login_pin": "01011990",
+    "attendance_pin": "0101"
+  },
+  {
+    "name": "Diego Ariana",
+    "role": "instalaciones",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.instalaciones@pin.local",
+    "login_pin": "41100002",
+    "attendance_pin": "4110"
+  },
+  {
+    "name": "Leonardo Natalia",
+    "role": "instalaciones",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.instalaciones@pin.local",
+    "login_pin": "41320003",
+    "attendance_pin": "4132"
+  },
+  {
+    "name": "Mia Gael",
+    "role": "instalaciones",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.instalaciones@pin.local",
+    "login_pin": "41210004",
+    "attendance_pin": "4121"
+  },
+  {
+    "name": "Test Instalaciones",
+    "role": "instalaciones",
+    "branch": "Todas / Central",
+    "email": "test_instalaciones@local",
+    "login_pin": "00120005",
+    "attendance_pin": "0012"
+  },
+  {
+    "name": "Daniela Solis",
+    "role": "jefe_tienda",
+    "branch": "branch_south",
+    "email": "jefe_tienda_branch_south@local",
+    "login_pin": "85020006",
+    "attendance_pin": "8502"
+  },
+  {
+    "name": "Miguel Larios",
+    "role": "jefe_tienda",
+    "branch": "branch_north",
+    "email": "jefe_tienda_branch_north@local",
+    "login_pin": "85010007",
+    "attendance_pin": "8501"
+  },
+  {
+    "name": "Patricia Rivas",
+    "role": "jefe_tienda",
+    "branch": "branch_main",
+    "email": "jefe_tienda_branch_main@local",
+    "login_pin": "85000008",
+    "attendance_pin": "8500"
+  },
+  {
+    "name": "Test Jefe de Tienda",
+    "role": "jefe_tienda",
+    "branch": "Todas / Central",
+    "email": "test_jefe_tienda@local",
+    "login_pin": "00070009",
+    "attendance_pin": "0007"
+  },
+  {
+    "name": "Andrea Ruiz",
+    "role": "jefe_vendedores",
+    "branch": "branch_north",
+    "email": "jefe_vendedores_branch_north@local",
+    "login_pin": "84010000",
+    "attendance_pin": "8401"
+  },
+  {
+    "name": "Carlos Mena",
+    "role": "jefe_vendedores",
+    "branch": "branch_main",
+    "email": "jefe_vendedores_branch_main@local",
+    "login_pin": "84000001",
+    "attendance_pin": "8400"
+  },
+  {
+    "name": "Mauricio Pineda",
+    "role": "jefe_vendedores",
+    "branch": "branch_south",
+    "email": "jefe_vendedores_branch_south@local",
+    "login_pin": "84020002",
+    "attendance_pin": "8402"
+  },
+  {
+    "name": "Test Jefe de Vendedores",
+    "role": "jefe_vendedores",
+    "branch": "Todas / Central",
+    "email": "test_jefe_vendedores@local",
+    "login_pin": "00060003",
+    "attendance_pin": "0006"
+  },
+  {
+    "name": "Ariana Sebastian",
+    "role": "polarizador",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.polarizador@pin.local",
+    "login_pin": "41070004",
+    "attendance_pin": "4107"
+  },
+  {
+    "name": "Joaquin Gabriela",
+    "role": "polarizador",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.polarizador@pin.local",
+    "login_pin": "41180005",
+    "attendance_pin": "4118"
+  },
+  {
+    "name": "Julia Nicolas",
+    "role": "polarizador",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.polarizador@pin.local",
+    "login_pin": "41290006",
+    "attendance_pin": "4129"
+  },
+  {
+    "name": "Test Polarizador",
+    "role": "polarizador",
+    "branch": "Todas / Central",
+    "email": "test_polarizador@local",
+    "login_pin": "00090007",
+    "attendance_pin": "0009"
+  },
+  {
+    "name": "Diego Martina",
+    "role": "programador",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.programador@pin.local",
+    "login_pin": "41220008",
+    "attendance_pin": "4122"
+  },
+  {
+    "name": "Mia Fabian",
+    "role": "programador",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.programador@pin.local",
+    "login_pin": "41330009",
+    "attendance_pin": "4133"
+  },
+  {
+    "name": "Noelia Cristian",
+    "role": "programador",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.programador@pin.local",
+    "login_pin": "41110000",
+    "attendance_pin": "4111"
+  },
+  {
+    "name": "Test Programador",
+    "role": "programador",
+    "branch": "Todas / Central",
+    "email": "test_programador@local",
+    "login_pin": "00160001",
+    "attendance_pin": "0016"
+  },
+  {
+    "name": "Mateo Renata",
+    "role": "recursos_humanos",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.recursos-humanos@pin.local",
+    "login_pin": "41240002",
+    "attendance_pin": "4124"
+  },
+  {
+    "name": "Sebastian Elena",
+    "role": "recursos_humanos",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.recursos-humanos@pin.local",
+    "login_pin": "41020003",
+    "attendance_pin": "4102"
+  },
+  {
+    "name": "Test Recursos Humanos",
+    "role": "recursos_humanos",
+    "branch": "Todas / Central",
+    "email": "test_recursos_humanos@local",
+    "login_pin": "00020004",
+    "attendance_pin": "0002"
+  },
+  {
+    "name": "Valeria Mateo",
+    "role": "recursos_humanos",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.recursos-humanos@pin.local",
+    "login_pin": "41130005",
+    "attendance_pin": "4113"
+  },
+  {
+    "name": "Martina Dylan",
+    "role": "supervisor",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.supervisor@pin.local",
+    "login_pin": "41030006",
+    "attendance_pin": "4103"
+  },
+  {
+    "name": "Sebastian Camila",
+    "role": "supervisor",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.supervisor@pin.local",
+    "login_pin": "41140007",
+    "attendance_pin": "4114"
+  },
+  {
+    "name": "Test Supervisor",
+    "role": "supervisor",
+    "branch": "Todas / Central",
+    "email": "test_supervisor@local",
+    "login_pin": "00030008",
+    "attendance_pin": "0003"
+  },
+  {
+    "name": "Valeria Leonardo",
+    "role": "supervisor",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.supervisor@pin.local",
+    "login_pin": "41250009",
+    "attendance_pin": "4125"
+  },
+  {
+    "name": "Ariana Diego",
+    "role": "transporte",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.transporte@pin.local",
+    "login_pin": "41190000",
+    "attendance_pin": "4119"
+  },
+  {
+    "name": "Joaquin Paula",
+    "role": "transporte",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.transporte@pin.local",
+    "login_pin": "41300001",
+    "attendance_pin": "4130"
+  },
+  {
+    "name": "Leonardo Daniela",
+    "role": "transporte",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.transporte@pin.local",
+    "login_pin": "41080002",
+    "attendance_pin": "4108"
+  },
+  {
+    "name": "Test Transporte",
+    "role": "transporte",
+    "branch": "Todas / Central",
+    "email": "test_transporte@local",
+    "login_pin": "00100003",
+    "attendance_pin": "0010"
+  },
+  {
+    "name": "Camila",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_vip_camila_baltodano@local",
+    "login_pin": "92010004",
+    "attendance_pin": "9201"
+  },
+  {
+    "name": "Diego",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_piso_diego_zeledon@local",
+    "login_pin": "91020005",
+    "attendance_pin": "9102"
+  },
+  {
+    "name": "Emiliano Julia",
+    "role": "ventas",
+    "branch": "branch_north",
+    "email": "qa.apr2026.branch-north.ventas@pin.local",
+    "login_pin": "41160006",
+    "attendance_pin": "4116"
+  },
+  {
+    "name": "Esteban",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_vip_esteban_guido@local",
+    "login_pin": "92020007",
+    "attendance_pin": "9202"
+  },
+  {
+    "name": "Julia Alan",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "qa.apr2026.branch-main.ventas@pin.local",
+    "login_pin": "41050008",
+    "attendance_pin": "4105"
+  },
+  {
+    "name": "Martina Adrian",
+    "role": "ventas",
+    "branch": "branch_south",
+    "email": "qa.apr2026.branch-south.ventas@pin.local",
+    "login_pin": "41270009",
+    "attendance_pin": "4127"
+  },
+  {
+    "name": "Natalia",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_vip_natalia_espinoza@local",
+    "login_pin": "92030000",
+    "attendance_pin": "9203"
+  },
+  {
+    "name": "Sofia",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_piso_sofia_mendoza@local",
+    "login_pin": "91010001",
+    "attendance_pin": "9101"
+  },
+  {
+    "name": "Test Ventas",
+    "role": "ventas",
+    "branch": "Todas / Central",
+    "email": "test_ventas@local",
+    "login_pin": "00050002",
+    "attendance_pin": "0005"
+  },
+  {
+    "name": "Valeria",
+    "role": "ventas",
+    "branch": "branch_main",
+    "email": "ventas_piso_valeria_urbina@local",
+    "login_pin": "91030003",
+    "attendance_pin": "9103"
+  }
+]

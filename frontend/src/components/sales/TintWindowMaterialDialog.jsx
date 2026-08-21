@@ -37,6 +37,7 @@ import { useAuth } from "@/context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import {
   resolveVehicleCategory,
+  findMatchingVehicleBlueprint,
   VEHICLE_CATEGORIES,
   VEHICLE_GLASS_GEOMETRY,
   LATERAL_GLASS_GEOMETRY,
@@ -225,7 +226,8 @@ export default function TintWindowMaterialDialog({
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Categoría de Vehículo Dinámica
+  // Categoría de Vehículo Dinámica & Plano de Ingeniería Específico
+  const matchedBlueprint = useMemo(() => findMatchingVehicleBlueprint(vehicle), [vehicle]);
   const detectedCategory = useMemo(() => resolveVehicleCategory(vehicle), [vehicle]);
   const [selectedVehicleType, setSelectedVehicleType] = useState(detectedCategory);
 
@@ -673,7 +675,7 @@ export default function TintWindowMaterialDialog({
                 <div className="relative w-full h-full max-w-[540px] aspect-[16/9] flex items-center justify-center p-2">
                   {/* Silueta Lateral Real del Vehículo */}
                   <img
-                    src={LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
+                    src={matchedBlueprint?.lateral_image || LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
                     alt="Silueta Lateral Vehículo"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-all duration-300"
                   />
@@ -775,7 +777,7 @@ export default function TintWindowMaterialDialog({
                 >
                   {/* 1. Imagen Top-Down Realista de la Carrocería */}
                   <img
-                    src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
+                    src={matchedBlueprint?.top_image || VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
                     alt="Vehículo Top-Down"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
                   />
