@@ -27,10 +27,13 @@ import {
   Crown,
   Shield,
   BadgePercent,
+  Scissors,
   CheckCircle2,
+  Lock,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import {
   resolveVehicleCategory,
@@ -98,6 +101,88 @@ const OFFICIAL_GAMAS = [
   },
 ];
 
+// Función de sombreado y color hiper-realista basada en las muestras del catálogo
+export function getRealisticTintShade(materialId, secondLayerEnabled = false) {
+  const mat = String(materialId || "").toLowerCase();
+
+  // 1. Camaleón (Efecto iridiscente tornasol azul/violeta)
+  if (mat.includes("camaleon")) {
+    return {
+      fill: "url(#camaleonGradient)",
+      opacity: secondLayerEnabled ? 0.96 : 0.82,
+      border: "#818cf8",
+      glow: "#6366f1",
+      label: "Camaleón 20%",
+      isSpecial: true,
+    };
+  }
+
+  // 2. Titanium (Sheen plateado metálico)
+  if (mat.includes("titanium")) {
+    return {
+      fill: "#1e293b",
+      opacity: secondLayerEnabled ? 0.95 : 0.78,
+      border: "#94a3b8",
+      glow: "#cbd5e1",
+      label: "Titanium 26%",
+      isSpecial: true,
+    };
+  }
+
+  // 3. Smoke 70% / Visión Nocturna Ultra Clara (Azul cielo cristalino translúcido)
+  if (mat.includes("70")) {
+    return {
+      fill: "#38bdf8",
+      opacity: secondLayerEnabled ? 0.65 : 0.32,
+      border: "#0284c7",
+      glow: "#38bdf8",
+      label: "70% Claro",
+    };
+  }
+
+  // 4. Supreme 42% / Claro Neutro
+  if (mat.includes("42")) {
+    return {
+      fill: "#334155",
+      opacity: secondLayerEnabled ? 0.80 : 0.55,
+      border: "#64748b",
+      glow: "#94a3b8",
+      label: "42% Cerámico",
+    };
+  }
+
+  // 5. Medios: 35%, 30%, 28%, 25% (Ahumado medio / grafito)
+  if (mat.includes("35") || mat.includes("30") || mat.includes("28") || mat.includes("25")) {
+    return {
+      fill: "#0f172a",
+      opacity: secondLayerEnabled ? 0.92 : 0.68,
+      border: "#475569",
+      glow: "#64748b",
+      label: mat.includes("35") ? "35% Medio" : mat.includes("30") ? "30% Supreme" : "28% Quantum",
+    };
+  }
+
+  // 6. Oscuro 05%, 04%, 06%, 07% (Limo Black / Azabache Profundo)
+  if (mat.includes("05") || mat.includes("04") || mat.includes("06") || mat.includes("07")) {
+    return {
+      fill: "#020617",
+      opacity: 0.96,
+      border: "#090d16",
+      glow: "#1e293b",
+      label: "5% Oscuro Limo",
+    };
+  }
+
+  // 7. Oscuro Intermedio: 10%, 12%, 14%, 15%, 16%, 19%, 20%, 22% (Estándar Oscuro 20%)
+  return {
+    fill: "#050914",
+    opacity: secondLayerEnabled ? 0.95 : 0.82,
+    border: "#1e293b",
+    glow: "#334155",
+    label: mat.includes("10") ? "10% Oscuro" : mat.includes("15") ? "15% Supreme" : "20% Intermedio",
+  };
+}
+
 export default function TintWindowMaterialDialog({
   isOpen,
   onClose,
@@ -107,12 +192,13 @@ export default function TintWindowMaterialDialog({
   currency = "NIO",
   exchangeRate = 36.5,
 }) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState(null);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
   const [orientation, setOrientation] = useState("horizontal"); // "horizontal" | "vertical"
-  const [selectedGama, setSelectedGama] = useState("all"); // "all" | "gama_economica" | "tinmax" | "nano_ceramico" | "gama_premium"
+  const [selectedGama, setSelectedGama] = useState("all");
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -149,6 +235,10 @@ export default function TintWindowMaterialDialog({
     rear_top: { enabled: false, material_id: "std_20" },
     rear_bottom: { enabled: false, material_id: "std_20" },
   });
+
+  // Opción de Empalme 2x20 en Parabrisas Trasero
+  const [empalmeRear, setEmpalmeRear] = useState(false);
+  const [empalmeAuthorized, setEmpalmeAuthorized] = useState(false);
 
   const [overrideFlags, setOverrideFlags] = useState({
     windshield: false,
@@ -196,6 +286,11 @@ export default function TintWindowMaterialDialog({
           setOverrideFlags(ovs);
           setSecondLayers((prev) => ({ ...prev, ...secs }));
 
+          if (initialPlan.windows.rear?.empalme_2x20) {
+            setEmpalmeRear(true);
+            setEmpalmeAuthorized(true);
+          }
+
           if (initialPlan.sunstrips) {
             setSunstrips((prev) => ({ ...prev, ...initialPlan.sunstrips }));
           }
@@ -212,6 +307,7 @@ export default function TintWindowMaterialDialog({
             rear: "std_20",
           });
           setLinkSides(true);
+          setEmpalmeRear(false);
         }
       } catch (err) {
         console.error("Error loading tint window config", err);
@@ -251,6 +347,7 @@ export default function TintWindowMaterialDialog({
             material_id: selectedMaterials.rear,
             override_size_band: overrideFlags.rear,
             second_layer: secondLayers.rear,
+            empalme_2x20: empalmeRear,
           },
         },
         sunstrips: sunstrips,
@@ -267,7 +364,7 @@ export default function TintWindowMaterialDialog({
     };
 
     computeQuote();
-  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, vehicle]);
+  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle]);
 
   // Manejar selección de material base
   const handleSelectMaterial = (zone, materialId) => {
@@ -321,6 +418,24 @@ export default function TintWindowMaterialDialog({
     }));
   };
 
+  // Manejar switch de empalme 2x20 con autorización de Responsable
+  const handleToggleEmpalme = (checked) => {
+    if (checked) {
+      const isAuthorizedRole = ["gerencia", "programador", "admin", "coordinador_polarizados", "supervisor"].includes(
+        user?.role
+      );
+      if (!isAuthorizedRole) {
+        toast.warning("El corte con empalme requiere autorización de la Responsable de Polarizados o Gerencia.");
+      }
+      setEmpalmeRear(true);
+      setEmpalmeAuthorized(true);
+      toast.info("Empalme activado: Se consumirán 2 pliegos de 20\" para el vidrio trasero.");
+    } else {
+      setEmpalmeRear(false);
+      setEmpalmeAuthorized(false);
+    }
+  };
+
   // Aplicar material a todas las ventanas
   const handleApplyAll = (materialId) => {
     setSelectedMaterials({
@@ -370,9 +485,12 @@ export default function TintWindowMaterialDialog({
             size_band: quoteData.vehicle_size_bands?.rear,
             override_size_band: overrideFlags.rear,
             second_layer: secondLayers.rear.enabled ? secondLayers.rear : null,
+            empalme_2x20: empalmeRear,
           },
         },
         sunstrips: sunstrips,
+        has_empalme: quoteData.has_empalme,
+        empalme_warning: quoteData.empalme_warning,
         rolls_consumed: quoteData.rolls_consumed,
         materials_extra_total: quoteData.materials_extra_total,
         price_breakdown: quoteData.price_breakdown,
@@ -408,17 +526,17 @@ export default function TintWindowMaterialDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[96dvh] h-[95dvh] md:h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
+      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[98dvh] h-[96dvh] md:h-[94vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
         {/* Encabezado Responsivo */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3 py-2 sm:p-3.5 md:px-6 md:py-3.5 text-white shrink-0 shadow-sm">
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3.5 py-2.5 sm:p-4 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="flex h-7 w-7 sm:h-9 sm:w-9 md:h-10 md:w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30 shrink-0">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30 shrink-0">
                 <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300" />
               </div>
               <div className="min-w-0">
                 <DialogTitle className="text-xs sm:text-base md:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate">
-                  <span>{vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Seleccionador de Materiales"}</span>
+                  <span>{vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Seleccionador de Polarizados"}</span>
                   <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] uppercase font-mono px-1 py-0 shrink-0">
                     {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Pick-Up"}
                   </Badge>
@@ -438,10 +556,10 @@ export default function TintWindowMaterialDialog({
           </div>
         </div>
 
-        {/* Cuerpo: Diagrama Interactivo de Auto Dinámico + Selector de Material */}
+        {/* Cuerpo: Diagrama Interactivo de Auto Dinámico en Tamaño Grande + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
-          {/* Lado Izquierdo (5 cols en PC / Arriba en Móvil): Diagrama Interactivo SVG */}
-          <div className="md:col-span-5 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-3 lg:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2">
+          {/* Lado Izquierdo (5.5 cols en PC): Diagrama Interactivo Grande */}
+          <div className="md:col-span-5 lg:col-span-6 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2">
             {/* Header del Vehículo con Botones Rápidos de Categoría y Rotación */}
             <div className="w-full space-y-1.5 px-1">
               <div className="flex items-center justify-between gap-1">
@@ -451,25 +569,22 @@ export default function TintWindowMaterialDialog({
                 </span>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  {/* Botón de cambio de orientación horizontal/vertical (PC y Móvil) */}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal"))}
                     className="h-6 px-1.5 text-[10px] bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 font-semibold"
-                    title="Alternar entre silueta horizontal y vertical"
+                    title="Alternar orientación de la silueta"
                   >
                     <RotateCw className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
                     {isVehicleHorizontal ? "Horizontal" : "Vertical"}
                   </Button>
 
-                  {/* Selector sutil de cambio manual de carrocería */}
                   <select
                     value={selectedVehicleType}
                     onChange={(e) => setSelectedVehicleType(e.target.value)}
                     className="text-[10px] sm:text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer max-w-[130px] truncate"
-                    title="Cambiar tipo de carrocería si difiere del detectado"
                   >
                     {VEHICLE_CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -480,7 +595,7 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
-              {/* Botones de Categorías Rápidas de Carrocería (Alineados en PC y Móvil) */}
+              {/* Botones de Categorías Rápidas de Carrocería */}
               <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
                 {[
                   { id: "sedan", label: "Sedán" },
@@ -508,7 +623,7 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
 
-            {/* Leyenda Compacta con Puntos de Colores Interactiva y Táctil */}
+            {/* Leyenda Interactiva y Táctil */}
             <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-md font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shrink-0 shadow-inner">
               {ZONES.map((z) => {
                 const isActive = activeZone === z.id;
@@ -530,19 +645,18 @@ export default function TintWindowMaterialDialog({
               })}
             </div>
 
-            {/* Canvas del Vehículo: Soporte Horizontal y Vertical Dinámico */}
+            {/* Canvas Grande del Vehículo con Sombras Hiper-Realistas */}
             <div
-              className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-xl bg-zinc-950/10 dark:bg-zinc-950/40 border border-zinc-200/60 dark:border-zinc-800/60 my-auto ${
+              className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-2xl bg-zinc-950/15 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 my-auto shadow-inner ${
                 isVehicleHorizontal
-                  ? "w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] h-[160px] sm:h-[180px] md:h-[220px]"
-                  : "w-48 sm:w-56 md:w-72 h-[220px] sm:h-[280px] md:h-[380px]"
+                  ? "w-full max-w-[360px] sm:max-w-[440px] md:max-w-[500px] h-[190px] sm:h-[220px] md:h-[270px]"
+                  : "w-52 sm:w-64 md:w-80 h-[260px] sm:h-[320px] md:h-[420px]"
               }`}
             >
-              {/* Contenedor con Rotación Dinámica */}
               <div
                 className={`transition-all duration-300 shrink-0 ${
                   isVehicleHorizontal
-                    ? "relative w-[200px] h-[360px] transform -rotate-90 origin-center scale-[0.82] sm:scale-[0.92] md:scale-[0.96]"
+                    ? "relative w-[210px] h-[380px] transform -rotate-90 origin-center scale-[0.88] sm:scale-[0.98] md:scale-[1.05]"
                     : "relative w-full h-full"
                 }`}
               >
@@ -550,28 +664,20 @@ export default function TintWindowMaterialDialog({
                 <img
                   src={VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
                   alt="Vehículo Top-Down"
-                  className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg transition-all duration-300"
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
                 />
 
-                {/* 2. Capa SVG Interactiva de Cristales */}
+                {/* 2. Capa SVG Interactiva con Shaders Hiper-Realistas */}
                 {(() => {
                   const geom =
                     VEHICLE_GLASS_GEOMETRY[selectedVehicleType] ||
                     VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
                     VEHICLE_GLASS_GEOMETRY.sedan;
 
-                  const getShade = (zoneKey) => {
-                    const mat = String(selectedMaterials[zoneKey] || "").toLowerCase();
-                    if (mat.includes("70") || mat.includes("42")) return { fill: "#38bdf8", opacity: 0.45, border: "#0284c7" };
-                    if (mat.includes("35") || mat.includes("28") || mat.includes("26") || mat.includes("25") || mat.includes("30")) return { fill: "#1e293b", opacity: 0.70, border: "#475569" };
-                    if (mat.includes("05") || mat.includes("04") || mat.includes("06") || mat.includes("07")) return { fill: "#020617", opacity: 0.95, border: "#0f172a" };
-                    return { fill: "#090d16", opacity: 0.85, border: "#1e293b" };
-                  };
-
-                  const shadeWindshield = getShade("windshield");
-                  const shadeFrontSides = getShade("front_sides");
-                  const shadeRearSides = getShade("rear_sides");
-                  const shadeRear = getShade("rear");
+                  const shadeWindshield = getRealisticTintShade(selectedMaterials.windshield, secondLayers.windshield?.enabled);
+                  const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
+                  const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
+                  const shadeRear = getRealisticTintShade(selectedMaterials.rear, secondLayers.rear?.enabled);
 
                   const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
 
@@ -582,17 +688,25 @@ export default function TintWindowMaterialDialog({
                   return (
                     <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
                       <defs>
+                        {/* Gradiente Tornasol para Camaleón 20% */}
+                        <linearGradient id="camaleonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
+                          <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
+                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
+                        </linearGradient>
+
+                        {/* Filtros de Neón para Zona Activa */}
                         <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#38bdf8" floodOpacity="0.9" />
+                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.95" />
                         </filter>
                         <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#eab308" floodOpacity="0.9" />
+                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#eab308" floodOpacity="0.95" />
                         </filter>
                         <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f97316" floodOpacity="0.9" />
+                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#f97316" floodOpacity="0.95" />
                         </filter>
                         <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
-                          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#a855f7" floodOpacity="0.9" />
+                          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#a855f7" floodOpacity="0.95" />
                         </filter>
                       </defs>
 
@@ -608,7 +722,7 @@ export default function TintWindowMaterialDialog({
                         onClick={() => setActiveZone("windshield")}
                       />
 
-                      {/* Banda Superior Parabrisas (Táctil) */}
+                      {/* Bandas de Sol Parabrisas */}
                       {geom.windshield.topStrip && (
                         <path
                           d={geom.windshield.topStrip}
@@ -626,7 +740,6 @@ export default function TintWindowMaterialDialog({
                         />
                       )}
 
-                      {/* Banda Inferior Parabrisas (Táctil) */}
                       {geom.windshield.bottomStrip && (
                         <path
                           d={geom.windshield.bottomStrip}
@@ -644,7 +757,6 @@ export default function TintWindowMaterialDialog({
                         />
                       )}
 
-                      {/* Textos Parabrisas Delantero */}
                       <text
                         x="100"
                         y={geom.windshield.textY}
@@ -667,11 +779,7 @@ export default function TintWindowMaterialDialog({
                         transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
                         className="pointer-events-none select-none"
                       >
-                        {selectedMaterials.windshield?.includes("70")
-                          ? "70%"
-                          : selectedMaterials.windshield?.includes("35")
-                          ? "35%"
-                          : "20%"}
+                        {shadeWindshield.label}
                         {secondLayers.windshield?.enabled ? " + 2da" : ""}
                       </text>
 
@@ -729,43 +837,20 @@ export default function TintWindowMaterialDialog({
                         onClick={() => setActiveZone("rear")}
                       />
 
-                      {/* Banda Superior Trasera (Táctil) */}
-                      {geom.rear.topStrip && (
-                        <path
-                          d={geom.rear.topStrip}
-                          fill={sunstrips.rear_top?.enabled ? "#020617" : "transparent"}
-                          fillOpacity={sunstrips.rear_top?.enabled ? 0.95 : 0.01}
-                          stroke={sunstrips.rear_top?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
-                          strokeWidth={sunstrips.rear_top?.enabled ? "1.5" : "0.5"}
-                          strokeDasharray={sunstrips.rear_top?.enabled ? undefined : "2,2"}
-                          className="cursor-pointer transition-all hover:opacity-80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveZone("rear");
-                            handleToggleSunstrip("rear_top", !sunstrips.rear_top?.enabled);
-                          }}
+                      {/* Línea visual de empalme horizontal si está activo */}
+                      {empalmeRear && (
+                        <line
+                          x1="70"
+                          y1={geom.rear.textY}
+                          x2="130"
+                          y2={geom.rear.textY}
+                          stroke="#f59e0b"
+                          strokeWidth="1"
+                          strokeDasharray="2,2"
+                          className="pointer-events-none"
                         />
                       )}
 
-                      {/* Banda Inferior Trasera (Táctil) */}
-                      {geom.rear.bottomStrip && (
-                        <path
-                          d={geom.rear.bottomStrip}
-                          fill={sunstrips.rear_bottom?.enabled ? "#020617" : "transparent"}
-                          fillOpacity={sunstrips.rear_bottom?.enabled ? 0.95 : 0.01}
-                          stroke={sunstrips.rear_bottom?.enabled ? "#a855f7" : "rgba(255,255,255,0.2)"}
-                          strokeWidth={sunstrips.rear_bottom?.enabled ? "1.5" : "0.5"}
-                          strokeDasharray={sunstrips.rear_bottom?.enabled ? undefined : "2,2"}
-                          className="cursor-pointer transition-all hover:opacity-80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveZone("rear");
-                            handleToggleSunstrip("rear_bottom", !sunstrips.rear_bottom?.enabled);
-                          }}
-                        />
-                      )}
-
-                      {/* Textos Parabrisas Trasero */}
                       <text
                         x="100"
                         y={geom.rear.textY}
@@ -788,11 +873,7 @@ export default function TintWindowMaterialDialog({
                         transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
                         className="pointer-events-none select-none"
                       >
-                        {selectedMaterials.rear?.includes("70")
-                          ? "70%"
-                          : selectedMaterials.rear?.includes("35")
-                          ? "35%"
-                          : "20%"}
+                        {empalmeRear ? "Empalme 2x20\"" : shadeRear.label}
                         {secondLayers.rear?.enabled ? " + 2da" : ""}
                       </text>
                     </svg>
@@ -802,8 +883,8 @@ export default function TintWindowMaterialDialog({
             </div>
           </div>
 
-          {/* Lado Derecho (7 cols en PC / Abajo en Móvil): Selector de Gamas y Materiales */}
-          <div className="md:col-span-7 p-2.5 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
+          {/* Lado Derecho (6.5 cols en PC): Selector de Gamas y Materiales */}
+          <div className="md:col-span-7 lg:col-span-6 p-2.5 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
             <div>
               {/* Barra de Control de la Zona Activa */}
               <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-2 mb-2">
@@ -832,7 +913,6 @@ export default function TintWindowMaterialDialog({
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {/* Botón rápido Aplicar a Todos */}
                   <Button
                     type="button"
                     variant="outline"
@@ -847,7 +927,7 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
-              {/* Controles Rápidos: Vincular Laterales, Doble Capa, Banda Superior y Banda Inferior */}
+              {/* Controles Rápidos: Vincular Laterales, Doble Capa, Empalme 2x20 y Bandas de Sol */}
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {(activeZone === "front_sides" || activeZone === "rear_sides") && (
                   <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-lg px-2 py-1">
@@ -878,7 +958,22 @@ export default function TintWindowMaterialDialog({
                   </div>
                 )}
 
-                {/* Toggle compacto de 2da Capa */}
+                {/* Opción de Empalme 2x20 en Parabrisas Trasero */}
+                {activeZone === "rear" && (
+                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 rounded-lg px-2 py-1">
+                    <Scissors className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 dark:text-amber-200">
+                      Empalme 2x20" (Corte Horizontal)
+                    </span>
+                    <Switch
+                      checked={empalmeRear}
+                      onCheckedChange={handleToggleEmpalme}
+                      className="scale-75"
+                    />
+                  </div>
+                )}
+
+                {/* Toggle de 2da Capa */}
                 <div className="flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-2 py-1">
                   <Sparkles className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                   <span className="text-[10px] sm:text-[11px] font-semibold text-amber-900 dark:text-amber-200">
@@ -891,7 +986,7 @@ export default function TintWindowMaterialDialog({
                   />
                 </div>
 
-                {/* Bandas Superior e Inferior para Parabrisas Delantero y Trasero */}
+                {/* Bandas Superior e Inferior para Parabrisas */}
                 {(activeZone === "windshield" || activeZone === "rear") && (
                   <>
                     <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
@@ -921,7 +1016,7 @@ export default function TintWindowMaterialDialog({
                 )}
               </div>
 
-              {/* Selector de Material 2da Capa (si está activada) */}
+              {/* Selector de Material 2da Capa */}
               {secondLayers[activeZone]?.enabled && (
                 <div className="mb-2 p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-2">
                   <Label className="text-[10px] sm:text-[11px] font-bold text-amber-900 dark:text-amber-200">
@@ -941,9 +1036,7 @@ export default function TintWindowMaterialDialog({
                 </div>
               )}
 
-              {/* ============================================================================== */}
-              {/* LAS 4 GAMAS OFICIALES (De izquierda a derecha según hoja oficial de catálogo) */}
-              {/* ============================================================================== */}
+              {/* LAS 4 GAMAS OFICIALES */}
               <div className="mb-2.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
@@ -1022,8 +1115,8 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
-              {/* Lista de Films / Materiales de la Gama y Carrocería Seleccionada */}
-              <div className="space-y-1.5 max-h-56 sm:max-h-64 lg:max-h-80 overflow-y-auto pr-1">
+              {/* Lista de Films / Materiales */}
+              <div className="space-y-1.5 max-h-52 sm:max-h-60 lg:max-h-72 overflow-y-auto pr-1">
                 {filteredMaterials.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
                     No hay materiales que coincidan con los filtros seleccionados.
@@ -1049,7 +1142,6 @@ export default function TintWindowMaterialDialog({
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
-                      {/* Contenido Principal Izquierdo */}
                       <div className="flex items-start gap-2.5 min-w-0 z-10 flex-1">
                         <div
                           className={`h-4 w-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
@@ -1062,13 +1154,11 @@ export default function TintWindowMaterialDialog({
                         </div>
 
                         <div className="min-w-0 space-y-1 flex-1">
-                          {/* Cabecera de la Tarjeta con Nombre, Gama y Emblema de Marca Nítido */}
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-[11px] sm:text-xs text-zinc-900 dark:text-white font-bold truncate">
                               {mat.name}
                             </span>
 
-                            {/* Badge de la Gama Oficial correspondiente */}
                             {matchedGama && (
                               <Badge variant="outline" className={`text-[8.5px] px-1.5 py-0 font-mono shrink-0 ${matchedGama.tierPill}`}>
                                 {matchedGama.shortName}
@@ -1082,7 +1172,6 @@ export default function TintWindowMaterialDialog({
                             )}
                           </div>
 
-                          {/* Métricas y Especificaciones Técnicas del Catálogo */}
                           <div className="flex flex-wrap items-center gap-1 text-[9px]">
                             {mat.ir_rejection_pct ? (
                               <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-red-500/15 text-red-700 dark:text-red-300 font-mono font-bold">
@@ -1108,9 +1197,7 @@ export default function TintWindowMaterialDialog({
                         </div>
                       </div>
 
-                      {/* Contenedor Derecho Aislado (Precios, Stock y Emblema de Marca Limpio) */}
                       <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10 space-y-0.5 min-w-[80px]">
-                        {/* Emblema Nítido de Marca (Ubicado en zona limpia sin solapamiento) */}
                         <div className="flex items-center gap-1 shrink-0">
                           {is3M ? (
                             <span className="text-[9px] font-black font-mono text-red-600 bg-red-50 dark:bg-red-950/60 px-1 py-0.5 rounded border border-red-200 dark:border-red-900">
@@ -1171,6 +1258,11 @@ export default function TintWindowMaterialDialog({
                     </span>
                   </div>
                 ))}
+                {quoteData?.has_empalme && (
+                  <div className="text-amber-600 dark:text-amber-400 font-bold text-[9.5px] pt-0.5">
+                    {quoteData.empalme_warning}
+                  </div>
+                )}
                 {(!quoteData?.price_breakdown || quoteData.price_breakdown.length === 0) && (
                   <div className="text-zinc-500 italic">Sin recargos adicionales (Films Estándar / Económicos).</div>
                 )}

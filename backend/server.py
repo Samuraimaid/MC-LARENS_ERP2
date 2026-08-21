@@ -24915,6 +24915,11 @@ from backend.routes.tint_materials import get_tint_materials_router
 tint_materials_router = get_tint_materials_router(db, require_auth, require_roles)
 api_router.include_router(tint_materials_router)
 
+from backend.routes.vehicle_blueprints import get_vehicle_blueprints_router
+
+vehicle_blueprints_router = get_vehicle_blueprints_router(db, require_auth, require_roles)
+api_router.include_router(vehicle_blueprints_router)
+
 app.include_router(api_router)
 
 cors_origins_env = os.environ.get("CORS_ORIGINS")

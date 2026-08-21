@@ -48,20 +48,28 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
-venv/
-.venv/
-.venv-win/
-
-# Development tools
-chainlit.md
-.chainlit
-.ipynb_checkpoints/
-.ac
-
-# Deployment
-.vercel
-
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+backend/data/blueprints_raw/
+backend/data/blueprints_cleaned/
 # Data and databases
 agenthub/agents/youtube/db
 

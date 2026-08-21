@@ -1208,19 +1208,22 @@ def quote_tint_window_plan(
     # 3. PARABRISAS TRASERO / MEDALLÓN (Rear)
     win_r = windows.get("rear") or {}
     mat_id_r = win_r.get("material_id")
+    is_empalme = bool(win_r.get("empalme_2x20"))
     if mat_id_r and mat_id_r in materials_map:
         mat_r = materials_map[mat_id_r]
-        band_r = win_r.get("size_band") or bands.get("rear", "side_under_20")
+        band_r = "side_under_20" if is_empalme else (win_r.get("size_band") or bands.get("rear", "side_under_20"))
         price_r = float((mat_r.get("price_by_zone_group") or {}).get("rear", 0.0))
         total_extra_usd += price_r
         breakdown.append({
             "group": "rear",
-            "group_label": "Parabrisas Trasero",
+            "group_label": "Parabrisas Trasero (Empalme 2 pliegos 20\")" if is_empalme else "Parabrisas Trasero",
             "material_id": mat_id_r,
             "material_name": mat_r.get("name"),
             "price_extra_usd": price_r,
+            "is_empalme": is_empalme,
         })
         roll_info_r = (mat_r.get("rolls") or {}).get(band_r) or {}
+        qty_r = 2.0 if is_empalme else float(roll_info_r.get("qty_per_job", 1.0))
         rolls_consumed.append({
             "zone": "rear",
             "layer": 1,
@@ -1231,7 +1234,8 @@ def quote_tint_window_plan(
             "product_id": roll_info_r.get("product_id"),
             "size_band": band_r,
             "is_override": bool(win_r.get("override_size_band")),
-            "qty_consumed": float(roll_info_r.get("qty_per_job", 1.0)),
+            "is_empalme": is_empalme,
+            "qty_consumed": qty_r,
         })
 
     # 4. SEGUNDA CAPA (Doble Capa)
@@ -1316,6 +1320,8 @@ def quote_tint_window_plan(
                     "qty_consumed": 0.25,
                 })
 
+    has_empalme = any(r.get("is_empalme") for r in rolls_consumed)
+
     return {
         "valid": True,
         "error": None,
@@ -1323,6 +1329,8 @@ def quote_tint_window_plan(
         "price_breakdown": breakdown,
         "rolls_consumed": rolls_consumed,
         "vehicle_size_bands": bands,
+        "has_empalme": has_empalme,
+        "empalme_warning": "⚠️ AVISO DE CALIDAD: Instalación con empalme horizontal en 2 pliegos de 20\" autorizada." if has_empalme else None,
         "plan": plan,
     }
 
