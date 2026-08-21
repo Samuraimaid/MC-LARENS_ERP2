@@ -8,7 +8,7 @@ import shutil
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -86,9 +86,9 @@ def get_vehicle_blueprints_router(
     async def process_local_zip_endpoint(
         payload: LocalZipProcessPayload,
         request: Request,
-        user: Any = Depends(require_roles(["gerente", "admin", "programador", "developer", "cajero", "vendedor"])),
     ):
         """Procesa un archivo .zip local en el servidor."""
+        await require_roles(request, ["gerencia", "gerente", "admin", "programador", "developer", "cajero", "vendedor"])
         local_path = Path(payload.zip_path)
         if not local_path.exists():
             raise HTTPException(status_code=404, detail=f"No se encontró el archivo en {payload.zip_path}")
@@ -155,12 +155,12 @@ def get_vehicle_blueprints_router(
 
     @router.post("/upload-zip")
     async def upload_blueprint_zip_endpoint(
+        request: Request,
         file: UploadFile = File(...),
         brand: Optional[str] = Form(None),
-        request: Request = None,
-        user: Any = Depends(require_roles(["gerente", "admin", "programador", "developer", "cajero", "vendedor"])),
     ):
         """Sube un archivo .zip con planos de vehículos desde el navegador."""
+        await require_roles(request, ["gerencia", "gerente", "admin", "programador", "developer", "cajero", "vendedor"])
         if not file.filename.lower().endswith(".zip"):
             raise HTTPException(status_code=400, detail="El archivo debe ser un .ZIP válido.")
 
