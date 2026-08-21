@@ -33,6 +33,15 @@ const ACTION_LABELS = {
   delete: "Eliminar",
 };
 
+const getErrorMessage = (error, fallback = "Ocurrió un error inesperado") => {
+  const detail = error?.response?.data?.detail ?? error?.message;
+  if (typeof detail === "string") return detail;
+  if (detail && typeof detail === "object") {
+    return detail.message || detail.error || JSON.stringify(detail);
+  }
+  return fallback;
+};
+
 export function UsersAdminPage() {
   const { user, loading: authLoading, hasPermission, hasRole } = useAuth();
   const [users, setUsers] = useState([]);
@@ -256,7 +265,7 @@ export function UsersAdminPage() {
         `Usuario: ${displayName} · Rol: ${res?.data?.role || "sin rol"}`
       );
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al cargar permisos del usuario");
+      toast.error(getErrorMessage(error, "Error al cargar permisos del usuario"));
     } finally {
       setLoadingPermissions(false);
     }
@@ -318,7 +327,7 @@ export function UsersAdminPage() {
         beginRolePermissionEdit(selectedRoleForPermissions);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al guardar permisos de rol");
+      toast.error(getErrorMessage(error, "Error al guardar permisos de rol"));
     } finally {
       setSavingRolePermissions(false);
     }
@@ -348,7 +357,7 @@ export function UsersAdminPage() {
       );
       setHasUserOverrides(Boolean(res?.data?.has_user_overrides));
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al guardar permisos de usuario");
+      toast.error(getErrorMessage(error, "Error al guardar permisos de usuario"));
     } finally {
       setSavingUserPermissions(false);
     }
@@ -365,7 +374,7 @@ export function UsersAdminPage() {
       toast.success("Permisos del usuario restablecidos a los del rol");
       await beginUserPermissionEdit(selectedUserForPermissions);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al restablecer permisos");
+      toast.error(getErrorMessage(error, "Error al restablecer permisos"));
     }
   };
 
@@ -400,7 +409,7 @@ export function UsersAdminPage() {
       await loadPermissionsBase();
       beginRolePermissionEdit(createdRole);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear rol");
+      toast.error(getErrorMessage(error, "Error al crear rol"));
     } finally {
       setCreatingRole(false);
     }
@@ -431,7 +440,7 @@ export function UsersAdminPage() {
       await loadPermissionsBase();
       beginRolePermissionEdit("ventas");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al eliminar rol");
+      toast.error(getErrorMessage(error, "Error al eliminar rol"));
     } finally {
       setDeletingRole(false);
     }
@@ -544,7 +553,7 @@ export function UsersAdminPage() {
       });
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear usuario PIN");
+      toast.error(getErrorMessage(error, "Error al crear usuario PIN"));
     }
   };
 
@@ -571,7 +580,7 @@ export function UsersAdminPage() {
       setEditingPinUser(null);
       setNewPin("");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al actualizar PIN");
+      toast.error(getErrorMessage(error, "Error al actualizar PIN"));
     }
   };
 
@@ -601,7 +610,7 @@ export function UsersAdminPage() {
       setNewKioskPin("");
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al actualizar PIN Kiosko");
+      toast.error(getErrorMessage(error, "Error al actualizar PIN Kiosko"));
     }
   };
 
@@ -614,7 +623,7 @@ export function UsersAdminPage() {
       }
     } catch (error) {
       if (!silent) {
-        toast.error(error.response?.data?.detail || "No se pudo sincronizar PINs Kiosko");
+        toast.error(getErrorMessage(error, "No se pudo sincronizar PINs Kiosko"));
       }
       throw error;
     } finally {
@@ -635,7 +644,7 @@ export function UsersAdminPage() {
       toast.success(`PIN Kiosko generados para ${rows.length} usuarios`);
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudieron generar los PIN Kiosko");
+      toast.error(getErrorMessage(error, "No se pudieron generar los PIN Kiosko"));
     } finally {
       setLoadingKioskPins(false);
     }
@@ -655,7 +664,7 @@ export function UsersAdminPage() {
       toast.success("Usuario eliminado");
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al eliminar usuario");
+      toast.error(getErrorMessage(error, "Error al eliminar usuario"));
     }
   };
 

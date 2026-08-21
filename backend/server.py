@@ -547,15 +547,15 @@ def allow_rrhh_pin_management() -> bool:
 
 
 def can_manage_other_users_pin(actor: User) -> bool:
-    if actor.role == "gerencia":
+    if actor.role in {"gerencia", "programador", "admin"}:
         return True
-    if actor.role == "recursos_humanos" and allow_rrhh_pin_management():
+    if actor.role in {"recursos_humanos", "rrhh"} and allow_rrhh_pin_management():
         return True
     return False
 
 
 def can_manage_login_pin(actor: User) -> bool:
-    return actor.role in {"gerencia", "recursos_humanos", "programador"}
+    return actor.role in {"gerencia", "recursos_humanos", "rrhh", "programador", "admin"}
 
 
 async def get_roles_catalog() -> Dict[str, Dict[str, str]]:
@@ -5597,11 +5597,11 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
     return user_doc
 
 
-# Create a PIN user (POST /api/users/pin)
 @api_router.post("/users/pin")
 async def create_pin_user(payload: Dict[str, Any], request: Request):
-    await require_roles(request, ["gerencia", "programador", "recursos_humanos"])
-    await require_reauth_pin(request, "users.create")
+    current_user = await require_roles(request, ["gerencia", "programador", "recursos_humanos", "admin"])
+    if current_user.role not in {"gerencia", "programador", "admin"}:
+        await require_reauth_pin(request, "users.create")
 
     data = payload or {}
     name = data.get("name")
@@ -5748,11 +5748,13 @@ async def create_pin_user(payload: Dict[str, Any], request: Request):
 async def update_user_pin(user_id: str, payload: Dict[str, Any], request: Request):
     """Update attendance PIN (4 digits) for a user."""
     current_user = await require_auth(request)
-    await require_reauth_pin(request, "users.pin_reset")
 
     # Only gerencia (or RRHH when feature flag is enabled) or the user themselves can change PIN
     if current_user.user_id != user_id and not can_manage_other_users_pin(current_user):
         raise HTTPException(status_code=403, detail="No tienes permiso para cambiar este PIN")
+
+    if current_user.role not in {"gerencia", "programador", "admin"}:
+        await require_reauth_pin(request, "users.pin_reset")
 
     new_pin = (payload or {}).get("new_pin")
     if not is_valid_attendance_pin(new_pin):
@@ -5930,9 +5932,10 @@ async def seed_kiosk_pins_for_testing(payload: Dict[str, Any], request: Request)
 async def update_user_login_pin(user_id: str, payload: Dict[str, Any], request: Request):
     """Update login PIN (8 digits). Only RRHH, Gerencia or Programador roles are allowed."""
     current_user = await require_auth(request)
-    await require_reauth_pin(request, "users.login_pin")
     if not can_manage_login_pin(current_user):
         raise HTTPException(status_code=403, detail="No tienes permiso para cambiar el PIN de inicio de sesión")
+    if current_user.role not in {"gerencia", "programador", "admin"}:
+        await require_reauth_pin(request, "users.login_pin")
 
     new_pin = (payload or {}).get("new_pin")
     if not is_valid_login_pin(new_pin):
