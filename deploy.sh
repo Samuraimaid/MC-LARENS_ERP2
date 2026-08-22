@@ -41,9 +41,10 @@ if gcloud run deploy "$SERVICE_NAME" \
 else
     echo -e "\n${RED}❌ Error durante la compilación en Cloud Build.${NC}"
     echo -e "${YELLOW}Mostrando los detalles exactos del error desde Google Cloud Build:${NC}\n"
-    LAST_BUILD_ID=$(gcloud builds list --project "$PROJECT_ID" --limit=1 --format="value(id)" 2>/dev/null || true)
+    LAST_BUILD_ID=$(gcloud builds list --region="$REGION" --project "$PROJECT_ID" --limit=1 --format="value(id)" 2>/dev/null || gcloud builds list --project "$PROJECT_ID" --limit=1 --format="value(id)" 2>/dev/null || true)
     if [ -n "$LAST_BUILD_ID" ]; then
-        gcloud builds log "$LAST_BUILD_ID" --project "$PROJECT_ID" || true
+        gcloud builds log "$LAST_BUILD_ID" --region="$REGION" --project "$PROJECT_ID" || gcloud builds log "$LAST_BUILD_ID" --project "$PROJECT_ID" || true
     fi
+
     exit 1
 fi
