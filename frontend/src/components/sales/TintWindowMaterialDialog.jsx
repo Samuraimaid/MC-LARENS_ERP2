@@ -44,7 +44,6 @@ import {
   LATERAL_GLASS_GEOMETRY,
 } from "@/lib/vehicleSilhouette";
 
-import vehicleWindowGeometries from "@/data/vehicle_window_geometry_index.json";
 
 
 // Zonas y Nombres Oficiales
@@ -326,12 +325,37 @@ export default function TintWindowMaterialDialog({
   const matchedBlueprint = useMemo(() => findMatchingVehicleBlueprint(vehicle), [vehicle]);
   const detectedCategory = useMemo(() => resolveVehicleCategory(vehicle), [vehicle]);
   const [selectedVehicleType, setSelectedVehicleType] = useState(detectedCategory);
+  const [customBlueprintGeom, setCustomBlueprintGeom] = useState(null);
 
   useEffect(() => {
     if (vehicle) {
       setSelectedVehicleType(resolveVehicleCategory(vehicle));
     }
   }, [vehicle]);
+
+  useEffect(() => {
+    if (!matchedBlueprint?.lateral_image) {
+      setCustomBlueprintGeom(null);
+      return;
+    }
+    const bpSlug = matchedBlueprint.lateral_image.split("/").pop().replace("_lat.png", "");
+    if (!bpSlug) return;
+
+    let isMounted = true;
+    import("@/data/vehicle_window_geometry_index.json")
+      .then((mod) => {
+        if (isMounted) {
+          const geom = (mod.default?.geometries || mod.geometries || {})[bpSlug];
+          if (geom) setCustomBlueprintGeom(geom);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [matchedBlueprint]);
+
 
   // Materiales Capa 1 (Base)
   const [selectedMaterials, setSelectedMaterials] = useState({
@@ -849,14 +873,11 @@ export default function TintWindowMaterialDialog({
                     const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                     const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                     const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
-                    const bpSlug = matchedBlueprint?.lateral_image
-                      ? matchedBlueprint.lateral_image.split("/").pop().replace("_lat.png", "")
-                      : "";
-                    const customGeom = bpSlug ? vehicleWindowGeometries?.geometries?.[bpSlug] : null;
                     const latGeom =
-                      customGeom ||
+                      customBlueprintGeom ||
                       LATERAL_GLASS_GEOMETRY[selectedVehicleType] ||
                       LATERAL_GLASS_GEOMETRY.camioneta_doble_cabina;
+
 
 
                     return (

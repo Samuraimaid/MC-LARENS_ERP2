@@ -7,8 +7,8 @@ import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
 import masterBlueprintCatalog from "@/data/vehicle_blueprints_master_index.json";
 
 export const VEHICLE_CDN_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_VEHICLES_CDN_URL) ||
-  (typeof window !== "undefined" && window.__VEHICLES_CDN_URL__) ||
+  (typeof window !== "undefined" && (window.__VEHICLES_CDN_URL__ || window.localStorage?.getItem("erp_vehicles_cdn_url"))) ||
+  (typeof process !== "undefined" && (process.env.VITE_VEHICLES_CDN_URL || process.env.REACT_APP_VEHICLES_CDN_URL)) ||
   "https://storage.googleapis.com/mclarens-erp-vehicles";
 
 export function getVehicleImageUrl(imagePath) {
@@ -21,6 +21,7 @@ export function getVehicleImageUrl(imagePath) {
   }
   return imagePath;
 }
+
 
 export const VEHICLE_CATEGORIES = [
 
