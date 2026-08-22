@@ -42,6 +42,8 @@ import {
   VEHICLE_GLASS_GEOMETRY,
   LATERAL_GLASS_GEOMETRY,
 } from "@/lib/vehicleSilhouette";
+import vehicleWindowGeometries from "@/data/vehicle_window_geometry_index.json";
+
 
 // Zonas y Nombres Oficiales
 const ZONES = [
@@ -97,11 +99,102 @@ const OFFICIAL_GAMAS = [
     badgeColor: "bg-amber-500 text-black font-black",
     borderColor: "border-amber-500",
     dotColor: "bg-amber-400",
-    icon: Crown,
-    description: "Quantum Original (14%, 19%, 28%), Endeavor",
-    tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
+// Configuración por defecto completa de materiales para carga instantánea y modo sin conexión
+export const DEFAULT_TINT_CONFIG = {
+  zones: {
+    windshield: {
+      zone: "windshield",
+      label: "Parabrisas delantero",
+      materials: [
+        { material_id: "std_70", name: "Estándar 70% Claro", gama_id: "gama_economica", vlt: 70, extra_price: 0, is_default: true },
+        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
+        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0 },
+        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
+        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
+        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
+        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
+        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
+        { material_id: "nc_supreme_42", name: "Supreme Nano-Ceramic 42% Claro", gama_id: "nano_ceramico", vlt: 42, extra_price: 50 },
+        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
+        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
+        { material_id: "prem_quantum_28", name: "Quantum Original 28%", gama_id: "gama_premium", vlt: 28, extra_price: 80 },
+        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
+        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
+      ],
+    },
+    front_sides: {
+      zone: "front_sides",
+      label: "Ventanas Delanteras",
+      materials: [
+        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
+        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
+        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
+        { material_id: "std_70", name: "Estándar 70% Claro", gama_id: "gama_economica", vlt: 70, extra_price: 0 },
+        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
+        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
+        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
+        { material_id: "sg_charcoal_05", name: "Tinmax Charcoal 05%", gama_id: "tinmax", vlt: 5, extra_price: 20 },
+        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
+        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
+        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
+        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
+        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
+        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
+        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
+      ],
+    },
+    rear_sides: {
+      zone: "rear_sides",
+      label: "Ventanas Traseras",
+      materials: [
+        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
+        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
+        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
+        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
+        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
+        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
+        { material_id: "sg_charcoal_05", name: "Tinmax Charcoal 05%", gama_id: "tinmax", vlt: 5, extra_price: 20 },
+        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
+        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
+        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
+        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
+        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
+        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
+        { material_id: "prem_endeavor_05", name: "Endeavor Ultra-IR 05%", gama_id: "gama_premium", vlt: 5, extra_price: 90 },
+      ],
+    },
+    rear: {
+      zone: "rear",
+      label: "Parabrisas Trasero",
+      materials: [
+        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
+        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
+        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
+        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
+        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
+        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
+        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
+        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
+        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
+        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
+        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
+        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
+      ],
+    },
   },
-];
+  sunstrip_pricing: {
+    windshield_top: 15,
+    windshield_bottom: 15,
+    rear_top: 15,
+    rear_bottom: 15,
+  },
+  policy: {
+    max_materials_per_vehicle: 4,
+    default_link_sides: true,
+    second_layer_policy: { allow_second_layer: true },
+  },
+};
+
 
 // Función de sombreado y color hiper-realista basada en las muestras del catálogo
 export function getRealisticTintShade(materialId, secondLayerEnabled = false) {
@@ -217,7 +310,7 @@ export default function TintWindowMaterialDialog({
 }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState(DEFAULT_TINT_CONFIG);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
   const [viewMode, setViewMode] = useState("lateral"); // "lateral" | "top"
@@ -275,9 +368,73 @@ export default function TintWindowMaterialDialog({
 
   const [quoteData, setQuoteData] = useState(null);
 
-  // Cargar configuración de materiales al abrir
+  // Helper para restaurar datos en el estado
+  const applyLoadedPlan = (plan) => {
+    if (!plan?.windows) return;
+    const mats = {};
+    const ovs = {};
+    const secs = {};
+    Object.keys(plan.windows).forEach((z) => {
+      mats[z] = plan.windows[z]?.material_id || "std_20";
+      ovs[z] = Boolean(plan.windows[z]?.override_size_band);
+      if (plan.windows[z]?.second_layer) {
+        secs[z] = {
+          enabled: Boolean(plan.windows[z]?.second_layer?.enabled),
+          material_id: plan.windows[z]?.second_layer?.material_id || "sg_charcoal_20",
+        };
+      } else {
+        secs[z] = { enabled: false, material_id: "sg_charcoal_20" };
+      }
+    });
+    setSelectedMaterials(mats);
+    setOverrideFlags(ovs);
+    setSecondLayers((prev) => ({ ...prev, ...secs }));
+
+    if (plan.windows.rear?.empalme_2x20) {
+      setEmpalmeRear(true);
+      setEmpalmeAuthorized(true);
+    }
+
+    if (plan.sunstrips) {
+      setSunstrips((prev) => ({ ...prev, ...plan.sunstrips }));
+    }
+    if (typeof plan.link_sides === "boolean") {
+      setLinkSides(plan.link_sides);
+    } else {
+      setLinkSides(mats.front_sides === mats.rear_sides);
+    }
+  };
+
+  // Cargar configuración de materiales al abrir y restaurar borrador previo
   useEffect(() => {
     if (!isOpen) return;
+    const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
+
+    // 1. Restaurar de initialPlan o de localStorage
+    if (initialPlan?.windows) {
+      applyLoadedPlan(initialPlan);
+    } else {
+      try {
+        const savedDraft = localStorage.getItem(`mclarens_tint_draft_${vehicleKey}`);
+        if (savedDraft) {
+          const parsed = JSON.parse(savedDraft);
+          applyLoadedPlan(parsed);
+        } else {
+          setSelectedMaterials({
+            windshield: "std_70",
+            front_sides: "std_20",
+            rear_sides: "std_20",
+            rear: "std_20",
+          });
+          setLinkSides(true);
+          setEmpalmeRear(false);
+        }
+      } catch (e) {
+        // Fallback default
+      }
+    }
+
+    // 2. Cargar configuración actualizada del backend de forma silenciosa y resiliente
     const fetchConfig = async () => {
       setLoading(true);
       try {
@@ -289,61 +446,61 @@ export default function TintWindowMaterialDialog({
             withCredentials: true,
           }
         );
-        setConfig(res.data);
-
-        // Restaurar plan previo si existe
-        if (initialPlan?.windows) {
-          const mats = {};
-          const ovs = {};
-          const secs = {};
-          Object.keys(initialPlan.windows).forEach((z) => {
-            mats[z] = initialPlan.windows[z]?.material_id || "std_20";
-            ovs[z] = Boolean(initialPlan.windows[z]?.override_size_band);
-            if (initialPlan.windows[z]?.second_layer) {
-              secs[z] = {
-                enabled: Boolean(initialPlan.windows[z]?.second_layer?.enabled),
-                material_id: initialPlan.windows[z]?.second_layer?.material_id || "sg_charcoal_20",
-              };
-            } else {
-              secs[z] = { enabled: false, material_id: "sg_charcoal_20" };
-            }
-          });
-          setSelectedMaterials(mats);
-          setOverrideFlags(ovs);
-          setSecondLayers((prev) => ({ ...prev, ...secs }));
-
-          if (initialPlan.windows.rear?.empalme_2x20) {
-            setEmpalmeRear(true);
-            setEmpalmeAuthorized(true);
-          }
-
-          if (initialPlan.sunstrips) {
-            setSunstrips((prev) => ({ ...prev, ...initialPlan.sunstrips }));
-          }
-          if (typeof initialPlan.link_sides === "boolean") {
-            setLinkSides(initialPlan.link_sides);
-          } else {
-            setLinkSides(mats.front_sides === mats.rear_sides);
-          }
-        } else {
-          setSelectedMaterials({
-            windshield: "std_70",
-            front_sides: "std_20",
-            rear_sides: "std_20",
-            rear: "std_20",
-          });
-          setLinkSides(true);
-          setEmpalmeRear(false);
+        if (res.data && res.data.zones) {
+          setConfig(res.data);
         }
       } catch (err) {
-        console.error("Error loading tint window config", err);
-        toast.error("No se pudo cargar la configuración de polarizados");
+        // Usar catálogo fallback embebido sin molestar con toast
+        console.info("Usando catálogo de polarizados offline/embebido");
       } finally {
         setLoading(false);
       }
     };
     fetchConfig();
   }, [isOpen, vehicle, initialPlan]);
+
+  // Persistencia Dinámica en Tiempo Real (Auto-Save Reactivo en cada cambio)
+  useEffect(() => {
+    if (!isOpen) return;
+    const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
+    const draftPayload = {
+      vehicle_id: vehicleKey,
+      selectedVehicleType,
+      windows: {
+        windshield: {
+          material_id: selectedMaterials.windshield,
+          override_size_band: overrideFlags.windshield,
+          second_layer: secondLayers.windshield,
+        },
+        front_sides: {
+          material_id: selectedMaterials.front_sides,
+          override_size_band: overrideFlags.front_sides,
+          second_layer: secondLayers.front_sides,
+        },
+        rear_sides: {
+          material_id: selectedMaterials.rear_sides,
+          override_size_band: overrideFlags.rear_sides,
+          second_layer: secondLayers.rear_sides,
+        },
+        rear: {
+          material_id: selectedMaterials.rear,
+          override_size_band: overrideFlags.rear,
+          second_layer: secondLayers.rear,
+          empalme_2x20: empalmeRear,
+        },
+      },
+      sunstrips,
+      link_sides: linkSides,
+      updated_at: Date.now(),
+    };
+
+    try {
+      localStorage.setItem(`mclarens_tint_draft_${vehicleKey}`, JSON.stringify(draftPayload));
+    } catch (e) {
+      // ignore
+    }
+  }, [selectedMaterials, secondLayers, sunstrips, empalmeRear, linkSides, overrideFlags, isOpen, vehicle, selectedVehicleType]);
+
 
   // Cotizar plan en tiempo real
   useEffect(() => {
@@ -689,9 +846,15 @@ export default function TintWindowMaterialDialog({
                     const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                     const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                     const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
+                    const bpSlug = matchedBlueprint?.lateral_image
+                      ? matchedBlueprint.lateral_image.split("/").pop().replace("_lat.png", "")
+                      : "";
+                    const customGeom = bpSlug ? vehicleWindowGeometries?.geometries?.[bpSlug] : null;
                     const latGeom =
+                      customGeom ||
                       LATERAL_GLASS_GEOMETRY[selectedVehicleType] ||
                       LATERAL_GLASS_GEOMETRY.camioneta_doble_cabina;
+
 
                     return (
                       <svg viewBox="0 0 640 360" className="absolute inset-0 w-full h-full select-none">

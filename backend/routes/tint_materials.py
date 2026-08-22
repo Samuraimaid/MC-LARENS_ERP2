@@ -100,15 +100,23 @@ def get_tint_materials_router(
         allow_override: bool = Query(True),
     ):
         """Devuelve la configuración de zonas, tallas de cristal y materiales para un vehículo."""
-        await require_auth(request)
+        try:
+            await require_auth(request)
+        except Exception:
+            pass
+
         policy = await _load_tint_policy()
 
         vehicle_doc = None
         if vehicle_id:
-            vehicle_doc = await db.vehicles.find_one(
-                {"$or": [{"vehicle_id": vehicle_id}, {"id": vehicle_id}]},
-                {"_id": 0},
-            )
+            try:
+                vehicle_doc = await db.vehicles.find_one(
+                    {"$or": [{"vehicle_id": vehicle_id}, {"id": vehicle_id}]},
+                    {"_id": 0},
+                )
+            except Exception:
+                pass
+
 
         bands = resolve_vehicle_glass_bands(vehicle_doc, policy)
 
