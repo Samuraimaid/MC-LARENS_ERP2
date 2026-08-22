@@ -25,7 +25,8 @@ gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
 
 echo "=== 3. Sincronizando 16,101 Imágenes en Paralelo con Multi-Threading ==="
 echo "Iniciando rsync de alta velocidad..."
-gcloud storage rsync -r -m frontend/public/vehicles/models "gs://${BUCKET_NAME}/models"
+gcloud storage rsync -r frontend/public/vehicles/models "gs://${BUCKET_NAME}/models" || gsutil -m rsync -r frontend/public/vehicles/models "gs://${BUCKET_NAME}/models"
+
 
 echo ""
 echo "=============================================================================="
