@@ -53,6 +53,9 @@ export default function CustomerVehicleFormTabs({
   persistOnChange = false,
   onFormDataBlur,
 }) {
+  const [showOcrModal, setShowOcrModal] = useState(false);
+
+
   const updateForm = (patch) => {
     const next = { ...formData, ...patch };
     onFormDataChange(next);
@@ -60,6 +63,20 @@ export default function CustomerVehicleFormTabs({
       onFormDataBlur(next);
     }
     return next;
+  };
+
+  const handleApplyOcr = (extractedData) => {
+    if (!extractedData) return;
+    const updates = {};
+    if (extractedData.plate_prefix) updates.plate_prefix = extractedData.plate_prefix;
+    if (extractedData.plate_number) updates.plate_number = extractedData.plate_number;
+    if (extractedData.chasis) updates.chasis = extractedData.chasis;
+    if (extractedData.brand) updates.brand = extractedData.brand;
+    if (extractedData.model) updates.model = extractedData.model;
+    if (extractedData.year) updates.year = extractedData.year;
+    if (extractedData.color) updates.color = extractedData.color;
+    updateForm(updates);
+    setShowOcrModal(false);
   };
 
   const commitForm = () => {
@@ -70,6 +87,7 @@ export default function CustomerVehicleFormTabs({
 
   const isCompany = formData.customer_type === "empresa";
   const showCabVariant = isPickupCatalogModel(formData.brand, formData.model);
+
 
   return (
     <Tabs

@@ -101,12 +101,15 @@ export function DriverPortalPage() {
   const [notes, setNotes] = useState("");
   const [proofJob, setProofJob] = useState(null);
   const [proofFile, setProofFile] = useState(null);
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [liveGpsEnabled, setLiveGpsEnabled] = useState(true);
   const [lastGpsPing, setLastGpsPing] = useState(null);
   const [gpsSpeed, setGpsSpeed] = useState(0);
   const fileInputRef = useRef(null);
   const cameraContextError = getCameraContextError();
   const cameraBlocked = !isSecureCameraContext() || Boolean(cameraContextError);
+
 
   // Background Live GPS ping loop
   useEffect(() => {
