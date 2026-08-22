@@ -100,8 +100,15 @@ const OFFICIAL_GAMAS = [
     badgeColor: "bg-amber-500 text-black font-black",
     borderColor: "border-amber-500",
     dotColor: "bg-amber-400",
+    icon: Crown,
+    description: "Quantum Original (14%, 19%, 28%), Endeavor",
+    tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
+  },
+];
+
 // Configuración por defecto completa de materiales para carga instantánea y modo sin conexión
 export const DEFAULT_TINT_CONFIG = {
+
   zones: {
     windshield: {
       zone: "windshield",
