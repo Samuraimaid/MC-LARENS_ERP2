@@ -38,10 +38,12 @@ import { API_BASE as API } from "@/lib/api";
 import {
   resolveVehicleCategory,
   findMatchingVehicleBlueprint,
+  getVehicleImageUrl,
   VEHICLE_CATEGORIES,
   VEHICLE_GLASS_GEOMETRY,
   LATERAL_GLASS_GEOMETRY,
 } from "@/lib/vehicleSilhouette";
+
 import vehicleWindowGeometries from "@/data/vehicle_window_geometry_index.json";
 
 
@@ -834,10 +836,11 @@ export default function TintWindowMaterialDialog({
                 <div className="relative w-full h-full max-w-[540px] aspect-[16/9] flex items-center justify-center p-2">
                   {/* Silueta Lateral Real del Vehículo */}
                   <img
-                    src={matchedBlueprint?.lateral_image || LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
+                    src={getVehicleImageUrl(matchedBlueprint?.lateral_image) || LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
                     alt="Silueta Lateral Vehículo"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-all duration-300"
                   />
+
 
                   {/* Capa SVG Interactiva para Ventanas Laterales */}
                   {(() => {
@@ -942,10 +945,11 @@ export default function TintWindowMaterialDialog({
                 >
                   {/* 1. Imagen Top-Down Realista de la Carrocería */}
                   <img
-                    src={matchedBlueprint?.top_image || VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
+                    src={getVehicleImageUrl(matchedBlueprint?.top_image) || VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
                     alt="Vehículo Top-Down"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
                   />
+
 
                   {/* 2. Capa SVG Interactiva con Shaders Hiper-Realistas */}
                   {(() => {

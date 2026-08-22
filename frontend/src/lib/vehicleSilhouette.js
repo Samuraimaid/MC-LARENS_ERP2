@@ -6,7 +6,24 @@
 import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
 import masterBlueprintCatalog from "@/data/vehicle_blueprints_master_index.json";
 
+export const VEHICLE_CDN_BASE =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_VEHICLES_CDN_URL) ||
+  (typeof window !== "undefined" && window.__VEHICLES_CDN_URL__) ||
+  "https://storage.googleapis.com/mclarens-erp-vehicles";
+
+export function getVehicleImageUrl(imagePath) {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  if (imagePath.startsWith("/vehicles/models/")) {
+    return `${VEHICLE_CDN_BASE}${imagePath.replace("/vehicles", "")}`;
+  }
+  return imagePath;
+}
+
 export const VEHICLE_CATEGORIES = [
+
   { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
   { id: "suv", label: "SUV / Crossover 4x4", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png" },
   { id: "camioneta_doble_cabina", label: "Camioneta Doble Cabina", shortLabel: "Doble Cabina", image: "/vehicles/clean_camioneta_doble_cabina.png" },
