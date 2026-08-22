@@ -221,8 +221,9 @@ export default function TintWindowMaterialDialog({
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
   const [viewMode, setViewMode] = useState("lateral"); // "lateral" | "top"
-  const [orientation, setOrientation] = useState("horizontal"); // "horizontal" | "vertical"
+  const [orientation, setOrientation] = useState("vertical"); // "horizontal" | "vertical"
   const [selectedGama, setSelectedGama] = useState("all");
+
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -650,14 +651,15 @@ export default function TintWindowMaterialDialog({
               {viewMode === "top" && (
                 <button
                   type="button"
-                  onClick={() => setOrientation((prev) => (prev === "horizontal" ? "vertical" : "horizontal"))}
-                  className="flex items-center gap-1 px-2 py-1 text-[9.5px] font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-2xs hover:bg-zinc-50"
-                  title="Cambiar orientación"
+                  onClick={() => setOrientation((prev) => (prev === "vertical" ? "horizontal" : "vertical"))}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-2xs hover:bg-zinc-50"
+                  title="Cambiar orientación de vista de planta"
                 >
-                  <RotateCw className="h-2.5 w-2.5" />
-                  <span>{orientation === "horizontal" ? "Vertical" : "Horizontal"}</span>
+                  <RotateCw className="h-3 w-3" />
+                  <span>{orientation === "vertical" ? "Girar Horizontal" : "Girar Vertical"}</span>
                 </button>
               )}
+
             </div>
 
             {/* Canvas Grande del Vehículo con Sombras Hiper-Realistas */}

@@ -1,117 +1,116 @@
 """
-MC-LARENS ERP: Vehicle Blueprint Matcher Test Suite
-Tests exact brand/model/year lookup against the master engineering catalog.
+MC-LARENS ERP: Enhanced Blueprint Matching Logic
 """
 
 import json
-import unicodedata
 import re
 
-def normalize_text(text: str) -> str:
-    text = unicodedata.normalize('NFD', str(text or ''))
-    text = ''.join(ch for ch in text if unicodedata.category(ch) != 'Mn')
-    return text.lower().strip()
+with open(r'c:\ANTIGRAVITY\MC-LARENS_ERP2\frontend\src\data\vehicle_blueprints_master_index.json', 'r', encoding='utf-8') as f:
+    bp_data = json.load(f)
+blueprints = bp_data.get('blueprints', [])
 
-def find_matching_vehicle_blueprint(vehicle, master_catalog):
-    brand = normalize_text(vehicle.get('brand', ''))
-    model = normalize_text(vehicle.get('model', '') or vehicle.get('descriptor', ''))
-    year = int(vehicle.get('year', 0)) if str(vehicle.get('year', '')).isdigit() else None
-    
-    blueprints = master_catalog.get('blueprints', [])
-    if not blueprints:
-        return None
-        
-    norm_brand = re.sub(r'[^a-z0-9]', '', brand)
-    brand_matches = [
-        b for b in blueprints
-        if re.sub(r'[^a-z0-9]', '', normalize_text(b.get('brand_slug', ''))) == norm_brand
-        or norm_brand in re.sub(r'[^a-z0-9]', '', normalize_text(b.get('brand_slug', '')))
-    ]
-    
+TRIM_AND_STOP_WORDS = {
+    'de', 'del', 'la', 'el', 'los', 'las', 'cabina', 'doble', 'sencilla', 'media', 
+    '4x4', '4x2', 'ano', 'año', 'presente', 'present', 'van', 'pickup', 'pick-up', 
+    'auto', 'm/t', 'a/t', 'gasolina', 'diesel', 'hybrid', 'hibrido', 'híbrido', 
+    'electric', 'electrico', 'eléctrico', 'turbo', 'intercooler', 'v6', 'v8', 
+    'touring', 'limited', 'sport', 'sportage', 'executive', 'premium', 'edition',
+    'special', 'custom', 'standard', 'classic', 'plus', 'pro', 'cross', 'active',
+    'comfort', 'elegance', 'luxury', 'line', 'package', 'pack', 'crew', 'regular',
+    'king', 'single', 'super', 'extended', 'club', 'ute', 'truck', 'car'
+}
+
+def clean_tokens(text):
+    # Remove bracketed text [2015-Present], engine sizes 2.5L, codes QR25DE, [G]
+    cleaned = re.sub(r'\[.*?\]|\(.*?\)', ' ', text)
+    cleaned = re.sub(r'\b\d+\.\d+L?\b|\b[A-Z0-9]{4,8}\b', ' ', cleaned)
+    tokens = re.split(r'[\s\-_/]+', cleaned.lower())
+    # Keep specific model acronyms even if short (cr-v, rav4, cx-5, d-max, etc.)
+    primary_tokens = []
+    secondary_tokens = []
+    for t in tokens:
+        if len(t) < 2:
+            continue
+        if t in TRIM_AND_STOP_WORDS:
+            secondary_tokens.append(t)
+        else:
+            primary_tokens.append(t)
+    return primary_tokens, secondary_tokens
+
+def match_blueprint(brand_str, model_str, year_val):
+    norm_brand = re.sub(r'[^a-z0-9]', '', brand_str.lower())
+    brand_matches = [b for b in blueprints if re.sub(r'[^a-z0-9]', '', b.get('brand_slug', '')) == norm_brand]
     if not brand_matches:
         return None
         
-    ignore_tokens = {'de', 'del', 'la', 'el', 'los', 'las', 'cabina', 'doble', '4x4', '4x2', 'ano', 'año'}
-    model_tokens = [
-        t for t in re.split(r'[\s\-_/()\[\]]+', model)
-        if len(t) >= 2 and t not in ignore_tokens
-    ]
+    primary_tokens, secondary_tokens = clean_tokens(model_str)
+    if not primary_tokens and not secondary_tokens:
+        return None
+        
+    year = int(year_val) if year_val and str(year_val).isdigit() else None
     
     best_match = None
-    best_score = -1
+    best_score = 0
     
     for b in brand_matches:
-        score = 0
-        b_model = normalize_text(b.get('model_name', ''))
-        b_raw = normalize_text(b.get('raw_header_text', ''))
+        b_model = (b.get('model_name') or '').lower()
+        b_raw = (b.get('raw_header_text') or '').lower()
         
-        for t in model_tokens:
-            if t in b_model or t in b_raw:
-                score += 10
+        model_score = 0
+        # Primary model tokens are worth 100 points
+        for t in primary_tokens:
+            if t == b_model or f' {t} ' in f' {b_model} ':
+                model_score += 120
+            elif t in b_model:
+                model_score += 80
+            elif t in b_raw:
+                model_score += 40
                 
+        # Secondary trim tokens are only worth 10 points
+        for t in secondary_tokens:
+            if t in b_model:
+                model_score += 10
+                
+        # REQUIRE at least one primary token match if primary tokens exist!
+        if primary_tokens and model_score < 40:
+            continue
+            
+        year_score = 0
         if year and b.get('year_start'):
-            y_start = b.get('year_start')
-            y_end = b.get('year_end') or y_start
-            if y_start <= year <= y_end:
-                score += 15
-            elif abs(year - y_start) <= 3:
-                score += 5
+            if year >= b['year_start'] and (not b.get('year_end') or year <= b.get('year_end')):
+                year_score = 25
+            elif abs(year - b['year_start']) <= 3:
+                year_score = 15
+            elif abs(year - b['year_start']) <= 6:
+                year_score = 5
                 
-        if score > best_score and score >= 10:
-            best_score = score
+        total = model_score + year_score
+        if total > best_score:
+            best_score = total
             best_match = b
             
     return best_match
 
-def run_tests():
-    with open('frontend/src/data/vehicle_blueprints_master_index.json', 'r', encoding='utf-8') as f:
-        master_catalog = json.load(f)
-        
-    test_vehicles = [
-        {'brand': 'NISSAN', 'model': 'FRONTIER', 'year': 2022},
-        {'brand': 'NISSAN', 'model': 'SENTRA', 'year': 2020},
-        {'brand': 'NISSAN', 'model': 'KICKS', 'year': 2021},
-        {'brand': 'TOYOTA', 'model': 'HILUX DOBLE CABINA', 'year': 2024},
-        {'brand': 'TOYOTA', 'model': 'LAND CRUISER PRADO', 'year': 2021},
-        {'brand': 'TOYOTA', 'model': 'COROLLA', 'year': 2022},
-        {'brand': 'KIA', 'model': 'SPORTAGE', 'year': 2020},
-        {'brand': 'KIA', 'model': 'SORENTO', 'year': 2021},
-        {'brand': 'KIA', 'model': 'RIO', 'year': 2019},
-        {'brand': 'HYUNDAI', 'model': 'TUCSON', 'year': 2022},
-        {'brand': 'HYUNDAI', 'model': 'SANTA FE', 'year': 2021},
-        {'brand': 'HYUNDAI', 'model': 'CRETA', 'year': 2023},
-        {'brand': 'FORD', 'model': 'RANGER', 'year': 2023},
-        {'brand': 'FORD', 'model': 'F-150', 'year': 2021},
-        {'brand': 'FORD', 'model': 'EXPLORER', 'year': 2020},
-        {'brand': 'CHEVROLET', 'model': 'SILVERADO', 'year': 2022},
-        {'brand': 'CHEVROLET', 'model': 'TRACKER', 'year': 2021},
-        {'brand': 'ISUZU', 'model': 'D-MAX', 'year': 2022},
-        {'brand': 'MITSUBISHI', 'model': 'L200', 'year': 2021},
-        {'brand': 'MITSUBISHI', 'model': 'MONTERO SPORT', 'year': 2022},
-        {'brand': 'MAZDA', 'model': 'CX-5', 'year': 2021},
-        {'brand': 'MAZDA', 'model': 'BT-50', 'year': 2022},
-        {'brand': 'HONDA', 'model': 'CR-V', 'year': 2022},
-        {'brand': 'HONDA', 'model': 'CIVIC', 'year': 2021},
-        {'brand': 'JEEP', 'model': 'WRANGLER', 'year': 2020},
-        {'brand': 'JEEP', 'model': 'GRAND CHEROKEE', 'year': 2021},
-        {'brand': 'VOLKSWAGEN', 'model': 'AMAROK', 'year': 2022},
-        {'brand': 'VOLKSWAGEN', 'model': 'TIGUAN', 'year': 2021},
-        {'brand': 'BMW', 'model': 'X5', 'year': 2022},
-        {'brand': 'AUDI', 'model': 'Q7', 'year': 2021},
-        {'brand': 'BYD', 'model': 'SONG PLUS', 'year': 2023},
-        {'brand': 'CHANGAN', 'model': 'CS55', 'year': 2022},
-        {'brand': 'GEELY', 'model': 'COOLRAY', 'year': 2022},
-    ]
-    
-    print(f"Testing {len(test_vehicles)} vehicles against master blueprint catalog...\n")
-    
-    for v in test_vehicles:
-        match = find_matching_vehicle_blueprint(v, master_catalog)
-        if match:
-            print(f"[MATCH] {v['brand']:12s} {v['model']:22s} ({v['year']}) -> {match.get('brand')} {match.get('model_name')} ({match.get('year_start')}) | Category: {match.get('category')}")
-        else:
-            print(f"[FALLBACK] {v['brand']:12s} {v['model']:22s} ({v['year']}) -> Canonical category fallback")
+samples = [
+    ("Nissan", "Frontier / Navara (D23) [2015-Present] - 2.5L QR25DE [G]", 2019),
+    ("Toyota", "Hilux Revo Double Cab 2.8L (2018)", 2018),
+    ("Toyota", "Corolla Cross 1.8L Hybrid (2022)", 2022),
+    ("Toyota", "RAV4 2.5L Limited (2021)", 2021),
+    ("Honda", "CR-V Touring 1.5T (2019)", 2019),
+    ("Hyundai", "Tucson 2.0L CRDi (2020)", 2020),
+    ("Kia", "Sportage 2.0L EX (2019)", 2019),
+    ("Ford", "Ranger XLT Double Cab 3.2L (2017)", 2017),
+    ("Chevrolet", "Colorado Z71 Crew Cab (2021)", 2021),
+    ("Mitsubishi", "L200 Triton Sportero (2020)", 2020),
+    ("Isuzu", "D-Max V-Cross 3.0L (2022)", 2022),
+    ("Suzuki", "Jimny Sierra 1.5L (2021)", 2021),
+    ("Mazda", "BT-50 Double Cab (2020)", 2020),
+]
 
-if __name__ == '__main__':
-    bestScore = 0
-    run_tests()
+print("\n--- SAMPLE MATCH TEST ---")
+for brand, model, yr in samples:
+    res = match_blueprint(brand, model, yr)
+    if res:
+        print(f"[{brand}] {model[:40]}... -> MATCH: {res.get('model_name')} ({res.get('category')})")
+    else:
+        print(f"[{brand}] {model[:40]}... -> NO BLUEPRINT")

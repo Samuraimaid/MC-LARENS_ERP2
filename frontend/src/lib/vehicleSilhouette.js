@@ -47,6 +47,17 @@ const CATEGORY_ALIASES = {
   bus: "bus_mediano_coaster",
 };
 
+const TRIM_AND_STOP_WORDS = new Set([
+  "de", "del", "la", "el", "los", "las", "cabina", "doble", "sencilla", "media",
+  "4x4", "4x2", "ano", "año", "presente", "present", "van", "pickup", "pick-up",
+  "auto", "m/t", "a/t", "gasolina", "diesel", "hybrid", "hibrido", "híbrido",
+  "electric", "electrico", "eléctrico", "turbo", "intercooler", "v6", "v8",
+  "touring", "limited", "sport", "sportage", "executive", "premium", "edition",
+  "special", "custom", "standard", "classic", "plus", "pro", "cross", "active",
+  "comfort", "elegance", "luxury", "line", "package", "pack", "crew", "regular",
+  "king", "single", "super", "extended", "club", "ute", "truck", "car",
+]);
+
 /**
  * Searches the 8,692-blueprint master catalog for a specific vehicle brand, model, and year.
  * Returns the exact blueprint match if available, or null.
@@ -68,43 +79,79 @@ export function findMatchingVehicleBlueprint(vehicle) {
 
   if (brandMatches.length === 0) return null;
 
-  const modelTokens = model
+  // Clean and split model tokens into primary and secondary
+  const cleanedModel = model
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .split(/[\s\-_/()\[\]]+/)
-    .filter((t) => t.length >= 2 && !["de", "del", "la", "el", "los", "las", "cabina", "doble", "4x4", "4x2", "ano", "año"].includes(t));
+    .replace(/\[.*?\]|\(.*?\)/g, " ")
+    .replace(/\b\d+\.\d+L?\b|\b[A-Z0-9]{4,8}\b/gi, " ");
+
+  const rawTokens = cleanedModel.split(/[\s\-_/]+/).map((t) => t.trim().toLowerCase());
+  const primaryTokens = [];
+  const secondaryTokens = [];
+
+  for (const t of rawTokens) {
+    if (t.length < 2) continue;
+    if (TRIM_AND_STOP_WORDS.has(t)) {
+      secondaryTokens.push(t);
+    } else {
+      primaryTokens.push(t);
+    }
+  }
+
+  if (primaryTokens.length === 0 && secondaryTokens.length === 0) return null;
 
   let bestMatch = null;
-  let bestScore = -1;
+  let bestScore = 0;
 
   for (const b of brandMatches) {
-    let score = 0;
     const bModel = String(b.model_name || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
     const bRaw = String(b.raw_header_text || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-    for (const token of modelTokens) {
-      if (bModel.includes(token) || bRaw.includes(token)) {
-        score += 10;
+    let modelScore = 0;
+
+    for (const t of primaryTokens) {
+      if (t === bModel || ` ${bModel} `.includes(` ${t} `)) {
+        modelScore += 120;
+      } else if (bModel.includes(t)) {
+        modelScore += 80;
+      } else if (bRaw.includes(t)) {
+        modelScore += 40;
       }
     }
 
+    for (const t of secondaryTokens) {
+      if (bModel.includes(t)) {
+        modelScore += 10;
+      }
+    }
+
+    // Require at least one primary token match if primary tokens exist
+    if (primaryTokens.length > 0 && modelScore < 40) {
+      continue;
+    }
+
+    let yearScore = 0;
     if (year && b.year_start) {
       if (year >= b.year_start && (!b.year_end || year <= b.year_end)) {
-        score += 15;
+        yearScore = 25;
       } else if (Math.abs(year - b.year_start) <= 3) {
-        score += 5;
+        yearScore = 15;
+      } else if (Math.abs(year - b.year_start) <= 6) {
+        yearScore = 5;
       }
     }
 
-    if (score > bestScore && score >= 10) {
-      bestScore = score;
+    const totalScore = modelScore + yearScore;
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
       bestMatch = b;
     }
   }
 
   return bestMatch;
 }
+
 
 /**
  * Resolves the vehicle category based on vehicle object metadata and comprehensive ERP vehicle catalog
@@ -482,191 +529,188 @@ export function resolveVehicleCategory(vehicle) {
 export const VEHICLE_GLASS_GEOMETRY = {
   sedan: {
     windshield: {
-      d: "M54,78 L146,78 L138,132 L62,132 Z",
-      // Banda Superior (Visera de Sol pegada al Techo / abajo en vista zenital)
-      topStrip: "M61,120 L139,120 L138,132 L62,132 Z",
-      // Banda Inferior (Pegada al Capó y Limpiaparabrisas / arriba en vista zenital)
-      bottomStrip: "M54,78 L146,78 L144,90 L56,90 Z",
-      textY: 105,
-      subY: 118,
+      d: "M54,86 L146,86 L142,136 L58,136 Z",
+      topStrip: "M60,124 L140,124 L142,136 L58,136 Z",
+      bottomStrip: "M54,86 L146,86 L144,98 L56,98 Z",
+      textY: 110,
+      subY: 122,
     },
     front_sides: [
-      { d: "M46,136 L62,136 L60,192 L44,192 Z" },
-      { d: "M138,136 L154,136 L156,192 L140,192 Z" },
+      { d: "M44,140 L58,140 L56,194 L42,194 Z" },
+      { d: "M142,140 L156,140 L158,194 L144,194 Z" },
     ],
     rear_sides: [
-      { d: "M44,196 L58,196 L56,248 L42,248 Z" },
-      { d: "M142,196 L156,196 L158,248 L144,248 Z" },
+      { d: "M42,198 L56,198 L54,248 L40,248 Z" },
+      { d: "M144,198 L158,198 L160,248 L146,248 Z" },
     ],
     rear: {
-      // Parabrisas trasero extendido hacia el baúl/bumper en sedanes fastback
-      d: "M66,250 L134,250 L130,326 L70,326 Z",
-      topStrip: "M66,250 L134,250 L133,260 L67,260 Z",
-      bottomStrip: "M69,316 L131,316 L130,326 L70,326 Z",
-      textY: 280,
-      subY: 294,
+      d: "M64,250 L136,250 L132,312 L68,312 Z",
+      topStrip: "M64,250 L136,250 L135,260 L65,260 Z",
+      bottomStrip: "M67,302 L133,302 L132,312 L68,312 Z",
+      textY: 278,
+      subY: 290,
     },
   },
   suv: {
     windshield: {
-      d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
-      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      textY: 104,
-      subY: 117,
+      d: "M52,86 L148,86 L144,136 L56,136 Z",
+      topStrip: "M58,124 L142,124 L144,136 L56,136 Z",
+      bottomStrip: "M52,86 L148,86 L146,98 L54,98 Z",
+      textY: 110,
+      subY: 122,
     },
     front_sides: [
-      { d: "M44,138 L60,138 L58,196 L42,196 Z" },
-      { d: "M140,138 L156,138 L158,196 L142,196 Z" },
+      { d: "M42,140 L58,140 L56,196 L40,196 Z" },
+      { d: "M142,140 L158,140 L160,196 L144,196 Z" },
     ],
     rear_sides: [
-      { d: "M42,200 L58,200 L56,262 L40,262 Z" },
-      { d: "M142,200 L158,200 L160,262 L144,262 Z" },
+      { d: "M40,200 L56,200 L54,262 L38,262 Z" },
+      { d: "M144,200 L160,200 L162,262 L146,262 Z" },
     ],
     rear: {
-      // Parabrisas trasero de SUV cerca del bumper posterior
-      d: "M62,264 L138,264 L134,328 L66,328 Z",
+      d: "M62,264 L138,264 L134,318 L66,318 Z",
       topStrip: "M62,264 L138,264 L137,274 L63,274 Z",
-      bottomStrip: "M65,318 L135,318 L134,328 L66,328 Z",
-      textY: 290,
-      subY: 304,
+      bottomStrip: "M65,308 L135,308 L134,318 L66,318 Z",
+      textY: 288,
+      subY: 300,
     },
   },
   camioneta_doble_cabina: {
     windshield: {
-      d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
-      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      textY: 104,
-      subY: 117,
+      d: "M56,96 L144,96 L148,138 L52,138 Z",
+      topStrip: "M53,126 L147,126 L148,138 L52,138 Z",
+      bottomStrip: "M56,96 L144,96 L142,108 L58,108 Z",
+      textY: 114,
+      subY: 126,
     },
     front_sides: [
-      { d: "M44,138 L60,138 L58,196 L42,196 Z" },
-      { d: "M140,138 L156,138 L158,196 L142,196 Z" },
+      { d: "M44,142 L58,142 L58,182 L44,182 Z" },
+      { d: "M142,142 L156,142 L156,182 L142,182 Z" },
     ],
     rear_sides: [
-      { d: "M42,200 L58,200 L56,252 L40,252 Z" },
-      { d: "M142,200 L158,200 L160,252 L144,252 Z" },
+      { d: "M44,186 L58,186 L58,220 L44,220 Z" },
+      { d: "M142,186 L156,186 L156,220 L142,220 Z" },
     ],
     rear: {
-      d: "M60,250 L140,250 L138,266 L62,266 Z",
-      topStrip: "M60,250 L140,250 L139,256 L61,256 Z",
-      bottomStrip: "M61,260 L139,260 L138,266 L62,266 Z",
-      textY: 258,
-      subY: 264,
+      d: "M60,222 L140,222 L138,238 L62,238 Z",
+      topStrip: "M60,222 L140,222 L139,228 L61,228 Z",
+      bottomStrip: "M61,232 L139,232 L138,238 L62,238 Z",
+      textY: 230,
+      subY: 235,
     },
   },
   camioneta_cabina_media: {
     windshield: {
-      d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
-      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      textY: 104,
-      subY: 117,
+      d: "M56,96 L144,96 L148,138 L52,138 Z",
+      topStrip: "M53,126 L147,126 L148,138 L52,138 Z",
+      bottomStrip: "M56,96 L144,96 L142,108 L58,108 Z",
+      textY: 114,
+      subY: 126,
     },
     front_sides: [
-      { d: "M44,138 L60,138 L58,192 L42,192 Z" },
-      { d: "M140,138 L156,138 L158,192 L142,192 Z" },
+      { d: "M44,142 L58,142 L58,182 L44,182 Z" },
+      { d: "M142,142 L156,142 L156,182 L142,182 Z" },
     ],
     rear_sides: [
-      { d: "M42,196 L56,196 L54,232 L40,232 Z" },
-      { d: "M144,196 L158,196 L160,232 L146,232 Z" },
+      { d: "M45,186 L57,186 L57,208 L45,208 Z" },
+      { d: "M143,186 L155,186 L155,208 L143,208 Z" },
     ],
     rear: {
-      d: "M60,228 L140,228 L138,244 L62,244 Z",
-      topStrip: "M60,228 L140,228 L139,234 L61,234 Z",
-      bottomStrip: "M61,238 L139,238 L138,244 L62,244 Z",
-      textY: 236,
-      subY: 242,
+      d: "M60,210 L140,210 L138,226 L62,226 Z",
+      topStrip: "M60,210 L140,210 L139,216 L61,216 Z",
+      bottomStrip: "M61,220 L139,220 L138,226 L62,226 Z",
+      textY: 218,
+      subY: 224,
     },
   },
   camioneta_1_cabina: {
     windshield: {
-      d: "M52,76 L148,76 L140,134 L60,134 Z",
-      topStrip: "M59,122 L141,122 L140,134 L60,134 Z",
-      bottomStrip: "M52,76 L148,76 L146,88 L54,88 Z",
-      textY: 104,
-      subY: 117,
+      d: "M56,96 L144,96 L148,138 L52,138 Z",
+      topStrip: "M53,126 L147,126 L148,138 L52,138 Z",
+      bottomStrip: "M56,96 L144,96 L142,108 L58,108 Z",
+      textY: 114,
+      subY: 126,
     },
     front_sides: [
-      { d: "M44,138 L60,138 L58,198 L42,198 Z" },
-      { d: "M140,138 L156,138 L158,198 L142,198 Z" },
+      { d: "M44,142 L58,142 L58,188 L44,188 Z" },
+      { d: "M142,142 L156,142 L156,188 L142,188 Z" },
     ],
     rear_sides: [],
     rear: {
-      d: "M60,198 L140,198 L138,214 L62,214 Z",
-      topStrip: "M60,198 L140,198 L139,204 L61,204 Z",
-      bottomStrip: "M61,208 L139,208 L138,214 L62,214 Z",
-      textY: 206,
-      subY: 212,
+      d: "M60,192 L140,192 L138,208 L62,208 Z",
+      topStrip: "M60,192 L140,192 L139,198 L61,198 Z",
+      bottomStrip: "M61,202 L139,202 L138,208 L62,208 Z",
+      textY: 200,
+      subY: 206,
     },
   },
   camion_1_cabina: {
     windshield: {
-      d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
-      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      textY: 100,
-      subY: 113,
+      d: "M46,80 L154,80 L152,126 L48,126 Z",
+      topStrip: "M55,116 L145,116 L144,126 L56,126 Z",
+      bottomStrip: "M46,80 L154,80 L152,92 L48,92 Z",
+      textY: 102,
+      subY: 114,
     },
     front_sides: [
-      { d: "M42,134 L58,134 L56,196 L40,196 Z" },
-      { d: "M142,134 L158,134 L160,196 L144,196 Z" },
+      { d: "M40,130 L54,130 L54,178 L40,178 Z" },
+      { d: "M146,130 L160,130 L160,178 L146,178 Z" },
     ],
     rear_sides: [],
     rear: {
-      d: "M60,196 L140,196 L138,214 L62,214 Z",
-      topStrip: "M60,196 L140,196 L139,202 L61,202 Z",
-      bottomStrip: "M61,208 L139,208 L138,214 L62,214 Z",
-      textY: 205,
-      subY: 211,
+      d: "M56,180 L144,180 L142,196 L58,196 Z",
+      topStrip: "M56,180 L144,180 L143,186 L57,186 Z",
+      bottomStrip: "M57,190 L143,190 L142,196 L58,196 Z",
+      textY: 188,
+      subY: 194,
     },
   },
   camion_2_cabinas: {
     windshield: {
-      d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
-      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      textY: 100,
-      subY: 113,
+      d: "M46,80 L154,80 L152,126 L48,126 Z",
+      topStrip: "M55,116 L145,116 L144,126 L56,126 Z",
+      bottomStrip: "M46,80 L154,80 L152,92 L48,92 Z",
+      textY: 102,
+      subY: 114,
     },
     front_sides: [
-      { d: "M42,134 L58,134 L56,194 L40,194 Z" },
-      { d: "M142,134 L158,134 L160,194 L144,194 Z" },
+      { d: "M40,130 L54,130 L54,174 L40,174 Z" },
+      { d: "M146,130 L160,130 L160,174 L146,174 Z" },
     ],
     rear_sides: [
-      { d: "M40,198 L56,198 L54,250 L38,250 Z" },
-      { d: "M144,198 L160,198 L162,250 L146,250 Z" },
+      { d: "M40,178 L54,178 L54,216 L40,216 Z" },
+      { d: "M146,178 L160,178 L160,216 L146,216 Z" },
     ],
     rear: {
-      d: "M60,248 L140,248 L138,264 L62,264 Z",
-      topStrip: "M60,248 L140,248 L139,254 L61,254 Z",
-      bottomStrip: "M61,258 L139,258 L138,264 L62,264 Z",
-      textY: 256,
-      subY: 262,
+      d: "M56,218 L144,218 L142,234 L58,234 Z",
+      topStrip: "M56,218 L144,218 L143,224 L57,224 Z",
+      bottomStrip: "M57,228 L143,228 L142,234 L58,234 Z",
+      textY: 226,
+      subY: 232,
     },
   },
   camion_carga_furgon: {
     windshield: {
-      d: "M50,70 L150,70 L144,130 L56,130 Z",
-      topStrip: "M55,120 L145,120 L144,130 L56,130 Z",
-      bottomStrip: "M50,70 L150,70 L148,82 L52,82 Z",
-      textY: 100,
-      subY: 113,
+      d: "M46,80 L154,80 L152,126 L48,126 Z",
+      topStrip: "M55,116 L145,116 L144,126 L56,126 Z",
+      bottomStrip: "M46,80 L154,80 L152,92 L48,92 Z",
+      textY: 102,
+      subY: 114,
     },
     front_sides: [
-      { d: "M42,134 L58,134 L56,194 L40,194 Z" },
-      { d: "M142,134 L158,134 L160,194 L144,194 Z" },
+      { d: "M40,130 L54,130 L54,178 L40,178 Z" },
+      { d: "M146,130 L160,130 L160,178 L146,178 Z" },
     ],
     rear_sides: [],
     rear: {
-      d: "M60,196 L140,196 L138,212 L62,212 Z",
-      topStrip: "M60,196 L140,196 L139,202 L61,202 Z",
-      bottomStrip: "M61,208 L139,208 L138,212 L62,212 Z",
-      textY: 204,
-      subY: 210,
+      d: "M56,180 L144,180 L142,196 L58,196 Z",
+      topStrip: "M56,180 L144,180 L143,186 L57,186 Z",
+      bottomStrip: "M57,190 L143,190 L142,196 L58,196 Z",
+      textY: 188,
+      subY: 194,
     },
   },
+
   station_wagon: {
     windshield: {
       d: "M54,76 L146,76 L138,130 L62,130 Z",
