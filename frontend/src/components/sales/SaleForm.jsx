@@ -5775,7 +5775,7 @@ export default function SaleForm({
         }}
         onApplyPlan={handleApplyTintPlan}
         vehicle={selectedVehicleData}
-        product={tintDialogProduct}
+        product={tintDialogProduct || tintDialogCartItem}
         initialPlan={tintDialogCartItem?.tint_window_plan}
         currency={currency}
         exchangeRate={exchangeRate}

@@ -1028,10 +1028,11 @@ def validate_tint_window_plan(
     for z in GLASS_ZONES:
         win = windows.get(z) or {}
         mat_id = win.get("material_id")
-        if mat_id:
+        if mat_id and mat_id not in ("none", "sin_polarizado", "no_incluido", "sin_material"):
             if mat_id not in materials_map:
                 return False, f"El material '{mat_id}' asignado a {ZONE_LABELS.get(z, z)} no existe."
             mat_ids.add(mat_id)
+
 
         # Validar segunda capa si existe
         sec_layer = win.get("second_layer") or {}

@@ -1,6 +1,7 @@
 /**
- * Intelligent Tint Plan Preselector & Resolver for MC-LARENS ERP
- * Infers service type, zone focus, sunstrips, shades, and gamas based on product SKU, name, description, and metadata.
+ * Intelligent Tint Plan Preselector & Scope Resolver for MC-LARENS ERP
+ * Infers service type, contracted zones, sunstrips, shades, and gamas based on product SKU, name, description, and metadata.
+ * Restricts editable zones so non-contracted windows are locked to "none" preventing accidental billing or roll consumption.
  */
 
 export function detectTintPlanFromProduct(product, vehicle) {
@@ -165,20 +166,23 @@ export function detectTintPlanFromProduct(product, vehicle) {
     sku.startsWith("POL-LAT") ||
     windowOpts.includes("laterales_trasero");
 
-  // CASO A: Banda Frontal / Franja Superior Parabrisas
+  // CASO A: Banda Frontal / Franja Superior Parabrisas (SOLO BANDA)
   if (isSunstrip) {
     return {
       serviceType: "franja_superior",
       serviceLabel: "Banda Frontal / Franja Superior",
+      allowedZones: [], // No se polariza ningún cristal completo
+      allowedSunstrips: ["windshield_top"],
+      isSunstripOnly: true,
       activeZone: "windshield",
       viewMode: "top", // Muestra la vista de planta donde la banda superior brilla en el parabrisas
       selectedGama,
-      linkSides: true,
+      linkSides: false,
       selectedMaterials: {
-        windshield: "std_70",
-        front_sides: "std_20",
-        rear_sides: "std_20",
-        rear: "std_20",
+        windshield: "none",
+        front_sides: "none",
+        rear_sides: "none",
+        rear: "none",
       },
       sunstrips: {
         windshield_top: { enabled: true, material_id: baseSidesMaterial },
@@ -186,24 +190,28 @@ export function detectTintPlanFromProduct(product, vehicle) {
         rear_top: { enabled: false, material_id: baseSidesMaterial },
         rear_bottom: { enabled: false, material_id: baseSidesMaterial },
       },
-      badgeNote: "Banda Frontal Superior ACTIVADA",
+      badgeNote: "Banda Frontal Superior (Cristales completos bloqueados)",
+      lockedExplanation: "Servicio de Banda Frontal: Los cristales completos están bloqueados para evitar consumos de rollos indebidos.",
     };
   }
 
-  // CASO B: Solo Vidrios Delanteros
+  // CASO B: Solo Vidrios Delanteros (SOLO FRONT SIDES)
   if (isFrontSidesOnly) {
     return {
       serviceType: "vidrios_delanteros",
       serviceLabel: "Solo Vidrios Delanteros",
+      allowedZones: ["front_sides"],
+      allowedSunstrips: [],
+      isSunstripOnly: false,
       activeZone: "front_sides",
       viewMode: "lateral",
       selectedGama,
       linkSides: false,
       selectedMaterials: {
-        windshield: "std_70",
+        windshield: "none",
         front_sides: baseSidesMaterial,
-        rear_sides: "std_20",
-        rear: "std_20",
+        rear_sides: "none",
+        rear: "none",
       },
       sunstrips: {
         windshield_top: { enabled: false, material_id: "std_20" },
@@ -211,7 +219,8 @@ export function detectTintPlanFromProduct(product, vehicle) {
         rear_top: { enabled: false, material_id: "std_20" },
         rear_bottom: { enabled: false, material_id: "std_20" },
       },
-      badgeNote: `Vidrios Delanteros: ${detectedVlt}%`,
+      badgeNote: `Vidrios Delanteros: ${detectedVlt}% (Resto de zonas bloqueadas)`,
+      lockedExplanation: "Paquete de Solo Vidrios Delanteros: Parabrisas y vidrios traseros bloqueados.",
     };
   }
 
@@ -220,15 +229,18 @@ export function detectTintPlanFromProduct(product, vehicle) {
     return {
       serviceType: "parabrisas_delantero",
       serviceLabel: "Parabrisas Delantero",
+      allowedZones: ["windshield"],
+      allowedSunstrips: ["windshield_top", "windshield_bottom"],
+      isSunstripOnly: false,
       activeZone: "windshield",
       viewMode: "lateral",
       selectedGama,
-      linkSides: true,
+      linkSides: false,
       selectedMaterials: {
         windshield: baseWindshieldMaterial,
-        front_sides: "std_20",
-        rear_sides: "std_20",
-        rear: "std_20",
+        front_sides: "none",
+        rear_sides: "none",
+        rear: "none",
       },
       sunstrips: {
         windshield_top: { enabled: false, material_id: "std_20" },
@@ -237,6 +249,7 @@ export function detectTintPlanFromProduct(product, vehicle) {
         rear_bottom: { enabled: false, material_id: "std_20" },
       },
       badgeNote: `Parabrisas Delantero: ${detectedVlt === 70 ? "70% Claro" : "Antirreflejo"}`,
+      lockedExplanation: "Paquete Parabrisas Delantero: Ventanas laterales y trasero bloqueados.",
     };
   }
 
@@ -245,14 +258,17 @@ export function detectTintPlanFromProduct(product, vehicle) {
     return {
       serviceType: "vidrio_trasero",
       serviceLabel: "Vidrio Trasero / Luneta",
+      allowedZones: ["rear"],
+      allowedSunstrips: ["rear_top", "rear_bottom"],
+      isSunstripOnly: false,
       activeZone: "rear",
       viewMode: "top",
       selectedGama,
       linkSides: false,
       selectedMaterials: {
-        windshield: "std_70",
-        front_sides: "std_20",
-        rear_sides: "std_20",
+        windshield: "none",
+        front_sides: "none",
+        rear_sides: "none",
         rear: baseSidesMaterial,
       },
       sunstrips: {
@@ -262,6 +278,7 @@ export function detectTintPlanFromProduct(product, vehicle) {
         rear_bottom: { enabled: false, material_id: "std_20" },
       },
       badgeNote: `Vidrio Trasero: ${detectedVlt}%`,
+      lockedExplanation: "Paquete Vidrio Trasero: Parabrisas y laterales bloqueados.",
     };
   }
 
@@ -270,12 +287,15 @@ export function detectTintPlanFromProduct(product, vehicle) {
     return {
       serviceType: "laterales_y_trasero",
       serviceLabel: "Laterales y Vidrio Trasero",
+      allowedZones: ["front_sides", "rear_sides", "rear"],
+      allowedSunstrips: ["rear_top", "rear_bottom"],
+      isSunstripOnly: false,
       activeZone: "front_sides",
       viewMode: "lateral",
       selectedGama,
       linkSides: true,
       selectedMaterials: {
-        windshield: "std_70",
+        windshield: "none",
         front_sides: baseSidesMaterial,
         rear_sides: baseSidesMaterial,
         rear: baseSidesMaterial,
@@ -286,7 +306,8 @@ export function detectTintPlanFromProduct(product, vehicle) {
         rear_top: { enabled: false, material_id: "std_20" },
         rear_bottom: { enabled: false, material_id: "std_20" },
       },
-      badgeNote: `Laterales + Trasero: ${detectedVlt}%`,
+      badgeNote: `Laterales + Trasero: ${detectedVlt}% (Parabrisas delantero bloqueado)`,
+      lockedExplanation: "Paquete Laterales y Trasero: Parabrisas delantero no incluido.",
     };
   }
 
@@ -294,6 +315,9 @@ export function detectTintPlanFromProduct(product, vehicle) {
   return {
     serviceType: "completo",
     serviceLabel: "Polarizado Completo",
+    allowedZones: ["windshield", "front_sides", "rear_sides", "rear"],
+    allowedSunstrips: ["windshield_top", "windshield_bottom", "rear_top", "rear_bottom"],
+    isSunstripOnly: false,
     activeZone: "windshield",
     viewMode: "lateral",
     selectedGama,
@@ -311,5 +335,6 @@ export function detectTintPlanFromProduct(product, vehicle) {
       rear_bottom: { enabled: false, material_id: "std_20" },
     },
     badgeNote: `Polarizado Completo (${detectedVlt}%)`,
+    lockedExplanation: null,
   };
 }

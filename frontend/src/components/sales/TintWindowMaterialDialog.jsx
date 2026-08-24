@@ -208,7 +208,18 @@ export const DEFAULT_TINT_CONFIG = {
 
 // Función de sombreado y color hiper-realista basada en las muestras del catálogo
 export function getRealisticTintShade(materialId, secondLayerEnabled = false) {
+  if (!materialId || materialId === "none" || materialId === "sin_polarizado" || materialId === "no_incluido") {
+    return {
+      fill: "rgba(220, 240, 255, 0.05)",
+      opacity: 0.15,
+      border: "#64748b",
+      glow: "#94a3b8",
+      label: "Sin polarizar",
+      isNone: true,
+    };
+  }
   const mat = String(materialId || "").toLowerCase();
+
 
   // 1. Camaleón (Efecto iridiscente tornasol azul/violeta)
   if (mat.includes("camaleon")) {
@@ -330,6 +341,21 @@ export default function TintWindowMaterialDialog({
   const [orientation, setOrientation] = useState("vertical"); // "horizontal" | "vertical"
   const [selectedGama, setSelectedGama] = useState("all");
   const [preselectedMeta, setPreselectedMeta] = useState(null);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Determinar zonas permitidas según alcance del producto
+  const allowedZones = useMemo(() => {
+    if (isUnlocked || !preselectedMeta?.allowedZones) {
+      return ["windshield", "front_sides", "rear_sides", "rear"];
+    }
+    return preselectedMeta.allowedZones;
+  }, [isUnlocked, preselectedMeta]);
+
+  const isSunstripOnly = Boolean(preselectedMeta?.isSunstripOnly && !isUnlocked);
+
+  const isZoneAllowed = (zoneKey) => {
+    return isUnlocked || allowedZones.includes(zoneKey);
+  };
 
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -447,6 +473,7 @@ export default function TintWindowMaterialDialog({
   // Cargar configuración de materiales al abrir y preseleccionar según producto o borrador previo
   useEffect(() => {
     if (!isOpen) return;
+    setIsUnlocked(false);
     const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
 
     // 1. Restaurar de initialPlan (si estamos editando una línea existente en el carrito)
@@ -539,24 +566,24 @@ export default function TintWindowMaterialDialog({
       selectedVehicleType,
       windows: {
         windshield: {
-          material_id: selectedMaterials.windshield,
+          material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
           override_size_band: overrideFlags.windshield,
-          second_layer: secondLayers.windshield,
+          second_layer: isZoneAllowed("windshield") ? secondLayers.windshield : { enabled: false },
         },
         front_sides: {
-          material_id: selectedMaterials.front_sides,
+          material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
           override_size_band: overrideFlags.front_sides,
-          second_layer: secondLayers.front_sides,
+          second_layer: isZoneAllowed("front_sides") ? secondLayers.front_sides : { enabled: false },
         },
         rear_sides: {
-          material_id: selectedMaterials.rear_sides,
+          material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
           override_size_band: overrideFlags.rear_sides,
-          second_layer: secondLayers.rear_sides,
+          second_layer: isZoneAllowed("rear_sides") ? secondLayers.rear_sides : { enabled: false },
         },
         rear: {
-          material_id: selectedMaterials.rear,
+          material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
           override_size_band: overrideFlags.rear,
-          second_layer: secondLayers.rear,
+          second_layer: isZoneAllowed("rear") ? secondLayers.rear : { enabled: false },
           empalme_2x20: empalmeRear,
         },
       },
@@ -570,10 +597,10 @@ export default function TintWindowMaterialDialog({
     } catch (e) {
       // ignore
     }
-  }, [selectedMaterials, secondLayers, sunstrips, empalmeRear, linkSides, overrideFlags, isOpen, vehicle, selectedVehicleType]);
+  }, [selectedMaterials, secondLayers, sunstrips, empalmeRear, linkSides, overrideFlags, isOpen, vehicle, selectedVehicleType, isUnlocked, allowedZones]);
 
 
-  // Cotizar plan en tiempo real
+  // Cotizar plan en tiempo real (Protección estricta: solo zonas contratadas)
   useEffect(() => {
     if (!isOpen || !config) return;
 
@@ -583,24 +610,24 @@ export default function TintWindowMaterialDialog({
         link_sides: linkSides,
         windows: {
           windshield: {
-            material_id: selectedMaterials.windshield,
+            material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
             override_size_band: overrideFlags.windshield,
-            second_layer: secondLayers.windshield,
+            second_layer: isZoneAllowed("windshield") ? secondLayers.windshield : { enabled: false },
           },
           front_sides: {
-            material_id: selectedMaterials.front_sides,
+            material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
             override_size_band: overrideFlags.front_sides,
-            second_layer: secondLayers.front_sides,
+            second_layer: isZoneAllowed("front_sides") ? secondLayers.front_sides : { enabled: false },
           },
           rear_sides: {
-            material_id: selectedMaterials.rear_sides,
+            material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
             override_size_band: overrideFlags.rear_sides,
-            second_layer: secondLayers.rear_sides,
+            second_layer: isZoneAllowed("rear_sides") ? secondLayers.rear_sides : { enabled: false },
           },
           rear: {
-            material_id: selectedMaterials.rear,
+            material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
             override_size_band: overrideFlags.rear,
-            second_layer: secondLayers.rear,
+            second_layer: isZoneAllowed("rear") ? secondLayers.rear : { enabled: false },
             empalme_2x20: empalmeRear,
           },
         },
@@ -618,13 +645,31 @@ export default function TintWindowMaterialDialog({
     };
 
     computeQuote();
-  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle]);
+  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle, isUnlocked, allowedZones]);
 
-  // Manejar selección de material base
+  // Manejar selección de material base o de banda
   const handleSelectMaterial = (zone, materialId) => {
+    if (isSunstripOnly) {
+      setSunstrips((prev) => ({
+        ...prev,
+        windshield_top: { enabled: true, material_id: materialId },
+      }));
+      const matName = config?.materials?.find((m) => m.id === materialId)?.name || materialId;
+      toast.success(`Film de Banda Frontal configurado a: ${matName}`);
+      return;
+    }
+
+    if (!isZoneAllowed(zone)) {
+      toast.warning(`La zona seleccionada no está contratada en este servicio.`);
+      return;
+    }
+
     setSelectedMaterials((prev) => {
       if (linkSides && (zone === "front_sides" || zone === "rear_sides")) {
-        return { ...prev, front_sides: materialId, rear_sides: materialId };
+        const next = { ...prev };
+        if (isZoneAllowed("front_sides")) next.front_sides = materialId;
+        if (isZoneAllowed("rear_sides")) next.rear_sides = materialId;
+        return next;
       }
       return { ...prev, [zone]: materialId };
     });
@@ -632,14 +677,17 @@ export default function TintWindowMaterialDialog({
 
   // Manejar segunda capa
   const handleToggleSecondLayer = (zone, enabled) => {
+    if (!isZoneAllowed(zone)) {
+      toast.warning(`La zona seleccionada no está contratada en este servicio.`);
+      return;
+    }
     setSecondLayers((prev) => {
       const current = prev[zone] || { material_id: "sg_charcoal_20" };
       if (linkSides && (zone === "front_sides" || zone === "rear_sides")) {
-        return {
-          ...prev,
-          front_sides: { ...current, enabled },
-          rear_sides: { ...current, enabled },
-        };
+        const next = { ...prev };
+        if (isZoneAllowed("front_sides")) next.front_sides = { ...current, enabled };
+        if (isZoneAllowed("rear_sides")) next.rear_sides = { ...current, enabled };
+        return next;
       }
       return {
         ...prev,
@@ -649,6 +697,7 @@ export default function TintWindowMaterialDialog({
   };
 
   const handleSelectSecondLayerMaterial = (zone, materialId) => {
+    if (!isZoneAllowed(zone)) return;
     setSecondLayers((prev) => {
       if (linkSides && (zone === "front_sides" || zone === "rear_sides")) {
         return {
@@ -690,15 +739,25 @@ export default function TintWindowMaterialDialog({
     }
   };
 
-  // Aplicar material a todas las ventanas
+  // Aplicar material a todas las ventanas contratadas / permitidas
   const handleApplyAll = (materialId) => {
-    setSelectedMaterials({
-      windshield: materialId,
-      front_sides: materialId,
-      rear_sides: materialId,
-      rear: materialId,
+    if (isSunstripOnly) {
+      setSunstrips((prev) => ({
+        ...prev,
+        windshield_top: { enabled: true, material_id: materialId },
+      }));
+      toast.success("Material aplicado a la Banda Frontal");
+      return;
+    }
+
+    setSelectedMaterials((prev) => {
+      const next = { ...prev };
+      allowedZones.forEach((z) => {
+        next[z] = materialId;
+      });
+      return next;
     });
-    toast.success("Material aplicado a todos los cristales");
+    toast.success(`Material aplicado a las zonas contratadas (${allowedZones.length})`);
   };
 
   // Confirmar y aplicar plan al carrito
@@ -711,38 +770,48 @@ export default function TintWindowMaterialDialog({
     onApplyPlan({
       tint_window_plan: {
         link_sides: linkSides,
+        is_unlocked: isUnlocked,
         windows: {
           windshield: {
-            material_id: selectedMaterials.windshield,
-            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "windshield" && r.layer === 1)?.material_name,
+            material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
+            material_name: isZoneAllowed("windshield")
+              ? quoteData.rolls_consumed?.find((r) => r.zone === "windshield" && r.layer === 1)?.material_name || "Sin polarizar"
+              : "No contratado",
             size_band: quoteData.vehicle_size_bands?.windshield,
             override_size_band: overrideFlags.windshield,
-            second_layer: secondLayers.windshield.enabled ? secondLayers.windshield : null,
+            second_layer: isZoneAllowed("windshield") && secondLayers.windshield.enabled ? secondLayers.windshield : null,
           },
           front_sides: {
-            material_id: selectedMaterials.front_sides,
-            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "front_sides" && r.layer === 1)?.material_name,
+            material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
+            material_name: isZoneAllowed("front_sides")
+              ? quoteData.rolls_consumed?.find((r) => r.zone === "front_sides" && r.layer === 1)?.material_name || "Sin polarizar"
+              : "No contratado",
             size_band: quoteData.vehicle_size_bands?.front_sides,
             override_size_band: overrideFlags.front_sides,
-            second_layer: secondLayers.front_sides.enabled ? secondLayers.front_sides : null,
+            second_layer: isZoneAllowed("front_sides") && secondLayers.front_sides.enabled ? secondLayers.front_sides : null,
           },
           rear_sides: {
-            material_id: selectedMaterials.rear_sides,
-            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "rear_sides" && r.layer === 1)?.material_name,
+            material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
+            material_name: isZoneAllowed("rear_sides")
+              ? quoteData.rolls_consumed?.find((r) => r.zone === "rear_sides" && r.layer === 1)?.material_name || "Sin polarizar"
+              : "No contratado",
             size_band: quoteData.vehicle_size_bands?.rear_sides,
             override_size_band: overrideFlags.rear_sides,
-            second_layer: secondLayers.rear_sides.enabled ? secondLayers.rear_sides : null,
+            second_layer: isZoneAllowed("rear_sides") && secondLayers.rear_sides.enabled ? secondLayers.rear_sides : null,
           },
           rear: {
-            material_id: selectedMaterials.rear,
-            material_name: quoteData.rolls_consumed?.find((r) => r.zone === "rear" && r.layer === 1)?.material_name,
+            material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
+            material_name: isZoneAllowed("rear")
+              ? quoteData.rolls_consumed?.find((r) => r.zone === "rear" && r.layer === 1)?.material_name || "Sin polarizar"
+              : "No contratado",
             size_band: quoteData.vehicle_size_bands?.rear,
             override_size_band: overrideFlags.rear,
-            second_layer: secondLayers.rear.enabled ? secondLayers.rear : null,
+            second_layer: isZoneAllowed("rear") && secondLayers.rear.enabled ? secondLayers.rear : null,
             empalme_2x20: empalmeRear,
           },
         },
         sunstrips: sunstrips,
+        sunstrip_only: isSunstripOnly,
         has_empalme: quoteData.has_empalme,
         empalme_warning: quoteData.empalme_warning,
         rolls_consumed: quoteData.rolls_consumed,
@@ -752,6 +821,7 @@ export default function TintWindowMaterialDialog({
       },
       materials_extra: quoteData.materials_extra_total,
     });
+
 
     onClose();
   };
@@ -823,13 +893,49 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
             </div>
-            <div className="text-right shrink-0">
-
-              <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
-              <span className="text-sm sm:text-lg md:text-xl font-black text-white">
-                +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
-                <span className="text-[10px] sm:text-xs font-medium text-blue-200">USD</span>
-              </span>
+            <div className="flex items-center gap-2">
+              {!isUnlocked && (allowedZones.length < 4 || isSunstripOnly) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsUnlocked(true);
+                    toast.info("Modo personalizado activado: Todas las ventanas desbloqueadas.");
+                  }}
+                  className="h-7 px-2 text-[10px] bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/40 shadow-xs"
+                  title="Desbloquear todas las zonas para cotizar cristales adicionales"
+                >
+                  <Lock className="h-3 w-3 mr-1 text-amber-300" />
+                  <span>Desbloquear Todo</span>
+                </Button>
+              )}
+              {isUnlocked && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsUnlocked(false);
+                    if (preselectedMeta) {
+                      if (preselectedMeta.selectedMaterials) setSelectedMaterials(preselectedMeta.selectedMaterials);
+                      if (preselectedMeta.sunstrips) setSunstrips(preselectedMeta.sunstrips);
+                    }
+                    toast.info("Bloqueo reactivado para el producto seleccionado.");
+                  }}
+                  className="h-7 px-2 text-[10px] bg-amber-500/20 text-amber-200 border-amber-400/40 hover:bg-amber-500/30 shadow-xs"
+                >
+                  <Check className="h-3 w-3 mr-1 text-amber-300" />
+                  <span>Restringir a Producto</span>
+                </Button>
+              )}
+              <div className="text-right shrink-0">
+                <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
+                <span className="text-sm sm:text-lg md:text-xl font-black text-white">
+                  +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
+                  <span className="text-[10px] sm:text-xs font-medium text-blue-200">USD</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -844,23 +950,39 @@ export default function TintWindowMaterialDialog({
             <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-md font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shrink-0 shadow-inner">
               {ZONES.map((z) => {
                 const isActive = activeZone === z.id;
+                const allowed = isZoneAllowed(z.id) || (z.id === "windshield" && isSunstripOnly);
                 return (
                   <button
                     key={z.id}
                     type="button"
+                    disabled={!allowed}
                     className={`flex-1 flex items-center justify-center gap-1 py-1 px-1 rounded-lg transition-all ${
-                      isActive
+                      !allowed
+                        ? "opacity-35 cursor-not-allowed bg-zinc-200/40 dark:bg-zinc-800/40 text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700"
+                        : isActive
                         ? `${z.activeBg} text-white font-bold shadow-sm ${z.ringColor} ring-1`
                         : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50"
                     }`}
-                    onClick={() => setActiveZone(z.id)}
+                    onClick={() => {
+                      if (!allowed) {
+                        toast.info(`Zona bloqueada: ${z.label} no está incluida en ${product?.name || "este servicio"}.`);
+                        return;
+                      }
+                      setActiveZone(z.id);
+                    }}
+                    title={!allowed ? `${z.label} (Bloqueado / No contratado)` : z.label}
                   >
-                    <span className={`h-2 w-2 rounded-full ${isActive ? "bg-white" : z.dotColor} shrink-0`} />
+                    {!allowed ? (
+                      <Lock className="h-2.5 w-2.5 text-zinc-400 shrink-0" />
+                    ) : (
+                      <span className={`h-2 w-2 rounded-full ${isActive ? "bg-white" : z.dotColor} shrink-0`} />
+                    )}
                     <span className="truncate">{z.shortLabel}</span>
                   </button>
                 );
               })}
             </div>
+
 
             {/* Selector de Modo de Vista: Lateral (Perfil Real) vs Superior (Planta) */}
             <div className="flex items-center justify-between w-full max-w-sm md:max-w-md gap-2 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shadow-xs">
@@ -992,13 +1114,32 @@ export default function TintWindowMaterialDialog({
                         {latGeom.front && (
                           <path
                             d={latGeom.front}
-                            fill={shadeFrontSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeFrontSides.fill}
-                            fillOpacity={shadeFrontSides.opacity}
-                            stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
-                            strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
-                            filter={isFrontSidesActive ? "url(#neonGlowYellowLat)" : undefined}
-                            className="cursor-pointer transition-all hover:opacity-90"
-                            onClick={() => setActiveZone("front_sides")}
+                            fill={
+                              !isZoneAllowed("front_sides")
+                                ? "rgba(220, 240, 255, 0.04)"
+                                : shadeFrontSides.fill === "url(#camaleonGradient)"
+                                ? "url(#camaleonGradientLateral)"
+                                : shadeFrontSides.fill
+                            }
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : shadeFrontSides.opacity}
+                            stroke={
+                              !isZoneAllowed("front_sides")
+                                ? "rgba(148, 163, 184, 0.35)"
+                                : isFrontSidesActive
+                                ? "#eab308"
+                                : shadeFrontSides.border
+                            }
+                            strokeWidth={isFrontSidesActive && isZoneAllowed("front_sides") ? "3.5" : "1.5"}
+                            strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
+                            filter={isFrontSidesActive && isZoneAllowed("front_sides") ? "url(#neonGlowYellowLat)" : undefined}
+                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            onClick={() => {
+                              if (!isZoneAllowed("front_sides")) {
+                                toast.info(`Ventanas delanteras no contratadas en este paquete.`);
+                                return;
+                              }
+                              setActiveZone("front_sides");
+                            }}
                           />
                         )}
 
@@ -1006,13 +1147,32 @@ export default function TintWindowMaterialDialog({
                         {latGeom.rear && (
                           <path
                             d={latGeom.rear}
-                            fill={shadeRearSides.fill === "url(#camaleonGradient)" ? "url(#camaleonGradientLateral)" : shadeRearSides.fill}
-                            fillOpacity={shadeRearSides.opacity}
-                            stroke={isRearSidesActive ? "#f97316" : shadeRearSides.border}
-                            strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
-                            filter={isRearSidesActive ? "url(#neonGlowOrangeLat)" : undefined}
-                            className="cursor-pointer transition-all hover:opacity-90"
-                            onClick={() => setActiveZone("rear_sides")}
+                            fill={
+                              !isZoneAllowed("rear_sides")
+                                ? "rgba(220, 240, 255, 0.04)"
+                                : shadeRearSides.fill === "url(#camaleonGradient)"
+                                ? "url(#camaleonGradientLateral)"
+                                : shadeRearSides.fill
+                            }
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : shadeRearSides.opacity}
+                            stroke={
+                              !isZoneAllowed("rear_sides")
+                                ? "rgba(148, 163, 184, 0.35)"
+                                : isRearSidesActive
+                                ? "#f97316"
+                                : shadeRearSides.border
+                            }
+                            strokeWidth={isRearSidesActive && isZoneAllowed("rear_sides") ? "3.5" : "1.5"}
+                            strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
+                            filter={isRearSidesActive && isZoneAllowed("rear_sides") ? "url(#neonGlowOrangeLat)" : undefined}
+                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            onClick={() => {
+                              if (!isZoneAllowed("rear_sides")) {
+                                toast.info(`Ventanas traseras no contratadas en este paquete.`);
+                                return;
+                              }
+                              setActiveZone("rear_sides");
+                            }}
                           />
                         )}
 
@@ -1022,12 +1182,12 @@ export default function TintWindowMaterialDialog({
                             x={latGeom.frontText.x}
                             y={latGeom.frontText.y}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            fill={!isZoneAllowed("front_sides") ? "#94a3b8" : "#ffffff"}
                             fontSize="10.5"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Del. {shadeFrontSides.label}
+                            Del. {!isZoneAllowed("front_sides") ? "Bloqueado" : shadeFrontSides.label}
                           </text>
                         )}
                         {latGeom.rearText && latGeom.rearText.x > 0 && (
@@ -1035,14 +1195,15 @@ export default function TintWindowMaterialDialog({
                             x={latGeom.rearText.x}
                             y={latGeom.rearText.y}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            fill={!isZoneAllowed("rear_sides") ? "#94a3b8" : "#ffffff"}
                             fontSize="10.5"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Tras. {shadeRearSides.label}
+                            Tras. {!isZoneAllowed("rear_sides") ? "Bloqueado" : shadeRearSides.label}
                           </text>
                         )}
+
                       </svg>
                     );
                   })()}
@@ -1110,13 +1271,42 @@ export default function TintWindowMaterialDialog({
                         {/* 1. PARABRISAS DELANTERO */}
                         <path
                           d={geom.windshield.d}
-                          fill={shadeWindshield.fill}
-                          fillOpacity={shadeWindshield.opacity}
-                          stroke={activeZone === "windshield" ? "#38bdf8" : shadeWindshield.border}
+                          fill={
+                            !isZoneAllowed("windshield") && !isSunstripOnly
+                              ? "rgba(220, 240, 255, 0.04)"
+                              : isSunstripOnly
+                              ? "rgba(220, 240, 255, 0.05)"
+                              : shadeWindshield.fill
+                          }
+                          fillOpacity={
+                            !isZoneAllowed("windshield") && !isSunstripOnly
+                              ? 0.12
+                              : isSunstripOnly
+                              ? 0.18
+                              : shadeWindshield.opacity
+                          }
+                          stroke={
+                            !isZoneAllowed("windshield") && !isSunstripOnly
+                              ? "rgba(148, 163, 184, 0.35)"
+                              : activeZone === "windshield"
+                              ? "#38bdf8"
+                              : shadeWindshield.border
+                          }
                           strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
+                          strokeDasharray={!isZoneAllowed("windshield") && !isSunstripOnly ? "4 3" : undefined}
                           filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
-                          className="cursor-pointer transition-all hover:opacity-90"
-                          onClick={() => setActiveZone("windshield")}
+                          className={
+                            !isZoneAllowed("windshield") && !isSunstripOnly
+                              ? "cursor-not-allowed opacity-45"
+                              : "cursor-pointer transition-all hover:opacity-90"
+                          }
+                          onClick={() => {
+                            if (!isZoneAllowed("windshield") && !isSunstripOnly) {
+                              toast.info("Parabrisas delantero no contratado en este servicio.");
+                              return;
+                            }
+                            setActiveZone("windshield");
+                          }}
                         />
 
                         {/* Bandas de Sol Parabrisas */}
@@ -1131,6 +1321,10 @@ export default function TintWindowMaterialDialog({
                             className="cursor-pointer transition-all hover:opacity-80"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (isSunstripOnly) {
+                                toast.info("La Banda Frontal Superior es el servicio contratado.");
+                                return;
+                              }
                               setActiveZone("windshield");
                               handleToggleSunstrip("windshield_top", !sunstrips.windshield_top?.enabled);
                             }}
@@ -1148,6 +1342,10 @@ export default function TintWindowMaterialDialog({
                             className="cursor-pointer transition-all hover:opacity-80"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (isSunstripOnly) {
+                                toast.warning("La banda inferior no está incluida en el servicio de Franja Superior.");
+                                return;
+                              }
                               setActiveZone("windshield");
                               handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
                             }}
@@ -1158,7 +1356,7 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.windshield.textY}
                           textAnchor="middle"
-                          fill="#ffffff"
+                          fill={!isZoneAllowed("windshield") && !isSunstripOnly ? "#94a3b8" : "#ffffff"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
@@ -1170,14 +1368,17 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.windshield.subY}
                           textAnchor="middle"
-                          fill="#e0f2fe"
+                          fill={!isZoneAllowed("windshield") && !isSunstripOnly ? "#94a3b8" : "#e0f2fe"}
                           fontSize="7"
                           fontWeight="600"
                           transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
                           className="pointer-events-none select-none"
                         >
-                          {shadeWindshield.label}
-                          {secondLayers.windshield?.enabled ? " + 2da" : ""}
+                          {!isZoneAllowed("windshield") && !isSunstripOnly
+                            ? "Bloqueado"
+                            : isSunstripOnly
+                            ? "Solo Banda Frontal"
+                            : `${shadeWindshield.label}${secondLayers.windshield?.enabled ? " + 2da" : ""}`}
                         </text>
 
                         {/* 2. VENTANAS DELANTERAS */}
@@ -1185,13 +1386,26 @@ export default function TintWindowMaterialDialog({
                           <path
                             key={`fs-${idx}`}
                             d={p.d}
-                            fill={shadeFrontSides.fill}
-                            fillOpacity={shadeFrontSides.opacity}
-                            stroke={isFrontSidesActive ? "#eab308" : shadeFrontSides.border}
-                            strokeWidth={isFrontSidesActive ? "3.5" : "1.5"}
-                            filter={isFrontSidesActive ? "url(#neonGlowYellow)" : undefined}
-                            className="cursor-pointer transition-all hover:opacity-90"
-                            onClick={() => setActiveZone("front_sides")}
+                            fill={!isZoneAllowed("front_sides") ? "rgba(220, 240, 255, 0.04)" : shadeFrontSides.fill}
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : shadeFrontSides.opacity}
+                            stroke={
+                              !isZoneAllowed("front_sides")
+                                ? "rgba(148, 163, 184, 0.35)"
+                                : isFrontSidesActive
+                                ? "#eab308"
+                                : shadeFrontSides.border
+                            }
+                            strokeWidth={isFrontSidesActive && isZoneAllowed("front_sides") ? "3.5" : "1.5"}
+                            strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
+                            filter={isFrontSidesActive && isZoneAllowed("front_sides") ? "url(#neonGlowYellow)" : undefined}
+                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            onClick={() => {
+                              if (!isZoneAllowed("front_sides")) {
+                                toast.info("Ventanas delanteras no contratadas en este servicio.");
+                                return;
+                              }
+                              setActiveZone("front_sides");
+                            }}
                           />
                         ))}
 
@@ -1200,38 +1414,60 @@ export default function TintWindowMaterialDialog({
                           <path
                             key={`rs-${idx}`}
                             d={p.d}
-                            fill={shadeRearSides.fill}
-                            fillOpacity={shadeRearSides.opacity}
+                            fill={!isZoneAllowed("rear_sides") ? "rgba(220, 240, 255, 0.04)" : shadeRearSides.fill}
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : shadeRearSides.opacity}
                             stroke={
-                              isSidesLinkedActive
+                              !isZoneAllowed("rear_sides")
+                                ? "rgba(148, 163, 184, 0.35)"
+                                : isSidesLinkedActive
                                 ? "#eab308"
                                 : activeZone === "rear_sides"
                                 ? "#f97316"
                                 : shadeRearSides.border
                             }
-                            strokeWidth={isRearSidesActive ? "3.5" : "1.5"}
+                            strokeWidth={isRearSidesActive && isZoneAllowed("rear_sides") ? "3.5" : "1.5"}
+                            strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
                             filter={
-                              isSidesLinkedActive
+                              isSidesLinkedActive && isZoneAllowed("rear_sides")
                                 ? "url(#neonGlowYellow)"
-                                : activeZone === "rear_sides"
+                                : activeZone === "rear_sides" && isZoneAllowed("rear_sides")
                                 ? "url(#neonGlowOrange)"
                                 : undefined
                             }
-                            className="cursor-pointer transition-all hover:opacity-90"
-                            onClick={() => setActiveZone("rear_sides")}
+                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            onClick={() => {
+                              if (!isZoneAllowed("rear_sides")) {
+                                toast.info("Ventanas traseras no contratadas en este servicio.");
+                                return;
+                              }
+                              setActiveZone("rear_sides");
+                            }}
                           />
                         ))}
 
                         {/* 4. PARABRISAS TRASERO */}
                         <path
                           d={geom.rear.d}
-                          fill={shadeRear.fill}
-                          fillOpacity={shadeRear.opacity}
-                          stroke={activeZone === "rear" ? "#a855f7" : shadeRear.border}
-                          strokeWidth={activeZone === "rear" ? "3.5" : "1.5"}
-                          filter={activeZone === "rear" ? "url(#neonGlowPurple)" : undefined}
-                          className="cursor-pointer transition-all hover:opacity-90"
-                          onClick={() => setActiveZone("rear")}
+                          fill={!isZoneAllowed("rear") ? "rgba(220, 240, 255, 0.04)" : shadeRear.fill}
+                          fillOpacity={!isZoneAllowed("rear") ? 0.12 : shadeRear.opacity}
+                          stroke={
+                            !isZoneAllowed("rear")
+                              ? "rgba(148, 163, 184, 0.35)"
+                              : activeZone === "rear"
+                              ? "#a855f7"
+                              : shadeRear.border
+                          }
+                          strokeWidth={activeZone === "rear" && isZoneAllowed("rear") ? "3.5" : "1.5"}
+                          strokeDasharray={!isZoneAllowed("rear") ? "4 3" : undefined}
+                          filter={activeZone === "rear" && isZoneAllowed("rear") ? "url(#neonGlowPurple)" : undefined}
+                          className={!isZoneAllowed("rear") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                          onClick={() => {
+                            if (!isZoneAllowed("rear")) {
+                              toast.info("Parabrisas trasero no contratado en este servicio.");
+                              return;
+                            }
+                            setActiveZone("rear");
+                          }}
                         />
 
                         {/* Línea visual de empalme horizontal si está activo */}
@@ -1252,7 +1488,7 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.rear.textY}
                           textAnchor="middle"
-                          fill="#ffffff"
+                          fill={!isZoneAllowed("rear") ? "#94a3b8" : "#ffffff"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
@@ -1264,14 +1500,17 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.rear.subY}
                           textAnchor="middle"
-                          fill="#f3e8ff"
+                          fill={!isZoneAllowed("rear") ? "#94a3b8" : "#f3e8ff"}
                           fontSize="7"
                           fontWeight="600"
                           transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
                           className="pointer-events-none select-none"
                         >
-                          {empalmeRear ? "Empalme 2x20\"" : shadeRear.label}
-                          {secondLayers.rear?.enabled ? " + 2da" : ""}
+                          {!isZoneAllowed("rear")
+                            ? "Bloqueado"
+                            : empalmeRear
+                            ? "Empalme 2x20\""
+                            : `${shadeRear.label}${secondLayers.rear?.enabled ? " + 2da" : ""}`}
                         </text>
                       </svg>
                     );
@@ -1289,7 +1528,9 @@ export default function TintWindowMaterialDialog({
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={`h-3 w-3 rounded-full shrink-0 ${
-                      activeZone === "windshield"
+                      isSunstripOnly
+                        ? "bg-amber-400 animate-pulse"
+                        : activeZone === "windshield"
                         ? "bg-sky-400"
                         : activeZone === "front_sides"
                         ? "bg-yellow-400"
@@ -1300,8 +1541,13 @@ export default function TintWindowMaterialDialog({
                   />
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 truncate">
-                      {activeZoneLabel}
-                      {secondLayers[activeZone]?.enabled && (
+                      {isSunstripOnly ? "☀️ Film para Banda Frontal Superior" : activeZoneLabel}
+                      {isSunstripOnly && (
+                        <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0 font-mono">
+                          Banda Frontal
+                        </Badge>
+                      )}
+                      {!isSunstripOnly && secondLayers[activeZone]?.enabled && (
                         <Badge className="bg-amber-600 text-white text-[9px] px-1.5 py-0 font-mono">
                           + Doble Capa
                         </Badge>
@@ -1310,112 +1556,116 @@ export default function TintWindowMaterialDialog({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleApplyAll(selectedMaterials[activeZone])}
-                    className="text-[10px] sm:text-xs h-7 px-2 text-zinc-700 dark:text-zinc-300 font-semibold"
-                    title="Aplicar el material de este cristal a todo el vehículo"
-                  >
-                    <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                    Aplicar a todos
-                  </Button>
-                </div>
+                {!isSunstripOnly && allowedZones.length > 1 && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleApplyAll(selectedMaterials[activeZone])}
+                      className="text-[10px] sm:text-xs h-7 px-2 text-zinc-700 dark:text-zinc-300 font-semibold"
+                      title="Aplicar el material de este cristal a todas las zonas contratadas"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+                      Aplicar a contratados
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Controles Rápidos: Vincular Laterales, Doble Capa, Empalme 2x20 y Bandas de Sol */}
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                {(activeZone === "front_sides" || activeZone === "rear_sides") && (
-                  <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-lg px-2 py-1">
-                    {linkSides ? (
-                      <Link className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                    ) : (
-                      <Unlink className="h-3 w-3 text-zinc-400" />
-                    )}
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-blue-900 dark:text-blue-200">
-                      Vincular Laterales
+              {!isSunstripOnly && (
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {(activeZone === "front_sides" || activeZone === "rear_sides") && (
+                    <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 rounded-lg px-2 py-1">
+                      {linkSides ? (
+                        <Link className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <Unlink className="h-3 w-3 text-zinc-400" />
+                      )}
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-blue-900 dark:text-blue-200">
+                        Vincular Laterales
+                      </span>
+                      <Switch
+                        checked={linkSides}
+                        onCheckedChange={(checked) => {
+                          setLinkSides(checked);
+                          if (checked) {
+                            setSelectedMaterials((prev) => ({
+                              ...prev,
+                              rear_sides: prev.front_sides,
+                            }));
+                            toast.info("Ventanas laterales vinculadas con el mismo material");
+                          } else {
+                            toast.info("Ventanas laterales desvinculadas");
+                          }
+                        }}
+                        className="scale-75"
+                      />
+                    </div>
+                  )}
+
+                  {/* Opción de Empalme 2x20 en Parabrisas Trasero */}
+                  {activeZone === "rear" && (
+                    <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 rounded-lg px-2 py-1">
+                      <Scissors className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                      <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 dark:text-amber-200">
+                        Empalme 2x20" (Corte Horizontal)
+                      </span>
+                      <Switch
+                        checked={empalmeRear}
+                        onCheckedChange={handleToggleEmpalme}
+                        className="scale-75"
+                      />
+                    </div>
+                  )}
+
+                  {/* Toggle de 2da Capa */}
+                  <div className="flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-2 py-1">
+                    <Sparkles className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-amber-900 dark:text-amber-200">
+                      2da Capa
                     </span>
                     <Switch
-                      checked={linkSides}
-                      onCheckedChange={(checked) => {
-                        setLinkSides(checked);
-                        if (checked) {
-                          setSelectedMaterials((prev) => ({
-                            ...prev,
-                            rear_sides: prev.front_sides,
-                          }));
-                          toast.info("Ventanas laterales vinculadas con el mismo material");
-                        } else {
-                          toast.info("Ventanas laterales desvinculadas");
-                        }
-                      }}
+                      checked={Boolean(secondLayers[activeZone]?.enabled)}
+                      onCheckedChange={(checked) => handleToggleSecondLayer(activeZone, checked)}
                       className="scale-75"
                     />
                   </div>
-                )}
 
-                {/* Opción de Empalme 2x20 en Parabrisas Trasero */}
-                {activeZone === "rear" && (
-                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 rounded-lg px-2 py-1">
-                    <Scissors className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 dark:text-amber-200">
-                      Empalme 2x20" (Corte Horizontal)
-                    </span>
-                    <Switch
-                      checked={empalmeRear}
-                      onCheckedChange={handleToggleEmpalme}
-                      className="scale-75"
-                    />
-                  </div>
-                )}
+                  {/* Bandas Superior e Inferior para Parabrisas */}
+                  {(activeZone === "windshield" || activeZone === "rear") && (
+                    <>
+                      <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
+                        <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+                        <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
+                          Banda Superior
+                        </span>
+                        <Switch
+                          checked={Boolean(sunstrips[`${activeZone}_top`]?.enabled)}
+                          onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_top`, checked)}
+                          className="scale-75"
+                        />
+                      </div>
 
-                {/* Toggle de 2da Capa */}
-                <div className="flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-2 py-1">
-                  <Sparkles className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                  <span className="text-[10px] sm:text-[11px] font-semibold text-amber-900 dark:text-amber-200">
-                    2da Capa
-                  </span>
-                  <Switch
-                    checked={Boolean(secondLayers[activeZone]?.enabled)}
-                    onCheckedChange={(checked) => handleToggleSecondLayer(activeZone, checked)}
-                    className="scale-75"
-                  />
+                      <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
+                        <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+                        <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
+                          Banda Inferior
+                        </span>
+                        <Switch
+                          checked={Boolean(sunstrips[`${activeZone}_bottom`]?.enabled)}
+                          onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_bottom`, checked)}
+                          className="scale-75"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                {/* Bandas Superior e Inferior para Parabrisas */}
-                {(activeZone === "windshield" || activeZone === "rear") && (
-                  <>
-                    <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
-                      <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
-                        Banda Superior
-                      </span>
-                      <Switch
-                        checked={Boolean(sunstrips[`${activeZone}_top`]?.enabled)}
-                        onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_top`, checked)}
-                        className="scale-75"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
-                      <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
-                        Banda Inferior
-                      </span>
-                      <Switch
-                        checked={Boolean(sunstrips[`${activeZone}_bottom`]?.enabled)}
-                        onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_bottom`, checked)}
-                        className="scale-75"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              )}
 
               {/* Selector de Material 2da Capa */}
-              {secondLayers[activeZone]?.enabled && (
+              {!isSunstripOnly && secondLayers[activeZone]?.enabled && (
                 <div className="mb-2 p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-2">
                   <Label className="text-[10px] sm:text-[11px] font-bold text-amber-900 dark:text-amber-200">
                     Material 2da Capa:
@@ -1522,10 +1772,13 @@ export default function TintWindowMaterialDialog({
                 ) : null}
 
                 {filteredMaterials.map((mat) => {
-                  const isSelected = selectedMaterials[activeZone] === mat.material_id;
+                  const isSelected = isSunstripOnly
+                    ? sunstrips.windshield_top?.material_id === mat.material_id
+                    : selectedMaterials[activeZone] === mat.material_id;
                   const is3M = mat.brand === "3M" || String(mat.id).includes("3m") || String(mat.family).includes("3M");
                   const isSolarGard = mat.brand === "Solar Gard" || (!is3M && mat.brand !== "Q1" && mat.brand !== "Raybar");
                   const isRaybar = mat.brand === "Raybar" || String(mat.id).includes("raybar");
+
                   const isQ1 = mat.brand === "Q1" || String(mat.id).includes("q1");
 
                   const matchedGama = OFFICIAL_GAMAS.find((g) => g.id === mat.gama);
