@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -6,6 +6,10 @@ import axios from "axios";
 import { getPriorityColor, WORK_ORDER_STATUS } from "../lib/utils";
 import { formatQuincenaLabel } from "../lib/payrollPeriods";
 import { TechnicianKioskNav } from "../components/technician/TechnicianKioskNav";
+import { audioAlerts } from "../lib/audioAlerts";
+import { TechnicianTintJobView } from "../components/technician/TechnicianTintJobView";
+import { TechnicianAccessoriesJobView } from "../components/technician/TechnicianAccessoriesJobView";
+import { TechnicianElectricalJobView } from "../components/technician/TechnicianElectricalJobView";
 
 const ROLE_LABELS = {
   instalaciones: "Instalador",
@@ -36,6 +40,10 @@ import {
   Timer,
   ClipboardList,
   CalendarRange,
+  Bell,
+  Volume2,
+  Scissors,
+  Zap,
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 
@@ -47,6 +55,12 @@ export function TechnicianMobilePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const prevOrdersCountRef = useRef(null);
+
+  const handleTestSound = () => {
+    audioAlerts.playNewJobChime();
+    toast.info("Alerta sonora y vibración activadas correctamente", { icon: "🔔" });
+  };
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -58,6 +72,13 @@ export function TechnicianMobilePage() {
       const myOrders = list.filter(
         (o) => o.technician_id === user?.user_id || !o.technician_id
       );
+
+      // Reproducir sonido si llegaron nuevas órdenes asignadas
+      if (prevOrdersCountRef.current !== null && myOrders.length > prevOrdersCountRef.current) {
+        audioAlerts.playNewJobChime();
+        toast.info("¡Nuevo trabajo disponible en taller!", { icon: "🔔" });
+      }
+      prevOrdersCountRef.current = myOrders.length;
       setOrders(myOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -66,6 +87,10 @@ export function TechnicianMobilePage() {
         const myOrders = (fallback.data || []).filter(
           (o) => o.technician_id === user?.user_id || !o.technician_id
         );
+        if (prevOrdersCountRef.current !== null && myOrders.length > prevOrdersCountRef.current) {
+          audioAlerts.playNewJobChime();
+        }
+        prevOrdersCountRef.current = myOrders.length;
         setOrders(myOrders);
       } catch {
         toast.error("No se pudieron cargar las órdenes");
@@ -226,6 +251,15 @@ export function TechnicianMobilePage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleTestSound}
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+              title="Probar sonido de notificación"
+            >
+              <Bell className="h-5 w-5 text-amber-300" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -458,17 +492,14 @@ export function TechnicianMobilePage() {
                 </div>
               </div>
 
-              <div>
-                <Label className="text-muted-foreground">Trabajos a Realizar:</Label>
-                <ul className="mt-2 space-y-2">
-                  {(selectedOrder.items || []).map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 p-2 bg-muted rounded-sm">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-primary" />
-                      <span>{item.description || item.product_name || "Instalación"}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* Vista Especializada según Perfil / Tipo de Trabajo */}
+              {selectedOrder.department === "polarizados" || user?.role === "polarizador" || selectedOrder.tint_window_plan ? (
+                <TechnicianTintJobView order={selectedOrder} />
+              ) : selectedOrder.department === "electrico" || user?.role === "electrico" ? (
+                <TechnicianElectricalJobView order={selectedOrder} />
+              ) : (
+                <TechnicianAccessoriesJobView order={selectedOrder} />
+              )}
 
               {selectedOrder.start_time && (
                 <div className="flex items-center gap-2 p-3 bg-orange-500/10 rounded-sm">

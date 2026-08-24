@@ -1,4 +1,32 @@
-# Here are your Instructions
+# MC-LARENS ERP 2.0 - Guía Maestra del Sistema
+
+## 🚀 Despliegue en Producción (Google Cloud Run)
+El sistema se despliega como un contenedor unificado (FastAPI + React/Vite) en Google Cloud Run:
+- **URL en Producción:** `https://mclarens-erp-836176703716.us-central1.run.app`
+- **Proyecto GCP:** `gen-lang-client-0971793042` | **Región:** `us-central1`
+- **Comando Oficial de Despliegue:**
+  ```bash
+  gcloud run deploy mclarens-erp --source . --region us-central1 --project gen-lang-client-0971793042 --allow-unauthenticated
+  ```
+
+### 🖼️ Arquitectura de Almacenamiento CDN para Imágenes (16,101 Vehículos)
+- **Bucket Cloud Storage:** `gs://mclarens-erp-vehicles` (Público / CDN global).
+- **URL Base CDN:** `https://storage.googleapis.com/mclarens-erp-vehicles/models/`
+- **Regla Crítica DevOps:** `.gcloudignore` y `.dockerignore` excluyen permanentemente `backend/data/blueprints_raw/` y `frontend/public/vehicles/models/`, reduciendo el paquete de subida de **~3 GB a 78 MB** (despliegues en segundos).
+- **Script de Sincronización Única de Imágenes al Bucket:** `scripts/sync_vehicles_to_gcs.sh`
+
+---
+
+## Historial de Actualizaciones y Mejoras del Sistema
+
+Actualizacion 2026-08-24 - Mesa de Corte de Polarizados, Inventario Dual y App Móvil
+-----------------------------------------------------------------------------------
+- Estandarizado término **"Rollo"** (ancho 20", 36", 40").
+- Cálculo automático de metrajes en **múltiplos de 0.50m** para todos los cristales vehiculares.
+- Separación de **Inventario Dual**: Rollos Sellados (Bodega) vs. Rollos en Uso (Taller) con botón de apertura (+30m).
+- **Voucher Térmico de 80mm** con Croquis Vehicular estructurado (ESC/POS y HTML imprimible).
+- **Alertas Sonoras y Hápticas nativas** (Web Audio API) en la App Móvil de Técnicos.
+- **Esqueletos Modulares** para Polarizadores, Instaladores de Accesorios y Eléctricos.
 
 Actualizacion 2026-05-07 - Ventas y acceso por red local
 ---------------------------------------------------------

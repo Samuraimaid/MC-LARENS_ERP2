@@ -9293,11 +9293,29 @@ async def _create_tint_order_from_sale(
         "quality_rating": None,
         "auto_generated": True,
     }
+
+    # Generar la Orden de Corte en múltiplos de 0.5m
+    try:
+        from backend.domains.tint.cutting_orders import create_cutting_order_from_sale
+        cut_order_id = await create_cutting_order_from_sale(
+            db=db,
+            sale_doc=sale_doc,
+            tint_order_id=tint_order_id,
+            customer=customer,
+            vehicle_info=vehicle_info,
+            polarizado_items=polarizado_items,
+        )
+        if cut_order_id:
+            tint_doc["cut_order_id"] = cut_order_id
+            tint_doc["cutting_status"] = "pending_cut"
+    except Exception as e:
+        logger.warning(f"Error generando orden de corte para polarizado: {e}")
+
     await db.tint_orders.insert_one(tint_doc)
     if work_order_id:
         await db.work_orders.update_one(
             {"work_order_id": work_order_id},
-            {"$set": {"tint_order_id": tint_order_id}},
+            {"$set": {"tint_order_id": tint_order_id, "cut_order_id": tint_doc.get("cut_order_id")}},
         )
     return tint_order_id
 
@@ -24922,6 +24940,11 @@ from backend.routes.vehicle_blueprints import get_vehicle_blueprints_router
 
 vehicle_blueprints_router = get_vehicle_blueprints_router(db, require_auth, require_roles)
 api_router.include_router(vehicle_blueprints_router)
+
+from backend.routes.tint_cutting import get_tint_cutting_router
+
+tint_cutting_router = get_tint_cutting_router(db, require_auth, require_roles)
+api_router.include_router(tint_cutting_router)
 
 app.include_router(api_router)
 

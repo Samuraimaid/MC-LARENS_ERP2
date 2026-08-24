@@ -9,7 +9,7 @@ import { getTimeElapsed, PRIORITY_BADGE, sortByPriorityThenAge } from "@/lib/kds
 import { KDSStatsBar } from "@/components/kds/KDSStatsBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Car, CheckCircle, Clock, Eraser, Palette, Trash2, User } from "lucide-react";
+import { Car, CheckCircle, Clock, Eraser, Palette, Scissors, Trash2, User } from "lucide-react";
 import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
 
 const WINDOW_LABELS = {
@@ -255,6 +255,21 @@ export function KDSTintPage() {
                   </div>
                   {order.assigned_technician_name && (
                     <p className="text-xs mt-2">Polarizador: {order.assigned_technician_name}</p>
+                  )}
+                  {order.cutting_status && (
+                    <div className="mt-2">
+                      <Badge
+                        variant="secondary"
+                        className={`text-[11px] font-medium flex items-center gap-1 w-fit ${
+                          order.cutting_status === "cut_ready"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        }`}
+                      >
+                        <Scissors className="h-3 w-3" />
+                        {order.cutting_status === "cut_ready" ? "Material Cortado ✓" : "En Mesa de Corte"}
+                      </Badge>
+                    </div>
                   )}
                 </div>
 

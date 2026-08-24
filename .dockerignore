@@ -1,12 +1,19 @@
+# ==============================================================================
+# MC-LARENS ERP: .dockerignore
+# ==============================================================================
 node_modules
 */node_modules
+**/node_modules
 frontend/node_modules
 backend/.venv
 .venv
 __pycache__
+**/__pycache__
 *.pyc
 .git
 .github
+.agents
+.gemini
 .env
 deploy/.env
 build
@@ -16,10 +23,16 @@ frontend/dist
 .DS_Store
 Thumbs.db
 *.log
+
+# Excluir directorios pesados locales (se sirven desde Cloud Storage CDN)
 backend/data/blueprints_raw
-backend/data/blueprints_clean
+backend/data/blueprints_cleaned
+frontend/public/vehicles/models
+frontend/public/vehicles/blueprints
+temporary_cleanup_validation
+backups
+
 *.zip
 *.pdf
 *.eps
 *.ai
-

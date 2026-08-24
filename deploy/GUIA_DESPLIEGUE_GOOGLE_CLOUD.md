@@ -119,23 +119,29 @@ Verifica el estado de los contenedores:
 docker compose -f deploy/docker-compose.cloud.yml ps
 ```
 
-### Opción B: Despliegue Serverless en Google Cloud Run
+### Opción B: Despliegue Unificado Ultrarrápido en Google Cloud Run (Recomendado)
 
-1. Construye las imágenes y súbelas a Google Artifact Registry:
-   ```bash
-   gcloud builds submit --tag gcr.io/mclarens-erp-cloud/backend ./backend
-   gcloud builds submit --tag gcr.io/mclarens-erp-cloud/frontend ./frontend
-   ```
-2. Despliega el Backend en Cloud Run:
-   ```bash
-   gcloud run deploy mclarens-backend \
-     --image gcr.io/mclarens-erp-cloud/backend \
-     --platform managed \
-     --region us-central1 \
-     --allow-unauthenticated \
-     --set-env-vars MONGO_URL="tu_mongo_uri",DB_NAME="mc-larens2_mundo_accesorios_erp",BRANCH_ID="branch_main"
-   ```
-3. Despliega el Frontend en Cloud Run apuntando la URL del Backend.
+El sistema cuenta con un **Dockerfile Unificado** que compila el frontend y el backend en un solo contenedor optimizado.
+
+#### 1. Arquitectura de Almacenamiento CDN para Imágenes (16,101 Vehículos)
+Para evitar subir más de 2.9 GB de imágenes en cada despliegue, las imágenes de vehículos, modelos y planos están alojadas de forma permanente en un Bucket CDN público de Google Cloud Storage:
+- **Bucket GCS:** `gs://mclarens-erp-vehicles`
+- **URL Base CDN:** `https://storage.googleapis.com/mclarens-erp-vehicles/models/`
+- **Sincronización (Solo 1 vez):** `scripts/sync_vehicles_to_gcs.sh`
+
+Los archivos `.gcloudignore` y `.dockerignore` excluyen permanentemente las carpetas locales pesadas (`backend/data/blueprints_raw/`, `frontend/public/vehicles/models/`), reduciendo el paquete de código fuente de **2,940 MB a solo 78 MB**.
+
+#### 2. Comando de Despliegue en 1 Solo Paso:
+```bash
+gcloud run deploy mclarens-erp \
+  --source . \
+  --region us-central1 \
+  --project gen-lang-client-0971793042 \
+  --allow-unauthenticated
+```
+
+El despliegue compilará y publicará automáticamente la nueva versión en:
+👉 **https://mclarens-erp-836176703716.us-central1.run.app**
 
 ---
 

@@ -25,12 +25,14 @@ import {
   Eraser,
   Palette,
   RefreshCw,
+  Scissors,
   Trash2,
   User,
   UserCheck,
   Wrench,
   Zap,
 } from "lucide-react";
+import { TintCuttingStation } from "../components/coordinator/TintCuttingStation";
 
 const DEPARTMENT_META = {
   instalaciones: {
@@ -501,6 +503,12 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
                 </TabsTrigger>
               );
             })}
+            {(profileConfig.key === "polarizados" || visibleTabs.includes("polarizados")) && (
+              <TabsTrigger value="mesa_corte" className="gap-2 text-amber-600 dark:text-amber-400 font-semibold">
+                <Scissors className="h-4 w-4" />
+                Mesa de Corte
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {visibleTabs.map((dept) => {
@@ -616,6 +624,12 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
               </TabsContent>
             );
           })}
+
+          {(profileConfig.key === "polarizados" || visibleTabs.includes("polarizados")) && (
+            <TabsContent value="mesa_corte" className="mt-4">
+              <TintCuttingStation />
+            </TabsContent>
+          )}
         </Tabs>
       )}
     </div>

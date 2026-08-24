@@ -1,4 +1,6 @@
-# .gcloudignore for MC-LARENS ERP
+# ==============================================================================
+# MC-LARENS ERP: .gcloudignore
+# ==============================================================================
 .gcloudignore
 .git
 .gitignore
@@ -7,10 +9,22 @@
 scratch/
 *.log
 node_modules/
+**/node_modules/
 frontend/node_modules/
 backend/__pycache__/
+**/__pycache__/
 *.pyc
 
-# Exclude massive local blueprint image directory from source upload (served via Google Cloud Storage CDN Bucket)
+# Excluir directorios pesados de planos y modelos 3D (se sirven vía Google Cloud Storage CDN Bucket)
+backend/data/blueprints_raw/
+backend/data/blueprints_cleaned/
 frontend/public/vehicles/models/
-blueprints_raw/
+frontend/public/vehicles/blueprints/
+temporary_cleanup_validation/
+backups/
+
+# Excluir builds locales para no duplicar en subida
+frontend/build/
+frontend/dist/
+build/
+dist/
