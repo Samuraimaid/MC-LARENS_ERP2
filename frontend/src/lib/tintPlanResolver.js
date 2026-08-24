@@ -60,6 +60,8 @@ export function detectTintPlanFromProduct(product, vehicle) {
     detectedGama = "gama_economica";
   }
 
+  const selectedGama = detectedGama;
+
   // 2. Detectar Tonalidad / VLT
   let detectedVlt = 20;
   if (
