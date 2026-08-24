@@ -43,6 +43,8 @@ import {
   VEHICLE_GLASS_GEOMETRY,
   LATERAL_GLASS_GEOMETRY,
 } from "@/lib/vehicleSilhouette";
+import { detectTintPlanFromProduct } from "@/lib/tintPlanResolver";
+
 
 
 
@@ -312,9 +314,12 @@ export default function TintWindowMaterialDialog({
   isOpen,
   onClose,
   vehicle,
+  product,
   initialPlan,
   onApplyPlan,
   salePrice = 0,
+  currency = "USD",
+  exchangeRate = 36.5,
 }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -324,6 +329,7 @@ export default function TintWindowMaterialDialog({
   const [viewMode, setViewMode] = useState("lateral"); // "lateral" | "top"
   const [orientation, setOrientation] = useState("vertical"); // "horizontal" | "vertical"
   const [selectedGama, setSelectedGama] = useState("all");
+  const [preselectedMeta, setPreselectedMeta] = useState(null);
 
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -438,15 +444,46 @@ export default function TintWindowMaterialDialog({
     }
   };
 
-  // Cargar configuración de materiales al abrir y restaurar borrador previo
+  // Cargar configuración de materiales al abrir y preseleccionar según producto o borrador previo
   useEffect(() => {
     if (!isOpen) return;
     const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
 
-    // 1. Restaurar de initialPlan o de localStorage
+    // 1. Restaurar de initialPlan (si estamos editando una línea existente en el carrito)
     if (initialPlan?.windows) {
       applyLoadedPlan(initialPlan);
+      if (initialPlan.sunstrips?.windshield_top?.enabled) {
+        setActiveZone("windshield");
+        setViewMode("top");
+      }
+      setPreselectedMeta(null);
+    } else if (product) {
+      // 2. Preselección INTELIGENTE según el producto clickeado en Catálogo/POS (ej. Franja Superior, Vidrios Delanteros, etc.)
+      const preselected = detectTintPlanFromProduct(product, vehicle);
+      if (preselected) {
+        setPreselectedMeta(preselected);
+        if (preselected.selectedMaterials) {
+          setSelectedMaterials(preselected.selectedMaterials);
+        }
+        if (preselected.sunstrips) {
+          setSunstrips(preselected.sunstrips);
+        }
+        if (preselected.activeZone) {
+          setActiveZone(preselected.activeZone);
+        }
+        if (preselected.viewMode) {
+          setViewMode(preselected.viewMode);
+        }
+        if (preselected.selectedGama) {
+          setSelectedGama(preselected.selectedGama);
+        }
+        if (typeof preselected.linkSides === "boolean") {
+          setLinkSides(preselected.linkSides);
+        }
+      }
     } else {
+      // 3. Fallback a borrador guardado en localStorage o default completo
+      setPreselectedMeta(null);
       try {
         const savedDraft = localStorage.getItem(`mclarens_tint_draft_${vehicleKey}`);
         if (savedDraft) {
@@ -467,7 +504,7 @@ export default function TintWindowMaterialDialog({
       }
     }
 
-    // 2. Cargar configuración actualizada del backend de forma silenciosa y resiliente
+    // 4. Cargar configuración actualizada del backend de forma silenciosa y resiliente
     const fetchConfig = async () => {
       setLoading(true);
       try {
@@ -490,7 +527,8 @@ export default function TintWindowMaterialDialog({
       }
     };
     fetchConfig();
-  }, [isOpen, vehicle, initialPlan]);
+  }, [isOpen, vehicle, initialPlan, product]);
+
 
   // Persistencia Dinámica en Tiempo Real (Auto-Save Reactivo en cada cambio)
   useEffect(() => {
@@ -765,13 +803,28 @@ export default function TintWindowMaterialDialog({
                   <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] uppercase font-mono px-1 py-0 shrink-0">
                     {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Pick-Up"}
                   </Badge>
+                  {product && (
+                    <Badge className="bg-amber-400/25 text-amber-200 border-amber-300/40 text-[9px] sm:text-[10px] px-1.5 py-0 flex items-center gap-1 shrink-0 shadow-xs font-semibold">
+                      <Sparkles className="h-3 w-3 text-amber-300 animate-pulse" />
+                      <span>Preseleccionado: {product.name}</span>
+                    </Badge>
+                  )}
+
                 </DialogTitle>
-                <p className="hidden sm:block text-[11px] text-blue-200/90 truncate">
-                  Bandas requeridas: {config?.vehicle_size_bands?.windshield || "Parabrisas >40\""} / {config?.vehicle_size_bands?.front_sides || "Laterales >20\""}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="hidden sm:block text-[11px] text-blue-200/90 truncate">
+                    Bandas requeridas: {config?.vehicle_size_bands?.windshield || "Parabrisas >40\""} / {config?.vehicle_size_bands?.front_sides || "Laterales >20\""}
+                  </p>
+                  {preselectedMeta?.badgeNote && (
+                    <span className="text-[10px] text-amber-300 font-bold bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30">
+                      ⚡ {preselectedMeta.badgeNote}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="text-right shrink-0">
+
               <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
               <span className="text-sm sm:text-lg md:text-xl font-black text-white">
                 +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
@@ -872,8 +925,40 @@ export default function TintWindowMaterialDialog({
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-all duration-300"
                   />
 
+                  {/* Indicador de Banda de Sol Frontal Activa en Vista Lateral */}
+                  {sunstrips.windshield_top?.enabled && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveZone("windshield");
+                        setViewMode("top");
+                      }}
+                      className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-sky-500/25 border border-sky-400/60 text-[10px] font-bold text-sky-100 backdrop-blur-xs shadow-md hover:bg-sky-500/40 transition-all cursor-pointer"
+                      title="Banda Frontal Superior Activa. Toca para ver en vista de planta."
+                    >
+                      <Sun className="h-3.5 w-3.5 text-yellow-300 animate-spin" style={{ animationDuration: "12s" }} />
+                      <span>Banda Frontal ON ✓</span>
+                    </button>
+                  )}
+
+                  {/* Indicador de Banda de Sol Trasera Activa en Vista Lateral */}
+                  {sunstrips.rear_top?.enabled && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveZone("rear");
+                        setViewMode("top");
+                      }}
+                      className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-500/25 border border-purple-400/60 text-[10px] font-bold text-purple-100 backdrop-blur-xs shadow-md hover:bg-purple-500/40 transition-all cursor-pointer"
+                      title="Banda Trasera Superior Activa. Toca para ver en vista de planta."
+                    >
+                      <Sun className="h-3.5 w-3.5 text-purple-300" />
+                      <span>Banda Trasera ON ✓</span>
+                    </button>
+                  )}
 
                   {/* Capa SVG Interactiva para Ventanas Laterales */}
+
                   {(() => {
                     const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
                     const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
@@ -1626,7 +1711,9 @@ TintWindowMaterialDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onApplyPlan: PropTypes.func.isRequired,
   vehicle: PropTypes.object,
+  product: PropTypes.object,
   initialPlan: PropTypes.object,
   currency: PropTypes.string,
   exchangeRate: PropTypes.number,
 };
+
