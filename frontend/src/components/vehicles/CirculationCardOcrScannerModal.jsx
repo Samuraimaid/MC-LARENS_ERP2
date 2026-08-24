@@ -98,30 +98,39 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
 
       setProgressStatus("Decodificando VIN y consultando catálogo...");
 
-      // 2. Enviar texto al backend para parsing inteligente y decodificación vPIC
+      // 2. Enviar texto e imagen al backend para parsing inteligente de Nicaragua y decodificación vPIC
       const res = await axios.post(
         `${API}/vehicles/ocr-circulation-card`,
-        { raw_text: extractedText },
+        {
+          raw_text: extractedText,
+          image_base64: imageDataUrl,
+        },
         { withCredentials: true }
       );
 
       const data = res.data || {};
       setOcrResult(data);
       setEditedFields({
-        vin: data.vin || "",
-        plate: data.plate || "",
-        brand: data.brand || "",
-        model: data.model || "",
-        year: data.year ? String(data.year) : "",
+        vin: data.vin || data.vin_chasis || "",
+        plate: data.plate || data.placa || "",
+        brand: data.brand || data.marca || "",
+        model: data.model || data.modelo || "",
+        year: data.year || data.anio ? String(data.year || data.anio) : "",
         color: data.color && data.color !== "No especificado" ? data.color : "Blanco",
         vehicle_type: data.vehicle_type || "Sedán / Automóvil",
-        vehicle_type_slug: data.vehicle_type_slug || "sedan",
+        vehicle_type_slug: data.vehicle_type_slug || data.tipo_carroceria || "sedan",
+        numero_motor: data.numero_motor || "",
+        tipo_combustible: data.tipo_combustible || "Gasolina",
+        propietario_cedula: data.propietario_cedula || "",
+        origin_country: data.origin_country || "",
         version_level: data.version_level || "intermedio",
         trim: data.trim || "",
       });
 
-      if (data.vin) {
-        toast.success(`Chasis detectado: ${data.vin}`);
+      if (data.vin || data.vin_chasis) {
+        toast.success(`Chasis/VIN detectado: ${data.vin || data.vin_chasis} (${data.origin_country || "Estándar"})`);
+      } else if (data.placa || data.plate) {
+        toast.success(`Placa detectada: ${data.placa || data.plate}`);
       } else {
         toast.info("Texto analizado. Por favor verifica los datos detectados.");
       }
@@ -402,6 +411,51 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                         <option value="intermedio">Intermedio / Mid</option>
                         <option value="full">Full / Premium / Limited</option>
                       </select>
+                    </div>
+
+                    {/* Número de Motor */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
+                        No. de Motor:
+                      </label>
+                      <input
+                        type="text"
+                        value={editedFields.numero_motor || ""}
+                        onChange={(e) => setEditedFields({ ...editedFields, numero_motor: e.target.value })}
+                        placeholder="Ej. 1GD1234567"
+                        className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 font-mono uppercase text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                      />
+                    </div>
+
+                    {/* Tipo de Combustible */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
+                        Combustible:
+                      </label>
+                      <select
+                        value={editedFields.tipo_combustible || "Gasolina"}
+                        onChange={(e) => setEditedFields({ ...editedFields, tipo_combustible: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                      >
+                        <option value="Gasolina">Gasolina</option>
+                        <option value="Diésel">Diésel</option>
+                        <option value="Híbrido">Híbrido</option>
+                        <option value="Eléctrico">Eléctrico</option>
+                      </select>
+                    </div>
+
+                    {/* Cédula del Propietario */}
+                    <div className="col-span-2 space-y-1">
+                      <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
+                        Cédula Propietario (Nicaragua):
+                      </label>
+                      <input
+                        type="text"
+                        value={editedFields.propietario_cedula || ""}
+                        onChange={(e) => setEditedFields({ ...editedFields, propietario_cedula: e.target.value })}
+                        placeholder="Ej. 001-140588-0042K"
+                        className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 font-mono text-xs text-zinc-900 dark:text-zinc-100"
+                      />
                     </div>
                   </div>
                 </div>

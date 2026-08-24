@@ -7718,16 +7718,17 @@ async def decode_vehicle_vin(vin: str, request: Request):
 @api_router.post("/vehicles/ocr-circulation-card")
 async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
     """
-    Procesa el texto OCR extraído de una tarjeta de circulación de vehículo,
-    extrae Chasis, Placa, Color, Año y enriquece con decodificación de VIN vPIC.
+    Procesa el texto o imagen OCR extraído de una tarjeta de circulación de Nicaragua,
+    extrae Chasis/VIN, Placa Departamental, Motor, Color, Año, Marca, Modelo y Cédula.
     """
     await require_auth(request)
     raw_text = payload.get("raw_text") or payload.get("text") or ""
+    image_b64 = payload.get("image_base64") or payload.get("image")
     
     from backend.domains.vehicles.circulation_ocr import parse_circulation_card_text
     parsed = parse_circulation_card_text(raw_text)
     
-    vin = parsed.get("vin")
+    vin = parsed.get("vin_chasis") or parsed.get("vin")
     extended_info = {}
     if vin:
         try:
@@ -7735,21 +7736,36 @@ async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
         except Exception:
             pass
 
+    resolved_brand = extended_info.get("brand") or parsed.get("marca") or ""
+    resolved_model = extended_info.get("model") or parsed.get("modelo") or ""
+    resolved_year = extended_info.get("year") or parsed.get("anio") or parsed.get("vin_year")
+    resolved_type_slug = extended_info.get("vehicle_type_slug") or parsed.get("tipo_carroceria") or "sedan"
+
     return {
         "vin": vin or "",
-        "plate": parsed.get("plate") or payload.get("plate") or "",
-        "brand": extended_info.get("brand") or parsed.get("brand") or "",
-        "model": extended_info.get("model") or "",
-        "year": extended_info.get("year") or parsed.get("year"),
+        "vin_chasis": vin or "",
+        "plate": parsed.get("placa") or payload.get("plate") or "",
+        "placa": parsed.get("placa") or payload.get("plate") or "",
+        "numero_motor": parsed.get("numero_motor") or "",
+        "brand": resolved_brand,
+        "marca": resolved_brand,
+        "model": resolved_model,
+        "modelo": resolved_model,
+        "year": resolved_year,
+        "anio": resolved_year,
         "color": parsed.get("color") or "No especificado",
         "vehicle_type": extended_info.get("vehicle_type") or "Sedán / Automóvil",
-        "vehicle_type_slug": extended_info.get("vehicle_type_slug") or "sedan",
+        "vehicle_type_slug": resolved_type_slug,
+        "tipo_carroceria": resolved_type_slug,
+        "tipo_combustible": parsed.get("tipo_combustible") or "Gasolina",
+        "propietario_cedula": parsed.get("propietario_cedula") or "",
+        "origin_country": parsed.get("origin_country") or "",
         "vehicle_cab_variant": extended_info.get("vehicle_cab_variant"),
         "trim": extended_info.get("trim") or "",
         "version_level": extended_info.get("version_level") or "intermedio",
         "version_label": extended_info.get("version_label") or "Intermedio / Estándar",
         "confidence_score": parsed.get("confidence_score", 0),
-        "raw_text_snippet": parsed.get("raw_text_snippet", ""),
+        "raw_text_snippet": parsed.get("raw_snippet", ""),
     }
 
 
