@@ -30,7 +30,7 @@ from fastapi import (
 )
 import re
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response as FastAPIResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response as FastAPIResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
