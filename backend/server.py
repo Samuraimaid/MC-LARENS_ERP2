@@ -7769,6 +7769,170 @@ async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
     }
 
 
+@api_router.post("/vehicles/batch-progress-sync")
+async def sync_vehicle_batch_progress(payload: Dict[str, Any]):
+    """Recibe y guarda en base de datos el progreso en vivo del generador por lotes."""
+    await db.system_status.update_one(
+        {"key": "vehicle_batch_progress"},
+        {"$set": {**payload, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    return {"status": "ok"}
+
+
+@api_router.get("/vehicles/batch-progress")
+async def get_vehicle_batch_progress():
+    """Devuelve una vista visual en HTML responsiva para monitorear el progreso desde el celular."""
+    doc = await db.system_status.find_one({"key": "vehicle_batch_progress"}, {"_id": 0}) or {}
+    total = doc.get("total", 260)
+    completed = doc.get("completed", 0)
+    current = doc.get("current_model", "Iniciando proceso...")
+    pct = round((completed / total * 100), 1) if total > 0 else 0
+    updated = doc.get("updated_at", "Esperando sincronización...")
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="6">
+        <title>Progreso Catálogo Vehicular | MC-LARENS ERP</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: #09090b;
+                color: #f4f4f5;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 90vh;
+            }}
+            .card {{
+                background: #18181b;
+                border: 1px solid #27272a;
+                border-radius: 24px;
+                padding: 28px;
+                max-width: 420px;
+                width: 100%;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            }}
+            .badge {{
+                display: inline-block;
+                background: rgba(14, 165, 233, 0.15);
+                color: #38bdf8;
+                padding: 6px 14px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                margin-bottom: 16px;
+            }}
+            h1 {{
+                font-size: 20px;
+                margin: 0 0 8px 0;
+                color: #ffffff;
+            }}
+            .desc {{
+                color: #a1a1aa;
+                font-size: 13px;
+                margin-bottom: 24px;
+            }}
+            .progress-container {{
+                background: #27272a;
+                border-radius: 999px;
+                height: 16px;
+                overflow: hidden;
+                margin-bottom: 12px;
+            }}
+            .progress-bar {{
+                background: linear-gradient(90deg, #0284c7, #10b981);
+                height: 100%;
+                width: {pct}%;
+                border-radius: 999px;
+                transition: width 0.5s ease;
+            }}
+            .stats {{
+                display: flex;
+                justify-content: space-between;
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 20px;
+            }}
+            .current-box {{
+                background: #09090b;
+                border: 1px solid #27272a;
+                border-radius: 16px;
+                padding: 16px;
+                margin-bottom: 20px;
+            }}
+            .current-label {{
+                font-size: 11px;
+                color: #71717a;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 4px;
+            }}
+            .current-val {{
+                font-size: 14px;
+                font-weight: 600;
+                color: #38bdf8;
+            }}
+            .footer {{
+                font-size: 11px;
+                color: #71717a;
+                text-align: center;
+            }}
+            .pulse {{
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #10b981;
+                margin-right: 6px;
+                animation: pulse 1.5s infinite;
+            }}
+            @keyframes pulse {{
+                0% {{ transform: scale(0.95); opacity: 0.8; }}
+                50% {{ transform: scale(1.3); opacity: 1; }}
+                100% {{ transform: scale(0.95); opacity: 0.8; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <span class="badge"><span class="pulse"></span>EN EJECUCIÓN NOCTURNA</span>
+            <h1>Catálogo Automotriz HD</h1>
+            <p class="desc">Generando siluetas transparentes (Toyota, Nissan, Hyundai, Kia, Mitsubishi, Isuzu).</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            
+            <div class="stats">
+                <span>{pct}%</span>
+                <span>{completed} / {total} Modelos</span>
+            </div>
+            
+            <div class="current-box">
+                <div class="current-label">Último Modelo Procesado:</div>
+                <div class="current-val">{current}</div>
+            </div>
+            
+            <div class="footer">
+                Actualizado: {updated[:19].replace('T', ' ')} UTC<br>
+                <em>Se actualiza automáticamente cada 6 segundos.</em>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+
 @api_router.get("/vehicles/{vehicle_id}")
 async def get_vehicle(vehicle_id: str, request: Request):
     await require_auth(request)

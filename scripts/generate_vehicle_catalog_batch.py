@@ -219,12 +219,45 @@ def main():
                     
                 print(f"  [SAVED] {out_path}")
                 processed += 1
+
+                # Sincronizar progreso en vivo a la nube para monitoreo móvil
+                try:
+                    import requests
+                    requests.post(
+                        "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
+                        json={
+                            "total": len(models),
+                            "completed": len(progress),
+                            "current_model": f"{m['brand']} {m['model_name']} ({m['year_start']}-{m['year_end']})",
+                            "status": "running"
+                        },
+                        timeout=5
+                    )
+                except Exception:
+                    pass
+
                 time.sleep(2) # Respetar rate limits
             except Exception as e:
                 print(f"  [ERROR] Falló generación de {slug}: {e}")
         else:
             print(f"  [PROMPT PREPARADO] {m['prompt_lateral']}")
             processed += 1
+
+            # Sincronizar de todos modos para pruebas
+            try:
+                import requests
+                requests.post(
+                    "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
+                    json={
+                        "total": len(models),
+                        "completed": processed,
+                        "current_model": f"{m['brand']} {m['model_name']} ({m['year_start']}-{m['year_end']})",
+                        "status": "running"
+                    },
+                    timeout=5
+                )
+            except Exception:
+                pass
 
     print("\n============================================================")
     print("PROCESO DE LOTE COMPLETADO / PAUSADO CON ÉXITO")
