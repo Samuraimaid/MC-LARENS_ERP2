@@ -11,35 +11,46 @@ Soporta procesamiento multimodal con Gemini Vision y parser heurístico regex.
 import re
 from typing import Any, Dict, List, Optional
 
-# Prefijos de Departamentos y Regiones de Nicaragua
+# Prefijos de Departamentos y Regiones de Nicaragua (Sincronizados con SaleForm & Tránsito Nacional)
 NICARAGUA_DEPT_PREFIXES = [
-    "M",    # Managua
-    "MY",   # Masaya
-    "GR",   # Granada
-    "LE",   # León
-    "CH",   # Chinandega
-    "MT",   # Matagalpa
-    "JI",   # Jinotega
-    "ES",   # Estelí
-    "MD",   # Madriz
-    "NS",   # Nueva Segovia
-    "BO",   # Boaco
-    "CO",   # Chontales
-    "CT",   # Chontales alterno
-    "RI",   # Rivas
-    "RS",   # Río San Juan
+    # Multi-carácter especial primero para prioridad de matching
     "RAAN", # Costa Caribe Norte
     "RAAS", # Costa Caribe Sur
+    # Departamentos y Especiales de 2 letras
+    "LE",   # León
+    "CH",   # Chinandega
+    "MY",   # Masaya
+    "GR",   # Granada
+    "CZ",   # Carazo
+    "MT",   # Matagalpa
+    "BO",   # Boaco
+    "CT",   # Chontales
+    "CO",   # Chontales alterno
+    "RI",   # Rivas
+    "NS",   # Nueva Segovia
+    "ES",   # Estelí
+    "MZ",   # Madriz
+    "MD",   # Madriz alterno
+    "JI",   # Jinotega
+    "RS",   # Río San Juan
+    "AN",   # Atlántico Norte
+    "AS",   # Atlántico Sur
     "RN",   # Región Norte
-    "CC",   # Cuerpo Consular / Especial
+    "TM",   # Transporte Municipal / Taxi
+    "ZC",   # Zona Comercial / Franca
+    "PN",   # Policía Nacional
+    "EN",   # Ejército de Nicaragua
     "CD",   # Cuerpo Diplomático
-    "OI",   # Organismos Internacionales
     "MI",   # Misión Internacional
+    "OI",   # Organismos Internacionales
+    "CC",   # Cuerpo Consular
     "PJ",   # Poder Judicial
     "ME",   # Ministerio de Estado
+    # 1 letra (Managua)
+    "M",    # Managua
 ]
 
-DEPT_PREFIX_REGEX = r"(?:" + "|".join(NICARAGUA_DEPT_PREFIXES) + r")"
+DEPT_PREFIX_REGEX = r"(?:" + "|".join(sorted(NICARAGUA_DEPT_PREFIXES, key=len, reverse=True)) + r")"
 
 # 1. Regex de Placas de Nicaragua: Prefijo + 1 a 6 dígitos (con o sin guión o espacio)
 NICARAGUA_PLATE_PATTERNS = [
