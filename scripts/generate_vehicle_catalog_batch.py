@@ -155,16 +155,38 @@ def crop_and_fit(img, target_w=640, target_h=360, padding=16):
     canvas.paste(resized, (pos_x, pos_y), resized)
     return canvas
 
-ACTIVE_VERTEX_MODEL = None
-
-def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
-    """Genera la imagen usando Vertex AI Imagen conectado a los créditos de Google Cloud."""
-    global ACTIVE_VERTEX_MODEL
+def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", location="us-central1"):
+    """Genera la imagen usando el SDK oficial de Google GenAI conectado a Vertex AI."""
     import base64
     import io
+
+    # 1. Intentar con el SDK oficial de Google GenAI (recomendado por Google Cloud)
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client(vertexai=True, project=project_id, location=location)
+        
+        for m_name in ['imagen-3.0-generate-002', 'imagen-3.0-fast-generate-001', 'imagegeneration@006']:
+            try:
+                res = client.models.generate_images(
+                    model=m_name,
+                    prompt=prompt,
+                    config=types.GenerateImagesConfig(
+                        number_of_images=1,
+                        aspect_ratio="16:9",
+                        output_mime_type="image/jpeg",
+                    )
+                )
+                if res and res.generated_images:
+                    return Image.open(io.BytesIO(res.generated_images[0].image.image_bytes))
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # 2. Fallback con token gcloud directo vía REST
     import requests
     import subprocess
-
     token = os.environ.get("GCLOUD_TOKEN")
     if not token:
         try:
@@ -172,17 +194,14 @@ def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
         except Exception:
             token = None
 
-    project_id = "gen-lang-client-0971793042"
-
     if token:
-        candidate_models = [ACTIVE_VERTEX_MODEL] if ACTIVE_VERTEX_MODEL else [
+        candidate_models = [
             "imagen-3.0-generate-001",
             "imagegeneration@006",
             "imagen-3.0-fast-generate-001",
             "imagegeneration@005",
             "imagen-3.0-generate-002",
         ]
-
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
@@ -195,15 +214,11 @@ def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
                 "outputOptions": {"mimeType": "image/jpeg"}
             }
         }
-
         last_error = ""
         for model_id in candidate_models:
-            if not model_id:
-                continue
             url = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/{model_id}:predict"
             resp = requests.post(url, headers=headers, json=payload, timeout=60)
             if resp.status_code == 200:
-                ACTIVE_VERTEX_MODEL = model_id
                 data = resp.json()
                 b64 = data["predictions"][0]["bytesBase64Encoded"]
                 return Image.open(io.BytesIO(base64.b64decode(b64)))
@@ -212,27 +227,7 @@ def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
 
         raise Exception(f"Vertex AI Error: {last_error}")
 
-    # Fallback a AI Studio API Key si existe
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if api_key:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={api_key}"
-        payload = {
-            "instances": [{"prompt": prompt}],
-            "parameters": {
-                "sampleCount": 1,
-                "aspectRatio": "16:9",
-                "outputOptions": {"mimeType": "image/jpeg"}
-            }
-        }
-        resp = requests.post(url, json=payload, timeout=45)
-        if resp.status_code == 200:
-            data = resp.json()
-            b64 = data["predictions"][0]["bytesBase64Encoded"]
-            return Image.open(io.BytesIO(base64.b64decode(b64)))
-        else:
-            raise Exception(f"AI Studio Error {resp.status_code}: {resp.text}")
-
-    raise Exception("No se encontró token de autenticación de Google Cloud ni API Key.")
+    raise Exception("No se pudo conectar a Vertex AI.")
 
 def main():
     models = extract_target_models()
