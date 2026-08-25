@@ -143,27 +143,63 @@ def crop_and_fit(img, target_w=640, target_h=360, padding=16):
     canvas.paste(resized, (pos_x, pos_y), resized)
     return canvas
 
-def generate_via_api(prompt, api_key):
-    """Llama a la API de Imagen 3 / Gemini REST para generar la imagen."""
+def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", location="us-central1"):
+    """Genera la imagen usando Vertex AI Imagen 3 conectado a los créditos de Google Cloud."""
+    import base64
+    import io
     import requests
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={api_key}"
-    payload = {
-        "instances": [{"prompt": prompt}],
-        "parameters": {
-            "sampleCount": 1,
-            "aspectRatio": "16:9",
-            "outputOptions": {"mimeType": "image/jpeg"}
+    import subprocess
+
+    token = os.environ.get("GCLOUD_TOKEN")
+    if not token:
+        try:
+            token = subprocess.check_output("gcloud auth print-access-token", shell=True).decode().strip()
+        except Exception:
+            token = None
+
+    if token:
+        url = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/imagen-3.0-generate-002:predict"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
         }
-    }
-    resp = requests.post(url, json=payload, timeout=45)
-    if resp.status_code == 200:
-        import base64
-        import io
-        data = resp.json()
-        b64 = data["predictions"][0]["bytesBase64Encoded"]
-        return Image.open(io.BytesIO(base64.b64decode(b64)))
-    else:
-        raise Exception(f"API Error {resp.status_code}: {resp.text}")
+        payload = {
+            "instances": [{"prompt": prompt}],
+            "parameters": {
+                "sampleCount": 1,
+                "aspectRatio": "16:9",
+                "outputOptions": {"mimeType": "image/jpeg"}
+            }
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        if resp.status_code == 200:
+            data = resp.json()
+            b64 = data["predictions"][0]["bytesBase64Encoded"]
+            return Image.open(io.BytesIO(base64.b64decode(b64)))
+        else:
+            raise Exception(f"Vertex AI Error {resp.status_code}: {resp.text}")
+
+    # Fallback a AI Studio API Key si existe
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if api_key:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={api_key}"
+        payload = {
+            "instances": [{"prompt": prompt}],
+            "parameters": {
+                "sampleCount": 1,
+                "aspectRatio": "16:9",
+                "outputOptions": {"mimeType": "image/jpeg"}
+            }
+        }
+        resp = requests.post(url, json=payload, timeout=45)
+        if resp.status_code == 200:
+            data = resp.json()
+            b64 = data["predictions"][0]["bytesBase64Encoded"]
+            return Image.open(io.BytesIO(base64.b64decode(b64)))
+        else:
+            raise Exception(f"AI Studio Error {resp.status_code}: {resp.text}")
+
+    raise Exception("No se encontró token de autenticación de Google Cloud ni API Key.")
 
 def main():
     models = extract_target_models()
@@ -201,13 +237,12 @@ def main():
 
         print(f"\n[{idx+1}/{len(models)}] Generando: {m['brand']} {m['model_name']} ({m['year_start']}-{m['year_end']})...")
         
-        if api_key:
-            try:
-                raw_img = generate_via_api(m["prompt_lateral"], api_key)
-                trans_img = flood_fill_transparent(raw_img)
-                final_img = crop_and_fit(trans_img, 640, 360)
-                os.makedirs(out_dir, exist_ok=True)
-                final_img.save(out_path, "PNG", optimize=True)
+        try:
+            raw_img = generate_via_vertex_ai(m["prompt_lateral"])
+            trans_img = flood_fill_transparent(raw_img)
+            final_img = crop_and_fit(trans_img, 640, 360)
+            os.makedirs(out_dir, exist_ok=True)
+            final_img.save(out_path, "PNG", optimize=True)
                 
                 progress[slug] = {
                     "status": "completed",
