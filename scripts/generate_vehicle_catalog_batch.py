@@ -155,8 +155,11 @@ def crop_and_fit(img, target_w=640, target_h=360, padding=16):
     canvas.paste(resized, (pos_x, pos_y), resized)
     return canvas
 
+ACTIVE_VERTEX_MODEL = None
+
 def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", location="us-central1"):
-    """Genera la imagen usando Vertex AI Imagen 3 conectado a los créditos de Google Cloud."""
+    """Genera la imagen usando Vertex AI Imagen conectado a los créditos de Google Cloud."""
+    global ACTIVE_VERTEX_MODEL
     import base64
     import io
     import requests
@@ -170,7 +173,14 @@ def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", loca
             token = None
 
     if token:
-        url = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/imagen-3.0-generate-002:predict"
+        candidate_models = [ACTIVE_VERTEX_MODEL] if ACTIVE_VERTEX_MODEL else [
+            "imagen-3.0-generate-001",
+            "imagegeneration@006",
+            "imagen-3.0-fast-generate-001",
+            "imagegeneration@005",
+            "imagen-3.0-generate-002",
+        ]
+
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
@@ -183,13 +193,22 @@ def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", loca
                 "outputOptions": {"mimeType": "image/jpeg"}
             }
         }
-        resp = requests.post(url, headers=headers, json=payload, timeout=60)
-        if resp.status_code == 200:
-            data = resp.json()
-            b64 = data["predictions"][0]["bytesBase64Encoded"]
-            return Image.open(io.BytesIO(base64.b64decode(b64)))
-        else:
-            raise Exception(f"Vertex AI Error {resp.status_code}: {resp.text}")
+
+        last_error = ""
+        for model_id in candidate_models:
+            if not model_id:
+                continue
+            url = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/{model_id}:predict"
+            resp = requests.post(url, headers=headers, json=payload, timeout=60)
+            if resp.status_code == 200:
+                ACTIVE_VERTEX_MODEL = model_id
+                data = resp.json()
+                b64 = data["predictions"][0]["bytesBase64Encoded"]
+                return Image.open(io.BytesIO(base64.b64decode(b64)))
+            else:
+                last_error = f"{model_id} ({resp.status_code}): {resp.text}"
+
+        raise Exception(f"Vertex AI Error: {last_error}")
 
     # Fallback a AI Studio API Key si existe
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
