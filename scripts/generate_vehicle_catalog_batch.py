@@ -243,49 +243,26 @@ def main():
             final_img = crop_and_fit(trans_img, 640, 360)
             os.makedirs(out_dir, exist_ok=True)
             final_img.save(out_path, "PNG", optimize=True)
+            
+            progress[slug] = {
+                "status": "completed",
+                "file": out_path,
+                "timestamp": time.time()
+            }
+            with open(PROGRESS_PATH, "w", encoding="utf-8") as f:
+                json.dump(progress, f, indent=2)
                 
-                progress[slug] = {
-                    "status": "completed",
-                    "file": out_path,
-                    "timestamp": time.time()
-                }
-                with open(PROGRESS_PATH, "w", encoding="utf-8") as f:
-                    json.dump(progress, f, indent=2)
-                    
-                print(f"  [SAVED] {out_path}")
-                processed += 1
-
-                # Sincronizar progreso en vivo a la nube para monitoreo móvil
-                try:
-                    import requests
-                    requests.post(
-                        "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
-                        json={
-                            "total": len(models),
-                            "completed": len(progress),
-                            "current_model": f"{m['brand']} {m['model_name']} ({m['year_start']}-{m['year_end']})",
-                            "status": "running"
-                        },
-                        timeout=5
-                    )
-                except Exception:
-                    pass
-
-                time.sleep(2) # Respetar rate limits
-            except Exception as e:
-                print(f"  [ERROR] Falló generación de {slug}: {e}")
-        else:
-            print(f"  [PROMPT PREPARADO] {m['prompt_lateral']}")
+            print(f"  [SAVED] {out_path}")
             processed += 1
 
-            # Sincronizar de todos modos para pruebas
+            # Sincronizar progreso en vivo a la nube para monitoreo móvil
             try:
                 import requests
                 requests.post(
                     "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
                     json={
                         "total": len(models),
-                        "completed": processed,
+                        "completed": len(progress),
                         "current_model": f"{m['brand']} {m['model_name']} ({m['year_start']}-{m['year_end']})",
                         "status": "running"
                     },
@@ -293,6 +270,11 @@ def main():
                 )
             except Exception:
                 pass
+
+            time.sleep(2) # Respetar rate limits
+        except Exception as e:
+            print(f"  [ERROR] Falló generación de {slug}: {e}")
+            time.sleep(1)
 
     print("\n============================================================")
     print("PROCESO DE LOTE COMPLETADO / PAUSADO CON ÉXITO")
