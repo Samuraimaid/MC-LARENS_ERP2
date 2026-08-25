@@ -157,7 +157,7 @@ def crop_and_fit(img, target_w=640, target_h=360, padding=16):
 
 ACTIVE_VERTEX_MODEL = None
 
-def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", location="us-central1"):
+def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
     """Genera la imagen usando Vertex AI Imagen conectado a los créditos de Google Cloud."""
     global ACTIVE_VERTEX_MODEL
     import base64
@@ -171,6 +171,14 @@ def generate_via_vertex_ai(prompt, project_id="gen-lang-client-0971793042", loca
             token = subprocess.check_output("gcloud auth print-access-token", shell=True).decode().strip()
         except Exception:
             token = None
+
+    if not project_id:
+        project_id = os.environ.get("PROJECT_ID")
+        if not project_id:
+            try:
+                project_id = subprocess.check_output("gcloud config get-value project", shell=True).decode().strip()
+            except Exception:
+                project_id = "gen-lang-client-0971793042"
 
     if token:
         candidate_models = [ACTIVE_VERTEX_MODEL] if ACTIVE_VERTEX_MODEL else [
