@@ -1,45 +1,38 @@
 """
-Script de diagnóstico para verificar modelos disponibles en Vertex AI
+Script de prueba de modelos de imagen de Vertex AI
 """
-import subprocess
-import sys
+from google import genai
+from google.genai import types
+from PIL import Image
+import io
 
-print("[1] Instalando / verificando google-genai...")
-subprocess.run([sys.executable, "-m", "pip", "install", "--user", "--quiet", "google-genai", "Pillow"], check=False)
+client = genai.Client(vertexai=True, project="gen-lang-client-0971793042", location="us-central1")
 
-import site
-site.main()
+models_to_test = [
+    "imagegeneration@006",
+    "imagegeneration@005",
+    "imagen-3.0-generate-001",
+    "imagegeneration@002",
+]
 
-try:
-    from google import genai
-    from google.genai import types
-    print("[2] Inicializando cliente Vertex AI...")
-    client = genai.Client(vertexai=True, project="gen-lang-client-0971793042", location="us-central1")
-    
-    print("[3] Probando generación con imagen-3.0-generate-002...")
-    result = client.models.generate_images(
-        model='imagen-3.0-generate-002',
-        prompt='A clean white car side view on white background',
-        config=types.GenerateImagesConfig(
-            number_of_images=1,
-            aspect_ratio="16:9",
-            output_mime_type="image/jpeg",
-        )
-    )
-    print(f"[OK] ¡ÉXITO TOTAL! Se generaron {len(result.generated_images)} imágenes.")
-except Exception as e:
-    print(f"[ERROR con imagen-3.0-generate-002]: {e}")
+print("Probando modelos de generacion en Vertex AI...")
+for m in models_to_test:
+    print(f"\n--- Probando modelo: {m} ---")
     try:
-        print("[4] Probando con imagen-3.0-fast-generate-001...")
-        result = client.models.generate_images(
-            model='imagen-3.0-fast-generate-001',
-            prompt='A clean white car side view on white background',
+        res = client.models.generate_images(
+            model=m,
+            prompt="A lateral view of a white modern car isolated on white background",
             config=types.GenerateImagesConfig(
                 number_of_images=1,
                 aspect_ratio="16:9",
                 output_mime_type="image/jpeg",
             )
         )
-        print(f"[OK] ¡ÉXITO TOTAL con fast! Se generaron {len(result.generated_images)} imágenes.")
-    except Exception as e2:
-        print(f"[ERROR con fast]: {e2}")
+        if res and res.generated_images:
+            img = Image.open(io.BytesIO(res.generated_images[0].image.image_bytes))
+            print(f"[EXITO TOTAL CON {m}] Tamano: {img.size}")
+            img.save("test_car_output.png")
+            print("Guardado en test_car_output.png")
+            break
+    except Exception as e:
+        print(f"Error con {m}: {e}")
