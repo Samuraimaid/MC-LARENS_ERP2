@@ -19,7 +19,10 @@ try:
 except ImportError:
     import subprocess
     print("[INFO] Instalando librerías necesarias en Cloud Shell (Pillow, requests)...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "Pillow", "requests"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "--quiet", "Pillow", "requests"])
+    import site
+    import importlib
+    site.main()
     from PIL import Image
     import requests
 
