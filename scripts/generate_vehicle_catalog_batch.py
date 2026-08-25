@@ -12,7 +12,16 @@ import os
 import re
 import sys
 import time
-from PIL import Image
+
+try:
+    from PIL import Image
+    import requests
+except ImportError:
+    import subprocess
+    print("[INFO] Instalando librerías necesarias en Cloud Shell (Pillow, requests)...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "Pillow", "requests"])
+    from PIL import Image
+    import requests
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DESCRIPTOR_PATH = os.path.join(BASE_DIR, "frontend", "src", "data", "vehicleDescriptorTypes.json")
