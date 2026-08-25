@@ -1566,6 +1566,46 @@ export default function SaleForm({
     }
   };
 
+  const handleApplySaleOcr = (extractedData) => {
+    if (!extractedData) return;
+    let prefix = "M";
+    let number = "";
+    if (extractedData.plate) {
+      const cleanPlate = extractedData.plate.trim().toUpperCase();
+      const match = cleanPlate.match(/^([A-Z]{1,4})[\s\-_]*(.*)$/);
+      if (match) {
+        const rawPrefix = match[1];
+        const rawDigits = match[2].replace(/[^0-9]/g, "");
+        prefix = PLATE_PREFIXES.find((p) => p.toUpperCase() === rawPrefix) || "M";
+        number = rawDigits ? formatPlateNumber(prefix, rawDigits) : "";
+      } else {
+        number = cleanPlate;
+      }
+    }
+
+    const brand = extractedData.brand || "";
+    const model = extractedData.model || "";
+    const year = extractedData.year ? String(extractedData.year) : "";
+    const chasis = extractedData.vin || extractedData.chasis || "";
+    const color = extractedData.color && extractedData.color !== "No especificado" ? extractedData.color : "";
+
+    const updatedVehicle = {
+      ...newVehicle,
+      plate_prefix: prefix,
+      plate_number: number || newVehicle.plate_number,
+      brand: brand || newVehicle.brand,
+      model: model || newVehicle.model,
+      year: year || newVehicle.year,
+      chasis: chasis ? formatChasis(chasis) : newVehicle.chasis,
+      color: color || newVehicle.color,
+    };
+
+    setNewVehicle(updatedVehicle);
+    persistDraftSnapshot({ newVehicle: updatedVehicle });
+    setShowSaleOcrModal(false);
+    toast.success("¡Datos de circulación aplicados con éxito!");
+  };
+
   const createVehicleForSelectedCustomer = async () => {
     if (!selectedCustomer?.customer_id) {
       toast.error("Selecciona un cliente antes de registrar vehículo");

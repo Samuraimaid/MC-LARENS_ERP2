@@ -68,13 +68,33 @@ export default function CustomerVehicleFormTabs({
   const handleApplyOcr = (extractedData) => {
     if (!extractedData) return;
     const updates = {};
-    if (extractedData.plate_prefix) updates.plate_prefix = extractedData.plate_prefix;
-    if (extractedData.plate_number) updates.plate_number = extractedData.plate_number;
-    if (extractedData.chasis) updates.chasis = extractedData.chasis;
+    
+    // Parsear placa a prefijo y número
+    if (extractedData.plate) {
+      const cleanPlate = extractedData.plate.trim().toUpperCase();
+      const match = cleanPlate.match(/^([A-Z]{1,4})[\s\-_]*(.*)$/);
+      if (match) {
+        const rawPrefix = match[1];
+        const rawDigits = match[2].replace(/[^0-9]/g, "");
+        const matchedPrefix = platePrefixes.find((p) => p.toUpperCase() === rawPrefix) || "M";
+        updates.plate_prefix = matchedPrefix;
+        updates.plate_number = rawDigits ? formatPlateNumber(matchedPrefix, rawDigits) : "";
+      } else {
+        updates.plate_number = cleanPlate;
+      }
+    } else {
+      if (extractedData.plate_prefix) updates.plate_prefix = extractedData.plate_prefix;
+      if (extractedData.plate_number) updates.plate_number = extractedData.plate_number;
+    }
+
+    if (extractedData.vin || extractedData.chasis) {
+      updates.chasis = formatChasis ? formatChasis(extractedData.vin || extractedData.chasis) : (extractedData.vin || extractedData.chasis);
+    }
     if (extractedData.brand) updates.brand = extractedData.brand;
     if (extractedData.model) updates.model = extractedData.model;
-    if (extractedData.year) updates.year = extractedData.year;
-    if (extractedData.color) updates.color = extractedData.color;
+    if (extractedData.year) updates.year = String(extractedData.year);
+    if (extractedData.color && extractedData.color !== "No especificado") updates.color = extractedData.color;
+    
     updateForm(updates);
     setShowOcrModal(false);
   };
