@@ -172,13 +172,7 @@ def generate_via_vertex_ai(prompt, project_id=None, location="us-central1"):
         except Exception:
             token = None
 
-    if not project_id:
-        project_id = os.environ.get("PROJECT_ID")
-        if not project_id:
-            try:
-                project_id = subprocess.check_output("gcloud config get-value project", shell=True).decode().strip()
-            except Exception:
-                project_id = "gen-lang-client-0971793042"
+    project_id = "gen-lang-client-0971793042"
 
     if token:
         candidate_models = [ACTIVE_VERTEX_MODEL] if ACTIVE_VERTEX_MODEL else [
