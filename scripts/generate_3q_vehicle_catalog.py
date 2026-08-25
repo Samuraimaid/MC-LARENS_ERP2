@@ -18,6 +18,13 @@ import urllib.parse
 import urllib.request
 import io
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 try:
     from PIL import Image
 except ImportError:
@@ -117,22 +124,60 @@ def render_progress_bar(completed, total, width=28):
     return f"[{bar}] {BOLD}{WHITE}{pct * 100:5.1f}%{RESET}"
 
 
-def fetch_image_from_engine(prompt, retries=3):
-    """Genera la imagen en alta definición vía motor fotorealista de alta velocidad."""
-    encoded = urllib.parse.quote(prompt)
-    seed = int(time.time() * 1000) % 99999
-    url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true&seed={seed}"
+def is_clean_studio_background(img):
+    """Verifica que las esquinas y bordes sean fondo blanco puro (> 220) y no una habitación gris oscura."""
+    img_rgb = img.convert("RGB")
+    w, h = img_rgb.size
+    pixels = img_rgb.load()
     
+    # Muestrear las esquinas y borde superior
+    samples = [
+        (0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1),
+        (w // 2, 0), (w // 4, 0), (3 * w // 4, 0),
+        (0, h // 2), (w - 1, h // 2)
+    ]
+    for cx, cy in samples:
+        r, g, b = pixels[cx, cy]
+        if r < 215 or g < 215 or b < 215:
+            return False
+    return True
+
+
+def fetch_image_from_engine(prompt, retries=6):
+    """Genera la imagen garantizando fondo blanco puro y reintentando automáticamente si sale con fondo oscuro."""
+    encoded = urllib.parse.quote(prompt)
+    
+    last_error = None
     for attempt in range(retries):
+        seed = int(time.time() * 1000 + attempt * 777) % 99999
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true&seed={seed}&enhance=false"
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            })
+            with urllib.request.urlopen(req, timeout=50) as resp:
                 data = resp.read()
-                return Image.open(io.BytesIO(data))
+                if len(data) < 1000:
+                    raise Exception(f"Respuesta inválida ({len(data)} bytes)")
+                img = Image.open(io.BytesIO(data))
+                
+                # Control de calidad estricto: verificar fondo blanco
+                if not is_clean_studio_background(img):
+                    print(f"      [Filtro ⚠️ Fondo no blanco detectado, regenerando con nueva semilla...]", flush=True)
+                    time.sleep(2)
+                    continue
+
+                time.sleep(1.5)
+                return img
         except Exception as e:
-            if attempt == retries - 1:
-                raise e
-            time.sleep(3)
+            last_error = e
+            wait_time = 4 * (attempt + 1)
+            print(f"      [Aviso ⏳ Reintento {attempt+1}/{retries} tras {wait_time}s]: {e}", flush=True)
+            time.sleep(wait_time)
+            
+    if last_error:
+        raise last_error
+    raise Exception("No se pudo obtener imagen con fondo blanco limpio tras varios intentos.")
 
 
 def main():
@@ -140,12 +185,12 @@ def main():
     if os.name == "nt":
         os.system("")
 
-    print(f"\n{CYAN}{BOLD}╔══════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{CYAN}{BOLD}║   🚗 MC-LARENS ERP — GENERADOR AUTÓNOMO DE SILUETAS 3/4 HD (FRONT + REAR)        ║{RESET}")
-    print(f"{CYAN}{BOLD}╚══════════════════════════════════════════════════════════════════════════════════╝{RESET}")
+    print(f"\n{CYAN}{BOLD}╔══════════════════════════════════════════════════════════════════════════════════╗{RESET}", flush=True)
+    print(f"{CYAN}{BOLD}║   🚗 MC-LARENS ERP — GENERADOR AUTÓNOMO DE SILUETAS 3/4 HD (FRONT + REAR)        ║{RESET}", flush=True)
+    print(f"{CYAN}{BOLD}╚══════════════════════════════════════════════════════════════════════════════════╝{RESET}", flush=True)
 
     if not os.path.exists(MANIFEST_PATH):
-        print(f"{YELLOW}❌ [ERROR] No se encontró el manifiesto: {MANIFEST_PATH}{RESET}")
+        print(f"{YELLOW}❌ [ERROR] No se encontró el manifiesto: {MANIFEST_PATH}{RESET}", flush=True)
         return
 
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
@@ -166,12 +211,27 @@ def main():
 
     completed_count = len([k for k, v in progress.items() if v.get("status") == "completed"])
 
-    print(f"{BLUE}📁 Carpeta de Salida:{RESET} {WHITE}{OUTPUT_BASE_DIR}{RESET}")
-    print(f"{BLUE}📊 Catálogo a procesar:{RESET} {BOLD}{total_models} Vehículos{RESET} ({total_models * 2} Vistas en total)")
-    print(f"{GREEN}💾 Progreso detectado:{RESET}  {BOLD}{completed_count}/{total_models}{RESET} modelos ya completados.")
-    print(f"{GRAY}💡 Puedes pausar con Ctrl + C en cualquier momento. El progreso se guarda automáticamente.{RESET}\n")
+    print(f"{BLUE}📁 Carpeta de Salida:{RESET} {WHITE}{OUTPUT_BASE_DIR}{RESET}", flush=True)
+    print(f"{BLUE}📊 Catálogo a procesar:{RESET} {BOLD}{total_models} Vehículos{RESET} ({total_models * 2} Vistas en total)", flush=True)
+    limit = None
+    brand_filter = None
+    for arg in sys.argv[1:]:
+        if arg.isdigit():
+            limit = int(arg)
+        elif arg.lower() in ["toyota", "nissan", "hyundai", "kia", "mitsubishi", "isuzu"]:
+            brand_filter = arg.lower()
 
+    if limit:
+        print(f"{YELLOW}⚡ Modo Limitado: Procesando hasta {limit} modelos.{RESET}", flush=True)
+    if brand_filter:
+        print(f"{YELLOW}⚡ Filtro de Marca: {brand_filter.upper()}{RESET}", flush=True)
+
+    processed_count = 0
     for idx, m in enumerate(models, start=1):
+        if limit and processed_count >= limit:
+            break
+        if brand_filter and m["brand_slug"] != brand_filter:
+            continue
         slug = m["slug"]
         brand_slug = m["brand_slug"]
         brand = m["brand"]
@@ -190,71 +250,73 @@ def main():
             continue
 
         bar = render_progress_bar(completed_count, total_models)
-        print(f"{bar} {MAGENTA}{BOLD}[{idx}/{total_models}]{RESET} {WHITE}{BOLD}{brand} {model_name}{RESET} {GRAY}({years}){RESET}")
+        print(f"{bar} {MAGENTA}{BOLD}[{idx}/{total_models}]{RESET} {WHITE}{BOLD}{brand} {model_name}{RESET} {GRAY}({years}){RESET}", flush=True)
 
         # 1. Vista Delantera 3/4
         if not os.path.exists(front_path):
             try:
-                print(f"   {YELLOW}⏳ [1/2] Generando Ángulo Frontal 3/4 (Parabrisas + Laterales)...{RESET}", end="\r")
-                p_front = f"Front 3/4 three-quarter perspective studio 3D render of a modern white {brand} {model_name} ({years}) {category}, front-left isometric studio view, clearly showing front windshield and side doors windows, dark grey tinted glass, clean white body, studio lighting, isolated on solid pure white background, high resolution, no watermark, no text, no ground shadow"
+                print(f"   {YELLOW}⏳ [1/2] Generando Ángulo Frontal 3/4 (Parabrisas + Laterales)...{RESET}", flush=True)
+                p_front = f"Front 3/4 three-quarter perspective studio 3D render of a modern white {brand} {model_name} ({years}) {category}, exact front-left angle view, clearly showing front windshield and side windows, dark grey tinted glass, clean white body, studio lighting, isolated on solid pure white background, high resolution, no watermark, no text, no ground shadow"
                 raw_f = fetch_image_from_engine(p_front)
                 trans_f = flood_fill_transparent(raw_f)
                 final_f = crop_and_fit(trans_f, 640, 480)
                 final_f.save(front_path, "PNG", optimize=True)
-                print(f"   {GREEN}✔ [1/2] Frontal 3/4 guardada:{RESET} {GRAY}{os.path.basename(front_path)}{RESET}                  ")
+                print(f"   {GREEN}✔ [1/2] Frontal 3/4 guardada:{RESET} {GRAY}{os.path.basename(front_path)}{RESET}", flush=True)
             except Exception as e:
-                print(f"   {YELLOW}❌ [1/2] Error en frontal de {slug}: {e}{RESET}")
+                print(f"   {YELLOW}❌ [1/2] Error en frontal de {slug}: {e}{RESET}", flush=True)
 
         # 2. Vista Trasera 3/4
         if not os.path.exists(rear_path):
             try:
-                print(f"   {YELLOW}⏳ [2/2] Generando Ángulo Trasero 3/4 (Medallón + Laterales)...{RESET}", end="\r")
-                p_rear = f"Rear 3/4 three-quarter perspective studio 3D render of a modern white {brand} {model_name} ({years}) {category}, rear-left isometric studio view, clearly showing rear back windshield window and rear side windows, dark grey tinted glass, clean white body, studio lighting, isolated on solid pure white background, high resolution, no watermark, no text, no ground shadow"
+                print(f"   {YELLOW}⏳ [2/2] Generando Ángulo Trasero 3/4 (Medallón + Laterales)...{RESET}", flush=True)
+                p_rear = f"Rear 3/4 three-quarter perspective studio 3D render of a modern white {brand} {model_name} ({years}) {category}, exact rear-left angle view, clearly showing rear back window and rear side windows, dark grey tinted glass, clean white body, studio lighting, isolated on solid pure white background, high resolution, no watermark, no text, no ground shadow"
                 raw_r = fetch_image_from_engine(p_rear)
                 trans_r = flood_fill_transparent(raw_r)
                 final_r = crop_and_fit(trans_r, 640, 480)
                 final_r.save(rear_path, "PNG", optimize=True)
-                print(f"   {GREEN}✔ [2/2] Trasera 3/4 guardada:{RESET} {GRAY}{os.path.basename(rear_path)}{RESET}                  ")
+                print(f"   {GREEN}✔ [2/2] Trasera 3/4 guardada:{RESET} {GRAY}{os.path.basename(rear_path)}{RESET}", flush=True)
             except Exception as e:
-                print(f"   {YELLOW}❌ [2/2] Error en trasera de {slug}: {e}{RESET}")
+                print(f"   {YELLOW}❌ [2/2] Error en trasera de {slug}: {e}{RESET}", flush=True)
 
-        # Registrar progreso
-        completed_count += 1
-        progress[slug] = {
-            "status": "completed",
-            "front": front_path,
-            "rear": rear_path,
-            "updated_at": time.time()
-        }
-        with open(PROGRESS_PATH, "w", encoding="utf-8") as f:
-            json.dump(progress, f, indent=2)
+        # Registrar progreso únicamente si ambos archivos existen
+        if os.path.exists(front_path) and os.path.exists(rear_path):
+            completed_count += 1
+            processed_count += 1
+            progress[slug] = {
+                "status": "completed",
+                "front": front_path,
+                "rear": rear_path,
+                "updated_at": time.time()
+            }
+            with open(PROGRESS_PATH, "w", encoding="utf-8") as f:
+                json.dump(progress, f, indent=2)
 
-        # Sincronizar en vivo a Cloud Run para monitoreo móvil
-        try:
-            import urllib.request
-            sync_payload = json.dumps({
-                "total": total_models,
-                "completed": completed_count,
-                "current_model": f"{brand} {model_name} ({years}) [Front 3/4 + Rear 3/4]",
-                "status": "running"
-            }).encode("utf-8")
-            s_req = urllib.request.Request(
-                "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
-                data=sync_payload,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-            urllib.request.urlopen(s_req, timeout=4)
-        except Exception:
-            pass
+            # Sincronizar en vivo a Cloud Run para monitoreo móvil
+            try:
+                import urllib.request
+                sync_payload = json.dumps({
+                    "total": total_models,
+                    "completed": completed_count,
+                    "current_model": f"{brand} {model_name} ({years}) [Front 3/4 + Rear 3/4]",
+                    "status": "running"
+                }).encode("utf-8")
+                s_req = urllib.request.Request(
+                    "https://mclarens-erp-836176703716.us-central1.run.app/api/vehicles/batch-progress-sync",
+                    data=sync_payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                urllib.request.urlopen(s_req, timeout=4)
+            except Exception:
+                pass
 
-        print(f"   {CYAN}✨ Modelo {brand} {model_name} completado con éxito.{RESET}\n")
+            print(f"   {CYAN}✨ Modelo {brand} {model_name} completado con éxito.{RESET}\n", flush=True)
         time.sleep(1)
 
     elapsed = time.time() - start_time
-    print(f"\n{GREEN}{BOLD}════════════════════════════════════════════════════════════════════════════════════{RESET}")
-    print(f"{GREEN}{BOLD}  🏁 CATÁLOGO 3/4 COMPLETADO: {completed_count}/{total_models} MODELOS EN {elapsed/60:.1f} MINUTOS{RESET}")
-    print(f"{GREEN}{BOLD}════════════════════════════════════════════════════════════════════════════════════{RESET}\n")
+    print(f"\n{GREEN}{BOLD}════════════════════════════════════════════════════════════════════════════════════{RESET}", flush=True)
+    print(f"{GREEN}{BOLD}  🏁 CATÁLOGO 3/4 COMPLETADO: {completed_count}/{total_models} MODELOS EN {elapsed/60:.1f} MINUTOS{RESET}", flush=True)
+    print(f"{GREEN}{BOLD}════════════════════════════════════════════════════════════════════════════════════{RESET}\n", flush=True)
 
 
 if __name__ == "__main__":
