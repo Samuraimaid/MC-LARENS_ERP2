@@ -1344,8 +1344,11 @@ export default function SaleForm({
   };
 
   const handleApplySaleOcr = (ocrVehicle) => {
+    if (!ocrVehicle) return;
     const nextVehicle = { ...newVehicle };
-    if (ocrVehicle.vin) nextVehicle.chasis = ocrVehicle.vin;
+    if (ocrVehicle.vin || ocrVehicle.chasis) {
+      nextVehicle.chasis = formatChasis(ocrVehicle.vin || ocrVehicle.chasis);
+    }
     if (ocrVehicle.brand) nextVehicle.brand = ocrVehicle.brand;
     if (ocrVehicle.model) nextVehicle.model = ocrVehicle.model;
     if (ocrVehicle.year) nextVehicle.year = String(ocrVehicle.year);
@@ -1356,18 +1359,23 @@ export default function SaleForm({
     if (ocrVehicle.trim) nextVehicle.trim = ocrVehicle.trim;
 
     if (ocrVehicle.plate) {
-      const rawPlate = ocrVehicle.plate.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-      const prefixMatch = rawPlate.match(/^([A-Za-z]{1,2})(\d+)$/);
-      if (prefixMatch && PLATE_PREFIXES.includes(prefixMatch[1])) {
-        nextVehicle.plate_prefix = prefixMatch[1];
-        nextVehicle.plate_number = formatPlateNumber(prefixMatch[1], prefixMatch[2]);
+      const cleanPlate = ocrVehicle.plate.trim().toUpperCase();
+      const match = cleanPlate.match(/^([A-Z]{1,4})[\s\-_]*(.*)$/);
+      if (match) {
+        const rawPrefix = match[1];
+        const rawDigits = match[2].replace(/[^0-9]/g, "");
+        const matchedPrefix = PLATE_PREFIXES.find((p) => p.toUpperCase() === rawPrefix) || "M";
+        nextVehicle.plate_prefix = matchedPrefix;
+        nextVehicle.plate_number = rawDigits ? formatPlateNumber(matchedPrefix, rawDigits) : "";
       } else {
-        nextVehicle.plate_number = ocrVehicle.plate;
+        nextVehicle.plate_number = cleanPlate;
       }
     }
 
     setNewVehicle(nextVehicle);
     persistDraftSnapshot({ newVehicle: nextVehicle });
+    setShowSaleOcrModal(false);
+    toast.success("¡Datos de circulación aplicados con éxito!");
   };
 
   const decodeNewCustomerVin = async () => {
@@ -1564,46 +1572,6 @@ export default function SaleForm({
     } finally {
       setIsDecodingVehicleVin(false);
     }
-  };
-
-  const handleApplySaleOcr = (extractedData) => {
-    if (!extractedData) return;
-    let prefix = "M";
-    let number = "";
-    if (extractedData.plate) {
-      const cleanPlate = extractedData.plate.trim().toUpperCase();
-      const match = cleanPlate.match(/^([A-Z]{1,4})[\s\-_]*(.*)$/);
-      if (match) {
-        const rawPrefix = match[1];
-        const rawDigits = match[2].replace(/[^0-9]/g, "");
-        prefix = PLATE_PREFIXES.find((p) => p.toUpperCase() === rawPrefix) || "M";
-        number = rawDigits ? formatPlateNumber(prefix, rawDigits) : "";
-      } else {
-        number = cleanPlate;
-      }
-    }
-
-    const brand = extractedData.brand || "";
-    const model = extractedData.model || "";
-    const year = extractedData.year ? String(extractedData.year) : "";
-    const chasis = extractedData.vin || extractedData.chasis || "";
-    const color = extractedData.color && extractedData.color !== "No especificado" ? extractedData.color : "";
-
-    const updatedVehicle = {
-      ...newVehicle,
-      plate_prefix: prefix,
-      plate_number: number || newVehicle.plate_number,
-      brand: brand || newVehicle.brand,
-      model: model || newVehicle.model,
-      year: year || newVehicle.year,
-      chasis: chasis ? formatChasis(chasis) : newVehicle.chasis,
-      color: color || newVehicle.color,
-    };
-
-    setNewVehicle(updatedVehicle);
-    persistDraftSnapshot({ newVehicle: updatedVehicle });
-    setShowSaleOcrModal(false);
-    toast.success("¡Datos de circulación aplicados con éxito!");
   };
 
   const createVehicleForSelectedCustomer = async () => {
