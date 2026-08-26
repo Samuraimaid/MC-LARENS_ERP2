@@ -67,9 +67,8 @@ print("\n[3/5] Verificando Endpoints Backend FastAPI:")
 api_tests = [
     ('/api/', 'GET', None, 'Root API ping'),
     ('/api/vehicle-thumbnails/manifest', 'GET', None, 'Manifest de miniaturas'),
-    ('/api/auth/login', 'POST', json.dumps({'pin': '0101'}).encode('utf-8'), 'Login con PIN 0101 (JSON)', {'Content-Type': 'application/json'}),
-    ('/api/auth/login', 'POST', json.dumps({'pin': '01011990'}).encode('utf-8'), 'Login con PIN 01011990 (JSON)', {'Content-Type': 'application/json'}),
-    ('/api/auth/login', 'POST', json.dumps({'email': 'xinon@local', 'pin': '0101'}).encode('utf-8'), 'Login con email+PIN', {'Content-Type': 'application/json'}),
+    ('/api/auth/pin/login', 'POST', json.dumps({'pin': '0101'}).encode('utf-8'), 'Login con PIN 0101 (JSON)', {'Content-Type': 'application/json'}),
+    ('/api/auth/pin/login', 'POST', json.dumps({'pin': '01011990'}).encode('utf-8'), 'Login con PIN 01011990 (JSON)', {'Content-Type': 'application/json'}),
 ]
 
 for item in api_tests:
