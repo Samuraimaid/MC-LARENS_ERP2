@@ -374,7 +374,7 @@
       "generation": "2014-2019",
       "cab_variant": "Hatchback (XP150)",
       "view": "Lateral",
-      "filename": "toyota_yaris_hatchback_2014_2019_lat.png",
+      "filename": "toyota_yaris_hatchback_2012_2019_lat.png",
       "aspect_ratio": "16:9",
       "prompt": "Clean 2D vector technical blueprint illustration of a white Toyota Yaris (2014-2019) hatchback, exact true 90-degree lateral side view, crisp black line art outlines, solid white body, front headlight in bright cyan blue (#00E5FF), rear taillight in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -385,7 +385,7 @@
       "generation": "2014-2019",
       "cab_variant": "Hatchback (XP150)",
       "view": "Superior (Top-Down)",
-      "filename": "toyota_yaris_hatchback_2014_2019_top.png",
+      "filename": "toyota_yaris_hatchback_2012_2019_top.png",
       "aspect_ratio": "9:16",
       "prompt": "Clean 2D vector technical blueprint illustration of a white Toyota Yaris (2014-2019) hatchback, vertical orientation, front hood facing top, crisp black line art outlines, solid white body, front headlights in bright cyan blue (#00E5FF), rear taillights in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -396,7 +396,7 @@
       "generation": "2014-2017",
       "cab_variant": "Sedan (XP150)",
       "view": "Lateral",
-      "filename": "toyota_yaris_sedan_2014_2017_lat.png",
+      "filename": "toyota_yaris_sedan_2013_2017_lat.png",
       "aspect_ratio": "16:9",
       "prompt": "Clean 2D vector technical blueprint illustration of a white Toyota Yaris (2014-2017) sedan, exact true 90-degree lateral side view, crisp black line art outlines, solid white body, front headlight in bright cyan blue (#00E5FF), rear taillight in bright vivid red (#FF0033), windows tinted dark grey, isolated on pure solid white background, no shadows, no text"
     },
@@ -407,7 +407,7 @@
       "generation": "2014-2017",
       "cab_variant": "Sedan (XP150)",
       "view": "Superior (Top-Down)",
-      "filename": "toyota_yaris_sedan_2014_2017_top.png",
+      "filename": "toyota_yaris_sedan_2013_2017_top.png",
       "aspect_ratio": "9:16",
       "prompt": "Clean 2D vector technical blueprint illustration of a white Toyota Yaris (2014-2017) sedan, vertical orientation, front hood facing top, crisp black line art outlines, solid white body, front headlights in bright cyan blue (#00E5FF), rear taillights in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -418,7 +418,7 @@
       "generation": "2006-2013",
       "cab_variant": "Sedan (XP90)",
       "view": "Lateral",
-      "filename": "toyota_yaris_sedan_2006_2013_lat.png",
+      "filename": "toyota_yaris_sedan_2006_2012_lat.png",
       "aspect_ratio": "16:9",
       "prompt": "Clean 2D vector technical blueprint illustration of a classic white Toyota Yaris (2006-2013) Belta sedan, exact true 90-degree lateral side view, crisp black line art outlines, solid white body, front headlight in bright cyan blue (#00E5FF), rear taillight in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -429,7 +429,7 @@
       "generation": "2006-2013",
       "cab_variant": "Sedan (XP90)",
       "view": "Superior (Top-Down)",
-      "filename": "toyota_yaris_sedan_2006_2013_top.png",
+      "filename": "toyota_yaris_sedan_2006_2012_top.png",
       "aspect_ratio": "9:16",
       "prompt": "Clean 2D vector technical blueprint illustration of a classic white Toyota Yaris (2006-2013) Belta sedan, vertical orientation, front hood facing top, crisp black line art outlines, solid white body, front headlights in bright cyan blue (#00E5FF), rear taillights in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -440,7 +440,7 @@
       "generation": "2006-2013",
       "cab_variant": "Hatchback (XP90)",
       "view": "Lateral",
-      "filename": "toyota_yaris_hatchback_2006_2013_lat.png",
+      "filename": "toyota_yaris_hatchback_2006_2011_lat.png",
       "aspect_ratio": "16:9",
       "prompt": "Clean 2D vector technical blueprint illustration of a classic white Toyota Yaris (2006-2013) hatchback, 5 doors, exact true 90-degree lateral side view, crisp black line art outlines, solid white body, front headlight in bright cyan blue (#00E5FF), rear taillight in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
@@ -451,7 +451,7 @@
       "generation": "2006-2013",
       "cab_variant": "Hatchback (XP90)",
       "view": "Superior (Top-Down)",
-      "filename": "toyota_yaris_hatchback_2006_2013_top.png",
+      "filename": "toyota_yaris_hatchback_2006_2011_top.png",
       "aspect_ratio": "9:16",
       "prompt": "Clean 2D vector technical blueprint illustration of a classic white Toyota Yaris (2006-2013) hatchback, vertical orientation, front hood facing top, crisp black line art outlines, solid white body, front headlights in bright cyan blue (#00E5FF), rear taillights in bright vivid red (#FF0033), isolated on pure solid white background, no shadows, no text"
     },
