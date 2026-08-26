@@ -32,6 +32,22 @@ def get_access_token():
         print(f"[ERROR] No se pudo obtener el token de gcloud: {e}")
         return None
 
+def ensure_aiplatform_enabled():
+    try:
+        print("[INFO] Verificando habilitacion de Vertex AI API en el proyecto...")
+        subprocess.check_call(["gcloud", "services", "enable", "aiplatform.googleapis.com", "--project", PROJECT_ID])
+        print("[OK] Vertex AI API habilitada.")
+    except Exception as e:
+        print(f"[AVISO] No se pudo ejecutar gcloud services enable: {e}")
+
+CANDIDATE_MODELS = [
+    "imagegeneration@006",
+    "imagegeneration@005",
+    "imagen-3.0-generate-001",
+    "imagegeneration@002",
+    "imagen-3.0-fast-generate-001",
+]
+
 def flood_fill_transparent(img, threshold=240):
     img = img.convert("RGBA")
     w, h = img.size
@@ -81,13 +97,13 @@ def crop_and_fit(img, target_w=640, target_h=360, padding=16):
     return canvas
 
 def generate_vertex_image(prompt, aspect_ratio="16:9", token=None):
+    global ACTIVE_MODEL
     import requests
     if not token:
         token = get_access_token()
     if not token:
         raise ValueError("No access token available")
 
-    url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{MODEL_ID}:predict"
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json; charset=utf-8",
@@ -101,19 +117,25 @@ def generate_vertex_image(prompt, aspect_ratio="16:9", token=None):
         }
     }
 
-    r = requests.post(url, headers=headers, json=payload, timeout=60)
-    if r.status_code != 200:
-        raise Exception(f"Vertex AI Error [{r.status_code}]: {r.text}")
+    models_to_try = [ACTIVE_MODEL] if ACTIVE_MODEL else CANDIDATE_MODELS
 
-    data = r.json()
-    predictions = data.get("predictions", [])
-    if not predictions:
-        raise Exception(f"No predictions returned: {data}")
+    last_err = None
+    for model_id in models_to_try:
+        url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{model_id}:predict"
+        r = requests.post(url, headers=headers, json=payload, timeout=60)
+        if r.status_code == 200:
+            ACTIVE_MODEL = model_id
+            data = r.json()
+            predictions = data.get("predictions", [])
+            if predictions:
+                b64_str = predictions[0].get("bytesBase64Encoded")
+                img_bytes = base64.b64decode(b64_str)
+                from io import BytesIO
+                return Image.open(BytesIO(img_bytes))
+        else:
+            last_err = f"Vertex AI [{model_id} - {r.status_code}]: {r.text}"
 
-    b64_str = predictions[0].get("bytesBase64Encoded")
-    img_bytes = base64.b64decode(b64_str)
-    from io import BytesIO
-    return Image.open(BytesIO(img_bytes))
+    raise Exception(last_err or "No se pudo generar imagen con ningun modelo de Vertex AI")
 
 # Catalogo Maestro de Tareas Toyota con Faros Diferenciados
 TASKS = [
@@ -648,6 +670,7 @@ TASKS = [
 
 def main():
     print(f"=== INICIANDO GENERADOR CONTINUO TOYOTA ({len(TASKS)} TAREAS) ===")
+    ensure_aiplatform_enabled()
     token = get_access_token()
     if not token:
         print("[ERROR CRITICO] Debes ejecutar este script en Google Cloud Shell donde gcloud esta autenticado.")
