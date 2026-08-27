@@ -2,26 +2,29 @@ import json
 import os
 
 def make_prompt(id_num, brand, model, generation, body_type, view, filename, extra_details=""):
-    aspect = "16:9 widescreen format" if view == "Lateral" else ("9:16 vertical portrait format" if view == "Superior (Top-Down)" else "16:9 studio format")
-    
-    if view == "Lateral":
-        orientation = "exact studio side profile view (Lateral), vehicle facing left, horizontally centered with generous padding"
-    elif view == "Superior (Top-Down)":
-        orientation = "pure 90-degree orthogonal top-down aerial zenith view (Vista Superior Cenital), vehicle facing UP, vertically centered with generous padding"
-    else:
-        orientation = "clean professional front three-quarter 3/4 studio angle, vehicle facing forward-left"
+    aspect = "16:9 widescreen format" if view == "Lateral" else "9:16 vertical portrait format"
+    orientation = (
+        "exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding"
+        if view == "Lateral"
+        else "pure 90-degree orthogonal top-down aerial zenith view (Vista Superior Cenital), vehicle facing UP, vertically centered with generous padding"
+    )
+    headlights_instruction = (
+        "Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444)."
+        if view == "Lateral"
+        else "Front headlights glowing in vivid cyan (#00E5FF), Rear taillights glowing in solid vivid red (#FF0033)."
+    )
 
-    # Specific metadata text required by the user inside the image to avoid confusion
-    metadata_text_tag = f"{brand.upper()} {model.upper()} ({generation}) - {body_type.upper()} [{view.upper()}]"
-    
+    metadata_label = f"📌 {brand.upper()} {model.upper()} ({generation}) | {body_type.upper()} | {view.upper()}"
+
     prompt = (
-        f"Professional automotive studio photo render of {brand} {model} ({generation}) {body_type}, {orientation}. "
-        f"Solid pure white body paint (#FFFFFF) with ultra-clean realistic reflections, sharp panel gaps, pristine door lines, authentic alloy wheels, detailed headlights and taillights. "
-        f"Clean factory-tinted dark charcoal glass windows (#1e293b). "
+        f"Professional automotive 2D vector technical blueprint illustration of {brand} {model} ({generation}) {body_type}, {orientation}. "
+        f"Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. "
+        f"Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). "
+        f"{headlights_instruction} "
         f"{extra_details} "
-        f"Isolated on a seamless, clean pure solid white background (#FFFFFF) with no harsh shadows and no background clutter. "
-        f"A clean, elegant, small technical caption text in discrete bold font at the bottom edge reads: '{metadata_text_tag}'. "
-        f"High-end official vehicle catalog reception asset. {aspect}."
+        f"At the top margin of the image, include a clean, sharp technical metadata text label that clearly reads: \"{metadata_label}\". "
+        f"Isolated on a seamless, clean pure solid white background (#FFFFFF) with no gradients, no shadows, no ground reflections, no perspective distortion, no wheels on top view. "
+        f"Perfect flat technical schematic for vehicle workshop reception damage inspection system. {aspect}."
     )
 
     header_tag = f"📌 ID {id_num:03d} | MARCA: {brand} | MODELO: {model} | AÑO: {generation} | TIPO: {body_type} | VISTA: {view} | ARCHIVO: {filename}"
@@ -34,7 +37,7 @@ def make_prompt(id_num, brand, model, generation, body_type, view, filename, ext
         "body_type": body_type,
         "view": view,
         "filename": filename,
-        "metadata_text": metadata_text_tag,
+        "metadata_text": metadata_label,
         "dimensions": "640x360" if view == "Lateral" else "360x640",
         "header_tag": header_tag,
         "prompt": prompt
@@ -188,15 +191,15 @@ def main():
         ))
         task_id += 1
 
-        # Front 3/4 Studio view
+        # Superior (Top-Down) view
         tasks.append(make_prompt(
             id_num=task_id,
             brand="Hyundai",
             model=model_name,
             generation=gen,
             body_type=body_type,
-            view="3/4 Frontal",
-            filename=f"{file_slug}_3q.png",
+            view="Superior (Top-Down)",
+            filename=f"{file_slug}_top.png",
             extra_details=extra
         ))
         task_id += 1
@@ -216,15 +219,15 @@ def main():
         ))
         task_id += 1
 
-        # Front 3/4 Studio view
+        # Superior (Top-Down) view
         tasks.append(make_prompt(
             id_num=task_id,
             brand="Kia",
             model=model_name,
             generation=gen,
             body_type=body_type,
-            view="3/4 Frontal",
-            filename=f"{file_slug}_3q.png",
+            view="Superior (Top-Down)",
+            filename=f"{file_slug}_top.png",
             extra_details=extra
         ))
         task_id += 1
@@ -263,9 +266,18 @@ def main():
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
 
+    # Also save directly in user's Downloads folder
+    downloads_path = os.path.expanduser(r"C:\Users\Xinon\Downloads\grok_hyundai_kia_catalog_prompts.json")
+    try:
+        with open(downloads_path, "w", encoding="utf-8") as f:
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
+        print(f"COPIED to: {downloads_path}")
+    except Exception as e:
+        print(f"Could not copy to Downloads: {e}")
+
     print(f"SUCCESS: Generated {output_file}")
     print(f"  - Total vehicle models: {len(hyundai_models)} Hyundai + {len(kia_models)} Kia = {len(hyundai_models) + len(kia_models)} models")
-    print(f"  - Total prompt tasks (Lateral + 3Q): {len(tasks)} tasks")
+    print(f"  - Total prompt tasks (Lateral + Top-Down): {len(tasks)} tasks")
     print(f"  - Total Grok batches of 6: {len(batches)} batches")
 
 if __name__ == "__main__":
