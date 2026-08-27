@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mundo de Accesorios - Tacómetro de Carga Animado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient-dark: radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 100%);
+      --bg-gradient-light: radial-gradient(circle at 50% 30%, #f1f5f9 0%, #cbd5e1 100%);
+      --card-dark: rgba(15, 23, 42, 0.85);
+      --card-light: rgba(255, 255, 255, 0.9);
+      --text-dark: #f8fafc;
+      --text-light: #0f172a;
+      --accent-cyan: #00d2ff;
+      --accent-cyan-glow: rgba(0, 210, 255, 0.6);
+      --accent-yellow: #ffe600;
+      --accent-red: #ff3344;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      background: var(--bg-gradient-dark);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      transition: background 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    body.light-theme {
+      background: var(--bg-gradient-light);
+      color: var(--text-light);
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .header-title {
+      text-align: center;
+      space-y: 0.5rem;
+    }
+
+    .header-title h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #00d2ff, #3b82f6, #ffe600);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-title p {
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    /* PREVIEW CARD */
+    .preview-card {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-dark);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 210, 255, 0.15);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    body.light-theme .preview-card {
+      background: var(--card-light);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 30px rgba(0, 210, 255, 0.2);
+    }
+
+    /* TACHOMETER LOGO COMPONENT */
+    .tachometer-widget {
+      position: relative;
+      width: 320px;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tacho-svg {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+    }
+
+    /* NEEDLE ANIMATION */
+    .needle-element {
+      transform-origin: 200px 175px;
+      transition: transform 0.1s cubic-bezier(0.1, 0.9, 0.2, 1);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+    }
+
+    /* Continuous Revving Keyframe */
+    @keyframes revvingMotion {
+      0% {
+        transform: rotate(-105deg);
+      }
+      20% {
+        transform: rotate(-30deg);
+      }
+      35% {
+        transform: rotate(-55deg);
+      }
+      65% {
+        transform: rotate(45deg);
+      }
+      75% {
+        transform: rotate(38deg);
+      }
+      90% {
+        transform: rotate(50deg);
+      }
+      100% {
+        transform: rotate(-105deg);
+      }
+    }
+
+    .animate-revving .needle-element {
+      animation: revvingMotion 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Arc Progress Glow */
+    .progress-arc {
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 0.15s ease-out;
+      filter: drop-shadow(0 0 10px var(--accent-cyan-glow));
+    }
+
+    @keyframes arcFillCycle {
+      0% {
+        stroke-dashoffset: 440;
+      }
+      20% {
+        stroke-dashoffset: 280;
+      }
+      35% {
+        stroke-dashoffset: 320;
+      }
+      65% {
+        stroke-dashoffset: 40;
+      }
+      75% {
+        stroke-dashoffset: 60;
+      }
+      90% {
+        stroke-dashoffset: 10;
+      }
+      100% {
+        stroke-dashoffset: 440;
+      }
+    }
+
+    .animate-revving .progress-arc {
+      animation: arcFillCycle 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Redline Pulse */
+    @keyframes redlinePulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; filter: drop-shadow(0 0 12px #ff3344); }
+    }
+    .redline-tick {
+      animation: redlinePulse 0.8s ease-in-out infinite;
+    }
+
+    /* STATUS TEXT & RPM COUNTER */
+    .status-container {
+      margin-top: 1.25rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .loading-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #38bdf8;
+    }
+
+    .dots-flashing span {
+      animation: dotPulse 1.4s infinite;
+      opacity: 0;
+    }
+    .dots-flashing span:nth-child(1) { animation-delay: 0.2s; }
+    .dots-flashing span:nth-child(2) { animation-delay: 0.4s; }
+    .dots-flashing span:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+
+    .rpm-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      opacity: 0.75;
+      letter-spacing: 1px;
+    }
+
+    /* PROGRESS BAR */
+    .mini-progress-track {
+      width: 220px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    body.light-theme .mini-progress-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .mini-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00d2ff, #ffe600, #ff3344);
+      border-radius: 999px;
+      transition: width 0.1s ease;
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+    }
+    .animate-revving .mini-progress-bar {
+      animation: progressBarCycle 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes progressBarCycle {
+      0% { width: 0%; }
+      65% { width: 85%; }
+      90% { width: 100%; }
+      100% { width: 0%; }
+    }
+
+    /* CONTROLS PANEL */
+    .controls-panel {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    body.light-theme .controls-panel {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button.btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: inherit;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    body.light-theme button.btn {
+      border-color: rgba(0, 0, 0, 0.12);
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    button.btn.active, button.btn:hover {
+      background: #00d2ff;
+      color: #000;
+      border-color: #00d2ff;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #00d2ff;
+      cursor: pointer;
+    }
+
+    /* MINI VARIANT PREVIEW */
+    .mini-variant-box {
+      width: 100%;
+      max-width: 520px;
+      padding: 1rem 1.25rem;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+    body.light-theme .mini-variant-box {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+    .mini-tacho {
+      width: 48px;
+      height: 38px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header-title">
+      <h1>Tacómetro Oficial Animado</h1>
+      <p>Componente de Carga y Sincronización para Mundo de Accesorios ERP</p>
+    </div>
+
+    <!-- MAIN INTERACTIVE PREVIEW CARD -->
+    <div class="preview-card" id="cardContainer">
+      <div class="tachometer-widget animate-revving" id="tachoWidget">
+        <svg class="tacho-svg" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Cyan Glow Filter -->
+            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <!-- Red Glow Filter -->
+            <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <!-- Arc Gradients -->
+            <linearGradient id="tachoGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00d2ff" />
+              <stop offset="70%" stop-color="#38bdf8" />
+              <stop offset="100%" stop-color="#ff3344" />
+            </linearGradient>
+            <!-- Logo Yellow Gradient -->
+            <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#fff566" />
+              <stop offset="100%" stop-color="#ffe600" />
+            </linearGradient>
+          </defs>
+
+          <!-- 1. TACHOMETER HOUSING & BACKGROUND -->
+          <!-- Outer Black Bezel -->
+          <path d="M 50 175 A 150 150 0 0 1 350 175 Z" fill="#090d16" stroke="#ffffff" stroke-width="5" />
+          <path d="M 62 175 A 138 138 0 0 1 338 175 Z" fill="#04060a" stroke="#1e293b" stroke-width="2" />
+
+          <!-- Background Static Arc Track -->
+          <path d="M 75 175 A 125 125 0 0 1 325 175" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round" />
+
+          <!-- Dynamic Animated Cyan/Redline Progress Arc -->
+          <path id="progressArcPath" class="progress-arc" d="M 75 175 A 125 125 0 0 1 325 175" fill="none" stroke="url(#tachoGrad)" stroke-width="8" stroke-linecap="round" />
+
+          <!-- 2. RPM TICK MARKS (0 to 8 RPM x 1000) -->
+          <!-- Left Zone (0-2) -->
+          <line x1="82" y1="175" x2="98" y2="175" stroke="#ffffff" stroke-width="4" />
+          <line x1="88" y1="148" x2="102" y2="152" stroke="#ffffff" stroke-width="2.5" />
+          <line x1="98" y1="122" x2="111" y2="130" stroke="#ffffff" stroke-width="4" />
+          <line x1="112" y1="99" x2="123" y2="110" stroke="#ffffff" stroke-width="2.5" />
+
+          <!-- Mid Zone (3-5) -->
+          <line x1="131" y1="79" x2="140" y2="92" stroke="#ffffff" stroke-width="4" />
+          <line x1="153" y1="64" x2="160" y2="78" stroke="#ffffff" stroke-width="2.5" />
+          <line x1="178" y1="53" x2="182" y2="68" stroke="#ffffff" stroke-width="4" />
+          <line x1="205" y1="48" x2="206" y2="63" stroke="#ffffff" stroke-width="2.5" />
+          <line x1="232" y1="52" x2="229" y2="67" stroke="#ffffff" stroke-width="4" />
+
+          <!-- High & Redline Zone (6-8) -->
+          <line x1="258" y1="62" x2="251" y2="76" stroke="#ffffff" stroke-width="2.5" />
+          <line x1="281" y1="77" x2="271" y2="90" stroke="#ffffff" stroke-width="4" />
+          <line x1="300" y1="97" x2="288" y2="108" stroke="#ff3344" stroke-width="3" class="redline-tick" />
+          <line x1="314" y1="120" x2="300" y2="128" stroke="#ff3344" stroke-width="4.5" class="redline-tick" />
+          <line x1="324" y1="146" x2="309" y2="150" stroke="#ff3344" stroke-width="3" class="redline-tick" />
+          <line x1="328" y1="175" x2="312" y2="175" stroke="#ff3344" stroke-width="5" class="redline-tick" />
+
+          <!-- Redline Arc Accent -->
+          <path d="M 281 77 A 125 125 0 0 1 328 175" fill="none" stroke="#ff3344" stroke-width="3" stroke-dasharray="4 3" opacity="0.8" />
+
+          <!-- 3. NEEDLE (SWEEPING FROM 0 TO MAX) -->
+          <g id="needleGroup" class="needle-element">
+            <!-- White Sharp Needle Blade (Authentic Logo Style) -->
+            <polygon points="196,175 204,175 201,55 199,55" fill="#ffffff" />
+            <polygon points="198,175 202,175 200,52 200,52" fill="#00d2ff" opacity="0.8" />
+            <!-- Needle Center Hub -->
+            <circle cx="200" cy="175" r="14" fill="#0b0f19" stroke="#ffffff" stroke-width="3" />
+            <circle cx="200" cy="175" r="6" fill="#00d2ff" />
+          </g>
+
+          <!-- 4. OFFICIAL BANNER: MUNDO DE ACCESORIOS -->
+          <g transform="translate(0, 15)">
+            <!-- Black Slanted Background Box -->
+            <polygon points="15,160 385,160 375,208 5,208" fill="#000000" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round" />
+
+            <!-- Yellow Italic Main Text -->
+            <text x="195" y="196"
+                  font-family="'Outfit', sans-serif"
+                  font-weight="900"
+                  font-style="italic"
+                  font-size="34"
+                  fill="url(#yellowGrad)"
+                  text-anchor="middle"
+                  letter-spacing="0.5px"
+                  style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
+              MUNDO DE ACCESORIOS
+            </text>
+
+            <!-- Subtitle Pill Box -->
+            <rect x="58" y="209" width="274" height="20" rx="10" fill="#000000" stroke="#ffffff" stroke-width="1.5" />
+            <text x="195" y="223"
+                  font-family="'Outfit', sans-serif"
+                  font-weight="600"
+                  font-size="11.5"
+                  fill="#ffffff"
+                  text-anchor="middle"
+                  letter-spacing="0.2px">
+              Accesorios para todo tipo de vehículo
+            </text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- STATUS & METRICS -->
+      <div class="status-container">
+        <div class="loading-label">
+          <span id="statusText">Cargando datos del sistema</span>
+          <span class="dots-flashing"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+        <div class="rpm-display" id="rpmText">REV: 6,400 RPM • ESTADO ÓPTIMO</div>
+        
+        <div class="mini-progress-track">
+          <div class="mini-progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE DEMO CONTROLS -->
+    <div class="controls-panel">
+      <div class="control-row">
+        <span><strong>Modo de Animación:</strong></span>
+        <div class="btn-group">
+          <button class="btn active" id="btnContinuous" onclick="setMode('continuous')">Aceleración Continua (Loop)</button>
+          <button class="btn" id="btnManual" onclick="setMode('manual')">Progreso Manual (0-100%)</button>
+        </div>
+      </div>
+
+      <div class="control-row" id="sliderRow" style="display: none;">
+        <span><strong>Porcentaje:</strong> <span id="percentLabel" style="font-family: monospace; color: #00d2ff;">50%</span></span>
+        <input type="range" id="progressSlider" min="0" max="100" value="50" oninput="updateManualProgress(this.value)">
+      </div>
+
+      <div class="control-row">
+        <span><strong>Tema Visual:</strong></span>
+        <div class="btn-group">
+          <button class="btn active" id="btnDark" onclick="setTheme('dark')">🌙 Dark Mode</button>
+          <button class="btn" id="btnLight" onclick="setTheme('light')">☀️ Light Mode</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MINI DISCRETE VARIANT EXAMPLE (FOR TOPBAR) -->
+    <div class="mini-variant-box">
+      <div>
+        <p style="font-size: 0.85rem; font-weight: 700;">Variante Discreta para Barra Superior:</p>
+        <p style="font-size: 0.75rem; opacity: 0.7;">Para sincronización silenciosa sin tapar la pantalla.</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(0,210,255,0.1); border: 1px solid rgba(0,210,255,0.3); padding: 0.4rem 0.75rem; border-radius: 999px;">
+        <svg class="mini-tacho animate-revving" viewBox="0 0 400 240" style="width: 32px; height: 20px;">
+          <path d="M 50 175 A 150 150 0 0 1 350 175 Z" fill="#090d16" stroke="#00d2ff" stroke-width="12" />
+          <g class="needle-element">
+            <polygon points="194,175 206,175 200,45" fill="#ffffff" />
+            <circle cx="200" cy="175" r="22" fill="#00d2ff" />
+          </g>
+        </svg>
+        <span style="font-size: 0.75rem; font-weight: 600; color: #00d2ff;">Actualizando catálogo...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const tachoWidget = document.getElementById('tachoWidget');
+    const needleGroup = document.getElementById('needleGroup');
+    const progressArcPath = document.getElementById('progressArcPath');
+    const progressBar = document.getElementById('progressBar');
+    const rpmText = document.getElementById('rpmText');
+    const sliderRow = document.getElementById('sliderRow');
+    const btnContinuous = document.getElementById('btnContinuous');
+    const btnManual = document.getElementById('btnManual');
+    const percentLabel = document.getElementById('percentLabel');
+    const statusText = document.getElementById('statusText');
+
+    let currentMode = 'continuous';
+
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'continuous') {
+        btnContinuous.classList.add('active');
+        btnManual.classList.remove('active');
+        sliderRow.style.display = 'none';
+        tachoWidget.classList.add('animate-revving');
+        needleGroup.style.transform = '';
+        progressArcPath.style.strokeDashoffset = '';
+        progressBar.style.width = '';
+        rpmText.textContent = 'REV: 6,400 RPM • ESTADO ÓPTIMO';
+        statusText.textContent = 'Cargando datos del sistema';
+      } else {
+        btnManual.classList.add('active');
+        btnContinuous.classList.remove('active');
+        sliderRow.style.display = 'flex';
+        tachoWidget.classList.remove('animate-revving');
+        updateManualProgress(document.getElementById('progressSlider').value);
+      }
+    }
+
+    function updateManualProgress(val) {
+      if (currentMode !== 'manual') return;
+      const pct = parseFloat(val);
+      percentLabel.textContent = `${pct}%`;
+
+      // Needle angle maps from -105deg (0%) to +55deg (100%)
+      const minAngle = -105;
+      const maxAngle = 55;
+      const angle = minAngle + (pct / 100) * (maxAngle - minAngle);
+      needleGroup.style.transform = `rotate(${angle}deg)`;
+
+      // Arc Dash offset maps from 440 (0%) to 0 (100%)
+      const arcOffset = 440 - (pct / 100) * 440;
+      progressArcPath.style.strokeDashoffset = arcOffset;
+
+      // Progress bar width
+      progressBar.style.width = `${pct}%`;
+
+      // RPM text
+      const rpm = Math.round(800 + (pct / 100) * 6400);
+      rpmText.textContent = `RPM: ${rpm.toLocaleString()} • PROGRESO ${pct}%`;
+
+      if (pct >= 100) {
+        statusText.textContent = '¡Sincronización completada!';
+      } else {
+        statusText.textContent = 'Cargando datos del sistema';
+      }
+    }
+
+    function setTheme(theme) {
+      const btnDark = document.getElementById('btnDark');
+      const btnLight = document.getElementById('btnLight');
+      if (theme === 'light') {
+        document.body.classList.add('light-theme');
+        btnLight.classList.add('active');
+        btnDark.classList.remove('active');
+      } else {
+        document.body.classList.remove('light-theme');
+        btnDark.classList.add('active');
+        btnLight.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>

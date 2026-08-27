@@ -84,6 +84,7 @@ import {
 } from "@/lib/formatters";
 
 import SaleForm from "../components/sales/SaleForm";
+import TachometerLoader from "@/components/ui/TachometerLoader";
 import SalePaymentPlanDialog from "../components/sales/SalePaymentPlanDialog";
 import SaleOperationalAuditDialog from "../components/sales/SaleOperationalAuditDialog";
 import { OperationalJobCard } from "@/components/erp/OperationalJobCard";
@@ -1022,7 +1023,7 @@ export function SalesPage() {
   const handleRefreshData = useCallback(async () => {
     setIsRefreshingData(true);
     try {
-      await fetchData();
+      await fetchData({ silent: true });
     } finally {
       setIsRefreshingData(false);
     }
@@ -2828,6 +2829,9 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   title="Actualizar datos"
                   className={isRefreshingData ? "[&_svg]:animate-spin" : ""}
                 />
+                {isRefreshingData ? (
+                  <TachometerLoader variant="mini" statusText="Actualizando datos..." />
+                ) : null}
                 <ErpToolbarButton
                   action="saveClear"
                   icon={SaveAll}
@@ -2848,6 +2852,13 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 ) : null}
               </ErpFormToolbar>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Borrador activo:</span>
+                <span className="font-mono">{activeDraftTab?.name || "Nuevo borrador"}</span>
+                {activeDraftReview?.status ? (
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                    {activeDraftReview.status}
+                  </Badge>
+                ) : null}
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
@@ -2913,9 +2924,9 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
             </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
-            <div key={activeDraftId || "no-draft"} className="animate-draft-load">
+            <div key={activeDraftId || "no-draft"}>
             <SaleForm
-              key={`${activeDraftId || "draft"}-${saleFormRenderNonce}`}
+              key={activeDraftId || "draft"}
               customers={customers}
               products={products}
               warehouses={warehouses}

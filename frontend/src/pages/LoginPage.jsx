@@ -16,6 +16,7 @@ import { formatCurrency } from "../lib/utils";
 import { getRoleHomePath } from "@/lib/roleHome";
 import { SevenSegCountdown } from "@/components/auth/SevenSegCountdown";
 import ServerConnectionDialog from "../components/common/ServerConnectionDialog";
+import TachometerLoader from "@/components/ui/TachometerLoader";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -1216,6 +1217,15 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Tachometer Loading Animation during PIN login & session hydration */}
+      {loading ? (
+        <TachometerLoader
+          variant="fullscreen"
+          statusText="Iniciando sesión en Mundo de Accesorios..."
+          rpmLabel="REV: 6,400 RPM • CONECTANDO"
+        />
+      ) : null}
 
       {/* Full-screen lockout overlay (cashier-style, red, huge countdown with centiseconds) */}
       {isPinLocked ? (

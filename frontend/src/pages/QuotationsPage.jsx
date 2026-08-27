@@ -1775,9 +1775,9 @@ export function QuotationsPage() {
             </Dialog>
           </CardHeader>
           <CardContent className="pt-0">
-            <div key={activeDraftId || "no-draft"} className="animate-draft-load">
+            <div key={activeDraftId || "no-draft"}>
             <SaleForm
-              key={`${activeDraftId || "draft"}-${quoteFormRenderNonce}`}
+              key={activeDraftId || "draft"}
               customers={customers}
               products={products}
               warehouses={warehouses}
