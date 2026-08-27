@@ -112,6 +112,8 @@ export function findMatchingVehicleBlueprint(vehicle) {
 
   // 1. TIER 1: Check Official Curated Catalog First (Toyota 49 + Nissan 51 models)
   const officialModels = officialVehicleCatalog?.models || [];
+  const vehicleCat = String(vehicle.vehicle_type_slug || vehicle.body_type || vehicle.category || "").toLowerCase();
+  
   if (officialModels.length > 0) {
     const brandOfficials = officialModels.filter((b) => {
       const bSlug = String(b.brand_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -124,20 +126,26 @@ export function findMatchingVehicleBlueprint(vehicle) {
 
       for (const b of brandOfficials) {
         const bModel = String(b.model_name || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+        const bSlug = String(b.model_slug || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
         let modelScore = 0;
 
         for (const t of primaryTokens) {
-          if (t === bModel || ` ${bModel} `.includes(` ${t} `)) {
-            modelScore += 150;
-          } else if (bModel.includes(t)) {
+          if (t === bModel || ` ${bModel} `.includes(` ${t} `) || t === bSlug || ` ${bSlug} `.includes(` ${t} `)) {
+            modelScore += 160;
+          } else if (bModel.includes(t) || bSlug.includes(t)) {
             modelScore += 90;
           }
         }
 
         for (const t of secondaryTokens) {
-          if (bModel.includes(t)) {
-            modelScore += 15;
+          if (bModel.includes(t) || bSlug.includes(t)) {
+            modelScore += 20;
           }
+        }
+
+        // Category / Body Type Match Bonus
+        if (vehicleCat && b.category && (vehicleCat === b.category || vehicleCat.includes(b.category) || b.category.includes(vehicleCat))) {
+          modelScore += 50;
         }
 
         if (primaryTokens.length > 0 && modelScore < 40) {
@@ -147,9 +155,9 @@ export function findMatchingVehicleBlueprint(vehicle) {
         let yearScore = 0;
         if (year && b.year_start) {
           if (year >= b.year_start && (!b.year_end || year <= b.year_end)) {
-            yearScore = 40;
+            yearScore = 50;
           } else if (Math.abs(year - b.year_start) <= 3) {
-            yearScore = 20;
+            yearScore = 25;
           } else if (Math.abs(year - b.year_start) <= 6) {
             yearScore = 10;
           }

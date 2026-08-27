@@ -2,97 +2,148 @@ import os
 import json
 import re
 
-def parse_years(gen_str):
-    m = re.search(r'(\d{4})\s*-\s*(\d{4})', str(gen_str))
-    if m:
-        return int(m.group(1)), int(m.group(2))
-    m2 = re.search(r'(\d{4})', str(gen_str))
-    if m2:
-        y = int(m2.group(1))
-        return y, y
-    return 2000, 2026
-
-def map_category(body_type, model_str):
-    bt = (str(body_type) + ' ' + str(model_str)).lower()
-    if 'doble cabina' in bt or 'double cab' in bt or 'crew' in bt:
-        return 'camioneta_doble_cabina'
-    elif 'cabina y media' in bt or 'king cab' in bt or 'extra cab' in bt:
-        return 'camioneta_cabina_media'
-    elif 'cabina sencilla' in bt or 'single cab' in bt or '1 cabina' in bt:
-        return 'camioneta_1_cabina'
-    elif 'camion' in bt or 'camión' in bt or 'cabstar' in bt or 'dyna' in bt or 'canter' in bt:
-        return 'camion_1_cabina'
-    elif 'techo alto' in bt or 'high roof' in bt or 'gran hiace' in bt:
-        return 'microbus_techo_alto'
-    elif 'panel' in bt or 'carga' in bt or 'furgon' in bt:
-        return 'microbus_carga'
-    elif 'coaster' in bt or 'bus' in bt:
-        return 'bus_mediano_coaster'
-    elif 'van' in bt or 'urvan' in bt or 'hiace' in bt or 'starex' in bt or 'pasajeros' in bt:
-        return 'microbus_pasajeros'
-    elif 'suv' in bt or '4x4' in bt or 'prado' in bt or 'cruiser' in bt or 'fortuner' in bt or '4runner' in bt or 'rav4' in bt or 'cross' in bt or 'kicks' in bt or 'qashqai' in bt or 'xtrail' in bt or 'x-trail' in bt or 'pathfinder' in bt or 'patrol' in bt or 'terra' in bt or 'murano' in bt or 'juke' in bt or 'magnite' in bt or 'rush' in bt or 'raize' in bt or 'hilux surf' in bt:
-        return 'suv'
-    elif 'station' in bt or 'probox' in bt or 'succeed' in bt or 'caldina' in bt:
-        return 'station_wagon'
-    elif 'hatchback' in bt or 'march' in bt or 'micra' in bt or 'yaris hb' in bt or 'starlet' in bt or 'vitz' in bt:
-        return 'hatchback'
+def parse_filename(fn, brand):
+    # e.g. toyota_hilux_2021_2026_lat.png
+    # e.g. toyota_hilux_extra_cab_2021_2026_lat.png
+    # e.g. nissan_sentra_2020_2026_lat.png
+    # e.g. toyota_land_cruiser_79_double_cab_lat.png
+    
+    clean = fn.replace('.png', '').replace('.jpg', '')
+    is_lat = '_lat' in clean
+    is_top = '_top' in clean
+    view = 'lateral' if is_lat else ('top' if is_top else 'other')
+    
+    base_no_view = clean.replace('_lat', '').replace('_top', '')
+    
+    # Extract years
+    m_years = re.search(r'_(\d{4})_(\d{4})', base_no_view)
+    m_year = re.search(r'_(\d{4})', base_no_view)
+    
+    if m_years:
+        y_start = int(m_years.group(1))
+        y_end = int(m_years.group(2))
+        gen_str = f"{y_start}-{y_end}"
+        model_slug = base_no_view[:m_years.start()]
+    elif m_year:
+        y_start = int(m_year.group(1))
+        y_end = y_start
+        gen_str = f"{y_start}"
+        model_slug = base_no_view[:m_year.start()]
     else:
-        return 'sedan'
-
-def build_index():
-    catalogs = [
-        ('toyota', 'scripts/grok_toyota_catalog_prompts.json'),
-        ('nissan', 'scripts/grok_nissan_catalog_prompts.json')
-    ]
-    
-    paired_models = {}
-    
-    for brand_key, cat_file in catalogs:
-        if not os.path.exists(cat_file):
-            continue
-        with open(cat_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        tasks = data.get('tasks', [])
+        y_start, y_end = 2000, 2026
+        gen_str = "2000-2026"
+        model_slug = base_no_view
         
-        for t in tasks:
-            brand = t.get('brand', brand_key.capitalize())
-            model = t.get('model', '')
-            gen = t.get('generation', '')
-            view = t.get('view', '')
-            fn = t.get('filename', '')
-            body_type = t.get('body_type', '')
-            
-            # Base key for pairing lat + top
-            pair_key = f"{brand_key}::{model}::{gen}::{body_type}"
-            if pair_key not in paired_models:
-                y_start, y_end = parse_years(gen)
-                cat = map_category(body_type, model)
-                paired_models[pair_key] = {
-                    "id": f"{brand_key}_{len(paired_models)+1:03d}",
-                    "brand": brand,
-                    "brand_slug": brand_key,
-                    "model_name": model,
-                    "generation": gen,
-                    "year_start": y_start,
-                    "year_end": y_end,
-                    "body_type": body_type,
-                    "category": cat,
-                    "lateral_image": None,
-                    "top_image": None
-                }
-            
-            if 'Lateral' in view or '_lat.' in fn:
-                paired_models[pair_key]["lateral_image"] = f"/vehicles/models/{brand_key}/{fn}"
-            elif 'Superior' in view or '_top.' in fn or 'Top' in view:
-                paired_models[pair_key]["top_image"] = f"/vehicles/models/{brand_key}/{fn}"
+    if model_slug.startswith(f"{brand}_"):
+        model_slug = model_slug[len(brand)+1:]
+        
+    low = base_no_view.lower()
+    
+    # Categorization
+    if 'double_cab' in low or 'doble_cab' in low or ('hilux' in low and 'extra' not in low and 'single' not in low and 'surf' not in low) or ('frontier' in low and 'king' not in low and 'single' not in low):
+        category = 'camioneta_doble_cabina'
+        body_type = 'Camioneta Doble Cabina'
+    elif 'extra_cab' in low or 'king_cab' in low or 'cabina_media' in low:
+        category = 'camioneta_cabina_media'
+        body_type = 'Camioneta Cabina y Media'
+    elif 'single_cab' in low or 'cabina_sencilla' in low:
+        category = 'camioneta_1_cabina'
+        body_type = 'Camioneta 1 Cabina'
+    elif 'cabstar' in low or 'dyna' in low:
+        category = 'camion_1_cabina'
+        body_type = 'Camión 1 Cabina'
+    elif 'high_roof' in low or 'techo_alto' in low:
+        category = 'microbus_techo_alto'
+        body_type = 'Microbús Techo Alto'
+    elif 'panel' in low or 'nv200' in low:
+        category = 'microbus_carga'
+        body_type = 'Microbús Panel Carga'
+    elif 'coaster' in low:
+        category = 'bus_mediano_coaster'
+        body_type = 'Bus Mediano'
+    elif 'hiace' in low or 'urvan' in low or 'nv350' in low:
+        category = 'microbus_pasajeros'
+        body_type = 'Microbús Pasajeros'
+    elif 'prado' in low or 'land_cruiser' in low or 'fortuner' in low or '4runner' in low or 'rav4' in low or 'cross' in low or 'kicks' in low or 'qashqai' in low or 'xtrail' in low or 'pathfinder' in low or 'patrol' in low or 'terra' in low or 'murano' in low or 'juke' in low or 'magnite' in low or 'rush' in low or 'raize' in low:
+        category = 'suv'
+        body_type = 'SUV / 4x4'
+    elif 'hatchback' in low or 'march' in low or 'yaris_hatchback' in low:
+        category = 'hatchback'
+        body_type = 'Hatchback'
+    else:
+        category = 'sedan'
+        body_type = 'Sedán'
+        
+    # Model name humanization
+    words = [w.capitalize() for w in model_slug.split('_')]
+    base_name = " ".join(words)
+    
+    return {
+        'brand': brand.capitalize(),
+        'brand_slug': brand,
+        'model_slug': model_slug,
+        'base_no_view': base_no_view,
+        'model_name': base_name,
+        'gen_str': gen_str,
+        'year_start': y_start,
+        'year_end': y_end,
+        'category': category,
+        'body_type': body_type,
+        'view': view,
+        'filename': fn
+    }
 
-    result_list = list(paired_models.values())
+def main():
+    brands = ['toyota', 'nissan']
+    models_dict = {}
     
-    out_path = 'frontend/src/data/official_vehicle_catalog.json'
-    with open(out_path, 'w', encoding='utf-8') as f:
-        json.dump({"models": result_list, "total_models": len(result_list)}, f, indent=2, ensure_ascii=False)
+    for brand in brands:
+        dir_path = f'frontend/public/vehicles/models/{brand}'
+        if not os.path.exists(dir_path):
+            continue
+            
+        all_files = [f for f in os.listdir(dir_path) if f.endswith('.png') or f.endswith('.jpg')]
+        # Keep clean standardized files
+        clean_files = [f for f in all_files if not f.split('_')[1].isdigit()]
+        
+        for fn in clean_files:
+            meta = parse_filename(fn, brand)
+            pair_key = f"{brand}::{meta['base_no_view']}"
+            
+            if pair_key not in models_dict:
+                models_dict[pair_key] = {
+                    'id': f"{brand}_{len(models_dict)+1:03d}",
+                    'brand': meta['brand'],
+                    'brand_slug': meta['brand_slug'],
+                    'model_name': meta['model_name'],
+                    'generation': meta['gen_str'],
+                    'year_start': meta['year_start'],
+                    'year_end': meta['year_end'],
+                    'category': meta['category'],
+                    'body_type': meta['body_type'],
+                    'lateral_image': None,
+                    'top_image': None
+                }
+                
+            if meta['view'] == 'lateral':
+                models_dict[pair_key]['lateral_image'] = f"/vehicles/models/{brand}/{fn}"
+            elif meta['view'] == 'top':
+                models_dict[pair_key]['top_image'] = f"/vehicles/models/{brand}/{fn}"
+                
+    # Fill in any lone pairs
+    for k, m in models_dict.items():
+        if m['lateral_image'] and not m['top_image']:
+            m['top_image'] = m['lateral_image'].replace('_lat.png', '_top.png')
+        elif m['top_image'] and not m['lateral_image']:
+            m['lateral_image'] = m['top_image'].replace('_top.png', '_lat.png')
+
+    result_models = list(models_dict.values())
     
-    print(f"Generado exitosamente {out_path} con {len(result_list)} modelos oficiales pareados.")
+    out_file = 'frontend/src/data/official_vehicle_catalog.json'
+    with open(out_file, 'w', encoding='utf-8') as f:
+        json.dump({'models': result_models, 'total_models': len(result_models)}, f, indent=2, ensure_ascii=False)
+        
+    print(f"Indexado oficial desde disco completado: {len(result_models)} modelos guardados en {out_file}")
 
 if __name__ == '__main__':
-    build_index()
+    main()
