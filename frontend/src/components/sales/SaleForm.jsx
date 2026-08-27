@@ -3925,46 +3925,44 @@ export default function SaleForm({
 
           {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
             <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  {(() => {
-                    const selImg = getVehicleDisplayImage(selectedVehicleData);
-                    if (!selImg?.src) return null;
-                    return (
-                      <div className="shrink-0 h-14 sm:h-16 w-24 sm:w-28 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-sky-200/80 dark:border-sky-700/60 flex items-center justify-center p-1 shadow-sm overflow-hidden">
-                        <img
-                          src={selImg.src}
-                          alt={[selectedVehicleData.brand, selectedVehicleData.model].filter(Boolean).join(" ")}
-                          className="max-h-full max-w-full object-contain drop-shadow"
-                          loading="lazy"
-                        />
-                      </div>
-                    );
-                  })()}
-
-                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
-                    <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
-                      <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
-                      <span className="min-w-0 whitespace-normal break-words">
-                        Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
-                      </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info, "min-w-0 flex-1")}>
+                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
+                    <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
+                    <span className="min-w-0 whitespace-normal break-words">
+                      Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
+                    </span>
+                  </p>
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
+                    <p className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
                     </p>
-                    <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
-                      <p className="inline-flex items-center gap-1.5">
-                        <FileText className="h-3.5 w-3.5 text-sky-700" />
-                        {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
-                      </p>
-                      <p className="inline-flex items-center gap-1.5">
-                        <Palette className="h-3.5 w-3.5 text-sky-700" />
-                        {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
-                      </p>
-                      <p className="inline-flex items-center gap-1.5 sm:col-span-2">
-                        <FileText className="h-3.5 w-3.5 text-sky-700" />
-                        <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
-                      </p>
-                    </div>
+                    <p className="inline-flex items-center gap-1.5">
+                      <Palette className="h-3.5 w-3.5 text-sky-700" />
+                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
+                      <FileText className="h-3.5 w-3.5 text-sky-700" />
+                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                    </p>
                   </div>
                 </div>
+
+                {(() => {
+                  const selImg = getVehicleDisplayImage(selectedVehicleData);
+                  if (!selImg?.src) return null;
+                  return (
+                    <div className="shrink-0 h-14 sm:h-16 w-28 sm:w-36 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-sky-200/80 dark:border-sky-700/60 flex items-center justify-center p-1.5 shadow-sm overflow-hidden self-center">
+                      <img
+                        src={selImg.src}
+                        alt={[selectedVehicleData.brand, selectedVehicleData.model].filter(Boolean).join(" ")}
+                        className="max-h-full max-w-full object-contain drop-shadow"
+                        loading="lazy"
+                      />
+                    </div>
+                  );
+                })()}
 
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
                   <Button
