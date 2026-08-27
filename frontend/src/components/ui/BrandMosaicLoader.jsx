@@ -58,6 +58,12 @@ export default function BrandMosaicLoader({
     );
   };
 
+  const [failedImages, setFailedImages] = useState({});
+
+  const handleImageError = (brandId) => {
+    setFailedImages((prev) => ({ ...prev, [brandId]: true }));
+  };
+
   // 1. MINI TOPBAR VARIANT
   if (variant === "mini") {
     return (
@@ -73,11 +79,16 @@ export default function BrandMosaicLoader({
               key={brand.id}
               className="h-4 w-4 rounded-full bg-white p-0.5 border border-sky-400 flex items-center justify-center overflow-hidden"
             >
-              <img
-                src={brand.logo}
-                alt={brand.name}
-                className="max-h-full max-w-full object-contain"
-              />
+              {!failedImages[brand.id] ? (
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="max-h-full max-w-full object-contain"
+                  onError={() => handleImageError(brand.id)}
+                />
+              ) : (
+                <span className="text-[7px] font-black text-slate-800">{brand.name.slice(0, 2)}</span>
+              )}
             </div>
           ))}
         </div>
@@ -110,6 +121,7 @@ export default function BrandMosaicLoader({
       <div className="grid grid-cols-4 gap-2.5 sm:gap-3 w-full mb-6">
         {OFFICIAL_BRANDS.map((brand, idx) => {
           const isHighlighted = getIsTileHighlighted(idx);
+          const hasError = failedImages[brand.id];
           return (
             <div
               key={brand.id}
@@ -121,13 +133,20 @@ export default function BrandMosaicLoader({
                   : "border-transparent opacity-85 hover:opacity-100"
               )}
             >
-              <img
-                src={brand.logo}
-                alt={brand.name}
-                className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-300"
-                style={isHighlighted ? { transform: "scale(1.08)" } : undefined}
-                loading="eager"
-              />
+              {!hasError ? (
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-300"
+                  style={isHighlighted ? { transform: "scale(1.08)" } : undefined}
+                  onError={() => handleImageError(brand.id)}
+                  loading="eager"
+                />
+              ) : (
+                <span className="font-black text-slate-900 text-xs sm:text-sm tracking-tight px-1 select-none">
+                  {brand.name}
+                </span>
+              )}
             </div>
           );
         })}
