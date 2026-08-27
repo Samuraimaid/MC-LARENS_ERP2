@@ -3,11 +3,6 @@ import json
 import re
 
 def parse_filename(fn, brand):
-    # e.g. toyota_hilux_2021_2026_lat.png
-    # e.g. toyota_hilux_extra_cab_2021_2026_lat.png
-    # e.g. nissan_sentra_2020_2026_lat.png
-    # e.g. toyota_land_cruiser_79_double_cab_lat.png
-    
     clean = fn.replace('.png', '').replace('.jpg', '')
     is_lat = '_lat' in clean
     is_top = '_top' in clean
@@ -78,6 +73,32 @@ def parse_filename(fn, brand):
     words = [w.capitalize() for w in model_slug.split('_')]
     base_name = " ".join(words)
     
+    # Specific enhancements for popular lines
+    if 'prado' in low:
+        base_name = "Land Cruiser Prado"
+    elif 'land_cruiser_79_double' in low:
+        base_name = "Land Cruiser 79 Doble Cabina"
+    elif 'land_cruiser_79_single' in low:
+        base_name = "Land Cruiser 79 Cabina Sencilla"
+    elif 'hilux' in low and category == 'camioneta_doble_cabina':
+        base_name = "Hilux Doble Cabina"
+    elif 'hilux' in low and category == 'camioneta_cabina_media':
+        base_name = "Hilux Cabina y Media (Extra Cab)"
+    elif 'hilux' in low and category == 'camioneta_1_cabina':
+        base_name = "Hilux Cabina Sencilla (Single Cab)"
+    elif 'frontier' in low and category == 'camioneta_doble_cabina':
+        base_name = "Frontier Doble Cabina"
+    elif 'frontier' in low and category == 'camioneta_cabina_media':
+        base_name = "Frontier King Cab (Cabina y Media)"
+    elif 'frontier' in low and category == 'camioneta_1_cabina':
+        base_name = "Frontier Cabina Sencilla (Single Cab)"
+    elif 'urvan' in low and 'high_roof' in low:
+        base_name = "Urvan NV350 Techo Alto"
+    elif 'urvan' in low and 'panel' in low:
+        base_name = "Urvan NV350 Panel Carga"
+    elif 'urvan' in low:
+        base_name = "Urvan NV350 Pasajeros"
+    
     return {
         'brand': brand.capitalize(),
         'brand_slug': brand,
@@ -103,7 +124,6 @@ def main():
             continue
             
         all_files = [f for f in os.listdir(dir_path) if f.endswith('.png') or f.endswith('.jpg')]
-        # Keep clean standardized files
         clean_files = [f for f in all_files if not f.split('_')[1].isdigit()]
         
         for fn in clean_files:
@@ -116,6 +136,7 @@ def main():
                     'brand': meta['brand'],
                     'brand_slug': meta['brand_slug'],
                     'model_name': meta['model_name'],
+                    'model_slug': meta['model_slug'],
                     'generation': meta['gen_str'],
                     'year_start': meta['year_start'],
                     'year_end': meta['year_end'],
@@ -130,7 +151,6 @@ def main():
             elif meta['view'] == 'top':
                 models_dict[pair_key]['top_image'] = f"/vehicles/models/{brand}/{fn}"
                 
-    # Fill in any lone pairs
     for k, m in models_dict.items():
         if m['lateral_image'] and not m['top_image']:
             m['top_image'] = m['lateral_image'].replace('_lat.png', '_top.png')
@@ -143,7 +163,7 @@ def main():
     with open(out_file, 'w', encoding='utf-8') as f:
         json.dump({'models': result_models, 'total_models': len(result_models)}, f, indent=2, ensure_ascii=False)
         
-    print(f"Indexado oficial desde disco completado: {len(result_models)} modelos guardados en {out_file}")
+    print(f"Indexado oficial completado: {len(result_models)} modelos guardados en {out_file}")
 
 if __name__ == '__main__':
     main()

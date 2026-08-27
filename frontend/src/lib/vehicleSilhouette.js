@@ -66,15 +66,28 @@ const CATEGORY_ALIASES = {
   bus: "bus_mediano_coaster",
 };
 
+const BODY_DISTINGUISHING_TOKENS = {
+  doble: ["doble", "double", "crew"],
+  double: ["doble", "double", "crew"],
+  media: ["media", "extra", "king", "supercab", "club"],
+  extra: ["media", "extra", "king", "supercab", "club"],
+  king: ["media", "extra", "king", "supercab", "club"],
+  sencilla: ["sencilla", "single", "regular", "1 cabina", "una cabina"],
+  single: ["sencilla", "single", "regular", "1 cabina", "una cabina"],
+  sedan: ["sedan", "sedán"],
+  hatchback: ["hatchback", "hb"],
+  cross: ["cross"],
+  prado: ["prado"],
+  panel: ["panel", "carga", "furgon"],
+  techo: ["techo alto", "high roof"],
+};
+
 const TRIM_AND_STOP_WORDS = new Set([
-  "de", "del", "la", "el", "los", "las", "cabina", "doble", "sencilla", "media",
-  "4x4", "4x2", "ano", "año", "presente", "present", "van", "pickup", "pick-up",
-  "auto", "m/t", "a/t", "gasolina", "diesel", "hybrid", "hibrido", "híbrido",
-  "electric", "electrico", "eléctrico", "turbo", "intercooler", "v6", "v8",
-  "touring", "limited", "sport", "sportage", "executive", "premium", "edition",
-  "special", "custom", "standard", "classic", "plus", "pro", "cross", "active",
-  "comfort", "elegance", "luxury", "line", "package", "pack", "crew", "regular",
-  "king", "single", "super", "extended", "club", "ute", "truck", "car",
+  "de", "del", "la", "el", "los", "las", "4x4", "4x2", "ano", "año", "presente", "present", "van", "pickup", "pick-up",
+  "auto", "m/t", "a/t", "gasolina", "diesel", "hybrid", "hibrido", "híbrido", "electric", "electrico", "eléctrico",
+  "turbo", "intercooler", "v6", "v8", "touring", "limited", "sport", "executive", "premium", "edition",
+  "special", "custom", "standard", "classic", "plus", "pro", "active", "comfort", "elegance", "luxury", "line",
+  "package", "pack", "ute", "truck", "car",
 ]);
 
 /**
@@ -95,7 +108,7 @@ export function findMatchingVehicleBlueprint(vehicle) {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/\[.*?\]|\(.*?\)/g, " ")
-    .replace(/\b\d+\.\d+L?\b|\b[A-Z0-9]{4,8}\b/gi, " ");
+    .replace(/\b\d+\.\d+L?\b/gi, " ");
 
   const rawTokens = cleanedModel.split(/[\s\-_/]+/).map((t) => t.trim().toLowerCase());
   const primaryTokens = [];
@@ -110,7 +123,7 @@ export function findMatchingVehicleBlueprint(vehicle) {
     }
   }
 
-  // 1. TIER 1: Check Official Curated Catalog First (Toyota 49 + Nissan 51 models)
+  // 1. TIER 1: Check Official Curated Catalog First (Toyota & Nissan high-res models)
   const officialModels = officialVehicleCatalog?.models || [];
   const vehicleCat = String(vehicle.vehicle_type_slug || vehicle.body_type || vehicle.category || "").toLowerCase();
   
@@ -126,44 +139,74 @@ export function findMatchingVehicleBlueprint(vehicle) {
 
       for (const b of brandOfficials) {
         const bModel = String(b.model_name || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-        const bSlug = String(b.model_slug || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-        let modelScore = 0;
+        const bModelTokens = new Set(bModel.split(/[\s\-_/]+/));
+        const bBaseSlug = String(b.model_slug || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+        
+        let modelMatchScore = 0;
+        let hasDirectModelMatch = false;
 
         for (const t of primaryTokens) {
-          if (t === bModel || ` ${bModel} `.includes(` ${t} `) || t === bSlug || ` ${bSlug} `.includes(` ${t} `)) {
-            modelScore += 160;
-          } else if (bModel.includes(t) || bSlug.includes(t)) {
-            modelScore += 90;
+          if (t === bModel || bModelTokens.has(t) || t === bBaseSlug) {
+            modelMatchScore += 250;
+            hasDirectModelMatch = true;
+          } else if (` ${bModel} `.includes(` ${t} `) || ` ${bBaseSlug} `.includes(` ${t} `)) {
+            modelMatchScore += 200;
+            hasDirectModelMatch = true;
+          } else if (bModel.includes(t) || bBaseSlug.includes(t)) {
+            modelMatchScore += 120;
+            hasDirectModelMatch = true;
           }
         }
 
         for (const t of secondaryTokens) {
-          if (bModel.includes(t) || bSlug.includes(t)) {
-            modelScore += 20;
+          if (bModelTokens.has(t) || bModel.includes(t) || bBaseSlug.includes(t)) {
+            modelMatchScore += 30;
           }
         }
 
-        // Category / Body Type Match Bonus
-        if (vehicleCat && b.category && (vehicleCat === b.category || vehicleCat.includes(b.category) || b.category.includes(vehicleCat))) {
-          modelScore += 50;
-        }
-
-        if (primaryTokens.length > 0 && modelScore < 40) {
+        // STRICT RULE: Must have at least one direct model token match if primary tokens exist!
+        if (primaryTokens.length > 0 && !hasDirectModelMatch) {
           continue;
         }
 
-        let yearScore = 0;
-        if (year && b.year_start) {
-          if (year >= b.year_start && (!b.year_end || year <= b.year_end)) {
-            yearScore = 50;
-          } else if (Math.abs(year - b.year_start) <= 3) {
-            yearScore = 25;
-          } else if (Math.abs(year - b.year_start) <= 6) {
-            yearScore = 10;
+        // 2. BODY DISTINGUISHING TOKENS MATCHING
+        let bodyTokenScore = 0;
+        const cleanedLow = cleanedModel.toLowerCase();
+        for (const [tokenKey, synonyms] of Object.entries(BODY_DISTINGUISHING_TOKENS)) {
+          if (synonyms.some((syn) => cleanedLow.includes(syn))) {
+            if (synonyms.some((syn) => bModel.includes(syn) || bBaseSlug.includes(syn))) {
+              bodyTokenScore += 120;
+            } else if (b.category && b.category.includes(tokenKey)) {
+              bodyTokenScore += 60;
+            }
           }
         }
 
-        const totalScore = modelScore + yearScore;
+        // 3. CATEGORY / BODY TYPE MATCH BONUS
+        let categoryScore = 0;
+        if (vehicleCat && b.category) {
+          if (vehicleCat === b.category) {
+            categoryScore = 60;
+          } else if (vehicleCat.includes(b.category) || b.category.includes(vehicleCat)) {
+            categoryScore = 30;
+          }
+        }
+
+        // 4. YEAR MATCHING SCORE
+        let yearScore = 0;
+        if (year && b.year_start) {
+          const yStart = b.year_start;
+          const yEnd = b.year_end || yStart;
+          if (year >= yStart && year <= yEnd) {
+            yearScore = 80;
+          } else if (Math.abs(year - yStart) <= 2 || Math.abs(year - yEnd) <= 2) {
+            yearScore = 40;
+          } else if (Math.abs(year - yStart) <= 5 || Math.abs(year - yEnd) <= 5) {
+            yearScore = 15;
+          }
+        }
+
+        const totalScore = modelMatchScore + bodyTokenScore + categoryScore + yearScore;
         if (totalScore > bestOfficialScore) {
           bestOfficialScore = totalScore;
           bestOfficial = b;
