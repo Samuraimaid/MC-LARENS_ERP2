@@ -108,88 +108,558 @@ const OFFICIAL_GAMAS = [
   },
 ];
 
-// Configuración por defecto completa de materiales para carga instantánea y modo sin conexión
-export const DEFAULT_TINT_CONFIG = {
+// 31 Materiales Oficiales Completos para Carga Instantánea, Resiliencia y Modo Offline
+export const ALL_OFFICIAL_TINT_MATERIALS = [
+  {
+    "material_id": "q1_05_40",
+    "id": "q1_05_40",
+    "name": "Q1 5%-40\"",
+    "brand": "Q1",
+    "family": "Q1",
+    "gama": "gama_economica",
+    "gama_id": "gama_economica",
+    "gama_label": "Gama Económica",
+    "vlt": 5,
+    "ir_rejection_pct": 15,
+    "uv_rejection_pct": 95,
+    "tech_type": "Económico 40\"",
+    "description": "Línea económica accesible con privacidad del 5% y medida de 40 pulgadas.",
+    "extra_price": 0,
+    "is_default": true
+  },
+  {
+    "material_id": "q1_20_40",
+    "id": "q1_20_40",
+    "name": "Q1 20%-40\"",
+    "brand": "Q1",
+    "family": "Q1",
+    "gama": "gama_economica",
+    "gama_id": "gama_economica",
+    "gama_label": "Gama Económica",
+    "vlt": 20,
+    "ir_rejection_pct": 15,
+    "uv_rejection_pct": 95,
+    "tech_type": "Económico 40\"",
+    "description": "Línea económica accesible con tono intermedio del 20% y medida de 40 pulgadas.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "raybar_05_60",
+    "id": "raybar_05_60",
+    "name": "Raybar 5%-60\" (Caja Roja y Blanca)",
+    "brand": "Raybar",
+    "family": "Raybar",
+    "gama": "gama_economica",
+    "gama_id": "gama_economica",
+    "gama_label": "Gama Económica",
+    "vlt": 5,
+    "ir_rejection_pct": 20,
+    "uv_rejection_pct": 95,
+    "tech_type": "Económico 60\"",
+    "description": "Película económica en rollo ancho de 60 pulgadas para cristales grandes y camionetas.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "std_05",
+    "id": "std_05",
+    "name": "Smoke 5%-20\"",
+    "brand": "Solar Gard",
+    "family": "Smoke",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 5,
+    "ir_rejection_pct": 99,
+    "uv_rejection_pct": 99,
+    "tech_type": "HP High Performance",
+    "description": "Máximo control térmico (99% IR) y total privacidad en rollo de 20 pulgadas.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "std_20",
+    "id": "std_20",
+    "name": "Smoke 20%-20\"",
+    "brand": "Solar Gard",
+    "family": "Smoke",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 20,
+    "ir_rejection_pct": 40,
+    "uv_rejection_pct": 99,
+    "tech_type": "Tono Intermedio",
+    "description": "Tonalidad intermedia más popular y versátil en rollo de 20 pulgadas.",
+    "extra_price": 0,
+    "is_default": true
+  },
+  {
+    "material_id": "std_35",
+    "id": "std_35",
+    "name": "Smoke 35%-20\" y 40\"",
+    "brand": "Solar Gard",
+    "family": "Smoke",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 35,
+    "ir_rejection_pct": 20,
+    "uv_rejection_pct": 99,
+    "tech_type": "NR (Non-Reflective)",
+    "description": "Claridad óptica superior (100% visibilidad nocturna) en 20\" y 40\".",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "std_70",
+    "id": "std_70",
+    "name": "Smoke 70% (Claro)",
+    "brand": "Solar Gard",
+    "family": "Smoke",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 70,
+    "ir_rejection_pct": 20,
+    "uv_rejection_pct": 99,
+    "tech_type": "Estándar Claro",
+    "description": "Transparencia total para parabrisas delantero y visión nocturna.",
+    "extra_price": 0,
+    "is_default": true
+  },
+  {
+    "material_id": "raybar_05_40",
+    "id": "raybar_05_40",
+    "name": "Raybar 5%-40\"",
+    "brand": "Raybar",
+    "family": "Raybar",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 5,
+    "ir_rejection_pct": 25,
+    "uv_rejection_pct": 98,
+    "tech_type": "Estándar 40\"",
+    "description": "Película Tinmax Raybar de 40 pulgadas tono oscuro 5%.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_quantum_reg_25",
+    "id": "sg_quantum_reg_25",
+    "name": "Quantum Regular 25%-40\"",
+    "brand": "Solar Gard",
+    "family": "Quantum Regular",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 25,
+    "ir_rejection_pct": 64,
+    "uv_rejection_pct": 99,
+    "tech_type": "Metalizada Sputtered",
+    "description": "Sin tintes: tono que jamás se degrada ni se torna morado con los años.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_quantum_reg_10",
+    "id": "sg_quantum_reg_10",
+    "name": "Quantum Regular 10%-40\" (Oscuro)",
+    "brand": "Solar Gard",
+    "family": "Quantum Regular",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 10,
+    "ir_rejection_pct": 72,
+    "uv_rejection_pct": 99,
+    "tech_type": "Metalizada Sputtered",
+    "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "3m_nano_20",
+    "id": "3m_nano_20",
+    "name": "3M 20%-40\" y 20\"",
+    "brand": "3M",
+    "family": "3M Nano",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 20,
+    "ir_rejection_pct": 62,
+    "uv_rejection_pct": 99,
+    "tech_type": "3M Series",
+    "description": "Look uniforme, deportivo y elegante: balance perfecto entre privacidad y seguridad.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_charcoal_07",
+    "id": "sg_charcoal_07",
+    "name": "Charcoal 7%-40\"",
+    "brand": "Solar Gard",
+    "family": "Charcoal",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 7,
+    "ir_rejection_pct": 60,
+    "uv_rejection_pct": 99,
+    "tech_type": "HC Hard Coated",
+    "description": "Negro profundo resistente a rayaduras en rollo de 40 pulgadas.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_charcoal_22",
+    "id": "sg_charcoal_22",
+    "name": "Charcoal 22%-20\"",
+    "brand": "Solar Gard",
+    "family": "Charcoal",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 22,
+    "ir_rejection_pct": 55,
+    "uv_rejection_pct": 99,
+    "tech_type": "HC Hard Coated",
+    "description": "Tono intermedio 22% en rollo de 20 pulgadas para ventanas laterales.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_charcoal_06",
+    "id": "sg_charcoal_06",
+    "name": "Charcoal 6% (HP)",
+    "brand": "Solar Gard",
+    "family": "Charcoal",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 6,
+    "ir_rejection_pct": 65,
+    "uv_rejection_pct": 99,
+    "tech_type": "HP Carbón",
+    "description": "Ultra oscura: máxima privacidad, estética agresiva y cero interferencia electrónica.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_charcoal_35",
+    "id": "sg_charcoal_35",
+    "name": "Charcoal 35% (HC)",
+    "brand": "Solar Gard",
+    "family": "Charcoal",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 35,
+    "ir_rejection_pct": 50,
+    "uv_rejection_pct": 99,
+    "tech_type": "HC Hard Coated",
+    "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_galaxie_12",
+    "id": "sg_galaxie_12",
+    "name": "Galaxie 12%",
+    "brand": "Solar Gard",
+    "family": "Galaxie",
+    "gama": "tinmax",
+    "gama_id": "tinmax",
+    "gama_label": "Tinmax",
+    "vlt": 12,
+    "ir_rejection_pct": 30,
+    "uv_rejection_pct": 99,
+    "tech_type": "Estándar Deportivo",
+    "description": "Punto dulce deportivo: auto oscuro y deportivo a precio accesible.",
+    "extra_price": 0,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_04",
+    "id": "sg_supreme_04",
+    "name": "Supreme 4%-20\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 4,
+    "ir_rejection_pct": 90,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico",
+    "description": "Privacidad extrema y 90% rechazo infrarrojo. Tecnología multicapa en 20 pulgadas.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_10",
+    "id": "sg_supreme_10",
+    "name": "Supreme 10%-20\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 10,
+    "ir_rejection_pct": 90,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico",
+    "description": "Elegancia y confort con 90% IR. Control solar superior en rollo de 20 pulgadas.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_15",
+    "id": "sg_supreme_15",
+    "name": "Supreme 15%-30\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 15,
+    "ir_rejection_pct": 55,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico 30\"",
+    "description": "Rollo especial de 30 pulgadas Supreme 15% con alto rechazo infrarrojo.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_16",
+    "id": "sg_supreme_16",
+    "name": "Supreme 16%-20\" y 40\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 16,
+    "ir_rejection_pct": 50,
+    "uv_rejection_pct": 99,
+    "tech_type": "HP High Performance",
+    "description": "Claridad superior y estilo elegante en rollos versátiles de 20 y 40 pulgadas.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_22",
+    "id": "sg_supreme_22",
+    "name": "Supreme 22%-20\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 22,
+    "ir_rejection_pct": 45,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico",
+    "description": "Gama media clara en 20 pulgadas: visibilidad, confort y look ejecutivo.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_30",
+    "id": "sg_supreme_30",
+    "name": "Supreme 30%-40\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 30,
+    "ir_rejection_pct": 45,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico 40\"",
+    "description": "Tono 30% en rollo de 40 pulgadas con rechazo térmico superior.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_supreme_42",
+    "id": "sg_supreme_42",
+    "name": "Supreme 42%-20\" y 40\"",
+    "brand": "Solar Gard",
+    "family": "Nano Cerámico Supreme",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 42,
+    "ir_rejection_pct": 35,
+    "uv_rejection_pct": 99,
+    "tech_type": "Nano Cerámico",
+    "description": "Acabado ultra claro con protección solar y visión transparente en 20\" y 40\".",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_solstice_05",
+    "id": "sg_solstice_05",
+    "name": "Solstice 5%-40\" y 20\"",
+    "brand": "Solar Gard",
+    "family": "Endeavor Solstice",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 5,
+    "ir_rejection_pct": 72,
+    "uv_rejection_pct": 99,
+    "tech_type": "Híbrida Metalizada",
+    "description": "Arquitectura híbrida metalizada para climas hostiles y sol directo en 20\" y 40\".",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_camaleon_20",
+    "id": "sg_camaleon_20",
+    "name": "Camaleón 20%",
+    "brand": "Solar Gard",
+    "family": "Camaleón",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 20,
+    "ir_rejection_pct": 88,
+    "uv_rejection_pct": 99,
+    "tech_type": "Multicapa Tornasol",
+    "description": "Efecto tornasol dinámico de alta gama que cambia de color según la luz solar.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_titanium_26",
+    "id": "sg_titanium_26",
+    "name": "Titanium 26%",
+    "brand": "Solar Gard",
+    "family": "Titanium",
+    "gama": "nano_ceramico",
+    "gama_id": "nano_ceramico",
+    "gama_label": "Nano Cerámico",
+    "vlt": 26,
+    "ir_rejection_pct": 80,
+    "uv_rejection_pct": 99,
+    "tech_type": "Barrera Titanio",
+    "description": "Blindaje térmico profesional basado en partículas de titanio al vacío.",
+    "extra_price": 45,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_quantum_orig_14",
+    "id": "sg_quantum_orig_14",
+    "name": "Quantum Original 14%-40\" y 20\"",
+    "brand": "Solar Gard",
+    "family": "Quantum Original",
+    "gama": "gama_premium",
+    "gama_id": "gama_premium",
+    "gama_label": "Gama Premium",
+    "vlt": 14,
+    "ir_rejection_pct": 70,
+    "uv_rejection_pct": 99,
+    "tech_type": "Metalizada Sputtered",
+    "description": "Película 100% metalizada por pulverización catódica en 20\" y 40\".",
+    "extra_price": 80,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_quantum_orig_19",
+    "id": "sg_quantum_orig_19",
+    "name": "Quantum Original 19%-40\" y 20\"",
+    "brand": "Solar Gard",
+    "family": "Quantum Original",
+    "gama": "gama_premium",
+    "gama_id": "gama_premium",
+    "gama_label": "Gama Premium",
+    "vlt": 19,
+    "ir_rejection_pct": 80,
+    "uv_rejection_pct": 99,
+    "tech_type": "Metalizada Sputtered",
+    "description": "Punto medio perfecto (80% IR): excelente privacidad sin perder visión nocturna.",
+    "extra_price": 80,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_quantum_orig_28",
+    "id": "sg_quantum_orig_28",
+    "name": "Quantum Original 28%-40\" y 20\"",
+    "brand": "Solar Gard",
+    "family": "Quantum Original",
+    "gama": "gama_premium",
+    "gama_id": "gama_premium",
+    "gama_label": "Gama Premium",
+    "vlt": 28,
+    "ir_rejection_pct": 72,
+    "uv_rejection_pct": 99,
+    "tech_type": "HP High Performance",
+    "description": "Tono claro y sutil: 72% IR sin oscurecer el auto en 20\" y 40\".",
+    "extra_price": 80,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_endeavor_05",
+    "id": "sg_endeavor_05",
+    "name": "Endeavor 5%-20\"",
+    "brand": "Solar Gard",
+    "family": "Endeavor",
+    "gama": "gama_premium",
+    "gama_id": "gama_premium",
+    "gama_label": "Gama Premium",
+    "vlt": 5,
+    "ir_rejection_pct": 70,
+    "uv_rejection_pct": 99,
+    "tech_type": "Gama Intermedia-Alta",
+    "description": "Privacidad absoluta, oscuridad profunda y rendimiento térmico en 20\".",
+    "extra_price": 80,
+    "is_default": false
+  },
+  {
+    "material_id": "sg_endeavor_35",
+    "id": "sg_endeavor_35",
+    "name": "Endeavor 35%-40\"",
+    "brand": "Solar Gard",
+    "family": "Endeavor",
+    "gama": "gama_premium",
+    "gama_id": "gama_premium",
+    "gama_label": "Gama Premium",
+    "vlt": 35,
+    "ir_rejection_pct": 60,
+    "uv_rejection_pct": 99,
+    "tech_type": "Gama Intermedia-Alta",
+    "description": "Tono claro, sutil y elegante con visibilidad nocturna impecable en 40\".",
+    "extra_price": 80,
+    "is_default": false
+  }
+];
 
+export const DEFAULT_TINT_CONFIG = {
   zones: {
     windshield: {
       zone: "windshield",
       label: "Parabrisas delantero",
-      materials: [
-        { material_id: "std_70", name: "Estándar 70% Claro", gama_id: "gama_economica", vlt: 70, extra_price: 0, is_default: true },
-        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
-        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0 },
-        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
-        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
-        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
-        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
-        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
-        { material_id: "nc_supreme_42", name: "Supreme Nano-Ceramic 42% Claro", gama_id: "nano_ceramico", vlt: 42, extra_price: 50 },
-        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
-        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
-        { material_id: "prem_quantum_28", name: "Quantum Original 28%", gama_id: "gama_premium", vlt: 28, extra_price: 80 },
-        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
-        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
-      ],
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
     },
     front_sides: {
       zone: "front_sides",
       label: "Ventanas Delanteras",
-      materials: [
-        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
-        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
-        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
-        { material_id: "std_70", name: "Estándar 70% Claro", gama_id: "gama_economica", vlt: 70, extra_price: 0 },
-        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
-        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
-        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
-        { material_id: "sg_charcoal_05", name: "Tinmax Charcoal 05%", gama_id: "tinmax", vlt: 5, extra_price: 20 },
-        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
-        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
-        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
-        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
-        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
-        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
-        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
-      ],
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
     },
     rear_sides: {
       zone: "rear_sides",
       label: "Ventanas Traseras",
-      materials: [
-        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
-        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
-        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
-        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
-        { material_id: "sg_smoke_05", name: "Tinmax Smoke 05%", gama_id: "tinmax", vlt: 5, extra_price: 15 },
-        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
-        { material_id: "sg_charcoal_05", name: "Tinmax Charcoal 05%", gama_id: "tinmax", vlt: 5, extra_price: 20 },
-        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
-        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
-        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
-        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
-        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
-        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
-        { material_id: "prem_endeavor_05", name: "Endeavor Ultra-IR 05%", gama_id: "gama_premium", vlt: 5, extra_price: 90 },
-      ],
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
     },
     rear: {
       zone: "rear",
       label: "Parabrisas Trasero",
-      materials: [
-        { material_id: "std_20", name: "Estándar 20% Oscuro", gama_id: "gama_economica", vlt: 20, extra_price: 0, is_default: true },
-        { material_id: "std_05", name: "Estándar 05% Limo", gama_id: "gama_economica", vlt: 5, extra_price: 0 },
-        { material_id: "std_35", name: "Estándar 35% Intermedio", gama_id: "gama_economica", vlt: 35, extra_price: 0 },
-        { material_id: "sg_smoke_20", name: "Tinmax Smoke 20%", gama_id: "tinmax", vlt: 20, extra_price: 15 },
-        { material_id: "sg_charcoal_20", name: "Tinmax Charcoal 20%", gama_id: "tinmax", vlt: 20, extra_price: 20 },
-        { material_id: "nc_supreme_20", name: "Supreme Nano-Ceramic 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 45 },
-        { material_id: "nc_supreme_05", name: "Supreme Nano-Ceramic 05%", gama_id: "nano_ceramico", vlt: 5, extra_price: 45 },
-        { material_id: "nc_camaleon_20", name: "Cerámico Camaleón Tornasol 20%", gama_id: "nano_ceramico", vlt: 20, extra_price: 60 },
-        { material_id: "nc_titanium_26", name: "Titanium IR Shield 26%", gama_id: "nano_ceramico", vlt: 26, extra_price: 55 },
-        { material_id: "prem_quantum_19", name: "Quantum Original 19%", gama_id: "gama_premium", vlt: 19, extra_price: 80 },
-        { material_id: "prem_quantum_14", name: "Quantum Original 14%", gama_id: "gama_premium", vlt: 14, extra_price: 80 },
-        { material_id: "prem_endeavor_20", name: "Endeavor Ultra-IR 20%", gama_id: "gama_premium", vlt: 20, extra_price: 90 },
-      ],
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
     },
   },
   sunstrip_pricing: {
@@ -828,31 +1298,72 @@ export default function TintWindowMaterialDialog({
 
   const activeZoneConfig = config?.zones?.[activeZone];
   const allZoneMaterials = Object.values(config?.zones || {}).flatMap((z) => z?.materials || []);
-  const uniqueAllMaterials = Array.from(new Map(allZoneMaterials.map((m) => [m.id, m])).values());
+  const uniqueAllMaterials = Array.from(new Map(allZoneMaterials.map((m) => [m.id || m.material_id, m])).values());
   const activeMaterials = (activeZoneConfig?.materials && activeZoneConfig.materials.length > 0)
     ? activeZoneConfig.materials
-    : uniqueAllMaterials;
+    : (uniqueAllMaterials.length > 0 ? uniqueAllMaterials : ALL_OFFICIAL_TINT_MATERIALS);
   const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
 
-  // Filtrado de materiales por Gama Oficial, Familia y Búsqueda
-  const filteredMaterials = useMemo(() => {
-    return activeMaterials.filter((m) => {
-      const matchGama =
-        selectedGama === "all" ||
-        m.gama === selectedGama ||
-        (selectedGama === "gama_economica" && (m.gama === "economica" || m.gama === "gama_economica")) ||
-        (selectedGama === "gama_premium" && (m.gama === "premium" || m.gama === "gama_premium")) ||
-        (selectedGama === "nano_ceramico" && (m.gama === "nano_ceramico" || m.gama === "nano_ceramica" || m.gama === "ceramico" || m.gama === "ceramica"));
-      const matchFamily = familyFilter === "all" || m.family === familyFilter;
-      const matchSearch =
-        !searchTerm.trim() ||
-        m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.family?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.gama_label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.tech_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchGama && matchFamily && matchSearch;
-    });
+  // Filtrado de materiales por Gama Oficial, Familia y Búsqueda Inteligente Multi-Gama
+  const { filteredMaterials, searchMatchedInOtherGama } = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    // Helper de coincidencia de gama
+    const isGamaMatch = (m, targetGama) => {
+      const mGama = m.gama || m.gama_id || "";
+      if (targetGama === "all") return true;
+      if (mGama === targetGama) return true;
+      if (targetGama === "gama_economica" && (mGama === "economica" || mGama === "gama_economica")) return true;
+      if (targetGama === "gama_premium" && (mGama === "premium" || mGama === "gama_premium")) return true;
+      if (targetGama === "nano_ceramico" && (mGama === "nano_ceramico" || mGama === "nano_ceramica" || mGama === "ceramico" || mGama === "ceramica")) return true;
+      if (targetGama === "tinmax" && mGama === "tinmax") return true;
+      return false;
+    };
+
+    // Helper de búsqueda por texto / tono / marca / id
+    const isSearchMatch = (m) => {
+      if (!term) return true;
+      return (
+        m.name?.toLowerCase().includes(term) ||
+        m.brand?.toLowerCase().includes(term) ||
+        m.family?.toLowerCase().includes(term) ||
+        m.gama_label?.toLowerCase().includes(term) ||
+        m.tech_type?.toLowerCase().includes(term) ||
+        m.description?.toLowerCase().includes(term) ||
+        String(m.vlt || "").includes(term) ||
+        String(m.id || "").toLowerCase().includes(term) ||
+        String(m.material_id || "").toLowerCase().includes(term)
+      );
+    };
+
+    const isFamilyMatch = (m) => {
+      return familyFilter === "all" || m.family === familyFilter;
+    };
+
+    // Si no hay término de búsqueda, respetar estrictamente la gama seleccionada
+    if (!term) {
+      const filtered = activeMaterials.filter((m) => isGamaMatch(m, selectedGama) && isFamilyMatch(m));
+      return { filteredMaterials: filtered, searchMatchedInOtherGama: false };
+    }
+
+    // Si hay término de búsqueda:
+    const strictMatches = activeMaterials.filter((m) => isGamaMatch(m, selectedGama) && isSearchMatch(m) && isFamilyMatch(m));
+    
+    // Si la gama seleccionada no era "all" pero arrojó 0 resultados, buscar en todas las gamas
+    if (strictMatches.length === 0 && selectedGama !== "all") {
+      const allGamaMatches = activeMaterials.filter((m) => isSearchMatch(m) && isFamilyMatch(m));
+      if (allGamaMatches.length > 0) {
+        return {
+          filteredMaterials: allGamaMatches,
+          searchMatchedInOtherGama: true,
+        };
+      }
+    }
+
+    return {
+      filteredMaterials: strictMatches,
+      searchMatchedInOtherGama: false,
+    };
   }, [activeMaterials, selectedGama, familyFilter, searchTerm]);
 
   const isVehicleHorizontal = orientation === "horizontal";
@@ -1763,30 +2274,64 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
+              {/* Notificación de Búsqueda Inteligente si se encontró en otra gama */}
+              {searchMatchedInOtherGama && (
+                <div className="mb-2 p-2 rounded-lg bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center justify-between text-[10.5px] text-blue-900 dark:text-blue-200">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="truncate">
+                      No hay resultados en la gama actual. Mostrando <b>{filteredMaterials.length}</b> resultado(s) de otras gamas para <b>"{searchTerm}"</b>:
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGama("all")}
+                    className="ml-2 underline font-bold shrink-0 hover:text-blue-700 dark:hover:text-blue-300 text-[10px]"
+                  >
+                    Ver todas
+                  </button>
+                </div>
+              )}
+
               {/* Lista de Films / Materiales */}
               <div className="space-y-1.5 max-h-52 sm:max-h-60 lg:max-h-72 overflow-y-auto pr-1">
                 {filteredMaterials.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
-                    No hay materiales que coincidan con los filtros seleccionados.
+                  <div className="p-4 text-center space-y-1 text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
+                    <p>No hay materiales que coincidan con los filtros seleccionados.</p>
+                    {searchTerm && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearchTerm("");
+                          setSelectedGama("all");
+                        }}
+                        className="text-[11px] h-7 text-blue-600 dark:text-blue-400 font-semibold"
+                      >
+                        Limpiar filtros y ver catálogo completo
+                      </Button>
+                    )}
                   </div>
                 ) : null}
 
                 {filteredMaterials.map((mat) => {
+                  const matId = mat.material_id || mat.id;
                   const isSelected = isSunstripOnly
-                    ? sunstrips.windshield_top?.material_id === mat.material_id
-                    : selectedMaterials[activeZone] === mat.material_id;
-                  const is3M = mat.brand === "3M" || String(mat.id).includes("3m") || String(mat.family).includes("3M");
+                    ? sunstrips.windshield_top?.material_id === matId
+                    : selectedMaterials[activeZone] === matId;
+                  const is3M = mat.brand === "3M" || String(matId).includes("3m") || String(mat.family).includes("3M");
                   const isSolarGard = mat.brand === "Solar Gard" || (!is3M && mat.brand !== "Q1" && mat.brand !== "Raybar");
-                  const isRaybar = mat.brand === "Raybar" || String(mat.id).includes("raybar");
+                  const isRaybar = mat.brand === "Raybar" || String(matId).includes("raybar");
 
-                  const isQ1 = mat.brand === "Q1" || String(mat.id).includes("q1");
+                  const isQ1 = mat.brand === "Q1" || String(matId).includes("q1");
 
-                  const matchedGama = OFFICIAL_GAMAS.find((g) => g.id === mat.gama);
+                  const matchedGama = OFFICIAL_GAMAS.find((g) => g.id === (mat.gama || mat.gama_id));
 
                   return (
                     <div
-                      key={mat.material_id}
-                      onClick={() => handleSelectMaterial(activeZone, mat.material_id)}
+                      key={matId}
+                      onClick={() => handleSelectMaterial(activeZone, matId)}
                       className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-2 overflow-hidden ${
                         isSelected
                           ? "border-blue-600 bg-blue-50/75 dark:bg-blue-950/60 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
