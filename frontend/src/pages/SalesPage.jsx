@@ -2853,13 +2853,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 ) : null}
               </ErpFormToolbar>
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">Borrador activo:</span>
-                <span className="font-mono">{activeDraftTab?.name || "Nuevo borrador"}</span>
-                {activeDraftReview?.status ? (
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                    {activeDraftReview.status}
-                  </Badge>
-                ) : null}
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
