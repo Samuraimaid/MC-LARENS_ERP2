@@ -5,6 +5,7 @@
 
 import vehicleDescriptorTypes from "@/data/vehicleDescriptorTypes.json";
 import masterBlueprintCatalog from "@/data/vehicle_blueprints_master_index.json";
+import officialVehicleCatalog from "@/data/official_vehicle_catalog.json";
 
 export const VEHICLE_CDN_BASE =
   (typeof window !== "undefined" && (window.__VEHICLES_CDN_URL__ || window.localStorage?.getItem("erp_vehicles_cdn_url"))) ||
@@ -77,7 +78,8 @@ const TRIM_AND_STOP_WORDS = new Set([
 ]);
 
 /**
- * Searches the 8,692-blueprint master catalog for a specific vehicle brand, model, and year.
+ * Searches the official curated vehicle catalog (Toyota & Nissan high-res vector technical silhouettes)
+ * and then the 8,692-blueprint master catalog for a specific vehicle brand, model, and year.
  * Returns the exact blueprint match if available, or null.
  */
 export function findMatchingVehicleBlueprint(vehicle) {
@@ -86,16 +88,7 @@ export function findMatchingVehicleBlueprint(vehicle) {
   const model = String(vehicle.model || vehicle.descriptor || "").toLowerCase().trim();
   const year = parseInt(vehicle.year, 10) || null;
 
-  const blueprints = masterBlueprintCatalog?.blueprints || [];
-  if (!blueprints.length) return null;
-
   const normBrand = brand.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
-  const brandMatches = blueprints.filter((b) => {
-    const bSlug = String(b.brand_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    return bSlug === normBrand || normBrand.includes(bSlug) || bSlug.includes(normBrand);
-  });
-
-  if (brandMatches.length === 0) return null;
 
   // Clean and split model tokens into primary and secondary
   const cleanedModel = model
@@ -116,6 +109,75 @@ export function findMatchingVehicleBlueprint(vehicle) {
       primaryTokens.push(t);
     }
   }
+
+  // 1. TIER 1: Check Official Curated Catalog First (Toyota 49 + Nissan 51 models)
+  const officialModels = officialVehicleCatalog?.models || [];
+  if (officialModels.length > 0) {
+    const brandOfficials = officialModels.filter((b) => {
+      const bSlug = String(b.brand_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      return bSlug === normBrand || normBrand.includes(bSlug) || bSlug.includes(normBrand);
+    });
+
+    if (brandOfficials.length > 0) {
+      let bestOfficial = null;
+      let bestOfficialScore = 0;
+
+      for (const b of brandOfficials) {
+        const bModel = String(b.model_name || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+        let modelScore = 0;
+
+        for (const t of primaryTokens) {
+          if (t === bModel || ` ${bModel} `.includes(` ${t} `)) {
+            modelScore += 150;
+          } else if (bModel.includes(t)) {
+            modelScore += 90;
+          }
+        }
+
+        for (const t of secondaryTokens) {
+          if (bModel.includes(t)) {
+            modelScore += 15;
+          }
+        }
+
+        if (primaryTokens.length > 0 && modelScore < 40) {
+          continue;
+        }
+
+        let yearScore = 0;
+        if (year && b.year_start) {
+          if (year >= b.year_start && (!b.year_end || year <= b.year_end)) {
+            yearScore = 40;
+          } else if (Math.abs(year - b.year_start) <= 3) {
+            yearScore = 20;
+          } else if (Math.abs(year - b.year_start) <= 6) {
+            yearScore = 10;
+          }
+        }
+
+        const totalScore = modelScore + yearScore;
+        if (totalScore > bestOfficialScore) {
+          bestOfficialScore = totalScore;
+          bestOfficial = b;
+        }
+      }
+
+      if (bestOfficial && bestOfficialScore >= 50) {
+        return bestOfficial;
+      }
+    }
+  }
+
+  // 2. TIER 2: Fallback to Master Blueprint Index
+  const blueprints = masterBlueprintCatalog?.blueprints || [];
+  if (!blueprints.length) return null;
+
+  const brandMatches = blueprints.filter((b) => {
+    const bSlug = String(b.brand_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return bSlug === normBrand || normBrand.includes(bSlug) || bSlug.includes(normBrand);
+  });
+
+  if (brandMatches.length === 0) return null;
 
   if (primaryTokens.length === 0 && secondaryTokens.length === 0) return null;
 
