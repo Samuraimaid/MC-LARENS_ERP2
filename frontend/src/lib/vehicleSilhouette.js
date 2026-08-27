@@ -1066,3 +1066,33 @@ export const LATERAL_GLASS_GEOMETRY = {
   },
 };
 
+/**
+ * Returns the best display image/silhouette for a vehicle:
+ * 1. Exact high-res lateral technical silhouette from official/master blueprint catalog if matched.
+ * 2. High-res vector body category silhouette as graceful fallback.
+ */
+export function getVehicleDisplayImage(vehicle) {
+  if (!vehicle) return null;
+  const bp = findMatchingVehicleBlueprint(vehicle);
+  if (bp?.lateral_image) {
+    return {
+      src: getVehicleImageUrl(bp.lateral_image),
+      modelName: bp.model_name || vehicle.model || "",
+      generation: bp.generation || "",
+      isExact: true,
+    };
+  }
+  const categoryId = resolveVehicleCategory(vehicle);
+  const cat = VEHICLE_CATEGORIES.find((c) => c.id === categoryId);
+  if (cat?.image) {
+    return {
+      src: cat.image,
+      modelName: cat.label || vehicle.model || "",
+      generation: "",
+      isExact: false,
+    };
+  }
+  return null;
+}
+
+

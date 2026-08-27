@@ -72,6 +72,7 @@ import {
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
+import { getVehicleDisplayImage } from "@/lib/vehicleSilhouette";
 import {
   formatChasis,
   formatCedula,
@@ -3632,6 +3633,7 @@ export default function SaleForm({
                       const catalogHint = formatVehicleIdentityHint(v.brand, v.year, v.model);
                       const vehicleOptionId = normalizeVehicleId(v.vehicle_id ?? v.id);
                       const isActiveVehicle = selectedVehicleOption === `vehicle:${vehicleOptionId}`;
+                      const vehicleImg = getVehicleDisplayImage(v);
                       return (
                         <button
                           key={v.vehicle_id ?? v.id}
@@ -3639,21 +3641,34 @@ export default function SaleForm({
                           disabled={sellerFlowLocked}
                           onClick={() => handleSelectVehicleFlow("registered", vehicleOptionId)}
                           className={cn(
-                            "rounded-lg border p-3 text-left transition-colors ui-interactive",
+                            "group relative rounded-xl border p-3 text-left transition-all ui-interactive flex items-center justify-between gap-2.5 overflow-hidden shadow-sm",
                             isActiveVehicle
-                              ? "border-sky-500 bg-sky-100/80 dark:border-sky-500/50 dark:bg-sky-500/20"
+                              ? "border-sky-500 bg-sky-100/90 dark:border-sky-500/50 dark:bg-sky-500/20 ring-2 ring-sky-500/40"
                               : "border-sky-200 bg-sky-50/80 hover:bg-sky-100/80 dark:border-sky-500/30 dark:bg-sky-500/10 dark:hover:bg-sky-500/20",
                           )}
                         >
-                          <p className="font-medium text-sky-900 dark:text-sky-100 inline-flex items-center gap-1.5">
-                            <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
-                            {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
-                          </p>
-                          {catalogHint ? (
-                            <p className="text-[11px] text-sky-800/90 mt-1">{catalogHint}</p>
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <p className="font-bold text-sky-950 dark:text-sky-100 inline-flex items-center gap-1.5 truncate">
+                              <CarFront className="h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" />
+                              {[v.brand, v.model, v.year].filter(Boolean).join(" ") || "Vehículo"}
+                            </p>
+                            {catalogHint ? (
+                              <p className="text-[11px] text-sky-800/90 truncate">{catalogHint}</p>
+                            ) : null}
+                            <p className="text-xs font-semibold text-sky-900 dark:text-sky-200">{plate}</p>
+                            <p className="text-[11px] text-sky-700 dark:text-sky-300/80 truncate">{vin} • {color}</p>
+                          </div>
+
+                          {vehicleImg?.src ? (
+                            <div className="shrink-0 h-12 sm:h-14 w-20 sm:w-24 rounded-lg bg-white/80 dark:bg-zinc-900/80 border border-sky-200/60 dark:border-sky-700/40 flex items-center justify-center p-1 shadow-inner overflow-hidden group-hover:scale-105 transition-transform">
+                              <img
+                                src={vehicleImg.src}
+                                alt={[v.brand, v.model].filter(Boolean).join(" ")}
+                                className="max-h-full max-w-full object-contain drop-shadow-sm"
+                                loading="lazy"
+                              />
+                            </div>
                           ) : null}
-                          <p className="text-xs text-sky-800 mt-1">{plate}</p>
-                          <p className="text-[11px] text-sky-700 mt-0.5">{vin} • {color}</p>
                         </button>
                       );
                     })}
@@ -3910,29 +3925,47 @@ export default function SaleForm({
 
           {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
             <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
-              <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.split}>
-                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
-                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
-                    <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
-                    <span className="min-w-0 whitespace-normal break-words">
-                      Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
-                    </span>
-                  </p>
-                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
-                    <p className="inline-flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  {(() => {
+                    const selImg = getVehicleDisplayImage(selectedVehicleData);
+                    if (!selImg?.src) return null;
+                    return (
+                      <div className="shrink-0 h-14 sm:h-16 w-24 sm:w-28 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-sky-200/80 dark:border-sky-700/60 flex items-center justify-center p-1 shadow-sm overflow-hidden">
+                        <img
+                          src={selImg.src}
+                          alt={[selectedVehicleData.brand, selectedVehicleData.model].filter(Boolean).join(" ")}
+                          className="max-h-full max-w-full object-contain drop-shadow"
+                          loading="lazy"
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info}>
+                    <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
+                      <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
+                      <span className="min-w-0 whitespace-normal break-words">
+                        Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
+                      </span>
                     </p>
-                    <p className="inline-flex items-center gap-1.5">
-                      <Palette className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
-                    </p>
-                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
-                    </p>
+                    <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
+                      <p className="inline-flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5 text-sky-700" />
+                        {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
+                      </p>
+                      <p className="inline-flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5 text-sky-700" />
+                        {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
+                      </p>
+                      <p className="inline-flex items-center gap-1.5 sm:col-span-2">
+                        <FileText className="h-3.5 w-3.5 text-sky-700" />
+                        <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
+
                 <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
                   <Button
                     type="button"
