@@ -14,7 +14,7 @@ def make_prompt(id_num, brand, model, generation, body_type, view, filename, ext
         else "Front headlights glowing in vivid cyan (#00E5FF), Rear taillights glowing in solid vivid red (#FF0033)."
     )
 
-    metadata_label = f"📌 {brand.upper()} {model.upper()} ({generation}) | {body_type.upper()} | {view.upper()}"
+    metadata_label = f"{brand.upper()} {model.upper()} ({generation}) · {body_type} · {view}"
 
     prompt = (
         f"Professional automotive 2D vector technical blueprint illustration of {brand} {model} ({generation}) {body_type}, {orientation}. "
@@ -22,12 +22,12 @@ def make_prompt(id_num, brand, model, generation, body_type, view, filename, ext
         f"Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). "
         f"{headlights_instruction} "
         f"{extra_details} "
-        f"At the top margin of the image, include a clean, sharp technical metadata text label that clearly reads: \"{metadata_label}\". "
+        f"In the bottom-left corner of the image, include a small, clean, discrete technical caption text in subtle dark grey sans-serif font aligned to the left that reads: \"{metadata_label}\". No emojis, no pin icons, no watermarks, no decorative graphics. "
         f"Isolated on a seamless, clean pure solid white background (#FFFFFF) with no gradients, no shadows, no ground reflections, no perspective distortion, no wheels on top view. "
         f"Perfect flat technical schematic for vehicle workshop reception damage inspection system. {aspect}."
     )
 
-    header_tag = f"📌 ID {id_num:03d} | MARCA: {brand} | MODELO: {model} | AÑO: {generation} | TIPO: {body_type} | VISTA: {view} | ARCHIVO: {filename}"
+    header_tag = f"ID {id_num:03d} | MARCA: {brand} | MODELO: {model} | AÑO: {generation} | TIPO: {body_type} | VISTA: {view} | ARCHIVO: {filename}"
 
     return {
         "id": id_num,
