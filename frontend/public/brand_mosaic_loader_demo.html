@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mundo de Accesorios - Mosaico de Marcas Oficiales (Cargador)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 100%);
+      --bg-light: radial-gradient(circle at 50% 30%, #f8fafc 0%, #e2e8f0 100%);
+      --card-bg-dark: rgba(15, 23, 42, 0.88);
+      --card-bg-light: rgba(255, 255, 255, 0.95);
+      --tile-bg-dark: rgba(255, 255, 255, 0.96);
+      --tile-border: rgba(255, 255, 255, 0.15);
+      --accent-cyan: #00d2ff;
+      --accent-yellow: #ffe600;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      transition: background 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    body.light-theme {
+      background: var(--bg-light);
+      color: #0f172a;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .header-title {
+      text-align: center;
+    }
+
+    .header-title h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #00d2ff, #38bdf8, #ffe600);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-title p {
+      font-size: 1rem;
+      opacity: 0.8;
+      margin-top: 0.25rem;
+    }
+
+    /* MAIN MOSAIC LOADER CARD */
+    .loader-card {
+      position: relative;
+      width: 100%;
+      max-width: 620px;
+      background: var(--card-bg-dark);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 35px rgba(0, 210, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.75rem;
+      transition: all 0.3s ease;
+    }
+
+    body.light-theme .loader-card {
+      background: var(--card-bg-light);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.15), 0 0 30px rgba(0, 210, 255, 0.12);
+    }
+
+    /* LOGO HEADER */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      text-align: center;
+    }
+
+    .brand-main-title {
+      font-size: 1.75rem;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      color: #ffe600;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #fff975 0%, #ffe600 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 210, 255, 0.12);
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      padding: 0.25rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #38bdf8;
+    }
+
+    /* 🧱 BRANDS MOSAIC GRID */
+    .mosaic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+      width: 100%;
+    }
+
+    @media (max-width: 520px) {
+      .mosaic-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .brand-tile {
+      position: relative;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 0.75rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 76px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      border: 2px solid transparent;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .brand-tile img {
+      max-height: 44px;
+      max-width: 86%;
+      object-contain: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+      transition: transform 0.3s ease;
+    }
+
+    /* Active Highlight Wave on Mosaic Tiles */
+    .brand-tile.highlight {
+      border-color: #00d2ff;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.6), inset 0 0 10px rgba(0, 210, 255, 0.2);
+      transform: scale(1.05) translateY(-2px);
+    }
+    .brand-tile.highlight img {
+      transform: scale(1.1);
+    }
+
+    /* Shimmer Sweep */
+    .brand-tile::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        60deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 70%
+      );
+      transform: rotate(30deg) translateX(-100%);
+      animation: shimmerSweep 3s infinite;
+    }
+
+    @keyframes shimmerSweep {
+      0% { transform: rotate(30deg) translateX(-100%); }
+      20%, 100% { transform: rotate(30deg) translateX(100%); }
+    }
+
+    /* PROGRESS & STATUS */
+    .loader-footer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+    body.light-theme .progress-bar-track {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 45%;
+      background: linear-gradient(90deg, #00d2ff, #38bdf8, #ffe600);
+      border-radius: 999px;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.8);
+      transition: width 0.1s ease;
+      animation: pulseBar 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseBar {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px #00d2ff); }
+    }
+
+    .metrics-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      letter-spacing: 0.5px;
+    }
+
+    /* CONTROLS */
+    .controls-panel {
+      width: 100%;
+      max-width: 620px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    body.light-theme .controls-panel {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button.btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: inherit;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    body.light-theme button.btn {
+      border-color: rgba(0, 0, 0, 0.12);
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    button.btn.active, button.btn:hover {
+      background: #00d2ff;
+      color: #000;
+      border-color: #00d2ff;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #00d2ff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header-title">
+      <h1>Mosaico de Marcas Oficiales</h1>
+      <p>Componente de Carga para Mundo de Accesorios ERP</p>
+    </div>
+
+    <!-- MAIN MOSAIC LOADER CARD -->
+    <div class="loader-card">
+      <!-- HEADER LOGO -->
+      <div class="brand-header">
+        <div class="brand-main-title">MUNDO DE ACCESORIOS</div>
+        <div class="brand-subtitle-badge">
+          <span>★</span> Distribuidores Oficiales <span>★</span>
+        </div>
+      </div>
+
+      <!-- 🧱 THE 8 BRANDS MOSAIC -->
+      <div class="mosaic-grid" id="mosaicGrid">
+        <div class="brand-tile" id="tile-0" title="DS18 - We Like It Loud">
+          <img src="/brands/ds18.png" alt="DS18 Audio">
+        </div>
+        <div class="brand-tile" id="tile-1" title="FOX Racing Shox">
+          <img src="/brands/fox.png" alt="FOX Shox">
+        </div>
+        <div class="brand-tile" id="tile-2" title="Pioneer Car Audio">
+          <img src="/brands/pioneer.jpg" alt="Pioneer">
+        </div>
+        <div class="brand-tile" id="tile-3" title="Solar Gard Window Films">
+          <img src="/brands/solargard.png" alt="Solar Gard">
+        </div>
+        <div class="brand-tile" id="tile-4" title="3M Automotive">
+          <img src="/brands/3m.png" alt="3M">
+        </div>
+        <div class="brand-tile" id="tile-5" title="KEKO Accesorios">
+          <img src="/brands/keko.jpg" alt="KEKO">
+        </div>
+        <div class="brand-tile" id="tile-6" title="AUXBEAM LED Lighting">
+          <img src="/brands/auxbeam.jpg" alt="AUXBEAM">
+        </div>
+        <div class="brand-tile" id="tile-7" title="DLAA Fog Lamps">
+          <img src="/brands/dlaa.png" alt="DLAA">
+        </div>
+      </div>
+
+      <!-- FOOTER PROGRESS & STATUS -->
+      <div class="loader-footer">
+        <div class="status-text">
+          <span id="statusLabel">Cargando catálogo e inventario...</span>
+        </div>
+
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+
+        <div class="metrics-label" id="metricsLabel">
+          SINCRONIZANDO MARCAS Y PRODUCTOS (45%)
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS PANEL -->
+    <div class="controls-panel">
+      <div class="control-row">
+        <span><strong>Modo de Carga:</strong></span>
+        <div class="btn-group">
+          <button class="btn active" id="btnLoop" onclick="setMode('loop')">Onda Automática (Loop)</button>
+          <button class="btn" id="btnManual" onclick="setMode('manual')">Progreso Manual (0-100%)</button>
+        </div>
+      </div>
+
+      <div class="control-row" id="sliderRow" style="display: none;">
+        <span><strong>Progreso:</strong> <span id="percentLabel" style="font-family: monospace; color: #00d2ff;">45%</span></span>
+        <input type="range" id="progressSlider" min="0" max="100" value="45" oninput="updateManual(this.value)">
+      </div>
+
+      <div class="control-row">
+        <span><strong>Tema Visual:</strong></span>
+        <div class="btn-group">
+          <button class="btn active" id="btnDark" onclick="setTheme('dark')">🌙 Dark Mode</button>
+          <button class="btn" id="btnLight" onclick="setTheme('light')">☀️ Light Mode</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let mode = 'loop';
+    let activeTileIdx = 0;
+    let waveInterval = null;
+
+    const tiles = document.querySelectorAll('.brand-tile');
+    const progressFill = document.getElementById('progressFill');
+    const metricsLabel = document.getElementById('metricsLabel');
+    const percentLabel = document.getElementById('percentLabel');
+    const sliderRow = document.getElementById('sliderRow');
+    const btnLoop = document.getElementById('btnLoop');
+    const btnManual = document.getElementById('btnManual');
+    const statusLabel = document.getElementById('statusLabel');
+
+    function startWave() {
+      if (waveInterval) clearInterval(waveInterval);
+      waveInterval = setInterval(() => {
+        tiles.forEach((t, i) => {
+          if (i === activeTileIdx || i === (activeTileIdx + 1) % tiles.length) {
+            t.classList.add('highlight');
+          } else {
+            t.classList.remove('highlight');
+          }
+        });
+        activeTileIdx = (activeTileIdx + 1) % tiles.length;
+      }, 400);
+    }
+
+    function stopWave() {
+      if (waveInterval) clearInterval(waveInterval);
+      tiles.forEach(t => t.classList.remove('highlight'));
+    }
+
+    startWave();
+
+    function setMode(newMode) {
+      mode = newMode;
+      if (mode === 'loop') {
+        btnLoop.classList.add('active');
+        btnManual.classList.remove('active');
+        sliderRow.style.display = 'none';
+        startWave();
+        progressFill.style.animation = 'pulseBar 2s ease-in-out infinite';
+        progressFill.style.width = '70%';
+        metricsLabel.textContent = 'SINCRONIZANDO MARCAS Y PRODUCTOS';
+        statusLabel.textContent = 'Cargando catálogo e inventario...';
+      } else {
+        btnManual.classList.add('active');
+        btnLoop.classList.remove('active');
+        sliderRow.style.display = 'flex';
+        stopWave();
+        progressFill.style.animation = 'none';
+        updateManual(document.getElementById('progressSlider').value);
+      }
+    }
+
+    function updateManual(val) {
+      if (mode !== 'manual') return;
+      const pct = parseFloat(val);
+      percentLabel.textContent = `${pct}%`;
+      progressFill.style.width = `${pct}%`;
+
+      // Highlight active tile according to progress
+      const targetIdx = Math.min(tiles.length - 1, Math.floor((pct / 100) * tiles.length));
+      tiles.forEach((t, i) => {
+        if (i <= targetIdx) {
+          t.classList.add('highlight');
+        } else {
+          t.classList.remove('highlight');
+        }
+      });
+
+      metricsLabel.textContent = `SINCRONIZANDO MARCAS (${pct}%)`;
+      if (pct >= 100) {
+        statusLabel.textContent = '¡Carga de marcas y productos lista!';
+      } else {
+        statusLabel.textContent = 'Cargando catálogo e inventario...';
+      }
+    }
+
+    function setTheme(theme) {
+      const btnDark = document.getElementById('btnDark');
+      const btnLight = document.getElementById('btnLight');
+      if (theme === 'light') {
+        document.body.classList.add('light-theme');
+        btnLight.classList.add('active');
+        btnDark.classList.remove('active');
+      } else {
+        document.body.classList.remove('light-theme');
+        btnDark.classList.add('active');
+        btnLight.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>

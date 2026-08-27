@@ -84,6 +84,7 @@ import {
 } from "@/lib/formatters";
 
 import SaleForm from "../components/sales/SaleForm";
+import BrandMosaicLoader from "@/components/ui/BrandMosaicLoader";
 import TachometerLoader from "@/components/ui/TachometerLoader";
 import SalePaymentPlanDialog from "../components/sales/SalePaymentPlanDialog";
 import SaleOperationalAuditDialog from "../components/sales/SaleOperationalAuditDialog";
@@ -2830,7 +2831,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   className={isRefreshingData ? "[&_svg]:animate-spin" : ""}
                 />
                 {isRefreshingData ? (
-                  <TachometerLoader variant="mini" statusText="Actualizando datos..." />
+                  <BrandMosaicLoader variant="mini" statusText="Actualizando datos..." />
                 ) : null}
                 <ErpToolbarButton
                   action="saveClear"
