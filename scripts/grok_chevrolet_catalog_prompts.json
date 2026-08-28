@@ -1,0 +1,314 @@
+{
+  "metadata": {
+    "catalog_name": "Grok Chevrolet Complete Vector Catalog",
+    "total_tasks": 24,
+    "total_batches": 4,
+    "batch_size": 6,
+    "models_covered": [
+      "Tracker (4ta Gen Crossover)",
+      "Tracker / Trax (3ra Gen Trax)",
+      "Spark (4ta Gen M400 / Beat)",
+      "Spark (3ra Gen M300 / Spark GT)",
+      "Aveo / Sonic Sedán (2da Gen T300)",
+      "Aveo Clásico Sedán (1ra Gen T250)",
+      "Cruze Sedán (2da Gen D2LC)",
+      "Cruze Sedán (1ra Gen J300)",
+      "N300 / N400 Max Van Pasajeros",
+      "N300 / N400 Move Microbus / Cargo",
+      "Colorado / D-Max Pickup Doble Cabina",
+      "Tahoe / Suburban (5ta Gen T1XX)"
+    ]
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "brand": "Chevrolet",
+      "model": "Tracker (4ta Gen Crossover)",
+      "years": "2020-Presente",
+      "vehicle_type": "SUV Compacto Moderno",
+      "view": "Lateral",
+      "filename": "chevrolet_tracker_2020_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tracker (4ta Gen Crossover) (2020-Presente) SUV Compacto Moderno, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern crossover SUV, athletic stance, sculpted dual-port front grille, sleek LED DRLs, roof rails, high beltline, rear spoiler. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER (4TA GEN CROSSOVER) (2020-Presente) · SUV Compacto Moderno · Lateral'."
+    },
+    {
+      "id": 2,
+      "brand": "Chevrolet",
+      "model": "Tracker (4ta Gen Crossover)",
+      "years": "2020-Presente",
+      "vehicle_type": "SUV Compacto Moderno",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_tracker_2020_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tracker (4ta Gen Crossover) (2020-Presente) SUV Compacto Moderno, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern crossover SUV, athletic stance, sculpted dual-port front grille, sleek LED DRLs, roof rails, high beltline, rear spoiler. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER (4TA GEN CROSSOVER) (2020-Presente) · SUV Compacto Moderno · Superior (Top-Down)'."
+    },
+    {
+      "id": 3,
+      "brand": "Chevrolet",
+      "model": "Tracker / Trax (3ra Gen Trax)",
+      "years": "2013-2020",
+      "vehicle_type": "SUV Urbano Subcompacto",
+      "view": "Lateral",
+      "filename": "chevrolet_tracker_2013_2020_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tracker / Trax (3ra Gen Trax) (2013-2020) SUV Urbano Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact urban SUV, high roofline, muscular wheel arches, prominent Chevrolet dual front grille with bowtie emblem, rear hatch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER / TRAX (3RA GEN TRAX) (2013-2020) · SUV Urbano Subcompacto · Lateral'."
+    },
+    {
+      "id": 4,
+      "brand": "Chevrolet",
+      "model": "Tracker / Trax (3ra Gen Trax)",
+      "years": "2013-2020",
+      "vehicle_type": "SUV Urbano Subcompacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_tracker_2013_2020_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tracker / Trax (3ra Gen Trax) (2013-2020) SUV Urbano Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact urban SUV, high roofline, muscular wheel arches, prominent Chevrolet dual front grille with bowtie emblem, rear hatch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER / TRAX (3RA GEN TRAX) (2013-2020) · SUV Urbano Subcompacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 5,
+      "brand": "Chevrolet",
+      "model": "Spark (4ta Gen M400 / Beat)",
+      "years": "2016-2022",
+      "vehicle_type": "Hatchback Urbano",
+      "view": "Lateral",
+      "filename": "chevrolet_spark_2016_2022_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Spark (4ta Gen M400 / Beat) (2016-2022) Hatchback Urbano, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). City hatchback / Beat, sharp dynamic angular body lines, hidden rear door handles in C-pillar, modern dual-port front grille. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (4TA GEN M400 / BEAT) (2016-2022) · Hatchback Urbano · Lateral'."
+    },
+    {
+      "id": 6,
+      "brand": "Chevrolet",
+      "model": "Spark (4ta Gen M400 / Beat)",
+      "years": "2016-2022",
+      "vehicle_type": "Hatchback Urbano",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_spark_2016_2022_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Spark (4ta Gen M400 / Beat) (2016-2022) Hatchback Urbano, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). City hatchback / Beat, sharp dynamic angular body lines, hidden rear door handles in C-pillar, modern dual-port front grille. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (4TA GEN M400 / BEAT) (2016-2022) · Hatchback Urbano · Superior (Top-Down)'."
+    },
+    {
+      "id": 7,
+      "brand": "Chevrolet",
+      "model": "Spark (3ra Gen M300 / Spark GT)",
+      "years": "2010-2016",
+      "vehicle_type": "Hatchback Subcompacto",
+      "view": "Lateral",
+      "filename": "chevrolet_spark_2010_2016_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Spark (3ra Gen M300 / Spark GT) (2010-2016) Hatchback Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Iconic high-roof city hatchback, hidden vertical rear door handles, aggressive swept-back angular headlights, tall roof silhouette. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (3RA GEN M300 / SPARK GT) (2010-2016) · Hatchback Subcompacto · Lateral'."
+    },
+    {
+      "id": 8,
+      "brand": "Chevrolet",
+      "model": "Spark (3ra Gen M300 / Spark GT)",
+      "years": "2010-2016",
+      "vehicle_type": "Hatchback Subcompacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_spark_2010_2016_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Spark (3ra Gen M300 / Spark GT) (2010-2016) Hatchback Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Iconic high-roof city hatchback, hidden vertical rear door handles, aggressive swept-back angular headlights, tall roof silhouette. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (3RA GEN M300 / SPARK GT) (2010-2016) · Hatchback Subcompacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 9,
+      "brand": "Chevrolet",
+      "model": "Aveo / Sonic Sedán (2da Gen T300)",
+      "years": "2012-2020",
+      "vehicle_type": "Sedán Subcompacto",
+      "view": "Lateral",
+      "filename": "chevrolet_aveo_2012_2020_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Aveo / Sonic Sedán (2da Gen T300) (2012-2020) Sedán Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact sedan / Sonic, exposed twin motorcycle-inspired round headlights, clean body crease, notchback trunk styling. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO / SONIC SEDÁN (2DA GEN T300) (2012-2020) · Sedán Subcompacto · Lateral'."
+    },
+    {
+      "id": 10,
+      "brand": "Chevrolet",
+      "model": "Aveo / Sonic Sedán (2da Gen T300)",
+      "years": "2012-2020",
+      "vehicle_type": "Sedán Subcompacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_aveo_2012_2020_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Aveo / Sonic Sedán (2da Gen T300) (2012-2020) Sedán Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact sedan / Sonic, exposed twin motorcycle-inspired round headlights, clean body crease, notchback trunk styling. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO / SONIC SEDÁN (2DA GEN T300) (2012-2020) · Sedán Subcompacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 11,
+      "brand": "Chevrolet",
+      "model": "Aveo Clásico Sedán (1ra Gen T250)",
+      "years": "2006-2018",
+      "vehicle_type": "Sedán Subcompacto",
+      "view": "Lateral",
+      "filename": "chevrolet_aveo_2006_2018_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Aveo Clásico Sedán (1ra Gen T250) (2006-2018) Sedán Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). High-volume classic subcompact sedan, high decklid, conservative clean body panels, horizontal chrome grille bar. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO CLÁSICO SEDÁN (1RA GEN T250) (2006-2018) · Sedán Subcompacto · Lateral'."
+    },
+    {
+      "id": 12,
+      "brand": "Chevrolet",
+      "model": "Aveo Clásico Sedán (1ra Gen T250)",
+      "years": "2006-2018",
+      "vehicle_type": "Sedán Subcompacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_aveo_2006_2018_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Aveo Clásico Sedán (1ra Gen T250) (2006-2018) Sedán Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). High-volume classic subcompact sedan, high decklid, conservative clean body panels, horizontal chrome grille bar. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO CLÁSICO SEDÁN (1RA GEN T250) (2006-2018) · Sedán Subcompacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 13,
+      "brand": "Chevrolet",
+      "model": "Cruze Sedán (2da Gen D2LC)",
+      "years": "2016-2023",
+      "vehicle_type": "Sedán Compacto",
+      "view": "Lateral",
+      "filename": "chevrolet_cruze_2016_2023_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (2da Gen D2LC) (2016-2023) Sedán Compacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Aerodynamic compact fastback sedan, sweeping aerodynamic roofline, aggressive dual front grille, sculpted muscular side character line. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (2DA GEN D2LC) (2016-2023) · Sedán Compacto · Lateral'."
+    },
+    {
+      "id": 14,
+      "brand": "Chevrolet",
+      "model": "Cruze Sedán (2da Gen D2LC)",
+      "years": "2016-2023",
+      "vehicle_type": "Sedán Compacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_cruze_2016_2023_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (2da Gen D2LC) (2016-2023) Sedán Compacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Aerodynamic compact fastback sedan, sweeping aerodynamic roofline, aggressive dual front grille, sculpted muscular side character line. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (2DA GEN D2LC) (2016-2023) · Sedán Compacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 15,
+      "brand": "Chevrolet",
+      "model": "Cruze Sedán (1ra Gen J300)",
+      "years": "2009-2016",
+      "vehicle_type": "Sedán Compacto",
+      "view": "Lateral",
+      "filename": "chevrolet_cruze_2009_2016_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (1ra Gen J300) (2009-2016) Sedán Compacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Substantial compact sedan, robust arched roofline, bold honeycomb dual-port grille, prominent shoulder line, wrap-around headlights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (1RA GEN J300) (2009-2016) · Sedán Compacto · Lateral'."
+    },
+    {
+      "id": 16,
+      "brand": "Chevrolet",
+      "model": "Cruze Sedán (1ra Gen J300)",
+      "years": "2009-2016",
+      "vehicle_type": "Sedán Compacto",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_cruze_2009_2016_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (1ra Gen J300) (2009-2016) Sedán Compacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Substantial compact sedan, robust arched roofline, bold honeycomb dual-port grille, prominent shoulder line, wrap-around headlights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (1RA GEN J300) (2009-2016) · Sedán Compacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 17,
+      "brand": "Chevrolet",
+      "model": "N300 / N400 Max Van Pasajeros",
+      "years": "2012-Presente",
+      "vehicle_type": "Microbús Pasajeros",
+      "view": "Lateral",
+      "filename": "chevrolet_n300_2012_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Max Van Pasajeros (2012-Presente) Microbús Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Microbus commercial van, cab-over short snub nose hood, dual sliding side doors, high square roof, vertical rectangular taillights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MAX VAN PASAJEROS (2012-Presente) · Microbús Pasajeros · Lateral'."
+    },
+    {
+      "id": 18,
+      "brand": "Chevrolet",
+      "model": "N300 / N400 Max Van Pasajeros",
+      "years": "2012-Presente",
+      "vehicle_type": "Microbús Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_n300_2012_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Max Van Pasajeros (2012-Presente) Microbús Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Microbus commercial van, cab-over short snub nose hood, dual sliding side doors, high square roof, vertical rectangular taillights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MAX VAN PASAJEROS (2012-Presente) · Microbús Pasajeros · Superior (Top-Down)'."
+    },
+    {
+      "id": 19,
+      "brand": "Chevrolet",
+      "model": "N300 / N400 Move Microbus / Cargo",
+      "years": "2012-Presente",
+      "vehicle_type": "Panel Comercial Cargo",
+      "view": "Lateral",
+      "filename": "chevrolet_n300_move_2012_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Move Microbus / Cargo (2012-Presente) Panel Comercial Cargo, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Compact commercial panel / cargo van, snub nose front, sliding side doors, utilitarian boxy cargo profile, flat rear hatch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MOVE MICROBUS / CARGO (2012-Presente) · Panel Comercial Cargo · Lateral'."
+    },
+    {
+      "id": 20,
+      "brand": "Chevrolet",
+      "model": "N300 / N400 Move Microbus / Cargo",
+      "years": "2012-Presente",
+      "vehicle_type": "Panel Comercial Cargo",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_n300_move_2012_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Move Microbus / Cargo (2012-Presente) Panel Comercial Cargo, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Compact commercial panel / cargo van, snub nose front, sliding side doors, utilitarian boxy cargo profile, flat rear hatch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MOVE MICROBUS / CARGO (2012-Presente) · Panel Comercial Cargo · Superior (Top-Down)'."
+    },
+    {
+      "id": 21,
+      "brand": "Chevrolet",
+      "model": "Colorado / D-Max Pickup Doble Cabina",
+      "years": "2015-Presente",
+      "vehicle_type": "Pickup Doble Cabina 4x4",
+      "view": "Lateral",
+      "filename": "chevrolet_colorado_2015_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Colorado / D-Max Pickup Doble Cabina (2015-Presente) Pickup Doble Cabina 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size 4x4 double cab pickup, muscular tall stance, horizontal dual-port front grille with bowtie, high cargo bed, flared fenders. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET COLORADO / D-MAX PICKUP DOBLE CABINA (2015-Presente) · Pickup Doble Cabina 4x4 · Lateral'."
+    },
+    {
+      "id": 22,
+      "brand": "Chevrolet",
+      "model": "Colorado / D-Max Pickup Doble Cabina",
+      "years": "2015-Presente",
+      "vehicle_type": "Pickup Doble Cabina 4x4",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_colorado_2015_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Colorado / D-Max Pickup Doble Cabina (2015-Presente) Pickup Doble Cabina 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size 4x4 double cab pickup, muscular tall stance, horizontal dual-port front grille with bowtie, high cargo bed, flared fenders. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET COLORADO / D-MAX PICKUP DOBLE CABINA (2015-Presente) · Pickup Doble Cabina 4x4 · Superior (Top-Down)'."
+    },
+    {
+      "id": 23,
+      "brand": "Chevrolet",
+      "model": "Tahoe / Suburban (5ta Gen T1XX)",
+      "years": "2020-Presente",
+      "vehicle_type": "SUV Grande 8 Pasajeros",
+      "view": "Lateral",
+      "filename": "chevrolet_tahoe_2020_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tahoe / Suburban (5ta Gen T1XX) (2020-Presente) SUV Grande 8 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size luxury 8-passenger SUV, massive imposing front grille with boomerang DRLs, long straight roofline, dark pillars, power side steps. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TAHOE / SUBURBAN (5TA GEN T1XX) (2020-Presente) · SUV Grande 8 Pasajeros · Lateral'."
+    },
+    {
+      "id": 24,
+      "brand": "Chevrolet",
+      "model": "Tahoe / Suburban (5ta Gen T1XX)",
+      "years": "2020-Presente",
+      "vehicle_type": "SUV Grande 8 Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "chevrolet_tahoe_2020_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Chevrolet Tahoe / Suburban (5ta Gen T1XX) (2020-Presente) SUV Grande 8 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size luxury 8-passenger SUV, massive imposing front grille with boomerang DRLs, long straight roofline, dark pillars, power side steps. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TAHOE / SUBURBAN (5TA GEN T1XX) (2020-Presente) · SUV Grande 8 Pasajeros · Superior (Top-Down)'."
+    }
+  ],
+  "batches": [
+    {
+      "batch_number": 1,
+      "task_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "formatted_paste_text": "=== BATCH 1 DE CHEVROLET (TAREAS ID 1 AL 6) ===\n\nID 1 | MARCA: Chevrolet | MODELO: Tracker (4ta Gen Crossover) | AÑO: 2020-Presente | TIPO: SUV Compacto Moderno | VISTA: Lateral | ARCHIVO: chevrolet_tracker_2020_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tracker (4ta Gen Crossover) (2020-Presente) SUV Compacto Moderno, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern crossover SUV, athletic stance, sculpted dual-port front grille, sleek LED DRLs, roof rails, high beltline, rear spoiler. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER (4TA GEN CROSSOVER) (2020-Presente) · SUV Compacto Moderno · Lateral'.\n\nID 2 | MARCA: Chevrolet | MODELO: Tracker (4ta Gen Crossover) | AÑO: 2020-Presente | TIPO: SUV Compacto Moderno | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_tracker_2020_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tracker (4ta Gen Crossover) (2020-Presente) SUV Compacto Moderno, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern crossover SUV, athletic stance, sculpted dual-port front grille, sleek LED DRLs, roof rails, high beltline, rear spoiler. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER (4TA GEN CROSSOVER) (2020-Presente) · SUV Compacto Moderno · Superior (Top-Down)'.\n\nID 3 | MARCA: Chevrolet | MODELO: Tracker / Trax (3ra Gen Trax) | AÑO: 2013-2020 | TIPO: SUV Urbano Subcompacto | VISTA: Lateral | ARCHIVO: chevrolet_tracker_2013_2020_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tracker / Trax (3ra Gen Trax) (2013-2020) SUV Urbano Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact urban SUV, high roofline, muscular wheel arches, prominent Chevrolet dual front grille with bowtie emblem, rear hatch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER / TRAX (3RA GEN TRAX) (2013-2020) · SUV Urbano Subcompacto · Lateral'.\n\nID 4 | MARCA: Chevrolet | MODELO: Tracker / Trax (3ra Gen Trax) | AÑO: 2013-2020 | TIPO: SUV Urbano Subcompacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_tracker_2013_2020_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tracker / Trax (3ra Gen Trax) (2013-2020) SUV Urbano Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact urban SUV, high roofline, muscular wheel arches, prominent Chevrolet dual front grille with bowtie emblem, rear hatch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TRACKER / TRAX (3RA GEN TRAX) (2013-2020) · SUV Urbano Subcompacto · Superior (Top-Down)'.\n\nID 5 | MARCA: Chevrolet | MODELO: Spark (4ta Gen M400 / Beat) | AÑO: 2016-2022 | TIPO: Hatchback Urbano | VISTA: Lateral | ARCHIVO: chevrolet_spark_2016_2022_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Spark (4ta Gen M400 / Beat) (2016-2022) Hatchback Urbano, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). City hatchback / Beat, sharp dynamic angular body lines, hidden rear door handles in C-pillar, modern dual-port front grille. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (4TA GEN M400 / BEAT) (2016-2022) · Hatchback Urbano · Lateral'.\n\nID 6 | MARCA: Chevrolet | MODELO: Spark (4ta Gen M400 / Beat) | AÑO: 2016-2022 | TIPO: Hatchback Urbano | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_spark_2016_2022_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Spark (4ta Gen M400 / Beat) (2016-2022) Hatchback Urbano, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). City hatchback / Beat, sharp dynamic angular body lines, hidden rear door handles in C-pillar, modern dual-port front grille. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (4TA GEN M400 / BEAT) (2016-2022) · Hatchback Urbano · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 2,
+      "task_ids": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "formatted_paste_text": "=== BATCH 2 DE CHEVROLET (TAREAS ID 7 AL 12) ===\n\nID 7 | MARCA: Chevrolet | MODELO: Spark (3ra Gen M300 / Spark GT) | AÑO: 2010-2016 | TIPO: Hatchback Subcompacto | VISTA: Lateral | ARCHIVO: chevrolet_spark_2010_2016_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Spark (3ra Gen M300 / Spark GT) (2010-2016) Hatchback Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Iconic high-roof city hatchback, hidden vertical rear door handles, aggressive swept-back angular headlights, tall roof silhouette. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (3RA GEN M300 / SPARK GT) (2010-2016) · Hatchback Subcompacto · Lateral'.\n\nID 8 | MARCA: Chevrolet | MODELO: Spark (3ra Gen M300 / Spark GT) | AÑO: 2010-2016 | TIPO: Hatchback Subcompacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_spark_2010_2016_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Spark (3ra Gen M300 / Spark GT) (2010-2016) Hatchback Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Iconic high-roof city hatchback, hidden vertical rear door handles, aggressive swept-back angular headlights, tall roof silhouette. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET SPARK (3RA GEN M300 / SPARK GT) (2010-2016) · Hatchback Subcompacto · Superior (Top-Down)'.\n\nID 9 | MARCA: Chevrolet | MODELO: Aveo / Sonic Sedán (2da Gen T300) | AÑO: 2012-2020 | TIPO: Sedán Subcompacto | VISTA: Lateral | ARCHIVO: chevrolet_aveo_2012_2020_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Aveo / Sonic Sedán (2da Gen T300) (2012-2020) Sedán Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact sedan / Sonic, exposed twin motorcycle-inspired round headlights, clean body crease, notchback trunk styling. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO / SONIC SEDÁN (2DA GEN T300) (2012-2020) · Sedán Subcompacto · Lateral'.\n\nID 10 | MARCA: Chevrolet | MODELO: Aveo / Sonic Sedán (2da Gen T300) | AÑO: 2012-2020 | TIPO: Sedán Subcompacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_aveo_2012_2020_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Aveo / Sonic Sedán (2da Gen T300) (2012-2020) Sedán Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Subcompact sedan / Sonic, exposed twin motorcycle-inspired round headlights, clean body crease, notchback trunk styling. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO / SONIC SEDÁN (2DA GEN T300) (2012-2020) · Sedán Subcompacto · Superior (Top-Down)'.\n\nID 11 | MARCA: Chevrolet | MODELO: Aveo Clásico Sedán (1ra Gen T250) | AÑO: 2006-2018 | TIPO: Sedán Subcompacto | VISTA: Lateral | ARCHIVO: chevrolet_aveo_2006_2018_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Aveo Clásico Sedán (1ra Gen T250) (2006-2018) Sedán Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). High-volume classic subcompact sedan, high decklid, conservative clean body panels, horizontal chrome grille bar. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO CLÁSICO SEDÁN (1RA GEN T250) (2006-2018) · Sedán Subcompacto · Lateral'.\n\nID 12 | MARCA: Chevrolet | MODELO: Aveo Clásico Sedán (1ra Gen T250) | AÑO: 2006-2018 | TIPO: Sedán Subcompacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_aveo_2006_2018_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Aveo Clásico Sedán (1ra Gen T250) (2006-2018) Sedán Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). High-volume classic subcompact sedan, high decklid, conservative clean body panels, horizontal chrome grille bar. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET AVEO CLÁSICO SEDÁN (1RA GEN T250) (2006-2018) · Sedán Subcompacto · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 3,
+      "task_ids": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "formatted_paste_text": "=== BATCH 3 DE CHEVROLET (TAREAS ID 13 AL 18) ===\n\nID 13 | MARCA: Chevrolet | MODELO: Cruze Sedán (2da Gen D2LC) | AÑO: 2016-2023 | TIPO: Sedán Compacto | VISTA: Lateral | ARCHIVO: chevrolet_cruze_2016_2023_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (2da Gen D2LC) (2016-2023) Sedán Compacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Aerodynamic compact fastback sedan, sweeping aerodynamic roofline, aggressive dual front grille, sculpted muscular side character line. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (2DA GEN D2LC) (2016-2023) · Sedán Compacto · Lateral'.\n\nID 14 | MARCA: Chevrolet | MODELO: Cruze Sedán (2da Gen D2LC) | AÑO: 2016-2023 | TIPO: Sedán Compacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_cruze_2016_2023_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (2da Gen D2LC) (2016-2023) Sedán Compacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Aerodynamic compact fastback sedan, sweeping aerodynamic roofline, aggressive dual front grille, sculpted muscular side character line. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (2DA GEN D2LC) (2016-2023) · Sedán Compacto · Superior (Top-Down)'.\n\nID 15 | MARCA: Chevrolet | MODELO: Cruze Sedán (1ra Gen J300) | AÑO: 2009-2016 | TIPO: Sedán Compacto | VISTA: Lateral | ARCHIVO: chevrolet_cruze_2009_2016_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (1ra Gen J300) (2009-2016) Sedán Compacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Substantial compact sedan, robust arched roofline, bold honeycomb dual-port grille, prominent shoulder line, wrap-around headlights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (1RA GEN J300) (2009-2016) · Sedán Compacto · Lateral'.\n\nID 16 | MARCA: Chevrolet | MODELO: Cruze Sedán (1ra Gen J300) | AÑO: 2009-2016 | TIPO: Sedán Compacto | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_cruze_2009_2016_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Cruze Sedán (1ra Gen J300) (2009-2016) Sedán Compacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Substantial compact sedan, robust arched roofline, bold honeycomb dual-port grille, prominent shoulder line, wrap-around headlights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET CRUZE SEDÁN (1RA GEN J300) (2009-2016) · Sedán Compacto · Superior (Top-Down)'.\n\nID 17 | MARCA: Chevrolet | MODELO: N300 / N400 Max Van Pasajeros | AÑO: 2012-Presente | TIPO: Microbús Pasajeros | VISTA: Lateral | ARCHIVO: chevrolet_n300_2012_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Max Van Pasajeros (2012-Presente) Microbús Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Microbus commercial van, cab-over short snub nose hood, dual sliding side doors, high square roof, vertical rectangular taillights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MAX VAN PASAJEROS (2012-Presente) · Microbús Pasajeros · Lateral'.\n\nID 18 | MARCA: Chevrolet | MODELO: N300 / N400 Max Van Pasajeros | AÑO: 2012-Presente | TIPO: Microbús Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_n300_2012_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Max Van Pasajeros (2012-Presente) Microbús Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Microbus commercial van, cab-over short snub nose hood, dual sliding side doors, high square roof, vertical rectangular taillights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MAX VAN PASAJEROS (2012-Presente) · Microbús Pasajeros · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 4,
+      "task_ids": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "formatted_paste_text": "=== BATCH 4 DE CHEVROLET (TAREAS ID 19 AL 24) ===\n\nID 19 | MARCA: Chevrolet | MODELO: N300 / N400 Move Microbus / Cargo | AÑO: 2012-Presente | TIPO: Panel Comercial Cargo | VISTA: Lateral | ARCHIVO: chevrolet_n300_move_2012_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Move Microbus / Cargo (2012-Presente) Panel Comercial Cargo, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Compact commercial panel / cargo van, snub nose front, sliding side doors, utilitarian boxy cargo profile, flat rear hatch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MOVE MICROBUS / CARGO (2012-Presente) · Panel Comercial Cargo · Lateral'.\n\nID 20 | MARCA: Chevrolet | MODELO: N300 / N400 Move Microbus / Cargo | AÑO: 2012-Presente | TIPO: Panel Comercial Cargo | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_n300_move_2012_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet N300 / N400 Move Microbus / Cargo (2012-Presente) Panel Comercial Cargo, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Compact commercial panel / cargo van, snub nose front, sliding side doors, utilitarian boxy cargo profile, flat rear hatch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET N300 / N400 MOVE MICROBUS / CARGO (2012-Presente) · Panel Comercial Cargo · Superior (Top-Down)'.\n\nID 21 | MARCA: Chevrolet | MODELO: Colorado / D-Max Pickup Doble Cabina | AÑO: 2015-Presente | TIPO: Pickup Doble Cabina 4x4 | VISTA: Lateral | ARCHIVO: chevrolet_colorado_2015_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Colorado / D-Max Pickup Doble Cabina (2015-Presente) Pickup Doble Cabina 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size 4x4 double cab pickup, muscular tall stance, horizontal dual-port front grille with bowtie, high cargo bed, flared fenders. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET COLORADO / D-MAX PICKUP DOBLE CABINA (2015-Presente) · Pickup Doble Cabina 4x4 · Lateral'.\n\nID 22 | MARCA: Chevrolet | MODELO: Colorado / D-Max Pickup Doble Cabina | AÑO: 2015-Presente | TIPO: Pickup Doble Cabina 4x4 | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_colorado_2015_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Colorado / D-Max Pickup Doble Cabina (2015-Presente) Pickup Doble Cabina 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size 4x4 double cab pickup, muscular tall stance, horizontal dual-port front grille with bowtie, high cargo bed, flared fenders. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET COLORADO / D-MAX PICKUP DOBLE CABINA (2015-Presente) · Pickup Doble Cabina 4x4 · Superior (Top-Down)'.\n\nID 23 | MARCA: Chevrolet | MODELO: Tahoe / Suburban (5ta Gen T1XX) | AÑO: 2020-Presente | TIPO: SUV Grande 8 Pasajeros | VISTA: Lateral | ARCHIVO: chevrolet_tahoe_2020_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tahoe / Suburban (5ta Gen T1XX) (2020-Presente) SUV Grande 8 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size luxury 8-passenger SUV, massive imposing front grille with boomerang DRLs, long straight roofline, dark pillars, power side steps. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TAHOE / SUBURBAN (5TA GEN T1XX) (2020-Presente) · SUV Grande 8 Pasajeros · Lateral'.\n\nID 24 | MARCA: Chevrolet | MODELO: Tahoe / Suburban (5ta Gen T1XX) | AÑO: 2020-Presente | TIPO: SUV Grande 8 Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: chevrolet_tahoe_2020_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Chevrolet Tahoe / Suburban (5ta Gen T1XX) (2020-Presente) SUV Grande 8 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size luxury 8-passenger SUV, massive imposing front grille with boomerang DRLs, long straight roofline, dark pillars, power side steps. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'CHEVROLET TAHOE / SUBURBAN (5TA GEN T1XX) (2020-Presente) · SUV Grande 8 Pasajeros · Superior (Top-Down)'.\n\n"
+    }
+  ]
+}
