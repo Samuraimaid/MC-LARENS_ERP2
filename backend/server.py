@@ -7718,8 +7718,7 @@ async def decode_vehicle_vin(vin: str, request: Request):
 @api_router.post("/vehicles/ocr-circulation-card")
 async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
     """
-    Procesa el texto o imagen OCR extraído de una tarjeta de circulación de Nicaragua,
-    extrae Chasis/VIN, Placa Departamental, Motor, Color, Año, Marca, Modelo y Cédula.
+    Procesa el texto o imagen OCR extraído de una tarjeta de circulación de Nicaragua (v1 Legacy).
     """
     await require_auth(request)
     raw_text = payload.get("raw_text") or payload.get("text") or ""
@@ -7767,6 +7766,75 @@ async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
         "confidence_score": parsed.get("confidence_score", 0),
         "raw_text_snippet": parsed.get("raw_snippet", ""),
     }
+
+
+@api_router.post("/vehicles/ocr-circulation-card-v2")
+async def ocr_circulation_card_v2(payload: Dict[str, Any], request: Request):
+    """
+    Procesa el fotograma o imagen de la tarjeta de circulación de Nicaragua (v2 Vision/Native OCR).
+    Extrae Chasis/VIN, Placa, Marca, Modelo, Año, Color, Motor, Combustible y Cédula con índices de confianza.
+    """
+    await require_auth(request)
+    raw_text = payload.get("raw_text") or payload.get("text") or ""
+    image_b64 = payload.get("image_base64") or payload.get("image") or ""
+
+    # Validación de tamaño de imagen (rechazar > 4MB base64 ~5.5M caracteres)
+    if image_b64 and len(image_b64) > 5_500_000:
+        raise HTTPException(
+            status_code=413,
+            detail="La imagen enviada excede el límite permitido de 4MB. Por favor envía un fotograma optimizado."
+        )
+
+    from backend.domains.vehicles.circulation_ocr import process_circulation_card_v2
+    result = await process_circulation_card_v2(image_base64=image_b64, raw_text=raw_text)
+
+    # Si hay un VIN de 17 caracteres válido y la marca/modelo tienen baja confianza, consultar vPIC
+    vin = result.get("vin")
+    if vin and len(vin) == 17:
+        try:
+            vpic_info = await decode_vehicle_vin(vin, request)
+            if vpic_info:
+                if not result.get("brand") or result.get("confidence", {}).get("brand", 0) < 0.85:
+                    if vpic_info.get("brand"):
+                        result["brand"] = vpic_info["brand"]
+                        result["marca"] = vpic_info["brand"]
+                        result["confidence"]["brand"] = 0.95
+                if not result.get("model") or result.get("confidence", {}).get("model", 0) < 0.85:
+                    if vpic_info.get("model"):
+                        result["model"] = vpic_info["model"]
+                        result["modelo"] = vpic_info["model"]
+                        result["confidence"]["model"] = 0.92
+                if not result.get("year"):
+                    if vpic_info.get("year"):
+                        result["year"] = vpic_info["year"]
+                        result["anio"] = vpic_info["year"]
+                        result["confidence"]["year"] = 0.95
+                if vpic_info.get("trim"):
+                    result["trim"] = vpic_info["trim"]
+                if vpic_info.get("version_level"):
+                    result["version_level"] = vpic_info["version_level"]
+                if vpic_info.get("vehicle_cab_variant"):
+                    result["vehicle_cab_variant"] = vpic_info["vehicle_cab_variant"]
+        except Exception as e:
+            print(f"[OCR v2] Error decodificando VIN en vPIC: {e}")
+
+    # Re-evaluar needs_review tras cross-referencing
+    needs_review = []
+    conf = result.get("confidence", {})
+    if not result.get("vin") or conf.get("vin", 0) < 0.85:
+        needs_review.append("vin")
+    if not result.get("plate") or conf.get("plate", 0) < 0.85:
+        needs_review.append("plate")
+    if not result.get("brand") or conf.get("brand", 0) < 0.85:
+        needs_review.append("brand")
+    if not result.get("model") or conf.get("model", 0) < 0.85:
+        needs_review.append("model")
+    if not result.get("year") or conf.get("year", 0) < 0.85:
+        needs_review.append("year")
+    result["needs_review"] = needs_review
+
+    return result
+
 
 
 @api_router.post("/vehicles/batch-progress-sync")
