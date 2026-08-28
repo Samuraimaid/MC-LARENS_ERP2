@@ -195,6 +195,22 @@ def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], 
     return plate, 0.65, True
 
 
+def normalize_cedula_nicaragua(raw_cedula: Optional[str]) -> Optional[str]:
+    """
+    Normaliza el formato de cédula nicaragüense (ej: 001-290590-0004L).
+    """
+    if not raw_cedula:
+        return None
+    cedula_pattern = re.compile(r"\b(\d{3})[\s\-_]?(\d{6})[\s\-_]?(\d{4}[A-Za-z])\b")
+    m = cedula_pattern.search(raw_cedula)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3).upper()}"
+    cleaned = re.sub(r"[^A-Za-z0-9]", "", raw_cedula).upper()
+    if len(cleaned) == 14 and cleaned[:13].isdigit() and cleaned[13].isalpha():
+        return f"{cleaned[:3]}-{cleaned[3:9]}-{cleaned[9:]}"
+    return raw_cedula.strip() if raw_cedula.strip() else None
+
+
 def resolve_vehicle_type_slug(raw_type: Optional[str], raw_model: Optional[str] = None) -> Tuple[str, str]:
     """
     Determina el slug canónico de carrocería (sedan, hatchback, pickup, suv, van, truck, moto).
