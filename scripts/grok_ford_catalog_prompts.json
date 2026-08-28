@@ -1,0 +1,314 @@
+{
+  "metadata": {
+    "catalog_name": "Grok Ford Complete Vector Catalog",
+    "total_tasks": 24,
+    "total_batches": 4,
+    "batch_size": 6,
+    "models_covered": [
+      "Ranger Pickup Doble Cabina (5ta Gen P703)",
+      "Ranger Pickup Doble Cabina (4ta Gen T6 Facelift)",
+      "Ranger Pickup Doble Cabina (3ra Gen PJ/PK)",
+      "Explorer (6ta Gen CD6)",
+      "Explorer (5ta Gen D4)",
+      "Escape / Kuga (4ta Gen C2)",
+      "Escape / Kuga (3ra Gen C520)",
+      "Escape (2da Gen CD2)",
+      "EcoSport (2da Gen B2E)",
+      "F-150 Pickup Doble Cabina (14va Gen)",
+      "Everest / Endeavour SUV 4x4 (U704)",
+      "Transit Custom / Pasajeros Van"
+    ]
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (5ta Gen P703)",
+      "years": "2022-Presente",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Lateral",
+      "filename": "ford_ranger_2022_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (5ta Gen P703) (2022-Presente) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Next-Gen midsize pickup, imposing C-clamp LED signature headlights, bold horizontal front grille bar, muscular flared fenders, high bed. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (5TA GEN P703) (2022-Presente) · Camioneta Pickup 4x4 · Lateral'."
+    },
+    {
+      "id": 2,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (5ta Gen P703)",
+      "years": "2022-Presente",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_ranger_2022_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (5ta Gen P703) (2022-Presente) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Next-Gen midsize pickup, imposing C-clamp LED signature headlights, bold horizontal front grille bar, muscular flared fenders, high bed. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (5TA GEN P703) (2022-Presente) · Camioneta Pickup 4x4 · Superior (Top-Down)'."
+    },
+    {
+      "id": 3,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (4ta Gen T6 Facelift)",
+      "years": "2015-2022",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Lateral",
+      "filename": "ford_ranger_2015_2022_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) (2015-2022) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Trapezoidal chrome front grille, swept-back headlights, rugged high-riding pickup double cab profile, side fender vents. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (4TA GEN T6 FACELIFT) (2015-2022) · Camioneta Pickup 4x4 · Lateral'."
+    },
+    {
+      "id": 4,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (4ta Gen T6 Facelift)",
+      "years": "2015-2022",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_ranger_2015_2022_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) (2015-2022) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Trapezoidal chrome front grille, swept-back headlights, rugged high-riding pickup double cab profile, side fender vents. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (4TA GEN T6 FACELIFT) (2015-2022) · Camioneta Pickup 4x4 · Superior (Top-Down)'."
+    },
+    {
+      "id": 5,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (3ra Gen PJ/PK)",
+      "years": "2006-2011",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Lateral",
+      "filename": "ford_ranger_2006_2011_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (3ra Gen PJ/PK) (2006-2011) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Classic robust workhorse pickup, rectangular blocky front grille with Ford oval badge, squared wheel wells, practical cargo bed. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (3RA GEN PJ/PK) (2006-2011) · Camioneta Pickup 4x4 · Lateral'."
+    },
+    {
+      "id": 6,
+      "brand": "Ford",
+      "model": "Ranger Pickup Doble Cabina (3ra Gen PJ/PK)",
+      "years": "2006-2011",
+      "vehicle_type": "Camioneta Pickup 4x4",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_ranger_2006_2011_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (3ra Gen PJ/PK) (2006-2011) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Classic robust workhorse pickup, rectangular blocky front grille with Ford oval badge, squared wheel wells, practical cargo bed. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (3RA GEN PJ/PK) (2006-2011) · Camioneta Pickup 4x4 · Superior (Top-Down)'."
+    },
+    {
+      "id": 7,
+      "brand": "Ford",
+      "model": "Explorer (6ta Gen CD6)",
+      "years": "2019-Presente",
+      "vehicle_type": "SUV Familiar 7 Pasajeros",
+      "view": "Lateral",
+      "filename": "ford_explorer_2019_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Explorer (6ta Gen CD6) (2019-Presente) SUV Familiar 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size luxury 3-row SUV, sloping roofline, athletic stance, wide hexagonal honeycomb grille, blacked-out A, B and D pillars. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (6TA GEN CD6) (2019-Presente) · SUV Familiar 7 Pasajeros · Lateral'."
+    },
+    {
+      "id": 8,
+      "brand": "Ford",
+      "model": "Explorer (6ta Gen CD6)",
+      "years": "2019-Presente",
+      "vehicle_type": "SUV Familiar 7 Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_explorer_2019_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Explorer (6ta Gen CD6) (2019-Presente) SUV Familiar 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size luxury 3-row SUV, sloping roofline, athletic stance, wide hexagonal honeycomb grille, blacked-out A, B and D pillars. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (6TA GEN CD6) (2019-Presente) · SUV Familiar 7 Pasajeros · Superior (Top-Down)'."
+    },
+    {
+      "id": 9,
+      "brand": "Ford",
+      "model": "Explorer (5ta Gen D4)",
+      "years": "2010-2019",
+      "vehicle_type": "SUV Familiar 7 Pasajeros",
+      "view": "Lateral",
+      "filename": "ford_explorer_2010_2019_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Explorer (5ta Gen D4) (2010-2019) SUV Familiar 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern unibody 7-passenger SUV, floating roof effect with blacked-out pillars, bold 3-bar front grille, sculpted waistline. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (5TA GEN D4) (2010-2019) · SUV Familiar 7 Pasajeros · Lateral'."
+    },
+    {
+      "id": 10,
+      "brand": "Ford",
+      "model": "Explorer (5ta Gen D4)",
+      "years": "2010-2019",
+      "vehicle_type": "SUV Familiar 7 Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_explorer_2010_2019_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Explorer (5ta Gen D4) (2010-2019) SUV Familiar 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern unibody 7-passenger SUV, floating roof effect with blacked-out pillars, bold 3-bar front grille, sculpted waistline. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (5TA GEN D4) (2010-2019) · SUV Familiar 7 Pasajeros · Superior (Top-Down)'."
+    },
+    {
+      "id": 11,
+      "brand": "Ford",
+      "model": "Escape / Kuga (4ta Gen C2)",
+      "years": "2019-Presente",
+      "vehicle_type": "SUV Compacto Crossover",
+      "view": "Lateral",
+      "filename": "ford_escape_2019_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (4ta Gen C2) (2019-Presente) SUV Compacto Crossover, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Sleek aerodynamic compact crossover SUV, shark-nose inspired trapezoidal mesh front grille, swooping coupe-like roofline. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (4TA GEN C2) (2019-Presente) · SUV Compacto Crossover · Lateral'."
+    },
+    {
+      "id": 12,
+      "brand": "Ford",
+      "model": "Escape / Kuga (4ta Gen C2)",
+      "years": "2019-Presente",
+      "vehicle_type": "SUV Compacto Crossover",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_escape_2019_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (4ta Gen C2) (2019-Presente) SUV Compacto Crossover, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Sleek aerodynamic compact crossover SUV, shark-nose inspired trapezoidal mesh front grille, swooping coupe-like roofline. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (4TA GEN C2) (2019-Presente) · SUV Compacto Crossover · Superior (Top-Down)'."
+    },
+    {
+      "id": 13,
+      "brand": "Ford",
+      "model": "Escape / Kuga (3ra Gen C520)",
+      "years": "2012-2019",
+      "vehicle_type": "SUV Compacto Crossover",
+      "view": "Lateral",
+      "filename": "ford_escape_2012_2019_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (3ra Gen C520) (2012-2019) SUV Compacto Crossover, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Kinetic design compact SUV, sharp angled headlights, prominent dual lower intake grilles, sweeping rising character line. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (3RA GEN C520) (2012-2019) · SUV Compacto Crossover · Lateral'."
+    },
+    {
+      "id": 14,
+      "brand": "Ford",
+      "model": "Escape / Kuga (3ra Gen C520)",
+      "years": "2012-2019",
+      "vehicle_type": "SUV Compacto Crossover",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_escape_2012_2019_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (3ra Gen C520) (2012-2019) SUV Compacto Crossover, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Kinetic design compact SUV, sharp angled headlights, prominent dual lower intake grilles, sweeping rising character line. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (3RA GEN C520) (2012-2019) · SUV Compacto Crossover · Superior (Top-Down)'."
+    },
+    {
+      "id": 15,
+      "brand": "Ford",
+      "model": "Escape (2da Gen CD2)",
+      "years": "2007-2012",
+      "vehicle_type": "SUV Compacto Clásico",
+      "view": "Lateral",
+      "filename": "ford_escape_2007_2012_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape (2da Gen CD2) (2007-2012) SUV Compacto Clásico, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Boxy utilitarian classic compact SUV, large chrome horizontal grille, upright square windshield, roof rails, high ground clearance. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE (2DA GEN CD2) (2007-2012) · SUV Compacto Clásico · Lateral'."
+    },
+    {
+      "id": 16,
+      "brand": "Ford",
+      "model": "Escape (2da Gen CD2)",
+      "years": "2007-2012",
+      "vehicle_type": "SUV Compacto Clásico",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_escape_2007_2012_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Escape (2da Gen CD2) (2007-2012) SUV Compacto Clásico, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Boxy utilitarian classic compact SUV, large chrome horizontal grille, upright square windshield, roof rails, high ground clearance. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE (2DA GEN CD2) (2007-2012) · SUV Compacto Clásico · Superior (Top-Down)'."
+    },
+    {
+      "id": 17,
+      "brand": "Ford",
+      "model": "EcoSport (2da Gen B2E)",
+      "years": "2012-2022",
+      "vehicle_type": "SUV Urbano Subcompacto",
+      "view": "Lateral",
+      "filename": "ford_ecosport_2012_2022_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford EcoSport (2da Gen B2E) (2012-2022) SUV Urbano Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Urban subcompact crossover, tall athletic stance, hexagonal front grille, mounted external spare tire on rear tailgate. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ECOSPORT (2DA GEN B2E) (2012-2022) · SUV Urbano Subcompacto · Lateral'."
+    },
+    {
+      "id": 18,
+      "brand": "Ford",
+      "model": "EcoSport (2da Gen B2E)",
+      "years": "2012-2022",
+      "vehicle_type": "SUV Urbano Subcompacto",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_ecosport_2012_2022_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford EcoSport (2da Gen B2E) (2012-2022) SUV Urbano Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Urban subcompact crossover, tall athletic stance, hexagonal front grille, mounted external spare tire on rear tailgate. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ECOSPORT (2DA GEN B2E) (2012-2022) · SUV Urbano Subcompacto · Superior (Top-Down)'."
+    },
+    {
+      "id": 19,
+      "brand": "Ford",
+      "model": "F-150 Pickup Doble Cabina (14va Gen)",
+      "years": "2020-Presente",
+      "vehicle_type": "Camioneta Pickup Grande 4x4",
+      "view": "Lateral",
+      "filename": "ford_f150_2020_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford F-150 Pickup Doble Cabina (14va Gen) (2020-Presente) Camioneta Pickup Grande 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size American pickup SuperCrew, massive bold front grille with signature C-clamp DRLs, power dome hood, dropped front window notch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD F-150 PICKUP DOBLE CABINA (14VA GEN) (2020-Presente) · Camioneta Pickup Grande 4x4 · Lateral'."
+    },
+    {
+      "id": 20,
+      "brand": "Ford",
+      "model": "F-150 Pickup Doble Cabina (14va Gen)",
+      "years": "2020-Presente",
+      "vehicle_type": "Camioneta Pickup Grande 4x4",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_f150_2020_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford F-150 Pickup Doble Cabina (14va Gen) (2020-Presente) Camioneta Pickup Grande 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size American pickup SuperCrew, massive bold front grille with signature C-clamp DRLs, power dome hood, dropped front window notch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD F-150 PICKUP DOBLE CABINA (14VA GEN) (2020-Presente) · Camioneta Pickup Grande 4x4 · Superior (Top-Down)'."
+    },
+    {
+      "id": 21,
+      "brand": "Ford",
+      "model": "Everest / Endeavour SUV 4x4 (U704)",
+      "years": "2015-Presente",
+      "vehicle_type": "SUV Todoterreno 7 Pasajeros",
+      "view": "Lateral",
+      "filename": "ford_everest_2015_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Everest / Endeavour SUV 4x4 (U704) (2015-Presente) SUV Todoterreno 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Rugged 7-passenger body-on-frame 4x4 SUV, high ground clearance, bold inverted trapezoidal front grille, sculpted rear tailgate. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EVEREST / ENDEAVOUR SUV 4X4 (U704) (2015-Presente) · SUV Todoterreno 7 Pasajeros · Lateral'."
+    },
+    {
+      "id": 22,
+      "brand": "Ford",
+      "model": "Everest / Endeavour SUV 4x4 (U704)",
+      "years": "2015-Presente",
+      "vehicle_type": "SUV Todoterreno 7 Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_everest_2015_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Everest / Endeavour SUV 4x4 (U704) (2015-Presente) SUV Todoterreno 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Rugged 7-passenger body-on-frame 4x4 SUV, high ground clearance, bold inverted trapezoidal front grille, sculpted rear tailgate. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EVEREST / ENDEAVOUR SUV 4X4 (U704) (2015-Presente) · SUV Todoterreno 7 Pasajeros · Superior (Top-Down)'."
+    },
+    {
+      "id": 23,
+      "brand": "Ford",
+      "model": "Transit Custom / Pasajeros Van",
+      "years": "2014-Presente",
+      "vehicle_type": "Van Comercial Pasajeros",
+      "view": "Lateral",
+      "filename": "ford_transit_2014_present_lat.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Transit Custom / Pasajeros Van (2014-Presente) Van Comercial Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Commercial passenger / cargo van, high aerodynamic front with large trapezoidal grille, sliding passenger side door, vertical rear taillights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD TRANSIT CUSTOM / PASAJEROS VAN (2014-Presente) · Van Comercial Pasajeros · Lateral'."
+    },
+    {
+      "id": 24,
+      "brand": "Ford",
+      "model": "Transit Custom / Pasajeros Van",
+      "years": "2014-Presente",
+      "vehicle_type": "Van Comercial Pasajeros",
+      "view": "Superior (Top-Down)",
+      "filename": "ford_transit_2014_present_top.png",
+      "prompt": "Professional automotive 2D vector technical blueprint illustration of Ford Transit Custom / Pasajeros Van (2014-Presente) Van Comercial Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Commercial passenger / cargo van, high aerodynamic front with large trapezoidal grille, sliding passenger side door, vertical rear taillights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD TRANSIT CUSTOM / PASAJEROS VAN (2014-Presente) · Van Comercial Pasajeros · Superior (Top-Down)'."
+    }
+  ],
+  "batches": [
+    {
+      "batch_number": 1,
+      "task_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "formatted_paste_text": "=== BATCH 1 DE FORD (TAREAS ID 1 AL 6) ===\n\nID 1 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (5ta Gen P703) | AÑO: 2022-Presente | TIPO: Camioneta Pickup 4x4 | VISTA: Lateral | ARCHIVO: ford_ranger_2022_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (5ta Gen P703) (2022-Presente) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Next-Gen midsize pickup, imposing C-clamp LED signature headlights, bold horizontal front grille bar, muscular flared fenders, high bed. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (5TA GEN P703) (2022-Presente) · Camioneta Pickup 4x4 · Lateral'.\n\nID 2 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (5ta Gen P703) | AÑO: 2022-Presente | TIPO: Camioneta Pickup 4x4 | VISTA: Superior (Top-Down) | ARCHIVO: ford_ranger_2022_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (5ta Gen P703) (2022-Presente) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Next-Gen midsize pickup, imposing C-clamp LED signature headlights, bold horizontal front grille bar, muscular flared fenders, high bed. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (5TA GEN P703) (2022-Presente) · Camioneta Pickup 4x4 · Superior (Top-Down)'.\n\nID 3 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) | AÑO: 2015-2022 | TIPO: Camioneta Pickup 4x4 | VISTA: Lateral | ARCHIVO: ford_ranger_2015_2022_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) (2015-2022) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Trapezoidal chrome front grille, swept-back headlights, rugged high-riding pickup double cab profile, side fender vents. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (4TA GEN T6 FACELIFT) (2015-2022) · Camioneta Pickup 4x4 · Lateral'.\n\nID 4 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) | AÑO: 2015-2022 | TIPO: Camioneta Pickup 4x4 | VISTA: Superior (Top-Down) | ARCHIVO: ford_ranger_2015_2022_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (4ta Gen T6 Facelift) (2015-2022) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Trapezoidal chrome front grille, swept-back headlights, rugged high-riding pickup double cab profile, side fender vents. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (4TA GEN T6 FACELIFT) (2015-2022) · Camioneta Pickup 4x4 · Superior (Top-Down)'.\n\nID 5 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (3ra Gen PJ/PK) | AÑO: 2006-2011 | TIPO: Camioneta Pickup 4x4 | VISTA: Lateral | ARCHIVO: ford_ranger_2006_2011_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (3ra Gen PJ/PK) (2006-2011) Camioneta Pickup 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Classic robust workhorse pickup, rectangular blocky front grille with Ford oval badge, squared wheel wells, practical cargo bed. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (3RA GEN PJ/PK) (2006-2011) · Camioneta Pickup 4x4 · Lateral'.\n\nID 6 | MARCA: Ford | MODELO: Ranger Pickup Doble Cabina (3ra Gen PJ/PK) | AÑO: 2006-2011 | TIPO: Camioneta Pickup 4x4 | VISTA: Superior (Top-Down) | ARCHIVO: ford_ranger_2006_2011_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Ranger Pickup Doble Cabina (3ra Gen PJ/PK) (2006-2011) Camioneta Pickup 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Classic robust workhorse pickup, rectangular blocky front grille with Ford oval badge, squared wheel wells, practical cargo bed. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD RANGER PICKUP DOBLE CABINA (3RA GEN PJ/PK) (2006-2011) · Camioneta Pickup 4x4 · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 2,
+      "task_ids": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "formatted_paste_text": "=== BATCH 2 DE FORD (TAREAS ID 7 AL 12) ===\n\nID 7 | MARCA: Ford | MODELO: Explorer (6ta Gen CD6) | AÑO: 2019-Presente | TIPO: SUV Familiar 7 Pasajeros | VISTA: Lateral | ARCHIVO: ford_explorer_2019_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Explorer (6ta Gen CD6) (2019-Presente) SUV Familiar 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size luxury 3-row SUV, sloping roofline, athletic stance, wide hexagonal honeycomb grille, blacked-out A, B and D pillars. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (6TA GEN CD6) (2019-Presente) · SUV Familiar 7 Pasajeros · Lateral'.\n\nID 8 | MARCA: Ford | MODELO: Explorer (6ta Gen CD6) | AÑO: 2019-Presente | TIPO: SUV Familiar 7 Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: ford_explorer_2019_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Explorer (6ta Gen CD6) (2019-Presente) SUV Familiar 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Mid-size luxury 3-row SUV, sloping roofline, athletic stance, wide hexagonal honeycomb grille, blacked-out A, B and D pillars. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (6TA GEN CD6) (2019-Presente) · SUV Familiar 7 Pasajeros · Superior (Top-Down)'.\n\nID 9 | MARCA: Ford | MODELO: Explorer (5ta Gen D4) | AÑO: 2010-2019 | TIPO: SUV Familiar 7 Pasajeros | VISTA: Lateral | ARCHIVO: ford_explorer_2010_2019_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Explorer (5ta Gen D4) (2010-2019) SUV Familiar 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern unibody 7-passenger SUV, floating roof effect with blacked-out pillars, bold 3-bar front grille, sculpted waistline. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (5TA GEN D4) (2010-2019) · SUV Familiar 7 Pasajeros · Lateral'.\n\nID 10 | MARCA: Ford | MODELO: Explorer (5ta Gen D4) | AÑO: 2010-2019 | TIPO: SUV Familiar 7 Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: ford_explorer_2010_2019_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Explorer (5ta Gen D4) (2010-2019) SUV Familiar 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Modern unibody 7-passenger SUV, floating roof effect with blacked-out pillars, bold 3-bar front grille, sculpted waistline. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EXPLORER (5TA GEN D4) (2010-2019) · SUV Familiar 7 Pasajeros · Superior (Top-Down)'.\n\nID 11 | MARCA: Ford | MODELO: Escape / Kuga (4ta Gen C2) | AÑO: 2019-Presente | TIPO: SUV Compacto Crossover | VISTA: Lateral | ARCHIVO: ford_escape_2019_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (4ta Gen C2) (2019-Presente) SUV Compacto Crossover, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Sleek aerodynamic compact crossover SUV, shark-nose inspired trapezoidal mesh front grille, swooping coupe-like roofline. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (4TA GEN C2) (2019-Presente) · SUV Compacto Crossover · Lateral'.\n\nID 12 | MARCA: Ford | MODELO: Escape / Kuga (4ta Gen C2) | AÑO: 2019-Presente | TIPO: SUV Compacto Crossover | VISTA: Superior (Top-Down) | ARCHIVO: ford_escape_2019_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (4ta Gen C2) (2019-Presente) SUV Compacto Crossover, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Sleek aerodynamic compact crossover SUV, shark-nose inspired trapezoidal mesh front grille, swooping coupe-like roofline. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (4TA GEN C2) (2019-Presente) · SUV Compacto Crossover · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 3,
+      "task_ids": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "formatted_paste_text": "=== BATCH 3 DE FORD (TAREAS ID 13 AL 18) ===\n\nID 13 | MARCA: Ford | MODELO: Escape / Kuga (3ra Gen C520) | AÑO: 2012-2019 | TIPO: SUV Compacto Crossover | VISTA: Lateral | ARCHIVO: ford_escape_2012_2019_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (3ra Gen C520) (2012-2019) SUV Compacto Crossover, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Kinetic design compact SUV, sharp angled headlights, prominent dual lower intake grilles, sweeping rising character line. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (3RA GEN C520) (2012-2019) · SUV Compacto Crossover · Lateral'.\n\nID 14 | MARCA: Ford | MODELO: Escape / Kuga (3ra Gen C520) | AÑO: 2012-2019 | TIPO: SUV Compacto Crossover | VISTA: Superior (Top-Down) | ARCHIVO: ford_escape_2012_2019_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape / Kuga (3ra Gen C520) (2012-2019) SUV Compacto Crossover, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Kinetic design compact SUV, sharp angled headlights, prominent dual lower intake grilles, sweeping rising character line. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE / KUGA (3RA GEN C520) (2012-2019) · SUV Compacto Crossover · Superior (Top-Down)'.\n\nID 15 | MARCA: Ford | MODELO: Escape (2da Gen CD2) | AÑO: 2007-2012 | TIPO: SUV Compacto Clásico | VISTA: Lateral | ARCHIVO: ford_escape_2007_2012_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape (2da Gen CD2) (2007-2012) SUV Compacto Clásico, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Boxy utilitarian classic compact SUV, large chrome horizontal grille, upright square windshield, roof rails, high ground clearance. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE (2DA GEN CD2) (2007-2012) · SUV Compacto Clásico · Lateral'.\n\nID 16 | MARCA: Ford | MODELO: Escape (2da Gen CD2) | AÑO: 2007-2012 | TIPO: SUV Compacto Clásico | VISTA: Superior (Top-Down) | ARCHIVO: ford_escape_2007_2012_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Escape (2da Gen CD2) (2007-2012) SUV Compacto Clásico, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Boxy utilitarian classic compact SUV, large chrome horizontal grille, upright square windshield, roof rails, high ground clearance. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ESCAPE (2DA GEN CD2) (2007-2012) · SUV Compacto Clásico · Superior (Top-Down)'.\n\nID 17 | MARCA: Ford | MODELO: EcoSport (2da Gen B2E) | AÑO: 2012-2022 | TIPO: SUV Urbano Subcompacto | VISTA: Lateral | ARCHIVO: ford_ecosport_2012_2022_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford EcoSport (2da Gen B2E) (2012-2022) SUV Urbano Subcompacto, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Urban subcompact crossover, tall athletic stance, hexagonal front grille, mounted external spare tire on rear tailgate. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ECOSPORT (2DA GEN B2E) (2012-2022) · SUV Urbano Subcompacto · Lateral'.\n\nID 18 | MARCA: Ford | MODELO: EcoSport (2da Gen B2E) | AÑO: 2012-2022 | TIPO: SUV Urbano Subcompacto | VISTA: Superior (Top-Down) | ARCHIVO: ford_ecosport_2012_2022_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford EcoSport (2da Gen B2E) (2012-2022) SUV Urbano Subcompacto, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Urban subcompact crossover, tall athletic stance, hexagonal front grille, mounted external spare tire on rear tailgate. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD ECOSPORT (2DA GEN B2E) (2012-2022) · SUV Urbano Subcompacto · Superior (Top-Down)'.\n\n"
+    },
+    {
+      "batch_number": 4,
+      "task_ids": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "formatted_paste_text": "=== BATCH 4 DE FORD (TAREAS ID 19 AL 24) ===\n\nID 19 | MARCA: Ford | MODELO: F-150 Pickup Doble Cabina (14va Gen) | AÑO: 2020-Presente | TIPO: Camioneta Pickup Grande 4x4 | VISTA: Lateral | ARCHIVO: ford_f150_2020_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford F-150 Pickup Doble Cabina (14va Gen) (2020-Presente) Camioneta Pickup Grande 4x4, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size American pickup SuperCrew, massive bold front grille with signature C-clamp DRLs, power dome hood, dropped front window notch. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD F-150 PICKUP DOBLE CABINA (14VA GEN) (2020-Presente) · Camioneta Pickup Grande 4x4 · Lateral'.\n\nID 20 | MARCA: Ford | MODELO: F-150 Pickup Doble Cabina (14va Gen) | AÑO: 2020-Presente | TIPO: Camioneta Pickup Grande 4x4 | VISTA: Superior (Top-Down) | ARCHIVO: ford_f150_2020_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford F-150 Pickup Doble Cabina (14va Gen) (2020-Presente) Camioneta Pickup Grande 4x4, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Full-size American pickup SuperCrew, massive bold front grille with signature C-clamp DRLs, power dome hood, dropped front window notch. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD F-150 PICKUP DOBLE CABINA (14VA GEN) (2020-Presente) · Camioneta Pickup Grande 4x4 · Superior (Top-Down)'.\n\nID 21 | MARCA: Ford | MODELO: Everest / Endeavour SUV 4x4 (U704) | AÑO: 2015-Presente | TIPO: SUV Todoterreno 7 Pasajeros | VISTA: Lateral | ARCHIVO: ford_everest_2015_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Everest / Endeavour SUV 4x4 (U704) (2015-Presente) SUV Todoterreno 7 Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Rugged 7-passenger body-on-frame 4x4 SUV, high ground clearance, bold inverted trapezoidal front grille, sculpted rear tailgate. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EVEREST / ENDEAVOUR SUV 4X4 (U704) (2015-Presente) · SUV Todoterreno 7 Pasajeros · Lateral'.\n\nID 22 | MARCA: Ford | MODELO: Everest / Endeavour SUV 4x4 (U704) | AÑO: 2015-Presente | TIPO: SUV Todoterreno 7 Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: ford_everest_2015_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Everest / Endeavour SUV 4x4 (U704) (2015-Presente) SUV Todoterreno 7 Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Rugged 7-passenger body-on-frame 4x4 SUV, high ground clearance, bold inverted trapezoidal front grille, sculpted rear tailgate. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD EVEREST / ENDEAVOUR SUV 4X4 (U704) (2015-Presente) · SUV Todoterreno 7 Pasajeros · Superior (Top-Down)'.\n\nID 23 | MARCA: Ford | MODELO: Transit Custom / Pasajeros Van | AÑO: 2014-Presente | TIPO: Van Comercial Pasajeros | VISTA: Lateral | ARCHIVO: ford_transit_2014_present_lat.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Transit Custom / Pasajeros Van (2014-Presente) Van Comercial Pasajeros, exact side profile view (Lateral), vehicle facing left, horizontally centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining doors, panels, bumpers, hood, fenders and roof contours. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Commercial passenger / cargo van, high aerodynamic front with large trapezoidal grille, sliding passenger side door, vertical rear taillights. Tires, wheels, and ground shadow in crisp clean blueprint style. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD TRANSIT CUSTOM / PASAJEROS VAN (2014-Presente) · Van Comercial Pasajeros · Lateral'.\n\nID 24 | MARCA: Ford | MODELO: Transit Custom / Pasajeros Van | AÑO: 2014-Presente | TIPO: Van Comercial Pasajeros | VISTA: Superior (Top-Down) | ARCHIVO: ford_transit_2014_present_top.png\nPROMPT:\nProfessional automotive 2D vector technical blueprint illustration of Ford Transit Custom / Pasajeros Van (2014-Presente) Van Comercial Pasajeros, exact top-down view (Superior Cenital), oriented horizontally with front of vehicle facing left, centered with generous padding. Solid pure white body paint (#FFFFFF) with crisp, clean black outline vector lines defining hood contours, roof panel, front windshield, side mirrors, rear window, roof ridges/rails and tailgate/trunk. Uniform flat dark charcoal tinted glass windows (#1e293b / #334155). Headlights illuminated in bright cyan-blue (#00E5FF / #38bdf8), Taillights illuminated in bright red (#FF0033 / #ef4444). Commercial passenger / cargo van, high aerodynamic front with large trapezoidal grille, sliding passenger side door, vertical rear taillights. Pure solid white background (#FFFFFF). Include small legible technical text in bottom-left corner: 'FORD TRANSIT CUSTOM / PASAJEROS VAN (2014-Presente) · Van Comercial Pasajeros · Superior (Top-Down)'.\n\n"
+    }
+  ]
+}
