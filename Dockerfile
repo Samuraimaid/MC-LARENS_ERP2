@@ -19,6 +19,7 @@ COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 COPY frontend/ ./
+RUN rm -rf public/uploads public/vehicles/models public/vehicles/blueprints
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV VITE_BACKEND_URL=""
 ENV VITE_AUTH_URL="/api/auth/login"
