@@ -16,23 +16,57 @@ def ingest():
     print(f"Loaded {len(products)} products from {seed_file}")
 
     # Inspect MongoDB URI
-    mongo_uri = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URI")
+    mongo_uri = (
+        os.environ.get("MONGODB_LOCAL_URI")
+        or os.environ.get("MONGO_URL")
+        or os.environ.get("MONGODB_URI")
+        or os.environ.get("MONGO_URI")
+    )
+    db_name = os.environ.get("DB_NAME", "mc-larens2_mundo_accesorios_erp")
+
     if not mongo_uri:
-        for p in [Path(".env"), Path("backend/.env")]:
+        for p in [Path("deploy/.env"), Path(".env"), Path("backend/.env")]:
             if p.exists():
                 for line in p.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("MONGODB_URI=") or line.startswith("MONGO_URI="):
-                        mongo_uri = line.split("=", 1)[1].strip().strip('"').strip("'")
-                        break
+                    line_clean = line.strip()
+                    if line_clean.startswith("#") or "=" not in line_clean:
+                        continue
+                    k, v = line_clean.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k in ("MONGODB_LOCAL_URI", "MONGO_URL", "MONGODB_URI", "MONGO_URI") and not mongo_uri:
+                        mongo_uri = v
+                    if k == "DB_NAME":
+                        db_name = v
+
+    if not mongo_uri or mongo_uri.startswith("mongodb://localhost"):
+        try:
+            import subprocess
+            cmd = ["gcloud", "run", "services", "describe", "mclarens-erp", "--region", "us-central1", "--format=json"]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            if proc.returncode == 0:
+                service_data = json.loads(proc.stdout)
+                envs = service_data.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [{}])[0].get("env", [])
+                for e in envs:
+                    name = e.get("name")
+                    val = e.get("value")
+                    if name in ("MONGODB_LOCAL_URI", "MONGO_URL", "MONGODB_URI", "MONGO_URI") and val:
+                        mongo_uri = val
+                        print(f"Auto-discovered MongoDB Atlas connection from Cloud Run!")
+                    if name == "DB_NAME" and val:
+                        db_name = val
+        except Exception:
+            pass
+
     if not mongo_uri:
         mongo_uri = "mongodb://localhost:27017"
 
     try:
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
-        db = client["mclarens_erp"]
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        db = client[db_name]
         # Test connection
         db.command("ping")
-        print("Connected to MongoDB successfully!")
+        print(f"Connected to MongoDB database '{db_name}' successfully!")
         
         inserted = 0
         updated = 0
