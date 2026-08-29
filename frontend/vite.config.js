@@ -143,9 +143,15 @@ module.exports = defineConfig(({ mode, command }) => {
       include: /src\/.*\.[jt]sx?$/,
       exclude: [],
     },
+    optimizeDeps: {
+      esbuildOptions: {
+        loader: {
+          ".js": "jsx",
+        },
+      },
+    },
     plugins: [
       react({
-        include: /\.(jsx|js|tsx|ts)$/,
         babel: isDevServer
           ? {
               plugins: [path.resolve(__dirname, "plugins/visual-edits/babel-metadata-plugin.js")],
