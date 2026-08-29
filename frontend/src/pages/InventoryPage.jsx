@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { formatCurrency } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
