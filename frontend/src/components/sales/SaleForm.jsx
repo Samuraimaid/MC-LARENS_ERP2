@@ -2877,6 +2877,48 @@ export default function SaleForm({
     );
   }, [localCustomers, customerSearch]);
 
+  const warehouseById = useMemo(
+    () => new Map((warehouses || []).map((warehouse) => [String(warehouse.warehouse_id), warehouse])),
+    [warehouses]
+  );
+
+  const inventoryByProductId = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(inventory)) {
+      for (let i = 0; i < inventory.length; i++) {
+        const row = inventory[i];
+        const pid = String(row?.product_id || "");
+        if (!pid) continue;
+        let list = map.get(pid);
+        if (!list) {
+          list = [];
+          map.set(pid, list);
+        }
+        list.push(row);
+      }
+    }
+    return map;
+  }, [inventory]);
+
+  const crossBranchByProductId = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(crossBranchInventory)) {
+      for (let i = 0; i < crossBranchInventory.length; i++) {
+        const row = crossBranchInventory[i];
+        if (Number(row?.quantity || 0) <= 0) continue;
+        const pid = String(row?.product_id || "");
+        if (!pid) continue;
+        let list = map.get(pid);
+        if (!list) {
+          list = [];
+          map.set(pid, list);
+        }
+        list.push(row);
+      }
+    }
+    return map;
+  }, [crossBranchInventory]);
+
   const filteredProducts = useMemo(() => {
     const list = Array.isArray(products) ? products : [];
     if (!productSearch) return list;
@@ -2884,22 +2926,25 @@ export default function SaleForm({
 
     // Si hay un vehículo seleccionado en modo Instalado, priorizamos y ordenamos los productos compatibles
     if (selectedVehicleData && logisticMode === "installed") {
-      return [...matched].sort((a, b) => {
-        const compA = getProductVehicleCompatibility(a, selectedVehicleData);
-        const compB = getProductVehicleCompatibility(b, selectedVehicleData);
-        if (compA.isCompatible && !compB.isCompatible) return -1;
-        if (!compA.isCompatible && compB.isCompatible) return 1;
+      const scored = matched.map((product) => ({
+        product,
+        compat: getProductVehicleCompatibility(product, selectedVehicleData),
+      }));
+      scored.sort((a, b) => {
+        if (a.compat.isCompatible && !b.compat.isCompatible) return -1;
+        if (!a.compat.isCompatible && b.compat.isCompatible) return 1;
         return 0;
       });
+      return scored.map((s) => s.product);
     }
 
     return matched;
   }, [products, productSearch, selectedVehicleData, logisticMode]);
 
-  const warehouseById = useMemo(
-    () => new Map((warehouses || []).map((warehouse) => [String(warehouse.warehouse_id), warehouse])),
-    [warehouses]
-  );
+  const MAX_SEARCH_DROPDOWN_ITEMS = 35;
+  const visibleProducts = useMemo(() => {
+    return filteredProducts.slice(0, MAX_SEARCH_DROPDOWN_ITEMS);
+  }, [filteredProducts]);
 
   const getProductStockThreshold = useCallback((product) => {
     const thresholdCandidates = [
@@ -2932,9 +2977,7 @@ export default function SaleForm({
     const normalizedProductId = String(product?.product_id || "");
     if (!normalizedProductId) return getFallbackProductStock(product);
 
-    const productRows = Array.isArray(inventory)
-      ? inventory.filter((row) => String(row?.product_id || "") === normalizedProductId)
-      : [];
+    const productRows = inventoryByProductId.get(normalizedProductId) || [];
 
     if (productRows.length === 0) {
       return getFallbackProductStock(product);
@@ -2942,18 +2985,22 @@ export default function SaleForm({
 
     const userBranchId = String(user?.branch_id || "");
     if (userBranchId) {
-      return productRows.reduce((total, row) => {
+      let total = 0;
+      for (let i = 0; i < productRows.length; i++) {
+        const row = productRows[i];
         const warehouse = warehouseById.get(String(row?.warehouse_id || ""));
         const branchId = String(warehouse?.branch_id || "");
-        if (branchId !== userBranchId) return total;
-        return total + Number(row?.quantity || 0);
-      }, 0);
+        if (branchId === userBranchId) {
+          total += Number(row?.quantity || 0);
+        }
+      }
+      return total;
     }
 
     // If seller has no assigned branch, we cannot infer "local store" stock reliably.
     // Keep tone policy strict to seller store only by treating local stock as zero.
     return 0;
-  }, [getFallbackProductStock, inventory, user?.branch_id, warehouseById]);
+  }, [getFallbackProductStock, inventoryByProductId, user?.branch_id, warehouseById]);
 
   const getProductStockStatus = useCallback((product, isServiceProduct) => {
     if (isServiceProduct) return "service";
@@ -4043,7 +4090,7 @@ export default function SaleForm({
           </div>
           {productSearch.trim() ? (
             <div ref={productListRef} className="max-h-72 space-y-2 overflow-y-auto pr-1 animate-fade-up-soft">
-              {filteredProducts.map((p, index) => (
+              {visibleProducts.map((p, index) => (
                 (() => {
                   const normalizedSku = String(p.sku || "").toUpperCase();
                   const normalizedName = String(p.name || "").toLowerCase();
@@ -4071,7 +4118,7 @@ export default function SaleForm({
                   onClick={(event) => addToCart(p, { sourceElement: event.currentTarget })}
                   onMouseEnter={() => setProductHighlightIndex(index)}
                 >
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} loading="lazy" className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
                   <div className="min-w-0 self-start">
                     <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{p.name}</p>
                     <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
@@ -4100,9 +4147,8 @@ export default function SaleForm({
                         const fallbackStockValue = getLocalStoreStockValue(p);
                         const hasFallbackStockValue = Number.isFinite(fallbackStockValue);
                         const fallbackThreshold = getProductStockThreshold(p);
-                        const stockRows = Array.isArray(inventory)
-                          ? inventory.filter((row) => String(row?.product_id || "") === String(p.product_id || "") && Number(row?.quantity || 0) > 0)
-                          : [];
+                        const rawStockRows = inventoryByProductId.get(String(p.product_id || "")) || [];
+                        const stockRows = rawStockRows.filter((row) => Number(row?.quantity || 0) > 0);
 
                         if (stockRows.length === 0) {
                           if (isServiceProduct) return <div className="min-h-[3.25rem]" />;
@@ -4135,8 +4181,6 @@ export default function SaleForm({
                           );
                         }
 
-                        const warehouseById = new Map((warehouses || []).map((wh) => [String(wh.warehouse_id), wh]));
-
                         const sellerStoreRows = [];
                         const otherStoreRows = [];
                         const otherWarehouseRows = [];
@@ -4166,12 +4210,7 @@ export default function SaleForm({
                           });
                         });
 
-                        const remoteStockRows = Array.isArray(crossBranchInventory)
-                          ? crossBranchInventory.filter(
-                            (row) => String(row?.product_id || "") === String(p.product_id || "")
-                              && Number(row?.quantity || 0) > 0,
-                          )
-                          : [];
+                        const remoteStockRows = crossBranchByProductId.get(String(p.product_id || "")) || [];
                         remoteStockRows.forEach((row) => {
                           const branchLabel = String(row.branch_name || row.branch_id || "Sucursal");
                           const warehouseLabel = String(row.warehouse_name || row.warehouse_id || "Bodega");
@@ -4306,6 +4345,11 @@ export default function SaleForm({
                   );
                 })()
               ))}
+              {filteredProducts.length > visibleProducts.length ? (
+                <div className="py-2.5 px-3 text-center text-xs text-muted-foreground bg-muted/40 rounded-xl border border-dashed border-border/80">
+                  Mostrando <strong>{visibleProducts.length}</strong> de <strong>{filteredProducts.length}</strong> productos encontrados. Escribe más letras o el modelo de auto (ej. <em>"halogeno yaris"</em>) para filtrar con precisión.
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">Escribe para buscar productos</p>

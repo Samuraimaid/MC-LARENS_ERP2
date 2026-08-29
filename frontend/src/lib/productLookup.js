@@ -30,12 +30,18 @@ export function productMatchesSearch(product, searchValue) {
   if (!normalized) return true;
 
   const lower = normalized.toLowerCase();
-  if (getProductCodeValues(product).some((value) => value.toLowerCase().includes(lower))) {
+  
+  // 1. Coincidencia directa por código exacto o parcial
+  const codeValues = getProductCodeValues(product);
+  if (codeValues.some((value) => value.toLowerCase().includes(lower))) {
     return true;
   }
 
-  return (
-    String(product?.name || "").toLowerCase().includes(lower)
-    || String(product?.category || "").toLowerCase().includes(lower)
-  );
+  // 2. Coincidencia multi-token (todas las palabras buscadas deben coincidir)
+  const tokens = lower.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return true;
+
+  const searchableText = `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""} ${product?.subcategory || ""} ${product?.brand || ""}`.toLowerCase();
+
+  return tokens.every((token) => searchableText.includes(token));
 }

@@ -148,12 +148,17 @@ export function CatalogPage() {
   const [sourceContext, setSourceContext] = useState(null);
   const [vehiclesById, setVehiclesById] = useState({});
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
+  const [visibleCount, setVisibleCount] = useState(30);
   const [draftDialog, setDraftDialog] = useState({
     open: false,
     type: null,
     product: null,
     choices: [],
   });
+
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [search, category, subcategory, productType, vehicleType, boardTab]);
 
   const getDraftConfig = (type) => {
     const base = DRAFT_CONFIG[type];
@@ -764,7 +769,7 @@ export function CatalogPage() {
                     <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">Sin productos en esta sección.</div>
                   ) : (
                     <div className="grid gap-6">
-                      {list.map((product) => {
+                      {list.slice(0, visibleCount).map((product) => {
             const compatibility = product?.compatibility || {};
             const compatTypes = getCompatibilityTypes(product);
             const image = getProductImage(product);
@@ -785,6 +790,7 @@ export function CatalogPage() {
                         <img
                           src={image}
                           alt={product.name || "Producto"}
+                          loading="lazy"
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -883,6 +889,17 @@ export function CatalogPage() {
               </Card>
             );
                       })}
+                      {list.length > visibleCount && (
+                        <div className="text-center pt-2 pb-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setVisibleCount((prev) => prev + 30)}
+                            className="w-full"
+                          >
+                            Cargar más productos ({visibleCount} de {list.length})
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
