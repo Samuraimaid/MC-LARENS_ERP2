@@ -283,20 +283,21 @@ export function AuthProvider({ children }) {
             detailMessage === "Invalid session" ||
             detailMessage === "Unauthorized");
 
+        const isLoginPage = typeof window !== "undefined" && window.location.pathname.startsWith("/login");
         if (isSessionTimeout) {
           setUser(null);
           setStoredUser(null);
           setStoredSessionToken(null);
           setPermissions(null);
-          if (!invalidSessionNotifiedRef.current) {
+          if (!invalidSessionNotifiedRef.current && !isLoginPage) {
             let msg = "Se cerró la sesión. Vuelve a iniciar con tu PIN.";
             if (detailCode === "SESSION_IDLE_TIMEOUT") {
               msg =
-                detailMessage ||
+                (typeof detailMessage === "string" ? detailMessage : null) ||
                 "Sesión cerrada por inactividad. Inicia sesión de nuevo.";
             } else if (detailCode === "SESSION_EXPIRED") {
               msg =
-                detailMessage ||
+                (typeof detailMessage === "string" ? detailMessage : null) ||
                 "La sesión ha expirado. Vuelve a iniciar sesión con tu PIN.";
             } else if (
               detailMessage === "Invalid session" ||
@@ -305,7 +306,7 @@ export function AuthProvider({ children }) {
               msg =
                 "Se cerró sesión en otro dispositivo que estaba logueado con tu cuenta";
             }
-            toast.error(msg);
+            toast.error(typeof msg === "string" ? msg : "Sesión expirada");
             invalidSessionNotifiedRef.current = true;
           }
         }
