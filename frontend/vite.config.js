@@ -1,6 +1,6 @@
 const path = require("path");
 const os = require("os");
-const { defineConfig, loadEnv, transformWithEsbuild } = require("vite");
+const { defineConfig, loadEnv } = require("vite");
 const react = require("@vitejs/plugin-react");
 
 const SERVER_START_TIME = Date.now();
@@ -123,25 +123,6 @@ function healthPlugin() {
   };
 }
 
-function jsxSourcePlugin() {
-  return {
-    name: "frontend-jsx-source-transform",
-    enforce: "pre",
-    async transform(code, id) {
-      const normalizedId = id.replace(/\\/g, "/");
-
-      if (!normalizedId.includes("/src/") || !/\.(js|jsx)$/.test(normalizedId)) {
-        return null;
-      }
-
-      return transformWithEsbuild(code, id, {
-        loader: "jsx",
-        jsx: "automatic",
-      });
-    },
-  };
-}
-
 module.exports = defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const isDevServer = command === "serve";
@@ -157,9 +138,14 @@ module.exports = defineConfig(({ mode, command }) => {
   };
 
   return {
+    esbuild: {
+      loader: "jsx",
+      include: /src\/.*\.[jt]sx?$/,
+      exclude: [],
+    },
     plugins: [
-      jsxSourcePlugin(),
       react({
+        include: /\.(jsx|js|tsx|ts)$/,
         babel: isDevServer
           ? {
               plugins: [path.resolve(__dirname, "plugins/visual-edits/babel-metadata-plugin.js")],
