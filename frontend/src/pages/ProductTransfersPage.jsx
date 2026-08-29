@@ -365,8 +365,7 @@ export function ProductTransfersPage() {
                         <SelectItem value="two_step">En 2 Pasos con Estado En Tránsito (Recomendado)</SelectItem>
                         <SelectItem value="direct">Traslado Inmediato Directo</SelectItem>
                       </SelectContent>
-                    </SelectContent>
-                  </Select>
+                    </Select>
                   </div>
                 )}
               </div>
