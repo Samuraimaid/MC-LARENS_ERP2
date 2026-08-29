@@ -42,11 +42,22 @@ def ingest():
     if not mongo_uri or mongo_uri.startswith("mongodb://localhost"):
         try:
             import subprocess
-            cmd = ["gcloud", "run", "services", "describe", "mclarens-erp", "--region", "us-central1", "--format=json"]
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if proc.returncode == 0:
+            cmd = [
+                "gcloud", "run", "services", "describe", "mclarens-erp",
+                "--region", "us-central1",
+                "--project", "gen-lang-client-0971793042",
+                "--format=json"
+            ]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            if proc.returncode == 0 and proc.stdout:
                 service_data = json.loads(proc.stdout)
-                envs = service_data.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [{}])[0].get("env", [])
+                envs = (
+                    service_data.get("spec", {})
+                    .get("template", {})
+                    .get("spec", {})
+                    .get("containers", [{}])[0]
+                    .get("env", [])
+                )
                 for e in envs:
                     name = e.get("name")
                     val = e.get("value")
@@ -55,8 +66,11 @@ def ingest():
                         print(f"Auto-discovered MongoDB Atlas connection from Cloud Run!")
                     if name == "DB_NAME" and val:
                         db_name = val
-        except Exception:
-            pass
+            else:
+                if proc.stderr:
+                    print(f"[Info] gcloud describe output: {proc.stderr.strip()[:150]}")
+        except Exception as ex:
+            print(f"[Info] Could not auto-discover from gcloud: {ex}")
 
     if not mongo_uri:
         mongo_uri = "mongodb://localhost:27017"
