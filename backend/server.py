@@ -6529,6 +6529,48 @@ async def create_product(product_data: ProductCreate, request: Request):
     return stored
 
 
+@api_router.post("/products/seed-dlaa")
+async def seed_dlaa_catalog(request: Request):
+    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
+    seed_file = ROOT_DIR / "data" / "seeds" / "dlaa_halogens_seed.json"
+    if not seed_file.exists():
+        raise HTTPException(status_code=404, detail="Archivo semilla de halógenos DLAA no encontrado")
+
+    try:
+        products = json.loads(seed_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error leyendo archivo semilla: {e}")
+
+    inserted = 0
+    updated = 0
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    for p in products:
+        sku = p.get("sku")
+        if not sku:
+            continue
+        p["updated_at"] = now_iso
+        if not p.get("created_at"):
+            p["created_at"] = now_iso
+        res = await db.products.update_one(
+            {"sku": sku},
+            {"$set": p},
+            upsert=True
+        )
+        if res.upserted_id:
+            inserted += 1
+        else:
+            updated += 1
+
+    return {
+        "status": "ok",
+        "message": "Catálogo DLAA sincronizado con éxito",
+        "total_processed": len(products),
+        "inserted": inserted,
+        "updated": updated
+    }
+
+
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str, request: Request):
     await require_auth(request)
