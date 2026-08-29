@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef, useDeferredValue } from "react";
 import { flushSync } from "react-dom";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
@@ -379,6 +379,7 @@ export default function SaleForm({
   const [currency, setCurrency] = useState(initialData.currency || "NIO");
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const deferredProductSearch = useDeferredValue(productSearch);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscounts, setAppliedDiscounts] = useState(initialData.appliedDiscounts || []);
@@ -2919,10 +2920,42 @@ export default function SaleForm({
     return map;
   }, [crossBranchInventory]);
 
-  const filteredProducts = useMemo(() => {
+  const indexedProducts = useMemo(() => {
     const list = Array.isArray(products) ? products : [];
-    if (!productSearch) return list;
-    const matched = list.filter((product) => productMatchesSearch(product, productSearch));
+    return list.map((p) => {
+      const codeValues = [p?.sku, p?.barcode, p?.ean, p?.upc, p?.product_id]
+        .filter(Boolean)
+        .map((v) => String(v).toLowerCase().trim());
+      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""}`.toLowerCase();
+      return {
+        product: p,
+        codeValues,
+        searchableText,
+      };
+    });
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const term = (deferredProductSearch || "").trim().toLowerCase();
+    if (!term) return Array.isArray(products) ? products : [];
+
+    const tokens = term.split(/\s+/).filter(Boolean);
+    const matched = [];
+
+    for (let i = 0; i < indexedProducts.length; i++) {
+      const item = indexedProducts[i];
+      // 1. Exact or partial code match
+      const hasCodeMatch = item.codeValues.some((v) => v.includes(term));
+      if (hasCodeMatch) {
+        matched.push(item.product);
+        continue;
+      }
+      // 2. Multi-token match across name, brand, category, subcategory
+      const allTokensMatch = tokens.every((token) => item.searchableText.includes(token));
+      if (allTokensMatch) {
+        matched.push(item.product);
+      }
+    }
 
     // Si hay un vehículo seleccionado en modo Instalado, priorizamos y ordenamos los productos compatibles
     if (selectedVehicleData && logisticMode === "installed") {
@@ -2939,9 +2972,9 @@ export default function SaleForm({
     }
 
     return matched;
-  }, [products, productSearch, selectedVehicleData, logisticMode]);
+  }, [indexedProducts, products, deferredProductSearch, selectedVehicleData, logisticMode]);
 
-  const MAX_SEARCH_DROPDOWN_ITEMS = 35;
+  const MAX_SEARCH_DROPDOWN_ITEMS = 30;
   const visibleProducts = useMemo(() => {
     return filteredProducts.slice(0, MAX_SEARCH_DROPDOWN_ITEMS);
   }, [filteredProducts]);
@@ -3261,21 +3294,21 @@ export default function SaleForm({
     if (productListRef.current) {
       productListRef.current.scrollTop = 0;
     }
-  }, [productSearch, filteredProducts.length]);
+  }, [deferredProductSearch, filteredProducts.length]);
 
   useEffect(() => {
     const list = customerListRef.current;
     if (!list) return;
     const item = list.querySelector(`[data-index="${customerHighlightIndex}"]`);
     if (item) item.scrollIntoView({ block: "nearest" });
-  }, [customerHighlightIndex, customerSearch]);
+  }, [customerHighlightIndex]);
 
   useEffect(() => {
     const list = productListRef.current;
     if (!list) return;
     const item = list.querySelector(`[data-index="${productHighlightIndex}"]`);
     if (item) item.scrollIntoView({ block: "nearest" });
-  }, [productHighlightIndex, productSearch]);
+  }, [productHighlightIndex]);
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -4239,7 +4272,7 @@ export default function SaleForm({
                             >
                               {icon}
                               <span className="font-semibold">{label}:</span>
-                              <ErpRollingQuantity value={qty} className={cn(qtyClassName)} />
+                              <span className={cn("font-mono font-bold", qtyClassName)}>{qty}</span>
                               {showBreakdown && rows.length > 0 && (
                                 <span className="truncate text-muted-foreground" title={rows.map((row) => `${row.name}: ${row.qty}`).join(" | ")}>
                                   ({rows.map((row) => `${row.name}: ${row.qty}`).join(", ")})
@@ -4300,7 +4333,7 @@ export default function SaleForm({
                             {/* Con instalación arriba (pequeño, muted) */}
                             <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
                               <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                              <ErpRollingCurrency value={convertPrice(tierUnitPrice + (p.installation_price || 0))} currency={currency} />
+                              <span className="font-mono">{formatCurrency(convertPrice(tierUnitPrice + (p.installation_price || 0)), currency)}</span>
                             </p>
                             {/* Para llevar abajo (grande, negrita = seleccionado) */}
                             <p className={cn("inline-flex items-center gap-1 font-mono text-[13px] font-extrabold", tone.emphasisPrice)}>
@@ -4333,7 +4366,7 @@ export default function SaleForm({
                                 hasSelectedVehicle ? cn("font-extrabold", tone.emphasisPrice) : "text-muted-foreground"
                               )}>
                                 <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                <ErpRollingCurrency value={convertPrice(tierUnitPrice + (p.installation_price || 0))} currency={currency} />
+                                <span className="font-mono">{formatCurrency(convertPrice(tierUnitPrice + (p.installation_price || 0)), currency)}</span>
                               </p>
                             )}
                           </>
