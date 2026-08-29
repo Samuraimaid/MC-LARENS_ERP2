@@ -12,11 +12,13 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { CarFront, ListFilter, Pin, Search, Shapes, Tags, ShoppingCart, FileText, MessageSquare, Boxes } from "lucide-react";
+import { Eye, CarFront, ListFilter, Pin, Search, Shapes, Tags, ShoppingCart, FileText, MessageSquare, Boxes } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
+import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 
 const DRAFT_CONFIG = {
   sale: {
@@ -137,7 +139,9 @@ export function CatalogPage() {
   const [customersList, setCustomersList] = useState([]);
   const [inventoryByProduct, setInventoryByProduct] = useState({});
   const [inventoryByWarehouse, setInventoryByWarehouse] = useState({});
+  const [warehouses, setWarehouses] = useState([]);
   const [warehousesById, setWarehousesById] = useState({});
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -223,6 +227,7 @@ export function CatalogPage() {
       setInventoryByProduct(inventoryMap);
       setInventoryByWarehouse(inventoryWarehouseMap);
 
+      setWarehouses(warehousesRes.data || []);
       const warehouseMap = {};
       (warehousesRes.data || []).forEach((wh) => {
         if (wh?.warehouse_id) {
@@ -852,28 +857,25 @@ export function CatalogPage() {
                     <CardContent className="p-0">
                       <div className="grid gap-5 md:grid-cols-[240px,1fr]">
                         {/* Image column */}
-                        <div className="relative bg-muted/30 border-b md:border-b-0 md:border-r flex items-center justify-center min-h-[200px] max-h-[260px] p-3 overflow-hidden group">
-                          {image ? (
-                            <img
-                              src={image}
-                              alt={product.name || "Producto"}
-                              loading="lazy"
-                              className="h-full w-full object-contain max-h-[220px] transition-transform duration-300 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="text-sm text-muted-foreground">Sin imagen</div>
-                          )}
-                          <div className="absolute top-2 left-2 flex flex-col gap-1">
-                            {stock !== null && stock > 0 ? (
-                              <Badge className="bg-emerald-600/90 backdrop-blur text-white text-[11px] font-semibold shadow-sm">
-                                Stock: {stock}
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="bg-background/90 backdrop-blur text-muted-foreground text-[11px] border">
-                                Sin stock
-                              </Badge>
-                            )}
-                          </div>
+                        <div className="p-3.5 bg-muted/20 border-b md:border-b-0 md:border-r flex items-center justify-center min-h-[200px] max-h-[260px]">
+                          <ProductImageHoverZoom
+                            src={image}
+                            alt={product.name || "Producto"}
+                            className="w-full h-full min-h-[190px] max-h-[230px]"
+                            onOpenQuickView={() => setQuickViewProduct(product)}
+                            showEyeButton={true}
+                            badge={
+                              stock !== null && stock > 0 ? (
+                                <Badge className="bg-emerald-600/90 backdrop-blur text-white text-[11px] font-semibold shadow-sm">
+                                  Stock: {stock}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-background/90 backdrop-blur text-muted-foreground text-[11px] border">
+                                  Sin stock
+                                </Badge>
+                              )
+                            }
+                          />
                         </div>
 
                         {/* Details column */}
@@ -986,6 +988,15 @@ export function CatalogPage() {
 
                           {/* Actions */}
                           <div className="flex flex-wrap gap-2.5 items-center pt-1 border-t border-border/40">
+                            <Button
+                              variant="outline"
+                              className="h-9 px-3 text-xs font-semibold gap-1.5 hover:bg-primary hover:text-primary-foreground transition-all"
+                              onClick={() => setQuickViewProduct(product)}
+                              title="Ver características completas y fotos"
+                            >
+                              <Eye className="h-3.5 w-3.5 text-primary" />
+                              Ver Detalle
+                            </Button>
                             <Button
                               className="bg-emerald-600 text-white hover:bg-emerald-700 h-9 px-4 text-xs font-semibold gap-1.5"
                               onClick={() => handleAddClick("sale", product)}
@@ -1151,6 +1162,21 @@ export function CatalogPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Product Quick View Dialog */}
+      <ProductQuickViewDialog
+        open={Boolean(quickViewProduct)}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+        product={quickViewProduct}
+        warehouses={warehouses}
+        inventoryByWarehouse={inventoryByWarehouse}
+        inventoryByProduct={inventoryByProduct}
+        onAddToCart={(p) => handleAddClick("sale", p)}
+        onAddToQuote={(p) => handleAddClick("quote", p)}
+        onSendWhatsApp={(p) => openWhatsAppDialog(p)}
+        isWarehouseRole={isWarehouseRole}
+        userRole={user?.role}
+      />
     </div>
   );
 }

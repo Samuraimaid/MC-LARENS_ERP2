@@ -26,6 +26,7 @@ import {
   Car,
   CarFront,
   CreditCard,
+  Eye,
   FileText,
   FlaskConical,
   Hand,
@@ -62,6 +63,8 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
+import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
+import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import {
   formatVehicleIdentityHint,
   getVehicleSelectOptionsByBrandYear,
@@ -380,6 +383,7 @@ export default function SaleForm({
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const deferredProductSearch = useDeferredValue(productSearch);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscounts, setAppliedDiscounts] = useState(initialData.appliedDiscounts || []);
@@ -2920,6 +2924,33 @@ export default function SaleForm({
     return map;
   }, [crossBranchInventory]);
 
+  const inventoryByWarehouseQuickView = useMemo(() => {
+    const map = {};
+    if (Array.isArray(inventory)) {
+      for (let i = 0; i < inventory.length; i++) {
+        const row = inventory[i];
+        const pid = String(row?.product_id || "");
+        if (!pid) continue;
+        if (!map[pid]) map[pid] = [];
+        map[pid].push(row);
+      }
+    }
+    return map;
+  }, [inventory]);
+
+  const inventoryByProductQuickView = useMemo(() => {
+    const map = {};
+    if (Array.isArray(inventory)) {
+      for (let i = 0; i < inventory.length; i++) {
+        const row = inventory[i];
+        const pid = String(row?.product_id || "");
+        if (!pid) continue;
+        map[pid] = (map[pid] || 0) + (Number(row?.quantity) || 0);
+      }
+    }
+    return map;
+  }, [inventory]);
+
   const indexedProducts = useMemo(() => {
     const list = Array.isArray(products) ? products : [];
     return list.map((p) => {
@@ -4142,7 +4173,7 @@ export default function SaleForm({
                   data-index={index}
                   type="button"
                   className={cn(
-                    "grid w-full grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 text-left shadow-sm transition-colors ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5",
+                    "grid w-full grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border p-3 text-left shadow-sm transition-colors ui-interactive ui-panel sm:grid-cols-[88px_minmax(0,1fr)] sm:p-2.5 group",
                     ERP_SEARCH_ROW.product,
                     tone.base,
                     tone.hover,
@@ -4151,9 +4182,39 @@ export default function SaleForm({
                   onClick={(event) => addToCart(p, { sourceElement: event.currentTarget })}
                   onMouseEnter={() => setProductHighlightIndex(index)}
                 >
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} loading="lazy" className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg object-cover bg-muted/30 sm:h-20 sm:w-20 sm:row-span-1" /> : <div className="row-span-2 h-[4.5rem] w-[4.5rem] rounded-lg bg-muted/50 sm:h-20 sm:w-20 sm:row-span-1" />}
+                  <div
+                    className="row-span-2 h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 sm:row-span-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setQuickViewProduct(p);
+                    }}
+                  >
+                    <ProductImageHoverZoom
+                      src={p.images?.[0] || p.image}
+                      alt={p.name}
+                      className="h-full w-full"
+                      onOpenQuickView={() => setQuickViewProduct(p)}
+                      showEyeButton={true}
+                    />
+                  </div>
                   <div className="min-w-0 self-start">
-                    <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words", tone.title)}>{p.name}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={cn("text-[13px] font-semibold leading-tight whitespace-normal break-words flex-1", tone.title)}>
+                        {p.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickViewProduct(p);
+                        }}
+                        className="h-6 w-6 shrink-0 rounded-full border border-border/70 bg-background/80 hover:bg-primary hover:text-primary-foreground shadow-xs flex items-center justify-center text-muted-foreground hover:text-foreground transition-all opacity-80 hover:opacity-100 hover:scale-110"
+                        title="Ver características y fotos del producto"
+                        aria-label="Ver características y fotos del producto"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                     <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                       <p className={cn("text-[11px]", tone.sku)}>{p.sku}</p>
                       {selectedVehicleData && logisticMode === "installed" && (() => {
@@ -5895,6 +5956,19 @@ export default function SaleForm({
         initialPlan={tintDialogCartItem?.tint_window_plan}
         currency={currency}
         exchangeRate={exchangeRate}
+      />
+
+      {/* Product Quick View Dialog */}
+      <ProductQuickViewDialog
+        open={Boolean(quickViewProduct)}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+        product={quickViewProduct}
+        warehouses={warehouses}
+        inventoryByWarehouse={inventoryByWarehouseQuickView}
+        inventoryByProduct={inventoryByProductQuickView}
+        onAddToCart={(product) => addToCart(product)}
+        isWarehouseRole={false}
+        userRole={user?.role}
       />
     </div>
   );
