@@ -40,11 +40,16 @@ def build_warranty_item_row(
     elif str(item.get("installation_type") or "") == "required":
         install_note = "Instalación obligatoria"
 
+    serial_num = str(item.get("serial_number") or item.get("serial") or "").strip()
+    lot_num = str(item.get("lot_number") or item.get("lote") or "").strip()
+
     return {
         "sale_id": sale.get("sale_id"),
         "invoice_number": sale.get("invoice_number"),
         "product_id": item.get("product_id"),
         "product_name": item.get("product_name") or (product or {}).get("name") or "Producto",
+        "serial_number": serial_num or None,
+        "lot_number": lot_num or None,
         "quantity": int(item.get("quantity") or 1),
         "unit_price": float(item.get("unit_price") or 0),
         "with_installation": bool(item.get("with_installation")),

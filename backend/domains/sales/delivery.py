@@ -66,8 +66,8 @@ def validate_delivery_info(
 
     if not info.get("is_delivery"):
         return
-    if info.get("delivery_cost", 0) <= 0:
-        raise HTTPException(status_code=400, detail="El costo de envío debe ser mayor a cero")
+    if float(info.get("delivery_cost") or 0) < 0:
+        raise HTTPException(status_code=400, detail="El costo de envío no puede ser negativo")
     if not info.get("messenger_id"):
         raise HTTPException(status_code=400, detail="Debe asignar un mensajero para el delivery")
     if messenger_doc is None:

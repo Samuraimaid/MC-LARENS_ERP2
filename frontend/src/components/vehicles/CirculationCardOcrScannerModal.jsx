@@ -481,6 +481,19 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
               {/* Formulario Editable con Verificación de Confianza */}
               {!processing && (
                 <div className="space-y-3 p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40">
+                  {/* Banner de Traspaso si el vehículo ya existía en base de datos */}
+                  {ocrResult?.existing_vehicle && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Vehículo previamente registrado</p>
+                        <p className="text-[11px] opacity-90">
+                          Este vehículo (Placa: {ocrResult.existing_vehicle.plate || "N/A"} · Chasis: {ocrResult.existing_vehicle.vin || "N/A"}) pertenecía a <strong>{ocrResult.existing_vehicle.customer_name}</strong>. Al aplicar, se registrará el traspaso a este cliente conservando el histórico anterior.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pb-1.5 border-b border-zinc-200 dark:border-zinc-800">
                     <span className="font-bold text-zinc-800 dark:text-zinc-200 text-xs flex items-center gap-1.5">
                       <FileText className="h-3.5 w-3.5 text-sky-500" /> Datos Extraídos

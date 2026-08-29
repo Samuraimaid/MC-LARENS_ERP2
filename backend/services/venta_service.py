@@ -302,6 +302,38 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
             {"$set": {"status": "cancelled", "cancelled_at": now_iso}},
         )
 
+    # Protección de órdenes de polarizados y control de merma
+    tint_order = await db.tint_orders.find_one({"sale_id": sale_id}, {"_id": 0})
+    if tint_order:
+        tint_status = str(tint_order.get("status") or "").lower()
+        if tint_status in {"cut", "in_progress", "completed", "cortado", "instalado"}:
+            # El material ya fue cercenado físicamente; registrar merma irrecuperable
+            await db.tint_orders.update_one(
+                {"sale_id": sale_id},
+                {
+                    "$set": {
+                        "status": "cancelled_with_scrap",
+                        "cancelled_at": now_iso,
+                        "scrap_loss_recorded": True,
+                        "scrap_reason": "Venta cancelada post-corte de bobina",
+                    }
+                },
+            )
+            await db.scrap_inventory.insert_one({
+                "scrap_id": f"scrap_{sale_id}",
+                "sale_id": sale_id,
+                "invoice_number": sale.get("invoice_number"),
+                "total_meters": tint_order.get("total_meters"),
+                "cuts": tint_order.get("cuts") or [],
+                "created_at": now_iso,
+                "status": "available_for_small_cuts",
+            })
+        else:
+            await db.tint_orders.update_one(
+                {"sale_id": sale_id},
+                {"$set": {"status": "cancelled", "cancelled_at": now_iso}},
+            )
+
     dispatch_id = sale.get("dispatch_id")
     if dispatch_id:
         await db.dispatch_orders.update_one(
@@ -329,6 +361,7 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
             "quotation_id": sale.get("quotation_id"),
             "work_order_id": work_order_id,
             "dispatch_id": dispatch_id,
+            "tint_order_cancelled": bool(tint_order),
         },
     })
 
@@ -338,4 +371,5 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
         "technician_id": technician_id,
         "invoice_number": sale.get("invoice_number"),
         "work_order_id": work_order_id,
+        "tint_scrap_recorded": bool(tint_order and str(tint_order.get("status") or "").lower() in {"cut", "in_progress", "completed", "cortado", "instalado"}),
     }

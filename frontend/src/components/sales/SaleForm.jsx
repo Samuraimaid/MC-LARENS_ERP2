@@ -1882,8 +1882,8 @@ export default function SaleForm({
     }
     if (logisticMode === "delivery") {
       const parsedDeliveryCost = Number(deliveryCost);
-      if (!Number.isFinite(parsedDeliveryCost) || parsedDeliveryCost <= 0) {
-        toast.error("Ingrese el costo de envío mayor a cero");
+      if (!Number.isFinite(parsedDeliveryCost) || parsedDeliveryCost < 0) {
+        toast.error("Ingrese un costo de envío válido (mayor o igual a cero)");
         return;
       }
       if (!selectedMessengerId) {

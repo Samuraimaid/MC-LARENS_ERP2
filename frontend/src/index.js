@@ -9,6 +9,17 @@ import { startFailoverManager } from "@/lib/failoverManager.js";
 axios.defaults.withCredentials = true;
 startFailoverManager();
 
+// Manejador global de errores de Vite por desactualización de chunks tras despliegues
+window.addEventListener("vite:preloadError", (event) => {
+  console.warn("[Vite Preload] Chunk desactualizado detectado tras despliegue. Recargando...");
+  const lastReload = sessionStorage.getItem("last_chunk_preload_reload");
+  const now = Date.now();
+  if (!lastReload || now - Number(lastReload) > 10000) {
+    sessionStorage.setItem("last_chunk_preload_reload", String(now));
+    window.location.reload();
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>

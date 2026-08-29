@@ -6,8 +6,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function lazyNamedPage(loader, exportName) {
   return lazy(async () => {
-    const module = await loader();
-    return { default: module[exportName] };
+    try {
+      const module = await loader();
+      return exportName ? { default: module[exportName] } : module;
+    } catch (error) {
+      console.warn(`[Workbench Lazy] Error cargando sub-pestaña (${exportName || 'default'}). Verificando versión...`, error);
+      const isDynamicImportError =
+        error?.message?.includes("Failed to fetch dynamically imported module") ||
+        error?.message?.includes("Importing a module script failed") ||
+        error?.name === "ChunkLoadError";
+
+      const key = "last_lazy_reload_wb_" + (exportName || "root");
+      const lastReload = sessionStorage.getItem(key);
+      const now = Date.now();
+
+      if (isDynamicImportError && (!lastReload || now - Number(lastReload) > 8000)) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      throw error;
+    }
   });
 }
 

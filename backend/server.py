@@ -7833,6 +7833,39 @@ async def ocr_circulation_card_v2(payload: Dict[str, Any], request: Request):
         needs_review.append("year")
     result["needs_review"] = needs_review
 
+    # Detección de vehículo registrado previamente en MongoDB (Traspaso inteligente)
+    existing_vehicle = None
+    search_query = []
+    if result.get("vin"):
+        search_query.append({"vin": result["vin"]})
+        search_query.append({"chasis": result["vin"]})
+    if result.get("plate"):
+        search_query.append({"plate": result["plate"]})
+        search_query.append({"placa": result["plate"]})
+    
+    if search_query:
+        veh_doc = await db.vehicles.find_one({"$or": search_query}, {"_id": 0})
+        if veh_doc:
+            customer_name = "Cliente previo"
+            if veh_doc.get("customer_id"):
+                cust = await db.customers.find_one(
+                    {"customer_id": veh_doc["customer_id"]},
+                    {"_id": 0, "name": 1, "first_name": 1, "last_name": 1, "phone": 1}
+                )
+                if cust:
+                    customer_name = cust.get("name") or f"{cust.get('first_name', '')} {cust.get('last_name', '')}".strip() or "Cliente registrado"
+            existing_vehicle = {
+                "vehicle_id": veh_doc.get("vehicle_id"),
+                "customer_id": veh_doc.get("customer_id"),
+                "customer_name": customer_name,
+                "plate": veh_doc.get("plate") or veh_doc.get("placa"),
+                "vin": veh_doc.get("vin") or veh_doc.get("chasis"),
+                "brand": veh_doc.get("brand") or veh_doc.get("marca"),
+                "model": veh_doc.get("model") or veh_doc.get("modelo"),
+                "year": veh_doc.get("year") or veh_doc.get("anio"),
+            }
+    result["existing_vehicle"] = existing_vehicle
+
     return result
 
 
@@ -25263,19 +25296,38 @@ if frontend_build_dir.exists():
     if vehicles_dir.exists():
         app.mount("/vehicles", StaticFiles(directory=str(vehicles_dir)), name="vehicles")
 
+    NO_CACHE_HEADERS = {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
+
+    STATIC_ASSET_EXTENSIONS = (
+        ".js", ".css", ".map", ".wasm", ".png", ".jpg", ".jpeg",
+        ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"
+    )
+
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         if full_path.startswith("api/") or full_path == "api":
             raise HTTPException(status_code=404, detail="API route not found")
 
         if not full_path or full_path == "":
-            return FileResponse(frontend_build_dir / "index.html")
+            return FileResponse(frontend_build_dir / "index.html", headers=NO_CACHE_HEADERS)
 
         candidate = frontend_build_dir / full_path
         if candidate.exists() and candidate.is_file():
+            # Si es index.html, no cachear; otros assets pueden cachearse normalmente
+            if candidate.name == "index.html":
+                return FileResponse(candidate, headers=NO_CACHE_HEADERS)
             return FileResponse(candidate)
 
-        return FileResponse(frontend_build_dir / "index.html")
+        # Si se solicita un archivo estático (.js, .css, etc.) y no existe, responder 404 real
+        # en lugar de retornar index.html (lo cual provoca el TypeError: Failed to fetch dynamically imported module)
+        if any(full_path.lower().endswith(ext) for ext in STATIC_ASSET_EXTENSIONS) or full_path.startswith("assets/"):
+            raise HTTPException(status_code=404, detail=f"Asset '{full_path}' not found on server")
+
+        return FileResponse(frontend_build_dir / "index.html", headers=NO_CACHE_HEADERS)
 else:
     @app.get("/")
     async def fallback_api_root():
