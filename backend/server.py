@@ -30,7 +30,7 @@ from fastapi import (
 )
 import re
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response as FastAPIResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response as FastAPIResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -25363,6 +25363,15 @@ if frontend_build_dir.exists():
             if candidate.name == "index.html":
                 return FileResponse(candidate, headers=NO_CACHE_HEADERS)
             return FileResponse(candidate)
+
+        # Redireccionar automáticamente al CDN de Google Cloud Storage si el asset de producto o vehículo no está en el build local
+        if full_path.startswith("uploads/products/"):
+            subpath = full_path[len("uploads/products/"):]
+            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-products/products/{subpath}", status_code=307)
+
+        if full_path.startswith("vehicles/models/"):
+            subpath = full_path[len("vehicles/models/"):]
+            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/models/{subpath}", status_code=307)
 
         # Si se solicita un archivo estático (.js, .css, etc.) y no existe, responder 404 real
         # en lugar de retornar index.html (lo cual provoca el TypeError: Failed to fetch dynamically imported module)
