@@ -12,7 +12,7 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { CarFront, ListFilter, Pin, Search, Shapes, Tags } from "lucide-react";
+import { CarFront, ListFilter, Pin, Search, Shapes, Tags, ShoppingCart, FileText, MessageSquare, Boxes } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
@@ -343,6 +343,26 @@ export function CatalogPage() {
     enforceVehicleCompatibility,
     selectedContextVehicle,
   ]);
+
+  const conStockCount = useMemo(
+    () => filteredProducts.filter((p) => (inventoryByProduct[p.product_id] ?? 0) > 0).length,
+    [filteredProducts, inventoryByProduct]
+  );
+
+  const sinStockCount = useMemo(
+    () => filteredProducts.filter((p) => (inventoryByProduct[p.product_id] ?? 0) === 0).length,
+    [filteredProducts, inventoryByProduct]
+  );
+
+  const currentActiveList = useMemo(() => {
+    if (boardTab === "con-stock") {
+      return filteredProducts.filter((p) => (inventoryByProduct[p.product_id] ?? 0) > 0);
+    }
+    if (boardTab === "sin-stock") {
+      return filteredProducts.filter((p) => (inventoryByProduct[p.product_id] ?? 0) === 0);
+    }
+    return filteredProducts;
+  }, [filteredProducts, boardTab, inventoryByProduct]);
 
   const getDraftTabs = (type) => {
     if (typeof window === "undefined") return [];
@@ -736,176 +756,282 @@ export function CatalogPage() {
         </Card>
       ) : (
         <>
-          {/* Board tabs selector (mobile/tablet) */}
-          <div className="xl:hidden">
-            <Tabs value={boardTab} onValueChange={setBoardTab}>
-              <TabsList className="grid h-11 w-full grid-cols-3 rounded-full border bg-card/95 p-1">
-                <TabsTrigger value="todos" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Todos ({filteredProducts.length})
-                </TabsTrigger>
-                <TabsTrigger value="con-stock" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Con stock ({filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) > 0).length})
-                </TabsTrigger>
-                <TabsTrigger value="sin-stock" className="rounded-full text-[12px] leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Sin stock ({filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) === 0).length})
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {/* PillSwitch / Segmented tabs selector */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-muted/40 p-2 rounded-2xl border">
+            <div className="inline-flex items-center p-1 rounded-xl bg-background/90 border shadow-sm gap-1">
+              <button
+                type="button"
+                onClick={() => setBoardTab("todos")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2",
+                  boardTab === "todos"
+                    ? "bg-primary text-primary-foreground shadow-sm font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <Boxes className="h-3.5 w-3.5" />
+                <span>Todos</span>
+                <Badge
+                  variant={boardTab === "todos" ? "secondary" : "outline"}
+                  className="text-[10px] px-1.5 py-0 h-4 min-w-[20px] justify-center"
+                >
+                  {filteredProducts.length}
+                </Badge>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBoardTab("con-stock")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2",
+                  boardTab === "con-stock"
+                    ? "bg-emerald-600 text-white shadow-sm font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Con stock</span>
+                <Badge
+                  variant={boardTab === "con-stock" ? "secondary" : "outline"}
+                  className="text-[10px] px-1.5 py-0 h-4 min-w-[20px] justify-center"
+                >
+                  {conStockCount}
+                </Badge>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBoardTab("sin-stock")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2",
+                  boardTab === "sin-stock"
+                    ? "bg-slate-700 text-white shadow-sm font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <span className="h-2 w-2 rounded-full bg-slate-400" />
+                <span>Sin stock</span>
+                <Badge
+                  variant={boardTab === "sin-stock" ? "secondary" : "outline"}
+                  className="text-[10px] px-1.5 py-0 h-4 min-w-[20px] justify-center"
+                >
+                  {sinStockCount}
+                </Badge>
+              </button>
+            </div>
+
+            <div className="text-xs text-muted-foreground pr-2 font-medium">
+              Mostrando <strong className="text-foreground">{Math.min(visibleCount, currentActiveList.length)}</strong> de{" "}
+              <strong className="text-foreground">{currentActiveList.length}</strong> productos
+            </div>
           </div>
 
-          {/* 3-panel product board */}
-          <div className="grid gap-6 xl:grid-cols-3">
-            {[
-              { key: "todos", label: "TODOS LOS PRODUCTOS", list: filteredProducts },
-              { key: "con-stock", label: "CON STOCK DISPONIBLE", list: filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) > 0) },
-              { key: "sin-stock", label: "SIN STOCK", list: filteredProducts.filter(p => (inventoryByProduct[p.product_id] ?? 0) === 0) },
-            ].map(({ key, label, list }) => (
-              <Card key={key} className={cn("h-fit", boardTab !== key ? "hidden xl:block" : "")}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{label} ({list.length})</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {list.length === 0 ? (
-                    <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">Sin productos en esta sección.</div>
-                  ) : (
-                    <div className="grid gap-6">
-                      {list.slice(0, visibleCount).map((product) => {
-            const compatibility = product?.compatibility || {};
-            const compatTypes = getCompatibilityTypes(product);
-            const image = getProductImage(product);
-            const stock = inventoryByProduct[product.product_id] ?? null;
-            const stockByWarehouse = inventoryByWarehouse[product.product_id] || [];
-            const promos = Array.isArray(product?.promotions)
-              ? product.promotions
-              : product?.promo_label
-                ? [product.promo_label]
-                : [];
+          {/* Single column spacious product list */}
+          {currentActiveList.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Sin productos en esta sección ({boardTab === "con-stock" ? "No hay con stock" : "No hay sin stock"}).
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {currentActiveList.slice(0, visibleCount).map((product) => {
+                const compatibility = product?.compatibility || {};
+                const compatTypes = getCompatibilityTypes(product);
+                const image = getProductImage(product);
+                const stock = inventoryByProduct[product.product_id] ?? null;
+                const stockByWarehouse = inventoryByWarehouse[product.product_id] || [];
+                const promos = Array.isArray(product?.promotions)
+                  ? product.promotions
+                  : product?.promo_label
+                    ? [product.promo_label]
+                    : [];
 
-            return (
-              <Card key={product.product_id || product.sku} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="grid gap-4 md:grid-cols-[280px,1fr]">
-                    <div className="bg-muted/30 flex items-center justify-center min-h-[220px]">
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={product.name || "Producto"}
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-sm text-muted-foreground">Sin imagen</div>
-                      )}
-                    </div>
-                    <div className="p-5 space-y-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0 space-y-1">
-                          <h3 className="text-xl font-semibold">{product.name || "Producto"}</h3>
-                          <p className="text-sm text-muted-foreground">{product.sku || "Sin SKU"} • {product.brand || "Sin marca"}</p>
-                          <div className="text-xs text-muted-foreground">Garantía: {product.warranty_months || 0} meses</div>
-                          {stock !== null ? (
-                            <div className="text-xs text-muted-foreground">Stock: {stock}</div>
-                          ) : null}
-                          {stockByWarehouse.length > 0 ? (
-                            <div className="text-xs text-muted-foreground">
-                              Bodegas: {stockByWarehouse.slice(0, 3).map((entry) => {
-                                const name = warehousesById[entry.warehouse_id] || entry.warehouse_id || "Bodega";
-                                return `${name} (${entry.quantity})`;
-                              }).join(" · ")}
-                              {stockByWarehouse.length > 3 ? " · ..." : ""}
+                return (
+                  <Card key={product.product_id || product.sku} className="overflow-hidden hover:shadow-md transition-all duration-200 border-border/80">
+                    <CardContent className="p-0">
+                      <div className="grid gap-5 md:grid-cols-[240px,1fr]">
+                        {/* Image column */}
+                        <div className="relative bg-muted/30 border-b md:border-b-0 md:border-r flex items-center justify-center min-h-[200px] max-h-[260px] p-3 overflow-hidden group">
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={product.name || "Producto"}
+                              loading="lazy"
+                              className="h-full w-full object-contain max-h-[220px] transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="text-sm text-muted-foreground">Sin imagen</div>
+                          )}
+                          <div className="absolute top-2 left-2 flex flex-col gap-1">
+                            {stock !== null && stock > 0 ? (
+                              <Badge className="bg-emerald-600/90 backdrop-blur text-white text-[11px] font-semibold shadow-sm">
+                                Stock: {stock}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-background/90 backdrop-blur text-muted-foreground text-[11px] border">
+                                Sin stock
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Details column */}
+                        <div className="p-5 space-y-3.5">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-snug">
+                                {product.name || "Producto"}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-mono">
+                                <span>SKU: {product.sku || "Sin SKU"}</span>
+                                <span>•</span>
+                                <span className="font-semibold text-foreground">{product.brand || "Sin marca"}</span>
+                                <span>•</span>
+                                <span>Garantía: {product.warranty_months || 0} meses</span>
+                              </div>
                             </div>
-                          ) : null}
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold">{formatCurrency(product.price || 0)}</div>
-                        </div>
-                      </div>
+                            <div className="text-right">
+                              <div className="text-xl sm:text-2xl font-black text-primary font-mono">
+                                {formatCurrency(product.price || 0)}
+                              </div>
+                            </div>
+                          </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">{product.category || "Sin categoría"}</Badge>
-                        {product.subcategory ? <Badge variant="secondary">{product.subcategory}</Badge> : null}
-                        <Badge variant="outline">{product.product_type === "service" ? "Servicio" : "Producto"}</Badge>
-                        {product.installation_type ? (
-                          <Badge variant="outline">
-                            Instalación: {product.installation_type === "required" ? "Requerida" : product.installation_type === "optional" ? "Opcional" : "No aplica"}
-                          </Badge>
-                        ) : null}
-                        {product.installation_price ? (
-                          <Badge variant="outline">Instalación {formatCurrency(product.installation_price || 0)}</Badge>
-                        ) : null}
-                      </div>
-
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {product.description || "Sin descripción"}
-                      </p>
-
-                      <div className="space-y-2">
-                        <div className="text-xs font-semibold text-muted-foreground">Compatibilidad</div>
-                        <div className="flex flex-wrap gap-2">
-                          {(compatibility?.brands || []).map((brand) => (
-                            <Badge key={brand} variant="secondary">{brand}</Badge>
-                          ))}
-                          {(compatibility?.models || []).map((model) => (
-                            <Badge key={model} variant="outline">{model}</Badge>
-                          ))}
-                          {(compatTypes || []).map((type) => (
-                            <Badge key={type} variant="outline">{type}</Badge>
-                          ))}
-                          {(compatibility?.year_from || compatibility?.year_to) && (
-                            <Badge variant="outline">
-                              {compatibility.year_from || "-"} - {compatibility.year_to || "Actual"}
+                          {/* Categories and types */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {product.category || "Sin categoría"}
                             </Badge>
+                            {product.subcategory ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {product.subcategory}
+                              </Badge>
+                            ) : null}
+                            <Badge variant="outline" className="text-xs">
+                              {product.product_type === "service" ? "Servicio" : "Producto"}
+                            </Badge>
+                            {product.installation_type && product.installation_type !== "not_available" ? (
+                              <Badge variant="outline" className="text-xs">
+                                Instalación: {product.installation_type === "required" ? "Requerida" : "Opcional"}
+                                {product.installation_price ? ` (${formatCurrency(product.installation_price)})` : ""}
+                              </Badge>
+                            ) : null}
+                          </div>
+
+                          {/* Description */}
+                          {product.description && (
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                              {product.description}
+                            </p>
                           )}
-                          {!compatibility?.brands?.length && !compatibility?.models?.length && !compatTypes?.length && !compatibility?.year_from && !compatibility?.year_to && (
-                            <Badge variant="outline">Sin datos de compatibilidad</Badge>
+
+                          {/* Compatibility */}
+                          <div className="space-y-1.5 bg-muted/20 p-2.5 rounded-lg border border-border/50">
+                            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                              Compatibilidad
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {(compatibility?.brands || []).map((brand) => (
+                                <Badge key={brand} variant="secondary" className="text-[11px] py-0 px-2 font-medium">
+                                  {brand}
+                                </Badge>
+                              ))}
+                              {(compatibility?.models || []).map((model) => (
+                                <Badge key={model} variant="outline" className="text-[11px] py-0 px-2">
+                                  {model}
+                                </Badge>
+                              ))}
+                              {(compatTypes || []).map((type) => (
+                                <Badge key={type} variant="outline" className="text-[11px] py-0 px-2">
+                                  {type}
+                                </Badge>
+                              ))}
+                              {(compatibility?.year_from || compatibility?.year_to) && (
+                                <Badge variant="outline" className="text-[11px] py-0 px-2">
+                                  {compatibility.year_from || "-"} - {compatibility.year_to || "Actual"}
+                                </Badge>
+                              )}
+                              {!compatibility?.brands?.length && !compatibility?.models?.length && !compatTypes?.length && !compatibility?.year_from && !compatibility?.year_to && (
+                                <span className="text-xs text-muted-foreground italic">Sin datos de compatibilidad</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Warehouse Breakdown */}
+                          {stockByWarehouse.length > 0 && (
+                            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5">
+                              <span className="font-medium">Bodegas:</span>
+                              {stockByWarehouse.map((entry) => {
+                                const name = warehousesById[entry.warehouse_id] || entry.warehouse_id || "Bodega";
+                                return (
+                                  <Badge key={entry.warehouse_id} variant="outline" className="text-[11px] py-0">
+                                    {name}: {entry.quantity}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
                           )}
+
+                          {/* Promotions */}
+                          {promos.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {promos.map((promo) => (
+                                <Badge key={promo} className="bg-amber-500 text-white text-xs">
+                                  {promo}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex flex-wrap gap-2.5 items-center pt-1 border-t border-border/40">
+                            <Button
+                              className="bg-emerald-600 text-white hover:bg-emerald-700 h-9 px-4 text-xs font-semibold gap-1.5"
+                              onClick={() => handleAddClick("sale", product)}
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5" />
+                              Agregar a venta
+                            </Button>
+                            <Button
+                              className="bg-blue-600 text-white hover:bg-blue-700 h-9 px-4 text-xs font-semibold gap-1.5"
+                              onClick={() => handleAddClick("quote", product)}
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              Agregar a cotización
+                            </Button>
+                            {!isWarehouseRole && (
+                              <Button
+                                variant="outline"
+                                className="text-emerald-700 dark:text-emerald-400 border-emerald-600/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 h-9 px-3.5 text-xs font-semibold gap-1.5"
+                                onClick={() => openWhatsAppDialog(product)}
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" />
+                                WhatsApp
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
 
-                      {promos.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {promos.map((promo) => (
-                            <Badge key={promo} className="bg-amber-500 text-white">{promo}</Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap gap-3 items-center">
-                        <Button className="bg-green-600 text-white hover:bg-green-700" onClick={() => handleAddClick("sale", product)}>
-                          Agregar a venta
-                        </Button>
-                        <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => handleAddClick("quote", product)}>
-                          Agregar a cotización
-                        </Button>
-                        {!isWarehouseRole && (
-                          <Button className="bg-white text-green-700 border border-green-600 hover:bg-green-50" onClick={() => openWhatsAppDialog(product)}>
-                            Enviar por WhatsApp
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-                      })}
-                      {list.length > visibleCount && (
-                        <div className="text-center pt-2 pb-4">
-                          <Button
-                            variant="outline"
-                            onClick={() => setVisibleCount((prev) => prev + 30)}
-                            className="w-full"
-                          >
-                            Cargar más productos ({visibleCount} de {list.length})
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              {currentActiveList.length > visibleCount && (
+                <div className="text-center pt-3 pb-6">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setVisibleCount((prev) => prev + 30)}
+                    className="w-full sm:w-auto px-8 font-medium shadow-sm"
+                  >
+                    Cargar más productos ({visibleCount} de {currentActiveList.length})
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 

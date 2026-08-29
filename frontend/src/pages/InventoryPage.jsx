@@ -79,6 +79,7 @@ export function InventoryPage() {
   const [transferRequests, setTransferRequests] = useState([]);
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -889,13 +890,75 @@ export function InventoryPage() {
     }
   };
 
-  const filteredInventory = inventory.filter(item => {
-    const product = item.product || {};
-    return (
-      product.name?.toLowerCase().includes(search.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(search.toLowerCase())
-    );
-  });
+  const filteredInventory = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
+    
+    // Index physical inventory by product_id
+    const invByProduct = new Map();
+    (inventory || []).forEach(item => {
+      const pid = String(item.product_id || "");
+      if (!pid) return;
+      if (!invByProduct.has(pid)) invByProduct.set(pid, []);
+      invByProduct.get(pid).push(item);
+    });
+
+    let rows = [];
+
+    if (selectedWarehouse === "all") {
+      // Iterate over products so that all catalog products (including new DLAA halogens) are listed
+      (products || []).forEach(product => {
+        const invRows = invByProduct.get(String(product.product_id || "")) || [];
+        if (invRows.length > 0) {
+          invRows.forEach(invItem => {
+            rows.push({
+              ...invItem,
+              product: invItem.product || product,
+            });
+          });
+        } else {
+          // Virtual / zero-stock row for catalog products not yet assigned to a warehouse
+          rows.push({
+            inventory_id: `synth_${product.product_id}`,
+            product_id: product.product_id,
+            warehouse_id: "none",
+            quantity: 0,
+            min_stock: product.min_stock || product.low_stock_threshold || 5,
+            product,
+            is_zero_stock: true,
+          });
+        }
+      });
+    } else {
+      // A specific warehouse was chosen
+      rows = (inventory || []).filter(item => String(item.warehouse_id) === String(selectedWarehouse));
+    }
+
+    // Filter by search term (name, sku, category, brand)
+    if (searchLower) {
+      rows = rows.filter(item => {
+        const p = item.product || {};
+        return (
+          (p.name || "").toLowerCase().includes(searchLower) ||
+          (p.sku || "").toLowerCase().includes(searchLower) ||
+          (p.category || "").toLowerCase().includes(searchLower) ||
+          (p.subcategory || "").toLowerCase().includes(searchLower) ||
+          (p.brand || "").toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      rows = rows.filter(item => (item.product?.category || "") === selectedCategory);
+    }
+
+    // Filter by low stock
+    if (showLowStock) {
+      rows = rows.filter(item => item.quantity <= item.min_stock);
+    }
+
+    return rows;
+  }, [inventory, products, search, selectedCategory, selectedWarehouse, showLowStock]);
 
   const getCategoryName = (key) => categories[key]?.name || key;
   const getSubcategories = (catKey) => categories[catKey]?.subcategories || [];
@@ -1929,10 +1992,14 @@ export function InventoryPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredInventory.map(item => {
+                filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
                   const product = item.product || {};
-                  const isLow = item.quantity <= item.min_stock;
+                  const isZero = (item.quantity ?? 0) === 0;
+                  const isLow = !isZero && (item.quantity <= (item.min_stock || 5));
                   const warehouse = warehouses.find(w => w.warehouse_id === item.warehouse_id);
+                  const warehouseLabel = item.warehouse_id === "none"
+                    ? <span className="text-muted-foreground italic text-xs">Sin asignar (0 stock)</span>
+                    : (warehouse?.name || item.warehouse_id);
                   
                   return (
                     <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`}>
@@ -1940,7 +2007,7 @@ export function InventoryPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {product.images?.[0] && (
-                            <img src={product.images[0]} alt="" className="w-8 h-8 rounded object-cover" />
+                            <img src={product.images[0]} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
                           )}
                           <span className="font-medium">{product.name || "Desconocido"}</span>
                         </div>
@@ -1959,17 +2026,19 @@ export function InventoryPage() {
                            product.product_type === "service_hourly" ? "Por Hora" : "Producto"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{warehouse?.name || item.warehouse_id}</TableCell>
+                      <TableCell>{warehouseLabel}</TableCell>
                       <TableCell className="text-center">
-                        <span className={`font-mono font-bold ${isLow ? "text-red-500" : ""}`}>
-                          {item.quantity}
+                        <span className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : ""}`}>
+                          {item.quantity ?? 0}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {formatCurrency(product.price || 0)}
                       </TableCell>
                       <TableCell>
-                        {isLow ? (
+                        {isZero ? (
+                          <Badge variant="secondary" className="text-muted-foreground">Sin stock</Badge>
+                        ) : isLow ? (
                           <Badge variant="destructive" className="gap-1">
                             <AlertTriangle className="h-3 w-3" />
                             Bajo
@@ -1989,7 +2058,7 @@ export function InventoryPage() {
                           </Button>
                           <Button 
                             variant="ghost" 
-                            size="icon"
+                            size="icon" 
                             onClick={() => setEditingProduct(product)}
                             disabled={!canEditInventory}
                           >
@@ -2000,11 +2069,27 @@ export function InventoryPage() {
                               variant="ghost"
                               size="icon"
                               title="Imprimir etiquetas"
-                              onClick={() => openLabelPrintDialog(product, item.warehouse_id, 1)}
+                              onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
                             >
                               <Barcode className="h-4 w-4" />
                             </Button>
                           ) : null}
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            title="Ingresar stock"
+                            onClick={() => {
+                              setAddStock({
+                                product_id: product.product_id || "",
+                                warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
+                                quantity: 1,
+                              });
+                              setShowAddStock(true);
+                            }}
+                            disabled={!canEditInventory}
+                          >
+                            <Plus className="h-4 w-4 text-primary" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2020,6 +2105,17 @@ export function InventoryPage() {
               )}
             </TableBody>
           </Table>
+          {filteredInventory.length > inventoryVisibleLimit && (
+            <div className="p-4 text-center border-t">
+              <Button
+                variant="outline"
+                onClick={() => setInventoryVisibleLimit(prev => prev + 50)}
+                className="w-full sm:w-auto"
+              >
+                Cargar más inventario ({inventoryVisibleLimit} de {filteredInventory.length})
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
       </TabsContent>
