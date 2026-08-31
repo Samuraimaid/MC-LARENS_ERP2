@@ -1811,6 +1811,24 @@ class BillingSellerVoucherTextsPayload(FlexibleModel):
     footer_disclaimer: Optional[str] = None
 
 
+class PromotionalVideoCreatePayload(FlexibleModel):
+    title: str
+    orientation: str = "horizontal"  # horizontal | vertical
+    url: str
+    filename: Optional[str] = None
+    active: bool = True
+    sort_order: int = 0
+
+
+class PromotionalVideoUpdatePayload(FlexibleModel):
+    title: Optional[str] = None
+    orientation: Optional[str] = None
+    url: Optional[str] = None
+    filename: Optional[str] = None
+    active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
 class BillingSellerVoucherSectionsPayload(FlexibleModel):
     header_rules: Optional[bool] = None
     company_name: Optional[bool] = None
@@ -22360,6 +22378,106 @@ async def get_pdf_logo_presets(request: Request):
     }
 
 
+# ==============================================================================
+# VIDEOS PROMOCIONALES DE FONDO (LOGIN & TOTEM)
+# ==============================================================================
+
+@api_router.get("/promos/videos")
+async def get_promotional_videos():
+    """Retorna la lista de videos promocionales activos para fondo de login y totems."""
+    cursor = db.promotional_videos.find({"active": {"$ne": False}}).sort("sort_order", 1)
+    videos = []
+    async for doc in cursor:
+        doc["_id"] = str(doc.get("_id", ""))
+        videos.append(doc)
+
+    if not videos:
+        default_list = [
+            {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 1},
+            {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 2},
+            {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 3},
+            {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 4},
+            {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 5},
+            {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 6},
+            {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 7},
+            {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 8},
+            {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 9},
+            {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 10},
+            {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 11},
+        ]
+        return {"videos": default_list}
+
+    return {"videos": videos}
+
+
+@api_router.get("/settings/promotional-videos")
+async def list_all_promotional_videos(request: Request):
+    await require_roles(request, ["gerencia", "programador"])
+    cursor = db.promotional_videos.find({}).sort("sort_order", 1)
+    videos = []
+    async for doc in cursor:
+        doc["_id"] = str(doc.get("_id", ""))
+        videos.append(doc)
+    return {"videos": videos}
+
+
+@api_router.post("/settings/promotional-videos")
+async def create_promotional_video(payload: PromotionalVideoCreatePayload, request: Request):
+    user = await require_roles(request, ["gerencia", "programador"])
+    video_id = _new_entity_id("promo_vid")
+    doc = {
+        "id": video_id,
+        "title": payload.title.strip(),
+        "orientation": payload.orientation.strip().lower() if payload.orientation in ["vertical", "horizontal"] else "horizontal",
+        "url": payload.url.strip(),
+        "filename": payload.filename or "",
+        "active": bool(payload.active),
+        "sort_order": int(payload.sort_order or 0),
+        "created_by": user.username,
+        "created_at": _utc_now().isoformat(),
+    }
+    await db.promotional_videos.insert_one(doc)
+    doc["_id"] = str(doc.get("_id", ""))
+    return {"message": "Video promocional registrado", "video": doc}
+
+
+@api_router.put("/settings/promotional-videos/{video_id}")
+async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdatePayload, request: Request):
+    await require_roles(request, ["gerencia", "programador"])
+    update_data = {}
+    if payload.title is not None:
+        update_data["title"] = payload.title.strip()
+    if payload.orientation is not None:
+        update_data["orientation"] = payload.orientation.strip().lower()
+    if payload.url is not None:
+        update_data["url"] = payload.url.strip()
+    if payload.filename is not None:
+        update_data["filename"] = payload.filename.strip()
+    if payload.active is not None:
+        update_data["active"] = bool(payload.active)
+    if payload.sort_order is not None:
+        update_data["sort_order"] = int(payload.sort_order)
+    update_data["updated_at"] = _utc_now().isoformat()
+
+    res = await db.promotional_videos.update_one({"id": video_id}, {"$set": update_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Video no encontrado")
+    doc = await db.promotional_videos.find_one({"id": video_id})
+    if doc:
+        doc["_id"] = str(doc.get("_id", ""))
+    return {"message": "Video promocional actualizado", "video": doc}
+
+
+@api_router.delete("/settings/promotional-videos/{video_id}")
+async def delete_promotional_video(video_id: str, request: Request):
+    await require_roles(request, ["gerencia", "programador"])
+    res = await db.promotional_videos.delete_one({"id": video_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video no encontrado")
+    return {"message": "Video eliminado exitosamente"}
+
+
+
 @api_router.put("/settings/billing/pdf-documents")
 async def update_billing_pdf_documents(
     payload: BillingPdfDocumentsUpdatePayload,
@@ -25353,6 +25471,10 @@ if frontend_build_dir.exists():
     if vehicles_dir.exists():
         app.mount("/vehicles", StaticFiles(directory=str(vehicles_dir)), name="vehicles")
 
+    videos_dir = frontend_build_dir / "videos"
+    if videos_dir.exists():
+        app.mount("/videos", StaticFiles(directory=str(videos_dir)), name="videos")
+
     NO_CACHE_HEADERS = {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
@@ -25361,7 +25483,8 @@ if frontend_build_dir.exists():
 
     STATIC_ASSET_EXTENSIONS = (
         ".js", ".css", ".map", ".wasm", ".png", ".jpg", ".jpeg",
-        ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"
+        ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot",
+        ".mp4", ".webm", ".mov"
     )
 
     @app.get("/{full_path:path}")

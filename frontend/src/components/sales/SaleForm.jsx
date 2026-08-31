@@ -4104,7 +4104,7 @@ export default function SaleForm({
           ) : null}
 
           {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
-            <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
+            <div className={cn("relative group/cardveh", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info, "min-w-0 flex-1")}>
                   <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
@@ -4143,18 +4143,20 @@ export default function SaleForm({
                           loading="lazy"
                         />
                       </div>
-                      {/* Zoom flotante en detalle 100% al pasar el cursor */}
-                      <div className="fixed sm:absolute z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 bottom-auto sm:bottom-full sm:right-0 mb-2 p-3 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border-2 border-sky-400/90 w-72 sm:w-96 flex flex-col items-center gap-2 backdrop-blur-md">
-                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[160px] border border-slate-100 dark:border-zinc-800">
+                      {/* Zoom flotante que abarca el 100% del ancho de la columna */}
+                      <div className="fixed sm:absolute z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 bottom-auto sm:bottom-full sm:-right-4 sm:-left-auto sm:w-[min(92vw,720px)] mb-3 p-4 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
+                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-5 flex items-center justify-center min-h-[220px] max-h-[340px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
                           <img
                             src={selImg.src}
                             alt={vLabel}
-                            className="max-h-48 max-w-full object-contain drop-shadow-xl"
+                            className="max-h-[300px] w-full object-contain drop-shadow-2xl"
                           />
                         </div>
-                        <div className="text-center w-full">
-                          <p className="text-xs font-bold text-sky-950 dark:text-sky-100 truncate">{vLabel || "Vehículo"}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Detalle 100% Vehículo</p>
+                        <div className="flex items-center justify-between w-full px-2 text-xs">
+                          <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate">{vLabel || "Vehículo"}</p>
+                          <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800 shrink-0">
+                            Vista Ampliada 100%
+                          </span>
                         </div>
                       </div>
                     </div>

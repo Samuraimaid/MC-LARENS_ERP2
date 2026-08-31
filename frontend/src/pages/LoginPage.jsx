@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server } from "lucide-react";
+import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server, Keypad } from "lucide-react";
 import { API_BASE as API, setStoredSessionToken, setStoredUser } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
@@ -16,7 +16,7 @@ import { formatCurrency } from "../lib/utils";
 import { getRoleHomePath } from "@/lib/roleHome";
 import { SevenSegCountdown } from "@/components/auth/SevenSegCountdown";
 import ServerConnectionDialog from "../components/common/ServerConnectionDialog";
-import LogoCascadeLoader from "@/components/ui/LogoCascadeLoader";
+import BackgroundPromoVideo from "@/components/auth/BackgroundPromoVideo";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -38,6 +38,26 @@ function formatLockoutCountdown(remainingMs) {
   }
   return `${ss}.${cc}`;
 }
+
+function formatTime(date) {
+  if (!date) return "";
+  return date.toLocaleTimeString("es-NI", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatDateFull(date) {
+  if (!date) return "";
+  const dayName = date.toLocaleDateString("es-NI", { weekday: "short" }).toUpperCase().replace(".", "");
+  const day = date.getDate();
+  const month = date.toLocaleDateString("es-NI", { month: "long" });
+  const year = date.getFullYear();
+  return `${day} de ${month} de ${year} · ${dayName}`;
+}
+
 const ATTENDANCE_KIOSK_SHORTCUT_PIN = (typeof window !== 'undefined' && window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__)
   ? String(window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__)
   : APP_ENV.attendanceKioskShortcutPin;
@@ -74,8 +94,28 @@ export function LoginPage() {
     ? buildTime.toLocaleString("es-NI", { dateStyle: "medium", timeStyle: "short" })
     : "desconocida";
 
-  // Reloj Digital y Mensaje Motivacional
+  // Reloj Digital, Estado OSD y Herramientas
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isPinpadVisible, setIsPinpadVisible] = useState(true);
+  const osdTimerRef = useRef(null);
+
+  const resetOsdTimer = useCallback(() => {
+    setIsPinpadVisible(true);
+    if (osdTimerRef.current) {
+      clearTimeout(osdTimerRef.current);
+    }
+    osdTimerRef.current = setTimeout(() => {
+      setIsPinpadVisible(false);
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    resetOsdTimer();
+    return () => {
+      if (osdTimerRef.current) clearTimeout(osdTimerRef.current);
+    };
+  }, [resetOsdTimer]);
+
   const [activeTool, setActiveTool] = useState(null);
   const [fxAmount, setFxAmount] = useState("1");
   const [fxFrom, setFxFrom] = useState("USD");
@@ -85,144 +125,6 @@ export function LoginPage() {
   const [fxLoading, setFxLoading] = useState(false);
   const [fxError, setFxError] = useState("");
 
-  // Frases aleatorias
-  const messages = [
-    "¡A romperla en ventas hoy! 🚀",
-    "Tu esfuerzo hace la diferencia. 💪",
-    "Sonríe, estás haciendo un gran trabajo. 😃",
-    "Cada cliente es una nueva oportunidad. ✨",
-    "Hoy es un buen día para tener un gran día. 🌞",
-    "El éxito es la suma de pequeños esfuerzos. 💼",
-    "Calidad y servicio, nuestra pasión. 🛠️",
-    "¡Vamos con todo, equipo! 🔥",
-    "La excelencia es un hábito. ⭐",
-    "La constancia construye resultados. 🧱",
-    "Tus metas están más cerca de lo que crees. 🎯",
-    "Cuidar al cliente siempre suma. 🤝",
-    "Hoy es perfecto para mejorar un 1%. 📈",
-    "Tu enfoque marca la diferencia. 🧠",
-    "Actitud positiva, ventas positivas. 😊",
-    "El detalle vende, cuida el detalle. 🔍",
-    "Cada paso cuenta. Sigue adelante. 🚶",
-    "Cree en tu potencial. 🌟",
-    "Lo que haces hoy define tu mañana. 📅",
-    "Hazlo con orgullo. 🏆",
-    "Tu energia contagia. ⚡",
-    "La disciplina es libertad. 🔒",
-    "Aprende, aplica, mejora. 📚",
-    "Los grandes resultados nacen de grandes habitos. 🔁",
-    "Suma valor en cada interaccion. 💬",
-    "Tu mejor venta es el servicio. 🤍",
-    "Hoy puedes superar tu record. 🥇",
-    "El cliente lo nota: da lo mejor. 👀",
-    "Se amable, se firme, se profesional. 🧭",
-    "Construye confianza todos los dias. 🧱",
-    "Cada consulta es una oportunidad. 💡",
-    "Escucha bien, vende mejor. 👂",
-    "Tu calidad habla por ti. 🗣️",
-    "Sigue, no te detengas. 🏃",
-    "Lo simple bien hecho es poderoso. ✨",
-    "Tu esfuerzo tiene recompensa. 🎁",
-    "El equipo unido logra mas. 🧩",
-    "Respira, enfocate y avanza. 🌬️",
-    "Hoy es un gran dia para crecer. 🌱",
-    "Mantente firme en tus metas. 🧗",
-    "Tu atencion es tu ventaja. 🎛️",
-    "La puntualidad es respeto. ⏰",
-    "Tu excelencia inspira. 🌠",
-    "Hoy puedes aprender algo nuevo. 🧪",
-    "Haz que cada cliente se vaya feliz. 😊",
-    "Confia en tu proceso. 🧵",
-    "La calidad es un estandar, no un extra. ✅",
-    "Actua con seguridad. 🛡️",
-    "Cada desafio te fortalece. 🥋",
-    "Tu constancia construye resultados. 🧱",
-    "Atiende con calidez. ☀️",
-    "El esfuerzo de hoy es el exito de manana. 🌄",
-    "Lo mejor esta por venir. 🔮",
-    "Se proactivo, marca la pauta. 🧭",
-    "Hazlo simple, hazlo bien. ✔️",
-    "Tu enfoque crea resultados. 🧩",
-    "La excelencia se nota. 👌",
-    "Hoy es dia de avanzar. 🚀",
-    "Tu energia impulsa al equipo. ⚙️",
-    "Piensa en soluciones. 🧠",
-    "Cada venta cuenta. 💵",
-    "El servicio es tu mejor carta. 🃏",
-    "Hazlo con pasion. ❤️",
-    "El cliente primero, siempre. 🥇",
-    "Tu trabajo deja huella. 👣",
-    "Se claro, se directo, se amable. 💬",
-    "El orden trae resultados. 📦",
-    "Pequenos logros, grandes cambios. 🔧",
-    "Tu actitud abre puertas. 🚪",
-    "Agradece y sigue. 🙌",
-    "No pares, estas logrando. 🏁",
-    "Sigue aprendiendo cada dia. 📘",
-    "Tus metas valen el esfuerzo. 🎯",
-    "Hoy es un buen dia para vender mas. 💼",
-    "La honestidad construye clientes fieles. 🤍",
-    "Hazlo mejor que ayer. ⏫",
-    "Concentrate en lo que puedes controlar. 🎛️",
-    "La energia positiva se nota. 🌞",
-    "El compromiso se ve. 🔒",
-    "Tu esfuerzo suma al equipo. 🤝",
-    "Se constante, se paciente. 🕰️",
-    "La calidad es tu sello. 🪪",
-    "Hoy puedes inspirar a alguien. 🌟",
-    "Cada dia es una nueva oportunidad. 🔄",
-    "Tu servicio vale oro. 🪙",
-    "Confia en tu habilidad. 🧠",
-    "Avanza con seguridad. 🛡️",
-    "El trabajo bien hecho se recomienda. 📣",
-    "Actua con excelencia. 🏅",
-    "Cuida los detalles, ganan clientes. 🔍",
-    "La dedicacion se premia. 🎖️",
-    "Tu ritmo define tu resultado. 🎶",
-    "Hoy es dia de dar el 100%. 💯",
-    "Eres parte de algo grande. 🌍",
-    "La actitud correcta crea oportunidades. 🧭",
-    "Sigue, ya estas avanzando. ➡️",
-    "Hazlo con orgullo y respeto. 🫡",
-    "Tu disciplina abre caminos. 🛤️",
-    "Cada cliente merece lo mejor. 🫶",
-    "Hazlo con calma y precision. 🎯",
-    "Se constante, se consistente. 🧱",
-    "Tu esfuerzo inspira confianza. 🤝",
-    "Hoy es un buen dia para superar limites. 🚧",
-    "La excelencia es tu decision diaria. ✅",
-    "El exito se construye paso a paso. 🪜",
-    "Tu servicio crea lealtad. 🧲",
-    "La calidad no se negocia. 🛠️",
-    "Tu enfoque es tu poder. 🔦",
-    "Hazlo facil para el cliente. 🧩",
-    "Cada detalle suma valor. 🧷",
-    "Tu mejor version esta en camino. 🌈",
-    "La energia del equipo es clave. 🔑",
-    "Confia en tu experiencia. 🧰",
-    "Hoy es dia de grandes resultados. 🏆",
-    "Eres capaz de mas de lo que piensas. 💭",
-    "Sirve con excelencia y veras resultados. 🏅",
-    "El esfuerzo constante siempre gana. 🥇",
-    "Tu actitud define la experiencia. 🎫",
-    "La confianza se construye con acciones. 🧱",
-    "Hoy es un buen dia para brillar. ✨",
-    "La dedicacion te hace destacar. 🔦",
-    "Con enfoque, todo se logra. 🎯",
-    "Tu servicio es tu mejor publicidad. 📢",
-    "Hazlo con energia y alegria. 😄",
-    "Cada dia cuenta, aprovechalo. 🗓️",
-    "Tu compromiso es tu ventaja. 🧩",
-    "Sigue adelante, estas en buen camino. 🛣️",
-    "Hazlo bien a la primera. ✅",
-    "La excelencia es contagiosa. 🌟",
-    "Tu esfuerzo tiene impacto. 🌍",
-    "La actitud correcta crea resultados. 📈",
-    "Hoy es un gran dia para servir. 🤍"
-  ];
-  
-  // Seleccionar mensaje solo al montar el componente
-  const [dailyMessage] = useState(() => messages[Math.floor(Math.random() * messages.length)]);
 
   const deviceTypeLabel = device.isPhone
     ? "Movil"
@@ -817,8 +719,16 @@ export function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen bg-background flex relative safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+      className="min-h-screen relative flex items-center justify-center overflow-hidden select-none bg-black safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+      onPointerDown={resetOsdTimer}
+      onTouchStart={resetOsdTimer}
     >
+      {/* Background Promo Video Player */}
+      <BackgroundPromoVideo
+        isPortrait={device.isPortrait}
+        onInteract={resetOsdTimer}
+      />
+
       <input
         ref={pinInputRef}
         type="tel"
@@ -831,399 +741,313 @@ export function LoginPage() {
         aria-label="PIN"
       />
 
-      {/* Left side - Info */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between relative overflow-hidden">
-        {/* Decorative background circle */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-foreground/10 rounded-full blur-3xl pointer-events-none" />
-        <img
-          src="/logo-big.png"
-          alt="Mundo de Accesorios"
-          className="pointer-events-none absolute left-1/2 top-1/2 w-[700px] -translate-x-1/2 -translate-y-1/2 opacity-10"
-        />
-        
-        {/* Clock - Top Right */}
-        <div className="absolute top-12 right-12 text-right font-mono">
-          <div className="text-lg font-medium text-primary-foreground/90 mb-0 capitalize tracking-wide">
-            {formatDateFull(currentTime)}
-          </div>
-          <div className="text-4xl font-bold text-primary-foreground tracking-widest opacity-100">
-            {formatTime(currentTime)}
-          </div>
-        </div>
+      {/* Top Left HUD - Time & Date Minimalist */}
+      <div className="absolute top-6 left-6 z-20 pointer-events-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
+        <p className="text-3xl sm:text-5xl font-black tracking-tight font-mono">
+          {formatTime(currentTime)}
+        </p>
+        <p className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-widest mt-1">
+          {formatDateFull(currentTime)}
+        </p>
+      </div>
 
-        <div>
-          {/* Motivational Message Card */}
-          <div className="absolute left-1/2 top-36 w-full max-w-md -translate-x-1/2 bg-primary-foreground/10 border-l-4 border-yellow-400 p-4 rounded-r-lg backdrop-blur-md text-center">
-            <p className="text-primary-foreground text-xl font-medium italic animate-pulse-slow">
-              &quot;{dailyMessage}&quot;
-            </p>
-          </div>
-        </div>
+      {/* Top Right HUD - Tool Buttons (Server Status, Calculator, Theme, Info) */}
+      <div className="absolute top-4 right-20 sm:right-28 z-30 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+            setShowServerConfig(true);
+          }}
+          aria-label="Configurar servidor"
+          title="Estado del Servidor"
+        >
+          <Server className="h-4 w-4 text-sky-400" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+            handleToolToggle("calculator");
+          }}
+          aria-label="Abrir calculadora"
+          title="Calculadora de divisas"
+        >
+          <Calculator className="h-4 w-4 text-amber-300" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+            setShowLoginInfo((prev) => !prev);
+          }}
+          aria-label={showLoginInfo ? "Ocultar información" : "Mostrar información"}
+          title="Información del dispositivo"
+          data-testid="login-info-toggle"
+        >
+          <Info className="h-4 w-4 text-emerald-300" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+            toggleMode();
+          }}
+          aria-label="Cambiar tema"
+          title="Tema claro/oscuro"
+        >
+          {resolvedMode === "dark" ? (
+            <Sun className="h-4 w-4 text-yellow-300" />
+          ) : (
+            <Moon className="h-4 w-4 text-indigo-300" />
+          )}
+        </Button>
+      </div>
 
-        {activeTool === "calculator" && (
-          <div className="absolute left-8 bottom-24 w-[360px] rounded-xl border border-border bg-background/95 p-4 text-foreground shadow-xl backdrop-blur-md">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Calculadora de Divisas</h3>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)}>
-                Cerrar
-              </Button>
+      {/* Floating Calculator Overlay */}
+      {activeTool === "calculator" && (
+        <div 
+          className="absolute top-20 right-6 z-40 w-[340px] rounded-2xl border border-white/20 bg-black/85 p-4 text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-sky-400">Calculadora de Divisas</h3>
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-white/70 hover:text-white" onClick={() => setActiveTool(null)}>
+              Cerrar
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-white/80">Monto</Label>
+              <input
+                className="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                value={fxAmount}
+                onChange={(event) => setFxAmount(event.target.value)}
+                inputMode="decimal"
+              />
             </div>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Monto</Label>
-                <input
-                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  value={fxAmount}
-                  onChange={(event) => setFxAmount(event.target.value)}
-                  inputMode="decimal"
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs">De</Label>
-                  <select
-                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
-                    value={fxFrom}
-                    onChange={(event) => setFxFrom(event.target.value)}
-                  >
-                    <option value="USD">USD</option>
-                    <option value="NIO">NIO</option>
-                  </select>
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10"
-                  onClick={handleSwapCurrencies}
-                  aria-label="Intercambiar divisas"
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label className="text-xs text-white/80">De</Label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-white/20 bg-zinc-900 px-2 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  value={fxFrom}
+                  onChange={(event) => setFxFrom(event.target.value)}
                 >
-                  <ArrowLeftRight className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                  <Label className="text-xs">A</Label>
-                  <select
-                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
-                    value={fxTo}
-                    onChange={(event) => setFxTo(event.target.value)}
-                  >
-                    <option value="NIO">NIO</option>
-                    <option value="USD">USD</option>
-                  </select>
-                </div>
+                  <option value="USD">USD</option>
+                  <option value="NIO">NIO</option>
+                </select>
               </div>
-              <Button className="w-full" onClick={handleConvertCurrency} disabled={fxLoading}>
-                {fxLoading ? "Calculando..." : "Convertir"}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/20"
+                onClick={handleSwapCurrencies}
+                aria-label="Intercambiar divisas"
+              >
+                <ArrowLeftRight className="h-4 w-4" />
               </Button>
-              <div className="rounded-md border border-border bg-muted/60 p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span>Tasa</span>
-                  <span>{fxRate ? fxRate.toFixed(4) : "-"}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between font-semibold">
-                  <span>Resultado</span>
-                  <span>
-                    {fxResult !== "" && fxResult !== null
-                      ? formatCurrency(fxResult, fxTo)
-                      : "-"}
-                  </span>
-                </div>
-                {fxError && <div className="mt-2 text-xs text-destructive">{fxError}</div>}
+              <div className="flex-1">
+                <Label className="text-xs text-white/80">A</Label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-white/20 bg-zinc-900 px-2 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  value={fxTo}
+                  onChange={(event) => setFxTo(event.target.value)}
+                >
+                  <option value="NIO">NIO</option>
+                  <option value="USD">USD</option>
+                </select>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTool === "calendar" && (
-          <div className="absolute left-8 bottom-24 w-[320px] rounded-xl border border-border bg-background/95 p-4 text-foreground shadow-xl backdrop-blur-md">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Calendario</h3>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)}>
-                Cerrar
-              </Button>
+            <Button className="w-full rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold" onClick={handleConvertCurrency} disabled={fxLoading}>
+              {fxLoading ? "Calculando..." : "Convertir"}
+            </Button>
+            <div className="rounded-xl border border-white/15 bg-white/5 p-3 text-xs space-y-1.5">
+              <div className="flex items-center justify-between text-white/70">
+                <span>Tasa</span>
+                <span className="font-mono text-white">{fxRate ? fxRate.toFixed(4) : "-"}</span>
+              </div>
+              <div className="flex items-center justify-between font-bold text-sm text-sky-300 pt-1 border-t border-white/10">
+                <span>Resultado</span>
+                <span>
+                  {fxResult !== "" && fxResult !== null
+                    ? formatCurrency(fxResult, fxTo)
+                    : "-"}
+                </span>
+              </div>
+              {fxError && <div className="text-xs text-rose-400">{fxError}</div>}
             </div>
-            <Label className="text-xs">Selecciona una fecha</Label>
-            <input
-              type="date"
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="space-y-2 text-primary-foreground/60 text-sm">
-          <div>© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</div>
-          <div>
+      {/* Device Info Overlay */}
+      {showLoginInfo && (
+        <div 
+          className="absolute top-20 right-6 z-40 w-full max-w-sm rounded-2xl border border-white/20 bg-black/85 p-4 text-xs text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95"
+          onClick={(e) => e.stopPropagation()}
+          data-testid="login-device-validator"
+        >
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
+            <span className="font-semibold text-sky-400">Información del Acceso</span>
+            <Button variant="ghost" size="sm" className="h-6 text-xs text-white/70 hover:text-white" onClick={() => setShowLoginInfo(false)}>
+              Cerrar
+            </Button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1">
+              <span className={`inline-block h-2 w-2 rounded-full ${
+                backendStatus === 'ok' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : backendStatus === 'down' ? 'bg-rose-500' : 'bg-yellow-400 animate-pulse'
+              }`} />
+              <span>
+                {backendStatus === 'ok' && "Servidor en línea"}
+                {backendStatus === 'down' && "Sin conexión"}
+                {backendStatus === 'unknown' && (checkingBackend ? "Comprobando..." : "Verificando...")}
+              </span>
+            </div>
+            <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1">
+              Pantalla: <strong>{deviceTypeLabel}</strong> ({device.viewportWidth}x{device.viewportHeight})
+            </span>
+            <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1">
+              Orientación: <strong>{device.isPortrait ? "Vertical (Tótem)" : "Horizontal"}</strong>
+            </span>
+          </div>
+          <div className="mt-3 text-right text-white/50 text-[10px] font-mono">
             Version: {buildVersion} · Build: {buildTimeLabel}
           </div>
         </div>
+
+      {/* Floating Wake Button when PIN pad is hidden */}
+      {!isPinpadVisible && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+          }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-6 py-3 rounded-full bg-black/55 hover:bg-black/75 border border-white/30 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-semibold tracking-wide animate-pulse cursor-pointer transition-all duration-300 hover:scale-105"
+        >
+          <Lock className="h-4 w-4 text-sky-400" />
+          <span>Toca o teclea tu PIN para acceder</span>
+        </button>
+      )}
+
+      {/* Center - Frosted Glass PIN Pad with 5-second OSD auto-fadeout */}
+      <div
+        className={`relative z-20 w-full max-w-[340px] sm:max-w-sm mx-auto p-5 sm:p-7 rounded-3xl backdrop-blur-2xl bg-black/50 dark:bg-black/65 border border-white/20 text-white shadow-2xl transition-all duration-500 transform ${
+          isPinpadVisible ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-center mb-4">
+          <h2 className="font-heading text-xl sm:text-2xl font-black text-white tracking-wide">Acceso Rápido</h2>
+          <p className="text-xs sm:text-sm text-white/70 mt-0.5">
+            Ingresa tu PIN de 8 dígitos para acceder
+          </p>
+        </div>
+
+        {/* PIN Display (always masked) */}
+        <div className="flex justify-center gap-1.5 mb-5 flex-wrap max-w-[320px] mx-auto">
+          {[...Array(PIN_LENGTH)].map((_, i) => (
+            <div
+              key={i}
+              className={`w-7 sm:w-8 h-10 sm:h-11 rounded-xl border-2 flex items-center justify-center text-xl font-bold transition-all ${
+                pin.length > i
+                  ? "border-sky-400 bg-sky-500/30 text-sky-200 shadow-[0_0_12px_rgba(56,189,248,0.6)] scale-105"
+                  : "border-white/20 bg-white/5 text-white/30"
+              }`}
+            >
+              {pin.length > i ? "•" : ""}
+            </div>
+          ))}
+        </div>
+
+        {remainingAttempts !== null && !isPinLocked && (
+          <div className="text-center text-xs text-amber-300 mb-2 font-medium">
+            Intentos restantes: {remainingAttempts}
+          </div>
+        )}
+
+        <div className={`grid grid-cols-3 gap-2 max-w-xs mx-auto p-1 rounded-2xl transition-all duration-300 ${
+          isPinLocked ? "opacity-40 pointer-events-none" :
+          authStatus === "error" ? "bg-destructive/30 ring-2 ring-destructive animate-shake" :
+          authStatus === "success" ? "bg-green-500/30 ring-2 ring-green-500" :
+          ""
+        }`}>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+            <Button
+              key={digit}
+              type="button"
+              variant="outline"
+              className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-mono font-semibold backdrop-blur-md shadow-md transition-all"
+              onClick={() => {
+                resetOsdTimer();
+                handlePinKeyPress(String(digit));
+              }}
+              disabled={loading || isPinLocked}
+              data-testid={`pin-key-${digit}`}
+            >
+              {digit}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 text-white text-xs sm:text-sm font-semibold backdrop-blur-md transition-all"
+            onClick={() => {
+              resetOsdTimer();
+              handlePinBackspace();
+            }}
+            disabled={loading || isPinLocked || pin.length === 0}
+          >
+            Borrar
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-mono font-semibold backdrop-blur-md shadow-md transition-all"
+            onClick={() => {
+              resetOsdTimer();
+              handlePinKeyPress("0");
+            }}
+            disabled={loading || isPinLocked}
+            data-testid="pin-key-0"
+          >
+            0
+          </Button>
+          <Button
+            type="button"
+            className="h-12 sm:h-14 rounded-2xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-bold text-base sm:text-lg shadow-[0_0_15px_rgba(14,165,233,0.5)] transition-all"
+            onClick={() => {
+              resetOsdTimer();
+              handlePinLogin();
+            }}
+            disabled={loading || isPinLocked || pin.length !== PIN_LENGTH || backendStatus === 'down'}
+            data-testid="pin-submit"
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
+          </Button>
+        </div>
       </div>
 
-      {/* Right side - Login */}
-      <div className="relative flex-1 flex items-center justify-center overflow-hidden p-3 sm:p-6 md:p-8">
-        <Card className="relative z-10 w-full max-w-md border border-border/80 dark:border-zinc-800 bg-card/95 dark:bg-zinc-900/95 shadow-2xl backdrop-blur-md">
-          <CardContent className="relative overflow-hidden p-4 sm:p-6 md:p-8">
-            <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-4 sm:p-6">
-              <img
-                src="/logo-big.png"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                className="h-auto w-[78%] max-w-lg select-none object-contain"
-                style={{ mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply", opacity: watermarkOpacity }}
-              />
-            </div>
-
-            <div className="relative z-10">
-            <div className="relative mb-4">
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => setShowServerConfig(true)}
-                  aria-label="Configurar servidor"
-                  title="Estado del Servidor"
-                >
-                  <Server className="h-4 w-4 text-sky-500 hover:text-sky-400" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => handleToolToggle("calculator")}
-                  aria-label="Abrir calculadora"
-                >
-                  <Calculator className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => setShowLoginInfo((prev) => !prev)}
-                  aria-label={showLoginInfo ? "Ocultar informacion" : "Mostrar informacion"}
-                  data-testid="login-info-toggle"
-                >
-                  <Info className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => toggleMode()}
-                  aria-label="Cambiar tema"
-                >
-                  {resolvedMode === "dark" ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {showLoginInfo ? (
-                <div
-                  className="absolute right-0 top-16 z-20 w-full rounded-xl border border-primary/20 bg-card/95 p-3 text-xs shadow-xl backdrop-blur-md"
-                  data-testid="login-device-validator"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold">Informacion del acceso</span>
-                    <span className="text-muted-foreground">Estado expandido</span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-md border bg-background/80 px-2 py-1">
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${
-                        backendStatus === 'ok' ? 'bg-emerald-500' : backendStatus === 'down' ? 'bg-destructive' : 'bg-yellow-400 animate-pulse'
-                      }`} />
-                      <span className="text-muted-foreground">
-                        {backendStatus === 'ok' && "Servidor OK"}
-                        {backendStatus === 'down' && "Servidor sin conexion"}
-                        {backendStatus === 'unknown' && (checkingBackend ? "Comprobando servidor..." : "Verificando servidor...")}
-                      </span>
-                    </div>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      Pantalla: <span className="font-semibold text-foreground">{deviceTypeLabel}</span>
-                    </span>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      Regla: <span className="font-semibold text-foreground">{deviceRuleLabel}</span>
-                    </span>
-
-                    <span className="rounded-md border bg-background/80 px-2 py-1 text-muted-foreground">
-                      {device.viewportWidth}x{device.viewportHeight} · {device.isPortrait ? "Vertical" : "Horizontal"} · {device.isTouchDevice ? "Tactil" : "No tactil"}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 text-right text-muted-foreground">
-                    Version: {buildVersion} · Build: {buildTimeLabel}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {activeTool && (
-              <div className="mb-6 rounded-xl border border-border bg-card/80 p-4 text-sm lg:hidden">
-                {activeTool === "calculator" ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">Calculadora de Divisas</span>
-                      <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)}>
-                        Cerrar
-                      </Button>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Monto</Label>
-                      <input
-                        className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                        value={fxAmount}
-                        onChange={(event) => setFxAmount(event.target.value)}
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <Label className="text-xs">De</Label>
-                        <select
-                          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
-                          value={fxFrom}
-                          onChange={(event) => setFxFrom(event.target.value)}
-                        >
-                          <option value="USD">USD</option>
-                          <option value="NIO">NIO</option>
-                        </select>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10"
-                        onClick={handleSwapCurrencies}
-                        aria-label="Intercambiar divisas"
-                      >
-                        <ArrowLeftRight className="h-4 w-4" />
-                      </Button>
-                      <div className="flex-1">
-                        <Label className="text-xs">A</Label>
-                        <select
-                          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
-                          value={fxTo}
-                          onChange={(event) => setFxTo(event.target.value)}
-                        >
-                          <option value="NIO">NIO</option>
-                          <option value="USD">USD</option>
-                        </select>
-                      </div>
-                    </div>
-                    <Button className="w-full" onClick={handleConvertCurrency} disabled={fxLoading}>
-                      {fxLoading ? "Calculando..." : "Convertir"}
-                    </Button>
-                    <div className="rounded-md border border-border bg-muted/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <span>Tasa</span>
-                        <span>{fxRate ? fxRate.toFixed(4) : "-"}</span>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between font-semibold">
-                        <span>Resultado</span>
-                        <span>
-                          {fxResult !== "" && fxResult !== null
-                            ? new Intl.NumberFormat("es-NI", {
-                                style: "currency",
-                                currency: fxTo,
-                              }).format(fxResult)
-                            : "-"}
-                        </span>
-                      </div>
-                      {fxError && <div className="mt-2 text-xs text-destructive">{fxError}</div>}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            )}
-
-            {/* PIN Login */}
-            <div className="w-full">
-              <h2 className="font-heading text-2xl font-bold mb-2">Acceso Rápido</h2>
-              <p className="text-muted-foreground mb-6">
-                Ingresa tu PIN de 8 dígitos para acceder
-              </p>
-
-              <Label className="text-center block mb-3">PIN</Label>
-
-              {/* PIN Display (always masked) */}
-              <div className="flex justify-center gap-1 mb-6 flex-wrap max-w-[340px] mx-auto">
-                {[...Array(PIN_LENGTH)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-9 h-11 rounded-lg border-2 flex items-center justify-center text-xl font-bold transition-all ${
-                      pin.length > i ? "border-primary bg-primary/10" : "border-muted"
-                    }`}
-                  >
-                    {pin.length > i ? "•" : ""}
-                  </div>
-                ))}
-              </div>
-
-              {remainingAttempts !== null && !isPinLocked && (
-                <div className="text-center text-sm text-muted-foreground mb-2">
-                  Intentos restantes: {remainingAttempts}
-                </div>
-              )}
-
-              <div className={`grid grid-cols-3 gap-2 max-w-xs mx-auto p-2 rounded-xl transition-all duration-300 ${
-                isPinLocked ? "opacity-40 pointer-events-none" :
-                authStatus === "error" ? "bg-destructive/20 ring-2 ring-destructive animate-shake" :
-                authStatus === "success" ? "bg-green-500/20 ring-2 ring-green-500" :
-                ""
-              }`}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                  <Button
-                    key={digit}
-                    variant="outline"
-                    className="h-14 text-xl font-semibold transition-colors"
-                    onClick={() => handlePinKeyPress(String(digit))}
-                    disabled={loading || isPinLocked}
-                    data-testid={`pin-key-${digit}`}
-                  >
-                    {digit}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  className="h-14 text-sm transition-colors"
-                  onClick={handlePinBackspace}
-                  disabled={loading || isPinLocked || pin.length === 0}
-                >
-                  Borrar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-xl font-semibold transition-colors"
-                  onClick={() => handlePinKeyPress("0")}
-                  disabled={loading || isPinLocked}
-                  data-testid="pin-key-0"
-                >
-                  0
-                </Button>
-                <Button
-                  className="h-14"
-                  onClick={() => handlePinLogin()}
-                  disabled={loading || isPinLocked || pin.length !== PIN_LENGTH || backendStatus === 'down'}
-                  data-testid="pin-submit"
-                >
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "OK"}
-                </Button>
-              </div>
-            </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Bottom Left HUD - Version and Build Label */}
+      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5">
+        <p className="font-semibold text-white/80">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
+        <p className="font-mono text-[11px] text-white/50">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
-      {/* Retro Logo Cascade Loading Animation during PIN login & session hydration */}
-      {loading ? (
-        <LogoCascadeLoader
-          statusText="Iniciando sesión en Mundo de Accesorios..."
-        />
-      ) : null}
 
       {/* Full-screen lockout overlay (cashier-style, red, huge countdown with centiseconds) */}
       {isPinLocked ? (
