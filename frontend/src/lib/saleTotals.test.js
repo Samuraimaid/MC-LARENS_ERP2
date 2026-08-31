@@ -7,11 +7,16 @@ import {
 
 describe("defaultApplyIvaForCustomer", () => {
   it("defaults natural clients to no IVA", () => {
-    expect(defaultApplyIvaForCustomer({ customer_type: "natural" })).toBe(false);
+    expect(defaultApplyIvaForCustomer({ customer_type: "natural" }, false)).toBe(false);
+    expect(defaultApplyIvaForCustomer({ customer_type: "natural" }, true)).toBe(false);
   });
 
-  it("defaults company clients to IVA", () => {
-    expect(defaultApplyIvaForCustomer({ customer_type: "empresa" })).toBe(true);
+  it("defaults company clients to no IVA when system taxes are disabled", () => {
+    expect(defaultApplyIvaForCustomer({ customer_type: "empresa" }, false)).toBe(false);
+  });
+
+  it("applies IVA for company clients only when system taxes are enabled", () => {
+    expect(defaultApplyIvaForCustomer({ customer_type: "empresa" }, true)).toBe(true);
   });
 });
 

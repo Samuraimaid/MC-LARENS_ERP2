@@ -1747,7 +1747,8 @@ class UsdNioDualRateUpdatePayload(FlexibleModel):
 
 
 class BillingIvaUpdatePayload(FlexibleModel):
-    iva_rate: float
+    iva_rate: Optional[float] = None
+    taxes_enabled: Optional[bool] = None
 
 
 class SellerGlobalDiscountPolicyPayload(FlexibleModel):
@@ -21981,6 +21982,7 @@ async def get_billing_settings(request: Request, branch_id: str = ""):
             "sell_source": resolved_rates["sell_source"],
         },
         "iva_rate": float(doc.get("iva_rate") or DEFAULT_BILLING_IVA_RATE),
+        "taxes_enabled": bool(doc.get("taxes_enabled", False)),
         "cancel_reasons": reasons,
         "pdf_documents": export_normalize_pdf_document_settings(doc.get("pdf_documents")),
         "seller_voucher": _normalize_seller_voucher_settings(doc.get("seller_voucher")),
@@ -22001,8 +22003,13 @@ async def get_public_cancel_reasons(request: Request):
 @api_router.get("/settings/billing/iva/public")
 async def get_public_billing_iva(request: Request):
     user = await require_auth(request)
+    doc = await _get_billing_settings_doc(user.branch_id)
     iva_rate = await _get_billing_iva_rate(user.branch_id)
-    return {"iva_rate": iva_rate, "branch_id": _normalize_billing_branch_id(user.branch_id)}
+    return {
+        "iva_rate": iva_rate,
+        "taxes_enabled": bool(doc.get("taxes_enabled", False)),
+        "branch_id": _normalize_billing_branch_id(user.branch_id),
+    }
 
 
 @api_router.put("/settings/billing/exchange")
@@ -22064,18 +22071,26 @@ async def update_billing_iva(
     request: Request,
     branch_id: str = "",
 ):
-    user = await require_roles(request, ["gerencia", "recursos_humanos"])
+    user = await require_roles(request, ["gerencia", "recursos_humanos", "programador"])
     resolved_branch_id = await _resolve_billing_branch_for_settings(user, branch_id or None)
-    iva_rate = float(payload.iva_rate or 0)
-    if iva_rate <= 0:
-        raise HTTPException(status_code=400, detail="El IVA debe ser mayor a cero")
-    if iva_rate > 100:
-        raise HTTPException(status_code=400, detail="El IVA no puede ser mayor a 100")
-
     doc = await _get_billing_settings_doc(resolved_branch_id)
-    doc["iva_rate"] = iva_rate
+
+    if payload.iva_rate is not None:
+        iva_rate = float(payload.iva_rate or 0)
+        if iva_rate <= 0 or iva_rate > 100:
+            raise HTTPException(status_code=400, detail="El IVA debe ser entre 0 y 100")
+        doc["iva_rate"] = iva_rate
+
+    if payload.taxes_enabled is not None:
+        doc["taxes_enabled"] = bool(payload.taxes_enabled)
+
     await _save_billing_settings_doc(doc, resolved_branch_id)
-    return {"message": "IVA actualizado", "iva_rate": iva_rate, "branch_id": resolved_branch_id}
+    return {
+        "message": "Configuración de impuestos actualizada",
+        "iva_rate": float(doc.get("iva_rate", 15)),
+        "taxes_enabled": bool(doc.get("taxes_enabled", False)),
+        "branch_id": resolved_branch_id,
+    }
 
 
 @api_router.post("/settings/billing/exchange/rules")

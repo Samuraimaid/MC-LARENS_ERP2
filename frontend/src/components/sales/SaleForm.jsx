@@ -162,77 +162,152 @@ import TintWindowMaterialDialog from "@/components/sales/TintWindowMaterialDialo
 import { resolveVehicleCategory } from "@/lib/vehicleSilhouette";
 
 export function getProductVehicleCompatibility(product, vehicle) {
-  if (!vehicle) return { isCompatible: true, isSpecificTint: false };
+  if (!vehicle) return { isCompatible: true, isSpecificTint: false, isSpecific: false, badge: null };
 
   const sku = String(product?.sku || "").toUpperCase();
   const name = String(product?.name || "").toLowerCase();
   const category = resolveVehicleCategory(vehicle);
+  const compatibility = product?.compatibility || {};
 
   const isTintProduct =
     sku.startsWith("POL-") ||
     name.includes("polarizado") ||
     String(product?.category || "").toLowerCase().includes("polarizado");
 
-  if (!isTintProduct) {
-    return { isCompatible: true, isSpecificTint: false };
+  if (isTintProduct) {
+    const isSedanGroup = ["sedan", "hatchback", "convertible"].includes(category);
+    const isSuvPickupGroup = [
+      "suv",
+      "camioneta_doble_cabina",
+      "camioneta_cabina_media",
+      "camioneta_1_cabina",
+      "pickup",
+      "station_wagon",
+    ].includes(category);
+    const isHeavyGroup = [
+      "camion_1_cabina",
+      "camion_2_cabinas",
+      "camion_carga_furgon",
+      "microbus_pasajeros",
+      "microbus_techo_alto",
+      "microbus_carga",
+      "bus_mediano_coaster",
+      "bus_grande_marcopolo",
+    ].includes(category);
+
+    const isSedanTint =
+      sku.includes("-SED-") ||
+      name.includes("sedán") ||
+      name.includes("sedan") ||
+      name.includes("automóvil") ||
+      name.includes("automovil");
+
+    const isSuvTint =
+      sku.includes("-SUV-") ||
+      (sku.includes("-CAM-") && (name.includes("suv") || name.includes("camioneta"))) ||
+      name.includes("suv") ||
+      name.includes("camioneta") ||
+      name.includes("pickup") ||
+      name.includes("4x4");
+
+    const isHeavyTint =
+      (sku.includes("-CAM-") && !name.includes("camioneta") && !name.includes("suv")) ||
+      name.includes("camión") ||
+      name.includes("camion") ||
+      name.includes("microbús") ||
+      name.includes("microbus") ||
+      name.includes("coaster") ||
+      name.includes("bus");
+
+    if (isSedanGroup) {
+      if (isSedanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sedán / Auto)" };
+      if (isSuvTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
+    } else if (isSuvPickupGroup) {
+      if (isSuvTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camioneta / SUV)" };
+      if (isSedanTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
+    } else if (isHeavyGroup) {
+      if (isHeavyTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camión / Bus)" };
+      if (isSedanTint || isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };
+    }
+
+    return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible" };
   }
 
-  const isSedanGroup = ["sedan", "hatchback", "convertible"].includes(category);
-  const isSuvPickupGroup = [
-    "suv",
-    "camioneta_doble_cabina",
-    "camioneta_cabina_media",
-    "camioneta_1_cabina",
-    "pickup",
-    "station_wagon",
-  ].includes(category);
-  const isHeavyGroup = [
-    "camion_1_cabina",
-    "camion_2_cabinas",
-    "camion_carga_furgon",
-    "microbus_pasajeros",
-    "microbus_techo_alto",
-    "microbus_carga",
-    "bus_mediano_coaster",
-    "bus_grande_marcopolo",
-  ].includes(category);
+  // Non-tint products: Check structured compatibility
+  const hasStructuredCompat =
+    (Array.isArray(compatibility.brands) && compatibility.brands.length > 0) ||
+    (Array.isArray(compatibility.models) && compatibility.models.length > 0) ||
+    Boolean(compatibility.year_from) ||
+    Boolean(compatibility.year_to) ||
+    (Array.isArray(compatibility.vehicle_types) && compatibility.vehicle_types.length > 0) ||
+    (Array.isArray(product?.vehicle_types) && product.vehicle_types.length > 0);
 
-  const isSedanTint =
-    sku.includes("-SED-") ||
-    name.includes("sedán") ||
-    name.includes("sedan") ||
-    name.includes("automóvil") ||
-    name.includes("automovil");
+  const vBrand = String(vehicle.brand || "").toLowerCase().trim();
+  const vModel = String(vehicle.model || "").toLowerCase().trim();
+  const vYear = Number(vehicle.year);
+  const vType = String(vehicle.vehicle_type || vehicle.type || vehicle.body_type || "").toLowerCase().trim();
 
-  const isSuvTint =
-    sku.includes("-SUV-") ||
-    (sku.includes("-CAM-") && (name.includes("suv") || name.includes("camioneta"))) ||
-    name.includes("suv") ||
-    name.includes("camioneta") ||
-    name.includes("pickup") ||
-    name.includes("4x4");
+  if (hasStructuredCompat) {
+    const brands = (Array.isArray(compatibility.brands) ? compatibility.brands : [])
+      .map((b) => String(b).toLowerCase().trim())
+      .filter(Boolean);
 
-  const isHeavyTint =
-    (sku.includes("-CAM-") && !name.includes("camioneta") && !name.includes("suv")) ||
-    name.includes("camión") ||
-    name.includes("camion") ||
-    name.includes("microbús") ||
-    name.includes("microbus") ||
-    name.includes("coaster") ||
-    name.includes("bus");
+    if (brands.length > 0 && vBrand && !brands.some((b) => vBrand.includes(b) || b.includes(vBrand))) {
+      return { isCompatible: false, isSpecificTint: false, isSpecific: true, badge: `Para ${brands.map((b) => b.toUpperCase()).join(", ")}` };
+    }
 
-  if (isSedanGroup) {
-    if (isSedanTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Sedán / Auto)" };
-    if (isSuvTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, badge: "Para SUV / Camioneta" };
-  } else if (isSuvPickupGroup) {
-    if (isSuvTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Camioneta / SUV)" };
-    if (isSedanTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, badge: "Para Sedán / Auto" };
-  } else if (isHeavyGroup) {
-    if (isHeavyTint) return { isCompatible: true, isSpecificTint: true, badge: "Compatible (Camión / Bus)" };
-    if (isSedanTint || isSuvTint) return { isCompatible: false, isSpecificTint: true, badge: "Para Vehículo Liviano" };
+    const models = (Array.isArray(compatibility.models) ? compatibility.models : [])
+      .map((m) => String(m).toLowerCase().trim())
+      .filter(Boolean);
+
+    if (models.length > 0 && vModel && !models.some((m) => vModel.includes(m) || m.includes(vModel))) {
+      return { isCompatible: false, isSpecificTint: false, isSpecific: true, badge: `Para ${models.map((m) => m.toUpperCase()).join(", ")}` };
+    }
+
+    if (!Number.isNaN(vYear) && vYear > 0 && (compatibility.year_from || compatibility.year_to)) {
+      const yearFrom = Number(compatibility.year_from || 0);
+      const yearTo = Number(compatibility.year_to || 9999);
+      if (vYear < yearFrom || vYear > yearTo) {
+        return { isCompatible: false, isSpecificTint: false, isSpecific: true, badge: `Años ${compatibility.year_from || "..."}-${compatibility.year_to || "Act."}` };
+      }
+    }
+
+    const types = (Array.isArray(compatibility.vehicle_types) ? compatibility.vehicle_types : (product?.vehicle_types || []))
+      .map((t) => String(t).toLowerCase().trim())
+      .filter(Boolean);
+
+    if (types.length > 0 && vType && !types.some((t) => vType.includes(t) || t.includes(vType))) {
+      return { isCompatible: false, isSpecificTint: false, isSpecific: true, badge: `Carrocería ${types.join(", ")}` };
+    }
+
+    return { isCompatible: true, isSpecificTint: false, isSpecific: true, badge: "Compatible" };
   }
 
-  return { isCompatible: true, isSpecificTint: true, badge: "Compatible" };
+  // If no structured compatibility, check if product description explicitly targets other brands
+  const KNOWN_BRANDS = [
+    "toyota", "nissan", "hyundai", "kia", "mitsubishi", "suzuki", "honda", "mazda",
+    "isuzu", "ford", "chevrolet", "volkswagen", "scion", "jeep", "dodge", "ram", "subaru"
+  ];
+  const brandsInTitle = KNOWN_BRANDS.filter((b) => name.includes(b));
+  if (brandsInTitle.length > 0 && vBrand) {
+    const matchesVehicleBrand = brandsInTitle.some((b) => vBrand.includes(b) || b.includes(vBrand));
+    if (!matchesVehicleBrand) {
+      return {
+        isCompatible: false,
+        isSpecificTint: false,
+        isSpecific: true,
+        badge: `Para ${brandsInTitle.map((b) => b.toUpperCase()).join("/")}`,
+      };
+    }
+    return {
+      isCompatible: true,
+      isSpecificTint: false,
+      isSpecific: true,
+      badge: `Compatible (${vBrand.toUpperCase()})`,
+    };
+  }
+
+  return { isCompatible: true, isSpecificTint: false, isSpecific: false, badge: null };
 }
 
 // Prefijos de placa Nicaragua
@@ -357,11 +432,13 @@ export default function SaleForm({
   const [paymentMethod, setPaymentMethod] = useState(initialData.paymentMethod || initialData.payment_type || "cash");
   const [notes, setNotes] = useState(initialData.notes || "");
   const [applyIVA, setApplyIVA] = useState(
-    initialData.applyIVA ?? defaultApplyIvaForCustomer(initialData.selectedCustomer),
+    initialData.applyIVA ?? false,
   );
+  const [onlyCompatibleProducts, setOnlyCompatibleProducts] = useState(false);
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
+  const canManageTaxes = ["gerencia", "programador", "supervisor"].includes(String(user?.role || "").toLowerCase());
   const [mixedPaymentMethods, setMixedPaymentMethods] = useState(
     normalizePaymentMethodList(initialData.mixedPaymentMethods || initialData.mixed_payment_methods || [])
   );
@@ -912,18 +989,6 @@ export default function SaleForm({
     void fetchMessengerOptions({ showErrorToast: true });
   }, [logisticMode, messengerLoadFailed, messengerLoading, fetchMessengerOptions, user?.branch_id]);
 
-  useEffect(() => {
-    if (!selectedCustomer) return;
-
-    if (isCompanyCustomer(selectedCustomer)) {
-      if (!applyIVA) {
-        setApplyIVA(true);
-      }
-      if (ivaRate !== 15) {
-        setIvaRate(15);
-      }
-    }
-  }, [selectedCustomer, isCompanyCustomer, applyIVA, ivaRate]);
 
   useEffect(() => {
     if (!draftLoaded) return;
@@ -983,11 +1048,9 @@ export default function SaleForm({
       const restoredCustomer = customers.find(
         (c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""),
       );
-      setApplyIVA(
-        draft?.applyIVA ?? defaultApplyIvaForCustomer(restoredCustomer || selectedCustomer),
-      );
-        setApplyRetention(draft?.applyRetention ?? false);
-        setRetentionRate(draft?.retentionRate ?? 2);
+      setApplyIVA(draft?.applyIVA ?? false);
+      setApplyRetention(draft?.applyRetention ?? false);
+      setRetentionRate(draft?.retentionRate ?? 2);
       setIvaRate(defaultIvaRate);
       applyCurrencyChange(draft?.currency || "NIO", { force: true });
       setCustomerSearch(draft?.customerSearch || "");
@@ -2387,7 +2450,7 @@ export default function SaleForm({
     if (shouldResetCart) {
       resetSaleFlowForCustomerChange();
     }
-    const nextApplyIva = defaultApplyIvaForCustomer(customer);
+    const nextApplyIva = false;
     setSelectedCustomer(customer);
     setPendingCustomerId(null);
     setCustomerSearch("");
@@ -2988,22 +3051,27 @@ export default function SaleForm({
       }
     }
 
-    // Si hay un vehículo seleccionado en modo Instalado, priorizamos y ordenamos los productos compatibles
-    if (selectedVehicleData && logisticMode === "installed") {
+    // Si hay un vehículo seleccionado o si está activo el switch de Solo compatibles
+    if (selectedVehicleData && (logisticMode === "installed" || onlyCompatibleProducts)) {
       const scored = matched.map((product) => ({
         product,
         compat: getProductVehicleCompatibility(product, selectedVehicleData),
       }));
-      scored.sort((a, b) => {
+
+      const finalItems = onlyCompatibleProducts
+        ? scored.filter((s) => s.compat.isCompatible)
+        : scored;
+
+      finalItems.sort((a, b) => {
         if (a.compat.isCompatible && !b.compat.isCompatible) return -1;
         if (!a.compat.isCompatible && b.compat.isCompatible) return 1;
         return 0;
       });
-      return scored.map((s) => s.product);
+      return finalItems.map((s) => s.product);
     }
 
     return matched;
-  }, [indexedProducts, products, deferredProductSearch, selectedVehicleData, logisticMode]);
+  }, [indexedProducts, products, deferredProductSearch, selectedVehicleData, logisticMode, onlyCompatibleProducts]);
 
   const MAX_SEARCH_DROPDOWN_ITEMS = 30;
   const visibleProducts = useMemo(() => {
@@ -4063,14 +4131,31 @@ export default function SaleForm({
                 {(() => {
                   const selImg = getVehicleDisplayImage(selectedVehicleData);
                   if (!selImg?.src) return null;
+                  const vLabel = [selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ");
                   return (
-                    <div className="shrink-0 h-14 sm:h-16 w-28 sm:w-36 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-sky-200/80 dark:border-sky-700/60 flex items-center justify-center p-1.5 shadow-sm overflow-hidden self-center">
-                      <img
-                        src={selImg.src}
-                        alt={[selectedVehicleData.brand, selectedVehicleData.model].filter(Boolean).join(" ")}
-                        className="max-h-full max-w-full object-contain drop-shadow"
-                        loading="lazy"
-                      />
+                    <div className="relative group/veh shrink-0 self-center">
+                      <div className="h-20 sm:h-24 w-36 sm:w-48 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-sky-200/90 dark:border-sky-700/60 p-2.5 sm:p-3 shadow-md flex items-center justify-center overflow-hidden transition-all duration-300 group-hover/veh:border-sky-400 group-hover/veh:shadow-xl cursor-zoom-in">
+                        <img
+                          src={selImg.src}
+                          alt={vLabel}
+                          className="max-h-full max-w-full object-contain drop-shadow transition-transform duration-300 group-hover/veh:scale-110"
+                          loading="lazy"
+                        />
+                      </div>
+                      {/* Zoom flotante en detalle 100% al pasar el cursor */}
+                      <div className="fixed sm:absolute z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 bottom-auto sm:bottom-full sm:right-0 mb-2 p-3 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border-2 border-sky-400/90 w-72 sm:w-96 flex flex-col items-center gap-2 backdrop-blur-md">
+                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[160px] border border-slate-100 dark:border-zinc-800">
+                          <img
+                            src={selImg.src}
+                            alt={vLabel}
+                            className="max-h-48 max-w-full object-contain drop-shadow-xl"
+                          />
+                        </div>
+                        <div className="text-center w-full">
+                          <p className="text-xs font-bold text-sky-950 dark:text-sky-100 truncate">{vLabel || "Vehículo"}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Detalle 100% Vehículo</p>
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
@@ -4126,8 +4211,24 @@ export default function SaleForm({
                   onKeyDown={handleProductSearchKeyDown}
                   ref={productSearchRef}
                   disabled={!stepTwoComplete}
-                  className="mb-0 pl-9 pr-12"
+                  className={cn("mb-0 pl-9", productSearch.trim() ? "pr-20" : "pr-12")}
                 />
+                {productSearch.trim() ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-10 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full"
+                    onClick={() => {
+                      setProductSearch("");
+                      productSearchRef.current?.focus();
+                    }}
+                    title="Borrar texto de búsqueda"
+                    aria-label="Borrar texto de búsqueda"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="ghost"
@@ -4141,6 +4242,21 @@ export default function SaleForm({
                   <ScanBarcode className="h-4 w-4" />
                 </Button>
               </div>
+
+            {selectedVehicleData ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-sky-50/90 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800 shadow-sm shrink-0">
+                <CarFront className="h-4 w-4 text-sky-700 dark:text-sky-300" />
+                <Label htmlFor="only-compatible-switch" className="text-xs font-semibold text-sky-950 dark:text-sky-200 cursor-pointer select-none">
+                  Solo compatibles
+                </Label>
+                <Switch
+                  id="only-compatible-switch"
+                  checked={onlyCompatibleProducts}
+                  onCheckedChange={setOnlyCompatibleProducts}
+                />
+              </div>
+            ) : null}
+
             <Button
               type="button"
               variant="outline"
@@ -5271,12 +5387,6 @@ export default function SaleForm({
           </div>
         </div>
 
-        {selectedCustomer && !isCompanyCustomerFlow ? (
-          <p className="text-xs text-muted-foreground">
-            Para cliente persona natural, el IVA es opcional.
-          </p>
-        ) : null}
-
         <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
           <Label className="inline-flex items-center gap-1.5">
             <Percent className="h-3.5 w-3.5" />
@@ -5291,93 +5401,93 @@ export default function SaleForm({
                     notifySellerParamsLocked();
                     return;
                   }
-                  if (isCompanyCustomerFlow) return;
                   const nextValue = Boolean(v);
                   setApplyIVA(nextValue);
                   persistDraftSnapshot({ applyIVA: nextValue });
                 }}
-                disabled={isCompanyCustomerFlow || sellerParamsLocked}
+                disabled={sellerParamsLocked}
               />
               <span className="text-xs text-muted-foreground">
-                {isCompanyCustomerFlow ? "Aplicación obligatoria para empresa" : "Aplicar IVA"}
+                Aplicar IVA ({Number(ivaRate || 15)}%)
               </span>
             </div>
-            <Badge variant="secondary" className="font-mono">15% fijo</Badge>
+            <Badge variant={applyIVA ? "default" : "secondary"} className="font-mono">
+              {applyIVA ? `${Number(ivaRate || 15)}%` : "Sin IVA"}
+            </Badge>
           </div>
         </div>
 
-        {isCompanyCustomerFlow && (
-          <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
-            <Label className="inline-flex items-center gap-1.5">
-              <Percent className="h-3.5 w-3.5" />
-              <span>Aplicar Retención IR</span>
-            </Label>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={applyRetention}
-                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
-                  onCheckedChange={(v) => {
-                    if (sellerParamsLocked) {
-                      notifySellerParamsLocked();
-                      return;
-                    }
-                    const next = Boolean(v);
-                    if (next && !totals.retentionThresholdMet) {
-                      toast.info("La retención IR requiere subtotal con descuentos >= C$1,000.00");
-                      return;
-                    }
-                    setApplyRetention(next);
-                    persistDraftSnapshot({ applyRetention: next, retentionRate });
-                  }}
-                />
-                <span className="text-xs text-muted-foreground">
-                  Retención sobre subtotal (habilita desde C$1,000.00 después de descuentos)
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
-                  onClick={() => {
-                    if (sellerParamsLocked) {
-                      notifySellerParamsLocked();
-                      return;
-                    }
-                    setRetentionRate(1);
-                    persistDraftSnapshot({ applyRetention, retentionRate: 1 });
-                  }}
-                  className={cn(
-                    "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    !totals.retentionThresholdMet || sellerParamsLocked
-                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                      : retentionRate === 1 && applyRetention
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-muted-foreground hover:bg-muted"
-                  )}
-                >1%</button>
-                <button
-                  type="button"
-                  disabled={!totals.retentionThresholdMet || sellerParamsLocked}
-                  onClick={() => {
-                    if (sellerParamsLocked) {
-                      notifySellerParamsLocked();
-                      return;
-                    }
-                    setRetentionRate(2);
-                    persistDraftSnapshot({ applyRetention, retentionRate: 2 });
-                  }}
-                  className={cn(
-                    "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
-                    !totals.retentionThresholdMet || sellerParamsLocked
-                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                      : retentionRate === 2 && applyRetention
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-muted-foreground hover:bg-muted"
-                  )}
-                >2%</button>
-              </div>
+        <div className="space-y-1.5 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
+          <Label className="inline-flex items-center gap-1.5">
+            <Percent className="h-3.5 w-3.5" />
+            <span>Aplicar Retención IR</span>
+          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={applyRetention}
+                disabled={!totals.retentionThresholdMet || sellerParamsLocked}
+                onCheckedChange={(v) => {
+                  if (sellerParamsLocked) {
+                    notifySellerParamsLocked();
+                    return;
+                  }
+                  const next = Boolean(v);
+                  if (next && !totals.retentionThresholdMet) {
+                    toast.info("La retención IR requiere subtotal con descuentos >= C$1,000.00");
+                    return;
+                  }
+                  setApplyRetention(next);
+                  persistDraftSnapshot({ applyRetention: next, retentionRate });
+                }}
+              />
+              <span className="text-xs text-muted-foreground">
+                Retención sobre subtotal (desde C$1,000.00)
+              </span>
             </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={!totals.retentionThresholdMet || sellerParamsLocked}
+                onClick={() => {
+                  if (sellerParamsLocked) {
+                    notifySellerParamsLocked();
+                    return;
+                  }
+                  setRetentionRate(1);
+                  persistDraftSnapshot({ applyRetention, retentionRate: 1 });
+                }}
+                className={cn(
+                  "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
+                  !totals.retentionThresholdMet || sellerParamsLocked
+                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                    : retentionRate === 1 && applyRetention
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                )}
+              >1%</button>
+              <button
+                type="button"
+                disabled={!totals.retentionThresholdMet || sellerParamsLocked}
+                onClick={() => {
+                  if (sellerParamsLocked) {
+                    notifySellerParamsLocked();
+                    return;
+                  }
+                  setRetentionRate(2);
+                  persistDraftSnapshot({ applyRetention, retentionRate: 2 });
+                }}
+                className={cn(
+                  "rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors",
+                  !totals.retentionThresholdMet || sellerParamsLocked
+                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                    : retentionRate === 2 && applyRetention
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                )}
+              >2%</button>
+            </div>
+          </div>
             {sellerParamsLocked ? (
               <p className="text-xs text-amber-800 dark:text-amber-300">
                 Retención IR definida por supervisión; no editable.

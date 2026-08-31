@@ -887,7 +887,7 @@ export function SalesPage() {
       setPaymentType(draft.paymentMethod || draft.payment_type || "cash");
       setGlobalDiscount(draft.globalDiscount || 0);
       setNotes(draft.notes || "");
-      setApplyIVA(draft.applyIVA ?? defaultApplyIvaForCustomer(restoredCustomer));
+      setApplyIVA(draft.applyIVA ?? false);
       setApplyRetention(draft.applyRetention ?? false);
       setRetentionRate(draft.retentionRate ?? 2);
       setCurrency(draft.currency || "NIO");
@@ -1217,7 +1217,7 @@ export function SalesPage() {
       previewImage: preview.image,
       previewVehicle: preview.vehicle,
       previewVehicleRecord: preview.previewVehicle,
-      applyIVA: draft?.applyIVA ?? true,
+      applyIVA: draft?.applyIVA ?? false,
       totalDiscounts: totals.displayTotalDiscounts,
       retention: totals.retention,
       retentionRate: draft?.retentionRate ?? 2,
@@ -1443,7 +1443,7 @@ export function SalesPage() {
       cartItems: Array.isArray(snapshot?.cartItems) ? snapshot.cartItems : [],
       globalDiscount: snapshot?.globalDiscount || 0,
       notes: snapshot?.notes || "",
-      applyIVA: snapshot?.applyIVA ?? true,
+      applyIVA: snapshot?.applyIVA ?? false,
       ivaRate: snapshot?.ivaRate ?? effectiveIvaRate,
       applyRetention: snapshot?.applyRetention ?? false,
       retentionRate: snapshot?.retentionRate ?? 2,

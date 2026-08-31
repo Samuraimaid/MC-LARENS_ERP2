@@ -288,6 +288,7 @@ export function SettingsPage() {
   const [billingSettings, setBillingSettings] = useState({
     exchange: { official_rate: 36.5, effective_rate: 36.5, effective_source: "billing_official", rules: [] },
     iva_rate: 15,
+    taxes_enabled: false,
     cancel_reasons: [],
     pdf_documents: DEFAULT_PDF_DOCUMENT_SETTINGS,
   });
@@ -324,7 +325,7 @@ export function SettingsPage() {
   const [newCancelReason, setNewCancelReason] = useState("");
   const [watermarkOpacityPercent, setWatermarkOpacityPercent] = useState(() => String(Math.round(watermarkOpacity * 100)));
   const [savingAppearanceSettings, setSavingAppearanceSettings] = useState(false);
-  const canManageBillingSettings = ["gerencia", "recursos_humanos"].includes((user?.role || "").toLowerCase());
+  const canManageBillingSettings = ["gerencia", "recursos_humanos", "programador"].includes((user?.role || "").toLowerCase());
   const canManageDialogMessages = ["gerencia", "programador"].includes((user?.role || "").toLowerCase());
 
   const handleSettingsTabChange = (nextTab) => {
@@ -674,6 +675,7 @@ export function SettingsPage() {
           rules: Array.isArray(exchange.rules) ? exchange.rules : [],
         },
         iva_rate: Number(payload.iva_rate || 15),
+        taxes_enabled: Boolean(payload.taxes_enabled),
         cancel_reasons: cancelReasons,
         pdf_documents: pdfDocuments,
         seller_voucher: {
@@ -1111,6 +1113,23 @@ export function SettingsPage() {
       await fetchBillingSettings();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo actualizar el IVA");
+    } finally {
+      setSavingBillingSettings(false);
+    }
+  };
+
+  const toggleTaxesEnabled = async (enabled) => {
+    setSavingBillingSettings(true);
+    try {
+      await axios.put(
+        `${API}/settings/billing/iva`,
+        { taxes_enabled: enabled },
+        { withCredentials: true, params: billingBranchQuery() }
+      );
+      toast.success(enabled ? "Cobro de IVA e IR activado" : "Cobro de IVA e IR desactivado");
+      await fetchBillingSettings();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo actualizar el estado de cobro de impuestos");
     } finally {
       setSavingBillingSettings(false);
     }
@@ -1844,18 +1863,36 @@ export function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-md border p-4">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-4 rounded-md border p-4 bg-muted/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
                       <div>
-                        <h3 className="font-medium">Porcentaje de IVA para ventas y cotizaciones</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Valor actual configurado: {Number(billingSettings.iva_rate || 0).toFixed(2)}%
+                        <div className="flex items-center gap-2">
+                          <Percent className="h-4 w-4 text-primary" />
+                          <h3 className="font-semibold text-sm sm:text-base">Aplicación de Impuestos en Ventas y Cotizaciones (IVA e IR)</h3>
+                          <Badge variant={billingSettings.taxes_enabled ? "default" : "secondary"} className="text-xs">
+                            {billingSettings.taxes_enabled ? "Cobro Activo" : "Desactivado por Defecto"}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Si está <strong className="text-foreground">desactivado</strong>: Las ventas y cotizaciones se realizan 100% libres de IVA e IR sin mostrar mensajes de obligatoriedad. Un Gerente o Programador siempre podrá activar los impuestos manualmente en una venta puntual o borrador si lo amerita.
                         </p>
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Label htmlFor="global-taxes-switch" className="text-xs font-medium cursor-pointer">
+                          {billingSettings.taxes_enabled ? "Cobro Habilitado" : "Cobro Deshabilitado"}
+                        </Label>
+                        <Switch
+                          id="global-taxes-switch"
+                          checked={Boolean(billingSettings.taxes_enabled)}
+                          disabled={savingBillingSettings}
+                          onCheckedChange={toggleTaxesEnabled}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-end gap-3">
-                      <div className="space-y-2">
-                        <Label>IVA (%)</Label>
+
+                    <div className="flex flex-wrap items-end gap-3 pt-1">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Tasa de IVA general (%)</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1863,12 +1900,12 @@ export function SettingsPage() {
                           max="100"
                           value={newIvaRate}
                           onChange={(e) => setNewIvaRate(e.target.value)}
-                          className="w-48"
+                          className="w-44 h-9"
                         />
                       </div>
-                      <Button onClick={saveIvaRate} disabled={savingBillingSettings}>
+                      <Button onClick={saveIvaRate} disabled={savingBillingSettings} size="sm" className="h-9">
                         <Save className="h-4 w-4 mr-2" />
-                        Guardar IVA
+                        Guardar Tasa de IVA
                       </Button>
                     </div>
                   </div>

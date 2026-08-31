@@ -21,3 +21,21 @@ export async function fetchEffectiveIvaRate(options = {}) {
 
   return Number.isFinite(fallback) && fallback > 0 ? fallback : DEFAULT_IVA_RATE;
 }
+
+export async function fetchEffectiveBillingTaxSettings(options = {}) {
+  const withCredentials = options.withCredentials ?? true;
+  try {
+    const response = await axios.get(`${API}/settings/billing/iva/public`, {
+      withCredentials,
+    });
+    return {
+      ivaRate: Number(response?.data?.iva_rate) || DEFAULT_IVA_RATE,
+      taxesEnabled: Boolean(response?.data?.taxes_enabled),
+    };
+  } catch {
+    return {
+      ivaRate: DEFAULT_IVA_RATE,
+      taxesEnabled: false,
+    };
+  }
+}

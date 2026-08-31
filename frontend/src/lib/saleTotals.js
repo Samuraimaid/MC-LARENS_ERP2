@@ -11,7 +11,10 @@ export const isCompanyCustomerType = (customer) => {
   return type === "empresa" || type === "company" || type === "juridica" || type === "juridico";
 };
 
-export const defaultApplyIvaForCustomer = (customer) => isCompanyCustomerType(customer);
+export const defaultApplyIvaForCustomer = (customer, taxesEnabled = false) => {
+  if (!taxesEnabled) return false;
+  return isCompanyCustomerType(customer);
+};
 
 export const normalizeCartItemForTotals = (item) => {
   const originalRaw = Number(item?.original_unit_price);
@@ -189,7 +192,7 @@ export const computeDraftSnapshotTotals = (draft, {
       : (Array.isArray(draft.applied_discounts) ? draft.applied_discounts : []),
     paymentMethod,
     mixedPaymentMethods: mixedMethods,
-    applyIVA: draft.applyIVA ?? draft.apply_iva ?? defaultApplyIvaForCustomer(customer),
+    applyIVA: draft.applyIVA ?? draft.apply_iva ?? false,
     applyRetention: draft.applyRetention ?? draft.apply_retention ?? false,
     retentionRate: (() => {
       const rawRate = draft.retentionRate ?? draft.retention_rate ?? draft.retentionRateHint ?? draft.retention_rate_hint;
