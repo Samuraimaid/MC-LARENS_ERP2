@@ -927,6 +927,7 @@ export function LoginPage() {
             Version: {buildVersion} · Build: {buildTimeLabel}
           </div>
         </div>
+      )}
 
       {/* Floating Wake Button when PIN pad is hidden */}
       {!isPinpadVisible && (

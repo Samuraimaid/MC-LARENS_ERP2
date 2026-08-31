@@ -5501,7 +5501,6 @@ export default function SaleForm({
               </p>
             ) : null}
           </div>
-        )}
 
         {!hideCurrencyField ? (
         <div>
