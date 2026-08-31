@@ -31,6 +31,9 @@ frontend/dist/
 build/
 dist/
 
-# Excluir scripts de ingestión e imágenes temporales
+# Excluir carpetas pesadas de inspección
 scripts/incoming_grok/
-scripts/
+scripts/migration/
+!frontend/scripts/
+!backend/scripts/
+
