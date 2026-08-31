@@ -59,6 +59,7 @@ import {
   Layers,
   Camera,
   Sparkles,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
