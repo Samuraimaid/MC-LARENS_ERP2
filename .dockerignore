@@ -33,6 +33,7 @@ frontend/public/uploads
 uploads
 temporary_cleanup_validation
 backups
+scripts/incoming_grok
 
 *.zip
 *.pdf

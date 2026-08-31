@@ -30,3 +30,7 @@ frontend/build/
 frontend/dist/
 build/
 dist/
+
+# Excluir scripts de ingestión e imágenes temporales
+scripts/incoming_grok/
+scripts/
