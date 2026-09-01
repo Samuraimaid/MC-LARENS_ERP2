@@ -32,6 +32,8 @@ if gcloud run deploy "$SERVICE_NAME" \
     --source . \
     --region "$REGION" \
     --project "$PROJECT_ID" \
+    --port 8080 \
+    --timeout 300 \
     --allow-unauthenticated; then
     
     echo -e "\n${GREEN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"

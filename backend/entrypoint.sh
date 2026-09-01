@@ -21,5 +21,11 @@ if [ -f /app/backend/data/host_lan_ip.txt ]; then
   fi
 fi
 
-echo "Starting uvicorn"
-exec "${@:-uvicorn backend.server:app --host 0.0.0.0 --port 8001}"
+APP_PORT="${PORT:-8080}"
+echo "Starting uvicorn on port ${APP_PORT}..."
+
+if [ $# -gt 0 ]; then
+  exec "$@"
+else
+  exec uvicorn backend.server:app --host 0.0.0.0 --port "${APP_PORT}"
+fi
