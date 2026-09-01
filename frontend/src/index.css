@@ -113,6 +113,28 @@
         drop-shadow(0 0 2.2px rgba(239, 45, 45, 1));
     }
   }
+
+  /* Contorno nítido de 1px exacto para los caracteres del reloj HUD (Dígitos y Fecha) */
+  .clock-theme-contour {
+    color: #ffffff;
+    text-shadow:
+      -1px -1px 0 var(--clock-stroke, rgba(56, 189, 248, 0.95)),
+       1px -1px 0 var(--clock-stroke, rgba(56, 189, 248, 0.95)),
+      -1px  1px 0 var(--clock-stroke, rgba(56, 189, 248, 0.95)),
+       1px  1px 0 var(--clock-stroke, rgba(56, 189, 248, 0.95)),
+       0 2px 10px rgba(0, 0, 0, 0.9);
+    filter: drop-shadow(0 0 2px var(--clock-stroke, rgba(56, 189, 248, 0.6)));
+  }
+
+  .clock-theme-contour-sub {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow:
+      -0.8px -0.8px 0 var(--clock-stroke, rgba(56, 189, 248, 0.9)),
+       0.8px -0.8px 0 var(--clock-stroke, rgba(56, 189, 248, 0.9)),
+      -0.8px  0.8px 0 var(--clock-stroke, rgba(56, 189, 248, 0.9)),
+       0.8px  0.8px 0 var(--clock-stroke, rgba(56, 189, 248, 0.9)),
+       0 1px 6px rgba(0, 0, 0, 0.9);
+  }
 }
 
 @layer base {

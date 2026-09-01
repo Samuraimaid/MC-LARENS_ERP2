@@ -187,7 +187,7 @@ export function getBrandInfoForVideo(video) {
       brand: "Auxbeam",
       logo: "/brands/auxbeam-brand-logo.png",
       theme: "auxbeam",
-      accent: "#F59E0B",
+      accent: "#EE8B13",
     };
   }
   if (text.includes("fox")) {
@@ -195,7 +195,7 @@ export function getBrandInfoForVideo(video) {
       brand: "FOX",
       logo: "/brands/fox-brand-logo.png",
       theme: "fox",
-      accent: "#EA580C",
+      accent: "#E4511D",
     };
   }
   if (text.includes("rigid")) {
@@ -203,7 +203,7 @@ export function getBrandInfoForVideo(video) {
       brand: "Rigid Industries",
       logo: "/brands/rigid-brand-logo.png",
       theme: "rigid",
-      accent: "#DC2626",
+      accent: "#E20725",
     };
   }
   if (text.includes("solar") || text.includes("gard")) {
@@ -211,7 +211,7 @@ export function getBrandInfoForVideo(video) {
       brand: "Solar Gard",
       logo: "/brands/solargard-brand-logo.png",
       theme: "solargard",
-      accent: "#0284C7",
+      accent: "#00AED9",
     };
   }
   if (text.includes("ds18")) {
@@ -219,7 +219,7 @@ export function getBrandInfoForVideo(video) {
       brand: "DS18",
       logo: "/brands/ds18-brand-logo.png",
       theme: "ds18",
-      accent: "#E11D48",
+      accent: "#E20725",
     };
   }
   if (text.includes("keko")) {
@@ -227,7 +227,7 @@ export function getBrandInfoForVideo(video) {
       brand: "Keko",
       logo: "/brands/keko-brand-logo.png",
       theme: "keko",
-      accent: "#16A34A",
+      accent: "#EA6E29",
     };
   }
   if (text.includes("autobull")) {
@@ -235,7 +235,7 @@ export function getBrandInfoForVideo(video) {
       brand: "AutoBull",
       logo: "/brands/autobull-brand-logo.png",
       theme: "autobull",
-      accent: "#CA8A04",
+      accent: "#D4AF37",
     };
   }
   if (text.includes("afn")) {
@@ -259,6 +259,6 @@ export function getBrandInfoForVideo(video) {
     brand: "Mc-LarenS",
     logo: "/brands/mclarens-white-red.png",
     theme: "mclarens",
-    accent: "#EF4444",
+    accent: "#EF2D2D",
   };
 }

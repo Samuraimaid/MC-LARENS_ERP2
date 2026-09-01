@@ -101,6 +101,7 @@ export function LoginPage() {
   const [isMuted, setIsMuted] = useState(true);
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   const brandInfo = useMemo(() => getBrandInfoForVideo(currentPlayingVideo), [currentPlayingVideo]);
+  const clockAccentColor = brandInfo?.accent || "rgba(56, 189, 248, 0.95)";
   const osdTimerRef = useRef(null);
   const wakeTimerRef = useRef(null);
 
@@ -767,12 +768,15 @@ export function LoginPage() {
         aria-label="PIN"
       />
 
-      {/* Top Left HUD - Time & Date Minimalist */}
-      <div className="absolute top-6 left-6 z-20 pointer-events-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] font-microgramma">
-        <p className="text-3xl sm:text-5xl font-black tracking-wider">
+      {/* Top Left HUD - Time & Date Minimalist con Contorno de 1px del Color del Tema */}
+      <div 
+        className="absolute top-6 left-6 z-20 pointer-events-none font-microgramma"
+        style={{ "--clock-stroke": clockAccentColor }}
+      >
+        <p className="text-3xl sm:text-5xl font-black tracking-wider clock-theme-contour transition-all duration-700">
           {formatTime(currentTime)}
         </p>
-        <p className="text-xs sm:text-sm font-bold text-white/90 uppercase tracking-widest mt-1">
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-widest mt-1 clock-theme-contour-sub transition-all duration-700">
           {formatDateFull(currentTime)}
         </p>
       </div>
