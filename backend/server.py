@@ -22413,17 +22413,15 @@ async def get_promotional_videos(branch_id: str = Query(default=""), sucursal: s
         videos.append(doc)
 
 DEFAULT_PROMOTIONAL_VIDEOS = [
-    {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 10, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 11, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
 ]
 
 
@@ -22453,7 +22451,11 @@ async def list_active_promotional_videos(
         videos.append(doc)
 
     if not videos:
-        return {"videos": DEFAULT_PROMOTIONAL_VIDEOS, "branch_id": target_branch}
+        # Si la colección no ha sido inicializada, devolver lista por defecto
+        total_in_db = await db.promotional_videos.count_documents({})
+        if total_in_db == 0:
+            return {"videos": DEFAULT_PROMOTIONAL_VIDEOS, "branch_id": target_branch}
+        return {"videos": [], "branch_id": target_branch}
 
     return {"videos": videos, "branch_id": target_branch}
 
@@ -22521,12 +22523,30 @@ async def upload_promotional_video_file(
     with open(target_path, "wb") as f:
         f.write(content)
 
+    # Subir directamente a Google Cloud Storage si está disponible
+    gcs_uploaded = False
+    gcs_url = None
+    try:
+        from google.cloud import storage
+        gcs_client = storage.Client()
+        bucket = gcs_client.bucket("mclarens-erp-vehicles")
+        blob = bucket.blob(f"videos/promos/{unique_name}")
+        blob.upload_from_filename(str(target_path), content_type="video/mp4")
+        gcs_url = f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{unique_name}"
+        gcs_uploaded = True
+        logger.info(f"Uploaded video directly to GCS: {gcs_url}")
+    except Exception as gcs_err:
+        logger.warning(f"Could not upload video to GCS directly: {gcs_err}")
+
+    final_url = gcs_url if gcs_uploaded else f"/uploads/promos/{unique_name}"
+
     return {
         "message": "Video subido exitosamente",
-        "url": f"/uploads/promos/{unique_name}",
+        "url": final_url,
         "filename": unique_name,
         "size": len(content),
         "original_name": file.filename,
+        "gcs_synced": gcs_uploaded,
     }
 
 
@@ -22582,10 +22602,13 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
         update_data["branch_id"] = payload.branch_id
     update_data["updated_at"] = _utc_now().isoformat()
 
-    res = await db.promotional_videos.update_one({"id": video_id}, {"$set": update_data})
+    res = await db.promotional_videos.update_one(
+        {"$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}]},
+        {"$set": update_data}
+    )
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Video no encontrado")
-    doc = await db.promotional_videos.find_one({"id": video_id})
+    doc = await db.promotional_videos.find_one({"$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}]})
     if doc:
         doc["_id"] = str(doc.get("_id", ""))
     return {"message": "Video promocional actualizado", "video": doc}
@@ -22594,10 +22617,58 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
 @api_router.delete("/settings/promotional-videos/{video_id}")
 async def delete_promotional_video(video_id: str, request: Request):
     await require_roles(request, ["gerencia", "programador"])
-    res = await db.promotional_videos.delete_one({"id": video_id})
-    if res.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Video no encontrado")
-    return {"message": "Video eliminado exitosamente"}
+    doc = await db.promotional_videos.find_one({
+        "$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}, {"filename": video_id}]
+    })
+    
+    if not doc:
+        # Si no se encuentra por id normal, intentar borrar por match directo
+        del_res = await db.promotional_videos.delete_many({"$or": [{"id": video_id}, {"filename": video_id}]})
+        if del_res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Video no encontrado")
+        return {"message": "Video eliminado exitosamente"}
+
+    # 1. Eliminar de la base de datos MongoDB
+    await db.promotional_videos.delete_one({"_id": doc["_id"]})
+
+    # 2. Eliminar archivo físico de Google Cloud Storage
+    url = doc.get("url", "")
+    filename = doc.get("filename", "")
+    blob_name = None
+    if "videos/promos/" in url:
+        blob_name = "videos/promos/" + url.split("videos/promos/")[-1].split("?")[0]
+    elif "uploads/promos/" in url:
+        blob_name = "uploads/promos/" + url.split("uploads/promos/")[-1].split("?")[0]
+    elif filename:
+        blob_name = f"videos/promos/{filename}"
+
+    if blob_name:
+        try:
+            from google.cloud import storage
+            gcs_client = storage.Client()
+            bucket = gcs_client.bucket("mclarens-erp-vehicles")
+            blob = bucket.blob(blob_name)
+            if blob.exists():
+                blob.delete()
+                logger.info(f"Deleted promotional video from GCS bucket: {blob_name}")
+        except Exception as gcs_err:
+            logger.warning(f"Could not delete blob {blob_name} from GCS: {gcs_err}")
+
+    # 3. Eliminar del disco local /app/uploads/promos si existiera
+    try:
+        if "uploads/promos/" in url:
+            clean_f = url.split("uploads/promos/")[-1].split("?")[0]
+            local_target = Path("/app/uploads/promos") / clean_f
+            if local_target.exists():
+                local_target.unlink()
+        elif filename:
+            local_promo = Path(f"/app/frontend/public/videos/promos/{filename}")
+            if local_promo.exists():
+                local_promo.unlink()
+    except Exception as local_err:
+        logger.warning(f"Could not delete local video file: {local_err}")
+
+    return {"message": "Video eliminado exitosamente de la base de datos y de Google Cloud Storage", "id": video_id}
 
 
 

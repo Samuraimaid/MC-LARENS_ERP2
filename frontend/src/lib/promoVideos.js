@@ -4,25 +4,7 @@ import { API_BASE as API } from "@/lib/api";
 const PROMO_VIDEO_CACHE_NAME = "mclarens-promo-cache-v2";
 
 export const DEFAULT_PROMOTIONAL_VIDEOS = [
-  // Videos Verticales (Tótem / Móvil / Pantallas verticales)
-  {
-    id: "totem-1",
-    title: "Mundo de Accesorios Totem 1",
-    orientation: "vertical",
-    filename: "totem1-1.mp4",
-    url: "/videos/promos/totem1-1.mp4",
-    active: true,
-  },
-  {
-    id: "totem-2",
-    title: "Mundo de Accesorios Totem 2",
-    orientation: "vertical",
-    filename: "totem2-1.mp4",
-    url: "/videos/promos/totem2-1.mp4",
-    active: true,
-  },
-
-  // Videos Horizontales (Widescreen / TV / Pantallas horizontales)
+  // Videos Horizontales y Universales (Catálogo Oficial de Fábrica)
   {
     id: "fox-raptor",
     title: "Ford Gen 3 Raptor - FOX Factory Race Series",
@@ -137,12 +119,25 @@ export async function getCachedVideoPlaybackUrl(videoUrl) {
 }
 
 /**
- * Precarga y almacena en caché local del navegador todos los videos de la lista.
+ * Precarga y almacena en caché local del navegador todos los videos de la lista,
+ * y elimina de caché cualquier video que haya sido borrado por el usuario.
  */
 export async function prefetchPromotionalVideos(videoList) {
   if (typeof window === "undefined" || !("caches" in window) || !Array.isArray(videoList)) return;
   try {
     const cache = await caches.open(PROMO_VIDEO_CACHE_NAME);
+    const activeUrls = new Set(videoList.map((v) => v.url).filter(Boolean));
+
+    // Limpiar videos antiguos o eliminados de la caché local del navegador
+    const requests = await cache.keys();
+    for (const req of requests) {
+      const reqPath = new URL(req.url, window.location.origin).pathname;
+      const isStillActive = activeUrls.has(req.url) || activeUrls.has(reqPath);
+      if (!isStillActive) {
+        await cache.delete(req);
+      }
+    }
+
     for (const item of videoList) {
       if (!item?.url) continue;
       const match = await cache.match(item.url);
@@ -164,7 +159,7 @@ export async function fetchPromotionalVideos(branchId = "") {
     const branch = branchId || (typeof window !== "undefined" ? localStorage.getItem("preferred_branch_id") || localStorage.getItem("sucursal") || "" : "");
     const url = branch ? `${API}/promos/videos?branch_id=${encodeURIComponent(branch)}` : `${API}/promos/videos`;
     const response = await axios.get(url);
-    if (Array.isArray(response?.data?.videos) && response.data.videos.length > 0) {
+    if (Array.isArray(response?.data?.videos)) {
       prefetchPromotionalVideos(response.data.videos);
       return response.data.videos;
     }
