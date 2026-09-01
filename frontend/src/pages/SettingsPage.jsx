@@ -16,12 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import {
   Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
   Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
-  MessageSquareText, Layers, Wifi, Percent,
+  MessageSquareText, Layers, Wifi, Percent, Video,
 } from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
 import { DialogMessagesSettingsPanel } from "@/components/settings/DialogMessagesSettingsPanel";
 import { SessionSecuritySettingsPanel } from "@/components/settings/SessionSecuritySettingsPanel";
 import TintMaterialsSettingsPanel from "@/components/settings/TintMaterialsSettingsPanel";
+import { PromotionalVideosSettingsPanel } from "@/components/settings/PromotionalVideosSettingsPanel";
 import { HotspotManagementPanel } from "@/components/hotspot/HotspotManagementPanel";
 import { SystemSettingsContent } from "./SystemSettingsPage";
 import { toast } from "sonner";
@@ -61,6 +62,7 @@ const DEFAULT_PDF_DOCUMENT_SETTINGS = buildDefaultPdfDocumentSettings();
 
 const SETTINGS_TAB_ICONS = {
   Settings2,
+  Video,
   ReceiptText,
   Car,
   Layers,
@@ -1780,6 +1782,10 @@ export function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="videos" className="space-y-6">
+          <PromotionalVideosSettingsPanel />
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-6">

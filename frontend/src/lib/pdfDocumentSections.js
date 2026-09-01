@@ -195,6 +195,7 @@ export const BILLING_SUBTAB_OPTIONS = [
 
 export const SETTINGS_TAB_OPTIONS = [
   { id: "general", label: "General", icon: "Settings2" },
+  { id: "videos", label: "Videos / Login", icon: "Video" },
   { id: "billing", label: "Facturación", icon: "ReceiptText" },
   { id: "vehicles", label: "Vehículos", icon: "Car" },
   { id: "polarizado", label: "Polarizado", icon: "Layers" },
