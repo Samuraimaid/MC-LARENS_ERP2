@@ -86,58 +86,38 @@
     animation: heartbeat3s 3s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
   }
 
-  /* 45-degree luxury sheen reflection sweep ONLY on typography of McLarenS logo */
-  @keyframes logoSheenSweep {
-    0% {
-      transform: translateX(-160%) skewX(-30deg);
-      opacity: 0;
-    }
-    10% {
-      opacity: 0.95;
-    }
-    35% {
-      transform: translateX(160%) skewX(-30deg);
-      opacity: 0;
-    }
-    100% {
-      transform: translateX(160%) skewX(-30deg);
-      opacity: 0;
-    }
-  }
-
-  .logo-sheen-container {
+  /* Contorno Neón McLarenS (Letras Blancas con aura blanca pura y S Roja con aura carmesí ardiente) */
+  .logo-mclarens-neon {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    filter:
+      drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.95))
+      drop-shadow(0 0 5px rgba(255, 255, 255, 0.6))
+      drop-shadow(0 0 12px rgba(255, 255, 255, 0.35))
+      drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))
+      drop-shadow(0 0 22px rgba(220, 38, 38, 0.55));
+    animation: mclarensNeonPulse 3.5s ease-in-out infinite alternate;
   }
 
-  .logo-sheen-container::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      110deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.1) 25%,
-      rgba(255, 255, 255, 0.95) 50%,
-      rgba(255, 255, 255, 0.1) 75%,
-      transparent 100%
-    );
-    -webkit-mask-image: url("/brands/mclarens-white-red.png?v=3");
-    mask-image: url("/brands/mclarens-white-red.png?v=3");
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    transform: translateX(-160%) skewX(-30deg);
-    animation: logoSheenSweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    pointer-events: none;
+  @keyframes mclarensNeonPulse {
+    0% {
+      filter:
+        drop-shadow(0 0 1px rgba(255, 255, 255, 0.85))
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.45))
+        drop-shadow(0 0 8px rgba(255, 255, 255, 0.25))
+        drop-shadow(0 0 6px rgba(239, 68, 68, 0.65))
+        drop-shadow(0 0 16px rgba(220, 38, 38, 0.35));
+    }
+    100% {
+      filter:
+        drop-shadow(0 0 2px rgba(255, 255, 255, 1))
+        drop-shadow(0 0 7px rgba(255, 255, 255, 0.8))
+        drop-shadow(0 0 15px rgba(255, 255, 255, 0.45))
+        drop-shadow(0 0 12px rgba(239, 68, 68, 0.95))
+        drop-shadow(0 0 28px rgba(220, 38, 38, 0.65));
+    }
   }
 }
 
@@ -2203,5 +2183,185 @@ html {
 
 .animate-tacho-progress-continuous {
   animation: tacho-progress-cycle 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ========================================================
+   TEXTURAS, PADDINGS Y JUEGO DE COLORES DE MARCAS (BRAND SKINS)
+   ======================================================== */
+
+/* Texturas de Fondo de Alto Rendimiento para Marcas Oficiales */
+.dark[data-skin="mclarens"] main,
+:root[data-skin="mclarens"] main {
+  background-image:
+    radial-gradient(ellipse at 85% 15%, rgba(239, 68, 68, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 85%, rgba(249, 115, 22, 0.05) 0%, transparent 45%),
+    radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 18px 18px;
+  background-position: 0 0, 0 0, 0 0;
+}
+
+.dark[data-skin="auxbeam"] main,
+:root[data-skin="auxbeam"] main {
+  background-image:
+    radial-gradient(ellipse at 80% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 55%),
+    linear-gradient(to right, rgba(251, 191, 36, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(251, 191, 36, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+.dark[data-skin="fox"] main,
+:root[data-skin="fox"] main {
+  background-image:
+    radial-gradient(ellipse at 80% 10%, rgba(234, 88, 12, 0.09) 0%, transparent 50%),
+    radial-gradient(rgba(249, 115, 22, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px, 10px 10px;
+  background-position: 0 0, 0 0, 5px 5px;
+}
+
+.dark[data-skin="rigid"] main,
+:root[data-skin="rigid"] main {
+  background-image:
+    radial-gradient(ellipse at 90% 10%, rgba(220, 38, 38, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%);
+  background-size: 100% 100%, 16px 16px, 16px 16px, 16px 16px, 16px 16px;
+  background-position: 0 0, -8px 0, 0 8px, 8px -8px, 0 0;
+}
+
+.dark[data-skin="solargard"] main,
+:root[data-skin="solargard"] main {
+  background-image:
+    radial-gradient(ellipse at 75% 15%, rgba(2, 132, 199, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+    radial-gradient(rgba(56, 189, 248, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px;
+}
+
+.dark[data-skin="ds18"] main,
+:root[data-skin="ds18"] main {
+  background-image:
+    radial-gradient(ellipse at 85% 15%, rgba(225, 29, 72, 0.09) 0%, transparent 50%),
+    radial-gradient(rgba(251, 113, 133, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 14px 14px;
+}
+
+.dark[data-skin="keko"] main,
+:root[data-skin="keko"] main {
+  background-image:
+    radial-gradient(ellipse at 80% 15%, rgba(22, 163, 74, 0.09) 0%, transparent 55%),
+    radial-gradient(rgba(74, 222, 128, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px;
+}
+
+.dark[data-skin="autobull"] main,
+:root[data-skin="autobull"] main {
+  background-image:
+    radial-gradient(ellipse at 85% 15%, rgba(202, 138, 4, 0.09) 0%, transparent 55%),
+    radial-gradient(rgba(250, 204, 21, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 18px 18px;
+}
+
+.dark[data-skin="afn"] main,
+:root[data-skin="afn"] main {
+  background-image:
+    radial-gradient(ellipse at 85% 15%, rgba(185, 28, 28, 0.09) 0%, transparent 55%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+}
+
+/* Resalte de Bordes y Tarjetas para Temas de Marcas */
+[data-skin="mclarens"] .border-border,
+[data-skin="mclarens"] .border {
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+[data-skin="auxbeam"] .border-border,
+[data-skin="auxbeam"] .border {
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+[data-skin="fox"] .border-border,
+[data-skin="fox"] .border {
+  border-color: rgba(234, 88, 12, 0.25);
+}
+
+[data-skin="rigid"] .border-border,
+[data-skin="rigid"] .border {
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+[data-skin="solargard"] .border-border,
+[data-skin="solargard"] .border {
+  border-color: rgba(2, 132, 199, 0.25);
+}
+
+[data-skin="ds18"] .border-border,
+[data-skin="ds18"] .border {
+  border-color: rgba(225, 29, 72, 0.25);
+}
+
+[data-skin="keko"] .border-border,
+[data-skin="keko"] .border {
+  border-color: rgba(22, 163, 74, 0.25);
+}
+
+[data-skin="autobull"] .border-border,
+[data-skin="autobull"] .border {
+  border-color: rgba(202, 138, 4, 0.25);
+}
+
+[data-skin="afn"] .border-border,
+[data-skin="afn"] .border {
+  border-color: rgba(185, 28, 28, 0.25);
+}
+
+/* Resalte en la Barra Superior para cada Marca */
+[data-skin="mclarens"] header,
+[data-skin="mclarens"] .header-accent {
+  border-bottom: 2px solid rgba(239, 68, 68, 0.6);
+}
+
+[data-skin="auxbeam"] header,
+[data-skin="auxbeam"] .header-accent {
+  border-bottom: 2px solid rgba(245, 158, 11, 0.6);
+}
+
+[data-skin="fox"] header,
+[data-skin="fox"] .header-accent {
+  border-bottom: 2px solid rgba(234, 88, 12, 0.6);
+}
+
+[data-skin="rigid"] header,
+[data-skin="rigid"] .header-accent {
+  border-bottom: 2px solid rgba(220, 38, 38, 0.6);
+}
+
+[data-skin="solargard"] header,
+[data-skin="solargard"] .header-accent {
+  border-bottom: 2px solid rgba(2, 132, 199, 0.6);
+}
+
+[data-skin="ds18"] header,
+[data-skin="ds18"] .header-accent {
+  border-bottom: 2px solid rgba(225, 29, 72, 0.6);
+}
+
+[data-skin="keko"] header,
+[data-skin="keko"] .header-accent {
+  border-bottom: 2px solid rgba(22, 163, 74, 0.6);
+}
+
+[data-skin="autobull"] header,
+[data-skin="autobull"] .header-accent {
+  border-bottom: 2px solid rgba(202, 138, 4, 0.6);
+}
+
+[data-skin="afn"] header,
+[data-skin="afn"] .header-accent {
+  border-bottom: 2px solid rgba(185, 28, 28, 0.6);
 }
 

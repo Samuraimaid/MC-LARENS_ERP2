@@ -7,6 +7,7 @@ import { FloatingTools } from "../FloatingTools";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getBrandingForBranch } from "../../lib/branding";
+import { getWatermarkLogoForSkin } from "../../lib/themeSkins";
 import { APP_ENV } from "../../lib/env";
 import { API_BASE as API } from "@/lib/api";
 import { AUTOSAVE_STATUS, AUTOSAVE_STATUS_EVENT } from "../../lib/autosaveStatus";
@@ -68,7 +69,7 @@ function HeaderCloudCheckIcon({ className }) {
 
 export function MainLayout() {
   const { user, logout } = useAuth();
-  const { resolvedMode, toggleMode, watermarkOpacity } = useTheme();
+  const { resolvedMode, toggleMode, watermarkOpacity, skin } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState(null);
@@ -749,11 +750,11 @@ export function MainLayout() {
             <div className="pointer-events-none sticky top-0 z-0 w-full" style={{ height: 0 }}>
               <div className="flex items-center justify-center overflow-hidden p-4 sm:p-6" style={{ height: "100vh" }}>
                 <img
-                  src={branding.logo}
+                  src={getWatermarkLogoForSkin(skin, branding.logo)}
                   alt=""
                   aria-hidden="true"
                   draggable={false}
-                  className="w-full h-full select-none object-contain"
+                  className="w-full h-full select-none object-contain transition-all duration-700"
                   style={{ mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply", opacity: watermarkOpacity }}
                 />
               </div>

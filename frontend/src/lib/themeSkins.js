@@ -33,3 +33,21 @@ export const THEME_SKINS = [
   { id: "spectrum-14", label: "Spectrum 14", group: "Spectrum", description: "Fucsia", swatches: ["#EC4899", "#0F172A", "#E2E8F0", "#F8FAFC"] },
   { id: "github", label: "Git Hub", group: "Brand", description: "GitHub theme (light & dark)", swatches: ["#0D1117", "#161B22", "#1F6FEB", "#2EA44F"] },
 ];
+
+export const BRAND_WATERMARK_LOGOS = {
+  mclarens: "/brands/mclarens-white-red.png?v=3",
+  auxbeam: "/brands/auxbeam-brand-logo.png",
+  fox: "/brands/fox-brand-logo.png",
+  rigid: "/brands/rigid-brand-logo.png",
+  solargard: "/brands/solargard-brand-logo.png",
+  ds18: "/brands/ds18-brand-logo.png",
+  keko: "/brands/keko-brand-logo.png",
+  autobull: "/brands/autobull-brand-logo.png",
+  afn: "/brands/afn-brand-logo.png",
+};
+
+export function getWatermarkLogoForSkin(skin, defaultLogo = "/brands/mundo-accesorios-brand-logo.png") {
+  if (!skin) return defaultLogo;
+  const key = String(skin).toLowerCase().trim();
+  return BRAND_WATERMARK_LOGOS[key] || defaultLogo;
+}

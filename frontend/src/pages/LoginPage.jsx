@@ -987,7 +987,7 @@ export function LoginPage() {
             e.stopPropagation();
             resetOsdTimer();
           }}
-          className={`fixed bottom-24 sm:bottom-14 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-black/60 hover:bg-black/85 border border-white/20 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-bold tracking-wider cursor-pointer font-microgramma transition-all duration-700 max-w-[90vw] whitespace-nowrap select-none ${
+          className={`fixed bottom-16 sm:bottom-10 left-1/2 -translate-x-1/2 z-30 inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-black/65 hover:bg-black/90 border border-white/25 backdrop-blur-xl text-white shadow-[0_8px_32px_rgba(0,0,0,0.85)] text-xs sm:text-sm font-bold tracking-wider cursor-pointer font-microgramma transition-all duration-700 max-w-[90vw] whitespace-nowrap select-none ${
             isWakeButtonVisible
               ? "opacity-100 scale-100 animate-heartbeat-3s"
               : "opacity-0 scale-95 pointer-events-none"
@@ -1103,13 +1103,13 @@ export function LoginPage() {
         <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
-      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with Sheen */}
+      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with Neon Aura */}
       <div className="absolute bottom-4 right-6 z-20 pointer-events-none hidden sm:flex items-center">
-        <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+        <div className="logo-mclarens-neon">
           <img
             src="/brands/mclarens-white-red.png?v=3"
             alt="Mc-LarenS Auto Accesorios"
-            className="h-8 sm:h-11 w-auto object-contain select-none filter drop-shadow-[0_0_2px_rgba(255,255,255,0.45)]"
+            className="h-8 sm:h-11 w-auto object-contain select-none filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]"
             draggable={false}
           />
         </div>
@@ -1117,11 +1117,11 @@ export function LoginPage() {
 
       {/* Mobile / Vertical Unified Footer (Zero overlapping, centered and compact) */}
       <div className="absolute bottom-3 inset-x-0 z-20 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma">
-        <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+        <div className="logo-mclarens-neon">
           <img
             src="/brands/mclarens-white-red.png?v=3"
             alt="Mc-LarenS Auto Accesorios"
-            className="h-7 w-auto object-contain select-none filter drop-shadow-[0_0_2px_rgba(255,255,255,0.45)]"
+            className="h-7 w-auto object-contain select-none filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]"
             draggable={false}
           />
         </div>
