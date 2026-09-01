@@ -757,29 +757,12 @@ export function LoginPage() {
         </p>
       </div>
 
-      {/* Top Right HUD - Dynamic Brand Logo + Tool Buttons */}
-      <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
-        {/* Brand Logo corresponding to currently playing promo video with 45° luxury sheen */}
-        {brandInfo?.logo && (
-          <div 
-            className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] bg-black/45 hover:bg-black/65 backdrop-blur-md px-3 sm:px-4 py-1 sm:py-1.5 rounded-2xl border border-white/20 transition-all duration-300 pointer-events-none flex items-center justify-center"
-            title={`Marca: ${brandInfo.brand}`}
-          >
-            <img
-              src={brandInfo.logo}
-              alt={brandInfo.brand}
-              className="h-6 sm:h-9 w-auto max-w-[130px] sm:max-w-[190px] object-contain select-none filter drop-shadow-[0_0_3px_rgba(255,255,255,0.45)]"
-              draggable={false}
-            />
-          </div>
-        )}
-
-        {/* Tool Buttons (Server Status, Calculator, Info, Theme, Mudo) - Sincronizados con OSD */}
-        <div 
-          className={`flex items-center gap-2 transition-all duration-500 transform ${
-            isPinpadVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
-          }`}
-        >
+      {/* Top Right HUD - Tool Buttons (Server Status, Calculator, Info, Theme, Mudo) - Sincronizados con OSD */}
+      <div 
+        className={`absolute top-4 right-4 z-30 flex items-center gap-2 transition-all duration-500 transform ${
+          isPinpadVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+        }`}
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -860,7 +843,6 @@ export function LoginPage() {
             <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
           )}
         </Button>
-        </div>
       </div>
 
       {/* Floating Calculator Overlay */}
@@ -1100,7 +1082,7 @@ export function LoginPage() {
       <div className="absolute bottom-4 right-6 z-20 pointer-events-none flex items-center">
         <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
           <img
-            src="/mclarens-logo-white-red.png"
+            src="/brands/mclarens-white-red.png?v=3"
             alt="Mc-LarenS Auto Accesorios"
             className="h-8 sm:h-11 w-auto object-contain select-none filter drop-shadow-[0_0_2px_rgba(255,255,255,0.45)]"
             draggable={false}
