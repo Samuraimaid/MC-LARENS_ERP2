@@ -575,9 +575,9 @@ export function TintCuttingStation() {
                     value={adjustWidth}
                     onChange={(e) => setAdjustWidth(parseInt(e.target.value, 10))}
                   >
-                    <option value={20}>Rollo 20"</option>
-                    <option value={36}>Rollo 36"</option>
-                    <option value={40}>Rollo 40"</option>
+                    <option value={20}>{'Rollo 20"'}</option>
+                    <option value={36}>{'Rollo 36"'}</option>
+                    <option value={40}>{'Rollo 40"'}</option>
                   </select>
                 </div>
 

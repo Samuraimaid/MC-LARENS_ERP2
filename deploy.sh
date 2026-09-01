@@ -39,12 +39,7 @@ if gcloud run deploy "$SERVICE_NAME" \
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
     echo -e "\n${CYAN}🌐 URL del Sistema:${NC} ${BOLD}https://mclarens-erp-836176703716.us-central1.run.app${NC}\n"
 else
-    echo -e "\n${RED}❌ Error durante la compilación en Cloud Build.${NC}"
-    echo -e "${YELLOW}Mostrando los detalles exactos del error desde Google Cloud Build:${NC}\n"
-    LAST_BUILD_ID=$(gcloud builds list --region="$REGION" --project "$PROJECT_ID" --limit=1 --format="value(id)" 2>/dev/null || gcloud builds list --project "$PROJECT_ID" --limit=1 --format="value(id)" 2>/dev/null || true)
-    if [ -n "$LAST_BUILD_ID" ]; then
-        gcloud builds log "$LAST_BUILD_ID" --region="$REGION" --project "$PROJECT_ID" || gcloud builds log "$LAST_BUILD_ID" --project "$PROJECT_ID" || true
-    fi
-
+    echo -e "\n${RED}❌ Error durante la compilación o despliegue.${NC}"
+    echo -e "${YELLOW}Revisa los mensajes anteriores de Cloud Build para identificar la causa del fallo.${NC}\n"
     exit 1
 fi

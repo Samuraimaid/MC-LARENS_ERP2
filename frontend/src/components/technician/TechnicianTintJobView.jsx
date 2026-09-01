@@ -141,7 +141,7 @@ export function TechnicianTintJobView({ order, onUpdateWindowStatus }) {
                 <div>
                   <p className="font-semibold">Banda Frontal Superior</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {sunstrips.windshield_top.material_name || "Franja Solar"} • <span className="font-mono">0.50m x 20"</span>
+                    {sunstrips.windshield_top.material_name || "Franja Solar"} • <span className="font-mono">{'0.50m x 20"'}</span>
                   </p>
                 </div>
               </div>

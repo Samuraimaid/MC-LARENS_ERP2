@@ -2280,7 +2280,7 @@ export default function TintWindowMaterialDialog({
                   <div className="flex items-center gap-1.5 truncate">
                     <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span className="truncate">
-                      No hay resultados en la gama actual. Mostrando <b>{filteredMaterials.length}</b> resultado(s) de otras gamas para <b>"{searchTerm}"</b>:
+                      No hay resultados en la gama actual. Mostrando <b>{filteredMaterials.length}</b> resultado(s) de otras gamas para <b>&quot;{searchTerm}&quot;</b>:
                     </span>
                   </div>
                   <button
