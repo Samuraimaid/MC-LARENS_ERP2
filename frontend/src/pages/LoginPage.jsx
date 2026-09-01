@@ -860,6 +860,7 @@ export function LoginPage() {
             <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
           )}
         </Button>
+        </div>
       </div>
 
       {/* Floating Calculator Overlay */}
