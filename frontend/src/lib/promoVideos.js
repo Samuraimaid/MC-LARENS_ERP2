@@ -1,6 +1,8 @@
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
 
+const PROMO_VIDEO_CACHE_NAME = "mclarens-promo-cache-v2";
+
 export const DEFAULT_PROMOTIONAL_VIDEOS = [
   // Videos Verticales (Tótem / Móvil / Pantallas verticales)
   {
@@ -95,14 +97,78 @@ export const DEFAULT_PROMOTIONAL_VIDEOS = [
   },
 ];
 
+const blobUrlMap = new Map();
+
+/**
+ * Obtiene la URL optimizada para reproducción (desde blob cache local si está disponible).
+ */
+export async function getCachedVideoPlaybackUrl(videoUrl) {
+  if (!videoUrl) return "";
+  if (blobUrlMap.has(videoUrl)) {
+    return blobUrlMap.get(videoUrl);
+  }
+
+  if (typeof window !== "undefined" && "caches" in window) {
+    try {
+      const cache = await caches.open(PROMO_VIDEO_CACHE_NAME);
+      const match = await cache.match(videoUrl);
+      if (match) {
+        const blob = await match.blob();
+        const objUrl = URL.createObjectURL(blob);
+        blobUrlMap.set(videoUrl, objUrl);
+        return objUrl;
+      }
+
+      // Descargar en segundo plano y almacenar en CacheStorage
+      fetch(videoUrl)
+        .then(async (res) => {
+          if (res.ok) {
+            await cache.put(videoUrl, res.clone());
+            const b = await res.blob();
+            const created = URL.createObjectURL(b);
+            blobUrlMap.set(videoUrl, created);
+          }
+        })
+        .catch(() => {});
+    } catch (_) {}
+  }
+
+  return videoUrl;
+}
+
+/**
+ * Precarga y almacena en caché local del navegador todos los videos de la lista.
+ */
+export async function prefetchPromotionalVideos(videoList) {
+  if (typeof window === "undefined" || !("caches" in window) || !Array.isArray(videoList)) return;
+  try {
+    const cache = await caches.open(PROMO_VIDEO_CACHE_NAME);
+    for (const item of videoList) {
+      if (!item?.url) continue;
+      const match = await cache.match(item.url);
+      if (!match) {
+        fetch(item.url)
+          .then(async (res) => {
+            if (res.ok) {
+              await cache.put(item.url, res);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  } catch (_) {}
+}
+
 export async function fetchPromotionalVideos() {
   try {
     const response = await axios.get(`${API}/promos/videos`);
     if (Array.isArray(response?.data?.videos) && response.data.videos.length > 0) {
+      prefetchPromotionalVideos(response.data.videos);
       return response.data.videos;
     }
   } catch (_) {
     // Fallback a lista estática
   }
+  prefetchPromotionalVideos(DEFAULT_PROMOTIONAL_VIDEOS);
   return DEFAULT_PROMOTIONAL_VIDEOS;
 }

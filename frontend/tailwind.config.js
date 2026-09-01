@@ -11,6 +11,7 @@ module.exports = {
         body: ['Public Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
         'seven-seg': ['DSEG7Classic', 'ui-monospace', 'monospace'],
+        microgramma: ['Microgramma', 'Microgramma Bold Extended', 'Michroma', 'Eurostile Extended', 'Eurostile', 'Square721', 'Chakra Petch', 'sans-serif'],
       },
       colors: {
         background: "hsl(var(--background))",

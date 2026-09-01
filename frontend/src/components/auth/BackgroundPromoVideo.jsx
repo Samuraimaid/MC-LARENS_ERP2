@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Volume2, VolumeX } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DEFAULT_PROMOTIONAL_VIDEOS, fetchPromotionalVideos } from "@/lib/promoVideos";
+import { DEFAULT_PROMOTIONAL_VIDEOS, fetchPromotionalVideos, getCachedVideoPlaybackUrl, prefetchPromotionalVideos } from "@/lib/promoVideos";
 
 export default function BackgroundPromoVideo({
   isPortrait = false,
+  isMuted = true,
   onInteract,
 }) {
   const [videos, setVideos] = useState(DEFAULT_PROMOTIONAL_VIDEOS);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
+  const [resolvedVideoSrc, setResolvedVideoSrc] = useState("");
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -17,6 +16,7 @@ export default function BackgroundPromoVideo({
     fetchPromotionalVideos().then((list) => {
       if (mounted && Array.isArray(list) && list.length > 0) {
         setVideos(list);
+        prefetchPromotionalVideos(list);
       }
     });
     return () => {
@@ -41,47 +41,64 @@ export default function BackgroundPromoVideo({
 
   const currentVideo = activePlaylist[currentIndex] || activePlaylist[0] || DEFAULT_PROMOTIONAL_VIDEOS[0];
 
+  // Resolver URL desde caché local para carga instantánea sin latencia
+  useEffect(() => {
+    let cancelled = false;
+    if (currentVideo?.url) {
+      getCachedVideoPlaybackUrl(currentVideo.url).then((src) => {
+        if (!cancelled && src) {
+          setResolvedVideoSrc(src);
+        }
+      });
+      // Precargar el siguiente video en la lista
+      const nextIdx = (currentIndex + 1) % activePlaylist.length;
+      const nextVideo = activePlaylist[nextIdx];
+      if (nextVideo?.url) {
+        getCachedVideoPlaybackUrl(nextVideo.url).catch(() => {});
+      }
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [currentVideo?.url, currentIndex, activePlaylist]);
+
   const handleVideoEnded = () => {
     setCurrentIndex((prev) => (prev + 1) % activePlaylist.length);
   };
 
-  const toggleAudio = (e) => {
-    e.stopPropagation();
-    if (onInteract) onInteract();
-    setIsMuted((prev) => {
-      const next = !prev;
-      if (videoRef.current) {
-        videoRef.current.muted = next;
-        if (!next) {
-          videoRef.current.play().catch(() => {});
-        }
-      }
-      return next;
-    });
-  };
-
-  // Asegurar que el video intente reproducir automáticamente
+  // Sincronizar estado de mute con el elemento de video
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
+      if (!isMuted) {
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [isMuted]);
+
+  // Asegurar autoplay del video al cambiar de fuente
+  useEffect(() => {
+    if (videoRef.current && resolvedVideoSrc) {
+      videoRef.current.muted = isMuted;
       videoRef.current.play().catch(() => {
-        // En navegadores estrictos, silenciar y reintentar
         if (videoRef.current) {
           videoRef.current.muted = true;
-          setIsMuted(true);
           videoRef.current.play().catch(() => {});
         }
       });
     }
-  }, [currentVideo?.url]);
+  }, [resolvedVideoSrc]);
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-black select-none pointer-events-auto">
-      {currentVideo?.url ? (
+    <div 
+      className="absolute inset-0 z-0 overflow-hidden bg-black select-none pointer-events-auto"
+      onClick={onInteract}
+    >
+      {resolvedVideoSrc ? (
         <video
-          key={currentVideo.url}
+          key={resolvedVideoSrc}
           ref={videoRef}
-          src={currentVideo.url}
+          src={resolvedVideoSrc}
           autoPlay
           playsInline
           muted={isMuted}
@@ -91,31 +108,7 @@ export default function BackgroundPromoVideo({
       ) : null}
 
       {/* Capa de viñeta oscura translúcida para garantizar contraste del texto */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
-
-      {/* Botón flotante para activar / desactivar sonido */}
-      <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={toggleAudio}
-          className="h-10 px-3.5 rounded-full bg-black/40 hover:bg-black/60 border-white/20 text-white backdrop-blur-md transition-all shadow-lg flex items-center gap-2 group"
-          title={isMuted ? "Activar audio" : "Silenciar video"}
-        >
-          {isMuted ? (
-            <>
-              <VolumeX className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium text-white/90 hidden sm:inline">Mudo</span>
-            </>
-          ) : (
-            <>
-              <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
-              <span className="text-xs font-medium text-white/90 hidden sm:inline">Audio Activado</span>
-            </>
-          )}
-        </Button>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/55 pointer-events-none" />
     </div>
   );
 }

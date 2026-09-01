@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server } from "lucide-react";
+import { Loader2, Sun, Moon, Calculator, ArrowLeftRight, Info, Lock, ShieldAlert, Server, Volume2, VolumeX } from "lucide-react";
 import { API_BASE as API, setStoredSessionToken, setStoredUser } from "@/lib/api";
 import { APP_ENV } from "@/lib/env";
 import { playLoginPinpadSound } from "@/lib/uiSounds";
@@ -93,9 +93,10 @@ export function LoginPage() {
     ? buildTime.toLocaleString("es-NI", { dateStyle: "medium", timeStyle: "short" })
     : "desconocida";
 
-  // Reloj Digital, Estado OSD y Herramientas
+  // Reloj Digital, Estado OSD, Audio y Herramientas
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isPinpadVisible, setIsPinpadVisible] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const osdTimerRef = useRef(null);
 
   const resetOsdTimer = useCallback(() => {
@@ -718,13 +719,14 @@ export function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen relative flex items-center justify-center overflow-hidden select-none bg-black safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+      className="min-h-screen relative flex items-center justify-center overflow-hidden select-none bg-black font-microgramma safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
       onPointerDown={resetOsdTimer}
       onTouchStart={resetOsdTimer}
     >
       {/* Background Promo Video Player */}
       <BackgroundPromoVideo
         isPortrait={device.isPortrait}
+        isMuted={isMuted}
         onInteract={resetOsdTimer}
       />
 
@@ -741,21 +743,25 @@ export function LoginPage() {
       />
 
       {/* Top Left HUD - Time & Date Minimalist */}
-      <div className="absolute top-6 left-6 z-20 pointer-events-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-        <p className="text-3xl sm:text-5xl font-black tracking-tight font-mono">
+      <div className="absolute top-6 left-6 z-20 pointer-events-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] font-microgramma">
+        <p className="text-3xl sm:text-5xl font-black tracking-wider">
           {formatTime(currentTime)}
         </p>
-        <p className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-widest mt-1">
+        <p className="text-xs sm:text-sm font-bold text-white/90 uppercase tracking-widest mt-1">
           {formatDateFull(currentTime)}
         </p>
       </div>
 
-      {/* Top Right HUD - Tool Buttons (Server Status, Calculator, Theme, Info) */}
-      <div className="absolute top-4 right-20 sm:right-28 z-30 flex items-center gap-2">
+      {/* Top Right HUD - Tool Buttons (Server Status, Calculator, Info, Theme, Mudo) - Sincronizados con OSD */}
+      <div 
+        className={`absolute top-4 right-4 z-30 flex items-center gap-2 transition-all duration-500 transform ${
+          isPinpadVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+        }`}
+      >
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg font-microgramma"
           onClick={(e) => {
             e.stopPropagation();
             resetOsdTimer();
@@ -769,7 +775,7 @@ export function LoginPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg font-microgramma"
           onClick={(e) => {
             e.stopPropagation();
             resetOsdTimer();
@@ -783,7 +789,7 @@ export function LoginPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg font-microgramma"
           onClick={(e) => {
             e.stopPropagation();
             resetOsdTimer();
@@ -798,7 +804,7 @@ export function LoginPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg"
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg font-microgramma"
           onClick={(e) => {
             e.stopPropagation();
             resetOsdTimer();
@@ -813,12 +819,36 @@ export function LoginPage() {
             <Moon className="h-4 w-4 text-indigo-300" />
           )}
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            resetOsdTimer();
+            setIsMuted((prev) => !prev);
+          }}
+          className="h-10 px-3.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg flex items-center gap-2 group font-microgramma"
+          title={isMuted ? "Activar audio" : "Silenciar video"}
+        >
+          {isMuted ? (
+            <>
+              <VolumeX className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-semibold text-white/90 hidden sm:inline">Mudo</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/90 hidden sm:inline">Audio</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Floating Calculator Overlay */}
       {activeTool === "calculator" && (
         <div 
-          className="absolute top-20 right-6 z-40 w-[340px] rounded-2xl border border-white/20 bg-black/85 p-4 text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95"
+          className="absolute top-20 right-6 z-40 w-[340px] rounded-2xl border border-white/20 bg-black/85 p-4 text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 font-microgramma"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-3 flex items-center justify-between">
@@ -831,7 +861,7 @@ export function LoginPage() {
             <div>
               <Label className="text-xs text-white/80">Monto</Label>
               <input
-                className="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sky-400 font-mono"
                 value={fxAmount}
                 onChange={(event) => setFxAmount(event.target.value)}
                 inputMode="decimal"
@@ -895,7 +925,7 @@ export function LoginPage() {
       {/* Device Info Overlay */}
       {showLoginInfo && (
         <div 
-          className="absolute top-20 right-6 z-40 w-full max-w-sm rounded-2xl border border-white/20 bg-black/85 p-4 text-xs text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95"
+          className="absolute top-20 right-6 z-40 w-full max-w-sm rounded-2xl border border-white/20 bg-black/85 p-4 text-xs text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 font-microgramma"
           onClick={(e) => e.stopPropagation()}
           data-testid="login-device-validator"
         >
@@ -929,7 +959,7 @@ export function LoginPage() {
         </div>
       )}
 
-      {/* Floating Wake Button when PIN pad is hidden */}
+      {/* Floating Wake Button when PIN pad is hidden (Heartbeat pulse every 3s) */}
       {!isPinpadVisible && (
         <button
           type="button"
@@ -937,7 +967,7 @@ export function LoginPage() {
             e.stopPropagation();
             resetOsdTimer();
           }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-6 py-3 rounded-full bg-black/55 hover:bg-black/75 border border-white/30 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-semibold tracking-wide animate-pulse cursor-pointer transition-all duration-300 hover:scale-105"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-6 py-3 rounded-full bg-black/60 hover:bg-black/80 border border-white/30 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-bold tracking-wider animate-heartbeat-3s cursor-pointer transition-all duration-300 hover:scale-105 font-microgramma"
         >
           <Lock className="h-4 w-4 text-sky-400" />
           <span>Toca o teclea tu PIN para acceder</span>
@@ -946,14 +976,14 @@ export function LoginPage() {
 
       {/* Center - Frosted Glass PIN Pad with 5-second OSD auto-fadeout */}
       <div
-        className={`relative z-20 w-full max-w-[340px] sm:max-w-sm mx-auto p-5 sm:p-7 rounded-3xl backdrop-blur-2xl bg-black/50 dark:bg-black/65 border border-white/20 text-white shadow-2xl transition-all duration-500 transform ${
+        className={`relative z-20 w-full max-w-[340px] sm:max-w-sm mx-auto p-5 sm:p-7 rounded-3xl backdrop-blur-2xl bg-black/50 dark:bg-black/65 border border-white/20 text-white shadow-2xl transition-all duration-500 transform font-microgramma ${
           isPinpadVisible ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-4">
-          <h2 className="font-heading text-xl sm:text-2xl font-black text-white tracking-wide">Acceso Rápido</h2>
-          <p className="text-xs sm:text-sm text-white/70 mt-0.5">
+          <h2 className="font-microgramma text-xl sm:text-2xl font-black text-white tracking-wider">Acceso Rápido</h2>
+          <p className="text-xs text-white/70 mt-0.5 tracking-wide">
             Ingresa tu PIN de 8 dígitos para acceder
           </p>
         </div>
@@ -963,7 +993,7 @@ export function LoginPage() {
           {[...Array(PIN_LENGTH)].map((_, i) => (
             <div
               key={i}
-              className={`w-7 sm:w-8 h-10 sm:h-11 rounded-xl border-2 flex items-center justify-center text-xl font-bold transition-all ${
+              className={`w-7 sm:w-8 h-10 sm:h-11 rounded-xl border-2 flex items-center justify-center text-xl font-bold font-microgramma transition-all ${
                 pin.length > i
                   ? "border-sky-400 bg-sky-500/30 text-sky-200 shadow-[0_0_12px_rgba(56,189,248,0.6)] scale-105"
                   : "border-white/20 bg-white/5 text-white/30"
@@ -975,7 +1005,7 @@ export function LoginPage() {
         </div>
 
         {remainingAttempts !== null && !isPinLocked && (
-          <div className="text-center text-xs text-amber-300 mb-2 font-medium">
+          <div className="text-center text-xs text-amber-300 mb-2 font-bold font-microgramma">
             Intentos restantes: {remainingAttempts}
           </div>
         )}
@@ -991,7 +1021,7 @@ export function LoginPage() {
               key={digit}
               type="button"
               variant="outline"
-              className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-mono font-semibold backdrop-blur-md shadow-md transition-all"
+              className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-microgramma font-bold backdrop-blur-md shadow-md transition-all"
               onClick={() => {
                 resetOsdTimer();
                 handlePinKeyPress(String(digit));
@@ -1005,7 +1035,7 @@ export function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 text-white text-xs sm:text-sm font-semibold backdrop-blur-md transition-all"
+            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 text-white text-xs sm:text-sm font-microgramma font-bold tracking-wider backdrop-blur-md transition-all"
             onClick={() => {
               resetOsdTimer();
               handlePinBackspace();
@@ -1017,7 +1047,7 @@ export function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-mono font-semibold backdrop-blur-md shadow-md transition-all"
+            className="h-12 sm:h-14 rounded-2xl border-white/15 bg-white/10 hover:bg-white/25 active:bg-white/35 active:scale-95 text-white text-xl sm:text-2xl font-microgramma font-bold backdrop-blur-md shadow-md transition-all"
             onClick={() => {
               resetOsdTimer();
               handlePinKeyPress("0");
@@ -1029,7 +1059,7 @@ export function LoginPage() {
           </Button>
           <Button
             type="button"
-            className="h-12 sm:h-14 rounded-2xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-bold text-base sm:text-lg shadow-[0_0_15px_rgba(14,165,233,0.5)] transition-all"
+            className="h-12 sm:h-14 rounded-2xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-microgramma font-black text-base sm:text-lg tracking-wider shadow-[0_0_15px_rgba(14,165,233,0.5)] transition-all"
             onClick={() => {
               resetOsdTimer();
               handlePinLogin();
@@ -1043,9 +1073,9 @@ export function LoginPage() {
       </div>
 
       {/* Bottom Left HUD - Version and Build Label */}
-      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5">
-        <p className="font-semibold text-white/80">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
-        <p className="font-mono text-[11px] text-white/50">Version: {buildVersion} · Build: {buildTimeLabel}</p>
+      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma">
+        <p className="font-bold text-white/80 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
+        <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
 

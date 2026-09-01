@@ -25500,6 +25500,9 @@ if frontend_build_dir.exists():
             # Si es index.html, no cachear; otros assets pueden cachearse normalmente
             if candidate.name == "index.html":
                 return FileResponse(candidate, headers=NO_CACHE_HEADERS)
+            # Para videos, fuentes y assets inmutables, agregar cache largo para navegación ultra rápida
+            if any(candidate.name.lower().endswith(ext) for ext in (".mp4", ".webm", ".woff2", ".woff", ".ttf", ".png", ".jpg", ".jpeg", ".svg")):
+                return FileResponse(candidate, headers={"Cache-Control": "public, max-age=31536000, immutable"})
             return FileResponse(candidate)
 
         # Redireccionar automáticamente al CDN de Google Cloud Storage si el asset de producto o vehículo no está en el build local

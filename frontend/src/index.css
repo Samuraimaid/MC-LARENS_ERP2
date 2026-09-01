@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Nunito:wght@400;500;600&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@500;600&family=Rubik:wght@400;500&family=Fredoka:wght@500;600&family=Quicksand:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Oxanium:wght@600;700;800&family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Nunito:wght@400;500;600&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@500;600&family=Rubik:wght@400;500&family=Fredoka:wght@500;600&family=Quicksand:wght@400;500;600&display=swap');
 
 /* DSEG7 Classic Italic — 7-segment LCD (SIL OFL 1.1, keshikan/DSEG)
    Family name is a single token (no spaces) so CSS minify won't break matching. */
@@ -27,6 +27,11 @@
 @tailwind utilities;
 
 @layer utilities {
+  .font-microgramma {
+    font-family: "Microgramma", "Microgramma Bold Extended", "Michroma", "Eurostile Extended", "Eurostile", "Square721", "Chakra Petch", sans-serif !important;
+    letter-spacing: 0.04em;
+  }
+
   .font-seven-seg {
     font-family: DSEG7Classic, ui-monospace, monospace !important;
     font-style: italic !important;
@@ -47,6 +52,38 @@
       0 0 8px rgba(255, 80, 80, 0.55),
       0 0 22px rgba(255, 40, 40, 0.35),
       0 0 40px rgba(200, 0, 0, 0.25);
+  }
+
+  @keyframes heartbeat3s {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+      opacity: 0.88;
+    }
+    10% {
+      transform: scale(1.06);
+      box-shadow: 0 0 24px 6px rgba(56, 189, 248, 0.5);
+      opacity: 1;
+    }
+    20% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+      opacity: 0.88;
+    }
+    30% {
+      transform: scale(1.035);
+      box-shadow: 0 0 14px 3px rgba(56, 189, 248, 0.3);
+      opacity: 1;
+    }
+    40% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+      opacity: 0.88;
+    }
+  }
+
+  .animate-heartbeat-3s {
+    animation: heartbeat3s 3s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
   }
 }
 
