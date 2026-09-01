@@ -22499,6 +22499,37 @@ async def seed_default_promotional_videos(request: Request):
     return {"message": f"{inserted} videos preinstalados cargados correctamente", "inserted": inserted}
 
 
+@api_router.post("/settings/promotional-videos/upload")
+async def upload_promotional_video_file(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    await require_roles(request, ["gerencia", "programador"])
+    filename = (file.filename or "").lower()
+    if not any(filename.endswith(ext) for ext in (".mp4", ".webm", ".mov", ".m4v", ".mkv")):
+        raise HTTPException(status_code=400, detail="Formato no admitido. Usa un archivo de video .mp4, .webm o .mov")
+
+    upload_dir = Path("/app/uploads/promos")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    clean_base = "".join(c if c.isalnum() or c in "._-" else "_" for c in os.path.splitext(file.filename)[0])
+    ext = os.path.splitext(filename)[1] or ".mp4"
+    unique_name = f"{clean_base}_{_new_entity_id('v')}{ext}"
+    target_path = upload_dir / unique_name
+
+    content = await file.read()
+    with open(target_path, "wb") as f:
+        f.write(content)
+
+    return {
+        "message": "Video subido exitosamente",
+        "url": f"/uploads/promos/{unique_name}",
+        "filename": unique_name,
+        "size": len(content),
+        "original_name": file.filename,
+    }
+
+
 @api_router.post("/settings/promotional-videos")
 async def create_promotional_video(payload: PromotionalVideoCreatePayload, request: Request):
     user = await require_roles(request, ["gerencia", "programador"])
@@ -25596,6 +25627,12 @@ if frontend_build_dir.exists():
             if any(candidate.name.lower().endswith(ext) for ext in (".mp4", ".webm", ".woff2", ".woff", ".ttf", ".png", ".jpg", ".jpeg", ".svg")):
                 return FileResponse(candidate, headers={"Cache-Control": "public, max-age=31536000, immutable"})
             return FileResponse(candidate)
+
+        # Si es un archivo subido en /app/uploads
+        if full_path.startswith("uploads/"):
+            upload_candidate = Path("/app") / full_path
+            if upload_candidate.exists() and upload_candidate.is_file():
+                return FileResponse(upload_candidate, headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
         # Redireccionar automáticamente al CDN de Google Cloud Storage si el asset de producto o vehículo no está en el build local
         if full_path.startswith("uploads/products/"):

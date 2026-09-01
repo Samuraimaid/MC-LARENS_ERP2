@@ -97,25 +97,43 @@ export function LoginPage() {
   // Reloj Digital, Estado OSD, Audio, Herramientas y Marca de Video Activo
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isPinpadVisible, setIsPinpadVisible] = useState(true);
+  const [isWakeButtonVisible, setIsWakeButtonVisible] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   const brandInfo = useMemo(() => getBrandInfoForVideo(currentPlayingVideo), [currentPlayingVideo]);
   const osdTimerRef = useRef(null);
+  const wakeTimerRef = useRef(null);
 
   const resetOsdTimer = useCallback(() => {
     setIsPinpadVisible(true);
-    if (osdTimerRef.current) {
-      clearTimeout(osdTimerRef.current);
-    }
+    setIsWakeButtonVisible(true);
+    if (osdTimerRef.current) clearTimeout(osdTimerRef.current);
+    if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
+
     osdTimerRef.current = setTimeout(() => {
       setIsPinpadVisible(false);
+      // Tras ocultar el teclado, el botón de PIN permanece visible durante 3 latidos (9.2s) antes de hacer fadeout
+      wakeTimerRef.current = setTimeout(() => {
+        setIsWakeButtonVisible(false);
+      }, 9200);
     }, 5000);
   }, []);
+
+  const handleWakeActivity = useCallback(() => {
+    setIsWakeButtonVisible(true);
+    if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
+    if (!isPinpadVisible) {
+      wakeTimerRef.current = setTimeout(() => {
+        setIsWakeButtonVisible(false);
+      }, 9200);
+    }
+  }, [isPinpadVisible]);
 
   useEffect(() => {
     resetOsdTimer();
     return () => {
       if (osdTimerRef.current) clearTimeout(osdTimerRef.current);
+      if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
     };
   }, [resetOsdTimer]);
 
@@ -723,8 +741,10 @@ export function LoginPage() {
   return (
     <div 
       className="min-h-screen relative flex items-center justify-center overflow-hidden select-none bg-black font-microgramma safe-area-top safe-area-bottom pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
-      onPointerDown={resetOsdTimer}
-      onTouchStart={resetOsdTimer}
+      onPointerDown={handleWakeActivity}
+      onMouseMove={handleWakeActivity}
+      onTouchStart={handleWakeActivity}
+      onClick={handleWakeActivity}
     >
       {/* Background Promo Video Player */}
       <BackgroundPromoVideo
@@ -959,7 +979,7 @@ export function LoginPage() {
         </div>
       )}
 
-      {/* Floating Wake Button when PIN pad is hidden (Heartbeat pulse every 3s) */}
+      {/* Floating Wake Button when PIN pad is hidden (Heartbeat pulse 3 times with 25% resting opacity, then smooth fadeout) */}
       {!isPinpadVisible && (
         <button
           type="button"
@@ -967,10 +987,15 @@ export function LoginPage() {
             e.stopPropagation();
             resetOsdTimer();
           }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-6 py-3 rounded-full bg-black/60 hover:bg-black/80 border border-white/30 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-bold tracking-wider animate-heartbeat-3s cursor-pointer transition-all duration-300 hover:scale-105 font-microgramma"
+          className={`fixed bottom-24 sm:bottom-14 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-black/60 hover:bg-black/85 border border-white/20 backdrop-blur-xl text-white shadow-2xl text-xs sm:text-sm font-bold tracking-wider cursor-pointer font-microgramma transition-all duration-700 max-w-[90vw] whitespace-nowrap select-none ${
+            isWakeButtonVisible
+              ? "opacity-100 scale-100 animate-heartbeat-3s"
+              : "opacity-0 scale-95 pointer-events-none"
+          }`}
+          data-testid="pin-wake-prompt"
         >
-          <Lock className="h-4 w-4 text-sky-400" />
-          <span>Toca o teclea tu PIN para acceder</span>
+          <Lock className="h-4 w-4 text-sky-400 shrink-0" />
+          <span className="truncate">Toca o teclea tu PIN para acceder</span>
         </button>
       )}
 
@@ -1072,14 +1097,14 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Bottom Left HUD - Version and Build Label */}
-      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma">
+      {/* Desktop / Landscape HUD - Bottom Left Version and Build Label */}
+      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma hidden sm:block">
         <p className="font-bold text-white/80 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
         <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
-      {/* Bottom Right HUD - Mc-LarenS White & Red Logo with 45° Luxury Sheen & Contour */}
-      <div className="absolute bottom-4 right-6 z-20 pointer-events-none flex items-center">
+      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with Sheen */}
+      <div className="absolute bottom-4 right-6 z-20 pointer-events-none hidden sm:flex items-center">
         <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
           <img
             src="/brands/mclarens-white-red.png?v=3"
@@ -1088,6 +1113,21 @@ export function LoginPage() {
             draggable={false}
           />
         </div>
+      </div>
+
+      {/* Mobile / Vertical Unified Footer (Zero overlapping, centered and compact) */}
+      <div className="absolute bottom-3 inset-x-0 z-20 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma">
+        <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+          <img
+            src="/brands/mclarens-white-red.png?v=3"
+            alt="Mc-LarenS Auto Accesorios"
+            className="h-7 w-auto object-contain select-none filter drop-shadow-[0_0_2px_rgba(255,255,255,0.45)]"
+            draggable={false}
+          />
+        </div>
+        <p className="text-[10px] text-white/60 tracking-wider text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+          © 2026 Mundo de Accesorios · v{buildVersion}
+        </p>
       </div>
 
 

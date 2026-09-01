@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
 import { toast } from "sonner";
@@ -17,7 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Video, Plus, Trash2, Edit, Play, RefreshCw, Smartphone, Monitor, Globe, Check } from "lucide-react";
+import {
+  Video, Plus, Trash2, Edit, Play, RefreshCw, Smartphone, Monitor,
+  Upload, Link as LinkIcon, FileVideo, CheckCircle2, Loader2
+} from "lucide-react";
 
 export function PromotionalVideosSettingsPanel() {
   const [videos, setVideos] = useState([]);
@@ -27,6 +30,7 @@ export function PromotionalVideosSettingsPanel() {
   const [submitting, setSubmitting] = useState(false);
 
   // Form State
+  const [inputMode, setInputMode] = useState("upload"); // "upload" | "url"
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [orientation, setOrientation] = useState("horizontal");
@@ -34,6 +38,12 @@ export function PromotionalVideosSettingsPanel() {
   const [sortOrder, setSortOrder] = useState(1);
   const [active, setActive] = useState(true);
   const [branchId, setBranchId] = useState("*");
+
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef(null);
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -54,8 +64,11 @@ export function PromotionalVideosSettingsPanel() {
 
   const handleOpenCreate = () => {
     setEditingVideo(null);
+    setInputMode("upload");
     setTitle("");
     setUrl("");
+    setSelectedFile(null);
+    setUploadProgress(0);
     setOrientation("horizontal");
     setAllowWidescreenOnMobile(true);
     setSortOrder(videos.length + 1);
@@ -66,14 +79,73 @@ export function PromotionalVideosSettingsPanel() {
 
   const handleOpenEdit = (v) => {
     setEditingVideo(v);
+    setInputMode("url");
     setTitle(v.title || "");
     setUrl(v.url || "");
+    setSelectedFile(null);
+    setUploadProgress(0);
     setOrientation(v.orientation || "horizontal");
     setAllowWidescreenOnMobile(v.allow_widescreen_on_mobile !== false);
     setSortOrder(v.sort_order || 1);
     setActive(v.active !== false);
     setBranchId(Array.isArray(v.branches) && v.branches.length ? v.branches[0] : "*");
     setIsDialogOpen(true);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().match(/\.(mp4|webm|mov|m4v|mkv)$/i)) {
+      toast.error("Formato no compatible. Por favor sube un archivo .mp4, .webm o .mov");
+      return;
+    }
+
+    setSelectedFile(file);
+    if (!title.trim()) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+      setTitle(nameWithoutExt);
+    }
+
+    // Auto-upload file
+    setUploading(true);
+    setUploadProgress(10);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axios.post(`${API}/settings/promotional-videos/upload`, formData, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          }
+        },
+      });
+
+      setUrl(res.data.url);
+      setUploadProgress(100);
+      toast.success("Archivo de video subido exitosamente");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al subir el archivo de video");
+      setSelectedFile(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSeedDefaults = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/settings/promotional-videos/seed-defaults`, {}, { withCredentials: true });
+      toast.success(res.data?.message || "Videos preinstalados cargados correctamente");
+      loadVideos();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al cargar videos preinstalados");
+      setLoading(false);
+    }
   };
 
   const handleSave = async (e) => {
@@ -83,7 +155,7 @@ export function PromotionalVideosSettingsPanel() {
       return;
     }
     if (!url.trim()) {
-      toast.error("La URL del video es requerida");
+      toast.error("El archivo de video o URL es requerido");
       return;
     }
 
@@ -130,18 +202,6 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
-  const handleSeedDefaults = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/settings/promotional-videos/seed-defaults`, {}, { withCredentials: true });
-      toast.success(res.data?.message || "Videos preinstalados cargados correctamente");
-      loadVideos();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al cargar videos preinstalados");
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (v) => {
     if (!window.confirm(`¿Estás seguro de eliminar el video "${v.title}"?`)) return;
     try {
@@ -175,7 +235,7 @@ export function PromotionalVideosSettingsPanel() {
               <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
               Actualizar
             </Button>
-            <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white font-medium" onClick={handleOpenCreate}>
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white font-medium shadow-sm" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-1" />
               Agregar Video
             </Button>
@@ -193,7 +253,7 @@ export function PromotionalVideosSettingsPanel() {
               <div>
                 <p className="text-base font-semibold text-muted-foreground">No hay videos en la base de datos de administración</p>
                 <p className="text-sm text-muted-foreground/80 mt-1 max-w-md mx-auto">
-                  Carga los 11 videos promocionales preinstalados para poder administrarlos, cambiar su orden, desactivarlos o eliminarlos.
+                  Carga los 11 videos promocionales preinstalados o sube uno nuevo directamente desde tu dispositivo.
                 </p>
               </div>
               <div className="flex justify-center gap-3 pt-2">
@@ -202,7 +262,7 @@ export function PromotionalVideosSettingsPanel() {
                   Cargar los 11 Videos Preinstalados
                 </Button>
                 <Button variant="outline" onClick={handleOpenCreate}>
-                  <Plus className="h-4 w-4 mr-1" /> Registrar Nuevo Video
+                  <Plus className="h-4 w-4 mr-1" /> Subir Video Local
                 </Button>
               </div>
             </div>
@@ -284,10 +344,10 @@ export function PromotionalVideosSettingsPanel() {
                       </Label>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)} title="Eliminar Video">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -299,21 +359,103 @@ export function PromotionalVideosSettingsPanel() {
         </CardContent>
       </Card>
 
-      {/* Dialogo para Crear / Editar Video */}
+      {/* Dialogo para Crear / Editar Video con Subida de Archivos Locales */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSave}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Video className="h-5 w-5 text-sky-500" />
-                {editingVideo ? "Editar Video Promocional" : "Agregar Nuevo Video Promocional"}
+                {editingVideo ? "Editar Video Promocional" : "Agregar Video Promocional"}
               </DialogTitle>
               <DialogDescription>
-                Define la URL (.mp4), título y reglas de orientación para la rotación automática en el login.
+                Sube un video desde tu dispositivo o ingresa una URL para reproducir en el login.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-3">
+              {/* Selector de Modo: Archivo Local vs URL */}
+              {!editingVideo && (
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/40 rounded-lg border border-border">
+                  <Button
+                    type="button"
+                    variant={inputMode === "upload" ? "default" : "ghost"}
+                    size="sm"
+                    className={`h-8 text-xs font-semibold ${inputMode === "upload" ? "bg-sky-600 text-white" : "text-muted-foreground"}`}
+                    onClick={() => setInputMode("upload")}
+                  >
+                    <Upload className="h-3.5 w-3.5 mr-1.5" />
+                    Subir Archivo Local (.mp4)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={inputMode === "url" ? "default" : "ghost"}
+                    size="sm"
+                    className={`h-8 text-xs font-semibold ${inputMode === "url" ? "bg-sky-600 text-white" : "text-muted-foreground"}`}
+                    onClick={() => setInputMode("url")}
+                  >
+                    <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
+                    Enlace / URL Directa
+                  </Button>
+                </div>
+              )}
+
+              {/* Subida de Archivo Local */}
+              {inputMode === "upload" && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Seleccionar archivo desde tu dispositivo</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/x-m4v"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                      url ? "border-emerald-500/50 bg-emerald-500/5" : "border-border hover:border-sky-500/50 hover:bg-sky-500/5"
+                    }`}
+                  >
+                    {uploading ? (
+                      <div className="py-2 space-y-2">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-sky-500" />
+                        <p className="text-xs font-semibold text-foreground">Subiendo video al servidor ({uploadProgress}%)...</p>
+                      </div>
+                    ) : url && selectedFile ? (
+                      <div className="py-1 space-y-1">
+                        <CheckCircle2 className="h-8 w-8 mx-auto text-emerald-500" />
+                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{selectedFile.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB · Clic para cambiar archivo</p>
+                      </div>
+                    ) : (
+                      <div className="py-2 space-y-1">
+                        <FileVideo className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                        <p className="text-xs font-semibold text-foreground">Haz clic aquí para seleccionar un video (.mp4, .webm, .mov)</p>
+                        <p className="text-[11px] text-muted-foreground">Máxima compatibilidad para pantallas HD y tótems</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* URL Directa */}
+              {inputMode === "url" && (
+                <div>
+                  <Label htmlFor="vid-url" className="text-xs font-semibold">
+                    URL del archivo de video (.mp4) <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    id="vid-url"
+                    placeholder="/videos/promos/mi-video.mp4 o https://storage.googleapis.com/..."
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="mt-1 font-mono text-xs"
+                    required
+                  />
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="vid-title" className="text-xs font-semibold">
                   Título descriptivo <span className="text-rose-500">*</span>
@@ -324,20 +466,6 @@ export function PromotionalVideosSettingsPanel() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="vid-url" className="text-xs font-semibold">
-                  URL del archivo de video (.mp4) <span className="text-rose-500">*</span>
-                </Label>
-                <Input
-                  id="vid-url"
-                  placeholder="/videos/promos/mi-video.mp4 o URL externa HTTPS"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="mt-1 font-mono text-xs"
                   required
                 />
               </div>
@@ -406,10 +534,10 @@ export function PromotionalVideosSettingsPanel() {
             </div>
 
             <DialogFooter className="flex items-center justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={submitting}>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={submitting || uploading}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-sky-600 hover:bg-sky-500 text-white font-medium" disabled={submitting}>
+              <Button type="submit" className="bg-sky-600 hover:bg-sky-500 text-white font-medium" disabled={submitting || uploading || !url}>
                 {submitting ? "Guardando..." : "Guardar Video"}
               </Button>
             </DialogFooter>
