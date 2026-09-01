@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import {
   Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
   Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
-  MessageSquareText, Layers, Wifi,
+  MessageSquareText, Layers, Wifi, Percent,
 } from "lucide-react";
 import { VehicleCatalogSettingsPanel } from "@/components/settings/VehicleCatalogSettingsPanel";
 import { DialogMessagesSettingsPanel } from "@/components/settings/DialogMessagesSettingsPanel";
