@@ -34,9 +34,12 @@ export default function BackgroundPromoVideo({
     return videos.filter((v) => v.active !== false);
   }, [videos, isPortrait]);
 
-  // Si cambia la orientación o la playlist, resetear índice seguro
+  // Si cambia la orientación o la playlist, iniciar con un video aleatorio
   useEffect(() => {
-    setCurrentIndex(0);
+    if (activePlaylist.length > 0) {
+      const initialRandom = Math.floor(Math.random() * activePlaylist.length);
+      setCurrentIndex(initialRandom);
+    }
   }, [isPortrait, activePlaylist.length]);
 
   const currentVideo = activePlaylist[currentIndex] || activePlaylist[0] || DEFAULT_PROMOTIONAL_VIDEOS[0];
@@ -50,20 +53,30 @@ export default function BackgroundPromoVideo({
           setResolvedVideoSrc(src);
         }
       });
-      // Precargar el siguiente video en la lista
-      const nextIdx = (currentIndex + 1) % activePlaylist.length;
-      const nextVideo = activePlaylist[nextIdx];
-      if (nextVideo?.url) {
-        getCachedVideoPlaybackUrl(nextVideo.url).catch(() => {});
-      }
+      // Precargar otros videos aleatorios de la playlist
+      activePlaylist.forEach((v) => {
+        if (v?.url && v.url !== currentVideo.url) {
+          getCachedVideoPlaybackUrl(v.url).catch(() => {});
+        }
+      });
     }
     return () => {
       cancelled = true;
     };
   }, [currentVideo?.url, currentIndex, activePlaylist]);
 
+  // Al terminar un video, reproducir otro video de forma aleatoria (sin repetir el mismo si hay más de 1)
   const handleVideoEnded = () => {
-    setCurrentIndex((prev) => (prev + 1) % activePlaylist.length);
+    if (activePlaylist.length <= 1) return;
+    setCurrentIndex((prev) => {
+      let next;
+      let attempts = 0;
+      do {
+        next = Math.floor(Math.random() * activePlaylist.length);
+        attempts++;
+      } while (next === prev && activePlaylist.length > 1 && attempts < 10);
+      return next;
+    });
   };
 
   // Sincronizar estado de mute con el elemento de video

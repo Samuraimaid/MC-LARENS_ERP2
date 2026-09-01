@@ -159,9 +159,11 @@ export async function prefetchPromotionalVideos(videoList) {
   } catch (_) {}
 }
 
-export async function fetchPromotionalVideos() {
+export async function fetchPromotionalVideos(branchId = "") {
   try {
-    const response = await axios.get(`${API}/promos/videos`);
+    const branch = branchId || (typeof window !== "undefined" ? localStorage.getItem("preferred_branch_id") || localStorage.getItem("sucursal") || "" : "");
+    const url = branch ? `${API}/promos/videos?branch_id=${encodeURIComponent(branch)}` : `${API}/promos/videos`;
+    const response = await axios.get(url);
     if (Array.isArray(response?.data?.videos) && response.data.videos.length > 0) {
       prefetchPromotionalVideos(response.data.videos);
       return response.data.videos;

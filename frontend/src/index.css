@@ -85,6 +85,52 @@
   .animate-heartbeat-3s {
     animation: heartbeat3s 3s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
   }
+
+  /* 45-degree luxury sheen reflection sweep for McLarenS logo */
+  @keyframes logoSheenSweep {
+    0% {
+      transform: translateX(-160%) skewX(-45deg);
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.85;
+    }
+    35% {
+      transform: translateX(260%) skewX(-45deg);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(260%) skewX(-45deg);
+      opacity: 0;
+    }
+  }
+
+  .logo-sheen-container {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .logo-sheen-container::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 20%,
+      rgba(255, 255, 255, 0.85) 50%,
+      rgba(255, 255, 255, 0.1) 80%,
+      transparent 100%
+    );
+    transform: translateX(-160%) skewX(-45deg);
+    animation: logoSheenSweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+  }
 }
 
 @layer base {

@@ -822,25 +822,20 @@ export function LoginPage() {
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             resetOsdTimer();
             setIsMuted((prev) => !prev);
           }}
-          className="h-10 px-3.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg flex items-center gap-2 group font-microgramma"
-          title={isMuted ? "Activar audio" : "Silenciar video"}
+          className="h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white backdrop-blur-md transition-all shadow-lg font-microgramma"
+          aria-label={isMuted ? "Activar audio" : "Silenciar audio"}
+          title={isMuted ? "Activar audio" : "Silenciar audio"}
         >
           {isMuted ? (
-            <>
-              <VolumeX className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-semibold text-white/90 hidden sm:inline">Mudo</span>
-            </>
+            <VolumeX className="h-4 w-4 text-red-400" />
           ) : (
-            <>
-              <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
-              <span className="text-xs font-semibold text-white/90 hidden sm:inline">Audio</span>
-            </>
+            <Volume2 className="h-4 w-4 text-emerald-400 animate-pulse" />
           )}
         </Button>
       </div>
@@ -1076,6 +1071,18 @@ export function LoginPage() {
       <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma">
         <p className="font-bold text-white/80 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
         <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
+      </div>
+
+      {/* Bottom Right HUD - Mc-LarenS White & Red Logo with 45° Luxury Sheen & Contour */}
+      <div className="absolute bottom-4 right-6 z-20 pointer-events-none flex items-center">
+        <div className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+          <img
+            src="/mclarens-logo-white-red.png"
+            alt="Mc-LarenS Auto Accesorios"
+            className="h-8 sm:h-11 w-auto object-contain select-none filter drop-shadow-[0_0_2px_rgba(255,255,255,0.45)]"
+            draggable={false}
+          />
+        </div>
       </div>
 
 
