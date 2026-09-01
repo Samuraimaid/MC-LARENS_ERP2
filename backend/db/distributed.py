@@ -45,7 +45,11 @@ def resolve_deployment_branch_id() -> Optional[str]:
 def get_local_client() -> AsyncIOMotorClient:
     global _local_client
     if _local_client is None:
-        _local_client = AsyncIOMotorClient(resolve_local_mongo_uri())
+        _local_client = AsyncIOMotorClient(
+            resolve_local_mongo_uri(),
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+        )
     return _local_client
 
 
@@ -55,7 +59,11 @@ def get_central_client() -> Optional[AsyncIOMotorClient]:
     if not uri:
         return None
     if _central_client is None:
-        _central_client = AsyncIOMotorClient(uri)
+        _central_client = AsyncIOMotorClient(
+            uri,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+        )
         logger.info("Central MongoDB client initialized for cross-branch inventory sync")
     return _central_client
 

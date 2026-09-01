@@ -25,8 +25,10 @@ fi
 APP_PORT="${PORT:-8080}"
 echo "Starting uvicorn on port ${APP_PORT}..."
 
-if [ $# -gt 0 ]; then
+export PYTHONUNBUFFERED=1
+
+if [ $# -gt 0 ] && [ "$1" != "sh" ] && [ "$1" != "uvicorn" ]; then
   exec "$@"
 else
-  exec uvicorn backend.server:app --host 0.0.0.0 --port "${APP_PORT}"
+  exec uvicorn backend.server:app --host 0.0.0.0 --port "${APP_PORT}" --log-level info
 fi

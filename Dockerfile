@@ -58,4 +58,4 @@ RUN chmod +x /entrypoint.sh \
     && chmod +x /app/backend/scripts/backup_server_node.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "uvicorn backend.server:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD []
