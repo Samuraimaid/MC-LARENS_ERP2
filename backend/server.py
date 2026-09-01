@@ -22412,21 +22412,48 @@ async def get_promotional_videos(branch_id: str = Query(default=""), sucursal: s
         doc["_id"] = str(doc.get("_id", ""))
         videos.append(doc)
 
-    if not videos:
-        default_list = [
-            {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 1, "branches": ["*"]},
-            {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 2, "branches": ["*"]},
-            {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"]},
-            {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"]},
-            {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"]},
-            {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"]},
-            {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"]},
-            {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"]},
-            {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"]},
-            {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 10, "branches": ["*"]},
-            {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 11, "branches": ["*"]},
+DEFAULT_PROMOTIONAL_VIDEOS = [
+    {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 10, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 11, "branches": ["*"], "allow_widescreen_on_mobile": True},
+]
+
+
+@api_router.get("/promos/videos")
+async def list_active_promotional_videos(
+    branch_id: str = Query(default=""),
+    orientation: str = Query(default=""),
+    request: Request = None,
+):
+    target_branch = branch_id.strip() if branch_id else "*"
+    query = {"active": True}
+    if target_branch != "*":
+        query["$or"] = [
+            {"branches": target_branch},
+            {"branch_id": target_branch},
+            {"branches": "*"},
         ]
-        return {"videos": default_list, "branch_id": target_branch}
+    if orientation.strip():
+        req_orient = orientation.strip().lower()
+        if req_orient in ["vertical", "horizontal"]:
+            query["orientation"] = {"$in": [req_orient, "universal", "both", "all"]}
+
+    cursor = db.promotional_videos.find(query).sort("sort_order", 1)
+    videos = []
+    async for doc in cursor:
+        doc["_id"] = str(doc.get("_id", ""))
+        videos.append(doc)
+
+    if not videos:
+        return {"videos": DEFAULT_PROMOTIONAL_VIDEOS, "branch_id": target_branch}
 
     return {"videos": videos, "branch_id": target_branch}
 
@@ -22434,6 +22461,14 @@ async def get_promotional_videos(branch_id: str = Query(default=""), sucursal: s
 @api_router.get("/settings/promotional-videos")
 async def list_all_promotional_videos(request: Request, branch_id: str = Query(default="")):
     await require_roles(request, ["gerencia", "programador"])
+    
+    total_count = await db.promotional_videos.count_documents({})
+    if total_count == 0:
+        for item in DEFAULT_PROMOTIONAL_VIDEOS:
+            doc = dict(item)
+            doc["created_at"] = _utc_now().isoformat()
+            await db.promotional_videos.insert_one(doc)
+
     query = {}
     if branch_id.strip():
         query["$or"] = [
@@ -22447,6 +22482,21 @@ async def list_all_promotional_videos(request: Request, branch_id: str = Query(d
         doc["_id"] = str(doc.get("_id", ""))
         videos.append(doc)
     return {"videos": videos}
+
+
+@api_router.post("/settings/promotional-videos/seed-defaults")
+async def seed_default_promotional_videos(request: Request):
+    user = await require_roles(request, ["gerencia", "programador"])
+    inserted = 0
+    for item in DEFAULT_PROMOTIONAL_VIDEOS:
+        exists = await db.promotional_videos.find_one({"id": item["id"]})
+        if not exists:
+            doc = dict(item)
+            doc["created_by"] = getattr(user, "username", getattr(user, "name", "admin"))
+            doc["created_at"] = _utc_now().isoformat()
+            await db.promotional_videos.insert_one(doc)
+            inserted += 1
+    return {"message": f"{inserted} videos preinstalados cargados correctamente", "inserted": inserted}
 
 
 @api_router.post("/settings/promotional-videos")
@@ -22467,7 +22517,7 @@ async def create_promotional_video(payload: PromotionalVideoCreatePayload, reque
         "sort_order": int(payload.sort_order or 0),
         "branches": payload.branches if payload.branches is not None else ([payload.branch_id] if payload.branch_id else ["*"]),
         "branch_id": payload.branch_id or "",
-        "created_by": user.username,
+        "created_by": getattr(user, "username", getattr(user, "name", "admin")),
         "created_at": _utc_now().isoformat(),
     }
     await db.promotional_videos.insert_one(doc)

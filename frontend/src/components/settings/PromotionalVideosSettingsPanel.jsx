@@ -130,6 +130,18 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
+  const handleSeedDefaults = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/settings/promotional-videos/seed-defaults`, {}, { withCredentials: true });
+      toast.success(res.data?.message || "Videos preinstalados cargados correctamente");
+      loadVideos();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al cargar videos preinstalados");
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (v) => {
     if (!window.confirm(`¿Estás seguro de eliminar el video "${v.title}"?`)) return;
     try {
@@ -144,7 +156,7 @@ export function PromotionalVideosSettingsPanel() {
   return (
     <div className="space-y-6">
       <Card className="border-border bg-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardHeader className="flex flex-row items-center justify-between pb-4 flex-wrap gap-3">
           <div>
             <CardTitle className="text-xl font-bold flex items-center gap-2">
               <Video className="h-5 w-5 text-sky-500" />
@@ -155,6 +167,10 @@ export function PromotionalVideosSettingsPanel() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSeedDefaults} disabled={loading} title="Restaura o carga la lista de 11 videos de fábrica">
+              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+              Cargar Videos de Fábrica
+            </Button>
             <Button variant="outline" size="sm" onClick={loadVideos} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
               Actualizar
@@ -172,15 +188,23 @@ export function PromotionalVideosSettingsPanel() {
               Cargando catálogo de videos promocionales...
             </div>
           ) : videos.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed border-border rounded-xl">
-              <Video className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-base font-semibold text-muted-foreground">No hay videos promocionales registrados</p>
-              <p className="text-sm text-muted-foreground/80 mt-1">
-                El sistema usará la lista de videos por defecto preinstalados en la app.
-              </p>
-              <Button className="mt-4 bg-sky-600 text-white" onClick={handleOpenCreate}>
-                <Plus className="h-4 w-4 mr-1" /> Registrar Primer Video
-              </Button>
+            <div className="py-12 text-center border-2 border-dashed border-border rounded-xl space-y-4">
+              <Video className="h-12 w-12 text-muted-foreground/40 mx-auto" />
+              <div>
+                <p className="text-base font-semibold text-muted-foreground">No hay videos en la base de datos de administración</p>
+                <p className="text-sm text-muted-foreground/80 mt-1 max-w-md mx-auto">
+                  Carga los 11 videos promocionales preinstalados para poder administrarlos, cambiar su orden, desactivarlos o eliminarlos.
+                </p>
+              </div>
+              <div className="flex justify-center gap-3 pt-2">
+                <Button className="bg-sky-600 hover:bg-sky-500 text-white" onClick={handleSeedDefaults} disabled={loading}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                  Cargar los 11 Videos Preinstalados
+                </Button>
+                <Button variant="outline" onClick={handleOpenCreate}>
+                  <Plus className="h-4 w-4 mr-1" /> Registrar Nuevo Video
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
