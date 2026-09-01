@@ -25606,6 +25606,10 @@ if frontend_build_dir.exists():
             subpath = full_path[len("vehicles/models/"):]
             return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/models/{subpath}", status_code=307)
 
+        if full_path.startswith("videos/promos/"):
+            subpath = full_path[len("videos/promos/"):]
+            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/{subpath}", status_code=307)
+
         # Si se solicita un archivo estático (.js, .css, etc.) y no existe, responder 404 real
         # en lugar de retornar index.html (lo cual provoca el TypeError: Failed to fetch dynamically imported module)
         if any(full_path.lower().endswith(ext) for ext in STATIC_ASSET_EXTENSIONS) or full_path.startswith("assets/"):
