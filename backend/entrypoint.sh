@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run DB migration and apply validator before starting the app
-echo "Running DB migration: migrate_customers_is_active.py"
-python backend/scripts/migrate_customers_is_active.py || echo "Migration script exited non-zero"
-
-echo "Applying customers validator"
-python backend/scripts/create_customers_validator.py || echo "Validator script exited non-zero"
+# Ejecutar verificaciones de DB en segundo plano solo si se solicita, sin bloquear el arranque de uvicorn
+if [ "${RUN_STARTUP_MIGRATIONS:-}" = "true" ]; then
+  (
+    python backend/scripts/migrate_customers_is_active.py 2>&1 || true
+    python backend/scripts/create_customers_validator.py 2>&1 || true
+  ) &
+fi
 
 # Prefer live host_lan_ip.txt for display; only export SERVER_LAN_IP when forced.
 # (Stale SERVER_LAN_IP used to hide the real Wi-Fi/Ethernet address on this PC.)
