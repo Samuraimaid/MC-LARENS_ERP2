@@ -1101,35 +1101,41 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Desktop / Landscape HUD - Bottom Left Version and Build Label */}
-      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/70 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma hidden sm:block">
-        <p className="font-bold text-white/80 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
+      {/* Desktop / Landscape HUD - Bottom Left Version and Build Label (50% Opacity) */}
+      <div className="absolute bottom-4 left-6 z-20 pointer-events-none text-white/50 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma hidden sm:block">
+        <p className="font-bold text-white/50 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
         <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
-      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with Neon Aura */}
-      <div className="absolute bottom-4 right-6 z-20 pointer-events-none hidden sm:flex items-center">
-        <div className="logo-mclarens-neon">
+      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with 1px Clock-Themed Contour (No Halo) */}
+      <div 
+        className="absolute bottom-4 right-6 z-20 pointer-events-none hidden sm:flex items-center"
+        style={{ "--clock-stroke": clockAccentColor }}
+      >
+        <div className="logo-mclarens-contour">
           <img
-            src="/brands/mclarens-white-red.png?v=3"
+            src="/brands/mclarens-white-red.png?v=4"
             alt="Mc-LarenS Auto Accesorios"
-            className="h-8 sm:h-11 w-auto object-contain select-none filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]"
+            className="h-8 sm:h-11 w-auto object-contain select-none"
             draggable={false}
           />
         </div>
       </div>
 
-      {/* Mobile / Vertical Unified Footer (Zero overlapping, centered and compact) */}
-      <div className="absolute bottom-3 inset-x-0 z-20 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma">
-        <div className="logo-mclarens-neon">
+      {/* Mobile / Vertical Unified Footer (Zero overlapping, centered and 50% opacity on build text) */}
+      <div 
+        className="absolute bottom-3 inset-x-0 z-20 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma"
+        style={{ "--clock-stroke": clockAccentColor }}
+      >
+        <div className="logo-mclarens-contour">
           <img
-            src="/brands/mclarens-white-red.png?v=3"
+            src="/brands/mclarens-white-red.png?v=4"
             alt="Mc-LarenS Auto Accesorios"
-            className="h-7 w-auto object-contain select-none filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]"
+            className="h-7 w-auto object-contain select-none"
             draggable={false}
           />
         </div>
-        <p className="text-[10px] text-white/60 tracking-wider text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+        <p className="text-[10px] text-white/50 tracking-wider text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
           © 2026 Mundo de Accesorios · v{buildVersion}
         </p>
       </div>

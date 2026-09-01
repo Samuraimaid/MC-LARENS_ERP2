@@ -35,7 +35,7 @@ export const THEME_SKINS = [
 ];
 
 export const BRAND_WATERMARK_LOGOS = {
-  mclarens: "/brands/mclarens-white-red.png?v=3",
+  mclarens: "/brands/mclarens-white-red.png?v=4",
   auxbeam: "/brands/auxbeam-brand-logo.png",
   fox: "/brands/fox-brand-logo.png",
   rigid: "/brands/rigid-brand-logo.png",

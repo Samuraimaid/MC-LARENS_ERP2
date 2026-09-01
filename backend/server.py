@@ -21150,6 +21150,17 @@ async def update_seller_discount_policy(payload: SellerGlobalDiscountPolicyPaylo
 
 ALLOWED_THEME_MODES = {"light", "dark", "system"}
 ALLOWED_THEME_SKINS = {
+    # Marcas Oficiales
+    "mclarens",
+    "auxbeam",
+    "fox",
+    "rigid",
+    "solargard",
+    "ds18",
+    "keko",
+    "autobull",
+    "afn",
+    # Temas Estándar y Spectrum
     "atlas",
     "forge",
     "aurora",

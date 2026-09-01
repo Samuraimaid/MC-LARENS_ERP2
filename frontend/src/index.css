@@ -86,32 +86,19 @@
     animation: heartbeat3s 3s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
   }
 
-  /* Contorno Neón McLarenS - Reducido con máxima nitidez a 2px de ancho */
+  /* Contorno nítido de 1px exacto para el logotipo McLarenS con el color del reloj/tema (sin halo ni brillo difuso) */
+  .logo-mclarens-contour,
   .logo-mclarens-neon {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     filter:
-      drop-shadow(0 0 1px rgba(255, 255, 255, 0.95))
-      drop-shadow(0 0 2px rgba(255, 255, 255, 0.8))
-      drop-shadow(0 0 2px rgba(239, 45, 45, 0.95));
-    animation: mclarensNeonPulse 3.5s ease-in-out infinite alternate;
-  }
-
-  @keyframes mclarensNeonPulse {
-    0% {
-      filter:
-        drop-shadow(0 0 0.8px rgba(255, 255, 255, 0.85))
-        drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.75))
-        drop-shadow(0 0 1.5px rgba(239, 45, 45, 0.85));
-    }
-    100% {
-      filter:
-        drop-shadow(0 0 1px rgba(255, 255, 255, 1))
-        drop-shadow(0 0 2px rgba(255, 255, 255, 0.95))
-        drop-shadow(0 0 2.2px rgba(239, 45, 45, 1));
-    }
+      drop-shadow(-1px -1px 0 var(--clock-stroke, #38bdf8))
+      drop-shadow(1px -1px 0 var(--clock-stroke, #38bdf8))
+      drop-shadow(-1px 1px 0 var(--clock-stroke, #38bdf8))
+      drop-shadow(1px 1px 0 var(--clock-stroke, #38bdf8));
+    transition: filter 0.7s ease;
   }
 
   /* Contorno nítido de 1px exacto para los caracteres del reloj HUD (Dígitos y Fecha) */
