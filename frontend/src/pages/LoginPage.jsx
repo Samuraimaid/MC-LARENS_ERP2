@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -16,6 +16,7 @@ import { getRoleHomePath } from "@/lib/roleHome";
 import { SevenSegCountdown } from "@/components/auth/SevenSegCountdown";
 import ServerConnectionDialog from "../components/common/ServerConnectionDialog";
 import BackgroundPromoVideo from "@/components/auth/BackgroundPromoVideo";
+import { getBrandInfoForVideo } from "@/lib/promoVideos";
 
 // Connectivity check interval (ms)
 const CONNECTIVITY_POLL_INTERVAL = 10000;
@@ -93,10 +94,12 @@ export function LoginPage() {
     ? buildTime.toLocaleString("es-NI", { dateStyle: "medium", timeStyle: "short" })
     : "desconocida";
 
-  // Reloj Digital, Estado OSD, Audio y Herramientas
+  // Reloj Digital, Estado OSD, Audio, Herramientas y Marca de Video Activo
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isPinpadVisible, setIsPinpadVisible] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
+  const brandInfo = useMemo(() => getBrandInfoForVideo(currentPlayingVideo), [currentPlayingVideo]);
   const osdTimerRef = useRef(null);
 
   const resetOsdTimer = useCallback(() => {
@@ -728,6 +731,8 @@ export function LoginPage() {
         isPortrait={device.isPortrait}
         isMuted={isMuted}
         onInteract={resetOsdTimer}
+        onVideoChange={(vid) => setCurrentPlayingVideo(vid)}
+        allowWidescreenOnMobile={true}
       />
 
       <input
@@ -752,12 +757,29 @@ export function LoginPage() {
         </p>
       </div>
 
-      {/* Top Right HUD - Tool Buttons (Server Status, Calculator, Info, Theme, Mudo) - Sincronizados con OSD */}
-      <div 
-        className={`absolute top-4 right-4 z-30 flex items-center gap-2 transition-all duration-500 transform ${
-          isPinpadVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
-        }`}
-      >
+      {/* Top Right HUD - Dynamic Brand Logo + Tool Buttons */}
+      <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
+        {/* Brand Logo corresponding to currently playing promo video with 45° luxury sheen */}
+        {brandInfo?.logo && (
+          <div 
+            className="logo-sheen-container drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] bg-black/45 hover:bg-black/65 backdrop-blur-md px-3 sm:px-4 py-1 sm:py-1.5 rounded-2xl border border-white/20 transition-all duration-300 pointer-events-none flex items-center justify-center"
+            title={`Marca: ${brandInfo.brand}`}
+          >
+            <img
+              src={brandInfo.logo}
+              alt={brandInfo.brand}
+              className="h-6 sm:h-9 w-auto max-w-[130px] sm:max-w-[190px] object-contain select-none filter drop-shadow-[0_0_3px_rgba(255,255,255,0.45)]"
+              draggable={false}
+            />
+          </div>
+        )}
+
+        {/* Tool Buttons (Server Status, Calculator, Info, Theme, Mudo) - Sincronizados con OSD */}
+        <div 
+          className={`flex items-center gap-2 transition-all duration-500 transform ${
+            isPinpadVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+          }`}
+        >
         <Button
           variant="ghost"
           size="icon"

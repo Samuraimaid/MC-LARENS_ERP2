@@ -7,8 +7,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ['Barlow Condensed', 'sans-serif'],
-        body: ['Public Sans', 'sans-serif'],
+        heading: ['Microgramma', 'Microgramma Bold Extended', 'Michroma', 'Eurostile Extended', 'Eurostile', 'Square721', 'Chakra Petch', 'sans-serif'],
+        body: ['Microgramma', 'Microgramma Bold Extended', 'Michroma', 'Eurostile Extended', 'Eurostile', 'Square721', 'Chakra Petch', 'sans-serif'],
+        sans: ['Microgramma', 'Microgramma Bold Extended', 'Michroma', 'Eurostile Extended', 'Eurostile', 'Square721', 'Chakra Petch', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
         'seven-seg': ['DSEG7Classic', 'ui-monospace', 'monospace'],
         microgramma: ['Microgramma', 'Microgramma Bold Extended', 'Michroma', 'Eurostile Extended', 'Eurostile', 'Square721', 'Chakra Petch', 'sans-serif'],

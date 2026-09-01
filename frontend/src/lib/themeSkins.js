@@ -1,4 +1,16 @@
 export const THEME_SKINS = [
+  // Temas de Marcas Oficiales (ERP Brands)
+  { id: "mclarens", label: "Mc-LarenS", group: "Marcas", description: "Rojo McLarenS y Naranja Papaya", swatches: ["#09090B", "#18181B", "#EF4444", "#F97316"] },
+  { id: "auxbeam", label: "Auxbeam", group: "Marcas", description: "Ámbar brillante y carbón profundo", swatches: ["#0B0F19", "#1E293B", "#F59E0B", "#FBBF24"] },
+  { id: "fox", label: "FOX", group: "Marcas", description: "Naranja Fox Factory y titanio oscuro", swatches: ["#0F172A", "#1E293B", "#EA580C", "#F97316"] },
+  { id: "rigid", label: "Rigid Industries", group: "Marcas", description: "Rojo táctico y ónix blindado", swatches: ["#09090B", "#18181B", "#DC2626", "#EF4444"] },
+  { id: "solargard", label: "Solar Gard", group: "Marcas", description: "Cian polar y azul profundo", swatches: ["#082F49", "#0C4A6E", "#0284C7", "#38BDF8"] },
+  { id: "ds18", label: "DS18", group: "Marcas", description: "Rojo audio y fibra de carbono", swatches: ["#18181B", "#27272A", "#E11D48", "#FB7185"] },
+  { id: "keko", label: "Keko", group: "Marcas", description: "Verde off-road y grafito", swatches: ["#14532D", "#166534", "#16A34A", "#4ADE80"] },
+  { id: "autobull", label: "AutoBull", group: "Marcas", description: "Dorado automotriz y negro mate", swatches: ["#18181B", "#27272A", "#CA8A04", "#FACC15"] },
+  { id: "afn", label: "AFN 4x4", group: "Marcas", description: "Rojo 4x4 y acero reforzado", swatches: ["#1E293B", "#334155", "#B91C1C", "#EF4444"] },
+
+  // Temas Estándar y Spectrum
   { id: "atlas", label: "Atlas", group: "Masculino", description: "Acero y oceano", swatches: ["#0F172A", "#1F2937", "#0EA5E9", "#F59E0B"] },
   { id: "forge", label: "Forge", group: "Masculino", description: "Carbon y brasa", swatches: ["#111827", "#7C2D12", "#F97316", "#F59E0B"] },
   { id: "aurora", label: "Aurora", group: "Femenino", description: "Coral y menta", swatches: ["#0F766E", "#FB7185", "#14B8A6", "#F97316"] },

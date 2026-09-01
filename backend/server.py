@@ -1814,13 +1814,14 @@ class BillingSellerVoucherTextsPayload(FlexibleModel):
 
 class PromotionalVideoCreatePayload(FlexibleModel):
     title: str
-    orientation: str = "horizontal"  # horizontal | vertical
+    orientation: str = "horizontal"  # horizontal | vertical | universal | both
     url: str
     filename: Optional[str] = None
     active: bool = True
     sort_order: int = 0
     branches: Optional[List[str]] = None
     branch_id: Optional[str] = None
+    allow_widescreen_on_mobile: Optional[bool] = True
 
 
 class PromotionalVideoUpdatePayload(FlexibleModel):
@@ -1832,6 +1833,7 @@ class PromotionalVideoUpdatePayload(FlexibleModel):
     sort_order: Optional[int] = None
     branches: Optional[List[str]] = None
     branch_id: Optional[str] = None
+    allow_widescreen_on_mobile: Optional[bool] = None
 
 
 class BillingSellerVoucherSectionsPayload(FlexibleModel):
@@ -22451,10 +22453,14 @@ async def list_all_promotional_videos(request: Request, branch_id: str = Query(d
 async def create_promotional_video(payload: PromotionalVideoCreatePayload, request: Request):
     user = await require_roles(request, ["gerencia", "programador"])
     video_id = _new_entity_id("promo_vid")
+    orientation_val = payload.orientation.strip().lower() if payload.orientation else "horizontal"
+    if orientation_val not in ["vertical", "horizontal", "universal", "both", "all"]:
+        orientation_val = "horizontal"
     doc = {
         "id": video_id,
         "title": payload.title.strip(),
-        "orientation": payload.orientation.strip().lower() if payload.orientation in ["vertical", "horizontal"] else "horizontal",
+        "orientation": orientation_val,
+        "allow_widescreen_on_mobile": True if payload.allow_widescreen_on_mobile is None else bool(payload.allow_widescreen_on_mobile),
         "url": payload.url.strip(),
         "filename": payload.filename or "",
         "active": bool(payload.active),
@@ -22476,7 +22482,11 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
     if payload.title is not None:
         update_data["title"] = payload.title.strip()
     if payload.orientation is not None:
-        update_data["orientation"] = payload.orientation.strip().lower()
+        orientation_val = payload.orientation.strip().lower()
+        if orientation_val in ["vertical", "horizontal", "universal", "both", "all"]:
+            update_data["orientation"] = orientation_val
+    if payload.allow_widescreen_on_mobile is not None:
+        update_data["allow_widescreen_on_mobile"] = bool(payload.allow_widescreen_on_mobile)
     if payload.url is not None:
         update_data["url"] = payload.url.strip()
     if payload.filename is not None:

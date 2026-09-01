@@ -174,3 +174,96 @@ export async function fetchPromotionalVideos(branchId = "") {
   prefetchPromotionalVideos(DEFAULT_PROMOTIONAL_VIDEOS);
   return DEFAULT_PROMOTIONAL_VIDEOS;
 }
+
+/**
+ * Resuelve el logo y marca correspondiente al video que se está reproduciendo.
+ */
+export function getBrandInfoForVideo(video) {
+  if (!video) return {
+    brand: "Mc-LarenS",
+    logo: "/brands/mclarens-white-red.png",
+    theme: "mclarens",
+  };
+  
+  const text = `${video.brand || ""} ${video.title || ""} ${video.filename || ""} ${video.id || ""}`.toLowerCase();
+
+  if (text.includes("auxbeam")) {
+    return {
+      brand: "Auxbeam",
+      logo: "/brands/auxbeam-brand-logo.png",
+      theme: "auxbeam",
+      accent: "#F59E0B",
+    };
+  }
+  if (text.includes("fox")) {
+    return {
+      brand: "FOX",
+      logo: "/brands/fox-brand-logo.png",
+      theme: "fox",
+      accent: "#EA580C",
+    };
+  }
+  if (text.includes("rigid")) {
+    return {
+      brand: "Rigid Industries",
+      logo: "/brands/rigid-brand-logo.png",
+      theme: "rigid",
+      accent: "#DC2626",
+    };
+  }
+  if (text.includes("solar") || text.includes("gard")) {
+    return {
+      brand: "Solar Gard",
+      logo: "/brands/solargard-brand-logo.png",
+      theme: "solargard",
+      accent: "#0284C7",
+    };
+  }
+  if (text.includes("ds18")) {
+    return {
+      brand: "DS18",
+      logo: "/brands/ds18-brand-logo.png",
+      theme: "ds18",
+      accent: "#E11D48",
+    };
+  }
+  if (text.includes("keko")) {
+    return {
+      brand: "Keko",
+      logo: "/brands/keko-brand-logo.png",
+      theme: "keko",
+      accent: "#16A34A",
+    };
+  }
+  if (text.includes("autobull")) {
+    return {
+      brand: "AutoBull",
+      logo: "/brands/autobull-brand-logo.png",
+      theme: "autobull",
+      accent: "#CA8A04",
+    };
+  }
+  if (text.includes("afn")) {
+    return {
+      brand: "AFN 4x4",
+      logo: "/brands/afn-brand-logo.png",
+      theme: "afn",
+      accent: "#B91C1C",
+    };
+  }
+  if (text.includes("totem") || text.includes("mundo")) {
+    return {
+      brand: "Mundo de Accesorios",
+      logo: "/brands/mundo-accesorios-brand-logo.png",
+      theme: "mundo",
+      accent: "#38BDF8",
+    };
+  }
+
+  return {
+    brand: "Mc-LarenS",
+    logo: "/brands/mclarens-white-red.png",
+    theme: "mclarens",
+    accent: "#EF4444",
+  };
+}

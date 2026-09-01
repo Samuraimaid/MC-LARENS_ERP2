@@ -5,6 +5,8 @@ export default function BackgroundPromoVideo({
   isPortrait = false,
   isMuted = true,
   onInteract,
+  onVideoChange,
+  allowWidescreenOnMobile = true,
 }) {
   const [videos, setVideos] = useState(DEFAULT_PROMOTIONAL_VIDEOS);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -24,15 +26,19 @@ export default function BackgroundPromoVideo({
     };
   }, []);
 
-  // Filtrar videos según orientación (vertical para tótem, horizontal para widescreen)
+  // Filtrar videos según orientación (o permitir videos widescreen en móviles de manera uniforme)
   const activePlaylist = useMemo(() => {
+    if (allowWidescreenOnMobile) {
+      const active = videos.filter((v) => v.active !== false);
+      if (active.length > 0) return active;
+    }
     const targetOrientation = isPortrait ? "vertical" : "horizontal";
     const filtered = videos.filter(
-      (v) => (v.active !== false) && (v.orientation === targetOrientation || !v.orientation)
+      (v) => (v.active !== false) && (v.orientation === targetOrientation || v.orientation === "universal" || v.orientation === "both" || !v.orientation)
     );
     if (filtered.length > 0) return filtered;
     return videos.filter((v) => v.active !== false);
-  }, [videos, isPortrait]);
+  }, [videos, isPortrait, allowWidescreenOnMobile]);
 
   // Si cambia la orientación o la playlist, iniciar con un video aleatorio
   useEffect(() => {
@@ -43,6 +49,13 @@ export default function BackgroundPromoVideo({
   }, [isPortrait, activePlaylist.length]);
 
   const currentVideo = activePlaylist[currentIndex] || activePlaylist[0] || DEFAULT_PROMOTIONAL_VIDEOS[0];
+
+  // Notificar al componente padre sobre el video en reproducción para sincronizar el logo de la marca
+  useEffect(() => {
+    if (currentVideo && typeof onVideoChange === "function") {
+      onVideoChange(currentVideo);
+    }
+  }, [currentVideo, onVideoChange]);
 
   // Resolver URL desde caché local para carga instantánea sin latencia
   useEffect(() => {
