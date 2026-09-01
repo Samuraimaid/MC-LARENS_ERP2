@@ -108,12 +108,30 @@ fi
 ```
 2. En [deploy.sh](file:///c:/ANTIGRAVITY/MC-LARENS_ERP2/deploy.sh) se definieron explícitamente `--port 8080 --timeout 300` para garantizar alineación con las sondas de Cloud Run.
 
+## Incidencia 4: Error de Transformación JSX en Cloud Build (`Unexpected end of file before a closing "div" tag`)
+
+### 1.1 Síntoma
+Cloud Build falló en el paso `Step 12/30 : RUN npm run build`:
+```text
+[vite:esbuild] Transform failed with 1 error:
+/app/frontend/src/pages/LoginPage.jsx:1268:0: ERROR: Unexpected end of file before a closing "div" tag
+```
+
+### 1.2 Causa Raíz
+Al envolver los botones de herramientas y el nuevo logo dinámico de la marca en un contenedor flexible unificado en la esquina superior derecha de `LoginPage.jsx`, faltaba la etiqueta de cierre `</div>` del contenedor exterior.
+
+### 1.3 Resolución
+Se añadió la etiqueta `</div>` correspondiente en `frontend/src/pages/LoginPage.jsx` y se validó el balance exacto de todas las etiquetas JSX (40 `<div>` abiertos y 40 `<div>` cerrados).
+
 ---
 
 ## Resumen de Commits de Mitigación
 * `19ca6543`: Corrección de comillas en componentes JSX (`TintCuttingStation.jsx`, `TintWindowMaterialDialog.jsx`, `TechnicianTintJobView.jsx`).
 * `20f7c6b9`: Importación de `Query` en `backend/server.py`.
 * `2e575e09`: Optimización de `backend/entrypoint.sh` para arranque instantáneo (< 1s) en Cloud Run.
+* `6dbc7a25`: Integración de logos oficiales, branding dinámico y temas de marcas.
+* `e1413024`: Limpieza de assets con espacios y entrecomillado de fuentes en `tailwind.config.js`.
+* `1bd4c322`: Cierre de etiqueta `div` en HUD superior derecho de `LoginPage.jsx`.
 
 ---
 *Documento autogenerado para el repositorio MC-LARENS ERP 2.0.*
