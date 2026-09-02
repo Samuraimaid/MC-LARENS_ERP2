@@ -153,6 +153,8 @@ Paint a field amber when `confidence[field] < 0.85` or field is in `needs_review
 
 Plate and VIN stay large, mono, top of the form.
 
+**Direct Year Entry Rule:** If the chassis/VIN does not encode the manufacture year (e.g. Japanese/Thai Toyota/Nissan with `0` in position 10 or non-standard format), the system MUST directly prompt and autofocus the Year field for immediate clerk input in one step. The system MUST NEVER force or mandate a second scan of the back of the card. Taking a photo of the back is strictly an optional alternative.
+
 If catalog matches brand+model+year, show the lateral blueprint thumbnail already used by the ERP.
 
 Apply still requires clerk tap. OCR never POSTs `/customers` or `/vehicles` by itself.

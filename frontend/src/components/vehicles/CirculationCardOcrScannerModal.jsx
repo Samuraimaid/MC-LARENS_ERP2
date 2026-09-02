@@ -70,6 +70,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
   const autoLockRef = useRef(null);
   const frontFileInputRef = useRef(null);
   const backFileInputRef = useRef(null);
+  const yearInputRef = useRef(null);
 
   // Iniciar / Detener cámara según estado del modal
   const stopLiveCamera = useCallback(() => {
@@ -182,7 +183,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       const needsReview = Array.isArray(data.needs_review) ? data.needs_review : [];
       setConfidenceScores(confidence);
       setNeedsReviewFields(needsReview);
-      setYearSource(data.year_source || (backImg ? "reverso_tarjeta" : "inferido_vin"));
+      setYearSource(data.year_source || (backImg ? "reverso_tarjeta" : (data.year ? "inferido_vin" : "no_detectado")));
 
       const detectedVin = data.vin || data.vin_chasis || "";
       const detectedPlate = data.plate || data.placa || "";
@@ -210,7 +211,16 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         origin_country: data.origin_country || "",
       });
 
-      if (detectedVin) {
+      if (!detectedYear) {
+        // Enfoque directo e inmediato al campo de Año si el chasis no lo codifica
+        setTimeout(() => {
+          if (yearInputRef.current) {
+            yearInputRef.current.focus();
+            yearInputRef.current.select();
+          }
+        }, 200);
+        toast.info("Ingresa el Año de Fabricación del vehículo (no codificado en el chasis).");
+      } else if (detectedVin) {
         toast.success(`Chasis/VIN: ${detectedVin} (${data.origin_country || "Estándar"})`);
       } else if (detectedPlate) {
         toast.success(`Placa detectada: ${detectedPlate}`);
@@ -742,7 +752,14 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                     {/* Año de Fabricación con origen */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 flex items-center justify-between">
-                        <span>Año de Fabricación:</span>
+                        <span className="flex items-center gap-1">
+                          Año de Fabricación:
+                          {!editedFields.year && (
+                            <span className="text-[10px] text-amber-500 font-bold animate-pulse">
+                              (Requerido)
+                            </span>
+                          )}
+                        </span>
                         {yearSource === "reverso_tarjeta" ? (
                           <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                             <Check className="h-3 w-3" /> Reverso ✓
@@ -753,23 +770,46 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                           </span>
                         ) : (
                           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-                            <AlertTriangle className="h-3 w-3" /> Revisa
+                            <AlertTriangle className="h-3 w-3" /> Ingresar directo
                           </span>
                         )}
                       </label>
                       <input
+                        ref={yearInputRef}
                         type="number"
                         value={editedFields.year}
                         onChange={(e) => setEditedFields({ ...editedFields, year: e.target.value })}
-                        placeholder="Ej. 2017"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleApplyToVehicle();
+                          }
+                        }}
+                        placeholder="Ej. 2018"
                         className={`w-full px-3 py-1.5 rounded-lg border text-xs font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-sky-500 transition ${
                           yearSource === "reverso_tarjeta"
                             ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/10"
+                            : !editedFields.year
+                            ? "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/30"
                             : isFieldInReview("year")
                             ? "border-amber-400 bg-amber-50/20"
                             : "border-zinc-300 dark:border-zinc-700"
                         }`}
                       />
+                      {!editedFields.year && (
+                        <div className="pt-1 flex flex-wrap gap-1 items-center">
+                          <span className="text-[9px] text-zinc-400">Años frecuentes:</span>
+                          {[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2010].map((yr) => (
+                            <button
+                              key={yr}
+                              type="button"
+                              onClick={() => setEditedFields({ ...editedFields, year: String(yr) })}
+                              className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-sky-500 hover:text-white dark:hover:bg-sky-600 text-[10px] font-mono font-semibold text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition"
+                            >
+                              {yr}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Color */}
