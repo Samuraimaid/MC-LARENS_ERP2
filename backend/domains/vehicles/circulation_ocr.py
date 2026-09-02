@@ -82,13 +82,27 @@ YEAR_REGEX = re.compile(r"\b(19[789]\d|20[0-3]\d)\b")
 
 # Mapeo de Tipo de Carrocería a Slugs Canónicos del ERP
 VEHICLE_TYPE_SLUG_MAP = {
-    "sedan": ["automovil", "automóvil", "sedan", "sedán", "turismo", "saloon", "berlina"],
-    "hatchback": ["hatchback", "compacto", "3 puertas", "5 puertas", "liftback"],
-    "pickup": ["camioneta", "pickup", "pick-up", "doble cabina", "cabina sencilla", "cabina y media", "truck 4x4"],
-    "suv": ["jeep", "suv", "rural", "station wagon", "crossover", "todo terreno", "4x4"],
-    "van": ["microbus", "microbús", "van", "panel", "minivan", "furgoneta", "pasajeros"],
-    "truck": ["camion", "camión", "furgon", "furgón", "cabezal", "chasis cabina", "plataforma", "volquete", "heavy"],
+    "pickup": [
+        "camioneta", "pickup", "pick-up", "doble cabina", "cabina sencilla", "cabina y media", "truck 4x4",
+        "d/cabina", "d/c", "hilux", "frontier", "d-max", "dmax", "bt-50", "l200", "tundra", "tacoma",
+        "silverado", "f-150", "ranger", "colorado", "poer", "wingle", "amaze", "amarok"
+    ],
+    "suv": [
+        "jeep", "suv", "rural", "station wagon", "crossover", "todo terreno", "4x4",
+        "prado", "land cruiser", "rav4", "4runner", "fortuner", "patrol", "pathfinder", "x-trail", "xtrail",
+        "kicks", "cr-v", "crv", "hr-v", "hrv", "sportage", "sorento", "tucson", "santa fe", "creta",
+        "montero", "outlander", "vitara", "jimny", "duster", "tracker", "tahoe", "suburban", "explorer",
+        "edge", "escape", "everest", "bronco", "x3", "x5", "x6", "q5", "q7", "tiguan", "taos", "teramont",
+        "t-cross", "tcross", "haval", "tiggo", "cs35", "cs55", "cs75", "coolray"
+    ],
+    "hatchback": [
+        "hatchback", "compacto", "3 puertas", "5 puertas", "liftback", "hb",
+        "picanto", "i10", "grand i10", "spark", "march", "swift", "polo", "golf", "fit"
+    ],
+    "van": ["microbus", "microbús", "van", "panel", "minivan", "furgoneta", "pasajeros", "hiace", "urvan", "h1", "starex"],
+    "truck": ["camion", "camión", "furgon", "furgón", "cabezal", "chasis cabina", "plataforma", "volquete", "heavy", "canter", "dyna", "npr", "nqr"],
     "moto": ["moto", "motocicleta", "scooter", "cuadraciclo", "trimoto", "mototaxi"],
+    "sedan": ["automovil", "automóvil", "sedan", "sedán", "turismo", "saloon", "berlina", "yaris", "corolla", "rio", "accent", "elantra", "sentra", "civic"],
 }
 
 # Colores Automotrices Oficiales
@@ -295,9 +309,55 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
     return None, 0.0, True
 
 
-def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[str]) -> Tuple[str, str, float]:
+# WMI (World Manufacturer Identifier) a Marca
+WMI_BRAND_MAP = {
+    "MR0": "TOYOTA",
+    "MRO": "TOYOTA",
+    "JTD": "TOYOTA",
+    "JTE": "TOYOTA",
+    "JTM": "TOYOTA",
+    "4T1": "TOYOTA",
+    "4T3": "TOYOTA",
+    "5TB": "TOYOTA",
+    "5TD": "TOYOTA",
+    "KNA": "KIA",
+    "KND": "KIA",
+    "KNM": "KIA",
+    "KMH": "HYUNDAI",
+    "KM8": "HYUNDAI",
+    "KME": "HYUNDAI",
+    "3N1": "NISSAN",
+    "JN1": "NISSAN",
+    "JN6": "NISSAN",
+    "JN8": "NISSAN",
+    "WBA": "BMW",
+    "WBS": "BMW",
+    "WBX": "BMW",
+    "5UX": "BMW",
+    "1GC": "CHEVROLET",
+    "2GC": "CHEVROLET",
+    "3GC": "CHEVROLET",
+    "KL1": "CHEVROLET",
+    "1FA": "FORD",
+    "1FT": "FORD",
+    "3FA": "FORD",
+    "JMB": "MITSUBISHI",
+    "MMB": "MITSUBISHI",
+    "JSA": "SUZUKI",
+    "JS2": "SUZUKI",
+    "JAL": "ISUZU",
+    "MP1": "ISUZU",
+    "JM1": "MAZDA",
+    "WVW": "VOLKSWAGEN",
+    "3VW": "VOLKSWAGEN",
+    "1C4": "JEEP",
+    "1J4": "JEEP",
+}
+
+def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[str], vin: Optional[str] = None) -> Tuple[str, str, float]:
     """
     Empareja con tolerancia a fallas la Marca y Modelo contra el catálogo maestro del ERP.
+    Usa tanto el texto OCR como los primeros 3 caracteres del VIN/WMI.
     """
     catalog = _get_catalog_data()
     brands_list = catalog.get("brands", [])
@@ -306,7 +366,7 @@ def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[st
     text_combined = f"{brand_raw or ''} {model_raw or ''}".upper()
 
     brand_synonyms = {
-        "TOYOTA": ["TOYOTA", "T OTA", "TOYOT", "TOYTA"],
+        "TOYOTA": ["TOYOTA", "T OTA", "TOYOT", "TOYTA", "OYOTA", "OYOTAYANS"],
         "HYUNDAI": ["HYUNDAI", "HYUNDA", "HIUNDAI"],
         "NISSAN": ["NISSAN", "NISAN"],
         "KIA": ["KIA"],
@@ -335,17 +395,103 @@ def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[st
         "BAIC": ["BAIC"],
     }
 
+    # Mapeo de Modelos por Marca
+    brand_model_synonyms = {
+        "TOYOTA": {
+            "Hilux": ["HILUX", "HILU", "HILUX D/C", "HILUX D/CABINA", "YAMIONETA"],
+            "Yaris": ["YARIS", "YANS", "YARI", "OYOTAYANS"],
+            "Corolla": ["COROLLA", "COROLA"],
+            "Land Cruiser Prado": ["PRADO", "LAND CRUISER", "LANDCRUISER"],
+            "RAV4": ["RAV4", "RAV-4"],
+            "Fortuner": ["FORTUNER"],
+            "4Runner": ["4RUNNER"],
+            "Agya": ["AGYA"],
+            "Rush": ["RUSH"],
+        },
+        "KIA": {
+            "Rio": ["RIO SEDAN", "RIO", "RIO HATCHBACK"],
+            "Sportage": ["SPORTAGE", "SPORTAG"],
+            "Picanto": ["PICANTO"],
+            "Seltos": ["SELTOS"],
+            "Sorento": ["SORENTO"],
+            "Soluto": ["SOLUTO"],
+            "Sonet": ["SONET"],
+            "K2700": ["K2700", "K-2700"],
+        },
+        "HYUNDAI": {
+            "Tucson": ["TUCSON", "TUCSON IX"],
+            "Accent": ["ACCENT"],
+            "Elantra": ["ELANTRA"],
+            "Santa Fe": ["SANTA FE", "SANTAFE"],
+            "Creta": ["CRETA"],
+            "Grand i10": ["GRAND I10", "I10"],
+            "Venue": ["VENUE"],
+            "H-100": ["H-100", "H100"],
+        },
+        "NISSAN": {
+            "Frontier": ["FRONTIER", "NAVARA", "NP300"],
+            "Sentra": ["SENTRA", "SENTRA B13", "B13"],
+            "Versa": ["VERSA"],
+            "Kicks": ["KICKS"],
+            "X-Trail": ["X-TRAIL", "XTRAIL"],
+            "Urvan": ["URVAN"],
+            "Patrol": ["PATROL"],
+            "March": ["MARCH"],
+        },
+        "BMW": {
+            "X3": ["X3", "X328I", "X3 28I", "X3 2.0", "X3 3.0"],
+            "X5": ["X5"],
+            "X6": ["X6"],
+            "X1": ["X1"],
+            "Serie 3": ["SERIE 3", "320I", "328I", "330I"],
+            "Serie 5": ["SERIE 5", "520I", "528I"],
+        },
+        "MITSUBISHI": {
+            "L200": ["L200", "SPORTERO", "L200 SPORTERO"],
+            "Montero": ["MONTERO", "MONTERO SPORT"],
+            "Outlander": ["OUTLANDER"],
+            "ASX": ["ASX"],
+        },
+        "SUZUKI": {
+            "Vitara": ["VITARA", "GRAND VITARA"],
+            "Jimny": ["JIMNY"],
+            "Swift": ["SWIFT"],
+            "Alto": ["ALTO"],
+            "Dzire": ["DZIRE"],
+            "Ertiga": ["ERTIGA"],
+        },
+        "ISUZU": {
+            "D-Max": ["D-MAX", "DMAX"],
+            "MU-X": ["MU-X", "MUX"],
+            "NPR": ["NPR"],
+            "Forward": ["FORWARD"],
+        },
+        "MAZDA": {
+            "BT-50": ["BT-50", "BT50"],
+            "Mazda 3": ["MAZDA 3", "MAZDA3"],
+            "Mazda 2": ["MAZDA 2", "MAZDA2"],
+            "CX-5": ["CX-5", "CX5"],
+            "CX-30": ["CX-30", "CX30"],
+        },
+    }
+
     matched_brand = ""
     matched_model = ""
 
-    # 1. Identificar Marca
+    # 1. Identificar Marca desde texto
     for canon, aliases in brand_synonyms.items():
         for al in aliases:
-            if re.search(rf"\b{re.escape(al)}\b", text_combined):
+            if re.search(rf"\b{re.escape(al)}\b", text_combined) or al in text_combined:
                 matched_brand = canon
                 break
         if matched_brand:
             break
+
+    # 2. Si no se halló en texto, consultar WMI del VIN
+    if not matched_brand and vin and len(vin) >= 3:
+        wmi_prefix = vin[:3].upper()
+        if wmi_prefix in WMI_BRAND_MAP:
+            matched_brand = WMI_BRAND_MAP[wmi_prefix]
 
     if not matched_brand:
         for b in brands_list:
@@ -353,25 +499,40 @@ def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[st
                 matched_brand = b
                 break
 
-    # 2. Identificar Modelo
-    if matched_brand and entries:
+    # 3. Identificar Modelo según la Marca identificada
+    if matched_brand and matched_brand in brand_model_synonyms:
+        for canon_m, aliases in brand_model_synonyms[matched_brand].items():
+            for al in aliases:
+                if re.search(rf"\b{re.escape(al)}\b", text_combined) or al in text_combined:
+                    matched_model = canon_m
+                    break
+            if matched_model:
+                break
+
+    # 4. Si la marca no tiene sinónimos o no coincidió, buscar en entradas del catálogo de esa marca
+    if matched_brand and not matched_model and entries:
         brand_entries = [e for e in entries if e.get("brand", "").upper() == matched_brand.upper()]
         for entry in brand_entries:
             m_name = entry.get("model", "")
-            if len(m_name) >= 2 and re.search(rf"\b{re.escape(m_name.upper())}\b", text_combined):
+            if len(m_name) >= 2 and (re.search(rf"\b{re.escape(m_name.upper())}\b", text_combined) or m_name.upper() in text_combined):
                 matched_model = m_name
                 break
 
-    if not matched_model and entries:
-        for entry in entries:
-            m_name = entry.get("model", "")
-            if len(m_name) >= 3 and re.search(rf"\b{re.escape(m_name.upper())}\b", text_combined):
-                matched_model = m_name
-                if not matched_brand:
-                    matched_brand = entry.get("brand", "")
+    # 5. Si la marca NO está identificada pero hay un modelo muy específico en el texto
+    if not matched_brand and not matched_model:
+        for b_name, m_dict in brand_model_synonyms.items():
+            for m_name, aliases in m_dict.items():
+                for al in aliases:
+                    if len(al) >= 4 and re.search(rf"\b{re.escape(al)}\b", text_combined):
+                        matched_brand = b_name
+                        matched_model = m_name
+                        break
+                if matched_model:
+                    break
+            if matched_brand:
                 break
 
-    conf = 0.92 if (matched_brand and matched_model) else (0.80 if matched_brand else 0.50)
+    conf = 0.95 if (matched_brand and matched_model) else (0.85 if matched_brand else 0.50)
     return matched_brand, matched_model, conf
 
 
@@ -395,13 +556,15 @@ def extract_vin_origin_country(vin: str) -> Optional[str]:
 # PIPELINE DE VISIÓN MULTIMODAL (Gemini / OpenAI / Windows Native OCR)
 # ==============================================================================
 
-SYSTEM_VISION_PROMPT = """You extract fields from a photo of a Nicaraguan vehicle circulation card (tarjeta de circulacion / certificado de matricula).
+SYSTEM_VISION_PROMPT = """You extract fields from photos of a Nicaraguan vehicle circulation card (tarjeta de circulacion / certificado de matricula).
 Return JSON only. No markdown.
-Schema keys: vin, plate, brand, model, year, color, vehicle_type, vehicle_type_slug, numero_motor, tipo_combustible, propietario_cedula, propietario_nombre, origin_country, version_level, trim, confidence, needs_review
+Schema keys: vin, plate, brand, model, year, year_source, color, vehicle_type, vehicle_type_slug, numero_motor, tipo_combustible, propietario_cedula, propietario_nombre, origin_country, version_level, trim, confidence, needs_review
 Rules:
 - If a field is unreadable, use null. Never invent a VIN or cedula.
 - VIN is 17 characters. Allowed A-H J-N P R-Z 0-9. No I O Q.
-- Plate is Nicaraguan. Prefix + numbers. Keep prefix letters as printed.
+- Plate is Nicaraguan. Prefix + numbers. Keep prefix letters as printed (e.g. M 145835, LE 29646, CZ 13206).
+- CRITICAL RULE FOR YEAR: The date labeled 'Emisión' (e.g. 22/09/2017, 30/01/2018) on the front is the DATE OF ISSUE of the document, NOT the manufacturing year. NEVER use the emission date as the vehicle year.
+- The manufacturing year is on the REVERSE (back) of the card or decoded from 10th digit of 17-char VIN. If only front is visible, year should be inferred from 10th VIN char or null.
 - year is an integer or null.
 - confidence is 0..1 per critical field (vin, plate, brand, model, year).
 - needs_review is an array of field names below 0.85 confidence.
@@ -412,56 +575,78 @@ Rules:
 - version_level one of base, intermedio, full if inferable, else intermedio.
 """
 
-def _call_gemini_vision(image_base64: str, api_key: str) -> Optional[Dict[str, Any]]:
+def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision."""
     import requests
     
-    # Extraer payload limpio
+    parts = [{"text": SYSTEM_VISION_PROMPT}]
+
+    # Frente
     b64_data = image_base64
     mime_type = "image/jpeg"
     if "," in image_base64:
         header, b64_data = image_base64.split(",", 1)
         if "png" in header:
             mime_type = "image/png"
+    parts.append({
+        "inline_data": {
+            "mime_type": mime_type,
+            "data": b64_data
+        }
+    })
+
+    # Reverso si se proporciona
+    if image_back_base64:
+        b64_back = image_back_base64
+        mime_back = "image/jpeg"
+        if "," in image_back_base64:
+            h_back, b64_back = image_back_base64.split(",", 1)
+            if "png" in h_back:
+                mime_back = "image/png"
+        parts.append({"text": "Foto del Reverso de la tarjeta (contiene Año de Fabricación):"})
+        parts.append({
+            "inline_data": {
+                "mime_type": mime_back,
+                "data": b64_back
+            }
+        })
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": SYSTEM_VISION_PROMPT},
-                    {
-                        "inline_data": {
-                            "mime_type": mime_type,
-                            "data": b64_data
-                        }
-                    }
-                ]
-            }
-        ],
+        "contents": [{"parts": parts}],
         "generationConfig": {
             "response_mime_type": "application/json",
             "temperature": 0.1
         }
     }
 
-    resp = requests.post(url, json=payload, timeout=8)
+    resp = requests.post(url, json=payload, timeout=10)
     if resp.status_code == 200:
         data = resp.json()
         candidates = data.get("candidates", [])
         if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if parts:
-                text_out = parts[0].get("text", "")
+            parts_out = candidates[0].get("content", {}).get("parts", [])
+            if parts_out:
+                text_out = parts_out[0].get("text", "")
                 return json.loads(text_out)
     return None
 
 
-def _call_openai_vision(image_base64: str, api_key: str) -> Optional[Dict[str, Any]]:
+def _call_openai_vision(image_base64: str, api_key: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Llama a la API de OpenAI GPT-4o-mini Vision."""
     import requests
 
     img_url = image_base64 if image_base64.startswith("data:") else f"data:image/jpeg;base64,{image_base64}"
+    content_list = [
+        {"type": "text", "text": "Extrae los datos de esta tarjeta de circulación de Nicaragua (Frente y opcional Reverso) en JSON según las reglas."},
+        {"type": "image_url", "image_url": {"url": img_url, "detail": "high"}}
+    ]
+
+    if image_back_base64:
+        img_back_url = image_back_base64 if image_back_base64.startswith("data:") else f"data:image/jpeg;base64,{image_back_base64}"
+        content_list.append({"type": "text", "text": "Foto Reverso:"})
+        content_list.append({"type": "image_url", "image_url": {"url": img_back_url, "detail": "high"}})
+
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -476,17 +661,14 @@ def _call_openai_vision(image_base64: str, api_key: str) -> Optional[Dict[str, A
             },
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": "Extrae los datos de esta tarjeta de circulación de Nicaragua en JSON."},
-                    {"type": "image_url", "image_url": {"url": img_url, "detail": "high"}}
-                ]
+                "content": content_list
             }
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.1
     }
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=8)
+    resp = requests.post(url, headers=headers, json=payload, timeout=10)
     if resp.status_code == 200:
         data = resp.json()
         content = data["choices"][0]["message"]["content"]
@@ -496,9 +678,10 @@ def _call_openai_vision(image_base64: str, api_key: str) -> Optional[Dict[str, A
 
 async def _run_windows_sdk_ocr_on_base64(image_base64: str) -> str:
     """
-    Ejecuta el motor OCR nativo de Windows (winsdk.windows.media.ocr)
-    a velocidad instantánea (~30-50ms) en el servidor.
+    Ejecuta el motor OCR nativo de Windows (winsdk o PowerShell WinRT bridge)
+    a velocidad instantánea (~40-80ms) 100% offline.
     """
+    # 1. Intentar módulo Python winsdk si está compilado
     try:
         import winsdk.windows.media.ocr as w_ocr
         import winsdk.windows.globalization as glob
@@ -508,7 +691,6 @@ async def _run_windows_sdk_ocr_on_base64(image_base64: str) -> str:
         b64_data = image_base64.split(",", 1)[1] if "," in image_base64 else image_base64
         raw_bytes = base64.b64decode(b64_data)
 
-        # Crear RandomAccessStream en memoria
         mem_stream = streams.InMemoryRandomAccessStream()
         data_writer = streams.DataWriter(mem_stream)
         data_writer.write_bytes(bytes(raw_bytes))
@@ -516,21 +698,79 @@ async def _run_windows_sdk_ocr_on_base64(image_base64: str) -> str:
         await data_writer.flush_async()
         mem_stream.seek(0)
 
-        # Decodificar Bitmap
         decoder = await imaging.BitmapDecoder.create_async(mem_stream)
         software_bitmap = await decoder.get_software_bitmap_async()
 
-        # Motor OCR en español o idioma del sistema
         lang = glob.Language("es")
         engine = w_ocr.OcrEngine.try_create_from_language(lang) or w_ocr.OcrEngine.try_create_from_user_profile_languages()
-        if not engine:
-            return ""
+        if engine:
+            result = await engine.recognize_async(software_bitmap)
+            if result and result.text:
+                return result.text
+    except Exception:
+        pass
 
-        result = await engine.recognize_async(software_bitmap)
-        return result.text or ""
+    # 2. Fallback súper rápido a WinRT PowerShell en Windows
+    try:
+        import tempfile
+        import subprocess
+
+        b64_data = image_base64.split(",", 1)[1] if "," in image_base64 else image_base64
+        raw_bytes = base64.b64decode(b64_data)
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(raw_bytes)
+            tmp_path = tmp.name
+
+        try:
+            ps_cmd = f"""
+Add-Type -AssemblyName System.Runtime.WindowsRuntime
+$asTaskGeneric = [System.WindowsRuntimeSystemExtensions].GetMethods() | ? {{ $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.IsGenericMethod }} | Select-Object -First 1
+function Await($WinRtTask, $ResultType) {{
+    $asTask = $asTaskGeneric.MakeGenericMethod($ResultType)
+    $netTask = $asTask.Invoke($null, @($WinRtTask))
+    $netTask.Wait()
+    return $netTask.Result
+}}
+[Windows.Globalization.Language, Windows.Foundation, ContentType = WindowsRuntime] | Out-Null
+[Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime] | Out-Null
+[Windows.Graphics.Imaging.BitmapDecoder, Windows.Foundation, ContentType = WindowsRuntime] | Out-Null
+[Windows.Storage.StorageFile, Windows.Foundation, ContentType = WindowsRuntime] | Out-Null
+
+$lang = New-Object Windows.Globalization.Language("es")
+$engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromLanguage($lang)
+if ($engine -eq $null) {{ $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }}
+
+$file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync("{tmp_path}")) ([Windows.Storage.StorageFile])
+$stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
+$decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
+$softwareBitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
+$ocrResult = Await ($engine.RecognizeAsync($softwareBitmap)) ([Windows.Media.Ocr.OcrResult])
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+Write-Host $ocrResult.Text
+"""
+            loop = asyncio.get_event_loop()
+            proc = await loop.run_in_executor(
+                None,
+                lambda: subprocess.run(
+                    ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_cmd],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore"
+                )
+            )
+            return proc.stdout.strip()
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
     except Exception as e:
-        print(f"[OCR] Error en Windows SDK OCR nativo: {e}")
-        return ""
+        print(f"[OCR] Error en fallback WinRT PowerShell: {e}")
+
+    return ""
 
 
 # ==============================================================================
@@ -539,16 +779,20 @@ async def _run_windows_sdk_ocr_on_base64(image_base64: str) -> str:
 
 async def process_circulation_card_v2(
     image_base64: Optional[str] = None,
+    image_back_base64: Optional[str] = None,
     raw_text: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Procesador principal v2 de Tarjetas de Circulación de Nicaragua.
-    Retorna respuesta normalizada, auditable y con índices de confianza.
+    Soporta:
+    - Foto Frontal (Obligatoria): Placa, Chasis/VIN, Motor, Color, Tipo de Vehículo, Marca y Modelo.
+    - Foto Reverso (Opcional): Año de Fabricación exacto y capacidad.
     """
     start_time = time.time()
     engine_used = "windows_native_ocr"
     raw_extracted_json: Optional[Dict[str, Any]] = None
     extracted_text = raw_text or ""
+    back_extracted_text = ""
 
     gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY") or os.getenv("VISION_API_KEY")
@@ -557,7 +801,7 @@ async def process_circulation_card_v2(
     if image_base64:
         if gemini_key:
             try:
-                raw_extracted_json = _call_gemini_vision(image_base64, gemini_key)
+                raw_extracted_json = _call_gemini_vision(image_base64, gemini_key, image_back_base64)
                 if raw_extracted_json:
                     engine_used = "gemini_vision"
             except Exception as e:
@@ -565,7 +809,7 @@ async def process_circulation_card_v2(
 
         if not raw_extracted_json and openai_key:
             try:
-                raw_extracted_json = _call_openai_vision(image_base64, openai_key)
+                raw_extracted_json = _call_openai_vision(image_base64, openai_key, image_back_base64)
                 if raw_extracted_json:
                     engine_used = "openai_vision"
             except Exception as e:
@@ -579,11 +823,20 @@ async def process_circulation_card_v2(
                     extracted_text = f"{extracted_text}\n{native_text}".strip()
                     engine_used = "windows_native_ocr"
             except Exception as e:
-                print(f"[OCR] Error en OCR nativo: {e}")
+                print(f"[OCR] Error en OCR nativo frente: {e}")
+
+            if image_back_base64:
+                try:
+                    native_back = await _run_windows_sdk_ocr_on_base64(image_back_base64)
+                    if native_back:
+                        back_extracted_text = native_back
+                except Exception as e:
+                    print(f"[OCR] Error en OCR nativo reverso: {e}")
 
     # 3. Consolidar y Normalizar Datos
     confidence_dict: Dict[str, float] = {}
     needs_review: List[str] = []
+    year_source = "no_detectado"
 
     if raw_extracted_json:
         raw_vin = raw_extracted_json.get("vin")
@@ -591,6 +844,7 @@ async def process_circulation_card_v2(
         raw_brand = raw_extracted_json.get("brand")
         raw_model = raw_extracted_json.get("model")
         raw_year = raw_extracted_json.get("year")
+        year_source = raw_extracted_json.get("year_source") or ("reverso_tarjeta" if image_back_base64 else "inferido_vin")
         raw_color = raw_extracted_json.get("color")
         raw_engine = raw_extracted_json.get("numero_motor")
         raw_fuel = raw_extracted_json.get("tipo_combustible")
@@ -614,7 +868,6 @@ async def process_circulation_card_v2(
         raw_plate = parsed.get("placa")
         raw_brand = parsed.get("marca")
         raw_model = parsed.get("modelo")
-        raw_year = parsed.get("anio") or parsed.get("vin_year")
         raw_color = parsed.get("color")
         raw_engine = parsed.get("numero_motor")
         raw_fuel = parsed.get("tipo_combustible")
@@ -624,6 +877,20 @@ async def process_circulation_card_v2(
         raw_type_slug = None
         version_level = "intermedio"
         trim = ""
+
+        # Año: evaluar si viene del reverso o del VIN
+        raw_year = None
+        if back_extracted_text:
+            parsed_back = parse_circulation_card_back_text(back_extracted_text)
+            if parsed_back.get("anio"):
+                raw_year = parsed_back.get("anio")
+                year_source = "reverso_tarjeta"
+                confidence_dict["year"] = 0.96
+
+        if not raw_year and parsed.get("vin_year"):
+            raw_year = parsed.get("vin_year")
+            year_source = "inferido_vin"
+            confidence_dict["year"] = 0.80
 
     # Normalizaciones de Nicaragua
     norm_plate, plate_conf, plate_review = normalize_plate_nicaragua(raw_plate)
@@ -636,13 +903,13 @@ async def process_circulation_card_v2(
     if vin_review or not norm_vin:
         needs_review.append("vin")
 
-    norm_brand, norm_model, model_conf = fuzzy_match_brand_and_model(raw_brand, raw_model)
+    norm_brand, norm_model, model_conf = fuzzy_match_brand_and_model(raw_brand, raw_model, vin=norm_vin)
     confidence_dict["brand"] = 0.90 if norm_brand else 0.0
     confidence_dict["model"] = model_conf if norm_model else 0.0
     if not norm_brand: needs_review.append("brand")
     if not norm_model: needs_review.append("model")
 
-    # Validación de Año
+    # Validación de Año (Excluyendo explícitamente fecha de emisión)
     current_year = datetime.now().year
     valid_year = None
     if raw_year:
@@ -650,14 +917,20 @@ async def process_circulation_card_v2(
             y_int = int(raw_year)
             if 1980 <= y_int <= current_year + 1:
                 valid_year = y_int
-                confidence_dict["year"] = 0.92
+                if year_source == "reverso_tarjeta":
+                    confidence_dict["year"] = 0.96
+                else:
+                    confidence_dict["year"] = 0.82
         except (ValueError, TypeError):
             pass
+
     if not valid_year:
         if norm_vin and len(norm_vin) == 17:
             valid_year = VIN_YEAR_CODES.get(norm_vin[9])
             if valid_year:
-                confidence_dict["year"] = 0.88
+                year_source = "inferido_vin"
+                confidence_dict["year"] = 0.80
+                needs_review.append("year")
     if not valid_year:
         needs_review.append("year")
 
@@ -675,7 +948,7 @@ async def process_circulation_card_v2(
 
     # Registrar latencia en ms
     latency_ms = int((time.time() - start_time) * 1000)
-    print(f"[OCR v2] Procesado en {latency_ms}ms | Motor: {engine_used} | Placa: {norm_plate} | VIN: {norm_vin}")
+    print(f"[OCR v2] Procesado en {latency_ms}ms | Motor: {engine_used} | Placa: {norm_plate} | VIN: {norm_vin} | Año ({year_source}): {valid_year}")
 
     return {
         "vin": norm_vin or "",
@@ -688,6 +961,7 @@ async def process_circulation_card_v2(
         "modelo": norm_model or "",
         "year": valid_year,
         "anio": valid_year,
+        "year_source": year_source,
         "color": norm_color,
         "vehicle_type": type_label,
         "vehicle_type_slug": type_slug,
@@ -703,12 +977,15 @@ async def process_circulation_card_v2(
         "needs_review": list(set(needs_review)),
         "engine": engine_used,
         "latency_ms": latency_ms,
+        "has_reverse_image": bool(image_back_base64),
     }
 
 
 def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
     """
-    Parser heurístico regex compatible con versiones previas.
+    Parser heurístico regex para la cara FRONTal de la tarjeta.
+    Extrae Placa, Chasis/VIN, Motor, Color, Tipo de Vehículo, Marca y Modelo.
+    IMPORTANTE: Ignora explícitamente la fecha de emisión.
     """
     cleaned = clean_ocr_text(raw_text)
     plate, _, _ = normalize_plate_nicaragua(cleaned)
@@ -727,30 +1004,28 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
     # Cédula
     cedula = normalize_cedula_nicaragua(cleaned)
 
-    # Marca y Modelo
-    brand_match, model_match, _ = fuzzy_match_brand_and_model(cleaned, cleaned)
-
-    # Año
-    year = None
-    context_year = re.search(r"(?:AÑO|A\.\s*FAB|MODELO|YEAR|AÑO\s*MODELO)[\s:\.#-]*\b(19[89]\d|20[0-3]\d)\b", cleaned, re.IGNORECASE)
-    if context_year:
-        year = int(context_year.group(1))
-    elif vin_year:
-        year = vin_year
-    else:
-        years = YEAR_REGEX.findall(cleaned)
-        if years:
-            year = int(years[0])
+    # Marca y Modelo (usando texto y WMI de VIN)
+    brand_match, model_match, _ = fuzzy_match_brand_and_model(cleaned, cleaned, vin=vin)
 
     # Color
     color = "No especificado"
-    for canonical, aliases in COLOR_MAP.items():
-        for alias in aliases:
-            if re.search(rf"\b{re.escape(alias)}\b", cleaned.upper()):
+    # 1. Búsqueda tras etiqueta Color
+    m_col = re.search(r"(?:Color|color|COLOR)[\s:\.#\-*]*([A-Za-zÁÉÍÓÚáéíóúñÑ]+)", cleaned, re.IGNORECASE)
+    if m_col:
+        c_word = m_col.group(1).upper()
+        for canonical, aliases in COLOR_MAP.items():
+            if any(syn in c_word or c_word in syn for syn in aliases):
                 color = canonical.capitalize()
                 break
-        if color != "No especificado":
-            break
+
+    if color == "No especificado":
+        for canonical, aliases in COLOR_MAP.items():
+            for alias in aliases:
+                if re.search(rf"\b{re.escape(alias)}\b", cleaned.upper()):
+                    color = canonical.capitalize()
+                    break
+            if color != "No especificado":
+                break
 
     # Combustible
     fuel = "Gasolina"
@@ -767,7 +1042,7 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
         "numero_motor": engine,
         "marca": brand_match,
         "modelo": model_match,
-        "anio": year,
+        "anio": vin_year,
         "color": color,
         "tipo_carroceria": type_slug,
         "tipo_combustible": fuel,
@@ -775,3 +1050,32 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
         "confidence_score": 85 if (plate or vin) else 40,
         "raw_snippet": cleaned[:300] if cleaned else "",
     }
+
+
+def parse_circulation_card_back_text(raw_text: str) -> Dict[str, Any]:
+    """
+    Parser heurístico regex para la cara TRASERA (Reverso) de la tarjeta de circulación.
+    Busca Año de Fabricación / Modelo Año y capacidades.
+    """
+    cleaned = clean_ocr_text(raw_text)
+    year = None
+
+    # 1. Buscar con etiquetas explícitas de reverso
+    m_year = re.search(r"(?:A[ÑN]O\s*FABRICACI[OÓ]N|A\.\s*FAB|A[ÑN]O\s*MODELO|MODELO\s*A[ÑN]O|A[ÑN]O|YEAR)[\s:\.#-]*\b(19[89]\d|20[0-3]\d)\b", cleaned, re.IGNORECASE)
+    if m_year:
+        year = int(m_year.group(1))
+    else:
+        # 2. Buscar 4 dígitos entre 1980 y el año en curso
+        current_year = datetime.now().year
+        matches = YEAR_REGEX.findall(cleaned)
+        for cand in matches:
+            val = int(cand)
+            if 1980 <= val <= current_year + 1:
+                year = val
+                break
+
+    return {
+        "anio": year,
+        "raw_snippet": cleaned[:200] if cleaned else ""
+    }
+

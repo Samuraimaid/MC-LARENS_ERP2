@@ -7841,20 +7841,31 @@ async def ocr_circulation_card_v2(payload: Dict[str, Any], request: Request):
     """
     Procesa el fotograma o imagen de la tarjeta de circulación de Nicaragua (v2 Vision/Native OCR).
     Extrae Chasis/VIN, Placa, Marca, Modelo, Año, Color, Motor, Combustible y Cédula con índices de confianza.
+    Soporta Foto Frontal (obligatoria) y Foto del Reverso (opcional para año de fabricación).
     """
     await require_auth(request)
     raw_text = payload.get("raw_text") or payload.get("text") or ""
     image_b64 = payload.get("image_base64") or payload.get("image") or ""
+    image_back_b64 = payload.get("image_back_base64") or payload.get("image_reverse_base64") or payload.get("image_back")
 
     # Validación de tamaño de imagen (rechazar > 4MB base64 ~5.5M caracteres)
     if image_b64 and len(image_b64) > 5_500_000:
         raise HTTPException(
             status_code=413,
-            detail="La imagen enviada excede el límite permitido de 4MB. Por favor envía un fotograma optimizado."
+            detail="La imagen frontal enviada excede el límite permitido de 4MB. Por favor envía un fotograma optimizado."
+        )
+    if image_back_b64 and len(image_back_b64) > 5_500_000:
+        raise HTTPException(
+            status_code=413,
+            detail="La imagen del reverso enviada excede el límite permitido de 4MB."
         )
 
     from backend.domains.vehicles.circulation_ocr import process_circulation_card_v2
-    result = await process_circulation_card_v2(image_base64=image_b64, raw_text=raw_text)
+    result = await process_circulation_card_v2(
+        image_base64=image_b64,
+        image_back_base64=image_back_b64,
+        raw_text=raw_text
+    )
 
     # Si hay un VIN de 17 caracteres válido y la marca/modelo tienen baja confianza, consultar vPIC
     vin = result.get("vin")
