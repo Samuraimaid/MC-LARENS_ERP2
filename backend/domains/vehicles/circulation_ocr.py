@@ -664,8 +664,10 @@ def _call_vertex_ai_vision(image_base64: str, image_back_base64: Optional[str] =
 
 
 def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision vía REST API."""
-    import requests
+    """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision vía REST API con urllib."""
+    import urllib.request
+    import urllib.error
+    import json
     
     parts = [{"text": SYSTEM_VISION_PROMPT}]
 
@@ -699,7 +701,6 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
             }
         })
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{"parts": parts}],
         "generationConfig": {
@@ -707,16 +708,44 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
             "temperature": 0.1
         }
     }
+    raw_payload = json.dumps(payload).encode("utf-8")
 
-    resp = requests.post(url, json=payload, timeout=10)
-    if resp.status_code == 200:
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts_out = candidates[0].get("content", {}).get("parts", [])
-            if parts_out:
-                text_out = parts_out[0].get("text", "")
-                return json.loads(text_out)
+    for model_name in [
+        "gemini-flash-latest",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-pro-latest"
+    ]:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            req = urllib.request.Request(
+                url,
+                data=raw_payload,
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                if resp.status == 200:
+                    resp_body = resp.read().decode("utf-8")
+                    data = json.loads(resp_body)
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts_out = candidates[0].get("content", {}).get("parts", [])
+                        if parts_out:
+                            text_out = parts_out[0].get("text", "").strip()
+                            if text_out.startswith("```json"):
+                                text_out = text_out[7:]
+                            if text_out.endswith("```"):
+                                text_out = text_out[:-3]
+                            return json.loads(text_out.strip())
+        except urllib.error.HTTPError as he:
+            err_msg = he.read().decode("utf-8", errors="ignore")
+            print(f"[OCR] Error HTTP en Gemini API ({model_name}): {he.code} - {err_msg[:200]}")
+        except Exception as e:
+            print(f"[OCR] Error de conexión en Gemini API ({model_name}): {e}")
+
     return None
 
 
