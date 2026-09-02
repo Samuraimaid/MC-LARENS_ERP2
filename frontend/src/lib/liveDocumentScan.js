@@ -11,25 +11,114 @@
  */
 
 /**
- * Inicia la cámara trasera en modo environment a resolución balanceada 720p/1080p
- * @param {HTMLVideoElement} videoEl
- * @returns {Promise<MediaStream>}
+ * Obtiene la lista de cámaras traseras disponibles, priorizando la lente principal 1x.
  */
-export async function startCamera(videoEl) {
+export async function getBackCameras() {
+  if (!navigator.mediaDevices?.enumerateDevices) return [];
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter((d) => d.kind === "videoinput");
+    
+    // Filtrar cámaras traseras
+    const backCameras = videoDevices.filter((d) => {
+      const label = (d.label || "").toLowerCase();
+      return (
+        label.includes("back") ||
+        label.includes("rear") ||
+        label.includes("trasera") ||
+        label.includes("environment") ||
+        label.includes("camera2 0") || // Android standard main rear
+        (!label.includes("front") && !label.includes("delantera") && !label.includes("selfie"))
+      );
+    });
+
+    // Ordenar para priorizar lente principal (1x standard) sobre gran angular (wide / 0.5x / ultra)
+    return (backCameras.length > 0 ? backCameras : videoDevices).sort((a, b) => {
+      const la = (a.label || "").toLowerCase();
+      const lb = (b.label || "").toLowerCase();
+      const isUltraA = la.includes("ultra") || la.includes("wide") || la.includes("0.5") || la.includes("macro");
+      const isUltraB = lb.includes("ultra") || lb.includes("wide") || lb.includes("0.5") || lb.includes("macro");
+      if (isUltraA && !isUltraB) return 1;
+      if (!isUltraA && isUltraB) return -1;
+      return 0;
+    });
+  } catch (e) {
+    console.warn("Error enumerando cámaras:", e);
+    return [];
+  }
+}
+
+/**
+ * Inicia la cámara trasera forzando la lente principal 1x y auto-enfoque continuo.
+ * @param {HTMLVideoElement} videoEl
+ * @param {string|null} preferredDeviceId
+ * @returns {Promise<{ stream: MediaStream, capabilities: Object, currentZoom: number }>}
+ */
+export async function startCamera(videoEl, preferredDeviceId = null) {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error("El navegador no soporta acceso directo a la cámara.");
   }
 
-  const constraints = {
-    audio: false,
-    video: {
-      facingMode: { ideal: "environment" },
-      width: { ideal: 1280, max: 1920 },
-      height: { ideal: 720, max: 1080 },
-    },
+  let deviceId = preferredDeviceId;
+  if (!deviceId) {
+    const backCams = await getBackCameras();
+    if (backCams.length > 0) {
+      deviceId = backCams[0].deviceId;
+    }
+  }
+
+  const videoConstraints = {
+    width: { ideal: 1920, max: 2560 },
+    height: { ideal: 1080, max: 1440 },
   };
 
-  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  if (deviceId) {
+    videoConstraints.deviceId = { exact: deviceId };
+  } else {
+    videoConstraints.facingMode = { ideal: "environment" };
+  }
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: videoConstraints,
+  });
+
+  const track = stream.getVideoTracks()[0];
+  let capabilities = {};
+  let currentZoom = 1.0;
+
+  if (track) {
+    capabilities = track.getCapabilities ? track.getCapabilities() : {};
+    const advanced = [];
+
+    // 1. Forzar enfoque continuo (Continuous Auto-Focus)
+    if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
+      advanced.push({ focusMode: "continuous" });
+    }
+    // 2. Exposición y balance de blancos continuos
+    if (capabilities.exposureMode && capabilities.exposureMode.includes("continuous")) {
+      advanced.push({ exposureMode: "continuous" });
+    }
+    if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes("continuous")) {
+      advanced.push({ whiteBalanceMode: "continuous" });
+    }
+
+    // 3. Forzar Lente 1x (evitando gran angular 0.5x si el track reporta zoom mínimo < 1.0)
+    if (capabilities.zoom && capabilities.zoom.min !== undefined && capabilities.zoom.max !== undefined) {
+      const targetZoom = Math.max(capabilities.zoom.min, 1.0);
+      currentZoom = targetZoom;
+      advanced.push({ zoom: targetZoom });
+    }
+
+    if (advanced.length > 0) {
+      try {
+        await track.applyConstraints({ advanced });
+      } catch (err) {
+        console.warn("No se pudieron aplicar restricciones avanzadas de lente 1x:", err);
+      }
+    }
+  }
+
   if (videoEl) {
     videoEl.srcObject = stream;
     videoEl.setAttribute("playsinline", "true");
@@ -40,7 +129,28 @@ export async function startCamera(videoEl) {
       console.warn("Video play error (esperando interacción del usuario):", e);
     }
   }
-  return stream;
+
+  return { stream, capabilities, currentZoom };
+}
+
+/**
+ * Aplica nivel de Zoom óptico/digital a la cámara (1x, 1.5x, 2x)
+ */
+export async function applyZoom(stream, zoomValue) {
+  if (!stream) return;
+  const track = stream.getVideoTracks()[0];
+  if (!track || !track.getCapabilities) return;
+  const caps = track.getCapabilities();
+  if (!caps.zoom) return;
+
+  const clamped = Math.min(Math.max(zoomValue, caps.zoom.min || 1), caps.zoom.max || 1);
+  try {
+    await track.applyConstraints({
+      advanced: [{ zoom: clamped }],
+    });
+  } catch (e) {
+    console.warn("Error aplicando zoom a la cámara:", e);
+  }
 }
 
 /**

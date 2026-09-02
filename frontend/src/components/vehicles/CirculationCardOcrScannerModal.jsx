@@ -29,6 +29,8 @@ import {
   grabJpeg,
   createAutoLock,
   validateImageQuality,
+  getBackCameras,
+  applyZoom,
 } from "@/lib/liveDocumentScan";
 
 export default function CirculationCardOcrScannerModal({ isOpen, onClose, onApply }) {
@@ -37,6 +39,12 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
   const [scanStatus, setScanStatus] = useState("searching"); // searching, closer, glare, hold, capturing, manual
   const [scanSide, setScanSide] = useState("front"); // "front" | "back"
   
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1.0);
+  const [supportsZoom, setSupportsZoom] = useState(false);
+  const [maxZoom, setMaxZoom] = useState(1.0);
+
   const [capturedFrontImage, setCapturedFrontImage] = useState(null);
   const [capturedBackImage, setCapturedBackImage] = useState(null);
   const [scanningBackMode, setScanningBackMode] = useState(false);
@@ -73,6 +81,18 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
   const frontFileInputRef = useRef(null);
   const backFileInputRef = useRef(null);
   const yearInputRef = useRef(null);
+
+  // Enumerar cámaras traseras al abrir modal para forzar lente principal 1x
+  useEffect(() => {
+    if (isOpen) {
+      getBackCameras().then((cams) => {
+        setAvailableCameras(cams);
+        if (cams.length > 0 && !selectedCameraId) {
+          setSelectedCameraId(cams[0].deviceId);
+        }
+      });
+    }
+  }, [isOpen, selectedCameraId]);
 
   // Iniciar / Detener cámara según estado del modal
   const stopLiveCamera = useCallback(() => {
@@ -120,6 +140,21 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     }
   }, [capturedFrontImage, capturedBackImage, handleApplyValidatedImage]);
 
+  const handleSetZoom = (lvl) => {
+    setZoomLevel(lvl);
+    if (streamRef.current) {
+      applyZoom(streamRef.current, lvl);
+    }
+  };
+
+  const handleSwitchLens = () => {
+    if (availableCameras.length <= 1) return;
+    const currentIndex = availableCameras.findIndex((c) => c.deviceId === selectedCameraId);
+    const nextIndex = (currentIndex + 1) % availableCameras.length;
+    const nextCam = availableCameras[nextIndex];
+    setSelectedCameraId(nextCam.deviceId);
+  };
+
   const startLiveCamera = useCallback(async () => {
     if (!videoRef.current) return;
     setCameraError(null);
@@ -127,9 +162,18 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
 
     try {
       stopLiveCamera();
-      const stream = await startCamera(videoRef.current);
-      streamRef.current = stream;
+      // Forzar lente 1x pasando deviceId preferido y aplicando constraints
+      const camRes = await startCamera(videoRef.current, selectedCameraId);
+      streamRef.current = camRes.stream;
       setCameraActive(true);
+
+      if (camRes.capabilities?.zoom) {
+        setSupportsZoom(true);
+        setMaxZoom(camRes.capabilities.zoom.max || 2.0);
+        setZoomLevel(camRes.currentZoom || 1.0);
+      } else {
+        setSupportsZoom(false);
+      }
 
       // Iniciar detector y motor de Auto-Lock inteligente (solo dispara solo si isAutoCaptureEnabled es true)
       autoLockRef.current = createAutoLock({
@@ -167,7 +211,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       setCameraError("No se pudo acceder a la cámara. Puedes subir una foto directamente.");
       setCameraActive(false);
     }
-  }, [stopLiveCamera, scanSide, scanningBackMode, isAutoCaptureEnabled, verifyAndProcessImage]);
+  }, [stopLiveCamera, scanSide, scanningBackMode, isAutoCaptureEnabled, selectedCameraId, verifyAndProcessImage]);
 
   useEffect(() => {
     const isCameraNeeded = isOpen && (!capturedFrontImage || scanningBackMode) && !qualityWarning;
@@ -614,6 +658,57 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                     {statusInfo.icon}
                     <span>{statusInfo.text}</span>
                   </div>
+                </div>
+
+                {/* Controles de Lente 1x y Zoom Flotantes */}
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5 z-10 pointer-events-auto">
+                  {supportsZoom && (
+                    <div className="flex items-center bg-black/65 backdrop-blur-md p-0.5 rounded-full border border-white/20 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => handleSetZoom(1.0)}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition ${
+                          zoomLevel <= 1.1 ? "bg-sky-500 text-white shadow-sm" : "text-white/80 hover:text-white"
+                        }`}
+                      >
+                        1x
+                      </button>
+                      {maxZoom >= 1.5 && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetZoom(1.5)}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition ${
+                            zoomLevel > 1.1 && zoomLevel <= 1.7 ? "bg-sky-500 text-white shadow-sm" : "text-white/80 hover:text-white"
+                          }`}
+                        >
+                          1.5x
+                        </button>
+                      )}
+                      {maxZoom >= 2.0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetZoom(2.0)}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition ${
+                            zoomLevel > 1.7 ? "bg-sky-500 text-white shadow-sm" : "text-white/80 hover:text-white"
+                          }`}
+                        >
+                          2x
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {availableCameras.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleSwitchLens}
+                      title="Cambiar Lente Trasera (1x Principal)"
+                      className="px-2 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white hover:bg-sky-600 transition shadow-lg flex items-center gap-1 text-[10px] font-bold"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      <span>Lente</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Mensaje de Error de Cámara si aplica */}
