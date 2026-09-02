@@ -158,12 +158,39 @@ def _get_catalog_data() -> Dict[str, Any]:
     return _CATALOG_CACHE
 
 
+HEADER_BLACKLIST_WORDS = [
+    "REPUBLICA", "REPUBL1CA", "REPUBL", "NICARAGUA", "N1CARAGUA", "N1CARA", "NICARA",
+    "POLICIA", "POL1C1A", "POLIC", "NACIONAL", "NAC1ONAL", "NACIO",
+    "CIRCULACION", "CIRCULAC1ON", "CIRCULA", "VEHICULAR", "VEH1CULAR", "VEHICUL",
+    "DEPARTAMENTO", "DIRECCION", "TRANSITO", "SEGURIDAD", "AUTORIZADO", "EMISION",
+    "DELEGACION", "MUNICIPAL", "MINISTERIO"
+]
+
+def is_header_noise(text: Optional[str]) -> bool:
+    if not text:
+        return False
+    t_clean = re.sub(r'[^A-Z0-9]', '', text.upper())
+    for kw in HEADER_BLACKLIST_WORDS:
+        if kw in t_clean or (len(t_clean) >= 5 and t_clean in kw):
+            return True
+    return False
+
+
 def clean_ocr_text(raw_text: str) -> str:
     if not raw_text:
         return ""
     text = raw_text.replace("\r", "\n")
-    text = re.sub(r'[|\\/{}\[\]_~`]', ' ', text)
-    return text
+    lines = []
+    for line in text.splitlines():
+        line_str = line.strip()
+        if not line_str:
+            continue
+        l_upper = re.sub(r'[^A-Z0-9]', '', line_str.upper())
+        if any(kw in l_upper for kw in ["REPUBLICA", "POLICIA", "CIRCULACION", "POLICIANACIONAL", "TRANSITO", "SEGURIDAD"]):
+            continue
+        lines.append(line_str)
+    cleaned = "\n".join(lines)
+    return re.sub(r'[|\\/{}\[\]_~`]', ' ', cleaned)
 
 
 def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], float, bool]:
@@ -175,7 +202,15 @@ def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], 
         return None, 0.0, True
 
     plate = raw_plate.strip().upper()
-    plate = re.sub(r'[^A-Z0-9\s\-]', '', plate)
+    if is_header_noise(plate):
+        return None, 0.0, True
+
+    # Remover cualquier palabra institucional residual
+    for kw in HEADER_BLACKLIST_WORDS:
+        plate = re.sub(rf"\b{kw}\b", "", plate)
+    plate = re.sub(r'[^A-Z0-9\s\-]', '', plate).strip()
+    if not plate:
+        return None, 0.0, True
 
     # Intentar separar prefijo y números
     match = re.match(r'^([A-Z]{1,4})[\s\-_]*(\d{1,6})$', plate)
@@ -189,8 +224,7 @@ def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], 
                 formatted = f"{prefix} {digits}"
             return formatted, 0.98, False
         else:
-            # Prefijo desconocido -> no inventar 'M', retornar raw y marcar review
-            return plate, 0.70, True
+            return None, 0.0, True
 
     # Búsqueda con patterns
     for pattern in NICARAGUA_PLATE_PATTERNS:
@@ -206,23 +240,7 @@ def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], 
                         return f"{prefix} {digits[:3]}-{digits[3:]}", 0.95, False
                     return f"{prefix} {digits}", 0.95, False
 
-    return plate, 0.65, True
-
-
-def normalize_cedula_nicaragua(raw_cedula: Optional[str]) -> Optional[str]:
-    """
-    Normaliza el formato de cédula nicaragüense (ej: 001-290590-0004L).
-    """
-    if not raw_cedula:
-        return None
-    cedula_pattern = re.compile(r"\b(\d{3})[\s\-_]?(\d{6})[\s\-_]?(\d{4}[A-Za-z])\b")
-    m = cedula_pattern.search(raw_cedula)
-    if m:
-        return f"{m.group(1)}-{m.group(2)}-{m.group(3).upper()}"
-    cleaned = re.sub(r"[^A-Za-z0-9]", "", raw_cedula).upper()
-    if len(cleaned) == 14 and cleaned[:13].isdigit() and cleaned[13].isalpha():
-        return f"{cleaned[:3]}-{cleaned[3:9]}-{cleaned[9:]}"
-    return raw_cedula.strip() if raw_cedula.strip() else None
+    return None, 0.0, True
 
 
 def resolve_vehicle_type_slug(raw_type: Optional[str], raw_model: Optional[str] = None) -> Tuple[str, str]:
@@ -275,6 +293,9 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
         return None, 0.0, True
 
     raw_str = raw_vin.strip().upper()
+    if is_header_noise(raw_str):
+        return None, 0.0, True
+
     vin_charset = set("0123456789ABCDEFGHJKLMNPRSTUVWXYZ")
     candidates = []
 
@@ -294,6 +315,8 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
 
     for cand in candidates:
         cand_clean = cand.upper()
+        if is_header_noise(cand_clean):
+            continue
         # Sustituciones legales de OCR para caracteres ilegales en VIN ISO 3779
         fixed = cand_clean.replace('I', '1').replace('O', '0').replace('Q', '0')
         if len(fixed) == 17 and all(c in vin_charset for c in fixed):
@@ -302,6 +325,8 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
         if len(fixed) > 17:
             for i in range(len(fixed) - 16):
                 sub = fixed[i:i+17]
+                if is_header_noise(sub):
+                    continue
                 if all(c in vin_charset for c in sub):
                     conf = 0.92 if sub == cand_clean[i:i+17] else 0.85
                     return sub, conf, False
@@ -711,11 +736,11 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
     raw_payload = json.dumps(payload).encode("utf-8")
 
     for model_name in [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-pro",
         "gemini-flash-latest",
-        "gemini-3.6-flash",
-        "gemini-3.5-flash",
-        "gemini-3.1-flash-lite",
-        "gemini-flash-lite-latest",
         "gemini-pro-latest"
     ]:
         try:
@@ -1150,8 +1175,6 @@ async def process_circulation_card_v2(
     if norm_color.upper() in COLOR_MAP:
         norm_color = norm_color.capitalize()
 
-    # Cédula
-    norm_cedula = normalize_cedula_nicaragua(raw_cedula)
     origin_country = extract_vin_origin_country(norm_vin) if norm_vin else None
 
     # Registrar latencia en ms
@@ -1176,8 +1199,6 @@ async def process_circulation_card_v2(
         "tipo_carroceria": type_slug,
         "numero_motor": raw_engine or "",
         "tipo_combustible": raw_fuel or "Gasolina",
-        "propietario_cedula": norm_cedula or "",
-        "propietario_nombre": raw_owner_name or "",
         "origin_country": origin_country or "Estándar",
         "version_level": version_level,
         "trim": trim,
@@ -1193,7 +1214,7 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
     """
     Parser heurístico regex para la cara FRONTal de la tarjeta.
     Extrae Placa, Chasis/VIN, Motor, Color, Tipo de Vehículo, Marca y Modelo.
-    IMPORTANTE: Ignora explícitamente la fecha de emisión.
+    IMPORTANTE: Ignora explícitamente la fecha de emisión y cabeceras.
     """
     cleaned = clean_ocr_text(raw_text)
     plate, _, _ = normalize_plate_nicaragua(cleaned)
@@ -1206,11 +1227,8 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
     m_eng = re.search(r"(?:MOTOR|ENGINE|NO\.?\s*MOTOR|NUMERO\s*MOTOR)[\s:\.#-]*([A-Z0-9]{4,16})", cleaned, re.IGNORECASE)
     if m_eng:
         cand = m_eng.group(1).upper().strip()
-        if cand not in ["DIESEL", "GASOLINA", "GASOIL", "CHASIS", "SERIE"]:
+        if cand not in ["DIESEL", "GASOLINA", "GASOIL", "CHASIS", "SERIE"] and not is_header_noise(cand):
             engine = cand
-
-    # Cédula
-    cedula = normalize_cedula_nicaragua(cleaned)
 
     # Marca y Modelo (usando texto y WMI de VIN)
     brand_match, model_match, _ = fuzzy_match_brand_and_model(cleaned, cleaned, vin=vin)
@@ -1254,7 +1272,6 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
         "color": color,
         "tipo_carroceria": type_slug,
         "tipo_combustible": fuel,
-        "propietario_cedula": cedula,
         "confidence_score": 85 if (plate or vin) else 40,
         "raw_snippet": cleaned[:300] if cleaned else "",
     }

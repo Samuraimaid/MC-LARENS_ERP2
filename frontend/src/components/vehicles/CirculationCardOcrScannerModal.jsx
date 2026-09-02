@@ -62,7 +62,6 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     trim: "",
     numero_motor: "",
     tipo_combustible: "Gasolina",
-    propietario_cedula: "",
     origin_country: "",
   });
 
@@ -238,7 +237,6 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         trim: data.trim || "",
         numero_motor: data.numero_motor || "",
         tipo_combustible: data.tipo_combustible || "Gasolina",
-        propietario_cedula: data.propietario_cedula || "",
         origin_country: data.origin_country || "",
       });
 
@@ -339,7 +337,6 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       trim: "",
       numero_motor: "",
       tipo_combustible: "Gasolina",
-      propietario_cedula: "",
       origin_country: "",
     });
   };
@@ -365,7 +362,6 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         trim: editedFields.trim,
         numero_motor: editedFields.numero_motor.trim(),
         tipo_combustible: editedFields.tipo_combustible,
-        propietario_cedula: editedFields.propietario_cedula.trim(),
       });
     }
     toast.success("¡Datos del vehículo aplicados correctamente!");
@@ -1019,20 +1015,6 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                         <option value="Híbrido">Híbrido</option>
                         <option value="Eléctrico">Eléctrico</option>
                       </select>
-                    </div>
-
-                    {/* Cédula del Propietario */}
-                    <div className="col-span-2 space-y-1">
-                      <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
-                        Cédula de Identidad (Propietario):
-                      </label>
-                      <input
-                        type="text"
-                        value={editedFields.propietario_cedula}
-                        onChange={(e) => setEditedFields({ ...editedFields, propietario_cedula: e.target.value })}
-                        placeholder="001-010180-0000A"
-                        className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 font-mono uppercase text-xs text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-sky-500"
-                      />
                     </div>
                   </div>
                 </div>
