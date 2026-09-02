@@ -556,23 +556,55 @@ def extract_vin_origin_country(vin: str) -> Optional[str]:
 # PIPELINE DE VISIÓN MULTIMODAL (Gemini / OpenAI / Windows Native OCR)
 # ==============================================================================
 
-SYSTEM_VISION_PROMPT = """You extract fields from photos of a Nicaraguan vehicle circulation card (tarjeta de circulacion / certificado de matricula).
-Return JSON only. No markdown.
-Schema keys: vin, plate, brand, model, year, year_source, color, vehicle_type, vehicle_type_slug, numero_motor, tipo_combustible, propietario_cedula, propietario_nombre, origin_country, version_level, trim, confidence, needs_review
-Rules:
-- If a field is unreadable, use null. Never invent a VIN or cedula.
-- VIN is 17 characters. Allowed A-H J-N P R-Z 0-9. No I O Q.
-- Plate is Nicaraguan. Prefix + numbers. Keep prefix letters as printed (e.g. M 145835, LE 29646, CZ 13206).
-- CRITICAL RULE FOR YEAR: The date labeled 'Emisión' (e.g. 22/09/2017, 30/01/2018) on the front is the DATE OF ISSUE of the document, NOT the manufacturing year. NEVER use the emission date as the vehicle year.
-- The manufacturing year is on the REVERSE (back) of the card or decoded from 10th digit of 17-char VIN. If only front is visible, year should be inferred from 10th VIN char or null.
-- year is an integer or null.
-- confidence is 0..1 per critical field (vin, plate, brand, model, year).
-- needs_review is an array of field names below 0.85 confidence.
-- Prefer printed block letters over handwriting.
-- Ignore holograms, stamps, and signatures.
-- Do not translate brand names.
-- vehicle_type_slug one of sedan, hatchback, pickup, suv, van, truck, moto.
-- version_level one of base, intermedio, full if inferable, else intermedio.
+SYSTEM_VISION_PROMPT = """You are an expert document parser extracting structured data from photos of Nicaraguan vehicle circulation cards (República de Nicaragua - Policía Nacional - Circulación Vehicular).
+
+EXACT CARD LAYOUT SPECIFICATION:
+1. PLACA: Located on the top-right under the title 'CIRCULACION VEHICULAR'. Format: Department prefix + number (e.g., 'Placa M 145835', 'Placa LE 29646', 'Placa CZ 13206', 'Placa M 243-616'). Extract as string (e.g. 'M 145-835' or 'M 145835').
+2. CLASIFICACION, MARCA, MODELO: Located on the upper-left, printed with comma separators:
+   - Example 'CAMIONETA,TOYOTA,HILUX' -> vehicle_type: 'Camioneta / Pickup', brand: 'TOYOTA', model: 'Hilux'.
+   - Example 'AUTOMOVIL,KIA,RIO' -> vehicle_type: 'Sedán / Automóvil', brand: 'KIA', model: 'Rio'.
+   - Example 'CAMIONETA,BMW,X3' -> vehicle_type: 'SUV / Camioneta Cerrada', brand: 'BMW', model: 'X3'.
+3. TIPO DE VEHICULO / SUBTIPO: Located directly below the Marca/Modelo line:
+   - 'D/CABINA.' = Doble Cabina -> vehicle_type_slug: 'pickup', trim: 'Doble Cabina'.
+   - 'SEDAN' -> vehicle_type_slug: 'sedan'.
+   - 'HATCHBACK' -> vehicle_type_slug: 'hatchback'.
+   - 'CABINA SENCILLA' -> vehicle_type_slug: 'pickup', trim: 'Cabina Sencilla'.
+4. COLOR: Located on the left labeled 'Color' (e.g. 'Color CAFE' -> 'Café', 'Color BLANCO' -> 'Blanco', 'Color GRIS' -> 'Gris', 'Color NEGRO' -> 'Negro', 'Color ROJO' -> 'Rojo', 'Color AZUL' -> 'Azul'). NOTE: A transparent security watermark/hologram covers parts of the card; read through it carefully.
+5. MOTOR: Located on the left labeled 'Motor' followed by alphanumeric serial code (e.g. 'Motor 2KD7854925', 'Motor G4FDCHS30772', 'Motor 2NZ5032362', 'Motor A9821078'). IMPORTANT: Preserve engine codes like '2KD' (do not confuse with '20' or '2O').
+6. CHASIS: Located on the left labeled 'Chasis' (e.g. 'Chasis MROFR22G800550800', 'Chasis KNADM4A3XD6124749', 'Chasis JTDBW923X01121180'). This is the 17-character VIN.
+
+EXCLUSION RULES (CRITICAL - DO NOT EXTRACT OR CONFUSE THESE):
+- IGNORE 'Emisión DD/MM/YYYY' (e.g. '22/09/2017'): This is the administrative date the card was printed by Transit Police. It is NEVER the vehicle's manufacture year.
+- IGNORE 'VIN 0009' or other bottom serial counters.
+- IGNORE signatures, 'Autorizado', stamps, barcode numbers, and headers.
+- The real manufacturing year is ONLY on the REVERSE of the card (if provided as a second photo) or decoded from the 10th digit of the 17-character VIN if standard ISO 3779. If the VIN has '0' as the 10th digit (e.g., Thai/Japanese Toyota MR0... / JTD...), return year as null so the operator enters it directly.
+
+Return JSON only:
+{
+  "vin": "MR0FR22G800550800",
+  "plate": "M 145-835",
+  "brand": "TOYOTA",
+  "model": "Hilux",
+  "year": null,
+  "year_source": "no_detectado",
+  "color": "Café",
+  "vehicle_type": "Camioneta / Pickup",
+  "vehicle_type_slug": "pickup",
+  "numero_motor": "2KD7854925",
+  "tipo_combustible": "Diésel",
+  "propietario_cedula": null,
+  "origin_country": "India / Tailandia",
+  "version_level": "intermedio",
+  "trim": "Doble Cabina",
+  "confidence": {
+    "vin": 0.95,
+    "plate": 0.95,
+    "brand": 0.95,
+    "model": 0.95,
+    "year": 0.0
+  },
+  "needs_review": ["year"]
+}
 """
 
 def _call_vertex_ai_vision(image_base64: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
