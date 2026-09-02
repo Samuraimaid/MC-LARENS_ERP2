@@ -62,28 +62,26 @@ export function stopCamera(stream) {
 }
 
 /**
- * Puntuación heurística de un fotograma sin necesidad de OpenCV ni librerías pesadas:
+ * Puntuación de detección real de documento:
  * - Recorta la zona del recuadro a un canvas ligero de 320px
- * - Evalúa Nitidez (Varianza aproximada de Laplaciano 3x3)
- * - Evalúa Reflejos/Brillo (Porcentaje de píxeles con luma > 245)
- * - Evalúa Cobertura/Fill (Densidad de contraste/bordes en bordes y centro)
+ * - Evalúa si el fondo es claro tipo documento (Luma entre 90 y 230)
+ * - Evalúa la presencia de múltiples transiciones horizontales de texto impreso
+ * - Evalúa Nitidez y ausencia de deslumbramiento (glare)
  * 
  * @param {HTMLVideoElement} videoEl
  * @param {{ x: number, y: number, width: number, height: number } | null} guideRect
- * @returns {{ sharpness: number, fill: number, glare: number, ok: boolean, status: string }}
+ * @returns {{ sharpness: number, fill: number, glare: number, textScore: number, ok: boolean, status: string }}
  */
 export function scoreFrame(videoEl, guideRect) {
   if (!videoEl || videoEl.readyState < 2 || videoEl.videoWidth === 0) {
-    return { sharpness: 0, fill: 0, glare: 1, ok: false, status: "searching" };
+    return { sharpness: 0, fill: 0, glare: 1, textScore: 0, ok: false, status: "searching" };
   }
 
   const vw = videoEl.videoWidth;
   const vh = videoEl.videoHeight;
 
-  // Si no se especifica guideRect, usar el 75% central con aspecto de tarjeta (1.58)
   let sx, sy, sw, sh;
   if (guideRect && guideRect.width > 0 && guideRect.height > 0) {
-    // Proporciones relativas al contenedor de video renderizado
     const elWidth = videoEl.clientWidth || vw;
     const elHeight = videoEl.clientHeight || vh;
     const scaleX = vw / elWidth;
@@ -94,7 +92,6 @@ export function scoreFrame(videoEl, guideRect) {
     sw = Math.min(vw - sx, guideRect.width * scaleX);
     sh = Math.min(vh - sy, guideRect.height * scaleY);
   } else {
-    // Recuadro por defecto al centro (aspecto ~1.58)
     const targetAspect = 1.58;
     sw = Math.min(vw * 0.85, vh * 0.85 * targetAspect);
     sh = sw / targetAspect;
@@ -105,7 +102,6 @@ export function scoreFrame(videoEl, guideRect) {
   const targetW = 320;
   const targetH = Math.round(targetW / (sw / sh || 1.58));
 
-  // Canvas offscreen reutilizable
   let canvas = scoreFrame._canvas;
   if (!canvas) {
     canvas = document.createElement("canvas");
@@ -115,7 +111,7 @@ export function scoreFrame(videoEl, guideRect) {
   canvas.height = targetH;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) {
-    return { sharpness: 0, fill: 0, glare: 1, ok: false, status: "searching" };
+    return { sharpness: 0, fill: 0, glare: 1, textScore: 0, ok: false, status: "searching" };
   }
 
   ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, targetW, targetH);
@@ -123,50 +119,70 @@ export function scoreFrame(videoEl, guideRect) {
   const data = imgData.data;
   const totalPixels = targetW * targetH;
 
-  // 1. Escala a gris y cálculo de Luma + Reflejos (Glare)
+  // 1. Escala a gris y cálculo de Luma + Reflejos
   const gray = new Uint8Array(totalPixels);
   let glareCount = 0;
   let darkCount = 0;
   let totalLuma = 0;
 
   for (let i = 0, p = 0; i < data.length; i += 4, p++) {
-    // Coeficientes BT.601
     const luma = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
     gray[p] = luma;
     totalLuma += luma;
-    if (luma > 242) glareCount++;
-    if (luma < 35) darkCount++;
+    if (luma > 248) glareCount++;
+    if (luma < 40) darkCount++;
   }
 
   const glareRatio = glareCount / totalPixels;
   const avgLuma = totalLuma / totalPixels;
+  const darkRatio = darkCount / totalPixels;
 
-  // Si hay demasiado brillo blanco que tapa los textos
-  if (glareRatio > 0.08) {
-    return { sharpness: 0, fill: 0, glare: glareRatio, ok: false, status: "glare" };
+  if (glareRatio > 0.10) {
+    return { sharpness: 0, fill: 0, glare: glareRatio, textScore: 0, ok: false, status: "glare" };
   }
 
-  // Si la escena está demasiado oscura
-  if (avgLuma < 45 || darkCount / totalPixels > 0.65) {
-    return { sharpness: 0, fill: 0, glare: glareRatio, ok: false, status: "searching" };
+  // Una tarjeta de circulación es clara (fondo claro con texto oscuro)
+  // Si está demasiado oscura o es un fondo de ropa/piel/mesa oscura, descartar
+  if (avgLuma < 85 || darkRatio > 0.55) {
+    return { sharpness: 0, fill: 0, glare: glareRatio, textScore: 0, ok: false, status: "closer" };
   }
 
-  // 2. Cálculo de Nitidez (Varianza aproximada de Laplaciano 3x3)
-  // Kernel: [0, 1, 0; 1, -4, 1; 0, 1, 0]
+  // 2. Detección de Líneas Horizontales de Texto Impreso
+  // Las tarjetas oficiales tienen múltiples transiciones oscuro-claro por fila
+  let textTransitions = 0;
+  let evaluatedRows = 0;
+  const yStart = Math.round(targetH * 0.18);
+  const yEnd = Math.round(targetH * 0.82);
+  const xStart = Math.round(targetW * 0.12);
+  const xEnd = Math.round(targetW * 0.88);
+
+  for (let y = yStart; y < yEnd; y += 3) {
+    evaluatedRows++;
+    const rowOffset = y * targetW;
+    let rowTransitions = 0;
+    for (let x = xStart; x < xEnd - 1; x++) {
+      const diff = Math.abs(gray[rowOffset + x] - gray[rowOffset + x + 1]);
+      if (diff > 25) {
+        rowTransitions++;
+      }
+    }
+    // Si la fila contiene patrón de caracteres
+    if (rowTransitions >= 7) {
+      textTransitions += rowTransitions;
+    }
+  }
+
+  const textDensity = textTransitions / (evaluatedRows * (xEnd - xStart) || 1);
+  const hasTextPattern = textDensity > 0.035 && textTransitions >= 50;
+
+  // 3. Nitidez por varianza de Laplaciano
   let sumLap = 0;
   let sumLapSq = 0;
   let lapCount = 0;
-  let borderEdgeCount = 0;
-  let centerEdgeCount = 0;
 
-  const borderMarginX = Math.round(targetW * 0.15);
-  const borderMarginY = Math.round(targetH * 0.15);
-
-  for (let y = 1; y < targetH - 1; y += 2) {
+  for (let y = yStart; y < yEnd; y += 2) {
     const rowIdx = y * targetW;
-    const isNearBorder = y < borderMarginY || y > targetH - borderMarginY;
-
-    for (let x = 1; x < targetW - 1; x += 2) {
+    for (let x = xStart; x < xEnd; x += 2) {
       const idx = rowIdx + x;
       const val =
         gray[idx - targetW] +
@@ -179,15 +195,6 @@ export function scoreFrame(videoEl, guideRect) {
       sumLap += absVal;
       sumLapSq += absVal * absVal;
       lapCount++;
-
-      // Evaluar presencia de bordes y texto
-      if (absVal > 22) {
-        if (isNearBorder || x < borderMarginX || x > targetW - borderMarginX) {
-          borderEdgeCount++;
-        } else {
-          centerEdgeCount++;
-        }
-      }
     }
   }
 
@@ -195,33 +202,29 @@ export function scoreFrame(videoEl, guideRect) {
   const variance = sumLapSq / (lapCount || 1) - meanLap * meanLap;
   const sharpness = Math.sqrt(Math.max(0, variance));
 
-  // 3. Fill ratio (tarjeta encuadrada y abarcando el recuadro con texto)
-  const edgeDensity = (borderEdgeCount + centerEdgeCount) / (lapCount || 1);
-  const fillScore = Math.min(1.0, edgeDensity * 4.5);
-
-  // Criterio de validación
-  // Sharpness > 12.0 indica texto legible enfocado
-  // Glare < 0.08 descarta reflejos molestos
-  // Fill > 0.35 asegura que la tarjeta está dentro del visor
+  // Criterios de documento verificado:
+  // - Nitidez suficiente (> 16.0)
+  // - Patrón de texto impreso verificado (hasTextPattern)
+  // - Nivel de luz adecuado de documento
   let status = "searching";
   let isOk = false;
 
-  if (glareRatio > 0.07) {
+  if (glareRatio > 0.08) {
     status = "glare";
-  } else if (fillScore < 0.30) {
+  } else if (avgLuma < 85 || textDensity < 0.02) {
     status = "closer";
-  } else if (sharpness < 11.0) {
+  } else if (sharpness < 15.0 || !hasTextPattern) {
     status = "searching";
   } else {
-    // Cumple todas las condiciones de nitidez y encuadre
     status = "hold";
     isOk = true;
   }
 
   return {
     sharpness,
-    fill: fillScore,
+    fill: Math.min(1.0, textDensity * 15),
     glare: glareRatio,
+    textScore: textDensity,
     ok: isOk,
     status,
   };
@@ -280,15 +283,16 @@ export function grabJpeg(videoEl, maxW = 1600, quality = 0.85, guideRect = null)
 
 /**
  * Motor de Auto-Lock reactivo:
- * - Monitorea el video cada `intervalMs` (ej: 180-220ms).
+ * - Monitorea el video cada `intervalMs` (ej: 200ms).
  * - Notifica cambios de estado en tiempo real.
- * - Al completar 3 lecturas OK consecutivas (~500-700ms), captura y entrega el JPEG.
+ * - Al completar 5 lecturas OK consecutivas (~1.0s - 1.2s de estabilidad), captura el JPEG.
  * 
  * @param {Object} config
  * @param {HTMLVideoElement} config.videoEl
  * @param {() => { x: number, y: number, width: number, height: number } | null} [config.getGuideRect]
  * @param {(status: 'searching'|'closer'|'glare'|'hold'|'capturing'|'manual') => void} config.onStatus
  * @param {(dataUrl: string) => void} config.onCapture
+ * @param {boolean} [config.autoTrigger=false]
  * @param {number} [config.intervalMs=200]
  * @returns {{ stop: () => void }}
  */
@@ -297,6 +301,7 @@ export function createAutoLock({
   getGuideRect,
   onStatus,
   onCapture,
+  autoTrigger = false,
   intervalMs = 200,
 }) {
   let timerId = null;
@@ -322,8 +327,8 @@ export function createAutoLock({
           bestCandidateSharpness = score.sharpness;
         }
 
-        if (consecutiveOkCount >= 3) {
-          // Bloqueo exitoso (Lock confirmado)
+        // Si autoTrigger está habilitado y hay 5 lecturas estables consecutivas (~1.2s)
+        if (autoTrigger && consecutiveOkCount >= 5) {
           isStopped = true;
           if (onStatus) onStatus("capturing");
           const finalJpeg = bestCandidate || grabJpeg(videoEl, 1600, 0.85, guide);
@@ -335,13 +340,11 @@ export function createAutoLock({
           if (onStatus) onStatus("hold");
         }
       } else {
-        // Se perdió el enfoque o se movió la tarjeta -> reiniciar racha
         consecutiveOkCount = 0;
         bestCandidate = null;
         bestCandidateSharpness = 0;
 
-        if (elapsedSec > 8.0) {
-          // Si han pasado más de 8 segundos sin lock, sugerir manual
+        if (elapsedSec > 10.0) {
           if (onStatus) onStatus("manual");
         } else {
           if (onStatus) onStatus(score.status || "searching");
@@ -356,7 +359,6 @@ export function createAutoLock({
     }
   };
 
-  // Iniciar ciclo de evaluación
   timerId = setTimeout(loop, 150);
 
   return {

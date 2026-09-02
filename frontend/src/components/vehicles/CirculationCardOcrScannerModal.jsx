@@ -64,6 +64,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     origin_country: "",
   });
 
+  const [isAutoCaptureEnabled, setIsAutoCaptureEnabled] = useState(false);
   const videoRef = useRef(null);
   const guideRef = useRef(null);
   const streamRef = useRef(null);
@@ -96,9 +97,10 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       streamRef.current = stream;
       setCameraActive(true);
 
-      // Iniciar detector y motor de Auto-Lock inteligente
+      // Iniciar detector y motor de Auto-Lock inteligente (solo dispara solo si isAutoCaptureEnabled es true)
       autoLockRef.current = createAutoLock({
         videoEl: videoRef.current,
+        autoTrigger: isAutoCaptureEnabled,
         getGuideRect: () => {
           if (!guideRef.current || !videoRef.current) return null;
           const rect = guideRef.current.getBoundingClientRect();
@@ -137,7 +139,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       setCameraError("No se pudo acceder a la cámara. Puedes subir una foto directamente.");
       setCameraActive(false);
     }
-  }, [stopLiveCamera, scanSide, scanningBackMode, capturedFrontImage, capturedBackImage]);
+  }, [stopLiveCamera, scanSide, scanningBackMode, capturedFrontImage, capturedBackImage, isAutoCaptureEnabled]);
 
   useEffect(() => {
     const isCameraNeeded = isOpen && (!capturedFrontImage || scanningBackMode);
@@ -455,23 +457,39 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
           {showCameraView ? (
             /* Vista 1: Visor de Cámara en Vivo con Auto-Lock */
             <div className="space-y-3">
-              {/* Indicador de cara a escanear */}
+              {/* Indicador de cara y selector de modo */}
               <div className="flex items-center justify-between px-1">
                 <span className="font-bold text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5">
                   <Layers className="h-3.5 w-3.5 text-sky-500" />
                   {scanningBackMode
-                    ? "Paso 2: Escaneando Reverso (Opcional - Año de Fabricación)"
-                    : "Paso 1: Escaneando Frente (Placa, Chasis, Motor, Color)"}
+                    ? "Paso 2: Reverso (Año de Fabricación)"
+                    : "Paso 1: Frente (Placa, Chasis, Motor, Color)"}
                 </span>
-                {scanningBackMode && (
+
+                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-700">
                   <button
                     type="button"
-                    onClick={() => setScanningBackMode(false)}
-                    className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 underline"
+                    onClick={() => setIsAutoCaptureEnabled(false)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                      !isAutoCaptureEnabled
+                        ? "bg-white dark:bg-zinc-700 text-sky-600 dark:text-sky-300 shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
                   >
-                    Volver a datos
+                    📸 Manual
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setIsAutoCaptureEnabled(true)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                      isAutoCaptureEnabled
+                        ? "bg-sky-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                  >
+                    ⚡ Auto
+                  </button>
+                </div>
               </div>
 
               <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] sm:aspect-[16/10] flex items-center justify-center border border-zinc-800 shadow-inner">
@@ -533,8 +551,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                 )}
               </div>
 
-              {/* Botones de Control Inferiores */}
-              <div className="flex items-center justify-between gap-2 pt-1">
+              {/* Controles de Captura con Gran Botón Obturador */}
+              <div className="flex items-center justify-between gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -542,21 +560,31 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                       ? backFileInputRef.current?.click()
                       : frontFileInputRef.current?.click()
                   }
-                  className="px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 font-semibold text-xs text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition"
+                  className="px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 font-semibold text-xs text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition"
                 >
-                  <Upload className="h-3.5 w-3.5" /> Subir archivo
+                  <Upload className="h-4 w-4 text-zinc-500" /> Subir
                 </button>
 
-                <div className="flex items-center gap-2">
+                {/* Botón Obturador Central Grande */}
+                <button
+                  type="button"
+                  onClick={handleManualCapture}
+                  disabled={!cameraActive}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-500 hover:to-emerald-500 active:scale-95 disabled:opacity-50 text-white font-extrabold text-sm shadow-lg shadow-sky-600/25 flex items-center justify-center gap-2 transition-all duration-150"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span>Capturar Tarjeta</span>
+                </button>
+
+                {scanningBackMode && (
                   <button
                     type="button"
-                    onClick={handleManualCapture}
-                    disabled={!cameraActive}
-                    className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 font-bold text-xs text-white shadow-md shadow-sky-600/20 flex items-center gap-1.5 transition"
+                    onClick={() => setScanningBackMode(false)}
+                    className="px-3 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                   >
-                    <Camera className="h-3.5 w-3.5" /> Captura manual
+                    Omitir
                   </button>
-                </div>
+                )}
               </div>
             </div>
           ) : (
