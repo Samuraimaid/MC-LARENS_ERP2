@@ -28,6 +28,7 @@ import {
   stopCamera,
   grabJpeg,
   createAutoLock,
+  validateImageQuality,
 } from "@/lib/liveDocumentScan";
 
 export default function CirculationCardOcrScannerModal({ isOpen, onClose, onApply }) {
@@ -39,6 +40,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
   const [capturedFrontImage, setCapturedFrontImage] = useState(null);
   const [capturedBackImage, setCapturedBackImage] = useState(null);
   const [scanningBackMode, setScanningBackMode] = useState(false);
+  const [qualityWarning, setQualityWarning] = useState(null);
 
   const [processing, setProcessing] = useState(false);
   const [progressStatus, setProgressStatus] = useState("");
@@ -86,6 +88,39 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     setCameraActive(false);
   }, []);
 
+  const handleApplyValidatedImage = useCallback((frontImg, backImg) => {
+    setQualityWarning(null);
+    stopLiveCamera();
+    if (scanningBackMode || scanSide === "back") {
+      setCapturedBackImage(backImg);
+      setScanningBackMode(false);
+      processOcrV2(capturedFrontImage, backImg);
+    } else {
+      setCapturedFrontImage(frontImg);
+      processOcrV2(frontImg, capturedBackImage);
+    }
+  }, [stopLiveCamera, scanningBackMode, scanSide, capturedFrontImage, capturedBackImage]);
+
+  const verifyAndProcessImage = useCallback(async (dataUrl, isBack = false) => {
+    if (!dataUrl) return;
+    const quality = await validateImageQuality(dataUrl);
+    if (!quality.ok) {
+      setQualityWarning({
+        reason: quality.reason,
+        message: quality.message,
+        dataUrl,
+        isBack,
+      });
+      return;
+    }
+
+    if (isBack) {
+      handleApplyValidatedImage(capturedFrontImage, dataUrl);
+    } else {
+      handleApplyValidatedImage(dataUrl, capturedBackImage);
+    }
+  }, [capturedFrontImage, capturedBackImage, handleApplyValidatedImage]);
+
   const startLiveCamera = useCallback(async () => {
     if (!videoRef.current) return;
     setCameraError(null);
@@ -123,14 +158,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
             } catch (_) {}
           }
           stopLiveCamera();
-          if (scanSide === "back" || scanningBackMode) {
-            setCapturedBackImage(jpegDataUrl);
-            setScanningBackMode(false);
-            processOcrV2(capturedFrontImage, jpegDataUrl);
-          } else {
-            setCapturedFrontImage(jpegDataUrl);
-            processOcrV2(jpegDataUrl, capturedBackImage);
-          }
+          const isBack = scanSide === "back" || scanningBackMode;
+          verifyAndProcessImage(jpegDataUrl, isBack);
         },
         intervalMs: 200,
       });
@@ -139,10 +168,10 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       setCameraError("No se pudo acceder a la cámara. Puedes subir una foto directamente.");
       setCameraActive(false);
     }
-  }, [stopLiveCamera, scanSide, scanningBackMode, capturedFrontImage, capturedBackImage, isAutoCaptureEnabled]);
+  }, [stopLiveCamera, scanSide, scanningBackMode, isAutoCaptureEnabled, verifyAndProcessImage]);
 
   useEffect(() => {
-    const isCameraNeeded = isOpen && (!capturedFrontImage || scanningBackMode);
+    const isCameraNeeded = isOpen && (!capturedFrontImage || scanningBackMode) && !qualityWarning;
     if (isCameraNeeded) {
       const timer = setTimeout(() => {
         startLiveCamera();
@@ -154,7 +183,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     } else {
       stopLiveCamera();
     }
-  }, [isOpen, capturedFrontImage, scanningBackMode, startLiveCamera, stopLiveCamera]);
+  }, [isOpen, capturedFrontImage, scanningBackMode, qualityWarning, startLiveCamera, stopLiveCamera]);
 
   if (!isOpen) return null;
 
@@ -164,8 +193,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     setProcessing(true);
     setProgressStatus(
       backImg
-        ? "Analizando Frente y Reverso (Confirmando Año de Fabricación)..."
-        : "Analizando Frente de Tarjeta de Circulación..."
+        ? "Analizando Frente y Reverso con IA (Confirmando Año)..."
+        : "Analizando Frente de Tarjeta con IA..."
     );
 
     try {
@@ -220,8 +249,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
             yearInputRef.current.focus();
             yearInputRef.current.select();
           }
-        }, 200);
-        toast.info("Ingresa el Año de Fabricación del vehículo (no codificado en el chasis).");
+        }, 150);
       } else if (detectedVin) {
         toast.success(`Chasis/VIN: ${detectedVin} (${data.origin_country || "Estándar"})`);
       } else if (detectedPlate) {
@@ -230,11 +258,10 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         toast.info("Lectura completada. Verifica los datos extraídos.");
       }
     } catch (err) {
-      console.error("Error OCR v2:", err);
-      toast.error("No se pudo leer la tarjeta con suficiente claridad. Intenta con mejor iluminación o sube un archivo.");
+      console.error("[OCR v2] Error procesando tarjeta:", err);
+      toast.error("Error al procesar tarjeta con IA. Puedes ingresar los datos manualmente.");
     } finally {
       setProcessing(false);
-      setProgressStatus("");
     }
   };
 
@@ -254,15 +281,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
 
     const jpeg = grabJpeg(videoRef.current, 1600, 0.85, guideRect);
     if (jpeg) {
-      stopLiveCamera();
-      if (scanningBackMode || scanSide === "back") {
-        setCapturedBackImage(jpeg);
-        setScanningBackMode(false);
-        processOcrV2(capturedFrontImage, jpeg);
-      } else {
-        setCapturedFrontImage(jpeg);
-        processOcrV2(jpeg, capturedBackImage);
-      }
+      const isBack = scanningBackMode || scanSide === "back";
+      verifyAndProcessImage(jpeg, isBack);
     }
   };
 
@@ -273,11 +293,10 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result;
-      stopLiveCamera();
-      setCapturedFrontImage(dataUrl);
-      processOcrV2(dataUrl, capturedBackImage);
+      verifyAndProcessImage(dataUrl, false);
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   // Subir archivo Reverso (Opcional)
@@ -287,12 +306,10 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result;
-      stopLiveCamera();
-      setCapturedBackImage(dataUrl);
-      setScanningBackMode(false);
-      processOcrV2(capturedFrontImage, dataUrl);
+      verifyAndProcessImage(dataUrl, true);
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const handleStartScanBack = () => {
@@ -454,7 +471,79 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
 
         {/* Contenido Principal */}
         <div className="p-4 space-y-3.5 overflow-y-auto text-xs">
-          {showCameraView ? (
+          {qualityWarning ? (
+            /* Vista de Advertencia de Calidad: Evita quemar tokens en fotos con reflejos/borrosas */
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:bg-amber-950/20 space-y-3.5">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+                      {qualityWarning.reason === "glare"
+                        ? "Foto con Reflejo de Luz o Flash"
+                        : qualityWarning.reason === "blur"
+                        ? "Foto Borrosa o Desenfocada"
+                        : "Foto Demasiado Oscura"}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                      Filtro de Calidad
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                    {qualityWarning.message}
+                  </p>
+                </div>
+              </div>
+
+              {/* Miniatura de la foto rechazada */}
+              <div className="relative rounded-xl overflow-hidden border border-amber-400/40 bg-black/40 h-36 flex items-center justify-center">
+                <img
+                  src={qualityWarning.dataUrl}
+                  alt="Foto rechazada"
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
+                  <span className="text-[11px] text-amber-200 font-medium">
+                    {qualityWarning.reason === "glare"
+                      ? "💡 Tip: Inclina ligeramente la tarjeta o apaga el flash para eliminar el destello blanco."
+                      : qualityWarning.reason === "blur"
+                      ? "🔍 Tip: Mantén el teléfono quieto a unos 15 cm de la tarjeta hasta que las letras se vean nítidas."
+                      : "☀️ Tip: Enciende la luz o acércate a un área iluminada."}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQualityWarning(null);
+                    startLiveCamera();
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-600/20 flex items-center justify-center gap-1.5 transition"
+                >
+                  <RotateCcw className="h-4 w-4" /> Tomar Otra Foto
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (qualityWarning.isBack) {
+                      handleApplyValidatedImage(capturedFrontImage, qualityWarning.dataUrl);
+                    } else {
+                      handleApplyValidatedImage(qualityWarning.dataUrl, capturedBackImage);
+                    }
+                  }}
+                  className="py-2.5 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-semibold transition"
+                >
+                  Procesar de todos modos
+                </button>
+              </div>
+            </div>
+          ) : showCameraView ? (
             /* Vista 1: Visor de Cámara en Vivo con Auto-Lock */
             <div className="space-y-3">
               {/* Indicador de cara y selector de modo */}

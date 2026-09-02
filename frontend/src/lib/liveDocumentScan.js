@@ -62,6 +62,139 @@ export function stopCamera(stream) {
 }
 
 /**
+ * Valida la calidad de una imagen estática (subida o capturada) antes de enviarla a la IA:
+ * - Detecta reflejos molestos o sobreexposición (glare)
+ * - Detecta desenfoque o borrosidad severa (blur)
+ * - Detecta imágenes excesivamente oscuras
+ * 
+ * @param {string} dataUrl - DataURL base64 de la imagen
+ * @returns {Promise<{ ok: boolean, reason?: 'glare'|'blur'|'dark'|'empty'|'error', message?: string, sharpness: number, glareRatio: number }>}
+ */
+export function validateImageQuality(dataUrl) {
+  return new Promise((resolve) => {
+    if (!dataUrl) {
+      resolve({ ok: false, reason: "empty", message: "No se proporcionó imagen.", sharpness: 0, glareRatio: 0 });
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const targetW = 400;
+        const targetH = Math.round(targetW / (img.width / img.height || 1.58));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve({ ok: true, sharpness: 20, glareRatio: 0 });
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        const imgData = ctx.getImageData(0, 0, targetW, targetH);
+        const data = imgData.data;
+        const totalPixels = targetW * targetH;
+
+        const gray = new Uint8Array(totalPixels);
+        let glareCount = 0;
+        let darkCount = 0;
+        let totalLuma = 0;
+
+        for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+          const luma = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
+          gray[p] = luma;
+          totalLuma += luma;
+          if (luma > 246) glareCount++;
+          if (luma < 40) darkCount++;
+        }
+
+        const glareRatio = glareCount / totalPixels;
+        const avgLuma = totalLuma / totalPixels;
+        const darkRatio = darkCount / totalPixels;
+
+        // 1. Reflejo severo (> 7% de píxeles quemados por flash o luz directa)
+        if (glareRatio > 0.07) {
+          resolve({
+            ok: false,
+            reason: "glare",
+            message: "La imagen tiene reflejos de luz o flash excesivo que tapan el texto de la tarjeta.",
+            sharpness: 0,
+            glareRatio,
+          });
+          return;
+        }
+
+        // 2. Imagen muy oscura
+        if (avgLuma < 55 || darkRatio > 0.60) {
+          resolve({
+            ok: false,
+            reason: "dark",
+            message: "La imagen está demasiado oscura para leer los caracteres con certeza.",
+            sharpness: 0,
+            glareRatio,
+          });
+          return;
+        }
+
+        // 3. Nitidez (Laplaciano)
+        let sumLap = 0;
+        let sumLapSq = 0;
+        let lapCount = 0;
+
+        for (let y = 2; y < targetH - 2; y += 2) {
+          const rowIdx = y * targetW;
+          for (let x = 2; x < targetW - 2; x += 2) {
+            const idx = rowIdx + x;
+            const val =
+              gray[idx - targetW] +
+              gray[idx + targetW] +
+              gray[idx - 1] +
+              gray[idx + 1] -
+              4 * gray[idx];
+
+            const absVal = Math.abs(val);
+            sumLap += absVal;
+            sumLapSq += absVal * absVal;
+            lapCount++;
+          }
+        }
+
+        const meanLap = sumLap / (lapCount || 1);
+        const variance = sumLapSq / (lapCount || 1) - meanLap * meanLap;
+        const sharpness = Math.sqrt(Math.max(0, variance));
+
+        // 4. Imagen borrosa / fuera de foco
+        if (sharpness < 13.5) {
+          resolve({
+            ok: false,
+            reason: "blur",
+            message: "La imagen está borrosa o desenfocada. Asegúrate de enfocar bien las letras.",
+            sharpness,
+            glareRatio,
+          });
+          return;
+        }
+
+        resolve({
+          ok: true,
+          sharpness,
+          glareRatio,
+        });
+      } catch (err) {
+        console.warn("Error evaluando calidad de imagen:", err);
+        resolve({ ok: true, sharpness: 20, glareRatio: 0 });
+      }
+    };
+    img.onerror = () => {
+      resolve({ ok: false, reason: "error", message: "No se pudo procesar el archivo de imagen.", sharpness: 0, glareRatio: 0 });
+    };
+    img.src = dataUrl;
+  });
+}
+
+/**
  * Puntuación de detección real de documento:
  * - Recorta la zona del recuadro a un canvas ligero de 320px
  * - Evalúa si el fondo es claro tipo documento (Luma entre 90 y 230)
