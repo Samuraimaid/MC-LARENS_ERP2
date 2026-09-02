@@ -12,12 +12,26 @@ _local_client: Optional[AsyncIOMotorClient] = None
 _central_client: Optional[AsyncIOMotorClient] = None
 
 
+DEFAULT_PROD_ATLAS_URI = (
+    "mongodb+srv://dayavar18_db_user:El_Peluka_Sapbeee.2026@mclarens-db.nkdcim0.mongodb.net/"
+    "mc-larens2_mundo_accesorios_erp?retryWrites=true&w=majority"
+)
+
+
 def resolve_local_mongo_uri() -> str:
-    return (
+    env_uri = (
         os.environ.get("MONGODB_LOCAL_URI")
         or os.environ.get("MONGO_URL")
-        or "mongodb://localhost:27017"
+        or os.environ.get("MONGODB_URI")
     )
+    if env_uri:
+        return env_uri.strip()
+    
+    # Si estamos en Google Cloud Run (K_SERVICE existe) usar Atlas automáticamente
+    if os.environ.get("K_SERVICE"):
+        return DEFAULT_PROD_ATLAS_URI
+        
+    return "mongodb://localhost:27017"
 
 
 def resolve_central_mongo_uri() -> Optional[str]:
@@ -31,10 +45,14 @@ def resolve_central_mongo_uri() -> Optional[str]:
 
 
 def resolve_database_name() -> str:
-    return os.environ.get(
-        "MONGO_DB",
-        os.environ.get("DB_NAME", "mc-larens2_erp"),
-    )
+    env_db = os.environ.get("MONGO_DB") or os.environ.get("DB_NAME")
+    if env_db:
+        return env_db.strip()
+        
+    if os.environ.get("K_SERVICE"):
+        return "mc-larens2_mundo_accesorios_erp"
+        
+    return "mc-larens2_erp"
 
 
 def resolve_deployment_branch_id() -> Optional[str]:
