@@ -575,8 +575,64 @@ Rules:
 - version_level one of base, intermedio, full if inferable, else intermedio.
 """
 
+def _call_vertex_ai_vision(image_base64: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """
+    Ejecuta Gemini Multimodal Vision mediante Vertex AI en Google Cloud Run
+    usando las credenciales automáticas del proyecto (sin requerir API key manual).
+    """
+    try:
+        from google import genai
+        from google.genai import types
+
+        project_id = os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT") or "gen-lang-client-0971793042"
+        region = os.getenv("GCP_REGION") or "us-central1"
+        client = genai.Client(vertexai=True, project=project_id, location=region)
+
+        contents = [SYSTEM_VISION_PROMPT]
+
+        b64_data = image_base64.split(",", 1)[1] if "," in image_base64 else image_base64
+        raw_bytes = base64.b64decode(b64_data)
+        mime_type = "image/jpeg"
+        if "png" in image_base64[:30]:
+            mime_type = "image/png"
+
+        contents.append(types.Part.from_bytes(data=raw_bytes, mime_type=mime_type))
+
+        if image_back_base64:
+            b64_back = image_back_base64.split(",", 1)[1] if "," in image_back_base64 else image_back_base64
+            raw_back_bytes = base64.b64decode(b64_back)
+            mime_back = "image/jpeg"
+            if "png" in image_back_base64[:30]:
+                mime_back = "image/png"
+            contents.append("Foto del Reverso de la tarjeta (contiene Año de Fabricación):")
+            contents.append(types.Part.from_bytes(data=raw_back_bytes, mime_type=mime_back))
+
+        for model_name in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.1
+                    )
+                )
+                if response and response.text:
+                    clean_text = response.text.strip()
+                    if clean_text.startswith("```json"):
+                        clean_text = clean_text[7:]
+                    if clean_text.endswith("```"):
+                        clean_text = clean_text[:-3]
+                    return json.loads(clean_text)
+            except Exception as e:
+                print(f"[OCR] Intento con Vertex AI {model_name}: {e}")
+    except Exception as e:
+        print(f"[OCR] Error general inicializando Vertex AI: {e}")
+    return None
+
+
 def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision."""
+    """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision vía REST API."""
     import requests
     
     parts = [{"text": SYSTEM_VISION_PROMPT}]
@@ -676,11 +732,78 @@ def _call_openai_vision(image_base64: str, api_key: str, image_back_base64: Opti
     return None
 
 
+def _run_tesseract_ocr(image_base64: str) -> str:
+    """
+    Ejecuta Tesseract OCR en Linux/Docker con preprocesamiento de imagen con PIL
+    para máxima legibilidad de números de placa, chasis y motor.
+    """
+    try:
+        from PIL import Image, ImageEnhance, ImageOps
+        import io
+        import subprocess
+        import tempfile
+
+        b64_data = image_base64.split(",", 1)[1] if "," in image_base64 else image_base64
+        raw_bytes = base64.b64decode(b64_data)
+
+        img = Image.open(io.BytesIO(raw_bytes))
+        
+        # Preprocesar imagen para OCR:
+        img_gray = ImageOps.grayscale(img)
+        enhancer = ImageEnhance.Contrast(img_gray)
+        img_enhanced = enhancer.enhance(1.8)
+
+        if img_enhanced.width < 1000:
+            scale_factor = 1200 / img_enhanced.width
+            new_size = (int(img_enhanced.width * scale_factor), int(img_enhanced.height * scale_factor))
+            img_enhanced = img_enhanced.resize(new_size, Image.Resampling.LANCZOS)
+
+        # 1. Intentar con pytesseract si está disponible
+        try:
+            import pytesseract
+            text = pytesseract.image_to_string(img_enhanced, lang="spa+eng", config="--psm 6")
+            if text and len(text.strip()) > 15:
+                return text.strip()
+        except Exception:
+            pass
+
+        # 2. Intentar con binario tesseract en el sistema
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            img_enhanced.save(tmp.name, format="PNG")
+            tmp_path = tmp.name
+
+        try:
+            for psm in ["6", "4", "3", "11"]:
+                proc = subprocess.run(
+                    ["tesseract", tmp_path, "stdout", "-l", "spa+eng", "--psm", psm],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                    timeout=5
+                )
+                if proc.returncode == 0 and proc.stdout and len(proc.stdout.strip()) > 15:
+                    return proc.stdout.strip()
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"[OCR] Error en Tesseract OCR local: {e}")
+
+    return ""
+
+
 async def _run_windows_sdk_ocr_on_base64(image_base64: str) -> str:
     """
     Ejecuta el motor OCR nativo de Windows (winsdk o PowerShell WinRT bridge)
     a velocidad instantánea (~40-80ms) 100% offline.
     """
+    if os.name != "nt":
+        return ""
+
     # 1. Intentar módulo Python winsdk si está compilado
     try:
         import winsdk.windows.media.ocr as w_ocr
@@ -785,11 +908,14 @@ async def process_circulation_card_v2(
     """
     Procesador principal v2 de Tarjetas de Circulación de Nicaragua.
     Soporta:
-    - Foto Frontal (Obligatoria): Placa, Chasis/VIN, Motor, Color, Tipo de Vehículo, Marca y Modelo.
-    - Foto Reverso (Opcional): Año de Fabricación exacto y capacidad.
+    - Tier 1: Vertex AI Gemini Multimodal Vision (Cloud Run / GCP nativo).
+    - Tier 2: Gemini API Key REST.
+    - Tier 3: OpenAI Vision.
+    - Tier 4: Tesseract OCR (Linux / Docker local sin APIs externas).
+    - Tier 5: Windows Media OCR (Windows local dev).
     """
     start_time = time.time()
-    engine_used = "windows_native_ocr"
+    engine_used = "desconocido"
     raw_extracted_json: Optional[Dict[str, Any]] = None
     extracted_text = raw_text or ""
     back_extracted_text = ""
@@ -797,9 +923,17 @@ async def process_circulation_card_v2(
     gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY") or os.getenv("VISION_API_KEY")
 
-    # 1. Intentar Visión Multimodal con LLM si hay API Key configurada
     if image_base64:
-        if gemini_key:
+        # 1. Intentar Vertex AI en Google Cloud Run
+        try:
+            raw_extracted_json = _call_vertex_ai_vision(image_base64, image_back_base64)
+            if raw_extracted_json:
+                engine_used = "vertex_ai_gemini"
+        except Exception as e:
+            print(f"[OCR] Error en Vertex AI: {e}")
+
+        # 2. Intentar Gemini API Key REST
+        if not raw_extracted_json and gemini_key:
             try:
                 raw_extracted_json = _call_gemini_vision(image_base64, gemini_key, image_back_base64)
                 if raw_extracted_json:
@@ -807,6 +941,7 @@ async def process_circulation_card_v2(
             except Exception as e:
                 print(f"[OCR] Error en llamada a Gemini Vision: {e}")
 
+        # 3. Intentar OpenAI Vision
         if not raw_extracted_json and openai_key:
             try:
                 raw_extracted_json = _call_openai_vision(image_base64, openai_key, image_back_base64)
@@ -815,8 +950,20 @@ async def process_circulation_card_v2(
             except Exception as e:
                 print(f"[OCR] Error en llamada a OpenAI Vision: {e}")
 
-        # 2. Si no hay Cloud Vision o falló, ejecutar Windows SDK OCR en el servidor
+        # 4. Fallback a Tesseract OCR (Linux / Docker)
         if not raw_extracted_json:
+            tess_text = _run_tesseract_ocr(image_base64)
+            if tess_text:
+                extracted_text = f"{extracted_text}\n{tess_text}".strip()
+                engine_used = "tesseract_ocr"
+
+            if image_back_base64:
+                tess_back = _run_tesseract_ocr(image_back_base64)
+                if tess_back:
+                    back_extracted_text = tess_back
+
+        # 5. Fallback a Windows Media OCR si estamos en Windows
+        if not raw_extracted_json and not extracted_text and os.name == "nt":
             try:
                 native_text = await _run_windows_sdk_ocr_on_base64(image_base64)
                 if native_text:

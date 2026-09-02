@@ -239,7 +239,18 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
   // Captura manual
   const handleManualCapture = () => {
     if (!videoRef.current) return;
-    const jpeg = grabJpeg(videoRef.current, 1600, 0.75);
+    const guideRect = guideRef.current && videoRef.current ? (() => {
+      const rect = guideRef.current.getBoundingClientRect();
+      const vRect = videoRef.current.getBoundingClientRect();
+      return {
+        x: Math.max(0, rect.left - vRect.left),
+        y: Math.max(0, rect.top - vRect.top),
+        width: rect.width,
+        height: rect.height,
+      };
+    })() : null;
+
+    const jpeg = grabJpeg(videoRef.current, 1600, 0.85, guideRect);
     if (jpeg) {
       stopLiveCamera();
       if (scanningBackMode || scanSide === "back") {

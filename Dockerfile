@@ -33,10 +33,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema y de Python
+# Instalar dependencias del sistema y de Python (incluye Tesseract OCR para Linux)
 COPY backend/requirements.txt .
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-dejavu-core bash tar gzip libjpeg62-turbo zlib1g libgssapi-krb5-2 \
+    && apt-get install -y --no-install-recommends \
+       fonts-dejavu-core bash tar gzip libjpeg62-turbo zlib1g libgssapi-krb5-2 \
+       tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng libtesseract-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -r requirements.txt
 

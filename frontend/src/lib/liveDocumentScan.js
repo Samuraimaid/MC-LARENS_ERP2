@@ -228,20 +228,45 @@ export function scoreFrame(videoEl, guideRect) {
 }
 
 /**
- * Captura un fotograma de alta calidad en formato JPEG optimizado
+ * Captura un fotograma de alta calidad en formato JPEG optimizado recortado al recuadro guía
  * @param {HTMLVideoElement} videoEl
  * @param {number} maxW - Ancho máximo (ej: 1600px)
- * @param {number} quality - Calidad JPEG (ej: 0.72)
+ * @param {number} quality - Calidad JPEG (ej: 0.85)
+ * @param {{ x: number, y: number, width: number, height: number } | null} [guideRect]
  * @returns {string} DataURL base64 JPEG
  */
-export function grabJpeg(videoEl, maxW = 1600, quality = 0.72) {
+export function grabJpeg(videoEl, maxW = 1600, quality = 0.85, guideRect = null) {
   if (!videoEl || videoEl.videoWidth === 0) return null;
 
   const vw = videoEl.videoWidth;
   const vh = videoEl.videoHeight;
-  const scale = Math.min(1.0, maxW / vw);
-  const width = Math.round(vw * scale);
-  const height = Math.round(vh * scale);
+
+  let sx = 0, sy = 0, sw = vw, sh = vh;
+
+  if (guideRect && guideRect.width > 0 && guideRect.height > 0) {
+    const elWidth = videoEl.clientWidth || vw;
+    const elHeight = videoEl.clientHeight || vh;
+    const scaleX = vw / elWidth;
+    const scaleY = vh / elHeight;
+
+    // Margen de seguridad del 10% para nunca cortar las esquinas ni el texto de la tarjeta
+    const padX = guideRect.width * 0.10;
+    const padY = guideRect.height * 0.10;
+
+    const rawX = (guideRect.x - padX) * scaleX;
+    const rawY = (guideRect.y - padY) * scaleY;
+    const rawW = (guideRect.width + padX * 2) * scaleX;
+    const rawH = (guideRect.height + padY * 2) * scaleY;
+
+    sx = Math.max(0, Math.min(vw - 50, rawX));
+    sy = Math.max(0, Math.min(vh - 50, rawY));
+    sw = Math.min(vw - sx, rawW);
+    sh = Math.min(vh - sy, rawH);
+  }
+
+  const scale = Math.min(1.0, maxW / sw);
+  const width = Math.round(sw * scale);
+  const height = Math.round(sh * scale);
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -249,7 +274,7 @@ export function grabJpeg(videoEl, maxW = 1600, quality = 0.72) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  ctx.drawImage(videoEl, 0, 0, width, height);
+  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, width, height);
   return canvas.toDataURL("image/jpeg", quality);
 }
 
@@ -291,9 +316,9 @@ export function createAutoLock({
 
       if (score.ok) {
         consecutiveOkCount++;
-        // Almacenar el fotograma más nítido de la ráfaga
+        // Almacenar el fotograma más nítido de la ráfaga recortado a la tarjeta
         if (score.sharpness > bestCandidateSharpness) {
-          bestCandidate = grabJpeg(videoEl, 1600, 0.75);
+          bestCandidate = grabJpeg(videoEl, 1600, 0.85, guide);
           bestCandidateSharpness = score.sharpness;
         }
 
@@ -301,7 +326,7 @@ export function createAutoLock({
           // Bloqueo exitoso (Lock confirmado)
           isStopped = true;
           if (onStatus) onStatus("capturing");
-          const finalJpeg = bestCandidate || grabJpeg(videoEl, 1600, 0.75);
+          const finalJpeg = bestCandidate || grabJpeg(videoEl, 1600, 0.85, guide);
           if (onCapture && finalJpeg) {
             onCapture(finalJpeg);
           }
