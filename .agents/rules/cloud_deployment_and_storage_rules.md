@@ -39,17 +39,16 @@ dist/
 
 ---
 
-## 3. Comando Oficial de Despliegue a Google Cloud Run
+## 3. Comando Oficial de Despliegue a Google Cloud Run (Cloud Shell)
+
+Para evitar que Cloud Shell intente comprimir todo el directorio `$HOME` (lo cual bloquea y hace lentísima la subida), el comando **siempre debe posicionarse en la carpeta del repositorio y actualizar con git pull**:
 
 ```bash
-gcloud run deploy mclarens-erp \
-    --source . \
-    --region us-central1 \
-    --project gen-lang-client-0971793042 \
-    --allow-unauthenticated
+cd ~/MC-LARENS_ERP2 && git pull origin master && gcloud run deploy mclarens-erp --source . --region us-central1 --project gen-lang-client-0971793042 --allow-unauthenticated
 ```
 
 - **ID de Proyecto GCP:** `gen-lang-client-0971793042`
 - **Región:** `us-central1`
 - **Servicio Cloud Run:** `mclarens-erp`
 - **URL en Producción:** `https://mclarens-erp-836176703716.us-central1.run.app`
+
