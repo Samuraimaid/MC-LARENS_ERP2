@@ -22,10 +22,100 @@ import {
   Upload, Link as LinkIcon, FileVideo, CheckCircle2, Loader2
 } from "lucide-react";
 
+function PromoVideoCardThumbnail({ video, onPreviewFull }) {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Time fragment #t=1.5 to automatically skip 0s black fade-in intro
+  const videoSrc = React.useMemo(() => {
+    if (!video?.url) return "";
+    return video.url.includes("#") ? video.url : `${video.url}#t=1.5`;
+  }, [video?.url]);
+
+  const handleMouseEnter = () => {
+    if (videoRef.current) {
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        setIsPlaying(false);
+        // Reset to 1.5s attractive thumbnail frame
+        if (videoRef.current.duration) {
+          videoRef.current.currentTime = Math.min(1.5, videoRef.current.duration * 0.1);
+        }
+      } catch (_) {}
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current && videoRef.current.currentTime < 0.5) {
+      try {
+        videoRef.current.currentTime = Math.min(1.5, (videoRef.current.duration || 10) * 0.1);
+      } catch (_) {}
+    }
+  };
+
+  return (
+    <div
+      className="relative aspect-video w-full rounded-lg bg-black/90 overflow-hidden mb-3 group cursor-pointer select-none"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => onPreviewFull && onPreviewFull(video)}
+      title="Clic para reproducir en pantalla completa con audio"
+    >
+      <video
+        ref={videoRef}
+        src={videoSrc}
+        preload="metadata"
+        className="w-full h-full object-cover transition-opacity duration-300"
+        muted
+        loop
+        playsInline
+        onLoadedMetadata={handleLoadedMetadata}
+        onError={(e) => {
+          console.warn("[PromoVideoCardThumbnail] Error cargando video preview:", video?.url);
+        }}
+      />
+      <div className="absolute top-2 left-2 flex gap-1 z-10 pointer-events-none">
+        <Badge variant="secondary" className="bg-black/70 text-white text-[10px] backdrop-blur-sm shadow">
+          Orden #{video.sort_order || 1}
+        </Badge>
+        <Badge
+          className={`text-[10px] font-semibold text-white shadow ${
+            video.orientation === "vertical"
+              ? "bg-purple-600"
+              : video.orientation === "universal"
+              ? "bg-emerald-600"
+              : "bg-blue-600"
+          }`}
+        >
+          {video.orientation === "vertical" ? "Vertical (9:16)" : video.orientation === "universal" ? "Universal" : "Horizontal (16:9)"}
+        </Badge>
+      </div>
+
+      {!isPlaying && (
+        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 flex items-center justify-center transition-all pointer-events-none">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white text-xs font-semibold shadow-lg group-hover:scale-105 transition-transform">
+            <Play className="h-3.5 w-3.5 fill-white text-white" />
+            <span>Previsualizar</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PromotionalVideosSettingsPanel() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [previewModalVideo, setPreviewModalVideo] = useState(null);
   const [editingVideo, setEditingVideo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -298,50 +388,10 @@ export function PromotionalVideosSettingsPanel() {
                   }`}
                 >
                   {/* Video Thumbnail Preview */}
-                  <div className="relative aspect-video w-full rounded-lg bg-black/90 overflow-hidden mb-3 group">
-                    <video
-                      src={v.url}
-                      className="w-full h-full object-cover"
-                      muted
-                      loop
-                      playsInline
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
-                      onMouseEnter={(e) => {
-                        if (e.target && typeof e.target.play === "function") {
-                          e.target.play().catch(() => {});
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (e.target && typeof e.target.pause === "function") {
-                          try {
-                            e.target.pause();
-                            e.target.currentTime = 0;
-                          } catch {}
-                        }
-                      }}
-                    />
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <Badge variant="secondary" className="bg-black/60 text-white text-[10px] backdrop-blur-sm">
-                        Orden #{v.sort_order || 1}
-                      </Badge>
-                      <Badge
-                        className={`text-[10px] font-semibold text-white ${
-                          v.orientation === "vertical"
-                            ? "bg-purple-600"
-                            : v.orientation === "universal"
-                            ? "bg-emerald-600"
-                            : "bg-blue-600"
-                        }`}
-                      >
-                        {v.orientation === "vertical" ? "Vertical (9:16)" : v.orientation === "universal" ? "Universal" : "Horizontal (16:9)"}
-                      </Badge>
-                    </div>
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none text-white text-xs font-semibold">
-                      <Play className="h-6 w-6 text-white drop-shadow-md mr-1" /> Pasar mouse para previsualizar
-                    </div>
-                  </div>
+                  <PromoVideoCardThumbnail
+                    video={v}
+                    onPreviewFull={(vid) => setPreviewModalVideo(vid)}
+                  />
 
                   {/* Info */}
                   <div className="flex-1">
@@ -575,6 +625,46 @@ export function PromotionalVideosSettingsPanel() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Previsualización Completa con Audio y Controles */}
+      <Dialog open={!!previewModalVideo} onOpenChange={(open) => !open && setPreviewModalVideo(null)}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black/95 text-white border-white/20">
+          <DialogHeader className="p-4 bg-zinc-900/90 border-b border-white/10">
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-sky-400">
+              <Video className="h-4 w-4" />
+              {previewModalVideo?.title || "Previsualización de Video"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400 truncate">
+              {previewModalVideo?.url}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative aspect-video w-full bg-black flex items-center justify-center">
+            {previewModalVideo && (
+              <video
+                key={previewModalVideo.url}
+                src={previewModalVideo.url}
+                className="w-full h-full object-contain max-h-[60vh]"
+                controls
+                autoPlay
+                playsInline
+                onError={(e) => {
+                  console.warn("[ModalVideoPreview] Error en reproducción modal:", previewModalVideo?.url);
+                }}
+              />
+            )}
+          </div>
+          <DialogFooter className="p-3 bg-zinc-900/90 border-t border-white/10 flex items-center justify-between sm:justify-between">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <span>Orientación: <strong className="text-white capitalize">{previewModalVideo?.orientation || "horizontal"}</strong></span>
+              <span>·</span>
+              <span>Orden: <strong className="text-white">#{previewModalVideo?.sort_order || 1}</strong></span>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => setPreviewModalVideo(null)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
