@@ -582,7 +582,7 @@ def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
                 {"title": "Accede al modulo de Videos", "detail": "Entra a la pestana Videos / Login en /settings?tab=videos."},
                 {"title": "Carga tu archivo de video", "detail": "Arrastra o selecciona archivos .mp4, .webm o .mov en 1080p. El sistema divide archivos pesados en fragmentos y los sube directo a Google Cloud Storage CDN."},
                 {"title": "Asigna titulo y orientacion", "detail": "Define un nombre claro y elige 'Horizontal (16:9)' para televisores y monitores, o 'Vertical (9:16)' para moviles y kioscos."},
-                {"title": "Organiza el orden de reproduccion", "detail": "El numero de orden (#) define la secuencia en que apareceran los videos en la pantalla de login."},
+                {"title": "Reordena videos arrastrando o usando flechas", "detail": "Puedes arrastrar y soltar cualquier tarjeta de video a la posicion deseada o usar los botones de subir/bajar (#) para definir la secuencia exacta de rotacion en Smart TVs y Login."},
                 {"title": "Activa, pausa o edita videos", "detail": "Usa el interruptor para encender o pausar videos de campanias especificas sin necesidad de eliminarlos. La eliminacion definitiva esta reservada para Gerencia."},
             ],
             objectives=[

@@ -1855,6 +1855,10 @@ class PromotionalVideoUpdatePayload(FlexibleModel):
     allow_widescreen_on_mobile: Optional[bool] = None
 
 
+class PromotionalVideosReorderPayload(FlexibleModel):
+    video_ids: List[str]
+
+
 class BillingSellerVoucherSectionsPayload(FlexibleModel):
     header_rules: Optional[bool] = None
     company_name: Optional[bool] = None
@@ -22789,6 +22793,22 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
     if doc:
         doc["_id"] = str(doc.get("_id", ""))
     return {"message": "Video promocional actualizado", "video": doc}
+
+
+@api_router.post("/settings/promotional-videos/reorder")
+async def reorder_promotional_videos(payload: PromotionalVideosReorderPayload, request: Request):
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
+    if not payload.video_ids:
+        return {"message": "Lista de ordenamiento vacía"}
+
+    for idx, vid in enumerate(payload.video_ids, start=1):
+        clean_id = str(vid).strip()
+        if clean_id:
+            await db.promotional_videos.update_one(
+                {"$or": [{"id": clean_id}, {"_id": _safe_object_id(clean_id)}]},
+                {"$set": {"sort_order": idx, "updated_at": _utc_now().isoformat()}}
+            )
+    return {"message": "Orden de reproducción actualizado exitosamente", "count": len(payload.video_ids)}
 
 
 @api_router.delete("/settings/promotional-videos/{video_id}")

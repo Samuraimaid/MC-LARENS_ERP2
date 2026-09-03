@@ -20,10 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import {
   Video, Plus, Trash2, Edit, Play, RefreshCw, Smartphone, Monitor,
-  Upload, Link as LinkIcon, FileVideo, CheckCircle2, Loader2
+  Upload, Link as LinkIcon, FileVideo, CheckCircle2, Loader2,
+  GripVertical, ChevronUp, ChevronDown, ArrowUpDown
 } from "lucide-react";
 
-function PromoVideoCardThumbnail({ video, onPreviewFull }) {
+function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -85,7 +86,7 @@ function PromoVideoCardThumbnail({ video, onPreviewFull }) {
       />
       <div className="absolute top-2 left-2 flex gap-1 z-10 pointer-events-none">
         <Badge variant="secondary" className="bg-black/70 text-white text-[10px] backdrop-blur-sm shadow">
-          Orden #{video.sort_order || 1}
+          Orden #{video.sort_order || (sortIndex !== undefined ? sortIndex + 1 : 1)}
         </Badge>
         <Badge
           className={`text-[10px] font-semibold text-white shadow ${
@@ -139,6 +140,11 @@ export function PromotionalVideosSettingsPanel() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
+
+  // Drag and drop & reordering state
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -334,6 +340,73 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
+  const handleSaveOrder = async (newVideosList) => {
+    setSavingOrder(true);
+    try {
+      const videoIds = newVideosList.map((v) => v.id || v._id);
+      await axios.post(
+        `${API}/settings/promotional-videos/reorder`,
+        { video_ids: videoIds },
+        { withCredentials: true }
+      );
+      toast.success("Nuevo orden de reproducción guardado");
+    } catch (err) {
+      console.error("Error al guardar orden:", err);
+      toast.error("Error al guardar el nuevo orden de reproducción");
+      loadVideos();
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `${index}`);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const reordered = [...videos];
+    const [draggedItem] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedItem);
+    const updated = reordered.map((item, idx) => ({ ...item, sort_order: idx + 1 }));
+    setVideos(updated);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    handleSaveOrder(updated);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMoveVideo = (index, delta) => {
+    const targetIndex = index + delta;
+    if (targetIndex < 0 || targetIndex >= videos.length) return;
+    const reordered = [...videos];
+    const [item] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, item);
+    const updated = reordered.map((v, idx) => ({ ...v, sort_order: idx + 1 }));
+    setVideos(updated);
+    handleSaveOrder(updated);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="border-border bg-card">
@@ -388,66 +461,130 @@ export function PromotionalVideosSettingsPanel() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {videos.map((v) => (
-                <div
-                  key={v.id || v._id}
-                  className={`flex flex-col rounded-xl border p-3 transition-all duration-200 ${
-                    v.active ? "bg-background border-border/80 shadow-sm" : "bg-muted/30 border-dashed border-muted-foreground/30 opacity-70"
-                  }`}
-                >
-                  {/* Video Thumbnail Preview */}
-                  <PromoVideoCardThumbnail
-                    video={v}
-                    onPreviewFull={(vid) => setPreviewModalVideo(vid)}
-                  />
-
-                  {/* Info */}
-                  <div className="flex-1">
-                    <h4 className="font-bold text-sm text-foreground line-clamp-1" title={v.title}>
-                      {v.title}
-                    </h4>
-                    <p className="text-xs text-muted-foreground/80 font-mono truncate mt-0.5" title={v.url}>
-                      {v.url}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5 items-center text-[11px] text-muted-foreground">
-                      {v.allow_widescreen_on_mobile !== false ? (
-                        <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                          <Smartphone className="h-3 w-3 mr-1" /> Móvil panorámico OK
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center text-amber-600 dark:text-amber-400">
-                          <Monitor className="h-3 w-3 mr-1" /> Solo tótems/escritorio
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions & Switch */}
-                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={v.active !== false}
-                        onCheckedChange={(checked) => handleToggleActive(v, checked)}
-                        id={`switch-${v.id}`}
-                      />
-                      <Label htmlFor={`switch-${v.id}`} className="text-xs font-medium cursor-pointer">
-                        {v.active !== false ? "Activo" : "Inactivo"}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} title="Editar">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {canDelete && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)} title="Eliminar Video">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 px-3.5 py-2.5 rounded-lg text-xs font-medium">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-4 w-4 text-sky-500 shrink-0" />
+                  <span>
+                    💡 <strong>Arrastra y suelta</strong> las tarjetas de video para definir el orden en que se reproducirán en los Smart TVs y pantalla de Login.
+                  </span>
                 </div>
-              ))}
+                {savingOrder && (
+                  <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-semibold shrink-0">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Guardando orden...</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {videos.map((v, index) => (
+                  <div
+                    key={v.id || v._id}
+                    draggable={true}
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`flex flex-col rounded-xl border p-3 transition-all duration-200 select-none cursor-grab active:cursor-grabbing ${
+                      draggedIndex === index
+                        ? "opacity-40 scale-95 border-dashed border-sky-500 bg-sky-50 dark:bg-sky-950/20 shadow-inner"
+                        : dragOverIndex === index
+                        ? "ring-2 ring-sky-500 border-sky-500 scale-[1.02] shadow-md bg-sky-50/50 dark:bg-sky-950/30"
+                        : v.active
+                        ? "bg-background border-border/80 shadow-sm hover:border-sky-500/50 hover:shadow-md"
+                        : "bg-muted/30 border-dashed border-muted-foreground/30 opacity-70"
+                    }`}
+                  >
+                    {/* Barra superior de arrastre y orden */}
+                    <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/80 hover:text-foreground" />
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded font-bold text-foreground">
+                          #{index + 1}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground font-normal">en cola</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          disabled={index === 0}
+                          onClick={(e) => { e.stopPropagation(); handleMoveVideo(index, -1); }}
+                          title="Subir posición"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          disabled={index === videos.length - 1}
+                          onClick={(e) => { e.stopPropagation(); handleMoveVideo(index, 1); }}
+                          title="Bajar posición"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Video Thumbnail Preview */}
+                    <PromoVideoCardThumbnail
+                      video={v}
+                      sortIndex={index}
+                      onPreviewFull={(vid) => setPreviewModalVideo(vid)}
+                    />
+
+                    {/* Info */}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-sm text-foreground line-clamp-1" title={v.title}>
+                        {v.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground/80 font-mono truncate mt-0.5" title={v.url}>
+                        {v.url}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5 items-center text-[11px] text-muted-foreground">
+                        {v.allow_widescreen_on_mobile !== false ? (
+                          <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                            <Smartphone className="h-3 w-3 mr-1" /> Móvil panorámico OK
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-amber-600 dark:text-amber-400">
+                            <Monitor className="h-3 w-3 mr-1" /> Solo tótems/escritorio
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions & Switch */}
+                    <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={v.active !== false}
+                          onCheckedChange={(checked) => handleToggleActive(v, checked)}
+                          id={`switch-${v.id}`}
+                        />
+                        <Label htmlFor={`switch-${v.id}`} className="text-xs font-medium cursor-pointer">
+                          {v.active !== false ? "Activo" : "Inactivo"}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} title="Editar">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {canDelete && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)} title="Eliminar Video">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
