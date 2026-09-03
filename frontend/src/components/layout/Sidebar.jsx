@@ -45,6 +45,7 @@ import {
   PanelsTopLeft,
   LogOut,
   Smartphone,
+  Video,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -89,6 +90,7 @@ const navigation = [
   { name: "Sucursales", href: "/branches", icon: Building2, roles: ["gerencia"] },
   { name: "Bodegas", href: "/warehouses", icon: Warehouse, roles: ["gerencia", "supervisor"] },
   { name: "Usuarios", href: "/users", icon: Users, roles: ["gerencia"] },
+  { name: "Videos Promocionales", href: "/settings?tab=videos", icon: Video, roles: ["publicidad"] },
   { name: "Configuración", href: "/settings", icon: Settings, roles: ["gerencia"] },
   { name: "Tutoriales", href: "/help/tutorials", icon: BookOpen, roles: ["all"] },
 ];
@@ -167,8 +169,12 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
       return false;
     }
 
+    const normalizedRole = String(user?.role || "").toLowerCase();
+    if (normalizedRole === "publicidad") {
+      return item.href.startsWith("/settings") || item.href === "/help/tutorials";
+    }
+
     if (item.href === "/dashboard") {
-      const normalizedRole = String(user?.role || "").toLowerCase();
       const canSeeDashboard = normalizedRole === "gerencia" || normalizedRole === "recursos_humanos";
       if (!canSeeDashboard) return false;
     }

@@ -513,6 +513,7 @@ ROLES = {
     "coordinador_instalaciones": {"label": "Coord. Instalaciones", "color": "rose"},
     "coordinador_polarizados": {"label": "Coord. Polarizados", "color": "fuchsia"},
     "entregador": {"label": "Entregador", "color": "amber"},
+    "publicidad": {"label": "Publicidad", "color": "pink"},
     "programador": {"label": "Programador", "color": "slate"},
 }
 
@@ -713,7 +714,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "branches": ["gerencia"],
     "human_resources": ["gerencia", "recursos_humanos", "supervisor"],
     "users": ["gerencia"],
-    "settings": ["gerencia"],
+    "settings": ["gerencia", "publicidad"],
     "system_settings": ["gerencia"],
     "accounting": ["gerencia", "recursos_humanos", "supervisor"],
 }
@@ -769,6 +770,7 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
     "polarizador": {"work_orders", "tint_orders", "kds", "technician_completed_jobs"},
     "transporte": {"deliveries"},
     "entregador": {"deliveries"},
+    "publicidad": {"settings"},
 }
 
 ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
@@ -779,6 +781,9 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
         "system_settings": {"view": True, "create": True, "edit": True, "delete": True},
         "branches": {"view": True, "create": True, "edit": True, "delete": True},
         "accounting": {"view": True, "create": True, "edit": True, "delete": True},
+    },
+    "publicidad": {
+        "settings": {"view": True, "create": True, "edit": True, "delete": True},
     },
     "recursos_humanos": {
         "accounting": {"view": True, "create": True, "edit": True},
@@ -22568,7 +22573,7 @@ async def list_all_promotional_videos(request: Request, branch_id: str = Query(d
 
 @api_router.post("/settings/promotional-videos/seed-defaults")
 async def seed_default_promotional_videos(request: Request):
-    user = await require_roles(request, ["gerencia", "programador"])
+    user = await require_roles(request, ["gerencia", "programador", "publicidad"])
     inserted = 0
     for item in DEFAULT_PROMOTIONAL_VIDEOS:
         exists = await db.promotional_videos.find_one({"id": item["id"]})
@@ -22586,7 +22591,7 @@ async def upload_promotional_video_file(
     request: Request,
     file: UploadFile = File(...),
 ):
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
     filename = (file.filename or "").lower()
     if not any(filename.endswith(ext) for ext in (".mp4", ".webm", ".mov", ".m4v", ".mkv")):
         raise HTTPException(status_code=400, detail="Formato no admitido. Usa un archivo de video .mp4, .webm o .mov")
@@ -22643,7 +22648,7 @@ async def upload_promotional_video_chunk(
     Subida por fragmentos (Chunked Upload de 3.5MB).
     Supera de forma transparente el límite de 32MB de Cloud Run y evita desconexiones en móviles.
     """
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
     
     clean_upload_id = "".join(c for c in upload_id if c.isalnum() or c in "_-")
     temp_dir = Path("/tmp/video_uploads") / clean_upload_id
@@ -22724,7 +22729,7 @@ async def upload_promotional_video_chunk(
 
 @api_router.post("/settings/promotional-videos")
 async def create_promotional_video(payload: PromotionalVideoCreatePayload, request: Request):
-    user = await require_roles(request, ["gerencia", "programador"])
+    user = await require_roles(request, ["gerencia", "programador", "publicidad"])
     video_id = _new_entity_id("promo_vid")
     orientation_val = payload.orientation.strip().lower() if payload.orientation else "horizontal"
     if orientation_val not in ["vertical", "horizontal", "universal", "both", "all"]:
@@ -22750,7 +22755,7 @@ async def create_promotional_video(payload: PromotionalVideoCreatePayload, reque
 
 @api_router.put("/settings/promotional-videos/{video_id}")
 async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdatePayload, request: Request):
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
     update_data = {}
     if payload.title is not None:
         update_data["title"] = payload.title.strip()
@@ -22788,7 +22793,7 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
 
 @api_router.delete("/settings/promotional-videos/{video_id}")
 async def delete_promotional_video(video_id: str, request: Request):
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
     doc = await db.promotional_videos.find_one({
         "$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}, {"filename": video_id}]
     })

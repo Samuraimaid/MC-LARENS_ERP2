@@ -59,6 +59,7 @@ export function getRoleHomePath(role) {
   if (normalized === "coordinador_polarizados") return "/coordinator/polarizados";
   if (normalized === "bodegas" || normalized === "jefe_tienda") return "/dispatch";
   if (normalized === "transporte" || normalized === "entregador") return "/driver";
+  if (normalized === "publicidad") return "/settings?tab=videos";
   return "/workbench";
 }
 
@@ -90,4 +91,5 @@ export const ROLE_HOME_MATRIX = [
   { role: "instalaciones", home: "/technician", restrictedNav: false, canAccessCashier: false },
   { role: "recursos_humanos", home: "/human-resources", restrictedNav: false, canAccessCashier: false },
   { role: "bodegas", home: "/dispatch", restrictedNav: false, canAccessCashier: false },
+  { role: "publicidad", home: "/settings?tab=videos", restrictedNav: true, canAccessCashier: false },
 ];

@@ -116,6 +116,7 @@ export const ROLES = {
   transporte: { label: "Transporte", color: "bg-orange-500" },
   bodegas: { label: "Bodegas", color: "bg-yellow-500" },
   instalaciones: { label: "Instalaciones", color: "bg-red-500" },
+  publicidad: { label: "Publicidad", color: "bg-fuchsia-500" },
 };
 
 export const PAYMENT_TYPES = {

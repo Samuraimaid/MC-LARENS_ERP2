@@ -25,6 +25,7 @@ const ROLE_LABELS = {
   tecnico: "Técnico",
   electrico: "Eléctrico",
   polarizador: "Polarizador",
+  publicidad: "Publicidad",
   programador: "Programador",
 };
 

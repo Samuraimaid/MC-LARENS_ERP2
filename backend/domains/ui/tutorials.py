@@ -25,6 +25,7 @@ TRACK_ROLES: List[str] = [
     "polarizador",
     "jefe_tienda",
     "jefe_vendedores",
+    "publicidad",
     "gerencia",
 ]
 
@@ -40,6 +41,7 @@ TRACK_LABELS: Dict[str, str] = {
     "polarizador": "Polarizador",
     "jefe_tienda": "Jefe de tienda",
     "jefe_vendedores": "Jefe de vendedores",
+    "publicidad": "Publicidad / Marketing",
     "gerencia": "Gerencia",
 }
 
@@ -566,6 +568,73 @@ def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
         ),
     ]
 
+    publicidad = [
+        _shared_login(),
+        _mod(
+            "pub-subir-videos",
+            2,
+            "basico",
+            6,
+            "Subida y Administracion de Videos Promocionales",
+            "Carga videos publicitarios, asigna su orientacion (16:9 / 9:16) y organiza el orden de reproduccion.",
+            "/api/tutorials/assets/real/login.png",
+            [
+                {"title": "Accede al modulo de Videos", "detail": "Entra a la pestana Videos / Login en /settings?tab=videos."},
+                {"title": "Carga tu archivo de video", "detail": "Arrastra o selecciona archivos .mp4, .webm o .mov en 1080p. El sistema divide archivos pesados en fragmentos y los sube directo a Google Cloud Storage CDN."},
+                {"title": "Asigna titulo y orientacion", "detail": "Define un nombre claro y elige 'Horizontal (16:9)' para televisores y monitores, o 'Vertical (9:16)' para moviles y kioscos."},
+                {"title": "Organiza el orden de reproduccion", "detail": "El numero de orden (#) define la secuencia en que apareceran los videos en la pantalla de login."},
+                {"title": "Activa o pausa videos", "detail": "Usa el interruptor para encender o pausar videos de campanias especificas sin necesidad de eliminarlos."},
+            ],
+            objectives=[
+                "Subir videos MP4/WebM en alta definicion mediante subida por fragmentos",
+                "Configurar la orientacion (16:9 / 9:16) y orden de rotacion",
+                "Activar, pausar o eliminar videos publicitarios",
+            ],
+            dos=[
+                "Usa resolucion 1080p (1920x1080 o 1080x1920) para maxima nitidez",
+                "Verifica el orden de rotacion para priorizar campanias vigentes",
+                "Previsualiza los videos con audio en el reproductor modal antes de activarlos",
+            ],
+            donts=[
+                "No subas formatos no estandar (.avi, .wmv); usa .mp4 o .webm",
+                "No dejes videos obsoletos activos; desactivalos cuando termine la promocion",
+            ],
+            scenarios=[
+                {
+                    "name": "Subida de video pesado (mas de 30MB)",
+                    "procedure": "El sistema sube en bloques de 3.5MB automaticamente a la nube sin riesgo de corte.",
+                },
+                {
+                    "name": "Video exclusivo para Smart TV de sala de espera",
+                    "procedure": "Selecciona orientacion Horizontal (16:9) y verifica su rotacion en el televisor.",
+                }
+            ],
+            related_routes=["/settings?tab=videos", "/login"],
+        ),
+        _mod(
+            "pub-sincronizacion-pantallas",
+            3,
+            "intermedio",
+            5,
+            "Sincronizacion con Smart TVs y Pantallas de Login",
+            "Como se distribuyen los videos automaticamente a todos los televisores y terminales del negocio.",
+            "/api/tutorials/assets/real/login.png",
+            [
+                {"title": "Distribucion automatica por CDN", "detail": "Al subir un video se publica de inmediato en Google Cloud Storage CDN con transmision fluida por rangos."},
+                {"title": "Sincronizacion en vivo sin recargar", "detail": "Las pantallas de login y Smart TVs activas detectan los nuevos videos automaticamente cada 5 minutos sin tocar el televisor."},
+                {"title": "Comprobacion en la pantalla de Login", "detail": "Abre /login para validar que el reloj y logotipo de Mc-LarenS permanezcan visibles en pantalla sobre el video."},
+            ],
+            dos=[
+                "Deja que los televisores actualicen su lista de reproduccion en segundo plano",
+                "Verifica que el video corra fluido sin saltos en pantallas grandes",
+            ],
+            donts=[
+                "No es necesario reiniciar los Smart TVs tras subir nuevos videos",
+            ],
+            related_routes=["/settings?tab=videos", "/login"],
+        ),
+    ]
+
     return {
         "ventas": {"role": "ventas", "label": TRACK_LABELS["ventas"], "modules": ventas},
         "cajero": {"role": "cajero", "label": TRACK_LABELS["cajero"], "modules": cajero},
@@ -598,6 +667,7 @@ def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
             "label": TRACK_LABELS["jefe_vendedores"],
             "modules": jefe,
         },
+        "publicidad": {"role": "publicidad", "label": TRACK_LABELS["publicidad"], "modules": publicidad},
         "gerencia": {"role": "gerencia", "label": TRACK_LABELS["gerencia"], "modules": gerencia},
     }
 

@@ -158,6 +158,10 @@ function DashboardOnlyRoute() {
 
 function WorkbenchOnlyRoute() {
   const { user } = useAuth();
+  const normalizedRole = String(user?.role || "").toLowerCase();
+  if (normalizedRole === "publicidad") {
+    return <Navigate to="/settings?tab=videos" replace />;
+  }
   if (isCashierRole(user?.role)) {
     return <Navigate to="/cashier" replace />;
   }

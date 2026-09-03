@@ -259,12 +259,14 @@ export function SettingsPage() {
   const canManageVehicleSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageAppearanceSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageSystemSettings = hasPermission("system_settings", "view");
+  const isPublicidad = (user?.role || "").toLowerCase() === "publicidad";
   const [profilePin, setProfilePin] = useState("");
   const [savingProfilePin, setSavingProfilePin] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
-  const activeTab = VALID_SETTINGS_TABS.includes(searchParams.get("tab") || "")
-    ? searchParams.get("tab")
-    : "general";
+  const rawTab = searchParams.get("tab") || "";
+  const activeTab = isPublicidad
+    ? "videos"
+    : (VALID_SETTINGS_TABS.includes(rawTab) ? rawTab : "general");
   const activeBillingTab = VALID_BILLING_TABS.includes(searchParams.get("billingTab") || "")
     ? searchParams.get("billingTab")
     : "exchange";
@@ -331,6 +333,7 @@ export function SettingsPage() {
   const canManageDialogMessages = ["gerencia", "programador"].includes((user?.role || "").toLowerCase());
 
   const handleSettingsTabChange = (nextTab) => {
+    if (isPublicidad && nextTab !== "videos") return;
     const params = new URLSearchParams(searchParams);
     params.set("tab", nextTab);
     if (nextTab !== "billing") {
@@ -1478,10 +1481,16 @@ export function SettingsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Centro de configuración</h1>
-          <p className="text-muted-foreground">Apariencia, facturación, vehículos, monedas e impresoras en un solo lugar</p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">
+            {isPublicidad ? "Gestión de Videos Promocionales" : "Centro de configuración"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isPublicidad
+              ? "Sube, ordena y administra los videos publicitarios que se muestran en el login y Smart TVs."
+              : "Apariencia, facturación, vehículos, monedas e impresoras en un solo lugar"}
+          </p>
         </div>
-        {canManageSystemSettings ? (
+        {!isPublicidad && canManageSystemSettings ? (
           <Button onClick={downloadExcelBackup} disabled={backingUp} data-testid="download-backup-btn-settings">
             {backingUp ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             Descargar respaldo
@@ -1490,25 +1499,27 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleSettingsTabChange} className="space-y-4 animate-fade-up-soft">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-          {SETTINGS_TAB_OPTIONS.map((tab) => {
-            const Icon = SETTINGS_TAB_ICONS[tab.icon];
-            const isGerenciaOrProg = ["gerencia", "programador"].includes(String(user?.role || "").toLowerCase());
-            const hidden =
-              (tab.id === "billing" && !canManageBillingSettings)
-              || (tab.id === "vehicles" && !canManageVehicleSettings)
-              || (tab.id === "dialogos" && !canManageDialogMessages)
-              || (tab.id === "seguridad" && !isGerenciaOrProg)
-              || (["monedas", "notificaciones", "impresoras"].includes(tab.id) && !canManageSystemSettings);
-            if (hidden) return null;
-            return (
-              <TabsTrigger key={tab.id} value={tab.id} className="gap-2 rounded-full">
-                {Icon ? <Icon className="h-4 w-4" /> : null}
-                {tab.label}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+        {!isPublicidad ? (
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-md border bg-card p-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+            {SETTINGS_TAB_OPTIONS.map((tab) => {
+              const Icon = SETTINGS_TAB_ICONS[tab.icon];
+              const isGerenciaOrProg = ["gerencia", "programador"].includes(String(user?.role || "").toLowerCase());
+              const hidden =
+                (tab.id === "billing" && !canManageBillingSettings)
+                || (tab.id === "vehicles" && !canManageVehicleSettings)
+                || (tab.id === "dialogos" && !canManageDialogMessages)
+                || (tab.id === "seguridad" && !isGerenciaOrProg)
+                || (["monedas", "notificaciones", "impresoras"].includes(tab.id) && !canManageSystemSettings);
+              if (hidden) return null;
+              return (
+                <TabsTrigger key={tab.id} value={tab.id} className="gap-2 rounded-full">
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
+                  {tab.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        ) : null}
 
         <TabsContent value="general" className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
