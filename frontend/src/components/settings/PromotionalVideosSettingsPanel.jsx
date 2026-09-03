@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,10 @@ function PromoVideoCardThumbnail({ video, onPreviewFull }) {
 }
 
 export function PromotionalVideosSettingsPanel() {
+  const { user } = useAuth();
+  const userRole = String(user?.role || "").toLowerCase();
+  const canDelete = ["gerencia", "programador"].includes(userRole);
+
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -315,13 +320,17 @@ export function PromotionalVideosSettingsPanel() {
   };
 
   const handleDelete = async (v) => {
+    if (!canDelete) {
+      toast.error("Tu rol no tiene permisos para eliminar videos");
+      return;
+    }
     if (!window.confirm(`¿Estás seguro de eliminar el video "${v.title}"?`)) return;
     try {
       await axios.delete(`${API}/settings/promotional-videos/${v.id}`, { withCredentials: true });
       toast.success("Video eliminado");
       setVideos((prev) => prev.filter((item) => item.id !== v.id));
     } catch (err) {
-      toast.error("Error al eliminar el video");
+      toast.error(err.response?.data?.detail || "Error al eliminar el video");
     }
   };
 
@@ -430,9 +439,11 @@ export function PromotionalVideosSettingsPanel() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)} title="Eliminar Video">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canDelete && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" onClick={() => handleDelete(v)} title="Eliminar Video">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -783,7 +783,7 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
         "accounting": {"view": True, "create": True, "edit": True, "delete": True},
     },
     "publicidad": {
-        "settings": {"view": True, "create": True, "edit": True, "delete": True},
+        "settings": {"view": True, "create": True, "edit": True, "delete": False},
     },
     "recursos_humanos": {
         "accounting": {"view": True, "create": True, "edit": True},
@@ -22793,7 +22793,7 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
 
 @api_router.delete("/settings/promotional-videos/{video_id}")
 async def delete_promotional_video(video_id: str, request: Request):
-    await require_roles(request, ["gerencia", "programador", "publicidad"])
+    await require_roles(request, ["gerencia", "programador"])
     doc = await db.promotional_videos.find_one({
         "$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}, {"filename": video_id}]
     })

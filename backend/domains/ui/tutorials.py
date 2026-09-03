@@ -583,12 +583,12 @@ def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
                 {"title": "Carga tu archivo de video", "detail": "Arrastra o selecciona archivos .mp4, .webm o .mov en 1080p. El sistema divide archivos pesados en fragmentos y los sube directo a Google Cloud Storage CDN."},
                 {"title": "Asigna titulo y orientacion", "detail": "Define un nombre claro y elige 'Horizontal (16:9)' para televisores y monitores, o 'Vertical (9:16)' para moviles y kioscos."},
                 {"title": "Organiza el orden de reproduccion", "detail": "El numero de orden (#) define la secuencia en que apareceran los videos en la pantalla de login."},
-                {"title": "Activa o pausa videos", "detail": "Usa el interruptor para encender o pausar videos de campanias especificas sin necesidad de eliminarlos."},
+                {"title": "Activa, pausa o edita videos", "detail": "Usa el interruptor para encender o pausar videos de campanias especificas sin necesidad de eliminarlos. La eliminacion definitiva esta reservada para Gerencia."},
             ],
             objectives=[
                 "Subir videos MP4/WebM en alta definicion mediante subida por fragmentos",
                 "Configurar la orientacion (16:9 / 9:16) y orden de rotacion",
-                "Activar, pausar o eliminar videos publicitarios",
+                "Activar, pausar y editar videos publicitarios",
             ],
             dos=[
                 "Usa resolucion 1080p (1920x1080 o 1080x1920) para maxima nitidez",
@@ -598,6 +598,7 @@ def _build_default_tracks() -> Dict[str, Dict[str, Any]]:
             donts=[
                 "No subas formatos no estandar (.avi, .wmv); usa .mp4 o .webm",
                 "No dejes videos obsoletos activos; desactivalos cuando termine la promocion",
+                "Si un video debe eliminarse definitivamente de los servidores, solicita el retiro a Gerencia",
             ],
             scenarios=[
                 {
