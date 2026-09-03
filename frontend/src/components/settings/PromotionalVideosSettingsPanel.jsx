@@ -305,10 +305,21 @@ export function PromotionalVideosSettingsPanel() {
                       muted
                       loop
                       playsInline
-                      onMouseEnter={(e) => e.target.play().catch(() => {})}
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                      onMouseEnter={(e) => {
+                        if (e.target && typeof e.target.play === "function") {
+                          e.target.play().catch(() => {});
+                        }
+                      }}
                       onMouseLeave={(e) => {
-                        e.target.pause();
-                        e.target.currentTime = 0;
+                        if (e.target && typeof e.target.pause === "function") {
+                          try {
+                            e.target.pause();
+                            e.target.currentTime = 0;
+                          } catch {}
+                        }
                       }}
                     />
                     <div className="absolute top-2 left-2 flex gap-1">

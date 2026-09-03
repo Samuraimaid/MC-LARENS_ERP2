@@ -21708,11 +21708,70 @@ from backend.domains.inventory.label_printer import (
     install_label_bridge_startup_task,
     print_test_label,
 )
+from backend.domains.inventory.product_labels import (
+    get_label_catalog,
+    render_labels_pdf,
+    render_labels_tspl,
+    render_labels_tspl_bytes,
+    build_label_payload,
+    LABEL_TEMPLATES,
+)
 from backend.domains.sales.voucher_printer import (
     fetch_pos_voucher_bridge_setup,
     fetch_pos_voucher_printer_status,
     print_test_pos_voucher,
 )
+
+
+# ==============================================================================
+# ETIQUETAS DE INVENTARIO Y CÓDIGOS DE BARRA (TSPL / PDF)
+# ==============================================================================
+
+@api_router.get("/inventory/labels/config")
+async def get_inventory_labels_config(request: Request):
+    await require_auth(request)
+    return get_label_catalog()
+
+
+@api_router.get("/inventory/labels/printer-status")
+async def get_inventory_labels_printer_status(request: Request):
+    await require_auth(request)
+    return await fetch_label_printer_status()
+
+
+@api_router.post("/inventory/labels/preview")
+async def preview_inventory_labels(payload: Dict[str, Any], request: Request):
+    await require_auth(request)
+    label_payload = build_label_payload(payload)
+    pdf_bytes = render_labels_pdf(label_payload)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'inline; filename="inventory-labels-preview.pdf"'},
+    )
+
+
+@api_router.post("/inventory/labels/print")
+async def print_inventory_labels(payload: Dict[str, Any], request: Request):
+    user = await require_auth(request)
+    label_payload = build_label_payload(payload)
+    output_format = str(payload.get("output_format") or "pdf").lower()
+
+    if output_format in ["usb", "direct", "usb_direct", "tspl"]:
+        tspl_bytes = render_labels_tspl_bytes(label_payload)
+        return {
+            "ok": True,
+            "format": "tspl",
+            "copies": label_payload.get("quantity", 1),
+            "payload_base64": base64.b64encode(tspl_bytes).decode("ascii"),
+        }
+
+    pdf_bytes = render_labels_pdf(label_payload)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="inventory-labels.pdf"'},
+    )
 
 
 @api_router.get("/system-settings/label-printer/setup")

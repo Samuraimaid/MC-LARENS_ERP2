@@ -43,6 +43,7 @@ export default function ExecutiveAuditDashboard() {
       anchor.href = url;
       anchor.download = tipo === "csv" ? "reporte_incidencias.csv" : "reporte_incidencias.pdf";
       anchor.click();
+      window.URL.revokeObjectURL(url);
       toast.success("Reporte exportado correctamente");
     } catch {
       toast.error("Error al exportar reporte");
