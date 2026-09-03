@@ -22452,6 +22452,8 @@ DEFAULT_PROMOTIONAL_VIDEOS = [
     {"id": "bfgoodrich-trail-terrain", "title": "The BFGoodrich Trail-Terrain T/A Tire Shanty", "orientation": "horizontal", "filename": "bfgoodrich_trail_terrain_shanty.mp4", "url": "/videos/promos/bfgoodrich_trail_terrain_shanty.mp4", "active": True, "sort_order": 15, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "dakar-2024-rally", "title": "The World's Toughest Rally - Dakar 2024", "orientation": "horizontal", "filename": "dakar_2024_toughest_rally.mp4", "url": "/videos/promos/dakar_2024_toughest_rally.mp4", "active": True, "sort_order": 16, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "mickey-thompson-trail-rough", "title": "Mickey Thompson - When the Trail Gets Rough", "orientation": "horizontal", "filename": "mickey_thompson_trail_rough_baja_boss.mp4", "url": "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4", "active": True, "sort_order": 17, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 18, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 19, "branches": ["*"], "allow_widescreen_on_mobile": True},
 ]
 
 
@@ -25838,7 +25840,11 @@ if frontend_build_dir.exists():
 
         if full_path.startswith("videos/promos/"):
             subpath = full_path[len("videos/promos/"):]
-            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/{subpath}", status_code=307)
+            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{subpath}", status_code=307)
+
+        if full_path.startswith("uploads/promos/"):
+            subpath = full_path[len("uploads/promos/"):]
+            return RedirectResponse(f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{subpath}", status_code=307)
 
         # Si se solicita un archivo estático (.js, .css, etc.) y no existe, responder 404 real
         # en lugar de retornar index.html (lo cual provoca el TypeError: Failed to fetch dynamically imported module)

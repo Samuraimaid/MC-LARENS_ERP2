@@ -141,6 +141,22 @@ export const DEFAULT_PROMOTIONAL_VIDEOS = [
     url: "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4",
     active: true,
   },
+  {
+    id: "totem-1",
+    title: "Mundo de Accesorios Totem 1",
+    orientation: "vertical",
+    filename: "totem1-1.mp4",
+    url: "/videos/promos/totem1-1.mp4",
+    active: true,
+  },
+  {
+    id: "totem-2",
+    title: "Mundo de Accesorios Totem 2",
+    orientation: "vertical",
+    filename: "totem2-1.mp4",
+    url: "/videos/promos/totem2-1.mp4",
+    active: true,
+  },
 ];
 
 const blobUrlMap = new Map();
