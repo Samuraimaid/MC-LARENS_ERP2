@@ -22547,7 +22547,7 @@ async def list_active_promotional_videos(
 
 @api_router.get("/settings/promotional-videos")
 async def list_all_promotional_videos(request: Request, branch_id: str = Query(default="")):
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "publicidad"])
     
     total_count = await db.promotional_videos.count_documents({})
     if total_count == 0:
