@@ -141,6 +141,22 @@ export const DEFAULT_PROMOTIONAL_VIDEOS = [
     url: "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4",
     active: true,
   },
+  {
+    id: "auxbeam-color-play",
+    title: "Auxbeam Color Play Series RGB Offroad Lights",
+    orientation: "horizontal",
+    filename: "auxbeam_color_play_series_rgb.mp4",
+    url: "/videos/promos/auxbeam_color_play_series_rgb.mp4",
+    active: true,
+  },
+  {
+    id: "auxbeam-rgb-switch-panel",
+    title: "Auxbeam 8 Gang RGB Switch Panel System",
+    orientation: "horizontal",
+    filename: "auxbeam_rgb_switch_panel_promo.mp4",
+    url: "/videos/promos/auxbeam_rgb_switch_panel_promo.mp4",
+    active: true,
+  },
 ];
 
 /**

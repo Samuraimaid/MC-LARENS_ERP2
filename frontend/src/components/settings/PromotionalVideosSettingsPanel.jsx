@@ -27,6 +27,7 @@ import {
 function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Time fragment #t=1.5 to automatically skip 0s black fade-in intro
   const videoSrc = React.useMemo(() => {
@@ -34,8 +35,12 @@ function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
     return video.url.includes("#") ? video.url : `${video.url}#t=1.5`;
   }, [video?.url]);
 
+  useEffect(() => {
+    setHasError(false);
+  }, [video?.url]);
+
   const handleMouseEnter = () => {
-    if (videoRef.current) {
+    if (videoRef.current && !hasError) {
       videoRef.current.play()
         .then(() => setIsPlaying(true))
         .catch(() => {});
@@ -43,7 +48,7 @@ function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
   };
 
   const handleMouseLeave = () => {
-    if (videoRef.current) {
+    if (videoRef.current && !hasError) {
       try {
         videoRef.current.pause();
         setIsPlaying(false);
@@ -71,19 +76,28 @@ function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
       onClick={() => onPreviewFull && onPreviewFull(video)}
       title="Clic para reproducir en pantalla completa con audio"
     >
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        preload="metadata"
-        className="w-full h-full object-cover transition-opacity duration-300"
-        muted
-        loop
-        playsInline
-        onLoadedMetadata={handleLoadedMetadata}
-        onError={(e) => {
-          console.warn("[PromoVideoCardThumbnail] Error cargando video preview:", video?.url);
-        }}
-      />
+      {!hasError ? (
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          preload="metadata"
+          className="w-full h-full object-cover transition-opacity duration-300"
+          muted
+          loop
+          playsInline
+          onLoadedMetadata={handleLoadedMetadata}
+          onError={(e) => {
+            console.warn("[PromoVideoCardThumbnail] Error cargando video preview:", video?.url);
+            setHasError(true);
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 text-muted-foreground p-3 text-center">
+          <FileVideo className="h-8 w-8 text-amber-500/70 mb-1" />
+          <span className="text-[11px] font-medium text-amber-400">Archivo no disponible</span>
+          <span className="text-[10px] text-zinc-500 truncate max-w-full">Sube el video nuevamente</span>
+        </div>
+      )}
       <div className="absolute top-2 left-2 flex gap-1 z-10 pointer-events-none">
         <Badge variant="secondary" className="bg-black/70 text-white text-[10px] backdrop-blur-sm shadow">
           Orden #{video.sort_order || (sortIndex !== undefined ? sortIndex + 1 : 1)}
@@ -101,7 +115,7 @@ function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
         </Badge>
       </div>
 
-      {!isPlaying && (
+      {!isPlaying && !hasError && (
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 flex items-center justify-center transition-all pointer-events-none">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white text-xs font-semibold shadow-lg group-hover:scale-105 transition-transform">
             <Play className="h-3.5 w-3.5 fill-white text-white" />
