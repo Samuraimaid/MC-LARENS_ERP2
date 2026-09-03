@@ -24,17 +24,24 @@ export default function BackgroundPromoVideo({
   const stallCountRef = useRef(0);
   const transitionTimeoutRef = useRef(null);
 
-  // 1. Cargar lista de videos promocionales desde la API o catálogo
+  // 1. Cargar y sincronizar lista de videos promocionales periódicamente (detecta videos nuevos en vivo sin recargar)
   useEffect(() => {
     let mounted = true;
-    fetchPromotionalVideos().then((list) => {
-      if (mounted && Array.isArray(list) && list.length > 0) {
-        setVideos(list);
-        prefetchPromotionalVideos(list);
-      }
-    });
+    const syncPlaylist = async () => {
+      try {
+        const list = await fetchPromotionalVideos();
+        if (mounted && Array.isArray(list) && list.length > 0) {
+          setVideos(list);
+          prefetchPromotionalVideos(list);
+        }
+      } catch (_) {}
+    };
+
+    syncPlaylist();
+    const interval = setInterval(syncPlaylist, 5 * 60 * 1000); // Sincroniza cada 5 minutos
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
