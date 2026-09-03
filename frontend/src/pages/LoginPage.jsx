@@ -196,6 +196,24 @@ export function LoginPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Auto-actualización silenciosa para Kioscos y Smart TVs tras redespliegues
+  useEffect(() => {
+    const checkInterval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/health", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          const currentBuild = APP_ENV.buildTime || APP_ENV.buildVersion;
+          if (data.build_time && currentBuild && data.build_time !== currentBuild && !pin) {
+            console.log("[Smart TV Auto-Update] Nueva versión detectada en Cloud Run. Recargando...");
+            window.location.reload();
+          }
+        }
+      } catch {}
+    }, 10 * 60 * 1000); // Chequea cada 10 minutos
+    return () => clearInterval(checkInterval);
+  }, [pin]);
+
   // High-frequency lockout countdown (centiseconds) for the full-screen red overlay.
   useEffect(() => {
     if (!lockoutUntil) {

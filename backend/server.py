@@ -106,12 +106,26 @@ api_router = APIRouter(prefix="/api")
 @api_router.get("/health")
 @api_router.get("/ping")
 async def api_root():
-    return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
+    return JSONResponse({
+        "status": "ok",
+        "healthy": True,
+        "message": "MUNDO DE ACCESORIOS ERP API",
+        "version": os.environ.get("APP_VERSION", "dev"),
+        "build_time": os.environ.get("BUILD_TIME", ""),
+        "build_id": os.environ.get("BUILD_ID", ""),
+    })
 
 @app.get("/health")
 @app.get("/ping")
 async def app_health_root():
-    return JSONResponse({"status": "ok", "healthy": True, "message": "MUNDO DE ACCESORIOS ERP API", "version": os.environ.get("APP_VERSION", "dev")})
+    return JSONResponse({
+        "status": "ok",
+        "healthy": True,
+        "message": "MUNDO DE ACCESORIOS ERP API",
+        "version": os.environ.get("APP_VERSION", "dev"),
+        "build_time": os.environ.get("BUILD_TIME", ""),
+        "build_id": os.environ.get("BUILD_ID", ""),
+    })
 
 
 # Drafts backup endpoints - scoped by authenticated user.
