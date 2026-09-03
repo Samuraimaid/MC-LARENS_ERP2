@@ -191,6 +191,25 @@ Do not refactor unrelated sales or PIN auth in the same change.
 - Clerk must confirm.
 - p95 under 5 s on a mid-range phone with a decent photo.
 
+## Troubleshooting & Incident Playbook
+
+### 1. Extracted Garbage Characters (`VEE8A119YDLETELAT` / Missing Fields)
+- **Symptom:** Fields are filled with nonsensical strings or plate/motor are empty.
+- **Root Cause:** Gemini API quota exhausted (`HTTP 429 RESOURCE_EXHAUSTED: Your prepayment credits are depleted`). The backend fell back to Tier 4 (Tesseract OCR local), which reads background artifacts and plastic watermarks.
+- **Resolution:**
+  1. Enable Vertex AI in Cloud Run: `gcloud services enable aiplatform.googleapis.com --project gen-lang-client-0971793042`.
+  2. Or generate a new free Google AI Studio API key at [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) and update `GEMINI_API_KEY`.
+
+### 2. Blurry Mobile Previews (0.5x Ultra-Wide Lens Trap)
+- **Symptom:** Text on the card is always out of focus on modern smartphones (Samsung, Xiaomi, iPhone).
+- **Root Cause:** Mobile browsers expose the 0.5x ultra-wide lens as the default camera. Ultra-wide sensors have fixed infinite focus and cannot focus at 15 cm.
+- **Resolution:** `liveDocumentScan.js` filters out `ultra`, `wide`, `0.5x` in `getBackCameras()` and enforces `zoom >= 1.0` and `focusMode: "continuous"`. The modal provides `[ 1x ]`, `[ 1.5x ]`, `[ 2x ]` and `[ 🔄 Lente ]` controls.
+
+### 3. REST Payload camelCase Requirement
+- **Symptom:** Gemini API returns `HTTP 400 Bad Request` on direct `urllib` calls.
+- **Root Cause:** Snake_case parameters (`inline_data`, `response_mime_type`) are only valid in the Python SDK. REST endpoints strictly require `inlineData`, `mimeType`, and `responseMimeType`.
+
 Read `references/live-scan.md` before coding the viewfinder.
 Read `references/ni-document-rules.md` before writing the normalizer.
 Use `assets/prompt-extractor.md` as the vision system prompt.
+
