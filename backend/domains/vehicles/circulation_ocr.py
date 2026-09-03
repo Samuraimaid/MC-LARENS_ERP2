@@ -82,27 +82,30 @@ YEAR_REGEX = re.compile(r"\b(19[789]\d|20[0-3]\d)\b")
 
 # Mapeo de Tipo de Carrocería a Slugs Canónicos del ERP
 VEHICLE_TYPE_SLUG_MAP = {
-    "pickup": [
-        "camioneta", "pickup", "pick-up", "doble cabina", "cabina sencilla", "cabina y media", "truck 4x4",
-        "d/cabina", "d/c", "hilux", "frontier", "d-max", "dmax", "bt-50", "l200", "tundra", "tacoma",
-        "silverado", "f-150", "ranger", "colorado", "poer", "wingle", "amaze", "amarok"
-    ],
     "suv": [
-        "jeep", "suv", "rural", "station wagon", "crossover", "todo terreno", "4x4",
+        "st/wagon", "st/ wagon", "st-wagon", "st.wagon", "stwagon", "st wagon",
+        "station wagon", "station", "st/w", "stw", "rural", "camioneta station", "camioneta cerrada",
+        "cerrada", "jeep", "suv", "crossover", "todo terreno", "4x4 cerrada",
         "prado", "land cruiser", "rav4", "4runner", "fortuner", "patrol", "pathfinder", "x-trail", "xtrail",
         "kicks", "cr-v", "crv", "hr-v", "hrv", "sportage", "sorento", "tucson", "santa fe", "creta",
         "montero", "outlander", "vitara", "jimny", "duster", "tracker", "tahoe", "suburban", "explorer",
-        "edge", "escape", "everest", "bronco", "x3", "x5", "x6", "q5", "q7", "tiguan", "taos", "teramont",
-        "t-cross", "tcross", "haval", "tiggo", "cs35", "cs55", "cs75", "coolray"
+        "edge", "escape", "everest", "bronco", "x1", "x3", "x5", "x6", "q3", "q5", "q7", "tiguan", "taos", "teramont",
+        "t-cross", "tcross", "haval", "tiggo", "cs35", "cs55", "cs75", "coolray", "rush", "asx", "mu-x", "mux"
+    ],
+    "pickup": [
+        "d/cabina", "d/c", "doble cabina", "cabina sencilla", "cabina y media", "truck 4x4",
+        "pickup", "pick-up", "pick up", "camioneta pickup", "tina", "batea", "chasis cabina",
+        "hilux", "frontier", "d-max", "dmax", "bt-50", "l200", "sportero", "tundra", "tacoma",
+        "silverado", "f-150", "f150", "ranger", "colorado", "poer", "wingle", "amaze", "amarok", "k2700"
     ],
     "hatchback": [
         "hatchback", "compacto", "3 puertas", "5 puertas", "liftback", "hb",
-        "picanto", "i10", "grand i10", "spark", "march", "swift", "polo", "golf", "fit"
+        "picanto", "i10", "grand i10", "spark", "march", "swift", "polo", "golf", "fit", "agya"
     ],
     "van": ["microbus", "microbús", "van", "panel", "minivan", "furgoneta", "pasajeros", "hiace", "urvan", "h1", "starex"],
-    "truck": ["camion", "camión", "furgon", "furgón", "cabezal", "chasis cabina", "plataforma", "volquete", "heavy", "canter", "dyna", "npr", "nqr"],
+    "truck": ["camion", "camión", "furgon", "furgón", "cabezal", "plataforma", "volquete", "heavy", "canter", "dyna", "npr", "nqr", "forward"],
     "moto": ["moto", "motocicleta", "scooter", "cuadraciclo", "trimoto", "mototaxi"],
-    "sedan": ["automovil", "automóvil", "sedan", "sedán", "turismo", "saloon", "berlina", "yaris", "corolla", "rio", "accent", "elantra", "sentra", "civic"],
+    "sedan": ["automovil", "automóvil", "sedan", "sedán", "turismo", "saloon", "berlina", "yaris", "corolla", "rio", "accent", "elantra", "sentra", "civic", "soluto", "dzire"],
 }
 
 # Colores Automotrices Oficiales
@@ -170,23 +173,43 @@ def is_header_noise(text: Optional[str]) -> bool:
     if not text:
         return False
     t_clean = re.sub(r'[^A-Z0-9]', '', text.upper())
+    if not t_clean:
+        return True
+    # Si contiene dígitos (ej. una placa M 243616 o chasis), no es ruido institucional puro
+    if any(c.isdigit() for c in t_clean) and len(t_clean) >= 6:
+        return False
     for kw in HEADER_BLACKLIST_WORDS:
-        if kw in t_clean or (len(t_clean) >= 5 and t_clean in kw):
+        if t_clean == kw or (len(t_clean) >= 5 and (kw in t_clean or t_clean in kw)):
             return True
     return False
 
+
+HEADER_PHRASES = [
+    r'MINISTERIO\s+DE\s+GOBERNACI[OÓ0]N',
+    r'REP[UÚ]BLICA\s+DE\s+NICARAGUA',
+    r'POLIC[IÍ1]A\s+NACIONAL',
+    r'CIRCULACI[OÓ0]N\s+VEHICULAR',
+    r'DIRECCI[OÓ0]N\s+DE\s+SEGURIDAD',
+    r'SEGURIDAD\s+DE\s+TR[AÁ]NSITO',
+    r'TR[AÁ]NSITO\s+NACIONAL',
+    r'DELEGACI[OÓ0]N\s+MUNICIPAL',
+    r'DELEGACI[OÓ0]N\s+DEPARTAMENTAL',
+]
 
 def clean_ocr_text(raw_text: str) -> str:
     if not raw_text:
         return ""
     text = raw_text.replace("\r", "\n")
+    for hp in HEADER_PHRASES:
+        text = re.sub(hp, ' ', text, flags=re.IGNORECASE)
     lines = []
     for line in text.splitlines():
         line_str = line.strip()
         if not line_str:
             continue
         l_upper = re.sub(r'[^A-Z0-9]', '', line_str.upper())
-        if any(kw in l_upper for kw in ["REPUBLICA", "POLICIA", "CIRCULACION", "POLICIANACIONAL", "TRANSITO", "SEGURIDAD"]):
+        # Si la línea entera solo es ruido institucional y no contiene dígitos ni datos
+        if not any(c.isdigit() for c in l_upper) and any(l_upper == kw for kw in ["REPUBLICA", "POLICIA", "CIRCULACION", "POLICIANACIONAL", "TRANSITO", "SEGURIDAD", "GOBERNACION", "MINISTERIO"]):
             continue
         lines.append(line_str)
     cleaned = "\n".join(lines)
@@ -246,38 +269,69 @@ def normalize_plate_nicaragua(raw_plate: Optional[str]) -> Tuple[Optional[str], 
 def resolve_vehicle_type_slug(raw_type: Optional[str], raw_model: Optional[str] = None) -> Tuple[str, str]:
     """
     Determina el slug canónico de carrocería (sedan, hatchback, pickup, suv, van, truck, moto).
+    Maneja las convenciones de tránsito de Nicaragua:
+    - CAMIONETA + ST/WAGON / STATION / RURAL / SUV o modelo SUV -> suv ("Camioneta Station / SUV")
+    - CAMIONETA + D/CABINA / PICKUP / CABINA SENCILLA o modelo pickup -> pickup ("Camioneta / Pickup")
     """
     text = f"{raw_type or ''} {raw_model or ''}".lower()
     
-    # Pickup / Camioneta
+    # 1. Indicadores explícitos de SUV / Station Wagon / Todo Terreno (Tienen máxima prioridad sobre 'camioneta')
+    suv_explicit_indicators = [
+        "st/wagon", "st/ wagon", "st-wagon", "st.wagon", "stwagon", "st wagon",
+        "station wagon", "station", "st/w", "stw", "rural", "camioneta station", "camioneta cerrada",
+        "cerrada", "jeep", "suv", "crossover", "todo terreno", "4x4 cerrada"
+    ]
+    for kw in suv_explicit_indicators:
+        if kw in text or re.search(rf"\b{re.escape(kw)}\b", text):
+            return "suv", "Camioneta Station / SUV"
+
+    # 2. Indicadores explícitos de Pickup / Camioneta con Tina / Batea
+    pickup_explicit_indicators = [
+        "d/cabina", "d/c", "doble cabina", "cabina sencilla", "cabina y media",
+        "pickup", "pick-up", "pick up", "camioneta pickup", "tina", "batea", "chasis cabina"
+    ]
+    for kw in pickup_explicit_indicators:
+        if kw in text or re.search(rf"\b{re.escape(kw)}\b", text):
+            return "pickup", "Camioneta / Pickup"
+
+    # 3. Modelos conocidos de SUV (si el modelo o texto contiene X3, Prado, Tucson, etc.)
+    for kw in VEHICLE_TYPE_SLUG_MAP["suv"]:
+        if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
+            return "suv", "Camioneta Station / SUV"
+
+    # 4. Modelos conocidos de Pickup
     for kw in VEHICLE_TYPE_SLUG_MAP["pickup"]:
         if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
             return "pickup", "Camioneta / Pickup"
 
-    # SUV / Todo Terreno
-    for kw in VEHICLE_TYPE_SLUG_MAP["suv"]:
-        if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
-            return "suv", "SUV / Todo Terreno"
-
-    # Hatchback / Compacto
+    # 5. Hatchback / Compacto
     for kw in VEHICLE_TYPE_SLUG_MAP["hatchback"]:
         if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
             return "hatchback", "Hatchback / Compacto"
 
-    # Van / Microbús
+    # 6. Van / Microbús
     for kw in VEHICLE_TYPE_SLUG_MAP["van"]:
         if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
             return "van", "Microbús / Van"
 
-    # Camión / Pesado
+    # 7. Camión / Pesado
     for kw in VEHICLE_TYPE_SLUG_MAP["truck"]:
         if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
             return "truck", "Camión / Carga Pesada"
 
-    # Moto / Motocicleta (usar límites de palabra estrictos para evitar falsos positivos con 'motor')
+    # 8. Moto / Motocicleta
     for kw in VEHICLE_TYPE_SLUG_MAP["moto"]:
         if re.search(rf"\b{re.escape(kw)}\b", text):
             return "moto", "Motocicleta"
+
+    # 9. Sedán / Turismo
+    for kw in VEHICLE_TYPE_SLUG_MAP["sedan"]:
+        if re.search(rf"\b{re.escape(kw)}\b", text) or kw in text:
+            return "sedan", "Sedán / Automóvil"
+
+    # 10. Si dice 'camioneta' sin más especificación, por convención en Nicaragua suele ser Camioneta Station
+    if "camioneta" in text:
+        return "suv", "Camioneta Station / SUV"
 
     # Sedán / Turismo por defecto
     return "sedan", "Sedán / Automóvil"
@@ -285,8 +339,12 @@ def resolve_vehicle_type_slug(raw_type: Optional[str], raw_model: Optional[str] 
 
 def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
     """
-    Normaliza Chasis/VIN a 17 caracteres (Estándar ISO 3779).
-    Aplica corrección de caracteres confusos de OCR (I->1, O->0, Q->0) y extrae de texto si es necesario.
+    Normaliza Chasis/VIN a formato oficial de Nicaragua.
+    Soporta:
+    - VIN estándar ISO 3779 (17 caracteres).
+    - Chasis extendidos de tránsito o numeraciones largas (18 a 22 caracteres, ej. WBAWX9107G0K0K05752).
+    - Chasis cortos de modelos clásicos, japoneses (JDM) o motocicletas (8 a 16 caracteres, ej. LN106-001234).
+    Aplica corrección de caracteres confusos de OCR (I->1, O->0, Q->0) SIN truncar dígitos válidos al final.
     Retorna: (vin_normalizado, confidence, needs_review)
     """
     if not raw_vin:
@@ -296,40 +354,44 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
     if is_header_noise(raw_str):
         return None, 0.0, True
 
-    vin_charset = set("0123456789ABCDEFGHJKLMNPRSTUVWXYZ")
+    # Quitar etiquetas iniciales si vienen pegadas
+    raw_str = re.sub(r'^(?:CHASIS|VIN|NO\.?\s*CHASIS|NUMERO\s*CHASIS|FRAME)[\s:\.#-]*', '', raw_str, flags=re.IGNORECASE)
+    # Quitar cualquier etiqueta posterior como 'VIN 0009' o 'VIN' al final
+    raw_str = re.split(r'\bVIN\b', raw_str, flags=re.IGNORECASE)[0].strip()
+
+    vin_charset = set("0123456789ABCDEFGHJKLMNPRSTUVWXYZ-")
     candidates = []
 
     # 1. Buscar tras etiquetas de Chasis / VIN
-    m = re.search(r"(?:CHASIS|VIN|NO\.?\s*CHASIS|NUMERO\s*CHASIS|FRAME)[\s:\.#-]*([A-Z0-9IOQ]{11,25})", raw_str, re.IGNORECASE)
+    m = re.search(r"(?:CHASIS|NO\.?\s*CHASIS|NUMERO\s*CHASIS|FRAME)[\s:\.#-]*([A-Z0-9IOQ\-]{8,25})", raw_str, re.IGNORECASE)
     if m:
         candidates.append(m.group(1))
 
-    # 2. Extraer tokens alfanuméricos de longitud 15-22
-    tokens = re.findall(r"\b[A-Z0-9IOQ]{15,22}\b", raw_str, re.IGNORECASE)
-    candidates.extend(tokens)
-
-    # 3. String limpio completo si no tenía espacios
-    cleaned_full = re.sub(r'[^A-Z0-9IOQ]', '', raw_str)
+    # 2. String limpio completo si no tenía espacios
+    cleaned_full = re.sub(r'[^A-Z0-9IOQ\-]', '', raw_str)
     if cleaned_full:
         candidates.append(cleaned_full)
 
+    # 3. Extraer tokens alfanuméricos de longitud 8-25
+    tokens = re.findall(r"\b[A-Z0-9IOQ\-]{8,25}\b", raw_str, re.IGNORECASE)
+    candidates.extend(tokens)
+
     for cand in candidates:
-        cand_clean = cand.upper()
+        cand_clean = cand.upper().strip("-")
         if is_header_noise(cand_clean):
             continue
-        # Sustituciones legales de OCR para caracteres ilegales en VIN ISO 3779
+        # Sustituciones legales de OCR para caracteres ilegales en VIN
         fixed = cand_clean.replace('I', '1').replace('O', '0').replace('Q', '0')
-        if len(fixed) == 17 and all(c in vin_charset for c in fixed):
-            conf = 0.96 if fixed == cand_clean else 0.88
+        
+        # Caso 1: Chasis de 17 a 22 caracteres (preservar el número completo sin truncar)
+        if 17 <= len(fixed) <= 22 and all(c in vin_charset for c in fixed):
+            conf = 0.98 if fixed == cand_clean else 0.90
             return fixed, conf, False
-        if len(fixed) > 17:
-            for i in range(len(fixed) - 16):
-                sub = fixed[i:i+17]
-                if is_header_noise(sub):
-                    continue
-                if all(c in vin_charset for c in sub):
-                    conf = 0.92 if sub == cand_clean[i:i+17] else 0.85
-                    return sub, conf, False
+
+        # Caso 2: Chasis corto válido (JDM, clásicos o motos, 8 a 16 caracteres)
+        if 8 <= len(fixed) < 17 and any(c.isdigit() for c in fixed) and any(c.isalpha() for c in fixed):
+            conf = 0.92 if fixed == cand_clean else 0.85
+            return fixed, conf, False
 
     return None, 0.0, True
 
@@ -434,7 +496,7 @@ def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[st
             "Rush": ["RUSH"],
         },
         "KIA": {
-            "Rio": ["RIO SEDAN", "RIO", "RIO HATCHBACK"],
+            "Rio": ["RIO SEDAN", "RIO", "RIO HATCHBACK", "RO"],
             "Sportage": ["SPORTAGE", "SPORTAG"],
             "Picanto": ["PICANTO"],
             "Seltos": ["SELTOS"],
@@ -464,8 +526,8 @@ def fuzzy_match_brand_and_model(brand_raw: Optional[str], model_raw: Optional[st
             "March": ["MARCH"],
         },
         "BMW": {
-            "X3": ["X3", "X328I", "X3 28I", "X3 2.0", "X3 3.0"],
-            "X5": ["X5"],
+            "X3": ["X3", "X3 2.8I", "X3 2.81", "X3 28I", "X328I", "X3281", "X32.8I", "X3 2.0", "X3 3.0"],
+            "X5": ["X5", "X5 3.0", "X5 4.8"],
             "X6": ["X6"],
             "X1": ["X1"],
             "Serie 3": ["SERIE 3", "320I", "328I", "330I"],
@@ -584,19 +646,19 @@ def extract_vin_origin_country(vin: str) -> Optional[str]:
 SYSTEM_VISION_PROMPT = """You are an expert document parser extracting structured data from photos of Nicaraguan vehicle circulation cards (República de Nicaragua - Policía Nacional - Circulación Vehicular).
 
 EXACT CARD LAYOUT SPECIFICATION:
-1. PLACA: Located on the top-right under the title 'CIRCULACION VEHICULAR'. Format: Department prefix + number (e.g., 'Placa M 145835', 'Placa LE 29646', 'Placa CZ 13206', 'Placa M 243-616'). Extract as string (e.g. 'M 145-835' or 'M 145835').
+1. PLACA: Located on the top-right under the title 'CIRCULACION VEHICULAR'. Format: Department prefix + number (e.g., 'Placa M 145835', 'Placa LE 29646', 'Placa CZ 13206', 'Placa M 243-616'). Extract as string (e.g. 'M 145-835' or 'M 243-616').
 2. CLASIFICACION, MARCA, MODELO: Located on the upper-left, printed with comma separators:
-   - Example 'CAMIONETA,TOYOTA,HILUX' -> vehicle_type: 'Camioneta / Pickup', brand: 'TOYOTA', model: 'Hilux'.
-   - Example 'AUTOMOVIL,KIA,RIO' -> vehicle_type: 'Sedán / Automóvil', brand: 'KIA', model: 'Rio'.
-   - Example 'CAMIONETA,BMW,X3' -> vehicle_type: 'SUV / Camioneta Cerrada', brand: 'BMW', model: 'X3'.
-3. TIPO DE VEHICULO / SUBTIPO: Located directly below the Marca/Modelo line:
-   - 'D/CABINA.' = Doble Cabina -> vehicle_type_slug: 'pickup', trim: 'Doble Cabina'.
-   - 'SEDAN' -> vehicle_type_slug: 'sedan'.
-   - 'HATCHBACK' -> vehicle_type_slug: 'hatchback'.
-   - 'CABINA SENCILLA' -> vehicle_type_slug: 'pickup', trim: 'Cabina Sencilla'.
+   - Example 'CAMIONETA,TOYOTA,HILUX' -> brand: 'TOYOTA', model: 'Hilux'.
+   - Example 'AUTOMOVIL,KIA,RIO' -> vehicle_type: 'Sedán / Automóvil', brand: 'KIA', model: 'Rio', vehicle_type_slug: 'sedan'.
+   - Example 'CAMIONETA,BMW,X3 2.8I' -> brand: 'BMW', model: 'X3'.
+3. TIPO DE VEHICULO / SUBTIPO: Located directly below or next to the Marca/Modelo line:
+   - 'ST/WAGON', 'STATION WAGON', 'RURAL', 'CAMIONETA CERRADA', or SUV models (X3, Prado, Fortuner, RAV4, CR-V, Tucson, etc.) -> vehicle_type_slug: 'suv', vehicle_type: 'Camioneta Station / SUV'.
+   - 'D/CABINA', 'CABINA SENCILLA', 'CABINA Y MEDIA', 'PICKUP', 'PICK-UP' -> vehicle_type_slug: 'pickup', vehicle_type: 'Camioneta / Pickup', trim: 'Doble Cabina'.
+   - 'SEDAN' -> vehicle_type_slug: 'sedan', vehicle_type: 'Sedán / Automóvil'.
+   - 'HATCHBACK' -> vehicle_type_slug: 'hatchback', vehicle_type: 'Hatchback / Compacto'.
 4. COLOR: Located on the left labeled 'Color' (e.g. 'Color CAFE' -> 'Café', 'Color BLANCO' -> 'Blanco', 'Color GRIS' -> 'Gris', 'Color NEGRO' -> 'Negro', 'Color ROJO' -> 'Rojo', 'Color AZUL' -> 'Azul'). NOTE: A transparent security watermark/hologram covers parts of the card; read through it carefully.
 5. MOTOR: Located on the left labeled 'Motor' followed by alphanumeric serial code (e.g. 'Motor 2KD7854925', 'Motor G4FDCHS30772', 'Motor 2NZ5032362', 'Motor A9821078'). IMPORTANT: Preserve engine codes like '2KD' (do not confuse with '20' or '2O').
-6. CHASIS: Located on the left labeled 'Chasis' (e.g. 'Chasis MROFR22G800550800', 'Chasis KNADM4A3XD6124749', 'Chasis JTDBW923X01121180'). This is the 17-character VIN.
+6. CHASIS: Located on the left labeled 'Chasis' (e.g. 'Chasis WBAWX9107G0K0K05752', 'Chasis MROFR22G800550800', 'Chasis KNADM4A3XD6124749', 'Chasis JTDBW923X01121180'). CRITICAL: Extract the COMPLETE chassis/VIN sequence exactly as printed on the card without truncating any trailing digits (even if it has 17, 18, 19, or non-standard characters).
 
 EXCLUSION RULES (CRITICAL - DO NOT EXTRACT OR CONFUSE THESE):
 - IGNORE 'Emisión DD/MM/YYYY' (e.g. '22/09/2017'): This is the administrative date the card was printed by Transit Police. It is NEVER the vehicle's manufacture year.
@@ -606,27 +668,27 @@ EXCLUSION RULES (CRITICAL - DO NOT EXTRACT OR CONFUSE THESE):
 
 Return JSON only:
 {
-  "vin": "MR0FR22G800550800",
-  "plate": "M 145-835",
-  "brand": "TOYOTA",
-  "model": "Hilux",
-  "year": null,
-  "year_source": "no_detectado",
-  "color": "Café",
-  "vehicle_type": "Camioneta / Pickup",
-  "vehicle_type_slug": "pickup",
-  "numero_motor": "2KD7854925",
-  "tipo_combustible": "Diésel",
+  "vin": "WBAWX9107G0K0K05752",
+  "plate": "M 243-616",
+  "brand": "BMW",
+  "model": "X3",
+  "year": 2016,
+  "year_source": "inferido_vin",
+  "color": "Blanco",
+  "vehicle_type": "Camioneta Station / SUV",
+  "vehicle_type_slug": "suv",
+  "numero_motor": "A9821078",
+  "tipo_combustible": "Gasolina",
   "propietario_cedula": null,
-  "origin_country": "India / Tailandia",
+  "origin_country": "Europa",
   "version_level": "intermedio",
-  "trim": "Doble Cabina",
+  "trim": "",
   "confidence": {
-    "vin": 0.95,
+    "vin": 0.98,
     "plate": 0.95,
     "brand": 0.95,
     "model": 0.95,
-    "year": 0.0
+    "year": 0.85
   },
   "needs_review": ["year"]
 }
@@ -1160,7 +1222,7 @@ async def process_circulation_card_v2(
             pass
 
     if not valid_year:
-        if norm_vin and len(norm_vin) == 17:
+        if norm_vin and len(norm_vin) >= 10 and norm_vin[9] in VIN_YEAR_CODES:
             valid_year = VIN_YEAR_CODES.get(norm_vin[9])
             if valid_year:
                 year_source = "inferido_vin"
@@ -1221,7 +1283,7 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
     cleaned = clean_ocr_text(raw_text)
     plate, _, _ = normalize_plate_nicaragua(cleaned)
     vin, _, _ = normalize_vin(cleaned)
-    vin_year = VIN_YEAR_CODES.get(vin[9]) if vin and len(vin) == 17 else None
+    vin_year = VIN_YEAR_CODES.get(vin[9]) if vin and len(vin) >= 10 and vin[9] in VIN_YEAR_CODES else None
     origin_country = extract_vin_origin_country(vin) if vin else None
     
     # Motor

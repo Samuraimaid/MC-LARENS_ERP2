@@ -467,6 +467,28 @@ Other open documents:
        - `isValidVehicleSelection` en `vehicleCatalog.js` flexibilizado para aceptar coincidencias exactas, entradas resueltas de catálogo, nombres base y mayúsculas/minúsculas.
        - Auto-detección de variante de cabina en camionetas (`camioneta-cabina-y-media` para doble cabina).
        - Activación automática de `add_vehicle: true` y cambio de pestaña a `vehicle` al aplicar el escaneo.
-  4. **Documentación Técnica Creada:**
-     - `docs/ocr_architecture_and_troubleshooting.md`: Manual de arquitectura en 5 niveles de fallback y guía de resolución rápida.
-     - Actualizados `.agents/rules/circulation_card_ocr_rules.md` y `.agents/skills/circulacion-ni-ocr/SKILL.md`.
+   4. **Documentación Técnica Creada:**
+      - `docs/ocr_architecture_and_troubleshooting.md`: Manual de arquitectura en 5 niveles de fallback y guía de resolución rápida.
+      - Actualizados `.agents/rules/circulation_card_ocr_rules.md` y `.agents/skills/circulacion-ni-ocr/SKILL.md`.
+
+---
+
+### Sesión 2026-09-03 (Corrección Mismatch de Chasis/VIN Extendido y Clasificación "Camioneta Station / SUV")
+- **Incidencias Atendidas y Resoluciones:**
+  1. **Mismatch en Número de Chasis / VIN (Truncamiento a 17 Caracteres):**
+     - **Problema:** En vehículos con número de chasis extendido (ej. BMW X3 con `Chasis WBAWX9107G0K0K05752` de 19 caracteres), el sistema truncaba los últimos dos dígitos (`52`), mostrando en pantalla `WBAWX9107G0K0K057`. Además, el input modal limitaba la entrada a `maxLength={17}`.
+     - **Causa:** `normalize_vin` forzaba cortes `sub = fixed[0:17]`, el prompt de visión instruía buscar exactamente 17 caracteres, y el modal restringía a 17 caracteres.
+     - **Solución:**
+       - `normalize_vin` preserva íntegramente series de 8 a 22 caracteres sin truncar dígitos válidos posteriores.
+       - Actualizado `SYSTEM_VISION_PROMPT` para instruir a la IA a extraer el número de chasis completo sin importar su longitud.
+       - En `CirculationCardOcrScannerModal.jsx`, cambiado el label a `Chasis / VIN:` y ampliado `maxLength={25}`.
+       - Actualizado el endpoint en `server.py` para consultar vPIC usando `vin[:17]` si el chasis tiene $\ge 17$ caracteres.
+  2. **Mismatch en Tipo de Carrocería ("Camioneta / Pickup" en lugar de "Camioneta Station / SUV"):**
+     - **Problema:** Tarjetas de circulación con clasificación `CAMIONETA,BMW,X3 2.8I` y sub-clasificación `ST/WAGON` se clasificaban erróneamente como `Camioneta / Pickup`.
+     - **Causa:** `VEHICLE_TYPE_SLUG_MAP["pickup"]` contenía la palabra clave genérica `"camioneta"`, la cual evaluaba primero y absorbía todos los vehículos cuya primera línea decía "CAMIONETA" (incluyendo Station Wagons/SUVs).
+     - **Solución:**
+       - Reordenada la jerarquía en `resolve_vehicle_type_slug`: los indicadores explícitos de SUV/Station Wagon (`st/wagon`, `station wagon`, `rural`, `camioneta cerrada`, `camioneta station`, etc.) y modelos conocidos de SUV (`X3`, `Prado`, `Fortuner`, `RAV4`, `Tucson`, etc.) tienen máxima prioridad.
+       - La categoría `pickup` solo se asigna si hay indicadores de tina/batea (`d/cabina`, `cabina sencilla`, `pickup`, etc.) o modelos pickup (`Hilux`, `Frontier`, `D-Max`, etc.).
+       - Actualizada la etiqueta canónica en backend y frontend a **`Camioneta Station / SUV`** (`suv`).
+  3. **Corrección en `clean_ocr_text` (Protección contra Líneas Mixtas de OCR Local):**
+     - Se reemplazó el filtro que descartaba líneas completas por un limpiador regex de frases institucionales (`HEADER_PHRASES`), permitiendo que líneas combinadas de Windows OCR conserven placa, chasis y motor.

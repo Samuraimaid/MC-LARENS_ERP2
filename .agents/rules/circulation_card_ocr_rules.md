@@ -10,12 +10,22 @@ Esta regla define el comportamiento obligatorio para cualquier módulo, componen
    - **PROHIBICIÓN ESTRICTA:** La fecha identificada como **"Emisión"** (`DD/MM/YYYY`) en el frente es la fecha administrativa del trámite. **NUNCA debe asignarse ni interpretarse como el año de fabricación del vehículo**.
 
 2. **Año de Fabricación (Inferencia y Entrada Directa del Operador):**
-   - **Inferencia por VIN (ISO 3779):** Si el chasis tiene 17 caracteres y el 10mo dígito corresponde a un año válido según el estándar internacional (ej. `D`=2013, `G`=2016, `N`=2022), el sistema lo asigna automáticamente con origen `inferido_vin`.
+   - **Inferencia por VIN (ISO 3779):** Si el chasis tiene 10 o más caracteres y el 10mo dígito corresponde a un año válido según el estándar internacional (ej. `D`=2013, `G`=2016, `N`=2022), el sistema lo asigna automáticamente con origen `inferido_vin`.
    - **REGLA DE SOLICITUD DIRECTA AL OPERADOR:** Si el Chasis **NO codifica el año** (por ejemplo, chasis de Toyota, Isuzu o Nissan con `0` en la 10ma posición, chasis cortos o no estándar):
      1. El sistema **NUNCA debe obligar, forzar ni requerir al operador** que tome una segunda captura del reverso.
      2. El sistema debe **solicitar directamente el año al operador en pantalla**, enfocando y resaltando de inmediato el campo `Año de Fabricación`.
      3. El operador puede escribir el año inmediatamente en 1 segundo y presionar **"Aplicar al Vehículo"** sin pasos adicionales.
      4. La captura de foto del reverso permanece únicamente como una opción secundaria y voluntaria.
+
+3. **Clasificación de Carrocería "CAMIONETA" (Station Wagon vs Pickup):**
+   - En Nicaragua, la Policía Nacional clasifica en Línea 1 como **"CAMIONETA"** tanto a los vehículos tipo Pickup con batea/tina como a las camionetas cerradas / SUVs / Station Wagons.
+   - La sub-clasificación en Línea 2 o el modelo determina estrictamente el tipo:
+     - `ST/WAGON`, `STATION WAGON`, `STATION`, `RURAL`, `CAMIONETA CERRADA`, o modelos SUV (ej. `X3`, `X5`, `Prado`, `Fortuner`, `RAV4`, `CR-V`, `Tucson`, `Sportage`, `Santa Fe`, `Montero`, `Patrol`, `Vitara`, etc.) $\rightarrow$ **`Camioneta Station / SUV`** (slug: `suv`).
+     - `D/CABINA`, `D/C`, `DOBLE CABINA`, `CABINA SENCILLA`, `CABINA Y MEDIA`, `PICKUP`, `PICK-UP` o modelos pickup (ej. `Hilux`, `Frontier`, `D-Max`, `BT-50`, `L200`, `Ranger`, `Tacoma`, `F-150`, etc.) $\rightarrow$ **`Camioneta / Pickup`** (slug: `pickup`).
+
+4. **Preservación Íntegra de Chasis / VIN sin Truncamiento:**
+   - En Nicaragua existen vehículos con números de chasis de longitud extendida por registro de tránsito (ej. BMW `WBAWX9107G0K0K05752` con 19 caracteres) o números cortos (JDM/clásicos/motos de 8 a 16 caracteres).
+   - El sistema **NUNCA debe truncar arbitrariamente los dígitos finales** a 17 caracteres. Debe preservar íntegramente la serie alfanumérica registrada en la tarjeta.
 
 ---
 

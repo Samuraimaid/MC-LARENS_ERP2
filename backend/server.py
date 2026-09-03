@@ -7869,9 +7869,9 @@ async def ocr_circulation_card_v2(payload: Dict[str, Any], request: Request):
 
     # Si hay un VIN de 17 caracteres válido y la marca/modelo tienen baja confianza, consultar vPIC
     vin = result.get("vin")
-    if vin and len(vin) == 17:
+    if vin and len(vin) >= 17:
         try:
-            vpic_info = await decode_vehicle_vin(vin, request)
+            vpic_info = await decode_vehicle_vin(vin[:17], request)
             if vpic_info:
                 if not result.get("brand") or result.get("confidence", {}).get("brand", 0) < 0.85:
                     if vpic_info.get("brand"):

@@ -878,7 +878,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                     {/* Chasis / VIN */}
                     <div className="col-span-2 space-y-1">
                       <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 flex items-center justify-between">
-                        <span className="flex items-center gap-1">Chasis / VIN (17 caracteres):</span>
+                        <span className="flex items-center gap-1">Chasis / VIN:</span>
                         {isFieldInReview("vin") && (
                           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
                             <AlertTriangle className="h-3 w-3" /> Revisar
@@ -890,7 +890,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                         value={editedFields.vin}
                         onChange={(e) => setEditedFields({ ...editedFields, vin: e.target.value })}
                         placeholder="Ej. 3N1AB7AP4HY123456"
-                        maxLength={17}
+                        maxLength={25}
                         className={`w-full px-3 py-1.5 rounded-lg border font-mono uppercase text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-sky-500 transition ${
                           isFieldInReview("vin")
                             ? "border-amber-400 bg-amber-50/20 dark:bg-amber-950/10"
@@ -1058,7 +1058,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                             sedan: "Sedán / Automóvil",
                             hatchback: "Hatchback",
                             pickup: "Camioneta / Pickup",
-                            suv: "SUV / Camioneta Cerrada",
+                            suv: "Camioneta Station / SUV",
                             van: "Microbús / Van",
                             truck: "Camión / Cabezal",
                             moto: "Motocicleta",
@@ -1074,7 +1074,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
                         <option value="sedan">Sedán / Automóvil</option>
                         <option value="hatchback">Hatchback</option>
                         <option value="pickup">Camioneta / Pickup</option>
-                        <option value="suv">SUV / Camioneta Cerrada</option>
+                        <option value="suv">Camioneta Station / SUV</option>
                         <option value="van">Microbús / Van</option>
                         <option value="truck">Camión / Cabezal</option>
                         <option value="moto">Motocicleta</option>
