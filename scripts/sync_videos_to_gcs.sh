@@ -25,6 +25,9 @@ gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --project="${PROJECT_ID}" 2>/dev/null || true
 
 echo "=== 3. Sincronizando Videos Promocionales a gs://${BUCKET_NAME}/videos/promos ==="
+# Eliminar videos obsoletos de totem del bucket
+gcloud storage rm "gs://${BUCKET_NAME}/videos/promos/totem1-1.mp4" "gs://${BUCKET_NAME}/videos/promos/totem2-1.mp4" "gs://${BUCKET_NAME}/videos/totem1-1.mp4" "gs://${BUCKET_NAME}/videos/totem2-1.mp4" 2>/dev/null || true
+
 if [ -d "frontend/public/videos/promos" ]; then
     gcloud storage rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos/promos" || gsutil -m rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos/promos"
 elif [ -d "public/videos/promos" ]; then

@@ -22411,29 +22411,6 @@ async def get_pdf_logo_presets(request: Request):
 # VIDEOS PROMOCIONALES DE FONDO (LOGIN & TOTEM)
 # ==============================================================================
 
-@api_router.get("/promos/videos")
-async def get_promotional_videos(branch_id: str = Query(default=""), sucursal: str = Query(default="")):
-    """Retorna la lista de videos promocionales activos para fondo de login y totems, opcionalmente filtrados por sucursal."""
-    target_branch = (branch_id or sucursal or "").strip()
-    
-    query = {"active": {"$ne": False}}
-    if target_branch:
-        query["$or"] = [
-            {"branches": target_branch},
-            {"branch_id": target_branch},
-            {"branches": "*"},
-            {"branches": {"$size": 0}},
-            {"branches": {"$exists": False}},
-            {"branch_id": {"$exists": False}},
-            {"branch_id": ""},
-        ]
-
-    cursor = db.promotional_videos.find(query).sort("sort_order", 1)
-    videos = []
-    async for doc in cursor:
-        doc["_id"] = str(doc.get("_id", ""))
-        videos.append(doc)
-
 DEFAULT_PROMOTIONAL_VIDEOS = [
     {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
@@ -22452,8 +22429,6 @@ DEFAULT_PROMOTIONAL_VIDEOS = [
     {"id": "bfgoodrich-trail-terrain", "title": "The BFGoodrich Trail-Terrain T/A Tire Shanty", "orientation": "horizontal", "filename": "bfgoodrich_trail_terrain_shanty.mp4", "url": "/videos/promos/bfgoodrich_trail_terrain_shanty.mp4", "active": True, "sort_order": 15, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "dakar-2024-rally", "title": "The World's Toughest Rally - Dakar 2024", "orientation": "horizontal", "filename": "dakar_2024_toughest_rally.mp4", "url": "/videos/promos/dakar_2024_toughest_rally.mp4", "active": True, "sort_order": 16, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "mickey-thompson-trail-rough", "title": "Mickey Thompson - When the Trail Gets Rough", "orientation": "horizontal", "filename": "mickey_thompson_trail_rough_baja_boss.mp4", "url": "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4", "active": True, "sort_order": 17, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "totem-1", "title": "Mundo de Accesorios Totem 1", "orientation": "vertical", "filename": "totem1-1.mp4", "url": "/videos/promos/totem1-1.mp4", "active": True, "sort_order": 18, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "totem-2", "title": "Mundo de Accesorios Totem 2", "orientation": "vertical", "filename": "totem2-1.mp4", "url": "/videos/promos/totem2-1.mp4", "active": True, "sort_order": 19, "branches": ["*"], "allow_widescreen_on_mobile": True},
 ]
 
 
