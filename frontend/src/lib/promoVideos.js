@@ -146,10 +146,49 @@ export const DEFAULT_PROMOTIONAL_VIDEOS = [
 const blobUrlMap = new Map();
 
 /**
- * Obtiene la URL optimizada para reproducción (desde blob cache local si está disponible).
+ * Detecta si el dispositivo es un Smart TV, Kiosco o dispositivo de memoria limitada (<= 4GB RAM)
+ * para evitar colapso de RAM por carga de Blobs pesados.
+ */
+export function isLowMemoryOrSmartTVDevice() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  
+  const ua = (navigator.userAgent || "").toLowerCase();
+  
+  const tvPatterns = [
+    "smart-tv", "smarttv", "googletv", "android tv", "appletv", "crkey", "tizen", "webos",
+    "hbbtv", "opera tv", "netcast", "viera", "bravia", "roku", "hisense", "philips",
+    "sharp", "toshiba", "panasonic", "vestel", "kylo", "aosp on", "large screen", "pov_tv", "aft"
+  ];
+  if (tvPatterns.some((pattern) => ua.includes(pattern))) {
+    return true;
+  }
+
+  // Si el navegador reporta memoria reducida (<= 4GB)
+  if (navigator.deviceMemory && navigator.deviceMemory <= 4) {
+    return true;
+  }
+
+  // Modo ahorro de datos o conexiones móviles
+  if (navigator.connection && (navigator.connection.saveData || navigator.connection.effectiveType === "2g" || navigator.connection.effectiveType === "3g")) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Obtiene la URL optimizada para reproducción.
+ * En Smart TVs y dispositivos de memoria reducida, devuelve la URL HTTP directa para streaming nativo por hardware.
  */
 export async function getCachedVideoPlaybackUrl(videoUrl) {
   if (!videoUrl) return "";
+
+  // En Smart TVs y dispositivos con memoria limitada, usar streaming HTTP nativo directo
+  // Esto evita cargar archivos de 45MB a memoria RAM / Blobs, permitiendo reproducción infinita sin pantalla negra.
+  if (isLowMemoryOrSmartTVDevice()) {
+    return videoUrl;
+  }
+
   if (blobUrlMap.has(videoUrl)) {
     return blobUrlMap.get(videoUrl);
   }
@@ -161,21 +200,16 @@ export async function getCachedVideoPlaybackUrl(videoUrl) {
       if (match) {
         const blob = await match.blob();
         const objUrl = URL.createObjectURL(blob);
+        // Limitar tamaño de mapa para evitar leaks en escritorio
+        if (blobUrlMap.size > 3) {
+          const firstKey = blobUrlMap.keys().next().value;
+          const oldUrl = blobUrlMap.get(firstKey);
+          if (oldUrl) URL.revokeObjectURL(oldUrl);
+          blobUrlMap.delete(firstKey);
+        }
         blobUrlMap.set(videoUrl, objUrl);
         return objUrl;
       }
-
-      // Descargar en segundo plano y almacenar en CacheStorage
-      fetch(videoUrl)
-        .then(async (res) => {
-          if (res.ok) {
-            await cache.put(videoUrl, res.clone());
-            const b = await res.blob();
-            const created = URL.createObjectURL(b);
-            blobUrlMap.set(videoUrl, created);
-          }
-        })
-        .catch(() => {});
     } catch (_) {}
   }
 
@@ -183,11 +217,13 @@ export async function getCachedVideoPlaybackUrl(videoUrl) {
 }
 
 /**
- * Precarga y almacena en caché local del navegador todos los videos de la lista,
- * y elimina de caché cualquier video que haya sido borrado por el usuario.
+ * Precarga y almacena en caché local del navegador de forma segura.
+ * Se omite en Smart TVs para no agotar la memoria del dispositivo.
  */
 export async function prefetchPromotionalVideos(videoList) {
   if (typeof window === "undefined" || !("caches" in window) || !Array.isArray(videoList)) return;
+  if (isLowMemoryOrSmartTVDevice()) return; // Smart TVs transmiten directamente
+
   try {
     const cache = await caches.open(PROMO_VIDEO_CACHE_NAME);
     const activeUrls = new Set(videoList.map((v) => v.url).filter(Boolean));
@@ -202,7 +238,8 @@ export async function prefetchPromotionalVideos(videoList) {
       }
     }
 
-    for (const item of videoList) {
+    // Precargar solo los primeros 2 videos para evitar saturar ancho de banda
+    for (const item of videoList.slice(0, 2)) {
       if (!item?.url) continue;
       const match = await cache.match(item.url);
       if (!match) {
