@@ -166,6 +166,7 @@ export function findCatalogEntryForVehicle(brand, year, model) {
   if (!brand) return null;
   const normalizedBrand = normalizeText(brand);
   const normalizedModel = normalizeText(model || "");
+  if (!normalizedModel) return null;
 
   const exactLabel = entries.find(
     (entry) => normalizeText(entry.brand) === normalizedBrand && entry.label === model
@@ -177,12 +178,21 @@ export function findCatalogEntryForVehicle(brand, year, model) {
     if (year && !yearInEntryRange(entry, year)) return false;
     const entryModel = normalizeText(entry.model || "");
     const descriptorModel = normalizeText(getDescriptor(entry).replace(/\s*\[.*?\]\s*/, ""));
-    return normalizedModel
-      && (entryModel === normalizedModel || descriptorModel.includes(normalizedModel));
+    return (
+      entryModel === normalizedModel ||
+      descriptorModel === normalizedModel ||
+      descriptorModel.includes(normalizedModel) ||
+      normalizedModel.includes(descriptorModel) ||
+      (entryModel && (entryModel.includes(normalizedModel) || normalizedModel.includes(entryModel)))
+    );
   });
 
   if (candidates.length === 1) return candidates[0];
-  if (candidates.length > 1 && model) {
+  if (candidates.length > 1) {
+    // Prioritize exact model name match
+    const exactModelMatch = candidates.find((entry) => normalizeText(entry.model || "") === normalizedModel);
+    if (exactModelMatch) return exactModelMatch;
+
     const labelMatch = candidates.find((entry) => normalizeText(entry.label).includes(normalizedModel));
     if (labelMatch) return labelMatch;
   }
@@ -203,11 +213,30 @@ export function isValidVehicleSelection(brand, year, model) {
   );
   if (!validBrand) return false;
 
-  const validYears = getVehicleYearsByBrand(brand);
-  if (!validYears.includes(String(year))) return false;
+  const numYear = Number(year);
+  if (Number.isNaN(numYear) || numYear < CATALOG_MIN_YEAR || numYear > CATALOG_MAX_YEAR) {
+    return false;
+  }
 
   const validModels = getVehicleOptionsByBrandYear(brand, year);
-  return validModels.includes(model);
+  if (validModels.includes(model)) return true;
+
+  const matched = findCatalogEntryForVehicle(brand, year, model);
+  if (matched) return true;
+
+  const normModel = normalizeText(model);
+  const brandEntries = entries.filter((e) => normalizeText(e.brand) === normalizedBrand);
+  if (brandEntries.length > 0) {
+    const modelMatches = brandEntries.some((e) => {
+      const em = normalizeText(e.model || "");
+      const el = normalizeText(e.label || "");
+      const ed = normalizeText((e.descriptor || "").replace(/\s*\[.*?\]\s*/, ""));
+      return em === normModel || el === normModel || ed === normModel || em.includes(normModel) || normModel.includes(em);
+    });
+    if (modelMatches) return true;
+  }
+
+  return false;
 }
 
 export function normalizeVehicleBrand(brand) {

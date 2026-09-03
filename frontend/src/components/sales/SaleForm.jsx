@@ -73,6 +73,8 @@ import {
   getCatalogVehiclePayload,
   isPickupCatalogModel,
   isValidVehicleSelection,
+  normalizeVehicleBrand,
+  findCatalogEntryForVehicle,
   VEHICLE_CATALOG_BRANDS,
   VEHICLE_COLOR_SUGGESTIONS,
 } from "@/lib/vehicleCatalog";
@@ -1419,14 +1421,40 @@ export default function SaleForm({
     if (ocrVehicle.vin || ocrVehicle.chasis) {
       nextVehicle.chasis = formatChasis(ocrVehicle.vin || ocrVehicle.chasis);
     }
-    if (ocrVehicle.brand) nextVehicle.brand = ocrVehicle.brand;
-    if (ocrVehicle.model) nextVehicle.model = ocrVehicle.model;
-    if (ocrVehicle.year) nextVehicle.year = String(ocrVehicle.year);
+
+    const normalizedBrand = normalizeVehicleBrand(ocrVehicle.brand);
+    const targetBrand = normalizedBrand || ocrVehicle.brand || nextVehicle.brand;
+    if (targetBrand) nextVehicle.brand = targetBrand;
+
+    const targetYear = ocrVehicle.year ? String(ocrVehicle.year) : nextVehicle.year;
+    if (targetYear) nextVehicle.year = targetYear;
+
+    if (ocrVehicle.model) {
+      const resolvedEntry = findCatalogEntryForVehicle(targetBrand, targetYear, ocrVehicle.model);
+      if (resolvedEntry?.label) {
+        nextVehicle.model = resolvedEntry.label;
+      } else {
+        nextVehicle.model = ocrVehicle.model;
+      }
+    }
+
     if (ocrVehicle.color && ocrVehicle.color !== "No especificado") nextVehicle.color = ocrVehicle.color;
     if (ocrVehicle.vehicle_type) nextVehicle.vehicle_type = ocrVehicle.vehicle_type;
     if (ocrVehicle.vehicle_type_slug) nextVehicle.vehicle_type_slug = ocrVehicle.vehicle_type_slug;
     if (ocrVehicle.version_level) nextVehicle.version_level = ocrVehicle.version_level;
     if (ocrVehicle.trim) nextVehicle.trim = ocrVehicle.trim;
+
+    // Auto-detect pickup cab variant
+    if (isPickupCatalogModel(nextVehicle.brand, nextVehicle.model)) {
+      const trimText = `${ocrVehicle.trim || ""} ${ocrVehicle.vehicle_type || ""}`.toLowerCase();
+      if (trimText.includes("doble") || trimText.includes("d/cabina") || trimText.includes("double")) {
+        nextVehicle.vehicle_cab_variant = "camioneta-cabina-y-media";
+      } else if (trimText.includes("simple") || trimText.includes("s/cabina") || trimText.includes("single")) {
+        nextVehicle.vehicle_cab_variant = "camioneta-1-cabina";
+      } else {
+        nextVehicle.vehicle_cab_variant = "camioneta-cabina-y-media";
+      }
+    }
 
     if (ocrVehicle.plate) {
       const cleanPlate = ocrVehicle.plate.trim().toUpperCase();

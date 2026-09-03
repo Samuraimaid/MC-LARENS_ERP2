@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
-import { isPickupCatalogModel } from "@/lib/vehicleCatalog";
+import { isPickupCatalogModel, normalizeVehicleBrand, findCatalogEntryForVehicle } from "@/lib/vehicleCatalog";
 import { PRICING_PROFILES } from "@/lib/priceTiers";
 import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
 
@@ -67,7 +67,7 @@ export default function CustomerVehicleFormTabs({
 
   const handleApplyOcr = (extractedData) => {
     if (!extractedData) return;
-    const updates = {};
+    const updates = { add_vehicle: true };
     
     // Parsear placa a prefijo y número
     if (extractedData.plate) {
@@ -90,12 +90,43 @@ export default function CustomerVehicleFormTabs({
     if (extractedData.vin || extractedData.chasis) {
       updates.chasis = formatChasis ? formatChasis(extractedData.vin || extractedData.chasis) : (extractedData.vin || extractedData.chasis);
     }
-    if (extractedData.brand) updates.brand = extractedData.brand;
-    if (extractedData.model) updates.model = extractedData.model;
-    if (extractedData.year) updates.year = String(extractedData.year);
-    if (extractedData.color && extractedData.color !== "No especificado") updates.color = extractedData.color;
+
+    const normalizedBrand = normalizeVehicleBrand(extractedData.brand);
+    const targetBrand = normalizedBrand || extractedData.brand || formData.brand;
+    if (targetBrand) updates.brand = targetBrand;
+
+    const targetYear = extractedData.year ? String(extractedData.year) : formData.year;
+    if (targetYear) updates.year = targetYear;
+
+    if (extractedData.model) {
+      const catalogEntry = findCatalogEntryForVehicle(targetBrand, targetYear, extractedData.model);
+      if (catalogEntry?.label) {
+        updates.model = catalogEntry.label;
+      } else {
+        updates.model = extractedData.model;
+      }
+    }
+
+    if (extractedData.color && extractedData.color !== "No especificado") {
+      updates.color = extractedData.color;
+    }
+
+    // Auto-detectar variante de cabina para camionetas/pickups
+    if (isPickupCatalogModel(updates.brand || formData.brand, updates.model || formData.model)) {
+      const trimText = `${extractedData.trim || ""} ${extractedData.vehicle_type || ""}`.toLowerCase();
+      if (trimText.includes("doble") || trimText.includes("d/cabina") || trimText.includes("double")) {
+        updates.vehicle_cab_variant = "camioneta-cabina-y-media";
+      } else if (trimText.includes("simple") || trimText.includes("s/cabina") || trimText.includes("single")) {
+        updates.vehicle_cab_variant = "camioneta-1-cabina";
+      } else {
+        updates.vehicle_cab_variant = "camioneta-cabina-y-media";
+      }
+    }
     
     updateForm(updates);
+    if (onActiveTabChange) {
+      onActiveTabChange("vehicle");
+    }
     setShowOcrModal(false);
   };
 
