@@ -107,29 +107,51 @@ export function PromotionalVideosSettingsPanel() {
       setTitle(nameWithoutExt);
     }
 
-    // Auto-upload file
+    // Subida por fragmentos (Chunked Upload) para evadir el límite de 32MB de Cloud Run
     setUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(5);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const CHUNK_SIZE = 3.5 * 1024 * 1024; // 3.5 MB por chunk
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const uploadId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      const res = await axios.post(`${API}/settings/promotional-videos/upload`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percent);
-          }
-        },
-      });
+      let finalUrl = "";
 
-      setUrl(res.data.url);
-      setUploadProgress(100);
-      toast.success("Archivo de video subido exitosamente");
+      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+        const start = chunkIdx * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunkBlob = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append("chunk", chunkBlob, file.name);
+        formData.append("upload_id", uploadId);
+        formData.append("chunk_index", chunkIdx);
+        formData.append("total_chunks", totalChunks);
+        formData.append("filename", file.name);
+
+        const res = await axios.post(`${API}/settings/promotional-videos/upload-chunk`, formData, {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        const percent = Math.round(((chunkIdx + 1) / totalChunks) * 100);
+        setUploadProgress(percent);
+
+        if (res.data?.status === "complete" && res.data?.url) {
+          finalUrl = res.data.url;
+        }
+      }
+
+      if (finalUrl) {
+        setUrl(finalUrl);
+        setUploadProgress(100);
+        toast.success("Archivo de video subido y sincronizado exitosamente");
+      } else {
+        throw new Error("No se recibió la URL final del video procesado");
+      }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al subir el archivo de video");
+      console.error("Error en subida de video:", err);
+      toast.error(err.response?.data?.detail || err.message || "Error al subir el archivo de video");
       setSelectedFile(null);
     } finally {
       setUploading(false);

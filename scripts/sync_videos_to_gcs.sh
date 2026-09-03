@@ -24,11 +24,11 @@ gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --role="roles/storage.objectViewer" \
     --project="${PROJECT_ID}" 2>/dev/null || true
 
-echo "=== 3. Sincronizando Videos Promocionales a gs://${BUCKET_NAME}/videos ==="
+echo "=== 3. Sincronizando Videos Promocionales a gs://${BUCKET_NAME}/videos/promos ==="
 if [ -d "frontend/public/videos/promos" ]; then
-    gcloud storage rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos" || gsutil -m rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos"
+    gcloud storage rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos/promos" || gsutil -m rsync -r frontend/public/videos/promos "gs://${BUCKET_NAME}/videos/promos"
 elif [ -d "public/videos/promos" ]; then
-    gcloud storage rsync -r public/videos/promos "gs://${BUCKET_NAME}/videos" || gsutil -m rsync -r public/videos/promos "gs://${BUCKET_NAME}/videos"
+    gcloud storage rsync -r public/videos/promos "gs://${BUCKET_NAME}/videos/promos" || gsutil -m rsync -r public/videos/promos "gs://${BUCKET_NAME}/videos/promos"
 else
     echo "Directorio de videos no encontrado localmente."
 fi

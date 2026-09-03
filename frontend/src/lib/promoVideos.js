@@ -77,6 +77,70 @@ export const DEFAULT_PROMOTIONAL_VIDEOS = [
     url: "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4",
     active: true,
   },
+  {
+    id: "bfgoodrich-ko3-kyle-strait",
+    title: "BFGoodrich All-Terrain T/A KO3 Tire - Kyle Strait",
+    orientation: "horizontal",
+    filename: "bfgoodrich_ko3_kyle_strait.mp4",
+    url: "/videos/promos/bfgoodrich_ko3_kyle_strait.mp4",
+    active: true,
+  },
+  {
+    id: "bfgoodrich-ko3-tech-overview",
+    title: "BFGoodrich KO3 Tire Tech Overview",
+    orientation: "horizontal",
+    filename: "bfgoodrich_ko3_tech_overview.mp4",
+    url: "/videos/promos/bfgoodrich_ko3_tech_overview.mp4",
+    active: true,
+  },
+  {
+    id: "ds18-audio-experiment",
+    title: "DS18 Audio - The Experiment",
+    orientation: "horizontal",
+    filename: "ds18_audio_the_experiment.mp4",
+    url: "/videos/promos/ds18_audio_the_experiment.mp4",
+    active: true,
+  },
+  {
+    id: "bfgoodrich-ko2-gravity",
+    title: "BFGoodrich KO2 Takes On Gravity",
+    orientation: "horizontal",
+    filename: "bfgoodrich_ko2_takes_on_gravity.mp4",
+    url: "/videos/promos/bfgoodrich_ko2_takes_on_gravity.mp4",
+    active: true,
+  },
+  {
+    id: "mickey-thompson-baja-boss",
+    title: "Mickey Thompson Colombia - Baja Boss A/T",
+    orientation: "horizontal",
+    filename: "mickey_thompson_baja_boss_at.mp4",
+    url: "/videos/promos/mickey_thompson_baja_boss_at.mp4",
+    active: true,
+  },
+  {
+    id: "bfgoodrich-trail-terrain",
+    title: "The BFGoodrich Trail-Terrain T/A Tire Shanty",
+    orientation: "horizontal",
+    filename: "bfgoodrich_trail_terrain_shanty.mp4",
+    url: "/videos/promos/bfgoodrich_trail_terrain_shanty.mp4",
+    active: true,
+  },
+  {
+    id: "dakar-2024-rally",
+    title: "The World's Toughest Rally - Dakar 2024",
+    orientation: "horizontal",
+    filename: "dakar_2024_toughest_rally.mp4",
+    url: "/videos/promos/dakar_2024_toughest_rally.mp4",
+    active: true,
+  },
+  {
+    id: "mickey-thompson-trail-rough",
+    title: "Mickey Thompson - When the Trail Gets Rough",
+    orientation: "horizontal",
+    filename: "mickey_thompson_trail_rough_baja_boss.mp4",
+    url: "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4",
+    active: true,
+  },
 ];
 
 const blobUrlMap = new Map();
@@ -252,6 +316,30 @@ export function getBrandInfoForVideo(video) {
       logo: "/brands/mundo-accesorios-brand-logo.png",
       theme: "mundo",
       accent: "#38BDF8",
+    };
+  }
+  if (text.includes("bfgoodrich") || text.includes("ko2") || text.includes("ko3") || text.includes("trail-terrain") || text.includes("terrain")) {
+    return {
+      brand: "BFGoodrich",
+      logo: "/brands/mclarens-white-red.png",
+      theme: "bfgoodrich",
+      accent: "#E20725",
+    };
+  }
+  if (text.includes("mickey") || text.includes("thompson") || text.includes("baja boss")) {
+    return {
+      brand: "Mickey Thompson",
+      logo: "/brands/mclarens-white-red.png",
+      theme: "mickeythompson",
+      accent: "#EAB308",
+    };
+  }
+  if (text.includes("dakar") || text.includes("rally")) {
+    return {
+      brand: "Dakar Rally",
+      logo: "/brands/mclarens-white-red.png",
+      theme: "dakar",
+      accent: "#F97316",
     };
   }
 

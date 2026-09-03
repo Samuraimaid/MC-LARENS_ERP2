@@ -22444,6 +22444,14 @@ DEFAULT_PROMOTIONAL_VIDEOS = [
     {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko3-kyle-strait", "title": "BFGoodrich All-Terrain T/A KO3 Tire - Kyle Strait", "orientation": "horizontal", "filename": "bfgoodrich_ko3_kyle_strait.mp4", "url": "/videos/promos/bfgoodrich_ko3_kyle_strait.mp4", "active": True, "sort_order": 10, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko3-tech-overview", "title": "BFGoodrich KO3 Tire Tech Overview", "orientation": "horizontal", "filename": "bfgoodrich_ko3_tech_overview.mp4", "url": "/videos/promos/bfgoodrich_ko3_tech_overview.mp4", "active": True, "sort_order": 11, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "ds18-audio-experiment", "title": "DS18 Audio - The Experiment", "orientation": "horizontal", "filename": "ds18_audio_the_experiment.mp4", "url": "/videos/promos/ds18_audio_the_experiment.mp4", "active": True, "sort_order": 12, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko2-gravity", "title": "BFGoodrich KO2 Takes On Gravity", "orientation": "horizontal", "filename": "bfgoodrich_ko2_takes_on_gravity.mp4", "url": "/videos/promos/bfgoodrich_ko2_takes_on_gravity.mp4", "active": True, "sort_order": 13, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "mickey-thompson-baja-boss", "title": "Mickey Thompson Colombia - Baja Boss A/T", "orientation": "horizontal", "filename": "mickey_thompson_baja_boss_at.mp4", "url": "/videos/promos/mickey_thompson_baja_boss_at.mp4", "active": True, "sort_order": 14, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-trail-terrain", "title": "The BFGoodrich Trail-Terrain T/A Tire Shanty", "orientation": "horizontal", "filename": "bfgoodrich_trail_terrain_shanty.mp4", "url": "/videos/promos/bfgoodrich_trail_terrain_shanty.mp4", "active": True, "sort_order": 15, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "dakar-2024-rally", "title": "The World's Toughest Rally - Dakar 2024", "orientation": "horizontal", "filename": "dakar_2024_toughest_rally.mp4", "url": "/videos/promos/dakar_2024_toughest_rally.mp4", "active": True, "sort_order": 16, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "mickey-thompson-trail-rough", "title": "Mickey Thompson - When the Trail Gets Rough", "orientation": "horizontal", "filename": "mickey_thompson_trail_rough_baja_boss.mp4", "url": "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4", "active": True, "sort_order": 17, "branches": ["*"], "allow_widescreen_on_mobile": True},
 ]
 
 
@@ -22568,6 +22576,98 @@ async def upload_promotional_video_file(
         "filename": unique_name,
         "size": len(content),
         "original_name": file.filename,
+        "gcs_synced": gcs_uploaded,
+    }
+
+
+@api_router.post("/settings/promotional-videos/upload-chunk")
+async def upload_promotional_video_chunk(
+    request: Request,
+    chunk: UploadFile = File(...),
+    upload_id: str = Form(...),
+    chunk_index: int = Form(...),
+    total_chunks: int = Form(...),
+    filename: str = Form(...),
+):
+    """
+    Subida por fragmentos (Chunked Upload de 3.5MB).
+    Supera de forma transparente el límite de 32MB de Cloud Run y evita desconexiones en móviles.
+    """
+    await require_roles(request, ["gerencia", "programador"])
+    
+    clean_upload_id = "".join(c for c in upload_id if c.isalnum() or c in "_-")
+    temp_dir = Path("/tmp/video_uploads") / clean_upload_id
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    
+    chunk_path = temp_dir / f"chunk_{int(chunk_index):05d}"
+    chunk_bytes = await chunk.read()
+    with open(chunk_path, "wb") as f:
+        f.write(chunk_bytes)
+        
+    existing_chunks = list(temp_dir.glob("chunk_*"))
+    if len(existing_chunks) < int(total_chunks):
+        return {
+            "status": "chunk_received",
+            "chunk_index": chunk_index,
+            "total_chunks": total_chunks,
+            "received_chunks": len(existing_chunks),
+            "progress": round((len(existing_chunks) / int(total_chunks)) * 100, 1),
+        }
+        
+    # Reensamblar archivo final una vez recibidos todos los fragmentos
+    upload_dir = Path("/app/uploads/promos")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    clean_base = "".join(c if c.isalnum() or c in "._-" else "_" for c in os.path.splitext(filename)[0])
+    ext = os.path.splitext(filename.lower())[1] or ".mp4"
+    if ext not in [".mp4", ".webm", ".mov", ".m4v", ".mkv"]:
+        ext = ".mp4"
+    unique_name = f"{clean_base}_{_new_entity_id('v')}{ext}"
+    target_path = upload_dir / unique_name
+    
+    total_size = 0
+    with open(target_path, "wb") as outfile:
+        for idx in range(int(total_chunks)):
+            c_file = temp_dir / f"chunk_{idx:05d}"
+            if c_file.exists():
+                with open(c_file, "rb") as infile:
+                    data = infile.read()
+                    total_size += len(data)
+                    outfile.write(data)
+                try:
+                    c_file.unlink()
+                except Exception:
+                    pass
+    try:
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    except Exception:
+        pass
+        
+    # Subir a Google Cloud Storage
+    gcs_uploaded = False
+    gcs_url = None
+    try:
+        from google.cloud import storage
+        gcs_client = storage.Client()
+        bucket = gcs_client.bucket("mclarens-erp-vehicles")
+        blob = bucket.blob(f"videos/promos/{unique_name}")
+        blob.upload_from_filename(str(target_path), content_type="video/mp4")
+        gcs_url = f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{unique_name}"
+        gcs_uploaded = True
+        logger.info(f"Uploaded assembled chunked video to GCS: {gcs_url}")
+    except Exception as gcs_err:
+        logger.warning(f"Could not upload assembled video to GCS directly: {gcs_err}")
+
+    final_url = gcs_url if gcs_uploaded else f"/uploads/promos/{unique_name}"
+
+    return {
+        "status": "complete",
+        "message": "Video subido y procesado exitosamente",
+        "url": final_url,
+        "filename": unique_name,
+        "size": total_size,
+        "original_name": filename,
         "gcs_synced": gcs_uploaded,
     }
 
