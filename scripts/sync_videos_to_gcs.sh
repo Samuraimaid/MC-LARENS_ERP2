@@ -11,6 +11,7 @@ set -e
 PROJECT_ID="gen-lang-client-0971793042"
 BUCKET_NAME="mclarens-erp-vehicles"
 REGION="us-central1"
+SERVICE_ACCOUNT="836176703716-compute@developer.gserviceaccount.com"
 
 echo "=== 1. Verificando Bucket de Google Cloud Storage: gs://${BUCKET_NAME} ==="
 gcloud storage buckets create "gs://${BUCKET_NAME}" \
@@ -18,13 +19,23 @@ gcloud storage buckets create "gs://${BUCKET_NAME}" \
     --location="${REGION}" \
     --uniform-bucket-level-access 2>/dev/null || echo "Bucket verificado."
 
-echo "=== 2. Configurando Acceso Público al CDN ==="
+echo "=== 2. Configurando Acceso Público y Permisos de Subida al CDN ==="
 gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --member="allUsers" \
     --role="roles/storage.objectViewer" \
     --project="${PROJECT_ID}" 2>/dev/null || true
 
-echo "=== 3. Sincronizando Videos Promocionales a gs://${BUCKET_NAME}/videos/promos ==="
+gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/storage.objectAdmin" \
+    --project="${PROJECT_ID}" 2>/dev/null || true
+
+echo "=== 3. Aplicando Reglas de CORS para Streaming de Video y Rangos de Bytes ==="
+if [ -f "scripts/gcs_cors.json" ]; then
+    gcloud storage buckets update "gs://${BUCKET_NAME}" --cors-file=scripts/gcs_cors.json 2>/dev/null || true
+fi
+
+echo "=== 4. Sincronizando Videos Promocionales a gs://${BUCKET_NAME}/videos/promos ==="
 # Eliminar videos obsoletos de totem del bucket
 gcloud storage rm "gs://${BUCKET_NAME}/videos/promos/totem1-1.mp4" "gs://${BUCKET_NAME}/videos/promos/totem2-1.mp4" "gs://${BUCKET_NAME}/videos/totem1-1.mp4" "gs://${BUCKET_NAME}/videos/totem2-1.mp4" 2>/dev/null || true
 
@@ -39,5 +50,5 @@ fi
 echo ""
 echo "=============================================================================="
 echo "✔ VIDEOS SINCRONIZADOS EXITOSAMENTE EN GOOGLE CLOUD STORAGE"
-echo "URL Base CDN: https://storage.googleapis.com/${BUCKET_NAME}/videos/"
+echo "URL Base CDN: https://storage.googleapis.com/${BUCKET_NAME}/videos/promos/"
 echo "=============================================================================="

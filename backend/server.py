@@ -25837,9 +25837,33 @@ if frontend_build_dir.exists():
     if vehicles_dir.exists():
         app.mount("/vehicles", StaticFiles(directory=str(vehicles_dir)), name="vehicles")
 
-    videos_dir = frontend_build_dir / "videos"
-    if videos_dir.exists():
-        app.mount("/videos", StaticFiles(directory=str(videos_dir)), name="videos")
+    @app.get("/videos/promos/{filename:path}")
+    async def get_promo_video_stream(filename: str):
+        clean_name = os.path.basename(filename)
+        return RedirectResponse(
+            f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{clean_name}",
+            status_code=307,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "Range, Content-Range, Accept-Ranges",
+                "Cache-Control": "public, max-age=86400"
+            }
+        )
+
+    @app.get("/uploads/promos/{filename:path}")
+    async def get_uploaded_promo_video_stream(filename: str):
+        clean_name = os.path.basename(filename)
+        return RedirectResponse(
+            f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{clean_name}",
+            status_code=307,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "Range, Content-Range, Accept-Ranges",
+                "Cache-Control": "public, max-age=86400"
+            }
+        )
 
     NO_CACHE_HEADERS = {
         "Cache-Control": "no-cache, no-store, must-revalidate",
