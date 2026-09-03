@@ -664,7 +664,7 @@ def _call_vertex_ai_vision(image_base64: str, image_back_base64: Optional[str] =
             contents.append("Foto del Reverso de la tarjeta (contiene Año de Fabricación):")
             contents.append(types.Part.from_bytes(data=raw_back_bytes, mime_type=mime_back))
 
-        for model_name in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
+        for model_name in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -689,7 +689,7 @@ def _call_vertex_ai_vision(image_base64: str, image_back_base64: Optional[str] =
 
 
 def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Llama a la API de Gemini 1.5/2.0 Flash Multimodal Vision vía REST API con urllib."""
+    """Llama a la API de Gemini Flash Multimodal Vision vía REST API con urllib."""
     import urllib.request
     import urllib.error
     import json
@@ -701,11 +701,11 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
     mime_type = "image/jpeg"
     if "," in image_base64:
         header, b64_data = image_base64.split(",", 1)
-        if "png" in header:
+        if "png" in header.lower():
             mime_type = "image/png"
     parts.append({
-        "inline_data": {
-            "mime_type": mime_type,
+        "inlineData": {
+            "mimeType": mime_type,
             "data": b64_data
         }
     })
@@ -716,12 +716,12 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
         mime_back = "image/jpeg"
         if "," in image_back_base64:
             h_back, b64_back = image_back_base64.split(",", 1)
-            if "png" in h_back:
+            if "png" in h_back.lower():
                 mime_back = "image/png"
         parts.append({"text": "Foto del Reverso de la tarjeta (contiene Año de Fabricación):"})
         parts.append({
-            "inline_data": {
-                "mime_type": mime_back,
+            "inlineData": {
+                "mimeType": mime_back,
                 "data": b64_back
             }
         })
@@ -729,18 +729,20 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
     payload = {
         "contents": [{"parts": parts}],
         "generationConfig": {
-            "response_mime_type": "application/json",
+            "responseMimeType": "application/json",
             "temperature": 0.1
         }
     }
     raw_payload = json.dumps(payload).encode("utf-8")
 
     for model_name in [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-1.5-pro",
+        "gemini-2.5-flash",
         "gemini-flash-latest",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash",
         "gemini-pro-latest"
     ]:
         try:
@@ -751,7 +753,7 @@ def _call_gemini_vision(image_base64: str, api_key: str, image_back_base64: Opti
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=14) as resp:
                 if resp.status == 200:
                     resp_body = resp.read().decode("utf-8")
                     data = json.loads(resp_body)
