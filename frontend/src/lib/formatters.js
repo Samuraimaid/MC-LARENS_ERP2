@@ -18,7 +18,7 @@ export const formatRUC = (value) => {
 
 export const formatChasis = (value) => {
   const clean = String(value || "").replace(/[^0-9A-HJ-NPR-Za-hj-npr-z]/g, "").toUpperCase();
-  return clean.slice(0, 17);
+  return clean.slice(0, 25);
 };
 
 export const formatPlateNumber = (prefix, value) => {

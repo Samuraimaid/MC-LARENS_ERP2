@@ -64,12 +64,12 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
     model: "",
     year: "",
     color: "",
-    vehicle_type: "Sedán / Automóvil",
-    vehicle_type_slug: "sedan",
+    vehicle_type: "",
+    vehicle_type_slug: "",
     version_level: "intermedio",
     trim: "",
     numero_motor: "",
-    tipo_combustible: "Gasolina",
+    tipo_combustible: "",
     origin_country: "",
   });
 
@@ -264,9 +264,9 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       const detectedBrand = data.brand || data.marca || "";
       const detectedModel = data.model || data.modelo || "";
       const detectedYear = data.year || data.anio ? String(data.year || data.anio) : "";
-      const detectedColor = data.color && data.color !== "No especificado" ? data.color : "Blanco";
-      const detectedType = data.vehicle_type || "Sedán / Automóvil";
-      const detectedTypeSlug = data.vehicle_type_slug || data.tipo_carroceria || "sedan";
+      const detectedColor = data.color && data.color !== "No especificado" ? data.color : "";
+      const detectedType = data.vehicle_type || "";
+      const detectedTypeSlug = data.vehicle_type_slug || data.tipo_carroceria || "";
 
       setEditedFields({
         vin: detectedVin,
@@ -280,7 +280,7 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         version_level: data.version_level || "intermedio",
         trim: data.trim || "",
         numero_motor: data.numero_motor || "",
-        tipo_combustible: data.tipo_combustible || "Gasolina",
+        tipo_combustible: data.tipo_combustible || "",
         origin_country: data.origin_country || "",
       });
 
@@ -398,14 +398,14 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         plate: editedFields.plate.trim().toUpperCase(),
         brand: editedFields.brand.trim().toUpperCase(),
         model: editedFields.model.trim(),
-        year: editedFields.year ? parseInt(editedFields.year, 10) : new Date().getFullYear(),
-        color: editedFields.color.trim() || "Blanco",
+        year: editedFields.year ? parseInt(editedFields.year, 10) : "",
+        color: editedFields.color ? editedFields.color.trim() : "",
         vehicle_type: editedFields.vehicle_type,
         vehicle_type_slug: editedFields.vehicle_type_slug,
         version_level: editedFields.version_level,
         trim: editedFields.trim,
-        numero_motor: editedFields.numero_motor.trim(),
-        tipo_combustible: editedFields.tipo_combustible,
+        numero_motor: editedFields.numero_motor ? editedFields.numero_motor.trim() : "",
+        tipo_combustible: editedFields.tipo_combustible ? editedFields.tipo_combustible.trim() : "",
       });
     }
     toast.success("¡Datos del vehículo aplicados correctamente!");

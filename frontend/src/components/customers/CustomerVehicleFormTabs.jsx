@@ -486,7 +486,7 @@ export default function CustomerVehicleFormTabs({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between min-h-[18px]">
               <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">CHASIS (VIN)</Label>
-              <span className="text-[10px] text-muted-foreground">{formData.chasis?.length || 0}/17 caracteres</span>
+              <span className="text-[10px] text-muted-foreground">{formData.chasis?.length || 0} caracteres</span>
             </div>
             <div className="flex gap-2">
               <Input
@@ -495,7 +495,7 @@ export default function CustomerVehicleFormTabs({
                 onBlur={commitForm}
                 placeholder="1HGBH41JXMN109186"
                 className="flex-1 h-9 font-mono text-xs uppercase"
-                maxLength={17}
+                maxLength={25}
                 data-testid={vehicleChasisTestId}
               />
               {useVinDecoder && (
@@ -505,7 +505,7 @@ export default function CustomerVehicleFormTabs({
                   size="sm"
                   className="h-9 px-2.5 text-xs whitespace-nowrap"
                   onClick={onDecodeVin}
-                  disabled={isDecodingVin || formData.chasis?.length !== 17}
+                  disabled={isDecodingVin || (formData.chasis?.length || 0) < 8}
                 >
                   {isDecodingVin ? "Decodificando..." : "Decodificar"}
                 </Button>
