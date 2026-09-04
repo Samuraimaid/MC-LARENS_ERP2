@@ -22493,26 +22493,49 @@ async def get_pdf_logo_presets(request: Request):
 # VIDEOS PROMOCIONALES DE FONDO (LOGIN & TOTEM)
 # ==============================================================================
 
+GCS_PROMO_VIDEOS_CDN = "https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos"
+
+
+def _normalize_promo_video_url(url: str, filename: str = "") -> str:
+    """
+    Normaliza cualquier URL relativa o local de videos a la URL pública directa
+    del CDN de Google Cloud Storage. Esto evita redirecciones 307 que causan
+    que los reproductores de Smart TVs (LG WebOS, Samsung Tizen, Android TV) salten videos.
+    """
+    if not url:
+        if filename:
+            return f"{GCS_PROMO_VIDEOS_CDN}/{filename}"
+        return ""
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+    clean = url.split("/")[-1].split("?")[0]
+    if clean:
+        return f"{GCS_PROMO_VIDEOS_CDN}/{clean}"
+    if filename:
+        return f"{GCS_PROMO_VIDEOS_CDN}/{filename}"
+    return url
+
+
 DEFAULT_PROMOTIONAL_VIDEOS = [
-    {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": "/videos/promos/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "bfgoodrich-ko3-kyle-strait", "title": "BFGoodrich All-Terrain T/A KO3 Tire - Kyle Strait", "orientation": "horizontal", "filename": "bfgoodrich_ko3_kyle_strait.mp4", "url": "/videos/promos/bfgoodrich_ko3_kyle_strait.mp4", "active": True, "sort_order": 10, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "bfgoodrich-ko3-tech-overview", "title": "BFGoodrich KO3 Tire Tech Overview", "orientation": "horizontal", "filename": "bfgoodrich_ko3_tech_overview.mp4", "url": "/videos/promos/bfgoodrich_ko3_tech_overview.mp4", "active": True, "sort_order": 11, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "ds18-audio-experiment", "title": "DS18 Audio - The Experiment", "orientation": "horizontal", "filename": "ds18_audio_the_experiment.mp4", "url": "/videos/promos/ds18_audio_the_experiment.mp4", "active": True, "sort_order": 12, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "bfgoodrich-ko2-gravity", "title": "BFGoodrich KO2 Takes On Gravity", "orientation": "horizontal", "filename": "bfgoodrich_ko2_takes_on_gravity.mp4", "url": "/videos/promos/bfgoodrich_ko2_takes_on_gravity.mp4", "active": True, "sort_order": 13, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "mickey-thompson-baja-boss", "title": "Mickey Thompson Colombia - Baja Boss A/T", "orientation": "horizontal", "filename": "mickey_thompson_baja_boss_at.mp4", "url": "/videos/promos/mickey_thompson_baja_boss_at.mp4", "active": True, "sort_order": 14, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "bfgoodrich-trail-terrain", "title": "The BFGoodrich Trail-Terrain T/A Tire Shanty", "orientation": "horizontal", "filename": "bfgoodrich_trail_terrain_shanty.mp4", "url": "/videos/promos/bfgoodrich_trail_terrain_shanty.mp4", "active": True, "sort_order": 15, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "dakar-2024-rally", "title": "The World's Toughest Rally - Dakar 2024", "orientation": "horizontal", "filename": "dakar_2024_toughest_rally.mp4", "url": "/videos/promos/dakar_2024_toughest_rally.mp4", "active": True, "sort_order": 16, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "mickey-thompson-trail-rough", "title": "Mickey Thompson - When the Trail Gets Rough", "orientation": "horizontal", "filename": "mickey_thompson_trail_rough_baja_boss.mp4", "url": "/videos/promos/mickey_thompson_trail_rough_baja_boss.mp4", "active": True, "sort_order": 17, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-color-play", "title": "Auxbeam Color Play Series RGB Offroad Lights", "orientation": "horizontal", "filename": "auxbeam_color_play_series_rgb.mp4", "url": "/videos/promos/auxbeam_color_play_series_rgb.mp4", "active": True, "sort_order": 18, "branches": ["*"], "allow_widescreen_on_mobile": True},
-    {"id": "auxbeam-rgb-switch-panel", "title": "Auxbeam 8 Gang RGB Switch Panel System", "orientation": "horizontal", "filename": "auxbeam_rgb_switch_panel_promo.mp4", "url": "/videos/promos/auxbeam_rgb_switch_panel_promo.mp4", "active": True, "sort_order": 19, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-4runner", "title": "Toyota 4Runner - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Toyota-4Runner-FOX-Factory-Race-Series_Media_H-WlSQ1Tpjc_001_1080p.mp4", "active": True, "sort_order": 4, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-3", "title": "Auxbeam V-ULTRA Series 3-Inch 108W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-3-Inch-108W-LED-S_Media_EYKj2Gx4Zh0_001_1080p.mp4", "active": True, "sort_order": 5, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "fox-victory", "title": "FOX - Your Victory Is Our Victory", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Your-Victory-Is-Our-Victory-FOX_Media_RY7TCZJ9ruY_001_1080p.mp4", "active": True, "sort_order": 6, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "this-is-rigid", "title": "This is RIGID Industries", "orientation": "horizontal", "filename": "YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_This-is-RIGID_Media_Cg2OX_e10mk_001_1080p.mp4", "active": True, "sort_order": 7, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-v-ultra-5", "title": "Auxbeam V-ULTRA Series 5-Inch 172W LED", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-5-Inch-172W-LED-S_Media_BrU095An_Oc_001_1080p.mp4", "active": True, "sort_order": 8, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-side-shooter", "title": "Auxbeam V-ULTRA Series LED Side Shooter", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Auxbeam-V-ULTRA-Series-LED-Side-Shooter-_Media_s2zY0QzAtxc_001_1080p.mp4", "active": True, "sort_order": 9, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko3-kyle-strait", "title": "BFGoodrich All-Terrain T/A KO3 Tire - Kyle Strait", "orientation": "horizontal", "filename": "bfgoodrich_ko3_kyle_strait.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/bfgoodrich_ko3_kyle_strait.mp4", "active": True, "sort_order": 10, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko3-tech-overview", "title": "BFGoodrich KO3 Tire Tech Overview", "orientation": "horizontal", "filename": "bfgoodrich_ko3_tech_overview.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/bfgoodrich_ko3_tech_overview.mp4", "active": True, "sort_order": 11, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "ds18-audio-experiment", "title": "DS18 Audio - The Experiment", "orientation": "horizontal", "filename": "ds18_audio_the_experiment.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/ds18_audio_the_experiment.mp4", "active": True, "sort_order": 12, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-ko2-gravity", "title": "BFGoodrich KO2 Takes On Gravity", "orientation": "horizontal", "filename": "bfgoodrich_ko2_takes_on_gravity.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/bfgoodrich_ko2_takes_on_gravity.mp4", "active": True, "sort_order": 13, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "mickey-thompson-baja-boss", "title": "Mickey Thompson Colombia - Baja Boss A/T", "orientation": "horizontal", "filename": "mickey_thompson_baja_boss_at.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/mickey_thompson_baja_boss_at.mp4", "active": True, "sort_order": 14, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "bfgoodrich-trail-terrain", "title": "The BFGoodrich Trail-Terrain T/A Tire Shanty", "orientation": "horizontal", "filename": "bfgoodrich_trail_terrain_shanty.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/bfgoodrich_trail_terrain_shanty.mp4", "active": True, "sort_order": 15, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "dakar-2024-rally", "title": "The World's Toughest Rally - Dakar 2024", "orientation": "horizontal", "filename": "dakar_2024_toughest_rally.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/dakar_2024_toughest_rally.mp4", "active": True, "sort_order": 16, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "mickey-thompson-trail-rough", "title": "Mickey Thompson - When the Trail Gets Rough", "orientation": "horizontal", "filename": "mickey_thompson_trail_rough_baja_boss.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/mickey_thompson_trail_rough_baja_boss.mp4", "active": True, "sort_order": 17, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-color-play", "title": "Auxbeam Color Play Series RGB Offroad Lights", "orientation": "horizontal", "filename": "auxbeam_color_play_series_rgb.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/auxbeam_color_play_series_rgb.mp4", "active": True, "sort_order": 18, "branches": ["*"], "allow_widescreen_on_mobile": True},
+    {"id": "auxbeam-rgb-switch-panel", "title": "Auxbeam 8 Gang RGB Switch Panel System", "orientation": "horizontal", "filename": "auxbeam_rgb_switch_panel_promo.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/auxbeam_rgb_switch_panel_promo.mp4", "active": True, "sort_order": 19, "branches": ["*"], "allow_widescreen_on_mobile": True},
 ]
 
 
@@ -22539,6 +22562,7 @@ async def list_active_promotional_videos(
     videos = []
     async for doc in cursor:
         doc["_id"] = str(doc.get("_id", ""))
+        doc["url"] = _normalize_promo_video_url(doc.get("url", ""), doc.get("filename", ""))
         videos.append(doc)
 
     if not videos:
@@ -22573,6 +22597,7 @@ async def list_all_promotional_videos(request: Request, branch_id: str = Query(d
     videos = []
     async for doc in cursor:
         doc["_id"] = str(doc.get("_id", ""))
+        doc["url"] = _normalize_promo_video_url(doc.get("url", ""), doc.get("filename", ""))
         videos.append(doc)
     return {"videos": videos}
 
@@ -22740,12 +22765,14 @@ async def create_promotional_video(payload: PromotionalVideoCreatePayload, reque
     orientation_val = payload.orientation.strip().lower() if payload.orientation else "horizontal"
     if orientation_val not in ["vertical", "horizontal", "universal", "both", "all"]:
         orientation_val = "horizontal"
+    raw_url = payload.url.strip()
+    norm_url = _normalize_promo_video_url(raw_url, payload.filename or "")
     doc = {
         "id": video_id,
         "title": payload.title.strip(),
         "orientation": orientation_val,
         "allow_widescreen_on_mobile": True if payload.allow_widescreen_on_mobile is None else bool(payload.allow_widescreen_on_mobile),
-        "url": payload.url.strip(),
+        "url": norm_url or raw_url,
         "filename": payload.filename or "",
         "active": bool(payload.active),
         "sort_order": int(payload.sort_order or 0),
@@ -22772,7 +22799,9 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
     if payload.allow_widescreen_on_mobile is not None:
         update_data["allow_widescreen_on_mobile"] = bool(payload.allow_widescreen_on_mobile)
     if payload.url is not None:
-        update_data["url"] = payload.url.strip()
+        raw_url = payload.url.strip()
+        norm_url = _normalize_promo_video_url(raw_url, payload.filename or "")
+        update_data["url"] = norm_url or raw_url
     if payload.filename is not None:
         update_data["filename"] = payload.filename.strip()
     if payload.active is not None:
@@ -22794,6 +22823,7 @@ async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdat
     doc = await db.promotional_videos.find_one({"$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}]})
     if doc:
         doc["_id"] = str(doc.get("_id", ""))
+        doc["url"] = _normalize_promo_video_url(doc.get("url", ""), doc.get("filename", ""))
     return {"message": "Video promocional actualizado", "video": doc}
 
 

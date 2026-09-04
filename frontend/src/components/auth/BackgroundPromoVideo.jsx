@@ -4,7 +4,8 @@ import {
   fetchPromotionalVideos, 
   getCachedVideoPlaybackUrl, 
   prefetchPromotionalVideos,
-  isLowMemoryOrSmartTVDevice 
+  isLowMemoryOrSmartTVDevice,
+  resolveDirectPromoVideoUrl
 } from "@/lib/promoVideos";
 
 export default function BackgroundPromoVideo({
@@ -45,7 +46,7 @@ export default function BackgroundPromoVideo({
     };
   }, []);
 
-  // 2. Playlist activa según orientación de pantalla
+  // 2. Playlist activa según orientación de pantalla y estado activo
   const activePlaylist = useMemo(() => {
     if (allowWidescreenOnMobile) {
       const active = videos.filter((v) => v.active !== false);
@@ -59,13 +60,10 @@ export default function BackgroundPromoVideo({
     return videos.filter((v) => v.active !== false);
   }, [videos, isPortrait, allowWidescreenOnMobile]);
 
-  // Iniciar con un video aleatorio al montar o cambiar playlist
+  // Inicializar índice
   useEffect(() => {
-    if (activePlaylist.length > 0) {
-      const initialRandom = Math.floor(Math.random() * activePlaylist.length);
-      setCurrentIndex(initialRandom);
-    }
-  }, [isPortrait, activePlaylist.length]);
+    setCurrentIndex(0);
+  }, [isPortrait]);
 
   const currentVideo = activePlaylist[currentIndex] || activePlaylist[0] || DEFAULT_PROMOTIONAL_VIDEOS[0];
 
@@ -76,10 +74,10 @@ export default function BackgroundPromoVideo({
     }
   }, [currentVideo, onVideoChange]);
 
-  // 4. Cambiar al siguiente video de forma segura
+  // 4. Cambiar al siguiente video de forma secuencial y limpia
   const handleVideoEnded = useCallback(() => {
+    stallCountRef.current = 0;
     if (activePlaylist.length <= 1) {
-      // Si solo hay 1 video, rebobinar y reproducir de nuevo
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
@@ -87,24 +85,17 @@ export default function BackgroundPromoVideo({
       return;
     }
 
-    setCurrentIndex((prev) => {
-      let next;
-      let attempts = 0;
-      do {
-        next = Math.floor(Math.random() * activePlaylist.length);
-        attempts++;
-      } while (next === prev && activePlaylist.length > 1 && attempts < 10);
-      return next;
-    });
-  }, [activePlaylist]);
+    setCurrentIndex((prev) => (prev + 1) % activePlaylist.length);
+  }, [activePlaylist.length]);
 
-  // 5. Resolver URL optimizada (Streaming directo en Smart TVs para no colapsar la RAM)
+  // 5. Resolver URL optimizada (Streaming directo a Google Cloud Storage CDN sin saltos 307)
   useEffect(() => {
     let cancelled = false;
     if (currentVideo?.url) {
       getCachedVideoPlaybackUrl(currentVideo.url).then((src) => {
         if (!cancelled && src) {
-          setResolvedVideoSrc(src);
+          const directSrc = resolveDirectPromoVideoUrl(src);
+          setResolvedVideoSrc(directSrc);
         }
       });
     }
@@ -113,16 +104,16 @@ export default function BackgroundPromoVideo({
     };
   }, [currentVideo?.url, currentIndex]);
 
-  // 6. Carga y reproducción segura en un solo elemento <video> estable (Evita pantalla negra por bloqueo de hardware)
+  // 6. Carga y reproducción en elemento <video>
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !resolvedVideoSrc) return;
 
     setIsVideoPlaying(false);
+    stallCountRef.current = 0;
 
     try {
       video.muted = isMuted;
-      video.pause();
       video.src = resolvedVideoSrc;
       video.load();
 
@@ -134,7 +125,7 @@ export default function BackgroundPromoVideo({
             stallCountRef.current = 0;
           })
           .catch((err) => {
-            console.warn("[BackgroundPromoVideo] Autoplay mitigado, forzando muted...", err);
+            console.warn("[BackgroundPromoVideo] Autoplay con audio bloqueado, forzando muted...", err);
             if (videoRef.current) {
               videoRef.current.muted = true;
               videoRef.current.play()
@@ -146,9 +137,9 @@ export default function BackgroundPromoVideo({
     } catch (err) {
       console.warn("[BackgroundPromoVideo] Error al cargar fuente de video:", err);
     }
-  }, [resolvedVideoSrc, isMuted]);
+  }, [resolvedVideoSrc]);
 
-  // 7. Sincronizar estado de mute
+  // 7. Sincronizar estado de mute sin reiniciar la fuente del video
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
@@ -159,21 +150,20 @@ export default function BackgroundPromoVideo({
   }, [isMuted]);
 
   // 8. Watchdog inteligente anti-pantalla negra para Smart TVs
-  // Si el decodificador de la TV se congela o no avanza el tiempo por más de 6 segundos, salta al siguiente video automáticamente
   useEffect(() => {
     const isTV = isLowMemoryOrSmartTVDevice();
-    const intervalMs = isTV ? 3000 : 5000;
+    const intervalMs = isTV ? 4000 : 6000;
 
     const interval = setInterval(() => {
       const v = videoRef.current;
       if (!v || !resolvedVideoSrc) return;
 
-      if (!v.paused && !v.ended) {
+      if (!v.paused && !v.ended && v.readyState >= 2) {
         if (Math.abs(v.currentTime - lastTimeRef.current) < 0.1) {
           stallCountRef.current += 1;
-          // Si el video está congelado en una pantalla negra por más de 6s
-          if (stallCountRef.current >= 2) {
-            console.warn("[BackgroundPromoVideo Watchdog] Video congelado en decodificador TV, recuperando...");
+          // Si el video está congelado en una pantalla negra por más de 12s
+          if (stallCountRef.current >= 3) {
+            console.warn("[BackgroundPromoVideo Watchdog] Decodificador TV congelado, avanzando al siguiente video...");
             stallCountRef.current = 0;
             handleVideoEnded();
           }
@@ -212,7 +202,7 @@ export default function BackgroundPromoVideo({
       className="absolute inset-0 z-0 overflow-hidden bg-black select-none pointer-events-auto"
       onClick={onInteract}
     >
-      {/* Elemento de video único y persistente (evita destruir el plano de hardware en Smart TVs) */}
+      {/* Elemento de video único y persistente */}
       <video
         ref={videoRef}
         autoPlay
@@ -221,11 +211,11 @@ export default function BackgroundPromoVideo({
         preload="auto"
         onEnded={handleVideoEnded}
         onError={(e) => {
-          console.warn("[BackgroundPromoVideo] Error de decodificación o red en Smart TV, avanzando al siguiente video...", e);
+          console.warn("[BackgroundPromoVideo] Error al cargar video en Smart TV, esperando antes de avanzar...", e);
           if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
           transitionTimeoutRef.current = setTimeout(() => {
             handleVideoEnded();
-          }, 600);
+          }, 2500);
         }}
         onWaiting={() => {
           stallCountRef.current += 1;
