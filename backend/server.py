@@ -3497,8 +3497,8 @@ async def seed_default_pin_user() -> None:
 
     # Additionally, ensure there is at least one test PIN user per role.
     # Assign deterministic test PINs: 111111, 222222, 333333, ... based on role order.
-    # Can be disabled with ENABLE_TEST_PIN_SEEDING=false
-    enable_test_pin_seeding = os.environ.get("ENABLE_TEST_PIN_SEEDING", "true").strip().lower() in {
+    # Default OFF. Local/CI must set ENABLE_TEST_PIN_SEEDING=true explicitly.
+    enable_test_pin_seeding = os.environ.get("ENABLE_TEST_PIN_SEEDING", "false").strip().lower() in {
         "1",
         "true",
         "yes",

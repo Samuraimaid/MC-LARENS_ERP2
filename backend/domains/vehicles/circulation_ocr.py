@@ -20,8 +20,15 @@ import json
 import time
 import base64
 import asyncio
+import shutil
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+VISION_TIMEOUT_SEC = 8.0
+
+
+def tesseract_binary_available() -> bool:
+    return shutil.which("tesseract") is not None
 
 # Prefijos de Departamentos y Regiones de Nicaragua (Policía Nacional de Tránsito)
 NICARAGUA_DEPT_PREFIXES = [
@@ -385,8 +392,10 @@ def normalize_vin(raw_vin: Optional[str]) -> Tuple[Optional[str], float, bool]:
         
         # Caso 1: Chasis de 17 a 22 caracteres (preservar el número completo sin truncar)
         if 17 <= len(fixed) <= 22 and all(c in vin_charset for c in fixed):
-            conf = 0.98 if fixed == cand_clean else 0.90
-            return fixed, conf, False
+            substituted = fixed != cand_clean
+            conf = 0.98 if not substituted else 0.88
+            needs_review = substituted and len(fixed) == 17
+            return fixed, conf, needs_review
 
         # Caso 2: Chasis corto válido (JDM, clásicos o motos, 8 a 16 caracteres)
         if 8 <= len(fixed) < 17 and any(c.isdigit() for c in fixed) and any(c.isalpha() for c in fixed):
@@ -874,7 +883,7 @@ def _call_openai_vision(image_base64: str, api_key: str, image_back_base64: Opti
         "temperature": 0.1
     }
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=10)
+    resp = requests.post(url, headers=headers, json=payload, timeout=int(VISION_TIMEOUT_SEC))
     if resp.status_code == 200:
         data = resp.json()
         content = data["choices"][0]["message"]["content"]
@@ -1100,20 +1109,21 @@ async def process_circulation_card_v2(
             except Exception as e:
                 print(f"[OCR] Error en llamada a OpenAI Vision: {e}")
 
-        # 4. Fallback a Tesseract OCR (Linux / Docker)
-        if not raw_extracted_json:
+        # 4. Tesseract solo si vision no dio JSON y el binario existe.
+        if not raw_extracted_json and tesseract_binary_available():
             tess_text = _run_tesseract_ocr(image_base64)
             if tess_text:
                 extracted_text = f"{extracted_text}\n{tess_text}".strip()
                 engine_used = "tesseract_ocr"
-
             if image_back_base64:
                 tess_back = _run_tesseract_ocr(image_back_base64)
                 if tess_back:
                     back_extracted_text = tess_back
+        elif not raw_extracted_json:
+            print("[OCR] Tesseract omitido: binario no encontrado")
 
-        # 5. Fallback a Windows Media OCR si estamos en Windows
-        if not raw_extracted_json and not extracted_text and os.name == "nt":
+        # 5. Windows OCR solo si no hay JSON ni texto
+        if not raw_extracted_json and not extracted_text.strip() and os.name == "nt":
             try:
                 native_text = await _run_windows_sdk_ocr_on_base64(image_base64)
                 if native_text:
@@ -1235,7 +1245,7 @@ async def process_circulation_card_v2(
     type_slug, type_label = resolve_vehicle_type_slug(raw_type_slug or raw_type, norm_model)
 
     # Color normalizado
-    norm_color = raw_color or "Blanco"
+    norm_color = raw_color or ""
     if norm_color.upper() in COLOR_MAP:
         norm_color = norm_color.capitalize()
 
@@ -1243,7 +1253,8 @@ async def process_circulation_card_v2(
 
     # Registrar latencia en ms
     latency_ms = int((time.time() - start_time) * 1000)
-    print(f"[OCR v2] Procesado en {latency_ms}ms | Motor: {engine_used} | Placa: {norm_plate} | VIN: {norm_vin} | Año ({year_source}): {valid_year}")
+    empty_fields = [k for k, v in (("plate", norm_plate), ("vin", norm_vin), ("brand", norm_brand), ("model", norm_model), ("year", valid_year), ("color", norm_color)) if not v]
+    print(f"[OCR v2] {latency_ms}ms engine={engine_used} empty={empty_fields} year_source={year_source}")
 
     return {
         "vin": norm_vin or "",
@@ -1262,7 +1273,7 @@ async def process_circulation_card_v2(
         "vehicle_type_slug": type_slug,
         "tipo_carroceria": type_slug,
         "numero_motor": raw_engine or "",
-        "tipo_combustible": raw_fuel or "Gasolina",
+        "tipo_combustible": raw_fuel or "",
         "origin_country": origin_country or "Estándar",
         "version_level": version_level,
         "trim": trim,
@@ -1318,7 +1329,7 @@ def parse_circulation_card_text(raw_text: str) -> Dict[str, Any]:
                 break
 
     # Combustible
-    fuel = "Gasolina"
+    fuel = ""
     if "DIESEL" in cleaned.upper() or "GASOIL" in cleaned.upper() or "HILUX" in cleaned.upper():
         fuel = "Diésel"
 
