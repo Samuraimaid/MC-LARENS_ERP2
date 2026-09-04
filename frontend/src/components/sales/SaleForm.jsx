@@ -178,59 +178,135 @@ export function getProductVehicleCompatibility(product, vehicle) {
     String(product?.category || "").toLowerCase().includes("polarizado");
 
   if (isTintProduct) {
-    const isSedanGroup = ["sedan", "hatchback", "convertible"].includes(category);
-    const isSuvPickupGroup = [
-      "suv",
+    const isSedanVehicle = category === "sedan" || ["coupe", "convertible"].includes(category);
+    const isHatchbackVehicle = category === "hatchback";
+    const isSuvVehicle = ["suv", "station_wagon"].includes(category);
+    const isPickupVehicle = [
+      "pickup",
       "camioneta_doble_cabina",
       "camioneta_cabina_media",
       "camioneta_1_cabina",
-      "pickup",
-      "station_wagon",
     ].includes(category);
-    const isHeavyGroup = [
-      "camion_1_cabina",
-      "camion_2_cabinas",
-      "camion_carga_furgon",
+    const isVanVehicle = [
+      "van",
       "microbus_pasajeros",
       "microbus_techo_alto",
       "microbus_carga",
+    ].includes(category);
+    const isTruckVehicle = [
+      "truck",
+      "camion_1_cabina",
+      "camion_2_cabinas",
+      "camion_carga_furgon",
       "bus_mediano_coaster",
       "bus_grande_marcopolo",
     ].includes(category);
+    const isMotoVehicle = ["moto", "atv", "cuadriciclo"].includes(category);
 
+    if (isMotoVehicle) {
+      return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "No aplica a motocicletas/ATV" };
+    }
+
+    // Universal partial tint items (apply to all 4+ wheeled vehicles)
+    if (sku === "POL-DEL-001" || sku.includes("-DEL-") || name.includes("vidrios delanteros") || name.includes("solo delanteros")) {
+      return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Vidrios Delanteros)" };
+    }
+    if (sku === "POL-FRA-SUP" || sku.includes("-FRA-") || name.includes("franja") || name.includes("sunstrip")) {
+      return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Franja Parabrisas)" };
+    }
+    if (sku === "POL-LIM-001" || sku.includes("-LIM-") || name.includes("despolarizado") || name.includes("limpieza de vidrios")) {
+      return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Limpieza Vidrios)" };
+    }
+    if (sku === "POL-CSS-001" || sku.includes("-CSS-") || name.includes("sin sellado")) {
+      return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sin Parabrisas)" };
+    }
+    if (sku === "POL-VEN-001" || sku.includes("-VEN-") || name.includes("ventana individual")) {
+      return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Ventana Individual)" };
+    }
+
+    // Complete Tint Product Identification
     const isSedanTint =
+      sku === "POL-SED-COM" ||
       sku.includes("-SED-") ||
-      name.includes("sedán") ||
-      name.includes("sedan") ||
-      name.includes("automóvil") ||
-      name.includes("automovil");
+      ((name.includes("sedán") || name.includes("sedan") || name.includes("automóvil") || name.includes("automovil")) &&
+        !name.includes("suv") &&
+        !name.includes("camioneta") &&
+        !name.includes("hatchback"));
+
+    const isHatchbackTint =
+      sku === "POL-HB-COM" ||
+      sku.includes("-HB-") ||
+      name.includes("hatchback") ||
+      name.includes("compacto");
 
     const isSuvTint =
+      sku === "POL-SUV-COM" ||
       sku.includes("-SUV-") ||
-      (sku.includes("-CAM-") && (name.includes("suv") || name.includes("camioneta"))) ||
-      name.includes("suv") ||
-      name.includes("camioneta") ||
-      name.includes("pickup") ||
-      name.includes("4x4");
+      ((name.includes("suv") || name.includes("station wagon") || name.includes("todo terreno")) &&
+        !name.includes("pickup") &&
+        !name.includes("doble cabina") &&
+        !name.includes("camión"));
 
-    const isHeavyTint =
-      (sku.includes("-CAM-") && !name.includes("camioneta") && !name.includes("suv")) ||
+    const isPickupTint =
+      sku === "POL-PCK-COM" ||
+      sku.includes("-PCK-") ||
+      name.includes("pickup") ||
+      name.includes("pick-up") ||
+      name.includes("doble cabina") ||
+      name.includes("tina");
+
+    const isVanTint =
+      sku === "POL-VAN-COM" ||
+      sku.includes("-VAN-") ||
+      ((name.includes("microbús") || name.includes("microbus") || name.includes("van") || name.includes("minivan")) &&
+        !name.includes("camión") &&
+        !name.includes("camion"));
+
+    const isTruckTint =
+      sku === "POL-TRK-COM" ||
+      sku.includes("-TRK-") ||
+      (sku === "POL-CAM-COM" && (name.includes("camión") || name.includes("camion"))) ||
       name.includes("camión") ||
       name.includes("camion") ||
-      name.includes("microbús") ||
-      name.includes("microbus") ||
-      name.includes("coaster") ||
-      name.includes("bus");
+      name.includes("cabezal") ||
+      name.includes("furgón");
 
-    if (isSedanGroup) {
+    const isCamLegacyTint =
+      sku === "POL-CAM-COM" ||
+      (name.includes("camión") && name.includes("microbús"));
+
+    if (isSuvVehicle) {
+      if (isSuvTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (SUV / Station Wagon)" };
+      if (isSedanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
+      if (isHatchbackTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Hatchback" };
+      if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
+      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
+    } else if (isPickupVehicle) {
+      if (isPickupTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camioneta Pickup)" };
+      if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Station Wagon" };
+      if (isSedanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
+      if (isHatchbackTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Hatchback" };
+      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
+    } else if (isSedanVehicle) {
       if (isSedanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sedán / Auto)" };
-      if (isSuvTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
-    } else if (isSuvPickupGroup) {
-      if (isSuvTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camioneta / SUV)" };
-      if (isSedanTint || isHeavyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
-    } else if (isHeavyGroup) {
-      if (isHeavyTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camión / Bus)" };
-      if (isSedanTint || isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };
+      if (isHatchbackTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Auto Compacto)" };
+      if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
+      if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
+      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
+    } else if (isHatchbackVehicle) {
+      if (isHatchbackTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Hatchback / Compacto)" };
+      if (isSedanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sedán / Auto)" };
+      if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
+      if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
+      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
+    } else if (isVanVehicle) {
+      if (isVanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Microbús / Van)" };
+      if (isCamLegacyTint || isTruckTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Microbús / Camión)" };
+      if (isSedanTint || isHatchbackTint || isSuvTint || isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };
+    } else if (isTruckVehicle) {
+      if (isTruckTint || isCamLegacyTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camión / Cabezal)" };
+      if (isVanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Microbús / Van" };
+      if (isSedanTint || isHatchbackTint || isSuvTint || isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };
     }
 
     return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible" };
@@ -4171,17 +4247,17 @@ export default function SaleForm({
                           loading="lazy"
                         />
                       </div>
-                      {/* Zoom flotante que abarca el 100% del ancho de la columna */}
-                      <div className="fixed sm:absolute z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 bottom-auto sm:bottom-full sm:-right-4 sm:-left-auto sm:w-[min(92vw,720px)] mb-3 p-4 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
-                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-5 flex items-center justify-center min-h-[220px] max-h-[340px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
+                      {/* Zoom flotante centrado y proporcionado al 100% sin recortes */}
+                      <div className="fixed inset-x-4 bottom-24 sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-w-[calc(100vw-2rem)] z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 mb-3 p-4 bg-white/95 dark:bg-zinc-950/95 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
+                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[180px] max-h-[260px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
                           <img
                             src={selImg.src}
                             alt={vLabel}
-                            className="max-h-[300px] w-full object-contain drop-shadow-2xl"
+                            className="max-h-[220px] max-w-full w-auto object-contain mx-auto drop-shadow-xl"
                           />
                         </div>
-                        <div className="flex items-center justify-between w-full px-2 text-xs">
-                          <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate">{vLabel || "Vehículo"}</p>
+                        <div className="flex items-center justify-between w-full px-1 text-xs">
+                          <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate pr-2">{vLabel || "Vehículo"}</p>
                           <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800 shrink-0">
                             Vista Ampliada 100%
                           </span>

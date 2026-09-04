@@ -1163,7 +1163,7 @@
       ]
     },
     "AUDI::Q3 (8U) [2011-2018]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1174,7 +1174,7 @@
       ]
     },
     "AUDI::Q3 (F3) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1184,7 +1184,7 @@
       ]
     },
     "AUDI::Q4 e-tron [2021-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1193,7 +1193,7 @@
       ]
     },
     "AUDI::Q5 (8R) [2008-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1205,7 +1205,7 @@
       ]
     },
     "AUDI::Q5 (FY) [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1216,7 +1216,7 @@
       ]
     },
     "AUDI::Q7 (4L) [2005-2015]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1227,7 +1227,7 @@
       ]
     },
     "AUDI::Q7 (4M) [2015-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1239,7 +1239,7 @@
       ]
     },
     "AUDI::Q8 (4M) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1426,7 +1426,7 @@
       ]
     },
     "BAIC::Beijing X25 [2015-2019]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1453,7 +1453,7 @@
       ]
     },
     "BAIC::Beijing X7 [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1961,7 +1961,7 @@
       ]
     },
     "BMW::X1 (E84) [2009-2015]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1972,7 +1972,7 @@
       ]
     },
     "BMW::X1 (F48) [2015-2022]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1983,7 +1983,7 @@
       ]
     },
     "BMW::X1 (U11) [2022-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -1994,7 +1994,7 @@
       ]
     },
     "BMW::X2 (F39) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2005,7 +2005,7 @@
       ]
     },
     "BMW::X3 (E83) [2003-2010]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2016,7 +2016,7 @@
       ]
     },
     "BMW::X3 (F25) [2010-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2027,7 +2027,7 @@
       ]
     },
     "BMW::X3 (G01) [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2038,7 +2038,7 @@
       ]
     },
     "BMW::X4 (F26) [2014-2018]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2048,7 +2048,7 @@
       ]
     },
     "BMW::X4 (G02) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2058,7 +2058,7 @@
       ]
     },
     "BMW::X5 (E53) [1999-2006]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2068,7 +2068,7 @@
       ]
     },
     "BMW::X5 (E70) [2006-2013]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2079,7 +2079,7 @@
       ]
     },
     "BMW::X5 (F15) [2013-2018]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2091,7 +2091,7 @@
       ]
     },
     "BMW::X5 (G05) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2102,7 +2102,7 @@
       ]
     },
     "BMW::X6 (E71) [2008-2014]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2112,7 +2112,7 @@
       ]
     },
     "BMW::X6 (F16) [2014-2019]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2122,7 +2122,7 @@
       ]
     },
     "BMW::X6 (G06) [2019-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2132,7 +2132,7 @@
       ]
     },
     "BMW::X7 (G07) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2219,7 +2219,7 @@
       ]
     },
     "BMW::iX (I20) [2021-Presente]": {
-      "default_silhouette_slug": "hatchback",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -2228,7 +2228,7 @@
       ]
     },
     "BMW::iX3 [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -3800,7 +3800,7 @@
       ]
     },
     "CHEVROLET::Colorado (1ra Gen) [2004-2012]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -3810,7 +3810,7 @@
       ]
     },
     "CHEVROLET::Colorado (2da Gen) [2012-2022]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -3821,7 +3821,7 @@
       ]
     },
     "CHEVROLET::Colorado (3ra Gen) [2023-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4160,7 +4160,7 @@
       ]
     },
     "CHEVROLET::Silverado (C/K) [1988-1998]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4170,7 +4170,7 @@
       ]
     },
     "CHEVROLET::Silverado (GMT800) [1999-2007]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4180,7 +4180,7 @@
       ]
     },
     "CHEVROLET::Silverado (GMT900) [2007-2013]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4190,7 +4190,7 @@
       ]
     },
     "CHEVROLET::Silverado (K2XX) [2014-2018]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4200,7 +4200,7 @@
       ]
     },
     "CHEVROLET::Silverado (T1XX) [2019-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4212,7 +4212,7 @@
       ]
     },
     "CHEVROLET::Silverado EV [2024-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4221,7 +4221,7 @@
       ]
     },
     "CHEVROLET::Silverado HD [2001-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4269,7 +4269,7 @@
       ]
     },
     "CHEVROLET::Suburban [1980-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -4279,7 +4279,7 @@
       ]
     },
     "CHEVROLET::Tahoe [1995-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -5351,7 +5351,7 @@
       ]
     },
     "DAEWOO::Musso Sports (rebadge SsangYong) [2002-2005]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -5826,7 +5826,7 @@
       ]
     },
     "DAIHATSU::Terios (1ra Gen J100) [1997-2006]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -5835,7 +5835,7 @@
       ]
     },
     "DAIHATSU::Terios (2da Gen J200) [2006-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -5844,7 +5844,7 @@
       ]
     },
     "DAIHATSU::Terios (3ra Gen) [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -6489,7 +6489,7 @@
       ]
     },
     "FAW::Besturn X40 [2017-2021]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7555,7 +7555,7 @@
       ]
     },
     "FORD::Expedition (1ra Gen) [1997-2002]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7565,7 +7565,7 @@
       ]
     },
     "FORD::Expedition (2da Gen) [2003-2006]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7575,7 +7575,7 @@
       ]
     },
     "FORD::Expedition (3ra Gen) [2007-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7584,7 +7584,7 @@
       ]
     },
     "FORD::Expedition (4ta Gen) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7672,7 +7672,7 @@
       ]
     },
     "FORD::F-150 (10ma Gen) [1997-2004]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7683,7 +7683,7 @@
       ]
     },
     "FORD::F-150 (11va Gen) [2004-2008]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7694,7 +7694,7 @@
       ]
     },
     "FORD::F-150 (12va Gen) [2009-2014]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7706,7 +7706,7 @@
       ]
     },
     "FORD::F-150 (13va Gen) [2015-2020]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7717,7 +7717,7 @@
       ]
     },
     "FORD::F-150 (14va Gen) [2021-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7729,7 +7729,7 @@
       ]
     },
     "FORD::F-150 Lightning [2022-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -7738,7 +7738,7 @@
       ]
     },
     "FORD::F-150 Raptor (SVT/Raptor) [2010-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8288,7 +8288,7 @@
       ]
     },
     "FORD::Ranger (1ra Gen) [1983-1992]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8299,7 +8299,7 @@
       ]
     },
     "FORD::Ranger (2da Gen) [1993-1997]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8309,7 +8309,7 @@
       ]
     },
     "FORD::Ranger (3ra Gen) [1998-2011]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8319,7 +8319,7 @@
       ]
     },
     "FORD::Ranger (LatAm variantes) [1998-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8328,7 +8328,7 @@
       ]
     },
     "FORD::Ranger (T6 1ra Gen global) [2011-2022]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8338,7 +8338,7 @@
       ]
     },
     "FORD::Ranger (T6 2da Gen) [2022-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8348,7 +8348,7 @@
       ]
     },
     "FORD::Ranger EV (en desarrollo) [2025-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8357,7 +8357,7 @@
       ]
     },
     "FORD::Ranger Raptor [2019-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8931,7 +8931,7 @@
       ]
     },
     "GEELY::Azkarra (Boyue internacional) [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -8991,7 +8991,7 @@
       ]
     },
     "GEELY::Coolray (Binyue) [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9028,7 +9028,7 @@
       ]
     },
     "GEELY::Emgrand GL [2016-2023]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9048,7 +9048,7 @@
       ]
     },
     "GEELY::Emgrand X7 (Vision X6) [2016-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9229,7 +9229,7 @@
       ]
     },
     "GEELY::Vision X3 (hatch/crossover) [2017-Presente]": {
-      "default_silhouette_slug": "hatchback",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9878,7 +9878,7 @@
       ]
     },
     "GREAT WALL::Haval Big Dog (Dargo) [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9897,7 +9897,7 @@
       ]
     },
     "GREAT WALL::Haval H3 [2005-2014]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9907,7 +9907,7 @@
       ]
     },
     "GREAT WALL::Haval H4 [2018-2021]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9917,7 +9917,7 @@
       ]
     },
     "GREAT WALL::Haval H5 [2010-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9958,7 +9958,7 @@
       ]
     },
     "GREAT WALL::Haval H7 [2015-2021]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9967,7 +9967,7 @@
       ]
     },
     "GREAT WALL::Haval H8 [2013-2017]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9976,7 +9976,7 @@
       ]
     },
     "GREAT WALL::Haval H9 [2014-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9986,7 +9986,7 @@
       ]
     },
     "GREAT WALL::Haval Hybrid Series [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -9995,7 +9995,7 @@
       ]
     },
     "GREAT WALL::Haval Jolion [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10005,7 +10005,7 @@
       ]
     },
     "GREAT WALL::Haval Monster [2021-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10077,7 +10077,7 @@
       ]
     },
     "GREAT WALL::Poer (P-Series) [2019-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10087,7 +10087,7 @@
       ]
     },
     "GREAT WALL::Poer King Kong [2021-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10097,7 +10097,7 @@
       ]
     },
     "GREAT WALL::Shanhai Cannon (premium pickup) [2022-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10208,7 +10208,7 @@
       ]
     },
     "GREAT WALL::Wingle 3 [2006-2011]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10218,7 +10218,7 @@
       ]
     },
     "GREAT WALL::Wingle 5 [2009-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10228,7 +10228,7 @@
       ]
     },
     "GREAT WALL::Wingle 6 [2014-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10238,7 +10238,7 @@
       ]
     },
     "GREAT WALL::Wingle 7 [2018-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10611,7 +10611,7 @@
       ]
     },
     "HINO::Hino Ranger (1ra Gen moderna) [1980-1989]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10620,7 +10620,7 @@
       ]
     },
     "HINO::Hino Ranger (2da Gen) [1989-2001]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10629,7 +10629,7 @@
       ]
     },
     "HINO::Hino Ranger (3ra Gen) [2001-2015]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10638,7 +10638,7 @@
       ]
     },
     "HINO::Hino Ranger 2 (pre-300) [1980-1989]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -10783,7 +10783,7 @@
       ]
     },
     "HOLDEN::Colorado [2008-2020]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12066,7 +12066,7 @@
       ]
     },
     "HONDA::Ridgeline (1ra Gen YK1) [2005-2014]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12075,7 +12075,7 @@
       ]
     },
     "HONDA::Ridgeline (2da Gen YK2) [2017-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12084,7 +12084,7 @@
       ]
     },
     "HONDA::Ridgeline Baja Race Truck (competición) [2008-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12371,7 +12371,7 @@
       ]
     },
     "HYUNDAI::Accent (X3) [1994-2000]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12537,7 +12537,7 @@
       ]
     },
     "HYUNDAI::Excel (X1) [1985-1989]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -12547,7 +12547,7 @@
       ]
     },
     "HYUNDAI::Excel (X2) [1989-1994]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13330,7 +13330,7 @@
       ]
     },
     "HYUNDAI::Veracruz / ix55 [2006-2015]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13441,7 +13441,7 @@
       ]
     },
     "HYUNDAI::ix35 (mercados específicos) [2009-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13562,7 +13562,7 @@
       ]
     },
     "INFINITI::Q40 [2014-2015]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13571,7 +13571,7 @@
       ]
     },
     "INFINITI::Q45 (F50) [2002-2006]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13580,7 +13580,7 @@
       ]
     },
     "INFINITI::Q45 (G50) [1989-1996]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13589,7 +13589,7 @@
       ]
     },
     "INFINITI::Q45 (Y33) [1997-2001]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13598,7 +13598,7 @@
       ]
     },
     "INFINITI::Q50 (1ra Gen) [2013-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13628,7 +13628,7 @@
       ]
     },
     "INFINITI::Q70 (Y51, antes M) [2010-2019]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -13797,7 +13797,7 @@
       ]
     },
     "KIA::Bongo II / Bongo Frontier [1990-2004]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14088,7 +14088,7 @@
       ]
     },
     "KIA::Kia Titan (mercados específicos) [1990s-2000s]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14478,7 +14478,7 @@
       ]
     },
     "KIA::Telluride [2019-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14704,7 +14704,7 @@
       ]
     },
     "NISSAN::Frontier / Navara (D21) [1986-1997]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14714,7 +14714,7 @@
       ]
     },
     "NISSAN::Frontier / Navara (D22) [1997-2004]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14725,7 +14725,7 @@
       ]
     },
     "NISSAN::Frontier / Navara (D23) [2015-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14735,7 +14735,7 @@
       ]
     },
     "NISSAN::Frontier / Navara (D40) [2004-2015]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14867,7 +14867,7 @@
       ]
     },
     "NISSAN::Patrol (Y60) [1987-1997]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14877,7 +14877,7 @@
       ]
     },
     "NISSAN::Patrol (Y61) [1997-2016]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -14887,7 +14887,7 @@
       ]
     },
     "NISSAN::Patrol (Y62) [2010-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -16057,7 +16057,7 @@
       ]
     },
     "RENAULT::Clio I (X57) [1990-1998]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -16069,7 +16069,7 @@
       ]
     },
     "RENAULT::Clio II (X65) [1998-2012]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -17343,7 +17343,7 @@
       ]
     },
     "SSANGYONG::Musso Sports [2018-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -18637,7 +18637,7 @@
       ]
     },
     "TOYOTA::Hilux (AN10/20) [2004-2015]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18650,7 +18650,7 @@
       ]
     },
     "TOYOTA::Hilux (AN120) [2015-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18661,7 +18661,7 @@
       ]
     },
     "TOYOTA::Hilux (N140-170) [1997-2005]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18672,7 +18672,7 @@
       ]
     },
     "TOYOTA::Hilux (N140/N150/N160/N170) [1997-2005]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "alias_generacion",
       "classification_source": "override",
@@ -18681,7 +18681,7 @@
       ]
     },
     "TOYOTA::Hilux (N30/40) [1979-1983]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18691,7 +18691,7 @@
       ]
     },
     "TOYOTA::Hilux (N50/60) [1983-1988]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18701,7 +18701,7 @@
       ]
     },
     "TOYOTA::Hilux (N80-110) [1988-1997]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18712,7 +18712,7 @@
       ]
     },
     "TOYOTA::Hilux GR Sport [2019-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -18721,7 +18721,7 @@
       ]
     },
     "TOYOTA::Hilux Vigo (nombre regional) [2004-2015]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "alias_generacion",
       "classification_source": "override",
@@ -18839,7 +18839,7 @@
       ]
     },
     "TOYOTA::Land Cruiser 70 Pickup [1984-Presente]": {
-      "default_silhouette_slug": "camioneta-1-cabina",
+      "default_silhouette_slug": "suv",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19177,7 +19177,7 @@
       ]
     },
     "TOYOTA::Tacoma (1ra gen) [1995-2004]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19188,7 +19188,7 @@
       ]
     },
     "TOYOTA::Tacoma (2da gen) [2005-2015]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19198,7 +19198,7 @@
       ]
     },
     "TOYOTA::Tacoma (3ra gen) [2015-2023]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19208,7 +19208,7 @@
       ]
     },
     "TOYOTA::Tacoma (4ta gen) [2024-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19263,7 +19263,7 @@
       ]
     },
     "TOYOTA::Tundra (1ra gen) [1999-2006]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19273,7 +19273,7 @@
       ]
     },
     "TOYOTA::Tundra (2da gen) [2007-2021]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19284,7 +19284,7 @@
       ]
     },
     "TOYOTA::Tundra (3ra gen) [2021-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": "pickup",
       "catalog_status": "validated",
       "classification_source": "override",
@@ -19597,7 +19597,7 @@
       ]
     },
     "VOLKSWAGEN::Amarok (1ra gen) [2010-2022]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -19608,7 +19608,7 @@
       ]
     },
     "VOLKSWAGEN::Amarok (2da gen) [2022-Presente]": {
-      "default_silhouette_slug": "camioneta-cabina-y-media",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -19629,7 +19629,7 @@
       ]
     },
     "VOLKSWAGEN::Atlas / Teramont [2017-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -20216,7 +20216,7 @@
       ]
     },
     "VOLKSWAGEN::T-Cross [2019-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -20281,7 +20281,7 @@
       ]
     },
     "VOLKSWAGEN::Taos [2020-Presente]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "suv",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -20878,7 +20878,7 @@
       ]
     },
     "ZOTYE::T600 Sport [2016-2021]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",
@@ -20888,7 +20888,7 @@
       ]
     },
     "ZOTYE::T600 [2013-2021]": {
-      "default_silhouette_slug": "sedan",
+      "default_silhouette_slug": "camioneta_doble_cabina",
       "body_family": null,
       "catalog_status": "auto",
       "classification_source": "override",

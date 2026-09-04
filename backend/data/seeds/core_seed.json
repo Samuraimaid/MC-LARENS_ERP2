@@ -1847,7 +1847,10 @@
         "compatibility": {
           "vehicle_types": [
             "Sedán",
-            "Hatchback"
+            "Automóvil",
+            "Turismo",
+            "Coupé",
+            "sedan"
           ]
         },
         "cost": 40.0,
@@ -1860,11 +1863,43 @@
         "installation_required": true,
         "installation_time_minutes": 120,
         "is_active": true,
-        "name": "Polarizado Completo Sedán",
+        "name": "Polarizado Completo Sedán / Automóvil",
         "polarizado_type": "3M FX Premium 20%",
         "price": 120.0,
         "product_type": "service",
         "sku": "POL-SED-COM",
+        "subcategory": "Polarizado Completo",
+        "warranty_months": 60,
+        "window_options": [
+          "completo"
+        ]
+      },
+      {
+        "product_id": "prod_pol_002_hb",
+        "brand": "3M",
+        "category": "polarizados",
+        "compatibility": {
+          "vehicle_types": [
+            "Hatchback",
+            "Compacto",
+            "hatchback"
+          ]
+        },
+        "cost": 38.0,
+        "created_at": "2026-03-28T15:09:25.801610+00:00",
+        "description": "Polarizado profesional película 20% todos los vidrios para autos compactos y hatchback",
+        "images": [
+          "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=400"
+        ],
+        "installation_price": 0,
+        "installation_required": true,
+        "installation_time_minutes": 110,
+        "is_active": true,
+        "name": "Polarizado Completo Hatchback / Compacto",
+        "polarizado_type": "3M FX Premium 20%",
+        "price": 105.0,
+        "product_type": "service",
+        "sku": "POL-HB-COM",
         "subcategory": "Polarizado Completo",
         "warranty_months": 60,
         "window_options": [
@@ -1878,25 +1913,108 @@
         "compatibility": {
           "vehicle_types": [
             "SUV",
-            "Camioneta Doble Cabina",
-            "Camioneta 1 Cabina"
+            "Station Wagon",
+            "Crossover",
+            "Todo Terreno",
+            "Jeep",
+            "Rural",
+            "Camioneta Cerrada",
+            "suv",
+            "station_wagon"
           ]
         },
-        "cost": 55.0,
+        "cost": 50.0,
         "created_at": "2026-03-28T15:09:25.801612+00:00",
-        "description": "Polarizado profesional película 20% todos los vidrios SUV grande",
+        "description": "Polarizado profesional película 20% todos los vidrios SUV y camioneta station wagon",
         "images": [
           "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=400"
         ],
         "installation_price": 0,
         "installation_required": true,
-        "installation_time_minutes": 180,
+        "installation_time_minutes": 150,
         "is_active": true,
-        "name": "Polarizado Completo SUV/Camioneta",
+        "name": "Polarizado Completo SUV / Station Wagon",
         "polarizado_type": "3M FX Premium 20%",
-        "price": 180.0,
+        "price": 160.0,
         "product_type": "service",
         "sku": "POL-SUV-COM",
+        "subcategory": "Polarizado Completo",
+        "warranty_months": 60,
+        "window_options": [
+          "completo"
+        ]
+      },
+      {
+        "product_id": "prod_pol_002_pck",
+        "brand": "3M",
+        "category": "polarizados",
+        "compatibility": {
+          "vehicle_types": [
+            "Pickup",
+            "Camioneta Doble Cabina",
+            "Camioneta Cabina y Media",
+            "Camioneta 1 Cabina",
+            "pickup",
+            "camioneta_doble_cabina",
+            "camioneta_cabina_media",
+            "camioneta_1_cabina"
+          ]
+        },
+        "cost": 45.0,
+        "created_at": "2026-03-28T15:09:25.801615+00:00",
+        "description": "Polarizado profesional película 20% todos los vidrios para camionetas pickup",
+        "images": [
+          "https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=400"
+        ],
+        "installation_price": 0,
+        "installation_required": true,
+        "installation_time_minutes": 130,
+        "is_active": true,
+        "name": "Polarizado Completo Camioneta Pickup",
+        "polarizado_type": "3M FX Premium 20%",
+        "price": 140.0,
+        "product_type": "service",
+        "sku": "POL-PCK-COM",
+        "subcategory": "Polarizado Completo",
+        "warranty_months": 60,
+        "window_options": [
+          "completo"
+        ]
+      },
+      {
+        "product_id": "prod_pol_003_van",
+        "brand": "3M",
+        "category": "polarizados",
+        "compatibility": {
+          "vehicle_types": [
+            "Microbús",
+            "Van",
+            "Minivan",
+            "Techo Alto",
+            "Panel",
+            "Microbús Pasajeros",
+            "Microbús Carga",
+            "van",
+            "microbus_pasajeros",
+            "microbus_techo_alto",
+            "microbus_carga"
+          ]
+        },
+        "cost": 65.0,
+        "created_at": "2026-03-28T15:09:25.801620+00:00",
+        "description": "Polarizado profesional película 20% para microbuses de pasajeros, vans y paneles",
+        "images": [
+          "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400"
+        ],
+        "installation_price": 0,
+        "installation_required": true,
+        "installation_time_minutes": 200,
+        "is_active": true,
+        "name": "Polarizado Completo Microbús / Van",
+        "polarizado_type": "3M FX Premium 20%",
+        "price": 200.0,
+        "product_type": "service",
+        "sku": "POL-VAN-COM",
         "subcategory": "Polarizado Completo",
         "warranty_months": 60,
         "window_options": [
@@ -1909,28 +2027,33 @@
         "category": "polarizados",
         "compatibility": {
           "vehicle_types": [
-            "Camión Pequeño",
-            "Camión Mediano",
-            "Camión Grande",
-            "Microbús Pasajeros",
-            "Microbús Carga"
+            "Camión",
+            "Cabezal",
+            "Tracto",
+            "Camión 1 Cabina",
+            "Camión 2 Cabinas",
+            "Camión Carga Furgón",
+            "truck",
+            "camion_1_cabina",
+            "camion_2_cabinas",
+            "camion_carga_furgon"
           ]
         },
-        "cost": 80.0,
+        "cost": 60.0,
         "created_at": "2026-03-28T15:09:25.801622+00:00",
-        "description": "Polarizado profesional para camiones y microbuses",
+        "description": "Polarizado profesional para cabinas de camiones medianos, pesados y cabezales",
         "images": [
-          "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400"
+          "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400"
         ],
         "installation_price": 0,
         "installation_required": true,
-        "installation_time_minutes": 240,
+        "installation_time_minutes": 180,
         "is_active": true,
-        "name": "Polarizado Completo Camión/Microbús",
+        "name": "Polarizado Completo Camión / Cabezal",
         "polarizado_type": "3M FX Premium 20%",
-        "price": 250.0,
+        "price": 180.0,
         "product_type": "service",
-        "sku": "POL-CAM-COM",
+        "sku": "POL-TRK-COM",
         "subcategory": "Polarizado Completo",
         "warranty_months": 60,
         "window_options": [

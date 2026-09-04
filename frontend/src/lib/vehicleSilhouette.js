@@ -25,8 +25,8 @@ export function getVehicleImageUrl(imagePath) {
 
 
 export const VEHICLE_CATEGORIES = [
-
   { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
+  { id: "hatchback", label: "Hatchback / Compacto", shortLabel: "Hatchback", image: "/vehicles/clean_hatchback.png" },
   { id: "suv", label: "SUV / Crossover 4x4", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png" },
   { id: "camioneta_doble_cabina", label: "Camioneta Doble Cabina", shortLabel: "Doble Cabina", image: "/vehicles/clean_camioneta_doble_cabina.png" },
   { id: "camioneta_cabina_media", label: "Camioneta Cabina y Media", shortLabel: "Cabina y Media", image: "/vehicles/clean_camioneta_cabina_media.png" },
@@ -40,30 +40,64 @@ export const VEHICLE_CATEGORIES = [
   { id: "microbus_carga", label: "Microbús Panel de Carga", shortLabel: "Panel Carga", image: "/vehicles/clean_microbus_carga.png" },
   { id: "bus_mediano_coaster", label: "Bus Mediano (Estilo Coaster)", shortLabel: "Bus Coaster", image: "/vehicles/clean_bus_mediano_coaster.png" },
   { id: "bus_grande_marcopolo", label: "Bus Grande (Estilo Marcopolo)", shortLabel: "Bus Grande", image: "/vehicles/clean_bus_grande_marcopolo.png" },
+  { id: "moto", label: "Motocicleta / Moto", shortLabel: "Moto", image: "/vehicles/clean_default.png" },
 ];
 
 const KNOWN_CATEGORIES = new Set(VEHICLE_CATEGORIES.map((c) => c.id));
 
 const CATEGORY_ALIASES = {
-  hatchback: "sedan",
+  hatchback: "hatchback",
+  compacto: "hatchback",
+  hb: "hatchback",
   coupe: "sedan",
   coupé: "sedan",
   convertible: "sedan",
   cabriolet: "sedan",
+  automovil: "sedan",
+  automóvil: "sedan",
+  turismo: "sedan",
   pickup: "camioneta_doble_cabina",
   "pick-up": "camioneta_doble_cabina",
   "pickup-doble-cabina": "camioneta_doble_cabina",
+  "camioneta-doble-cabina": "camioneta_doble_cabina",
+  "camioneta_doble_cabina": "camioneta_doble_cabina",
   "pickup-cabina-media": "camioneta_cabina_media",
+  "camioneta-cabina-y-media": "camioneta_cabina_media",
+  "camioneta_cabina_media": "camioneta_cabina_media",
   "pickup-1-cabina": "camioneta_1_cabina",
+  "camioneta-1-cabina": "camioneta_1_cabina",
+  "camioneta_1_cabina": "camioneta_1_cabina",
+  "station-wagon": "station_wagon",
+  "station wagon": "station_wagon",
+  "st-wagon": "station_wagon",
+  "st/wagon": "suv",
+  "st wagon": "suv",
+  "todo terreno": "suv",
+  "todo-terreno": "suv",
+  "todo_terreno": "suv",
+  jeep: "suv",
+  varu: "suv",
+  rural: "suv",
+  cerrada: "suv",
+  crossover: "suv",
   furgon: "microbus_carga",
   furgón: "microbus_carga",
   panel: "microbus_carga",
   minivan: "microbus_pasajeros",
   minibus: "microbus_pasajeros",
   minibús: "microbus_pasajeros",
+  van: "microbus_pasajeros",
   camion: "camion_1_cabina",
   camión: "camion_1_cabina",
+  truck: "camion_1_cabina",
+  cabezal: "camion_1_cabina",
+  tracto: "camion_1_cabina",
   bus: "bus_mediano_coaster",
+  moto: "moto",
+  motocicleta: "moto",
+  motoneta: "moto",
+  cuadriciclo: "moto",
+  atv: "moto",
 };
 
 const BODY_DISTINGUISHING_TOKENS = {
@@ -220,7 +254,9 @@ export function findMatchingVehicleBlueprint(vehicle) {
   }
 
   // 2. TIER 2: Fallback to Master Blueprint Index
-  const blueprints = masterBlueprintCatalog?.blueprints || [];
+  const blueprints = Array.isArray(masterBlueprintCatalog)
+    ? masterBlueprintCatalog
+    : (masterBlueprintCatalog?.blueprints || Object.values(masterBlueprintCatalog || {}));
   if (!blueprints.length) return null;
 
   const brandMatches = blueprints.filter((b) => {
@@ -290,7 +326,7 @@ export function findMatchingVehicleBlueprint(vehicle) {
 export function resolveVehicleCategory(vehicle) {
   if (!vehicle) return "sedan";
 
-  // 1. Direct assigned slug validation
+  // 1. Direct assigned slug validation (e.g. from circulation OCR or vehicle profile)
   const directSlug = String(
     vehicle.vehicle_type_slug ||
     vehicle.type ||
@@ -302,20 +338,11 @@ export function resolveVehicleCategory(vehicle) {
   if (KNOWN_CATEGORIES.has(directSlug)) return directSlug;
   if (CATEGORY_ALIASES[directSlug]) return CATEGORY_ALIASES[directSlug];
 
-  // 1.1 Match from 8,692-blueprint Master Engineering Catalog
-  const matchedBp = findMatchingVehicleBlueprint(vehicle);
-  if (matchedBp?.category && KNOWN_CATEGORIES.has(matchedBp.category)) {
-    return matchedBp.category;
-  }
-  if (matchedBp?.category && CATEGORY_ALIASES[matchedBp.category]) {
-    return CATEGORY_ALIASES[matchedBp.category];
-  }
-
   const brand = String(vehicle.brand || "").trim().toUpperCase();
   const descriptor = String(vehicle.descriptor || vehicle.model || "").trim();
   const normBrand = brand.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 
-  // 2. Exact match in ERP Vehicle Descriptor Catalog
+  // 2. Exact match in ERP Curated Vehicle Descriptor Catalog
   if (normBrand && descriptor) {
     const key = `${normBrand}::${descriptor}`;
     const catalogSlug = vehicleDescriptorTypes.entries?.[key]?.default_silhouette_slug;
@@ -334,6 +361,12 @@ export function resolveVehicleCategory(vehicle) {
         const entryDesc = key.slice(normBrand.length + 2).toUpperCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
         if (entryDesc.includes(modelToken) || entryDesc.startsWith(modelToken)) {
           const slug = String(profile?.default_silhouette_slug || "").trim();
+          if (KNOWN_CATEGORIES.has(slug)) return slug;
+          if (CATEGORY_ALIASES[slug]) return CATEGORY_ALIASES[slug];
+        }
+      }
+    }
+  }
           if (KNOWN_CATEGORIES.has(slug)) return slug;
           if (CATEGORY_ALIASES[slug]) return CATEGORY_ALIASES[slug];
         }
@@ -650,7 +683,53 @@ export function resolveVehicleCategory(vehicle) {
     return "suv";
   }
 
-  // 4.14 Default -> Sedán / Automóvil / Hatchback (Corolla, Civic, Yaris, Sentra, Elantra, etc.)
+  // 4.14 Hatchback / Compacto (Picanto, Spark, March, Swift, Golf, Polo, Fit, i10, etc.)
+  if (
+    text.includes("hatchback") ||
+    text.includes("compacto") ||
+    text.includes("hb") ||
+    text.includes("picanto") ||
+    text.includes("spark") ||
+    text.includes("march") ||
+    text.includes("swift") ||
+    text.includes("i10") ||
+    text.includes("grand i10") ||
+    text.includes("golf") ||
+    text.includes("polo") ||
+    text.includes("fit") ||
+    text.includes("agya") ||
+    text.includes("kwid") ||
+    text.includes("sandero") ||
+    text.includes("beat") ||
+    text.includes("yaris hb") ||
+    text.includes("yaris hatchback")
+  ) {
+    return "hatchback";
+  }
+
+  // 4.15 Motocicleta / Moto / ATV
+  if (
+    text.includes("moto") ||
+    text.includes("motocicleta") ||
+    text.includes("scooter") ||
+    text.includes("cuadriciclo") ||
+    text.includes("atv") ||
+    text.includes("pulsar") ||
+    text.includes("boxer")
+  ) {
+    return "moto";
+  }
+
+  // 5. Match from Master Engineering Blueprint Catalog as fallback
+  const matchedBp = findMatchingVehicleBlueprint(vehicle);
+  if (matchedBp?.category && KNOWN_CATEGORIES.has(matchedBp.category)) {
+    return matchedBp.category;
+  }
+  if (matchedBp?.category && CATEGORY_ALIASES[matchedBp.category]) {
+    return CATEGORY_ALIASES[matchedBp.category];
+  }
+
+  // 6. Default -> Sedán / Automóvil (Corolla, Civic, Yaris, Sentra, Elantra, etc.)
   return "sedan";
 }
 
