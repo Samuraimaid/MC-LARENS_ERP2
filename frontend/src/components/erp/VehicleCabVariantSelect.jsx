@@ -9,23 +9,28 @@ export function VehicleCabVariantSelect({
   disabled = false,
   className = "",
   hint = "Selecciona el tipo de cabina para mostrar la silueta correcta.",
+  showLabel = true,
 }) {
   return (
     <div className={className}>
-      <Label>Tipo de cabina *</Label>
+      {showLabel && (
+        <div className="flex items-center justify-between min-h-[18px] mb-1.5">
+          <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Tipo de cabina *</Label>
+        </div>
+      )}
       <Select value={value || ""} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger>
+        <SelectTrigger className="h-9 text-xs">
           <SelectValue placeholder="Seleccionar cabina" />
         </SelectTrigger>
         <SelectContent>
           {VEHICLE_CAB_VARIANTS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={option.value} className="text-xs">
               {option.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+      {hint && <p className="text-[10px] text-muted-foreground mt-1">{hint}</p>}
     </div>
   );
 }

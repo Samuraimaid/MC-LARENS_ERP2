@@ -161,12 +161,14 @@ export default function CustomerVehicleFormTabs({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
           {/* Columna 1: Tipo de Cliente */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Tipo de Cliente *</Label>
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Tipo de Cliente *</Label>
+            </div>
             <Select
               value={formData.customer_type}
               onValueChange={(value) => updateForm({ customer_type: value, tax_id: "" })}
             >
-              <SelectTrigger data-testid={customerTypeTestId} className="h-9">
+              <SelectTrigger data-testid={customerTypeTestId} className="h-9 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -186,7 +188,7 @@ export default function CustomerVehicleFormTabs({
 
           {/* Columna 2: Cédula o RUC */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[18px]">
               <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{isCompany ? "RUC *" : "Cédula"}</Label>
               <span className="text-[10px] text-muted-foreground">
                 {isCompany ? "Formato: J0000000000000" : "Formato: 001-000000-0000A"}
@@ -210,7 +212,9 @@ export default function CustomerVehicleFormTabs({
           {/* Nombres / Empresa */}
           {isCompany ? (
             <div className="space-y-1.5 md:col-span-2">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombre de la Empresa *</Label>
+              <div className="flex items-center justify-between min-h-[18px]">
+                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombre de la Empresa *</Label>
+              </div>
               <Input
                 value={formData.first_name}
                 onChange={(e) => updateForm({ first_name: e.target.value, last_name: "" })}
@@ -223,7 +227,9 @@ export default function CustomerVehicleFormTabs({
           ) : (
             <>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombres *</Label>
+                <div className="flex items-center justify-between min-h-[18px]">
+                  <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombres *</Label>
+                </div>
                 <Input
                   value={formData.first_name}
                   onChange={(e) => updateForm({ first_name: e.target.value })}
@@ -234,7 +240,9 @@ export default function CustomerVehicleFormTabs({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Apellidos *</Label>
+                <div className="flex items-center justify-between min-h-[18px]">
+                  <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Apellidos *</Label>
+                </div>
                 <Input
                   value={formData.last_name}
                   onChange={(e) => updateForm({ last_name: e.target.value })}
@@ -249,7 +257,7 @@ export default function CustomerVehicleFormTabs({
 
           {/* Teléfono */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[18px]">
               <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Teléfono *</Label>
               <span className="text-[10px] text-muted-foreground">+505-0000-0000</span>
             </div>
@@ -281,9 +289,11 @@ export default function CustomerVehicleFormTabs({
 
           {/* Email */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Email <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
-            </Label>
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Email <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
+              </Label>
+            </div>
             <Input
               type="email"
               value={formData.email}
@@ -294,24 +304,64 @@ export default function CustomerVehicleFormTabs({
             />
           </div>
 
-          {/* Dirección */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Dirección <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
-            </Label>
+          {/* Dirección (ocupa ancho completo md:col-span-2 para mantener alineación y simetría) */}
+          <div className="space-y-1.5 md:col-span-2">
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Dirección <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
+              </Label>
+            </div>
             <Input
               value={formData.address}
               onChange={(e) => updateForm({ address: e.target.value })}
               onBlur={commitForm}
-              placeholder="Dirección del cliente"
+              placeholder={isCompany ? "Dirección de la empresa" : "Dirección del cliente"}
               className="h-9 text-xs"
             />
           </div>
 
-          {/* Límite de Crédito o Perfil de Precios */}
-          {canManageCreditLimit ? (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Límite de Crédito (C$)</Label>
+          {/* Límite de Crédito / Perfil de Precios (si están habilitados) */}
+          {canManageCreditLimit && canManagePricingProfile ? (
+            <>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between min-h-[18px]">
+                  <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Límite de Crédito (C$)</Label>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.credit_limit}
+                  onChange={(e) => updateForm({ credit_limit: e.target.value })}
+                  onBlur={commitForm}
+                  placeholder="0.00"
+                  className="h-9 font-mono text-xs"
+                  data-testid={creditLimitTestId}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between min-h-[18px]">
+                  <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Perfil de precios</Label>
+                </div>
+                <Select
+                  value={formData.pricing_profile || "standard"}
+                  onValueChange={(value) => updateForm({ pricing_profile: value })}
+                >
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder="Seleccionar perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PRICING_PROFILES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          ) : canManageCreditLimit ? (
+            <div className="space-y-1.5 md:col-span-2">
+              <div className="flex items-center justify-between min-h-[18px]">
+                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Límite de Crédito (C$)</Label>
+              </div>
               <Input
                 type="number"
                 min="0"
@@ -324,27 +374,10 @@ export default function CustomerVehicleFormTabs({
               />
             </div>
           ) : canManagePricingProfile ? (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Perfil de precios</Label>
-              <Select
-                value={formData.pricing_profile || "standard"}
-                onValueChange={(value) => updateForm({ pricing_profile: value })}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Seleccionar perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PRICING_PROFILES).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-
-          {canManageCreditLimit && canManagePricingProfile ? (
             <div className="space-y-1.5 md:col-span-2">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Perfil de precios</Label>
+              <div className="flex items-center justify-between min-h-[18px]">
+                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Perfil de precios</Label>
+              </div>
               <Select
                 value={formData.pricing_profile || "standard"}
                 onValueChange={(value) => updateForm({ pricing_profile: value })}
@@ -414,7 +447,7 @@ export default function CustomerVehicleFormTabs({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
           {/* Placa */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[18px]">
               <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Placa *</Label>
               <span className="text-[10px] text-muted-foreground">
                 {formData.plate_prefix === "M" ? "M 123 456" : `${formData.plate_prefix || "M"} 12345`}
@@ -451,7 +484,7 @@ export default function CustomerVehicleFormTabs({
 
           {/* Chasis VIN */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[18px]">
               <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">CHASIS (VIN)</Label>
               <span className="text-[10px] text-muted-foreground">{formData.chasis?.length || 0}/17 caracteres</span>
             </div>
@@ -482,7 +515,9 @@ export default function CustomerVehicleFormTabs({
 
           {/* Marca */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Marca *</Label>
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Marca *</Label>
+            </div>
             <SearchableSelect
               value={formData.brand}
               onChange={(value) => updateForm({ brand: value, year: "", model: "", vehicle_cab_variant: "" })}
@@ -496,7 +531,9 @@ export default function CustomerVehicleFormTabs({
           {/* Año y Modelo en 2 sub-columnas */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Año *</Label>
+              <div className="flex items-center justify-between min-h-[18px]">
+                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Año *</Label>
+              </div>
               <SearchableSelect
                 value={String(formData.year || "")}
                 onChange={(value) => updateForm({ year: value, model: "", vehicle_cab_variant: "" })}
@@ -508,7 +545,9 @@ export default function CustomerVehicleFormTabs({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Modelo *</Label>
+              <div className="flex items-center justify-between min-h-[18px]">
+                <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Modelo *</Label>
+              </div>
               <SearchableSelect
                 value={formData.model}
                 onChange={(value) => updateForm({ model: value, vehicle_cab_variant: "" })}
@@ -523,7 +562,11 @@ export default function CustomerVehicleFormTabs({
 
           {/* Color */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Color</Label>
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Color <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
+              </Label>
+            </div>
             <Input
               list={colorDatalistId}
               value={formData.color}
@@ -540,20 +583,28 @@ export default function CustomerVehicleFormTabs({
           </div>
 
           {/* Variante de Cabina (si aplica) o Decodificador VIN Checkbox */}
-          <div className="space-y-1.5 flex flex-col justify-end">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between min-h-[18px]">
+              <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                {showCabVariant ? "Tipo de Cabina *" : "Asistente VIN"}
+              </Label>
+            </div>
             {showCabVariant ? (
               <VehicleCabVariantSelect
                 value={formData.vehicle_cab_variant}
                 onChange={(value) => updateForm({ vehicle_cab_variant: value })}
+                showLabel={false}
               />
             ) : (
-              <div className="flex items-center gap-2 h-9 px-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2 h-9 px-3 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
                 <Checkbox
                   id={useVinCheckboxId}
                   checked={useVinDecoder}
                   onCheckedChange={(checked) => onUseVinDecoderChange(Boolean(checked))}
                 />
-                <Label htmlFor={useVinCheckboxId} className="text-xs cursor-pointer">Usar decodificador VIN automático</Label>
+                <Label htmlFor={useVinCheckboxId} className="text-xs font-normal cursor-pointer text-zinc-700 dark:text-zinc-300">
+                  Usar decodificador VIN automático
+                </Label>
               </div>
             )}
           </div>
