@@ -367,12 +367,6 @@ export function resolveVehicleCategory(vehicle) {
       }
     }
   }
-          if (KNOWN_CATEGORIES.has(slug)) return slug;
-          if (CATEGORY_ALIASES[slug]) return CATEGORY_ALIASES[slug];
-        }
-      }
-    }
-  }
 
   // 4. Exhaustive Text Token Matching covering all ERP vehicles
   const text = `${directSlug} ${brand.toLowerCase()} ${model.toLowerCase()}`;
