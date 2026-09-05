@@ -425,6 +425,12 @@ Reglas acordadas con operacion:
      `frontend/public/videos/`, `backend/data/blueprints_raw/`, `frontend/public/vehicles/models/`, `*.mp4`, `*.xlsx` y volcados de depuración del root (`/ERP_TREE.txt`, etc.).
    - **Garantía de inclusión**: Siempre deben incluirse explícitamente `!frontend/index.html` y `!backend/requirements.txt` para que el compilador Vite y Docker dispongan de los puntos de entrada necesarios.
    - El archivo `.tgz` subido por `gcloud builds submit` **no debe superar los 35 MB**.
+3. **Comando Canónico de Despliegue en Cloud Shell**:
+   - Todo comando de redespliegue provisto para Cloud Shell **debe incluir de forma mandatoria `cd ~/MC-LARENS_ERP2 &&` al inicio**, garantizando que funcione de inmediato sin importar si la sesión de la consola arrancó en el directorio raíz (`~`).
+   - Comando estándar:
+     ```bash
+     cd ~/MC-LARENS_ERP2 && git pull origin master && gcloud builds submit --project gen-lang-client-0971793042 --tag gcr.io/gen-lang-client-0971793042/mclarens-erp && gcloud run deploy mclarens-erp --project gen-lang-client-0971793042 --image gcr.io/gen-lang-client-0971793042/mclarens-erp --platform managed --region us-central1 --allow-unauthenticated
+     ```
 
 ---
 
