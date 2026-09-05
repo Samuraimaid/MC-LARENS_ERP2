@@ -7828,6 +7828,7 @@ async def transfer_vehicle_owner(vehicle_id: str, payload: VehicleOwnerTransferP
         "created_at": now_iso,
     }
     await db.vehicle_transfer_logs.insert_one(transfer_log)
+    transfer_log.pop("_id", None)
 
     if payload.draft_id:
         norm_flow = _normalize_draft_flow(payload.flow or "sales")
@@ -7913,6 +7914,7 @@ async def approve_draft_vehicle_transfer(flow: str, draft_id: str, payload: Draf
         "created_at": now_iso,
     }
     await db.vehicle_transfer_logs.insert_one(transfer_log)
+    transfer_log.pop("_id", None)
 
     snap["pending_vehicle_transfer"] = None
     snap["selectedVehicle"] = vehicle_id
