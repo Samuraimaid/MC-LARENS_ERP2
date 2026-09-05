@@ -2635,6 +2635,117 @@ export default function SaleForm({
     }
   }, [buildDraftSnapshot, draftKey, draftLoaded, onDraftClear, onDraftPersist, onDraftSaveStateChange]);
 
+  // Auto-resolve pending vehicle transfer if the vehicle already belongs to the selected customer
+  useEffect(() => {
+    if (!pendingVehicleTransfer || !selectedCustomer?.customer_id) return;
+    const targetVehId = normalizeVehicleId(pendingVehicleTransfer.vehicle_id);
+    const targetVin = (pendingVehicleTransfer.vin || "").trim().toUpperCase();
+    const targetPlate = (pendingVehicleTransfer.plate || "").trim().toUpperCase();
+
+    const matchingVehicle = customerVehicles.find((v) => {
+      const vId = normalizeVehicleId(v.vehicle_id ?? v.id);
+      if (targetVehId && vId === targetVehId) return true;
+      const vVin = (v.vin || v.chasis || "").trim().toUpperCase();
+      if (targetVin && vVin === targetVin) return true;
+      const vPlate = (v.plate || v.plate_number || "").trim().toUpperCase();
+      if (targetPlate && vPlate === targetPlate) return true;
+      return false;
+    });
+
+    if (matchingVehicle) {
+      const resolvedVehId = normalizeVehicleId(matchingVehicle.vehicle_id ?? matchingVehicle.id);
+      setPendingVehicleTransfer(null);
+      applyNewlyCreatedVehicleSelection(resolvedVehId, matchingVehicle);
+      persistDraftSnapshot({
+        pending_vehicle_transfer: null,
+        selectedVehicle: resolvedVehId,
+        vehicleFlowOption: "registered",
+        logisticMode: "installed",
+        isVehiclePickerVisible: false,
+      });
+      toast.success("¡El traspaso del vehículo fue aprobado! Vehículo asignado a la venta.");
+    }
+  }, [
+    applyNewlyCreatedVehicleSelection,
+    customerVehicles,
+    normalizeVehicleId,
+    pendingVehicleTransfer,
+    persistDraftSnapshot,
+    selectedCustomer?.customer_id,
+  ]);
+
+  // Background polling while a transfer request is pending (closed-loop sync)
+  useEffect(() => {
+    if (!pendingVehicleTransfer || !selectedCustomer?.customer_id) return undefined;
+    let cancelled = false;
+
+    const pollVehicleTransferStatus = async () => {
+      try {
+        const targetVehId = normalizeVehicleId(pendingVehicleTransfer.vehicle_id);
+        const targetVin = (pendingVehicleTransfer.vin || "").trim().toUpperCase();
+
+        const res = await axios.get(`${API}/vehicles`, { withCredentials: true });
+        if (cancelled) return;
+        const list = Array.isArray(res.data) ? res.data : [];
+        setLocalVehicles(list);
+
+        const currentCustId = normalizeCustomerId(selectedCustomer.customer_id);
+        const ownedByCustomer = list.find((v) => {
+          const isCustOwner = normalizeCustomerId(v.customer_id) === currentCustId;
+          if (!isCustOwner) return false;
+          if (targetVehId && normalizeVehicleId(v.vehicle_id ?? v.id) === targetVehId) return true;
+          if (targetVin && (v.vin || v.chasis || "").trim().toUpperCase() === targetVin) return true;
+          return false;
+        });
+
+        if (ownedByCustomer) {
+          const resolvedVehId = normalizeVehicleId(ownedByCustomer.vehicle_id ?? ownedByCustomer.id);
+          setPendingVehicleTransfer(null);
+          applyNewlyCreatedVehicleSelection(resolvedVehId, ownedByCustomer);
+          persistDraftSnapshot({
+            pending_vehicle_transfer: null,
+            selectedVehicle: resolvedVehId,
+            vehicleFlowOption: "registered",
+            logisticMode: "installed",
+            isVehiclePickerVisible: false,
+          });
+          toast.success("¡El traspaso del vehículo fue aprobado! Vehículo asignado a la venta.");
+          return;
+        }
+
+        const draftId = initialData?.draft_id || initialData?.id;
+        if (draftId) {
+          const draftRes = await axios.get(`${API}/drafts/sales/${draftId}`, { withCredentials: true });
+          if (cancelled) return;
+          const draftSnap = draftRes.data?.snapshot || {};
+          if (!draftSnap.pending_vehicle_transfer && !ownedByCustomer) {
+            setPendingVehicleTransfer(null);
+            persistDraftSnapshot({ pending_vehicle_transfer: null });
+            toast.info("La solicitud de traspaso de vehículo no fue aprobada.");
+          }
+        }
+      } catch (err) {
+        // Silently retry on next poll tick
+      }
+    };
+
+    pollVehicleTransferStatus();
+    const intervalId = window.setInterval(pollVehicleTransferStatus, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    applyNewlyCreatedVehicleSelection,
+    initialData?.draft_id,
+    initialData?.id,
+    normalizeCustomerId,
+    normalizeVehicleId,
+    pendingVehicleTransfer,
+    persistDraftSnapshot,
+    selectedCustomer?.customer_id,
+  ]);
+
   const handleOpenBarcodeScanner = useCallback(() => {
     const contextError = getCameraContextError();
     if (contextError) {
