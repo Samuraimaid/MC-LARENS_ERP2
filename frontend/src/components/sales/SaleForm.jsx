@@ -572,6 +572,7 @@ export default function SaleForm({
   const [isSubmittingCustomer, setIsSubmittingCustomer] = useState(false);
   const [vehicleConflictData, setVehicleConflictData] = useState(null);
   const [showVehicleConflictDialog, setShowVehicleConflictDialog] = useState(false);
+  const [showVehicleImageModal, setShowVehicleImageModal] = useState(false);
   const [vehicleTransferReason, setVehicleTransferReason] = useState("Compraventa / Traspaso de vehículo");
   const [isTransferringVehicle, setIsTransferringVehicle] = useState(false);
   const [pendingVehicleTransfer, setPendingVehicleTransfer] = useState(
@@ -4455,17 +4456,17 @@ export default function SaleForm({
             const selImg = getVehicleDisplayImage(selectedVehicleData);
             const vLabel = [selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ");
             return (
-              <div className={cn("relative overflow-hidden group/cardveh", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
-                {/* Marca de agua elegante del vehículo en el fondo de la tarjeta */}
+              <div className={cn("relative overflow-hidden group/cardveh min-h-[82px]", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
+                {/* Marca de agua escalada a la altura de la tarjeta con 50% de opacidad */}
                 {selImg?.src && (
                   <div
                     aria-hidden="true"
-                    className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 h-full max-h-[82px] w-44 sm:w-60 opacity-15 dark:opacity-10 pointer-events-none select-none overflow-hidden flex items-center justify-end pr-1"
+                    className="absolute right-0 sm:right-2 top-0 bottom-0 h-full w-48 sm:w-72 opacity-50 dark:opacity-35 pointer-events-none select-none overflow-hidden flex items-center justify-end pr-1 z-0"
                   >
                     <img
                       src={selImg.src}
                       alt=""
-                      className="h-full w-auto max-w-full object-contain object-right filter grayscale-[20%]"
+                      className="h-full w-auto max-w-full object-contain object-right"
                       loading="lazy"
                     />
                   </div>
@@ -4474,59 +4475,43 @@ export default function SaleForm({
                 <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 sm:gap-4">
                   <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info, "min-w-0")}>
                     <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
-                      <Wrench className="h-4 w-4 shrink-0 text-sky-700 mt-0.5" />
-                      <span className="min-w-0 whitespace-normal break-words">
+                      <Wrench className="h-4 w-4 shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
+                      <span className="min-w-0 whitespace-normal break-words font-semibold text-sky-950 dark:text-sky-100">
                         Instalado — {vLabel || "Vehículo"}
                       </span>
                     </p>
                     <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
-                      <p className="inline-flex items-center gap-1.5">
-                        <FileText className="h-3.5 w-3.5 text-sky-700 shrink-0" />
-                        <span className="truncate">{selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}</span>
+                      <p className="inline-flex items-center gap-1.5 font-bold text-sky-950 dark:text-sky-100">
+                        <FileText className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
+                        <span className="truncate font-bold tracking-wide">
+                          {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
+                        </span>
                       </p>
                       <p className="inline-flex items-center gap-1.5">
-                        <Palette className="h-3.5 w-3.5 text-sky-700 shrink-0" />
-                        <span className="truncate">{selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}</span>
+                        <Palette className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
+                        <span className="truncate font-medium">{selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}</span>
                       </p>
                       <p className="inline-flex items-center gap-1.5 sm:col-span-2">
-                        <FileText className="h-3.5 w-3.5 text-sky-700 shrink-0" />
-                        <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                        <FileText className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
+                        <span className="truncate font-mono text-[11px] text-sky-900/80 dark:text-sky-200/70">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 z-10">
                     {selImg?.src && (
-                      <div className="relative group/veh shrink-0">
-                        <button
-                          type="button"
-                          aria-label="Ver imagen ampliada del vehículo"
-                          className="h-11 w-18 sm:h-14 sm:w-24 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-sky-300/80 dark:border-sky-700/60 p-1 shadow-sm flex items-center justify-center overflow-hidden transition-all duration-200 hover:scale-105 hover:border-sky-500 hover:shadow-md cursor-zoom-in active:scale-95"
-                        >
-                          <img
-                            src={selImg.src}
-                            alt={vLabel}
-                            className="max-h-full max-w-full object-contain drop-shadow-sm"
-                            loading="lazy"
-                          />
-                        </button>
-                        {/* Zoom flotante centrado y proporcionado al 100% sin recortes */}
-                        <div className="fixed inset-x-4 bottom-24 sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:w-[480px] sm:max-w-[calc(100vw-2rem)] z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 group-focus-within/veh:opacity-100 transition-all duration-300 mb-3 p-4 bg-white/95 dark:bg-zinc-950/95 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
-                          <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[180px] max-h-[260px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
-                            <img
-                              src={selImg.src}
-                              alt={vLabel}
-                              className="max-h-[220px] max-w-full w-auto object-contain mx-auto drop-shadow-xl"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between w-full px-1 text-xs">
-                            <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate pr-2">{vLabel || "Vehículo"}</p>
-                            <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800 shrink-0">
-                              Vista Ampliada 100%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        aria-label="Ver imagen del vehículo al 100%"
+                        title="Ver imagen del vehículo al 100%"
+                        className="h-8 px-2.5 text-xs font-semibold bg-white/90 dark:bg-zinc-900/90 border-sky-300 dark:border-sky-700 text-sky-900 dark:text-sky-100 hover:bg-sky-50 dark:hover:bg-sky-950/80 shadow-sm gap-1.5 ui-interactive"
+                        onClick={() => setShowVehicleImageModal(true)}
+                      >
+                        <Eye className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400" />
+                        <span className="hidden xs:inline sm:inline">Ver auto</span>
+                      </Button>
                     )}
 
                     <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
@@ -6593,6 +6578,67 @@ export default function SaleForm({
         currency={currency}
         exchangeRate={exchangeRate}
       />
+
+      {/* Modal para ver imagen del vehículo al 100% */}
+      <Dialog
+        open={showVehicleImageModal}
+        onOpenChange={setShowVehicleImageModal}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] p-4 sm:p-6 overflow-hidden flex flex-col bg-white/95 dark:bg-zinc-950/95 border-2 border-sky-400/80 dark:border-sky-600/80 rounded-2xl shadow-2xl backdrop-blur-xl">
+          <DialogHeader className="pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-sky-950 dark:text-sky-100">
+              <CarFront className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              <span>{selectedVehicleData ? [selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") : "Vehículo"}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 dark:text-zinc-400 flex flex-wrap items-center gap-2 mt-1">
+              {selectedVehicleData?.plate && (
+                <span className="font-bold text-sky-900 dark:text-sky-200 bg-sky-50 dark:bg-sky-950/60 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-800">
+                  Placa: {selectedVehicleData.plate}
+                </span>
+              )}
+              {selectedVehicleData?.color && (
+                <span className="text-slate-700 dark:text-zinc-300">
+                  Color: {selectedVehicleData.color}
+                </span>
+              )}
+              {selectedVehicleData?.vin && (
+                <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400">
+                  VIN: {selectedVehicleData.vin}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 min-h-[200px] max-h-[60vh] w-full my-3 p-4 bg-slate-50 dark:bg-zinc-900/90 rounded-xl border border-slate-200/80 dark:border-zinc-800 flex items-center justify-center overflow-hidden">
+            {selectedVehicleData ? (() => {
+              const vImg = getVehicleDisplayImage(selectedVehicleData);
+              return vImg?.src ? (
+                <img
+                  src={vImg.src}
+                  alt={[selectedVehicleData.brand, selectedVehicleData.model].filter(Boolean).join(" ")}
+                  className="max-h-[52vh] max-w-full w-auto object-contain mx-auto drop-shadow-xl select-none"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">Sin imagen disponible</p>
+              );
+            })() : null}
+          </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-zinc-800 text-xs">
+            <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
+              Vista Lateral 100% HD
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowVehicleImageModal(false)}
+            >
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
