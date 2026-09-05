@@ -58,6 +58,7 @@ import {
   ScanBarcode,
   Layers,
   Camera,
+  Scissors,
   Sparkles,
   X,
 } from "lucide-react";
@@ -513,7 +514,7 @@ export default function SaleForm({
   const [applyIVA, setApplyIVA] = useState(
     initialData.applyIVA ?? false,
   );
-  const [onlyCompatibleProducts, setOnlyCompatibleProducts] = useState(false);
+  const [onlyCompatibleProducts, setOnlyCompatibleProducts] = useState(true);
   const [ivaRate, setIvaRate] = useState(initialData.ivaRate ?? defaultIvaRate);
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
@@ -2675,6 +2676,7 @@ export default function SaleForm({
     setLogisticMode("installed");
     setVehicleFlowOption(nextFlowOption);
     setSelectedVehicle(normalizedVehicleId);
+    setOnlyCompatibleProducts(true);
     if (nextFlowOption !== "new") {
       setIsVehiclePickerVisible(false);
     }
@@ -4207,84 +4209,104 @@ export default function SaleForm({
             </div>
           ) : null}
 
-          {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (
-            <div className={cn("relative group/cardveh", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info, "min-w-0 flex-1")}>
-                  <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
-                    <Wrench className="h-4 w-4 shrink-0 text-sky-700" />
-                    <span className="min-w-0 whitespace-normal break-words">
-                      Instalado — {[selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ") || "Vehículo"}
-                    </span>
-                  </p>
-                  <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
-                    <p className="inline-flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}
-                    </p>
-                    <p className="inline-flex items-center gap-1.5">
-                      <Palette className="h-3.5 w-3.5 text-sky-700" />
-                      {selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}
-                    </p>
-                    <p className="inline-flex items-center gap-1.5 sm:col-span-2">
-                      <FileText className="h-3.5 w-3.5 text-sky-700" />
-                      <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
-                    </p>
+          {!showFulfillmentChooser && stepOneComplete && selectedCustomer && logisticMode === "installed" && selectedVehicleData ? (() => {
+            const selImg = getVehicleDisplayImage(selectedVehicleData);
+            const vLabel = [selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ");
+            return (
+              <div className={cn("relative overflow-hidden group/cardveh", CUSTOMER_VEHICLE_CARD_PATTERNS.shared.shell, CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.shell, vehiclePulseActive && ERP_ANIMATION_CLASSES.pulse)}>
+                {/* Marca de agua elegante del vehículo en el fondo de la tarjeta */}
+                {selImg?.src && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 h-full max-h-[82px] w-44 sm:w-60 opacity-15 dark:opacity-10 pointer-events-none select-none overflow-hidden flex items-center justify-end pr-1"
+                  >
+                    <img
+                      src={selImg.src}
+                      alt=""
+                      className="h-full w-auto max-w-full object-contain object-right filter grayscale-[20%]"
+                      loading="lazy"
+                    />
                   </div>
-                </div>
+                )}
 
-                {(() => {
-                  const selImg = getVehicleDisplayImage(selectedVehicleData);
-                  if (!selImg?.src) return null;
-                  const vLabel = [selectedVehicleData.brand, selectedVehicleData.model, selectedVehicleData.year].filter(Boolean).join(" ");
-                  return (
-                    <div className="relative group/veh shrink-0 self-center">
-                      <div className="h-20 sm:h-24 w-36 sm:w-48 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-sky-200/90 dark:border-sky-700/60 p-2.5 sm:p-3 shadow-md flex items-center justify-center overflow-hidden transition-all duration-300 group-hover/veh:border-sky-400 group-hover/veh:shadow-xl cursor-zoom-in">
-                        <img
-                          src={selImg.src}
-                          alt={vLabel}
-                          className="max-h-full max-w-full object-contain drop-shadow transition-transform duration-300 group-hover/veh:scale-110"
-                          loading="lazy"
-                        />
-                      </div>
-                      {/* Zoom flotante centrado y proporcionado al 100% sin recortes */}
-                      <div className="fixed inset-x-4 bottom-24 sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-w-[calc(100vw-2rem)] z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 transition-all duration-300 mb-3 p-4 bg-white/95 dark:bg-zinc-950/95 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
-                        <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[180px] max-h-[260px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
+                <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 sm:gap-4">
+                  <div className={cn(CUSTOMER_VEHICLE_CARD_PATTERNS.shared.info, "min-w-0")}>
+                    <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.title}>
+                      <Wrench className="h-4 w-4 shrink-0 text-sky-700 mt-0.5" />
+                      <span className="min-w-0 whitespace-normal break-words">
+                        Instalado — {vLabel || "Vehículo"}
+                      </span>
+                    </p>
+                    <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.metaGrid}>
+                      <p className="inline-flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5 text-sky-700 shrink-0" />
+                        <span className="truncate">{selectedVehicleData.plate || selectedVehicleData.plate_number || selectedVehicleData.number_plate || "Sin placa"}</span>
+                      </p>
+                      <p className="inline-flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5 text-sky-700 shrink-0" />
+                        <span className="truncate">{selectedVehicleData.color || selectedVehicleData.vehicle_color || selectedVehicleData.colour || "Sin color"}</span>
+                      </p>
+                      <p className="inline-flex items-center gap-1.5 sm:col-span-2">
+                        <FileText className="h-3.5 w-3.5 text-sky-700 shrink-0" />
+                        <span className="truncate">{selectedVehicleData.vin || selectedVehicleData.chasis || selectedVehicleData.chassis || "Sin chasis"}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                    {selImg?.src && (
+                      <div className="relative group/veh shrink-0">
+                        <button
+                          type="button"
+                          aria-label="Ver imagen ampliada del vehículo"
+                          className="h-11 w-18 sm:h-14 sm:w-24 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-sky-300/80 dark:border-sky-700/60 p-1 shadow-sm flex items-center justify-center overflow-hidden transition-all duration-200 hover:scale-105 hover:border-sky-500 hover:shadow-md cursor-zoom-in active:scale-95"
+                        >
                           <img
                             src={selImg.src}
                             alt={vLabel}
-                            className="max-h-[220px] max-w-full w-auto object-contain mx-auto drop-shadow-xl"
+                            className="max-h-full max-w-full object-contain drop-shadow-sm"
+                            loading="lazy"
                           />
-                        </div>
-                        <div className="flex items-center justify-between w-full px-1 text-xs">
-                          <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate pr-2">{vLabel || "Vehículo"}</p>
-                          <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800 shrink-0">
-                            Vista Ampliada 100%
-                          </span>
+                        </button>
+                        {/* Zoom flotante centrado y proporcionado al 100% sin recortes */}
+                        <div className="fixed inset-x-4 bottom-24 sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:w-[480px] sm:max-w-[calc(100vw-2rem)] z-50 pointer-events-none opacity-0 group-hover/veh:opacity-100 group-focus-within/veh:opacity-100 transition-all duration-300 mb-3 p-4 bg-white/95 dark:bg-zinc-950/95 rounded-2xl shadow-2xl border-2 border-sky-400/90 flex flex-col items-center gap-3 backdrop-blur-xl">
+                          <div className="w-full bg-slate-50 dark:bg-zinc-900/90 rounded-xl p-4 flex items-center justify-center min-h-[180px] max-h-[260px] border border-slate-100 dark:border-zinc-800 overflow-hidden">
+                            <img
+                              src={selImg.src}
+                              alt={vLabel}
+                              className="max-h-[220px] max-w-full w-auto object-contain mx-auto drop-shadow-xl"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between w-full px-1 text-xs">
+                            <p className="text-sm font-bold text-sky-950 dark:text-sky-100 truncate pr-2">{vLabel || "Vehículo"}</p>
+                            <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800 shrink-0">
+                              Vista Ampliada 100%
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    )}
 
-                <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-8 px-2.5 text-sm font-medium ui-interactive"
-                    disabled={sellerFlowLocked}
-                    onClick={handleReopenFulfillmentStep}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-1.5" />
-                    Cambiar
-                  </Button>
-                  <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>
-                    Instalado
-                  </Badge>
+                    <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.shared.actions}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-8 px-2.5 text-xs font-medium ui-interactive"
+                        disabled={sellerFlowLocked}
+                        onClick={handleReopenFulfillmentStep}
+                      >
+                        <RefreshCcw className="h-3.5 w-3.5 mr-1" />
+                        Cambiar
+                      </Button>
+                      <Badge variant="outline" className={CUSTOMER_VEHICLE_CARD_PATTERNS.vehicle.badge}>
+                        Instalado
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
+            );
+          })() : null}
         </div>
 
         <div
@@ -4882,6 +4904,18 @@ export default function SaleForm({
                     <Badge variant="outline" className="border-blue-300 bg-blue-50/70 text-blue-800 text-[10px] py-0 px-1.5 flex items-center gap-1">
                       <Layers className="h-3 w-3" />
                       Plan Ventanas (+${Number(item.materials_extra || 0).toFixed(2)} USD)
+                    </Badge>
+                  )}
+                  {item.tint_window_plan?.requires_despolarizado && (
+                    <Badge variant="outline" className="border-amber-300 bg-amber-50/70 text-amber-800 text-[10px] py-0 px-1.5 flex items-center gap-1">
+                      <Scissors className="h-3 w-3" />
+                      Despolarizado
+                    </Badge>
+                  )}
+                  {item.tint_window_plan?.requires_remover && (
+                    <Badge variant="outline" className="border-orange-300 bg-orange-50/70 text-orange-800 text-[10px] py-0 px-1.5 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Removedor
                     </Badge>
                   )}
                 </div>
@@ -6185,6 +6219,8 @@ export default function SaleForm({
         onAddToCart={(product) => addToCart(product)}
         isWarehouseRole={false}
         userRole={user?.role}
+        currency={currency}
+        exchangeRate={exchangeRate}
       />
     </div>
   );

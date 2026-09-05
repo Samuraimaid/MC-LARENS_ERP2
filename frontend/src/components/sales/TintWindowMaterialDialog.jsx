@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -812,6 +813,10 @@ export default function TintWindowMaterialDialog({
   const [selectedGama, setSelectedGama] = useState("all");
   const [preselectedMeta, setPreselectedMeta] = useState(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [requiresDespolarizado, setRequiresDespolarizado] = useState(false);
+  const [requiresRemover, setRequiresRemover] = useState(false);
+  const DESPOLARIZADO_PRICE_USD = 25.0;
+  const REMOVER_PRICE_USD = 15.0;
 
   // Determinar zonas permitidas según alcance del producto
   const allowedZones = useMemo(() => {
@@ -938,6 +943,8 @@ export default function TintWindowMaterialDialog({
     } else {
       setLinkSides(mats.front_sides === mats.rear_sides);
     }
+    setRequiresDespolarizado(Boolean(plan.requires_despolarizado));
+    setRequiresRemover(Boolean(plan.requires_remover));
   };
 
   // Cargar configuración de materiales al abrir y preseleccionar según producto o borrador previo
@@ -955,6 +962,8 @@ export default function TintWindowMaterialDialog({
       }
       setPreselectedMeta(null);
     } else if (product) {
+      setRequiresDespolarizado(false);
+      setRequiresRemover(false);
       // 2. Preselección INTELIGENTE según el producto clickeado en Catálogo/POS (ej. Franja Superior, Vidrios Delanteros, etc.)
       const preselected = detectTintPlanFromProduct(product, vehicle);
       if (preselected) {
@@ -979,6 +988,8 @@ export default function TintWindowMaterialDialog({
         }
       }
     } else {
+      setRequiresDespolarizado(false);
+      setRequiresRemover(false);
       // 3. Fallback a borrador guardado en localStorage o default completo
       setPreselectedMeta(null);
       try {
@@ -1237,10 +1248,41 @@ export default function TintWindowMaterialDialog({
       return;
     }
 
+    const despolarizadoExtra = requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0;
+    const removerExtra = requiresRemover ? REMOVER_PRICE_USD : 0;
+    const totalAddonsExtra = despolarizadoExtra + removerExtra;
+    const totalExtraSum = Number(((quoteData?.materials_extra_total || 0) + totalAddonsExtra).toFixed(2));
+
+    const breakdownItems = [
+      ...(quoteData?.price_breakdown || []),
+      ...(requiresDespolarizado
+        ? [
+            {
+              group_label: "Servicio de Taller",
+              material_name: "Despolarizado (Retiro de film)",
+              price_extra_usd: DESPOLARIZADO_PRICE_USD,
+            },
+          ]
+        : []),
+      ...(requiresRemover
+        ? [
+            {
+              group_label: "Insumo Químico",
+              material_name: "Removedor de Pegamento Quemado",
+              price_extra_usd: REMOVER_PRICE_USD,
+            },
+          ]
+        : []),
+    ];
+
     onApplyPlan({
       tint_window_plan: {
         link_sides: linkSides,
         is_unlocked: isUnlocked,
+        requires_despolarizado: requiresDespolarizado,
+        despolarizado_price: despolarizadoExtra,
+        requires_remover: requiresRemover,
+        remover_price: removerExtra,
         windows: {
           windshield: {
             material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
@@ -1285,11 +1327,11 @@ export default function TintWindowMaterialDialog({
         has_empalme: quoteData.has_empalme,
         empalme_warning: quoteData.empalme_warning,
         rolls_consumed: quoteData.rolls_consumed,
-        materials_extra_total: quoteData.materials_extra_total,
-        price_breakdown: quoteData.price_breakdown,
+        materials_extra_total: totalExtraSum,
+        price_breakdown: breakdownItems,
         vehicle_size_bands: quoteData.vehicle_size_bands,
       },
-      materials_extra: quoteData.materials_extra_total,
+      materials_extra: totalExtraSum,
     });
 
 
@@ -1443,7 +1485,7 @@ export default function TintWindowMaterialDialog({
               <div className="text-right shrink-0">
                 <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
                 <span className="text-sm sm:text-lg md:text-xl font-black text-white">
-                  +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"}{" "}
+                  +${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)}{" "}
                   <span className="text-[10px] sm:text-xs font-medium text-blue-200">USD</span>
                 </span>
               </div>
@@ -2439,12 +2481,77 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
 
+            {/* Sección de Preparación y Despolarizado */}
+            <div className="rounded-xl border border-amber-300/80 bg-amber-50/80 p-2.5 dark:border-amber-900/60 dark:bg-amber-950/30 text-xs space-y-2 shrink-0">
+              <div className="flex items-center justify-between font-bold text-amber-950 dark:text-amber-200">
+                <div className="flex items-center gap-1.5">
+                  <Scissors className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                  <span>Preparación y Despolarizado</span>
+                </div>
+                <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-100/80 text-amber-900 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
+                  Taller & Tiempos
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                {/* Opción 1: Despolarizar */}
+                <div
+                  className={cn(
+                    "flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none",
+                    requiresDespolarizado
+                      ? "border-amber-500 bg-amber-100/90 dark:bg-amber-900/60 shadow-xs"
+                      : "border-amber-200/80 bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
+                  )}
+                  onClick={() => setRequiresDespolarizado((prev) => !prev)}
+                >
+                  <div className="space-y-0.5 pr-2">
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] flex items-center gap-1.5">
+                      <span>¿Requiere Despolarizar?</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Retirar film viejo / dañado (+${DESPOLARIZADO_PRICE_USD.toFixed(2)} USD)
+                    </div>
+                  </div>
+                  <Switch
+                    checked={requiresDespolarizado}
+                    onCheckedChange={setRequiresDespolarizado}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                {/* Opción 2: Químico Removedor */}
+                <div
+                  className={cn(
+                    "flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none",
+                    requiresRemover
+                      ? "border-amber-500 bg-amber-100/90 dark:bg-amber-900/60 shadow-xs"
+                      : "border-amber-200/80 bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
+                  )}
+                  onClick={() => setRequiresRemover((prev) => !prev)}
+                >
+                  <div className="space-y-0.5 pr-2">
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] flex items-center gap-1.5">
+                      <span>¿Aplicar Removedor?</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Químico pegamento quemado (+${REMOVER_PRICE_USD.toFixed(2)} USD)
+                    </div>
+                  </div>
+                  <Switch
+                    checked={requiresRemover}
+                    onCheckedChange={setRequiresRemover}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Resumen del Plan y Desglose de Precios */}
             <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-2 dark:border-zinc-800 dark:bg-zinc-900/50 text-[11px] shrink-0">
               <div className="flex items-center justify-between font-semibold text-zinc-700 dark:text-zinc-300 pb-1 border-b border-zinc-200 dark:border-zinc-800">
                 <span>Recargo Total:</span>
                 <span className="text-primary font-mono font-bold">
-                  +${quoteData?.materials_extra_total?.toFixed(2) || "0.00"} USD
+                  +${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)} USD
                 </span>
               </div>
               <div className="mt-1 space-y-0.5 max-h-14 overflow-y-auto text-[10px] text-muted-foreground pr-1">
@@ -2458,12 +2565,24 @@ export default function TintWindowMaterialDialog({
                     </span>
                   </div>
                 ))}
+                {requiresDespolarizado && (
+                  <div className="flex justify-between items-center py-0.5 text-amber-700 dark:text-amber-300 font-medium">
+                    <span className="truncate pr-2">Despolarizado (Retiro de film anterior):</span>
+                    <span className="font-mono shrink-0">+${DESPOLARIZADO_PRICE_USD.toFixed(2)} USD</span>
+                  </div>
+                )}
+                {requiresRemover && (
+                  <div className="flex justify-between items-center py-0.5 text-amber-700 dark:text-amber-300 font-medium">
+                    <span className="truncate pr-2">Insumo Químico Removedor de Pegamento:</span>
+                    <span className="font-mono shrink-0">+${REMOVER_PRICE_USD.toFixed(2)} USD</span>
+                  </div>
+                )}
                 {quoteData?.has_empalme && (
                   <div className="text-amber-600 dark:text-amber-400 font-bold text-[9.5px] pt-0.5">
                     {quoteData.empalme_warning}
                   </div>
                 )}
-                {(!quoteData?.price_breakdown || quoteData.price_breakdown.length === 0) && (
+                {(!quoteData?.price_breakdown || quoteData.price_breakdown.length === 0) && !requiresDespolarizado && !requiresRemover && (
                   <div className="text-zinc-500 italic">Sin recargos adicionales (Films Estándar / Económicos).</div>
                 )}
               </div>
@@ -2495,7 +2614,7 @@ export default function TintWindowMaterialDialog({
               size="sm"
               className="flex-1 sm:flex-initial h-8 text-xs bg-primary hover:bg-primary/90 text-white font-bold"
             >
-              Aplicar al Carrito (+${quoteData?.materials_extra_total?.toFixed(2) || "0.00"} USD)
+              Aplicar al Carrito (+${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)} USD)
             </Button>
           </div>
         </DialogFooter>

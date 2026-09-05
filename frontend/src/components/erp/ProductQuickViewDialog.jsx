@@ -38,6 +38,8 @@ export default function ProductQuickViewDialog({
   onSendWhatsApp,
   isWarehouseRole = false,
   userRole = "",
+  currency = "NIO",
+  exchangeRate = 36.5,
 }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -48,6 +50,19 @@ export default function ProductQuickViewDialog({
   }, [product?.product_id, open]);
 
   if (!product) return null;
+
+  const getConvertedPrice = (priceVal) => {
+    const base = Number(priceVal) || 0;
+    const rate = Number(exchangeRate) || 36.5;
+    if (currency === "USD") {
+      return base;
+    }
+    return Number((base * rate).toFixed(2));
+  };
+
+  const formatProductPrice = (priceVal) => {
+    return formatCurrency(getConvertedPrice(priceVal), currency);
+  };
 
   // Gather all valid images
   const rawImages = Array.isArray(product.images) && product.images.length > 0
@@ -68,8 +83,6 @@ export default function ProductQuickViewDialog({
   const rawStock = inventoryByProduct[product.product_id] ?? null;
   const stockRows = inventoryByWarehouse[product.product_id] || [];
   const totalStock = rawStock !== null ? rawStock : stockRows.reduce((sum, row) => sum + (row.quantity || 0), 0);
-
-  const isSupervisorOrAdmin = ["gerencia", "supervisor", "programador"].includes(userRole);
 
   const prevImage = () => {
     setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
@@ -118,9 +131,11 @@ export default function ProductQuickViewDialog({
 
             <div className="text-right">
               <div className="text-2xl font-black text-primary font-mono">
-                {formatCurrency(product.precio1 ?? product.price ?? 0)}
+                {formatProductPrice(product.precio1 ?? product.price ?? 0)}
               </div>
-              <div className="text-[11px] text-muted-foreground">Precio sugerido al cliente</div>
+              <div className="text-[11px] text-muted-foreground">
+                Precio sugerido al cliente {currency === "NIO" ? `(US$ ${Number(product.precio1 ?? product.price ?? 0).toFixed(2)})` : ""}
+              </div>
             </div>
           </div>
         </div>
@@ -260,40 +275,34 @@ export default function ProductQuickViewDialog({
               <div className="space-y-2 bg-muted/20 p-3.5 rounded-xl border">
                 <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  Tabla de Precios
+                  Tabla de Precios ({currency})
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio 1 (Base)</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatCurrency(product.precio1 ?? product.price ?? 0)}
+                      {formatProductPrice(product.precio1 ?? product.price ?? 0)}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio 2 (Taller)</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatCurrency(product.precio2 ?? product.price ?? 0)}
+                      {formatProductPrice(product.precio2 ?? product.price ?? 0)}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio VIP</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatCurrency(product.precio_vip ?? product.precio2 ?? product.price ?? 0)}
+                      {formatProductPrice(product.precio_vip ?? product.precio2 ?? product.price ?? 0)}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Casa Comercial</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatCurrency(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0)}
+                      {formatProductPrice(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0)}
                     </div>
                   </div>
                 </div>
-                {isSupervisorOrAdmin && product.cost !== undefined && product.cost !== null && (
-                  <div className="pt-1.5 flex items-center justify-between text-xs text-muted-foreground border-t border-border/40">
-                    <span>Costo interno del producto:</span>
-                    <span className="font-mono font-semibold text-foreground">{formatCurrency(product.cost)}</span>
-                  </div>
-                )}
               </div>
 
               {/* Description */}
@@ -374,16 +383,21 @@ export default function ProductQuickViewDialog({
               {/* Installation Details */}
               {product.installation_type && product.installation_type !== "not_available" && (
                 <div className="p-3 bg-muted/20 rounded-xl border flex flex-wrap items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-2.5">
+                    <Wrench className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <div>
                       <div className="font-semibold text-foreground">
                         Instalación {product.installation_type === "required" ? "Requerida" : "Opcional"}
                       </div>
                       {product.installation_time_minutes ? (
-                        <div className="text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3" />
-                          Tiempo estimado: {product.installation_time_minutes} min
+                        <div className="text-muted-foreground flex flex-col gap-0.5 mt-1">
+                          <div className="flex items-center gap-1.5 font-medium text-foreground/90">
+                            <Clock className="h-3.5 w-3.5 text-primary" />
+                            <span>Tiempo aproximado: ~{product.installation_time_minutes} min</span>
+                          </div>
+                          <span className="text-[11px] text-amber-700 dark:text-amber-400">
+                            * Los tiempos pueden variar dependiendo del estado del vehículo y si es necesario despolarizar.
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -392,7 +406,7 @@ export default function ProductQuickViewDialog({
                     <div className="text-right">
                       <div className="text-[11px] text-muted-foreground">Mano de Obra</div>
                       <div className="font-mono font-bold text-foreground">
-                        +{formatCurrency(product.installation_price)}
+                        +{formatProductPrice(product.installation_price)}
                       </div>
                     </div>
                   ) : null}
