@@ -2002,32 +2002,81 @@ export default function SaleForm({
   };
 
   const handleApproveDraftTransfer = async (approved = true) => {
+    const vehicleId = pendingVehicleTransfer?.vehicle_id;
+    const targetCustomerId = pendingVehicleTransfer?.target_customer_id || selectedCustomer?.customer_id;
     const draftId = initialData?.draft_id || initialData?.id;
-    if (!draftId) {
-      toast.error("Identificador de borrador no disponible");
+
+    if (approved && (!vehicleId || !targetCustomerId)) {
+      toast.error("Datos incompletos para procesar el traspaso del vehículo.");
       return;
     }
+
     try {
       setIsTransferringVehicle(true);
-      const res = await axios.post(
-        `${API}/drafts/sales/${draftId}/approve-vehicle-transfer`,
-        {
-          approved,
-          reason: approved ? "Aprobado por supervisión" : "Rechazado por supervisión",
-        },
-        { withCredentials: true }
-      );
+      let res = null;
+
+      if (draftId) {
+        try {
+          res = await axios.post(
+            `${API}/drafts/sales/${draftId}/approve-vehicle-transfer`,
+            {
+              approved,
+              reason: approved
+                ? (pendingVehicleTransfer?.reason || "Aprobado por supervisión")
+                : "Rechazado por supervisión",
+            },
+            { withCredentials: true }
+          );
+        } catch (draftErr) {
+          // If server draft endpoint fails (e.g. 404 draft not found), fallback to direct transfer if approving
+          if (approved && vehicleId && targetCustomerId) {
+            res = await axios.post(
+              `${API}/vehicles/${vehicleId}/transfer-owner`,
+              {
+                target_customer_id: targetCustomerId,
+                reason: pendingVehicleTransfer?.reason || "Traspaso de vehículo por venta",
+                draft_id: draftId,
+                flow: "sales",
+              },
+              { withCredentials: true }
+            );
+          } else {
+            throw draftErr;
+          }
+        }
+      } else {
+        if (approved) {
+          res = await axios.post(
+            `${API}/vehicles/${vehicleId}/transfer-owner`,
+            {
+              target_customer_id: targetCustomerId,
+              reason: pendingVehicleTransfer?.reason || "Traspaso de vehículo por venta",
+              flow: "sales",
+            },
+            { withCredentials: true }
+          );
+        }
+      }
 
       if (approved) {
-        toast.success(res.data?.message || "Traspaso aprobado exitosamente.");
-        const vehicleId = pendingVehicleTransfer?.vehicle_id;
+        toast.success(res?.data?.message || "Traspaso de vehículo aprobado exitosamente.");
         const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
         setLocalVehicles(vehiclesRes.data);
         if (vehicleId) {
-          applyNewlyCreatedVehicleSelection(vehicleId, res.data?.vehicle);
+          applyNewlyCreatedVehicleSelection(vehicleId, res?.data?.vehicle);
         }
+        persistDraftSnapshot({
+          selectedVehicle: normalizeVehicleId(vehicleId),
+          vehicleFlowOption: "registered",
+          logisticMode: "installed",
+          pending_vehicle_transfer: null,
+          isVehiclePickerVisible: false,
+        });
       } else {
         toast.info("Solicitud de traspaso rechazada.");
+        persistDraftSnapshot({
+          pending_vehicle_transfer: null,
+        });
       }
       setPendingVehicleTransfer(null);
       if (typeof onDataRefresh === "function") {
@@ -2035,7 +2084,8 @@ export default function SaleForm({
       }
     } catch (error) {
       const errDetail = error.response?.data?.detail;
-      toast.error(typeof errDetail === "string" ? errDetail : "Error al procesar la aprobación del traspaso");
+      const msg = typeof errDetail === "string" ? errDetail : (errDetail?.message || "Error al procesar la aprobación del traspaso");
+      toast.error(msg);
     } finally {
       setIsTransferringVehicle(false);
     }
