@@ -183,30 +183,76 @@ export function getProductVehicleCompatibility(product, vehicle) {
     String(product?.category || "").toLowerCase().includes("polarizado");
 
   if (isTintProduct) {
-    const isSedanVehicle = category === "sedan" || ["coupe", "convertible"].includes(category);
-    const isHatchbackVehicle = category === "hatchback";
-    const isSuvVehicle = ["suv", "station_wagon"].includes(category);
+    const isSedanVehicle = category === "sedan" || ["coupe", "convertible", "automovil", "automóvil", "turismo"].includes(category);
+    const isHatchbackVehicle = category === "hatchback" || category === "compacto" || category === "hb";
+    const isSuvVehicle = [
+      "suv",
+      "station_wagon",
+      "station-wagon",
+      "todo_terreno",
+      "todo-terreno",
+      "crossover",
+    ].includes(category);
     const isPickupVehicle = [
       "pickup",
+      "pick-up",
       "camioneta_doble_cabina",
+      "camioneta-doble-cabina",
       "camioneta_cabina_media",
+      "camioneta-cabina-y-media",
       "camioneta_1_cabina",
+      "camioneta-1-cabina",
     ].includes(category);
     const isVanVehicle = [
       "van",
+      "minivan",
       "microbus_pasajeros",
+      "microbus-pasajeros",
       "microbus_techo_alto",
+      "microbus-techo-alto",
       "microbus_carga",
+      "microbus-carga",
     ].includes(category);
     const isTruckVehicle = [
       "truck",
+      "camion",
+      "camión",
       "camion_1_cabina",
+      "camion-1-cabina",
       "camion_2_cabinas",
+      "camion-2-cabinas",
       "camion_carga_furgon",
+      "camion-carga-furgon",
       "bus_mediano_coaster",
+      "bus-mediano-coaster",
       "bus_grande_marcopolo",
+      "bus-grande-marcopolo",
+      "cabezal",
     ].includes(category);
-    const isMotoVehicle = ["moto", "atv", "cuadriciclo"].includes(category);
+    const isMotoVehicle = ["moto", "motocicleta", "atv", "cuadriciclo"].includes(category);
+
+    const vehicleText = `${vehicle?.brand || ""} ${vehicle?.model || ""} ${vehicle?.descriptor || ""} ${vehicle?.trim || ""}`.toLowerCase();
+    const isPickupByModel = [
+      "tacoma", "hilux", "frontier", "ranger", "d-max", "dmax", "l200", "bt-50", "bt50",
+      "amarok", "colorado", "silverado", "f-150", "f150", "f-250", "f250", "ram 1500", "ram 2500", "ram",
+      "tundra", "titan", "navara", "poer", "wingle", "ridgeline", "gladiator", "cybertruck",
+      "maverick", "santa cruz", "s10", "montana", "saveiro", "strada", "oroq", "alaskan", "tina"
+    ].some(kw => vehicleText.includes(kw));
+
+    const isSuvByModel = [
+      "rav4", "rav-4", "prado", "fortuner", "4runner", "highlander", "land cruiser", "cr-v", "crv",
+      "hr-v", "hrv", "patrol", "pathfinder", "x-trail", "xtrail", "kicks", "montero", "pajero",
+      "outlander", "tucson", "santa fe", "sportage", "sorento", "cx-5", "cx-30", "cx-9", "cx-50",
+      "tracker", "tahoe", "suburban", "equinox", "traverse", "explorer", "edge", "escape",
+      "duster", "vitara", "jimny", "creta", "seltos", "tiguan", "taos"
+    ].some(kw => vehicleText.includes(kw));
+
+    const effectiveIsPickup = isPickupVehicle || isPickupByModel;
+    const effectiveIsSuv = (isSuvVehicle || isSuvByModel) && !effectiveIsPickup;
+    const effectiveIsSedan = isSedanVehicle && !effectiveIsPickup && !effectiveIsSuv;
+    const effectiveIsHatchback = isHatchbackVehicle && !effectiveIsPickup && !effectiveIsSuv;
+    const effectiveIsVan = isVanVehicle && !effectiveIsPickup;
+    const effectiveIsTruck = isTruckVehicle && !effectiveIsPickup;
 
     if (isMotoVehicle) {
       return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "No aplica a motocicletas/ATV" };
@@ -280,35 +326,35 @@ export function getProductVehicleCompatibility(product, vehicle) {
       sku === "POL-CAM-COM" ||
       (name.includes("camión") && name.includes("microbús"));
 
-    if (isSuvVehicle) {
-      if (isSuvTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (SUV / Station Wagon)" };
-      if (isSedanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
-      if (isHatchbackTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Hatchback" };
-      if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
-      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
-    } else if (isPickupVehicle) {
+    if (effectiveIsPickup) {
       if (isPickupTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camioneta Pickup)" };
       if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Station Wagon" };
       if (isSedanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
       if (isHatchbackTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Hatchback" };
       if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
-    } else if (isSedanVehicle) {
+    } else if (effectiveIsSuv) {
+      if (isSuvTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (SUV / Station Wagon)" };
+      if (isSedanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Sedán / Auto" };
+      if (isHatchbackTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Hatchback" };
+      if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
+      if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
+    } else if (effectiveIsSedan) {
       if (isSedanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sedán / Auto)" };
       if (isHatchbackTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Auto Compacto)" };
       if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
       if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
       if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
-    } else if (isHatchbackVehicle) {
+    } else if (effectiveIsHatchback) {
       if (isHatchbackTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Hatchback / Compacto)" };
       if (isSedanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Sedán / Auto)" };
       if (isSuvTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para SUV / Camioneta" };
       if (isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Camioneta Pickup" };
       if (isVanTint || isTruckTint || isCamLegacyTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Pesado" };
-    } else if (isVanVehicle) {
+    } else if (effectiveIsVan) {
       if (isVanTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Microbús / Van)" };
       if (isCamLegacyTint || isTruckTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Microbús / Camión)" };
       if (isSedanTint || isHatchbackTint || isSuvTint || isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };
-    } else if (isTruckVehicle) {
+    } else if (effectiveIsTruck) {
       if (isTruckTint || isCamLegacyTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camión / Cabezal)" };
       if (isVanTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Microbús / Van" };
       if (isSedanTint || isHatchbackTint || isSuvTint || isPickupTint) return { isCompatible: false, isSpecificTint: true, isSpecific: true, badge: "Para Vehículo Liviano" };

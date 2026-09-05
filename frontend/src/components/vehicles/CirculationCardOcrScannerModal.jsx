@@ -32,6 +32,7 @@ import {
   getBackCameras,
   applyZoom,
 } from "@/lib/liveDocumentScan";
+import { resolveVehicleCategory, VEHICLE_CATEGORIES } from "@/lib/vehicleSilhouette";
 
 export default function CirculationCardOcrScannerModal({ isOpen, onClose, onApply }) {
   const [cameraActive, setCameraActive] = useState(false);
@@ -268,6 +269,23 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       const detectedType = data.vehicle_type || "";
       const detectedTypeSlug = data.vehicle_type_slug || data.tipo_carroceria || "";
 
+      let resolvedTypeSlug = detectedTypeSlug;
+      let resolvedTypeLabel = detectedType;
+      if (!resolvedTypeSlug || resolvedTypeSlug === "sedan") {
+        const autoCat = resolveVehicleCategory({
+          brand: detectedBrand,
+          model: detectedModel,
+          vehicle_type_slug: detectedTypeSlug,
+        });
+        if (autoCat && autoCat !== "sedan") {
+          resolvedTypeSlug = autoCat;
+          const foundCategory = VEHICLE_CATEGORIES.find((c) => c.id === autoCat);
+          if (foundCategory?.label) {
+            resolvedTypeLabel = foundCategory.label;
+          }
+        }
+      }
+
       setEditedFields({
         vin: detectedVin,
         plate: detectedPlate,
@@ -275,8 +293,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
         model: detectedModel,
         year: detectedYear,
         color: detectedColor,
-        vehicle_type: detectedType,
-        vehicle_type_slug: detectedTypeSlug,
+        vehicle_type: resolvedTypeLabel,
+        vehicle_type_slug: resolvedTypeSlug,
         version_level: data.version_level || "intermedio",
         trim: data.trim || "",
         numero_motor: data.numero_motor || "",
@@ -375,8 +393,8 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       model: "",
       year: "",
       color: "",
-      vehicle_type: "Sedán / Automóvil",
-      vehicle_type_slug: "sedan",
+      vehicle_type: "",
+      vehicle_type_slug: "",
       version_level: "intermedio",
       trim: "",
       numero_motor: "",
@@ -392,16 +410,36 @@ export default function CirculationCardOcrScannerModal({ isOpen, onClose, onAppl
       return;
     }
 
+    const brand = editedFields.brand.trim().toUpperCase();
+    const model = editedFields.model.trim();
+    let finalTypeSlug = editedFields.vehicle_type_slug;
+    let finalTypeLabel = editedFields.vehicle_type;
+
+    if (!finalTypeSlug || finalTypeSlug === "sedan") {
+      const autoCat = resolveVehicleCategory({
+        brand,
+        model,
+        vehicle_type_slug: finalTypeSlug,
+      });
+      if (autoCat && autoCat !== "sedan") {
+        finalTypeSlug = autoCat;
+        const foundCategory = VEHICLE_CATEGORIES.find((c) => c.id === autoCat);
+        if (foundCategory?.label) {
+          finalTypeLabel = foundCategory.label;
+        }
+      }
+    }
+
     if (onApply) {
       onApply({
         vin: editedFields.vin.trim().toUpperCase(),
         plate: editedFields.plate.trim().toUpperCase(),
-        brand: editedFields.brand.trim().toUpperCase(),
-        model: editedFields.model.trim(),
+        brand,
+        model,
         year: editedFields.year ? parseInt(editedFields.year, 10) : "",
         color: editedFields.color ? editedFields.color.trim() : "",
-        vehicle_type: editedFields.vehicle_type,
-        vehicle_type_slug: editedFields.vehicle_type_slug,
+        vehicle_type: finalTypeLabel,
+        vehicle_type_slug: finalTypeSlug,
         version_level: editedFields.version_level,
         trim: editedFields.trim,
         numero_motor: editedFields.numero_motor ? editedFields.numero_motor.trim() : "",

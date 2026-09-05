@@ -309,11 +309,15 @@ export function getCatalogEntryForModel(brand, model) {
 
 export function getVehicleTypeSlugFromCatalog(brand, model) {
   const match = getCatalogEntryForModel(brand, model);
-  if (!match) return null;
-  if (match.vehicle_type_slug) return match.vehicle_type_slug;
-  if (match.thumbnail_slug) return match.thumbnail_slug;
-  const profile = getDescriptorTypeProfile(brand, match.descriptor || "");
-  return profile?.default_silhouette_slug || null;
+  if (match) {
+    if (match.vehicle_type_slug) return match.vehicle_type_slug;
+    if (match.thumbnail_slug) return match.thumbnail_slug;
+    const profile = getDescriptorTypeProfile(brand, match.descriptor || "");
+    if (profile?.default_silhouette_slug) return profile.default_silhouette_slug;
+  }
+  const directProfile = getDescriptorTypeProfile(brand, model || "");
+  if (directProfile?.default_silhouette_slug) return directProfile.default_silhouette_slug;
+  return null;
 }
 
 export function inferVehicleTypeFromCatalog(brand, model) {
@@ -326,9 +330,75 @@ export function inferVehicleTypeFromCatalog(brand, model) {
   return slugFromText ? TYPE_LABEL_BY_SLUG[slugFromText] || null : null;
 }
 
+const PICKUP_SLUGS = new Set([
+  "camioneta-1-cabina",
+  "camioneta_1_cabina",
+  "camioneta-cabina-y-media",
+  "camioneta_cabina_media",
+  "camioneta-doble-cabina",
+  "camioneta_doble_cabina",
+  "pickup",
+  "pick-up",
+  "pickup-doble-cabina",
+  "pickup-cabina-media",
+  "pickup-1-cabina",
+]);
+
+const KNOWN_PICKUP_KEYWORDS = [
+  "tacoma",
+  "hilux",
+  "frontier",
+  "ranger",
+  "d-max",
+  "dmax",
+  "l200",
+  "bt-50",
+  "bt50",
+  "amarok",
+  "colorado",
+  "silverado",
+  "f-150",
+  "f150",
+  "f-250",
+  "f250",
+  "f-350",
+  "f350",
+  "ram 1500",
+  "ram 2500",
+  "ram 3500",
+  "ram",
+  "tundra",
+  "titan",
+  "navara",
+  "poer",
+  "wingle",
+  "ridgeline",
+  "gladiator",
+  "cybertruck",
+  "maverick",
+  "santa cruz",
+  "s10",
+  "montana",
+  "saveiro",
+  "strada",
+  "oroq",
+  "alaskan",
+  "terrano",
+  "land cruiser 79",
+  "land cruiser pick",
+  "pickup",
+  "pick-up",
+];
+
 export function isPickupCatalogModel(brand, model) {
   const slug = getVehicleTypeSlugFromCatalog(brand, model);
-  return slug === "camioneta-1-cabina" || slug === "camioneta-cabina-y-media";
+  if (slug && PICKUP_SLUGS.has(String(slug).toLowerCase().trim())) {
+    return true;
+  }
+  const normModel = String(model || "").toLowerCase().trim();
+  const normBrand = String(brand || "").toLowerCase().trim();
+  const text = `${normBrand} ${normModel}`;
+  return KNOWN_PICKUP_KEYWORDS.some((kw) => text.includes(kw));
 }
 
 export function getCatalogVehiclePayload(brand, model, options = {}) {

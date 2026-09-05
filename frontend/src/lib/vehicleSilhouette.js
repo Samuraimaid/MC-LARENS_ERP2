@@ -100,6 +100,20 @@ const CATEGORY_ALIASES = {
   atv: "moto",
 };
 
+const GENERIC_DEFAULT_SLUGS = new Set([
+  "",
+  "sedan",
+  "sedán",
+  "auto",
+  "automovil",
+  "automóvil",
+  "turismo",
+  "default",
+  "car",
+  "vehiculo",
+  "vehículo",
+]);
+
 const BODY_DISTINGUISHING_TOKENS = {
   doble: ["doble", "double", "crew"],
   double: ["doble", "double", "crew"],
@@ -326,8 +340,8 @@ export function findMatchingVehicleBlueprint(vehicle) {
 export function resolveVehicleCategory(vehicle) {
   if (!vehicle) return "sedan";
 
-  // 1. Direct assigned slug validation (e.g. from circulation OCR or vehicle profile)
-  const directSlug = String(
+  // 1. Direct assigned slug validation (only if specific and non-generic)
+  const rawDirectSlug = String(
     vehicle.vehicle_type_slug ||
     vehicle.type ||
     vehicle.body_type ||
@@ -335,8 +349,13 @@ export function resolveVehicleCategory(vehicle) {
     ""
   ).toLowerCase().trim();
 
-  if (KNOWN_CATEGORIES.has(directSlug)) return directSlug;
-  if (CATEGORY_ALIASES[directSlug]) return CATEGORY_ALIASES[directSlug];
+  const directSlug = CATEGORY_ALIASES[rawDirectSlug] || (KNOWN_CATEGORIES.has(rawDirectSlug) ? rawDirectSlug : "");
+  const isGenericDirectSlug = !directSlug || GENERIC_DEFAULT_SLUGS.has(rawDirectSlug) || directSlug === "sedan";
+
+  // If a specific, non-generic category is explicitly assigned, trust it
+  if (directSlug && !isGenericDirectSlug) {
+    return directSlug;
+  }
 
   const brand = String(vehicle.brand || "").trim().toUpperCase();
   const descriptor = String(vehicle.descriptor || vehicle.model || "").trim();

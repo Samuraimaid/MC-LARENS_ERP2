@@ -8071,10 +8071,22 @@ async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
         except Exception:
             pass
 
-    resolved_brand = extended_info.get("brand") or parsed.get("marca") or ""
-    resolved_model = extended_info.get("model") or parsed.get("modelo") or ""
-    resolved_year = extended_info.get("year") or parsed.get("anio") or parsed.get("vin_year")
-    resolved_type_slug = extended_info.get("vehicle_type_slug") or parsed.get("tipo_carroceria") or "sedan"
+    from backend.domains.vehicles.type_resolver import (
+        resolve_vehicle_thumbnail_slug,
+        infer_canonical_vehicle_type_label,
+    )
+
+    resolved_type_slug = extended_info.get("vehicle_type_slug") or parsed.get("tipo_carroceria")
+    resolved_type_label = extended_info.get("vehicle_type") or parsed.get("vehicle_type")
+
+    if not resolved_type_slug or resolved_type_slug in ("sedan", "default"):
+        inferred_slug = resolve_vehicle_thumbnail_slug("", brand=resolved_brand, model=resolved_model, allow_default=False)
+        if inferred_slug and inferred_slug not in ("default", "sedan"):
+            resolved_type_slug = inferred_slug
+            resolved_type_label = infer_canonical_vehicle_type_label("", brand=resolved_brand, model=resolved_model)
+        elif not resolved_type_slug:
+            resolved_type_slug = "sedan"
+            resolved_type_label = resolved_type_label or "Sedán / Automóvil"
 
     return {
         "vin": vin or "",
@@ -8089,7 +8101,7 @@ async def ocr_circulation_card(payload: Dict[str, Any], request: Request):
         "year": resolved_year,
         "anio": resolved_year,
         "color": parsed.get("color") or "No especificado",
-        "vehicle_type": extended_info.get("vehicle_type") or "Sedán / Automóvil",
+        "vehicle_type": resolved_type_label or "Sedán / Automóvil",
         "vehicle_type_slug": resolved_type_slug,
         "tipo_carroceria": resolved_type_slug,
         "tipo_combustible": parsed.get("tipo_combustible") or "Gasolina",
@@ -8162,8 +8174,23 @@ async def ocr_circulation_card_v2(payload: Dict[str, Any], request: Request):
                     result["version_level"] = vpic_info["version_level"]
                 if vpic_info.get("vehicle_cab_variant"):
                     result["vehicle_cab_variant"] = vpic_info["vehicle_cab_variant"]
+                if vpic_info.get("vehicle_type_slug"):
+                    result["vehicle_type_slug"] = vpic_info["vehicle_type_slug"]
+                if vpic_info.get("vehicle_type"):
+                    result["vehicle_type"] = vpic_info["vehicle_type"]
         except Exception as e:
             print(f"[OCR v2] Error decodificando VIN en vPIC: {e}")
+
+    if not result.get("vehicle_type_slug") or result.get("vehicle_type_slug") in ("sedan", "default"):
+        from backend.domains.vehicles.type_resolver import (
+            resolve_vehicle_thumbnail_slug,
+            infer_canonical_vehicle_type_label,
+        )
+        inferred_slug = resolve_vehicle_thumbnail_slug("", brand=result.get("brand", ""), model=result.get("model", ""), allow_default=False)
+        if inferred_slug and inferred_slug not in ("default", "sedan"):
+            result["vehicle_type_slug"] = inferred_slug
+            if not result.get("vehicle_type"):
+                result["vehicle_type"] = infer_canonical_vehicle_type_label("", brand=result.get("brand", ""), model=result.get("model", ""))
 
     # Re-evaluar needs_review tras cross-referencing
     needs_review = []
