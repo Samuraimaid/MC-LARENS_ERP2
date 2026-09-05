@@ -29,6 +29,7 @@ backend/data/blueprints_raw
 backend/data/blueprints_cleaned
 frontend/public/vehicles/models
 frontend/public/vehicles/blueprints
+frontend/public/videos
 frontend/public/uploads
 uploads
 temporary_cleanup_validation
@@ -39,3 +40,6 @@ scripts/incoming_grok
 *.pdf
 *.eps
 *.ai
+*.mp4
+*.xlsx
+*.txt
