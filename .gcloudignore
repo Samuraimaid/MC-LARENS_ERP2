@@ -25,10 +25,19 @@ frontend/public/uploads/
 uploads/
 temporary_cleanup_validation/
 backups/
-*.txt
-*.xlsx
-*.html
+
+# Archivos pesados y volcados de depuración
+*.zip
+*.pdf
+*.eps
+*.ai
 *.mp4
+*.xlsx
+/vehicle_catalog_export.html
+/ERP_TREE.txt
+/FRONTEND_TREE.txt
+/server.txt
+/committed_server_snip.txt
 
 # Excluir builds locales para no duplicar en subida
 frontend/build/
@@ -39,6 +48,10 @@ dist/
 # Excluir carpetas pesadas de inspección
 scripts/incoming_grok/
 scripts/migration/
+
+# GARANTIZAR INCLUSIÓN DE ARCHIVOS ESENCIALES
+!frontend/index.html
+!backend/requirements.txt
 !frontend/scripts/
 !backend/scripts/
 

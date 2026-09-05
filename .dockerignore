@@ -36,10 +36,21 @@ temporary_cleanup_validation
 backups
 scripts/incoming_grok
 
+# Archivos pesados y volcados de depuración
 *.zip
 *.pdf
 *.eps
 *.ai
 *.mp4
 *.xlsx
-*.txt
+/vehicle_catalog_export.html
+/ERP_TREE.txt
+/FRONTEND_TREE.txt
+/server.txt
+/committed_server_snip.txt
+
+# GARANTIZAR INCLUSIÓN DE ARCHIVOS ESENCIALES
+!frontend/index.html
+!backend/requirements.txt
+!frontend/scripts/
+!backend/scripts/

@@ -422,7 +422,8 @@ Reglas acordadas con operacion:
    - **Queda estrictamente prohibido** empaquetar carpetas multimedia locales (`frontend/public/videos/`, `backend/data/blueprints_raw/`, etc.) dentro de la imagen Docker de Cloud Run.
 2. **Blindaje de `.gcloudignore` y `.dockerignore`**:
    - `.gcloudignore` y `.dockerignore` deben excluir de forma permanente:
-     `frontend/public/videos/`, `backend/data/blueprints_raw/`, `frontend/public/vehicles/models/`, `*.mp4`, `*.xlsx`, `*.txt` y `scratch/`.
+     `frontend/public/videos/`, `backend/data/blueprints_raw/`, `frontend/public/vehicles/models/`, `*.mp4`, `*.xlsx` y volcados de depuración del root (`/ERP_TREE.txt`, etc.).
+   - **Garantía de inclusión**: Siempre deben incluirse explícitamente `!frontend/index.html` y `!backend/requirements.txt` para que el compilador Vite y Docker dispongan de los puntos de entrada necesarios.
    - El archivo `.tgz` subido por `gcloud builds submit` **no debe superar los 35 MB**.
 
 ---
