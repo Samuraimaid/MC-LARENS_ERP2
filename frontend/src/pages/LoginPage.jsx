@@ -772,6 +772,7 @@ export function LoginPage() {
         onInteract={resetOsdTimer}
         onVideoChange={(vid) => setCurrentPlayingVideo(vid)}
         allowWidescreenOnMobile={true}
+        showOverlay={isPinpadVisible}
       />
 
       <input
@@ -1123,21 +1124,21 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Desktop / Landscape HUD - Bottom Left Version and Build Label (50% Opacity) */}
+      {/* Desktop / Landscape HUD - Bottom Left Version and Build Label (High Contrast 85% Opacity) */}
       <div 
-        className="absolute bottom-4 left-6 z-30 pointer-events-none text-white/50 text-xs drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] space-y-0.5 font-microgramma hidden sm:block will-change-transform"
+        className="absolute bottom-4 left-6 z-30 pointer-events-none text-white/85 text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] space-y-0.5 font-microgramma hidden sm:block will-change-transform"
         style={{
           transform: "translate3d(0, 0, 0)",
           WebkitTransform: "translate3d(0, 0, 0)",
         }}
       >
-        <p className="font-bold text-white/50 tracking-wide">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
-        <p className="text-[11px] text-white/50 tracking-wider">Version: {buildVersion} · Build: {buildTimeLabel}</p>
+        <p className="font-bold text-white/90 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">© 2026 MUNDO DE ACCESORIOS. Todos los derechos reservados.</p>
+        <p className="text-[11px] text-white/80 tracking-wider drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Version: {buildVersion} · Build: {buildTimeLabel}</p>
       </div>
 
-      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with 1px Clock-Themed Contour (No Halo) */}
+      {/* Desktop / Landscape HUD - Bottom Right Mc-LarenS Logo with 1px Clock-Themed Contour */}
       <div 
-        className="absolute bottom-4 right-6 z-30 pointer-events-none hidden sm:flex items-center will-change-transform"
+        className="absolute bottom-4 right-6 z-30 pointer-events-none hidden sm:flex items-center will-change-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
         style={{ 
           "--clock-stroke": clockAccentColor,
           transform: "translate3d(0, 0, 0)",
@@ -1154,9 +1155,9 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Mobile / Vertical Unified Footer (Zero overlapping, centered and 50% opacity on build text) */}
+      {/* Mobile / Vertical Unified Footer (High Contrast) */}
       <div 
-        className="absolute bottom-3 inset-x-0 z-30 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma will-change-transform"
+        className="absolute bottom-3 inset-x-0 z-30 pointer-events-none flex flex-col items-center justify-center gap-1.5 px-4 sm:hidden font-microgramma will-change-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
         style={{ 
           "--clock-stroke": clockAccentColor,
           transform: "translate3d(0, 0, 0)",
@@ -1171,7 +1172,7 @@ export function LoginPage() {
             draggable={false}
           />
         </div>
-        <p className="text-[10px] text-white/50 tracking-wider text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+        <p className="text-[10px] text-white/85 tracking-wider text-center drop-shadow-[0_2px_5px_rgba(0,0,0,0.95)]">
           © 2026 Mundo de Accesorios · v{buildVersion}
         </p>
       </div>

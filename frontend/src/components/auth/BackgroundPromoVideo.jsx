@@ -14,6 +14,7 @@ export default function BackgroundPromoVideo({
   onInteract,
   onVideoChange,
   allowWidescreenOnMobile = true,
+  showOverlay = true,
 }) {
   const [videos, setVideos] = useState(DEFAULT_PROMOTIONAL_VIDEOS);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -229,8 +230,12 @@ export default function BackgroundPromoVideo({
         }`}
       />
 
-      {/* Capa de viñeta oscura translúcida para garantizar contraste del texto de la hora y logo */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/55 pointer-events-none" />
+      {/* Capa de viñeta oscura translúcida que solo se activa al interactuar para contrastar el PIN pad */}
+      <div 
+        className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/65 pointer-events-none transition-opacity duration-700 ease-in-out ${
+          showOverlay ? "opacity-100" : "opacity-0"
+        }`} 
+      />
     </div>
   );
 }
