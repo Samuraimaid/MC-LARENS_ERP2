@@ -523,7 +523,6 @@ export default function SaleForm({
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
   const canManageTaxes = ["gerencia", "programador", "supervisor"].includes(String(user?.role || "").toLowerCase());
-  const isSupervisorUser = ["gerencia", "programador", "supervisor", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
   const [mixedPaymentMethods, setMixedPaymentMethods] = useState(
     normalizePaymentMethodList(initialData.mixedPaymentMethods || initialData.mixed_payment_methods || [])
   );
