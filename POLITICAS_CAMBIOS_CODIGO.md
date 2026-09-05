@@ -411,6 +411,42 @@ Reglas acordadas con operacion:
 3. En pago mixto con tarjeta: vendedor declara **monto** por linea de tarjeta; cajero documenta banco, tipo, transaccion y referencia.
 4. Facturas a **credito**: gerencia/supervisor fijan dias de credito, techo y articulos segun perfil aprobado del cliente.
 
+---
+
+### Politica de Assets Multimedia y Despliegues Ligeros en Cloud Run
+
+**Actualizado:** 2026-09-04
+
+1. **Almacenamiento Desacoplado en Google Cloud Storage CDN**:
+   - Todos los recursos multimedia pesados (videos promocionales `.mp4`, colecciones masivas de planos `.png` > 8,000 archivos, modelos 3D y reportes pesados) **deben servirse exclusivamente vía CDN de GCS** (`https://storage.googleapis.com/mclarens-erp-vehicles/...`).
+   - **Queda estrictamente prohibido** empaquetar carpetas multimedia locales (`frontend/public/videos/`, `backend/data/blueprints_raw/`, etc.) dentro de la imagen Docker de Cloud Run.
+2. **Blindaje de `.gcloudignore` y `.dockerignore`**:
+   - `.gcloudignore` y `.dockerignore` deben excluir de forma permanente:
+     `frontend/public/videos/`, `backend/data/blueprints_raw/`, `frontend/public/vehicles/models/`, `*.mp4`, `*.xlsx`, `*.txt` y `scratch/`.
+   - El archivo `.tgz` subido por `gcloud builds submit` **no debe superar los 35 MB**.
+
+---
+
+### Politica de Clasificacion Vehicular y Compatibilidad de Polarizados (Transito Nicaragua)
+
+**Actualizado:** 2026-09-04
+
+1. **Mapeo Canónico Obligatorio**:
+   El sistema debe respetar la clasificación vehicular de las tarjetas de circulación de la Policía Nacional de Nicaragua / Tránsito:
+   - `AUTOMÓVIL / AUTOMOVIL / TURISMO / SEDAN` → `sedan` → Producto: `POL-SED-COM` (Polarizado Completo Sedán / Automóvil).
+   - `HATCHBACK / COMPACTO` → `hatchback` → Producto: `POL-HB-COM` (Polarizado Completo Hatchback / Compacto).
+   - `CAMIONETA + ST/WAGON, STATION, RURAL, CERRADA, JEEP, TODO TERRENO` → `suv` → Producto: `POL-SUV-COM` (Polarizado Completo SUV / Station Wagon).
+   - `CAMIONETA + D/CABINA, D/C, CABINA SENCILLA, CABINA Y MEDIA, PICKUP, TINA` → `pickup` → Producto: `POL-PCK-COM` (Polarizado Completo Camioneta Pickup).
+   - `MICROBUS / MICROBÚS / VAN / PANEL / TECHO ALTO` → `van` → Producto: `POL-VAN-COM` (Polarizado Completo Microbús / Van).
+   - `CAMIÓN / CAMION / CABEZAL / TRACTO / FURGÓN` → `truck` → Producto: `POL-TRK-COM` (Polarizado Completo Camión / Cabezal).
+   - `MOTOCICLETA / MOTO / ATV / CUADRICICLO` → `moto` → Excluido de polarizados completos automotrices.
+2. **Prohibición de Fallbacks Erróneos**:
+   - Ningún modelo SUV (ej. BMW X1–X7, Audi Q3–Q8, Mercedes GLC/GLE, Toyota RAV4, Tucson, CR-V) puede clasificarse como `sedan` ni ofrecer polarizados de sedán en el Carrito de Ventas.
+3. **Contenedores y Popovers de Zoom**:
+   - Todo elemento flotante o popover de vista previa (como `Vista Ampliada 100%`) debe utilizar centrado responsivo (`sm:left-1/2 sm:-translate-x-1/2 sm:max-w-[calc(100vw-2rem)]`) e imagen contenida (`object-contain`) para garantizar que nunca se recorte en bordes de pantalla.
+
+---
+
 ## Referencias del repo
 
 - `FRONTEND_MODERNIZATION_STATUS.md`
