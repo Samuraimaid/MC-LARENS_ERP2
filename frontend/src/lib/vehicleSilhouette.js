@@ -25,22 +25,22 @@ export function getVehicleImageUrl(imagePath) {
 
 
 export const VEHICLE_CATEGORIES = [
-  { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png" },
-  { id: "hatchback", label: "Hatchback / Compacto", shortLabel: "Hatchback", image: "/vehicles/clean_hatchback.png" },
-  { id: "suv", label: "SUV / Crossover 4x4", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png" },
-  { id: "camioneta_doble_cabina", label: "Camioneta Doble Cabina", shortLabel: "Doble Cabina", image: "/vehicles/clean_camioneta_doble_cabina.png" },
-  { id: "camioneta_cabina_media", label: "Camioneta Cabina y Media", shortLabel: "Cabina y Media", image: "/vehicles/clean_camioneta_cabina_media.png" },
-  { id: "camioneta_1_cabina", label: "Camioneta 1 Cabina", shortLabel: "Camioneta 1 Cab.", image: "/vehicles/clean_camioneta_1_cabina.png" },
-  { id: "camion_1_cabina", label: "Camión 1 Cabina (Plataforma)", shortLabel: "Camión 1 Cab.", image: "/vehicles/clean_camion_1_cabina.png" },
-  { id: "camion_2_cabinas", label: "Camión 2 Cabinas (Doble Cabina)", shortLabel: "Camión 2 Cab.", image: "/vehicles/clean_camion_2_cabinas.png" },
-  { id: "camion_carga_furgon", label: "Camión de Carga (Furgón)", shortLabel: "Camión Furgón", image: "/vehicles/clean_camion_carga_furgon.png" },
-  { id: "station_wagon", label: "Station Wagon / Familiar", shortLabel: "Station Wagon", image: "/vehicles/clean_station_wagon.png" },
-  { id: "microbus_pasajeros", label: "Microbús de Pasajeros", shortLabel: "Microbús Pas.", image: "/vehicles/clean_microbus_pasajeros.png" },
-  { id: "microbus_techo_alto", label: "Microbús Techo Alto", shortLabel: "Techo Alto", image: "/vehicles/clean_microbus_techo_alto.png" },
-  { id: "microbus_carga", label: "Microbús Panel de Carga", shortLabel: "Panel Carga", image: "/vehicles/clean_microbus_carga.png" },
-  { id: "bus_mediano_coaster", label: "Bus Mediano (Estilo Coaster)", shortLabel: "Bus Coaster", image: "/vehicles/clean_bus_mediano_coaster.png" },
-  { id: "bus_grande_marcopolo", label: "Bus Grande (Estilo Marcopolo)", shortLabel: "Bus Grande", image: "/vehicles/clean_bus_grande_marcopolo.png" },
-  { id: "moto", label: "Motocicleta / Moto", shortLabel: "Moto", image: "/vehicles/clean_default.png" },
+  { id: "sedan", label: "Sedán / Automóvil", shortLabel: "Sedán", image: "/vehicles/clean_sedan.png", lateralImage: "/vehicles/thumbnails/sedan.png" },
+  { id: "hatchback", label: "Hatchback / Compacto", shortLabel: "Hatchback", image: "/vehicles/clean_hatchback.png", lateralImage: "/vehicles/thumbnails/hatchback.png" },
+  { id: "suv", label: "SUV / Crossover 4x4", shortLabel: "SUV / 4x4", image: "/vehicles/clean_suv.png", lateralImage: "/vehicles/thumbnails/suv.png" },
+  { id: "camioneta_doble_cabina", label: "Camioneta Doble Cabina", shortLabel: "Doble Cabina", image: "/vehicles/clean_camioneta_doble_cabina.png", lateralImage: "/vehicles/thumbnails/camioneta-doble-cabina.png" },
+  { id: "camioneta_cabina_media", label: "Camioneta Cabina y Media", shortLabel: "Cabina y Media", image: "/vehicles/clean_camioneta_cabina_media.png", lateralImage: "/vehicles/thumbnails/camioneta-cabina-y-media.png" },
+  { id: "camioneta_1_cabina", label: "Camioneta 1 Cabina", shortLabel: "Camioneta 1 Cab.", image: "/vehicles/clean_camioneta_1_cabina.png", lateralImage: "/vehicles/thumbnails/camioneta-1-cabina.png" },
+  { id: "camion_1_cabina", label: "Camión 1 Cabina (Plataforma)", shortLabel: "Camión 1 Cab.", image: "/vehicles/clean_camion_1_cabina.png", lateralImage: "/vehicles/thumbnails/camion-carga.png" },
+  { id: "camion_2_cabinas", label: "Camión 2 Cabinas (Doble Cabina)", shortLabel: "Camión 2 Cab.", image: "/vehicles/clean_camion_2_cabinas.png", lateralImage: "/vehicles/thumbnails/camion-carga.png" },
+  { id: "camion_carga_furgon", label: "Camión de Carga (Furgón)", shortLabel: "Camión Furgón", image: "/vehicles/clean_camion_carga_furgon.png", lateralImage: "/vehicles/thumbnails/camion-carga.png" },
+  { id: "station_wagon", label: "Station Wagon / Familiar", shortLabel: "Station Wagon", image: "/vehicles/clean_station_wagon.png", lateralImage: "/vehicles/thumbnails/station-wagon.png" },
+  { id: "microbus_pasajeros", label: "Microbús de Pasajeros", shortLabel: "Microbús Pas.", image: "/vehicles/clean_microbus_pasajeros.png", lateralImage: "/vehicles/thumbnails/microbus-pasajeros.png" },
+  { id: "microbus_techo_alto", label: "Microbús Techo Alto", shortLabel: "Techo Alto", image: "/vehicles/clean_microbus_techo_alto.png", lateralImage: "/vehicles/thumbnails/microbus-carga.png" },
+  { id: "microbus_carga", label: "Microbús Panel de Carga", shortLabel: "Panel Carga", image: "/vehicles/clean_microbus_carga.png", lateralImage: "/vehicles/thumbnails/microbus-carga.png" },
+  { id: "bus_mediano_coaster", label: "Bus Mediano (Estilo Coaster)", shortLabel: "Bus Coaster", image: "/vehicles/clean_bus_mediano_coaster.png", lateralImage: "/vehicles/thumbnails/microbus-pasajeros.png" },
+  { id: "bus_grande_marcopolo", label: "Bus Grande (Estilo Marcopolo)", shortLabel: "Bus Grande", image: "/vehicles/clean_bus_grande_marcopolo.png", lateralImage: "/vehicles/thumbnails/cabezal.png" },
+  { id: "moto", label: "Motocicleta / Moto", shortLabel: "Moto", image: "/vehicles/clean_default.png", lateralImage: "/vehicles/thumbnails/default.png" },
 ];
 
 const KNOWN_CATEGORIES = new Set(VEHICLE_CATEGORIES.map((c) => c.id));
@@ -1157,15 +1157,22 @@ export function getVehicleDisplayImage(vehicle) {
   }
   const categoryId = resolveVehicleCategory(vehicle);
   const cat = VEHICLE_CATEGORIES.find((c) => c.id === categoryId);
-  if (cat?.image) {
+  if (cat) {
     return {
-      src: cat.image,
+      src: cat.lateralImage || cat.image || "/vehicles/thumbnails/default.png",
+      topSrc: cat.image,
       modelName: cat.label || vehicle.model || "",
       generation: "",
       isExact: false,
     };
   }
-  return null;
+  return {
+    src: "/vehicles/thumbnails/default.png",
+    topSrc: "/vehicles/clean_default.png",
+    modelName: vehicle.model || "",
+    generation: "",
+    isExact: false,
+  };
 }
 
 

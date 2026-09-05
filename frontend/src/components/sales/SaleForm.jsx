@@ -21,45 +21,49 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
 import { API_BASE as API } from "@/lib/api";
 import {
-  Building2,
+  AlertTriangle,
+  ArrowRightLeft,
+  BadgeAlert,
+  Banknote,
   BookOpen,
+  Building2,
+  Camera,
   Car,
   CarFront,
+  Check,
   CreditCard,
   Eye,
   FileText,
   FlaskConical,
   Hand,
+  Layers,
+  Loader2,
   MapPin,
   Minus,
-  Banknote,
-  Palette,
   Package,
+  PackageSearch,
+  Palette,
+  PencilLine,
+  Percent,
   Phone,
   Plus,
   PlusCircle,
-  Percent,
-  PencilLine,
-  ArrowRightLeft,
-  BadgeAlert,
   RefreshCcw,
+  ScanBarcode,
+  Scissors,
+  ShieldAlert,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Tag,
   Trash2,
   Truck,
   Undo2,
   User,
-  UserSearch,
   UserPlus,
+  UserSearch,
   Warehouse,
   Wrench,
-  PackageSearch,
-  ScanBarcode,
-  Layers,
-  Camera,
-  Scissors,
-  Sparkles,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -519,6 +523,7 @@ export default function SaleForm({
   const [applyRetention, setApplyRetention] = useState(initialData.applyRetention ?? false);
   const [retentionRate, setRetentionRate] = useState(initialData.retentionRate ?? 2);
   const canManageTaxes = ["gerencia", "programador", "supervisor"].includes(String(user?.role || "").toLowerCase());
+  const isSupervisorUser = ["gerencia", "programador", "supervisor", "jefe_vendedores", "jefe_tienda"].includes(String(user?.role || "").toLowerCase());
   const [mixedPaymentMethods, setMixedPaymentMethods] = useState(
     normalizePaymentMethodList(initialData.mixedPaymentMethods || initialData.mixed_payment_methods || [])
   );
@@ -564,6 +569,15 @@ export default function SaleForm({
   const [useVehicleVinDecoder, setUseVehicleVinDecoder] = useState(false);
   const [isDecodingVehicleVin, setIsDecodingVehicleVin] = useState(false);
   const [showSaleOcrModal, setShowSaleOcrModal] = useState(false);
+  const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
+  const [isSubmittingCustomer, setIsSubmittingCustomer] = useState(false);
+  const [vehicleConflictData, setVehicleConflictData] = useState(null);
+  const [showVehicleConflictDialog, setShowVehicleConflictDialog] = useState(false);
+  const [vehicleTransferReason, setVehicleTransferReason] = useState("Compraventa / Traspaso de vehículo");
+  const [isTransferringVehicle, setIsTransferringVehicle] = useState(false);
+  const [pendingVehicleTransfer, setPendingVehicleTransfer] = useState(
+    initialData.pending_vehicle_transfer || initialData.pendingVehicleTransfer || null
+  );
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [pendingCustomerId, setPendingCustomerId] = useState(null);
   const draftSnapshotRef = useRef(null);
@@ -1173,6 +1187,7 @@ export default function SaleForm({
       setUseVehicleVinDecoder(Boolean(draft?.useVehicleVinDecoder));
       setNewCustomer((prev) => ({ ...prev, ...(draft?.newCustomer || {}) }));
       setNewVehicle((prev) => ({ ...prev, ...(draft?.newVehicle || {}) }));
+      setPendingVehicleTransfer(draft?.pending_vehicle_transfer || draft?.pendingVehicleTransfer || null);
       draftSnapshotRef.current = draft;
     } catch (error) {
       console.warn("No se pudo cargar borrador:", error);
@@ -1619,6 +1634,9 @@ export default function SaleForm({
         credit_limit: parseFloat(newCustomer.credit_limit) || 0,
       };
 
+      if (isSubmittingCustomer) return;
+      setIsSubmittingCustomer(true);
+
       const response = await axios.post(`${API}/customers`, customerData, { withCredentials: true });
       const customerId = response.data.customer_id;
       toast.success("Cliente creado exitosamente");
@@ -1628,14 +1646,17 @@ export default function SaleForm({
       if (newCustomer.add_vehicle && newCustomer.brand && newCustomer.model) {
         if (!newCustomer.year) {
           toast.error("Selecciona el año del vehículo");
+          setIsSubmittingCustomer(false);
           return;
         }
         if (!isValidVehicleSelection(newCustomer.brand, newCustomer.year, newCustomer.model)) {
           toast.error("Marca, año y modelo deben seleccionarse desde la lista");
+          setIsSubmittingCustomer(false);
           return;
         }
         if (isPickupCatalogModel(newCustomer.brand, newCustomer.model) && !newCustomer.vehicle_cab_variant) {
           toast.error("Selecciona el tipo de cabina para esta camioneta");
+          setIsSubmittingCustomer(false);
           return;
         }
         const plateFormatted = newCustomer.plate_prefix === "M"
@@ -1647,7 +1668,7 @@ export default function SaleForm({
           plate: plateFormatted,
           brand: newCustomer.brand,
           model: newCustomer.model,
-          year: parseInt(newCustomer.year) || new Date().getFullYear(),
+          year: parseInt(newCustomer.year, 10) || new Date().getFullYear(),
           color: newCustomer.color || null,
           vin: newCustomer.chasis || null,
           ...(getCatalogVehiclePayload(newCustomer.brand, newCustomer.model, {
@@ -1655,17 +1676,29 @@ export default function SaleForm({
           }) || {}),
         };
 
-        const vehicleResponse = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
-        createdVehicleId = vehicleResponse?.data?.vehicle_id;
-        toast.success("Vehículo registrado");
-        playCreationSuccessSound();
+        try {
+          const vehicleResponse = await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
+          createdVehicleId = vehicleResponse?.data?.vehicle_id;
+          toast.success("Vehículo registrado");
+          playCreationSuccessSound();
 
-        if (createdVehicleId) {
-          applyNewlyCreatedVehicleSelection(createdVehicleId, vehicleResponse?.data);
+          if (createdVehicleId) {
+            applyNewlyCreatedVehicleSelection(createdVehicleId, vehicleResponse?.data);
+          }
+
+          const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
+          setLocalVehicles(vehiclesRes.data);
+        } catch (vehErr) {
+          const vDetail = vehErr.response?.data?.detail;
+          if (vehErr.response?.status === 409 && vDetail?.code === "VEHICLE_OWNED_BY_ANOTHER") {
+            setVehicleConflictData(vDetail);
+            setShowVehicleConflictDialog(true);
+            toast.warning("El vehículo ingresado pertenece a otro cliente/empresa. Revisa el traspaso de propietario.");
+          } else {
+            const vMsg = typeof vDetail === "string" ? vDetail : (vDetail?.message || "No se pudo registrar el vehículo");
+            toast.error(vMsg);
+          }
         }
-
-        const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
-        setLocalVehicles(vehiclesRes.data);
       }
 
       const customersRes = await axios.get(`${API}/customers`, { withCredentials: true });
@@ -1717,6 +1750,8 @@ export default function SaleForm({
       });
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al crear cliente");
+    } finally {
+      setIsSubmittingCustomer(false);
     }
   };
 
@@ -1750,6 +1785,7 @@ export default function SaleForm({
   };
 
   const createVehicleForSelectedCustomer = async () => {
+    if (isSubmittingVehicle) return;
     if (!selectedCustomer?.customer_id) {
       toast.error("Selecciona un cliente antes de registrar vehículo");
       return;
@@ -1772,6 +1808,7 @@ export default function SaleForm({
     }
 
     try {
+      setIsSubmittingVehicle(true);
       const plateFormatted = newVehicle.plate_prefix === "M"
         ? `M ${newVehicle.plate_number}`
         : `${newVehicle.plate_prefix} ${newVehicle.plate_number}`;
@@ -1824,7 +1861,137 @@ export default function SaleForm({
       });
       toast.success("Vehículo registrado para el cliente");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo registrar el vehículo");
+      const errDetail = error.response?.data?.detail;
+      if (error.response?.status === 409 && errDetail?.code === "VEHICLE_OWNED_BY_ANOTHER") {
+        setVehicleConflictData(errDetail);
+        setShowVehicleConflictDialog(true);
+      } else {
+        const msg = typeof errDetail === "string" ? errDetail : (errDetail?.message || "No se pudo registrar el vehículo");
+        toast.error(msg);
+      }
+    } finally {
+      setIsSubmittingVehicle(false);
+    }
+  };
+
+  const handleExecuteSupervisorTransfer = async () => {
+    if (!vehicleConflictData?.existing_vehicle?.vehicle_id || !selectedCustomer?.customer_id) {
+      toast.error("Datos incompletos para realizar el traspaso");
+      return;
+    }
+    try {
+      setIsTransferringVehicle(true);
+      const vehicleId = vehicleConflictData.existing_vehicle.vehicle_id;
+      const res = await axios.post(
+        `${API}/vehicles/${vehicleId}/transfer-owner`,
+        {
+          target_customer_id: selectedCustomer.customer_id,
+          reason: vehicleTransferReason || "Traspaso de vehículo por venta",
+          draft_id: initialData?.draft_id || initialData?.id || null,
+          flow: "sales",
+        },
+        { withCredentials: true }
+      );
+
+      toast.success(res.data?.message || "Vehículo traspasado exitosamente.");
+      setShowVehicleConflictDialog(false);
+      setShowNewVehicleDialog(false);
+      resetNewVehicleForm();
+
+      const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
+      setLocalVehicles(vehiclesRes.data);
+      applyNewlyCreatedVehicleSelection(vehicleId, res.data?.vehicle);
+      if (typeof onDataRefresh === "function") {
+        onDataRefresh();
+      }
+      setPendingVehicleTransfer(null);
+      persistDraftSnapshot({
+        selectedVehicle: normalizeVehicleId(vehicleId),
+        vehicleFlowOption: "registered",
+        logisticMode: "installed",
+        pending_vehicle_transfer: null,
+      });
+    } catch (error) {
+      const errDetail = error.response?.data?.detail;
+      toast.error(typeof errDetail === "string" ? errDetail : "No se pudo realizar el traspaso del vehículo");
+    } finally {
+      setIsTransferringVehicle(false);
+    }
+  };
+
+  const handleRequestSellerTransfer = () => {
+    if (!vehicleConflictData?.existing_vehicle?.vehicle_id || !selectedCustomer?.customer_id) {
+      toast.error("Datos incompletos para solicitar el traspaso");
+      return;
+    }
+    const transferReq = {
+      vehicle_id: vehicleConflictData.existing_vehicle.vehicle_id,
+      target_customer_id: selectedCustomer.customer_id,
+      target_customer_name: selectedCustomer.name || [selectedCustomer.first_name, selectedCustomer.last_name].filter(Boolean).join(" "),
+      previous_customer_id: vehicleConflictData.owner_info?.customer_id,
+      previous_customer_name: vehicleConflictData.owner_info?.name || "Dueño Anterior",
+      brand: vehicleConflictData.existing_vehicle.brand,
+      model: vehicleConflictData.existing_vehicle.model,
+      year: vehicleConflictData.existing_vehicle.year,
+      plate: vehicleConflictData.existing_vehicle.plate,
+      vin: vehicleConflictData.existing_vehicle.vin,
+      reason: vehicleTransferReason || "Traspaso solicitado por venta de vehículo",
+      requested_at: new Date().toISOString(),
+      requested_by_user_id: user?.user_id,
+      requested_by_name: user?.name,
+    };
+
+    setPendingVehicleTransfer(transferReq);
+    setShowVehicleConflictDialog(false);
+    setShowNewVehicleDialog(false);
+    resetNewVehicleForm();
+
+    persistDraftSnapshot({
+      pending_vehicle_transfer: transferReq,
+      isVehiclePickerVisible: false,
+      logisticMode: "installed",
+    });
+
+    toast.info("Solicitud de traspaso guardada en el borrador. Un supervisor o gerente debe aprobarla para asignar el vehículo.");
+  };
+
+  const handleApproveDraftTransfer = async (approved = true) => {
+    const draftId = initialData?.draft_id || initialData?.id;
+    if (!draftId) {
+      toast.error("Identificador de borrador no disponible");
+      return;
+    }
+    try {
+      setIsTransferringVehicle(true);
+      const res = await axios.post(
+        `${API}/drafts/sales/${draftId}/approve-vehicle-transfer`,
+        {
+          approved,
+          reason: approved ? "Aprobado por supervisión" : "Rechazado por supervisión",
+        },
+        { withCredentials: true }
+      );
+
+      if (approved) {
+        toast.success(res.data?.message || "Traspaso aprobado exitosamente.");
+        const vehicleId = pendingVehicleTransfer?.vehicle_id;
+        const vehiclesRes = await axios.get(`${API}/vehicles`, { withCredentials: true });
+        setLocalVehicles(vehiclesRes.data);
+        if (vehicleId) {
+          applyNewlyCreatedVehicleSelection(vehicleId, res.data?.vehicle);
+        }
+      } else {
+        toast.info("Solicitud de traspaso rechazada.");
+      }
+      setPendingVehicleTransfer(null);
+      if (typeof onDataRefresh === "function") {
+        onDataRefresh();
+      }
+    } catch (error) {
+      const errDetail = error.response?.data?.detail;
+      toast.error(typeof errDetail === "string" ? errDetail : "Error al procesar la aprobación del traspaso");
+    } finally {
+      setIsTransferringVehicle(false);
     }
   };
 
@@ -3911,6 +4078,82 @@ export default function SaleForm({
                     <CarFront className="h-4 w-4" />
                     Seleccionar vehículo
                   </Label>
+
+                  {pendingVehicleTransfer ? (
+                    <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50/90 dark:bg-amber-950/40 p-3.5 shadow-sm space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
+                            <CarFront className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-xs text-amber-950 dark:text-amber-100">
+                                Solicitud de Traspaso de Vehículo Pendiente
+                              </p>
+                              <Badge variant="outline" className="bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-[10px] py-0 font-medium">
+                                En revisión
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-amber-900/90 dark:text-amber-200/90 mt-0.5">
+                              Vehículo <strong>{[pendingVehicleTransfer.brand, pendingVehicleTransfer.model, pendingVehicleTransfer.year].filter(Boolean).join(" ")}</strong> (Placa: <strong>{pendingVehicleTransfer.plate}</strong>, Chasis: <strong>{pendingVehicleTransfer.vin}</strong>)
+                            </p>
+                            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/70 mt-0.5">
+                              Dueño anterior: <strong>{pendingVehicleTransfer.previous_customer_name}</strong> ➔ Nuevo dueño: <strong>{pendingVehicleTransfer.target_customer_name}</strong>
+                            </p>
+                            {pendingVehicleTransfer.reason ? (
+                              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 italic mt-0.5">
+                                Motivo: "{pendingVehicleTransfer.reason}"
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      {isSupervisorUser ? (
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-amber-200/60 dark:border-amber-800/40">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={isTransferringVehicle}
+                            onClick={() => handleApproveDraftTransfer(false)}
+                            className="h-8 text-xs text-rose-700 hover:text-rose-800 hover:bg-rose-50 border-rose-200 dark:border-rose-900"
+                          >
+                            Rechazar traspaso
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isTransferringVehicle}
+                            onClick={() => handleApproveDraftTransfer(true)}
+                            className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5 shadow-sm"
+                          >
+                            {isTransferringVehicle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Aprobar Traspaso de Vehículo
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
+                          <span>Esperando que Gerencia o Supervisión apruebe el traspaso en este borrador.</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setPendingVehicleTransfer(null);
+                              persistDraftSnapshot({ pending_vehicle_transfer: null });
+                              toast.info("Solicitud de traspaso cancelada");
+                            }}
+                            className="h-7 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          >
+                            Cancelar solicitud
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
                   <div className={`grid gap-2 ${customerVehicles.length ? "sm:grid-cols-2" : ""}`}>
                     {customerVehicles.map((v) => {
                       const plate = v.plate || v.plate_number || v.number_plate || "Sin placa";
@@ -6077,10 +6320,132 @@ export default function SaleForm({
               </p>
             </div>
 
-            <Button onClick={createVehicleForSelectedCustomer} className="w-full">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Registrar vehículo del cliente
+            <Button
+              onClick={createVehicleForSelectedCustomer}
+              disabled={isSubmittingVehicle}
+              className="w-full"
+            >
+              {isSubmittingVehicle ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <PlusCircle className="h-4 w-4 mr-2" />
+              )}
+              {isSubmittingVehicle ? "Registrando vehículo..." : "Registrar vehículo del cliente"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Conflicto de Propiedad y Traspaso de Vehículo */}
+      <Dialog
+        open={showVehicleConflictDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowVehicleConflictDialog(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl max-h-[min(90vh,92dvh)] overflow-y-auto border-2 border-amber-400 dark:border-amber-600 bg-white dark:bg-zinc-950">
+          <ContextualDialogHeader
+            variant="warning"
+            size="inline"
+            icon={ShieldAlert}
+            title="Vehículo ya registrado con otro cliente/empresa"
+            description="El número de placa o chasis ya existe en el sistema bajo otra titularidad."
+          />
+
+          <div className="space-y-4 pt-2">
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-950 dark:text-amber-100 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-sm">
+                    {vehicleConflictData?.existing_vehicle?.brand} {vehicleConflictData?.existing_vehicle?.model} {vehicleConflictData?.existing_vehicle?.year}
+                  </p>
+                  <p className="font-mono text-xs">
+                    Placa: <strong>{vehicleConflictData?.existing_vehicle?.plate || "N/A"}</strong> • Chasis: <strong>{vehicleConflictData?.existing_vehicle?.vin || "N/A"}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 space-y-1">
+                <span className="text-[11px] font-bold uppercase text-slate-500 block">Propietario Actual Registrado</span>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                  {vehicleConflictData?.owner_info?.name || "Cliente Registrado"}
+                </p>
+                {vehicleConflictData?.owner_info?.tax_id ? (
+                  <p className="text-slate-600 dark:text-slate-400">RUC/Cédula: {vehicleConflictData?.owner_info?.tax_id}</p>
+                ) : null}
+                {vehicleConflictData?.owner_info?.phone ? (
+                  <p className="text-slate-600 dark:text-slate-400">Tel: {vehicleConflictData?.owner_info?.phone}</p>
+                ) : null}
+              </div>
+
+              <div className="p-3 rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 space-y-1">
+                <span className="text-[11px] font-bold uppercase text-sky-600 dark:text-sky-400 block">Nuevo Propietario Solicitado</span>
+                <p className="font-bold text-sky-950 dark:text-sky-100 text-sm">
+                  {selectedCustomer?.name || [selectedCustomer?.first_name, selectedCustomer?.last_name].filter(Boolean).join(" ") || "Cliente Actual"}
+                </p>
+                {selectedCustomer?.tax_id ? (
+                  <p className="text-sky-800 dark:text-sky-300">RUC/Cédula: {selectedCustomer?.tax_id}</p>
+                ) : null}
+                {selectedCustomer?.phone ? (
+                  <p className="text-sky-800 dark:text-sky-300">Tel: {selectedCustomer?.phone}</p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Motivo del Traspaso / Cambio de Titularidad</Label>
+              <Select
+                value={vehicleTransferReason}
+                onValueChange={(val) => setVehicleTransferReason(val)}
+              >
+                <SelectTrigger className="text-xs h-9">
+                  <SelectValue placeholder="Seleccione motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Compraventa / Traspaso de vehículo">Compraventa / Traspaso de vehículo</SelectItem>
+                  <SelectItem value="Vehículo de empresa transferido / Reasignación">Vehículo de empresa transferido / Reasignación</SelectItem>
+                  <SelectItem value="Corrección de titularidad de cliente">Corrección de titularidad de cliente</SelectItem>
+                  <SelectItem value="Nuevo dueño particular">Nuevo dueño particular</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowVehicleConflictDialog(false)}
+                className="w-full sm:w-auto text-xs"
+              >
+                Cancelar
+              </Button>
+
+              {isSupervisorUser ? (
+                <Button
+                  type="button"
+                  disabled={isTransferringVehicle}
+                  onClick={handleExecuteSupervisorTransfer}
+                  className="w-full sm:w-auto text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5 shadow-md shadow-emerald-600/20"
+                >
+                  {isTransferringVehicle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  Aprobar y Traspasar Propietario Ahora
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleRequestSellerTransfer}
+                  className="w-full sm:w-auto text-xs bg-amber-600 hover:bg-amber-500 text-white font-bold gap-1.5 shadow-md shadow-amber-600/20"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Solicitar Traspaso al Supervisor
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -6177,7 +6542,14 @@ export default function SaleForm({
             onFormDataBlur={(nextCustomer) => persistDraftSnapshot({ newCustomer: nextCustomer })}
           />
 
-          <Button onClick={createNewCustomer} className="w-full mt-3">
+          <Button
+            onClick={createNewCustomer}
+            disabled={isSubmittingCustomer}
+            className="w-full mt-3"
+          >
+            {isSubmittingCustomer ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
             {newCustomer.add_vehicle
               ? (isNewCustomerCompany ? "Crear Empresa y Vehículo" : "Crear Cliente y Vehículo")
               : (isNewCustomerCompany ? "Crear Empresa" : "Crear Cliente")}

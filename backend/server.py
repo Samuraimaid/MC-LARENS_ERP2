@@ -7618,6 +7618,19 @@ async def delete_vehicle(vehicle_id: str, request: Request):
     return {"status": "deleted", "vehicle_id": vehicle_id}
 
 
+class VehicleOwnerTransferPayload(BaseModel):
+    target_customer_id: str
+    reason: Optional[str] = "Cambio de propietario / Traspaso de vehículo"
+    supervisor_pin: Optional[str] = None
+    draft_id: Optional[str] = None
+    flow: Optional[str] = "sales"
+
+
+class DraftVehicleTransferApprovalPayload(BaseModel):
+    approved: bool = True
+    reason: Optional[str] = None
+
+
 @api_router.post("/vehicles")
 async def create_vehicle(vehicle_data: VehicleCreate, request: Request):
     await require_auth(request)
@@ -7658,6 +7671,80 @@ async def create_vehicle(vehicle_data: VehicleCreate, request: Request):
     from backend.domains.vehicles.vehicle_cab import apply_cab_to_vehicle_doc
 
     doc = apply_cab_to_vehicle_doc(doc)
+
+    # Duplicate and Ownership Verification
+    target_customer_id = str(doc.get("customer_id") or "").strip()
+    raw_plate = str(doc.get("plate") or "").strip()
+    raw_vin = str(doc.get("vin") or doc.get("chasis") or "").strip().upper()
+
+    clean_plate_digits = re.sub(r"[^A-Za-z0-9]", "", raw_plate).upper()
+    clean_vin = re.sub(r"[^A-Za-z0-9]", "", raw_vin)
+
+    query_conditions = []
+    if clean_plate_digits and len(clean_plate_digits) >= 4:
+        plate_regex = "^" + r"\s*".join([re.escape(c) for c in clean_plate_digits]) + "$"
+        query_conditions.append({"plate": {"$regex": plate_regex, "$options": "i"}})
+    if clean_vin and len(clean_vin) >= 6:
+        vin_regex = "^" + r"\s*".join([re.escape(c) for c in clean_vin]) + "$"
+        query_conditions.append({"vin": {"$regex": vin_regex, "$options": "i"}})
+        query_conditions.append({"chasis": {"$regex": vin_regex, "$options": "i"}})
+
+    if query_conditions:
+        existing_veh = await db.vehicles.find_one({"$or": query_conditions}, {"_id": 0})
+        if existing_veh:
+            existing_cust_id = str(existing_veh.get("customer_id") or "").strip()
+            # Case 1: Same Customer -> Idempotent response (prevents double-click duplicate entries)
+            if existing_cust_id == target_customer_id:
+                logger.info(f"Vehicle already registered for this customer ({existing_veh.get('vehicle_id')}). Returning existing record.")
+                update_fields = {}
+                if doc.get("color") and not existing_veh.get("color"):
+                    update_fields["color"] = doc["color"]
+                if doc.get("vehicle_cab_variant") and not existing_veh.get("vehicle_cab_variant"):
+                    update_fields["vehicle_cab_variant"] = doc["vehicle_cab_variant"]
+                if doc.get("vehicle_type_slug") and not existing_veh.get("vehicle_type_slug"):
+                    update_fields["vehicle_type_slug"] = doc["vehicle_type_slug"]
+                if update_fields:
+                    await db.vehicles.update_one({"vehicle_id": existing_veh["vehicle_id"]}, {"$set": update_fields})
+                    existing_veh = await db.vehicles.find_one({"vehicle_id": existing_veh["vehicle_id"]}, {"_id": 0})
+                return existing_veh
+
+            # Case 2: Different Customer -> 409 Conflict with Previous Owner Info
+            prev_customer = await db.customers.find_one({"customer_id": existing_cust_id}, {"_id": 0}) or {}
+            prev_name = prev_customer.get("name") or f"{prev_customer.get('first_name', '')} {prev_customer.get('last_name', '')}".strip() or "Otro Cliente Registrado"
+            prev_type = prev_customer.get("customer_type") or prev_customer.get("type") or "natural"
+            prev_tax_id = prev_customer.get("tax_id") or ""
+            prev_phone = prev_customer.get("phone") or ""
+
+            veh_summary = f"{existing_veh.get('brand', '')} {existing_veh.get('model', '')} {existing_veh.get('year', '')}".strip()
+            conflict_plate = existing_veh.get("plate") or raw_plate
+            conflict_vin = existing_veh.get("vin") or raw_vin
+
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "VEHICLE_OWNED_BY_ANOTHER",
+                    "message": f"El vehículo {veh_summary} con placa '{conflict_plate}' y chasis '{conflict_vin}' ya se encuentra registrado a nombre de '{prev_name}'.",
+                    "existing_vehicle": {
+                        "vehicle_id": existing_veh.get("vehicle_id"),
+                        "brand": existing_veh.get("brand"),
+                        "model": existing_veh.get("model"),
+                        "year": existing_veh.get("year"),
+                        "plate": existing_veh.get("plate"),
+                        "vin": existing_veh.get("vin"),
+                        "color": existing_veh.get("color"),
+                        "vehicle_type": existing_veh.get("vehicle_type"),
+                        "customer_id": existing_cust_id,
+                    },
+                    "owner_info": {
+                        "customer_id": existing_cust_id,
+                        "name": prev_name,
+                        "type": prev_type,
+                        "tax_id": prev_tax_id,
+                        "phone": prev_phone,
+                    },
+                },
+            )
+
     # Ensure created_at exists and is ISO string
     created_at_val = doc.get("created_at")
     if not created_at_val:
@@ -7686,6 +7773,164 @@ async def create_vehicle(vehicle_data: VehicleCreate, request: Request):
 
     logger.info(f"create_vehicle returning stored doc for {stored.get('vehicle_id')}")
     return stored
+
+
+@api_router.post("/vehicles/{vehicle_id}/transfer-owner")
+async def transfer_vehicle_owner(vehicle_id: str, payload: VehicleOwnerTransferPayload, request: Request):
+    user = await require_auth(request)
+
+    is_auth_supervisor = _is_draft_branch_supervisor(user.role)
+    if not is_auth_supervisor and payload.supervisor_pin:
+        sup_user = await db.users.find_one({"pin": payload.supervisor_pin, "role": {"$in": list(DRAFT_BRANCH_SUPERVISOR_ROLES)}}, {"_id": 0})
+        if sup_user:
+            is_auth_supervisor = True
+
+    if not is_auth_supervisor:
+        raise HTTPException(
+            status_code=403,
+            detail="Se requiere autorización de un Supervisor o Gerente para traspasar el propietario de un vehículo.",
+        )
+
+    veh = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+    if not veh:
+        raise HTTPException(status_code=404, detail="Vehículo no encontrado")
+
+    target_customer = await db.customers.find_one({"customer_id": payload.target_customer_id}, {"_id": 0})
+    if not target_customer:
+        raise HTTPException(status_code=404, detail="Cliente destino no encontrado")
+
+    prev_customer_id = veh.get("customer_id")
+    prev_customer = await db.customers.find_one({"customer_id": prev_customer_id}, {"_id": 0}) or {}
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    await db.vehicles.update_one(
+        {"vehicle_id": vehicle_id},
+        {"$set": {"customer_id": payload.target_customer_id, "updated_at": now_iso}},
+    )
+
+    transfer_log = {
+        "log_id": f"vtrans_{uuid.uuid4().hex[:12]}",
+        "vehicle_id": vehicle_id,
+        "plate": veh.get("plate"),
+        "vin": veh.get("vin"),
+        "brand": veh.get("brand"),
+        "model": veh.get("model"),
+        "year": veh.get("year"),
+        "previous_customer_id": prev_customer_id,
+        "previous_customer_name": prev_customer.get("name") or f"{prev_customer.get('first_name', '')} {prev_customer.get('last_name', '')}".strip() or "Desconocido",
+        "new_customer_id": payload.target_customer_id,
+        "new_customer_name": target_customer.get("name") or f"{target_customer.get('first_name', '')} {target_customer.get('last_name', '')}".strip() or "Nuevo Cliente",
+        "reason": payload.reason or "Traspaso de propietario",
+        "authorized_by_user_id": user.user_id,
+        "authorized_by_name": user.name,
+        "authorized_by_role": user.role,
+        "created_at": now_iso,
+    }
+    await db.vehicle_transfer_logs.insert_one(transfer_log)
+
+    if payload.draft_id:
+        norm_flow = _normalize_draft_flow(payload.flow or "sales")
+        draft = await db.user_drafts.find_one({"flow": norm_flow, "draft_id": payload.draft_id})
+        if draft:
+            snap = draft.get("snapshot") or {}
+            snap["pending_vehicle_transfer"] = None
+            snap["selectedVehicle"] = vehicle_id
+            snap["vehicleFlowOption"] = "registered"
+            snap["logisticMode"] = "installed"
+            await db.user_drafts.update_one(
+                {"flow": norm_flow, "draft_id": payload.draft_id},
+                {"$set": {"snapshot": snap, "updated_at": now_iso}},
+            )
+
+    updated_veh = await db.vehicles.find_one({"vehicle_id": vehicle_id}, {"_id": 0})
+    return {
+        "success": True,
+        "message": f"Vehículo traspasado exitosamente a {transfer_log['new_customer_name']}",
+        "vehicle": updated_veh,
+        "transfer_log": transfer_log,
+    }
+
+
+@api_router.post("/drafts/{flow}/{draft_id}/approve-vehicle-transfer")
+async def approve_draft_vehicle_transfer(flow: str, draft_id: str, payload: DraftVehicleTransferApprovalPayload, request: Request):
+    user = await require_auth(request)
+    if not _is_draft_branch_supervisor(user.role):
+        raise HTTPException(status_code=403, detail="Solo supervisión o gerencia pueden aprobar traspasos de vehículos.")
+
+    norm_flow = _normalize_draft_flow(flow)
+    draft = await _get_accessible_draft_doc(norm_flow, draft_id, user)
+    snap = draft.get("snapshot") or {}
+    pending_transfer = snap.get("pending_vehicle_transfer")
+    if not pending_transfer:
+        raise HTTPException(status_code=400, detail="Este borrador no tiene ninguna solicitud de traspaso de vehículo pendiente.")
+
+    vehicle_id = pending_transfer.get("vehicle_id")
+    target_customer_id = pending_transfer.get("target_customer_id")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    if not payload.approved:
+        snap["pending_vehicle_transfer"] = None
+        await db.user_drafts.update_one(
+            {"flow": norm_flow, "draft_id": draft_id},
+            {"$set": {"snapshot": snap, "updated_at": now_iso}},
+        )
+        return {"success": True, "message": "Solicitud de traspaso rechazada.", "approved": False}
+
+    veh = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+    if not veh:
+        raise HTTPException(status_code=404, detail="Vehículo no encontrado")
+
+    target_customer = await db.customers.find_one({"customer_id": target_customer_id}, {"_id": 0})
+    if not target_customer:
+        raise HTTPException(status_code=404, detail="Cliente destino no encontrado")
+
+    prev_customer_id = veh.get("customer_id")
+    prev_customer = await db.customers.find_one({"customer_id": prev_customer_id}, {"_id": 0}) or {}
+
+    await db.vehicles.update_one(
+        {"vehicle_id": vehicle_id},
+        {"$set": {"customer_id": target_customer_id, "updated_at": now_iso}},
+    )
+
+    transfer_log = {
+        "log_id": f"vtrans_{uuid.uuid4().hex[:12]}",
+        "vehicle_id": vehicle_id,
+        "plate": veh.get("plate"),
+        "vin": veh.get("vin"),
+        "brand": veh.get("brand"),
+        "model": veh.get("model"),
+        "year": veh.get("year"),
+        "previous_customer_id": prev_customer_id,
+        "previous_customer_name": prev_customer.get("name") or f"{prev_customer.get('first_name', '')} {prev_customer.get('last_name', '')}".strip() or "Desconocido",
+        "new_customer_id": target_customer_id,
+        "new_customer_name": target_customer.get("name") or f"{target_customer.get('first_name', '')} {target_customer.get('last_name', '')}".strip() or "Nuevo Cliente",
+        "reason": payload.reason or pending_transfer.get("reason") or "Aprobado por supervisión en borrador",
+        "authorized_by_user_id": user.user_id,
+        "authorized_by_name": user.name,
+        "authorized_by_role": user.role,
+        "created_at": now_iso,
+    }
+    await db.vehicle_transfer_logs.insert_one(transfer_log)
+
+    snap["pending_vehicle_transfer"] = None
+    snap["selectedVehicle"] = vehicle_id
+    snap["vehicleFlowOption"] = "registered"
+    snap["logisticMode"] = "installed"
+    await db.user_drafts.update_one(
+        {"flow": norm_flow, "draft_id": draft_id},
+        {"$set": {"snapshot": snap, "updated_at": now_iso}},
+    )
+
+    updated_veh = await db.vehicles.find_one({"vehicle_id": vehicle_id}, {"_id": 0})
+    return {
+        "success": True,
+        "message": "Traspaso de vehículo aprobado exitosamente.",
+        "approved": True,
+        "vehicle": updated_veh,
+        "transfer_log": transfer_log,
+    }
 
 
 @api_router.get("/vehicles/decode-vin")
