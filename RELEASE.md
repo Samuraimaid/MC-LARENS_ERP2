@@ -1,6 +1,18 @@
 # Release v0.2.1-roles
 
-Build documental actual: 2026-02-26
+Build documental actual: 2026-09-07
+
+## Control de cambios - 2026-09-07 (Blindaje Anti-DevTools, Menú Contextual Seguro y Captura de Pantalla)
+
+Estado de cierre
+- Implementado blindaje estricto contra inspección de código (F12, atajos de DevTools, purga de logs en producción).
+- Menú contextual in-app (AntiTamperGuard) reacondicionado con motor de captura de pantalla ultra-robusto (CORS, eliminación de taint canvas, multi-CDN y fallback a MediaStream).
+- Widget flotante integrado de Calculadora / Conversor cambiario USD-NIO con tasa dinámica.
+- Endpoint de auditoría de seguridad `/api/hypervisor/tamper-alert` para registro inmutable de incidentes de inspección.
+- Optimización de despliegue en Cloud Run con 2 vCPUs, 2 GiB de RAM y concurrencia de 80 peticiones para alta disponibilidad multi-sucursal.
+
+Documentación técnica asociada:
+- `docs/SECURITY_AND_TAMPER_PROTECTION_GUIDE.md`
 
 ## Control de cambios - 2026-05-07 (Deshacer carrito, retencion IR y conectividad LAN)
 
