@@ -60,6 +60,24 @@ En terminales de mostrador, cajas de cobro y puntos de venta de las sucursales, 
 
 ---
 
+### Fallo D: Compartir en WhatsApp sin Imagen Adjunta y Falta de Discreción Comercial
+* **Causa Raíz:**
+  1. **Limitación de Protocolo Web:** El esquema estándar `api.whatsapp.com/send?text=...` de Meta únicamente acepta cadenas de texto URL y no permite adjuntar archivos binarios (imágenes) por restricciones de seguridad del navegador.
+  2. **Riesgo de Fuga de Márgenes Comerciales:** Al compartir capturas de pantalla con clientes o terceros, existía el riesgo de exponer información confidencial como **Precios 2, Precios VIP, Precios Casa Comercial, Costos y existencias exactas en bodegas**.
+* **Solución Aplicada:**
+  1. **Modo Discreción Comercial Inteligente:**
+     - Previo al renderizado del canvas, el sistema aplica un filtro de desenfoque (`blur(7px)`) sobre todos los niveles de precio mayoristas/VIP/Casa comercial y cantidades desglosadas por bodega.
+     - **Solo el Precio 1 (Precio Público / Lista)** y la información relevante del producto permanecen 100% nítidos.
+     - Incluye selector/badge en el modal para alternar la discreción según la necesidad operativa.
+  2. **Generador de Mensajes Contextuales Inteligentes:**
+     - Detecta la pantalla activa (Catálogo, Búsqueda, Ventas, Cotizaciones, Caja, Taller, Configuración) y genera automáticamente un saludo y descripción comercial profesional.
+     - El mensaje es **100% editable** por el vendedor antes de enviar.
+  3. **Flujo de Compartición Híbrido (Web Share API + Auto-Clipboard):**
+     - En dispositivos móviles o compatibles, adjunta el archivo de imagen directamente mediante `navigator.share({ files: [file] })`.
+     - En WhatsApp Web de escritorio, copia automáticamente la imagen al portapapeles y muestra una guía visual para que el operador presione `Ctrl + V` en el chat, enviando la imagen y el texto en segundos.
+
+---
+
 ## 3. Matriz de Menú Contextual Seguro
 
 | Opción | Atajo | Alcance / Acción |
