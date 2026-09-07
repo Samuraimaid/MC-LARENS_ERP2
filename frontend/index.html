@@ -29,6 +29,24 @@
         document.head.appendChild(tailwindScript);
       }
     </script>
+    <script>
+      (function() {
+        document.addEventListener("contextmenu", function(e) {
+          var tag = String(e.target && e.target.tagName || "").toLowerCase();
+          if (tag !== "input" && tag !== "textarea" && !(e.target && e.target.isContentEditable)) {
+            e.preventDefault();
+          }
+        }, true);
+        window.addEventListener("keydown", function(e) {
+          var k = (e.key || "").toUpperCase();
+          var c = e.keyCode || e.which;
+          var ctrl = e.ctrlKey || e.metaKey;
+          if (k === "F12" || c === 123) { e.preventDefault(); e.stopPropagation(); }
+          if (ctrl && e.shiftKey && (k === "I" || k === "J" || k === "C" || k === "K" || c === 73 || c === 74 || c === 67 || c === 75)) { e.preventDefault(); e.stopPropagation(); }
+          if (ctrl && (k === "U" || c === 85)) { e.preventDefault(); e.stopPropagation(); }
+        }, true);
+      })();
+    </script>
     <script src="/env.js"></script>
   </head>
   <body>

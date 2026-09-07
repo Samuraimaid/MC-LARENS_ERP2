@@ -6741,6 +6741,44 @@ async def hypervisor_access(request: Request):
     }
 
 
+@api_router.post("/hypervisor/tamper-alert")
+async def record_hypervisor_tamper_alert(request: Request):
+    client_ip = get_client_ip(request)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        body_bytes = await request.body()
+        body_data = json.loads(body_bytes.decode("utf-8")) if body_bytes else {}
+    except Exception:
+        body_data = {}
+
+    event_id = f"evt_tamper_{uuid.uuid4().hex[:12]}"
+    event_doc = {
+        "event_id": event_id,
+        "timestamp": now_iso,
+        "actor_user_id": "UNAUTHORIZED_TAMPER",
+        "actor_name": "Terminal Operator (DevTools)",
+        "actor_role": "unknown",
+        "entity_type": "security_tamper",
+        "entity_id": client_ip,
+        "action": "DEVTOOLS_TAMPER_DETECTED",
+        "changes": {
+            "ip": client_ip,
+            "url": body_data.get("url"),
+            "userAgent": body_data.get("userAgent"),
+            "alert": "Intento de apertura no autorizada de DevTools / Inspección de Código",
+        },
+        "ip_address": client_ip,
+        "details": body_data,
+    }
+    try:
+        await db.hypervisor_events.insert_one(event_doc)
+        event_doc.pop("_id", None)
+    except Exception:
+        pass
+
+    return {"status": "recorded", "event_id": event_id}
+
+
 @api_router.get("/hypervisor/events")
 async def get_hypervisor_events(
     request: Request,

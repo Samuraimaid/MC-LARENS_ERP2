@@ -67,6 +67,9 @@ if gcloud run deploy "$SERVICE_NAME" \
     --image "$IMAGE_TAG" \
     --platform managed \
     --region "$REGION" \
+    --memory 2Gi \
+    --cpu 2 \
+    --concurrency 80 \
     --allow-unauthenticated; then
     echo -e "${CLR_NEON_GREEN}└─ ✔ Servicio desplegado y asignado al 100% del tráfico.${RESET}\n"
 else
