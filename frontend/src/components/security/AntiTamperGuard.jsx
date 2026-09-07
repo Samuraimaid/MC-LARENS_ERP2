@@ -25,6 +25,9 @@ import {
   Check,
   ChevronRight,
   ArrowLeftRight,
+  EyeOff,
+  Eye,
+  MessageSquare,
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -32,6 +35,134 @@ import { useTheme } from "../../context/ThemeContext";
 import axios from "axios";
 
 const DEFAULT_FX_RATE = 36.5;
+
+/**
+ * Genera el mensaje contextual dinámico para WhatsApp basado en la ruta actual
+ */
+function getContextualShareMessage(pathname = "", search = "") {
+  const currentPath = String(pathname || "").toLowerCase();
+  const currentSearch = String(search || "").toLowerCase();
+
+  // 1. Catálogo de Productos / Buscador de Repuestos
+  if (currentPath.includes("/workbench") && currentSearch.includes("tab=catalog")) {
+    return "📦 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto la ficha de producto de nuestro catálogo.\n\n_Para consultar existencias o solicitar tu pedido, estamos a tu orden._";
+  }
+  if (currentPath.includes("/workbench") && currentSearch.includes("tab=search")) {
+    return "🔍 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto la consulta de repuesto y disponibilidad desde nuestro sistema.\n\n_Quedamos a tu orden para confirmar tu compra._";
+  }
+  if (currentPath.includes("/inventory")) {
+    return "📦 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto la ficha de producto y detalle técnico.";
+  }
+
+  // 2. Ventas / Cotizaciones / Facturación
+  if (currentPath.includes("/sales") || currentSearch.includes("tab=sales")) {
+    return "📄 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te adjunto el resumen de tu cotización / orden de venta.\n\n_Quedamos atentos a tu confirmación para proceder con el despacho._";
+  }
+  if (currentSearch.includes("tab=quotations")) {
+    return "📋 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto la cotización formal de accesorios y repuestos.";
+  }
+
+  // 3. Caja / Pagos / Recibos
+  if (currentPath.includes("/cashier") || currentPath.includes("/accounting")) {
+    return "🧾 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto el comprobante de caja y registro de pago.";
+  }
+
+  // 4. Taller / Instalaciones
+  if (currentPath.includes("/workshop")) {
+    return "🔧 *MC-LARENS AUTO ACCESORIOS - TALLER*\n👋 Hola, te comparto el estado de servicio y orden de trabajo de tu vehículo.";
+  }
+
+  // 5. Configuración / Pantallas Generales
+  if (currentPath.includes("/settings")) {
+    return "⚙️ *MC-LARENS AUTO ACCESORIOS*\nCaptura de pantalla de configuración y módulos del sistema ERP.";
+  }
+
+  return "🚗💨 *MC-LARENS AUTO ACCESORIOS*\n👋 Hola, te comparto captura de pantalla del sistema ERP.";
+}
+
+/**
+ * Aplica temporalmente efecto de censura/blur a datos sensibles
+ * (Precios mayoristas 2/VIP/Casa comercial, costos y desglose de bodegas)
+ * antes de tomar la captura de pantalla.
+ */
+function applyDiscretionCensorship() {
+  const elementsToRestore = [];
+
+  // 1. Selectores explícitos de precios y datos sensibles
+  const sensitiveSelectors = [
+    '[data-tier="precio2"]',
+    '[data-tier="precio_vip"]',
+    '[data-tier="precio_casa_comercial"]',
+    '[data-sensitive="true"]',
+    '.price-tier-precio2',
+    '.price-tier-vip',
+    '.price-tier-casa',
+    '.sensitive-stock-detail',
+    '.sensitive-cost',
+    '.internal-audit-field',
+  ];
+
+  try {
+    document.querySelectorAll(sensitiveSelectors.join(",")).forEach((el) => {
+      const originalFilter = el.style.filter;
+      const originalOpacity = el.style.opacity;
+      el.style.filter = "blur(7px)";
+      el.style.opacity = "0.45";
+      elementsToRestore.push(() => {
+        el.style.filter = originalFilter;
+        el.style.opacity = originalOpacity;
+      });
+    });
+  } catch (e) {
+    // Continuar
+  }
+
+  // 2. Escaneo inteligente de nodos de texto con etiquetas de precios confidenciales y bodegas
+  try {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    const regexSensitive = /(precio\s*2|precio\s*vip|casa\s*comercial|precio\s*3|p2\s*:|vip\s*:|costo|utilidad|margen|bodega\s*norte|bodega\s*sur|almac[eé]n\s*central|stock\s*norte|stock\s*sur)/i;
+
+    const matchedNodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.nodeValue && regexSensitive.test(node.nodeValue)) {
+        matchedNodes.push(node);
+      }
+    }
+
+    matchedNodes.forEach((node) => {
+      const parent = node.parentElement;
+      if (
+        parent &&
+        !parent.closest('[data-screenshot-ignore="true"]') &&
+        !parent.closest("button") &&
+        !parent.classList?.contains("anti-tamper-ignore")
+      ) {
+        const targetBlock = parent.closest(".price-tier-card, tr, li, .grid > div, .flex-col, .space-y-1, div") || parent;
+        const originalFilter = targetBlock.style.filter;
+        const originalOpacity = targetBlock.style.opacity;
+        targetBlock.style.filter = "blur(7px)";
+        targetBlock.style.opacity = "0.45";
+        elementsToRestore.push(() => {
+          targetBlock.style.filter = originalFilter;
+          targetBlock.style.opacity = originalOpacity;
+        });
+      }
+    });
+  } catch (e) {
+    // Continuar
+  }
+
+  return () => {
+    elementsToRestore.forEach((restore) => {
+      try {
+        restore();
+      } catch (e) {
+        // Ignorar
+      }
+    });
+  };
+}
 
 export function AntiTamperGuard({ children }) {
   const { user, logout } = useAuth();
@@ -65,7 +196,10 @@ export function AntiTamperGuard({ children }) {
     imageUrl: "",
     isCapturing: false,
     errorMsg: "",
+    discretionEnabled: true,
+    customMessage: "",
   });
+  const [whatsAppHelperVisible, setWhatsAppHelperVisible] = useState(false);
 
   // Widget Calculadora Rápida Integrada
   const [calculatorWidget, setCalculatorWidget] = useState({
@@ -318,7 +452,7 @@ export function AntiTamperGuard({ children }) {
     window.location.reload(true);
   };
 
-  // Carga Robusta de html2canvas con múltiples fuentes
+  // Carga Robusta de html2canvas con múltiples fuentes CDN
   const loadHtml2Canvas = () => {
     return new Promise((resolve) => {
       if (window.html2canvas) {
@@ -355,20 +489,31 @@ export function AntiTamperGuard({ children }) {
     });
   };
 
-  // Captura de Pantalla Ultra-Robusta
-  const handleCaptureScreen = async (e) => {
-    e.stopPropagation();
+  // Generación de Captura de Pantalla con Modo Discreción Comercial
+  const handleCaptureScreen = async (e, forceDiscretion = true) => {
+    if (e) e.stopPropagation();
     closeContextMenu();
+    setWhatsAppHelperVisible(false);
+
+    const defaultMsg = getContextualShareMessage(location.pathname, location.search);
 
     setScreenshotModal({
       isOpen: true,
       imageUrl: "",
       isCapturing: true,
       errorMsg: "",
+      discretionEnabled: forceDiscretion,
+      customMessage: defaultMsg,
     });
 
+    // 1. Aplicar censura visual previa si la discreción está habilitada
+    let restoreCensorship = () => {};
+    if (forceDiscretion) {
+      restoreCensorship = applyDiscretionCensorship();
+    }
+
     try {
-      // 1. Cargar biblioteca html2canvas
+      // 2. Cargar biblioteca html2canvas
       const h2c = await loadHtml2Canvas();
 
       if (h2c) {
@@ -394,17 +539,23 @@ export function AntiTamperGuard({ children }) {
           },
         });
 
+        // Restaurar estilos en pantalla viva inmediatamente
+        restoreCensorship();
+
         const dataUrl = canvas.toDataURL("image/png");
-        setScreenshotModal({
+        setScreenshotModal((prev) => ({
+          ...prev,
           isOpen: true,
           imageUrl: dataUrl,
           isCapturing: false,
           errorMsg: "",
-        });
+          discretionEnabled: forceDiscretion,
+          customMessage: prev.customMessage || defaultMsg,
+        }));
         return;
       }
 
-      // 2. Fallback con MediaDevices API
+      // 3. Fallback con MediaDevices API
       if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: "browser" },
@@ -421,26 +572,77 @@ export function AntiTamperGuard({ children }) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         stream.getTracks().forEach((track) => track.stop());
 
+        restoreCensorship();
+
         const dataUrl = canvas.toDataURL("image/png");
-        setScreenshotModal({
+        setScreenshotModal((prev) => ({
+          ...prev,
           isOpen: true,
           imageUrl: dataUrl,
           isCapturing: false,
           errorMsg: "",
-        });
+          discretionEnabled: forceDiscretion,
+          customMessage: prev.customMessage || defaultMsg,
+        }));
         return;
       }
 
+      restoreCensorship();
       throw new Error("No se pudo inicializar el motor de captura de pantalla.");
     } catch (err) {
+      restoreCensorship();
       console.warn("Screenshot capture error:", err);
-      setScreenshotModal({
+      setScreenshotModal((prev) => ({
+        ...prev,
         isOpen: true,
         imageUrl: "",
         isCapturing: false,
         errorMsg: "No se pudo generar la captura. Verifica que las políticas de tu navegador permitan la captura local.",
-      });
+      }));
     }
+  };
+
+  // Compartir en WhatsApp con Soporte de Archivo y Auto-Copia a Portapapeles
+  const handleShareWhatsApp = async () => {
+    const textToSend =
+      screenshotModal.customMessage?.trim() ||
+      getContextualShareMessage(location.pathname, location.search);
+
+    // 1. Intentar Web Share API con archivo binario nativo (móviles / navegadores con soporte)
+    try {
+      if (screenshotModal.imageUrl && navigator.canShare) {
+        const res = await fetch(screenshotModal.imageUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `captura_mclarens_${Date.now()}.png`, { type: "image/png" });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "MC-Larens ERP",
+            text: textToSend,
+          });
+          showFeedback("¡Compartido con éxito!");
+          return;
+        }
+      }
+    } catch (err) {
+      // Si el usuario canceló el share sheet o falló, continuar con flujo WhatsApp Web
+    }
+
+    // 2. Flujo WhatsApp Web: Copiar imagen automáticamente al portapapeles y abrir chat con texto pre-cargado
+    try {
+      if (screenshotModal.imageUrl) {
+        const res = await fetch(screenshotModal.imageUrl);
+        const blob = await res.blob();
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      }
+    } catch (e) {
+      console.warn("Auto-clipboard copy fallback:", e);
+    }
+
+    setWhatsAppHelperVisible(true);
+    const encodedMsg = encodeURIComponent(textToSend);
+    window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
   };
 
   // Pantalla Completa (Modo Kiosko)
@@ -459,7 +661,12 @@ export function AntiTamperGuard({ children }) {
     e.stopPropagation();
     closeContextMenu();
     if (user) {
-      if (user.role === "vendedor" || user.role === "supervisor" || user.role === "gerencia" || user.role === "programador") {
+      if (
+        user.role === "vendedor" ||
+        user.role === "supervisor" ||
+        user.role === "gerencia" ||
+        user.role === "programador"
+      ) {
         navigate("/workbench?tab=search");
       } else {
         navigate("/inventory");
@@ -601,7 +808,7 @@ export function AntiTamperGuard({ children }) {
 
           <button
             type="button"
-            onClick={handleCaptureScreen}
+            onClick={(e) => handleCaptureScreen(e, true)}
             className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <Camera className="h-4 w-4 text-emerald-500" />
@@ -684,34 +891,78 @@ export function AntiTamperGuard({ children }) {
         </div>
       )}
 
-      {/* Modal de Previsualización y Compartir Captura de Pantalla */}
+      {/* Modal de Previsualización y Compartir Captura de Pantalla con Discreción */}
       {screenshotModal.isOpen && (
         <div
           id="mclarens-screenshot-modal-container"
           data-screenshot-ignore="true"
-          className="fixed inset-0 z-[99999999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-in fade-in duration-200 anti-tamper-ignore select-none"
+          className="fixed inset-0 z-[99999999] flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200 anti-tamper-ignore select-none"
         >
-          <div className="relative max-w-2xl w-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800">
+          <div className="relative max-w-2xl w-full rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-white max-h-[92vh] flex flex-col">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800 shrink-0">
               <div className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-emerald-500" />
-                <h3 className="text-base font-bold">Captura de Pantalla del ERP</h3>
+                <h3 className="text-sm sm:text-base font-bold">Captura y Compartir ERP</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setScreenshotModal({ isOpen: false, imageUrl: "", isCapturing: false, errorMsg: "" })}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Badge de Discreción Empresarial */}
+                <button
+                  type="button"
+                  title="Activa o desactiva la censura de precios confidenciales y stock"
+                  onClick={() => handleCaptureScreen(null, !screenshotModal.discretionEnabled)}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition-all ${
+                    screenshotModal.discretionEnabled
+                      ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 dark:text-emerald-400"
+                      : "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  {screenshotModal.discretionEnabled ? (
+                    <>
+                      <EyeOff className="h-3 w-3" />
+                      <span>Discreción: ACTIVA</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3 w-3" />
+                      <span>Discreción: Inactiva</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setScreenshotModal({
+                      isOpen: false,
+                      imageUrl: "",
+                      isCapturing: false,
+                      errorMsg: "",
+                      discretionEnabled: true,
+                      customMessage: "",
+                    })
+                  }
+                  className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-col items-center">
+            {/* Cuerpo del Modal con Previsualización */}
+            <div className="mt-3 flex-1 overflow-y-auto space-y-3">
               {screenshotModal.isCapturing ? (
                 <div className="flex flex-col items-center justify-center py-16 text-sm text-zinc-500">
                   <RefreshCw className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">Generando captura de pantalla de alta resolución...</span>
-                  <span className="text-xs text-zinc-400 mt-1">Renderizando elementos visibles del sistema</span>
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                    Generando captura protegida...
+                  </span>
+                  <span className="text-xs text-zinc-400 mt-1">
+                    {screenshotModal.discretionEnabled
+                      ? "Aplicando discreción comercial (Precio 1 público)"
+                      : "Renderizando vista completa del sistema"}
+                  </span>
                 </div>
               ) : screenshotModal.errorMsg ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-red-500">
@@ -719,18 +970,53 @@ export function AntiTamperGuard({ children }) {
                   <p className="max-w-md">{screenshotModal.errorMsg}</p>
                 </div>
               ) : (
-                <div className="max-h-[52vh] w-full overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-900/40 p-2 shadow-inner">
-                  <img
-                    src={screenshotModal.imageUrl}
-                    alt="Captura ERP"
-                    className="w-full h-auto object-contain rounded-lg shadow-md"
-                  />
-                </div>
+                <>
+                  <div className="max-h-[38vh] w-full overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-900/40 p-1.5 shadow-inner">
+                    <img
+                      src={screenshotModal.imageUrl}
+                      alt="Captura ERP"
+                      className="w-full h-auto object-contain rounded-lg shadow-md"
+                    />
+                  </div>
+
+                  {/* Campo de Mensaje Contextual para WhatsApp */}
+                  <div className="space-y-1">
+                    <label className="flex items-center justify-between text-[10px] font-semibold text-zinc-500 uppercase tracking-wide">
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3 text-emerald-500" /> Mensaje Contextual de WhatsApp
+                      </span>
+                      <span className="text-zinc-400 lowercase font-normal">editable</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={screenshotModal.customMessage}
+                      onChange={(e) =>
+                        setScreenshotModal((prev) => ({ ...prev, customMessage: e.target.value }))
+                      }
+                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-100 focus:border-emerald-500 focus:outline-none"
+                      placeholder="Escribe un mensaje personalizado para el cliente..."
+                    />
+                  </div>
+
+                  {/* Banner de Ayuda para WhatsApp */}
+                  {whatsAppHelperVisible && (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>¡Captura copiada al portapapeles!</strong>
+                        <p className="text-[11px] mt-0.5 opacity-90">
+                          Al abrirse tu chat de WhatsApp, presiona <strong>Ctrl + V</strong> (Pegar) para adjuntar la imagen junto con el mensaje contextual.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
+            {/* Footer de Acciones */}
             {!screenshotModal.isCapturing && !screenshotModal.errorMsg && (
-              <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800 shrink-0">
                 <button
                   type="button"
                   onClick={async () => {
@@ -743,7 +1029,7 @@ export function AntiTamperGuard({ children }) {
                       alert("Usa el botón 'Descargar PNG' para guardar la imagen.");
                     }
                   }}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-zinc-100 px-3.5 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <Copy className="h-3.5 w-3.5" /> Copiar Imagen
                 </button>
@@ -751,18 +1037,15 @@ export function AntiTamperGuard({ children }) {
                 <a
                   href={screenshotModal.imageUrl}
                   download={`captura_mclarens_erp_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "_")}.png`}
-                  className="flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-primary/30"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 px-3.5 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-primary/30"
                 >
                   <Download className="h-3.5 w-3.5" /> Descargar PNG
                 </a>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    const msg = encodeURIComponent("Adjunto comprobante / pantalla de MC-Larens ERP.");
-                    window.open(`https://api.whatsapp.com/send?text=${msg}`, "_blank");
-                  }}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-emerald-700/30"
+                  onClick={handleShareWhatsApp}
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-emerald-700/30"
                 >
                   <Share2 className="h-3.5 w-3.5" /> WhatsApp
                 </button>
