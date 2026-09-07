@@ -30,7 +30,8 @@ function Resolve-VehicleCategory($vehicle) {
     }
 
     $brand = ('' + $vehicle.brand).Trim().ToUpper()
-    $descriptor = ('' + (if ($vehicle.descriptor) { $vehicle.descriptor } else { $vehicle.model })).Trim()
+    $rawDesc = if ($vehicle.ContainsKey('descriptor') -and $vehicle.descriptor) { $vehicle.descriptor } else { $vehicle.model }
+    $descriptor = ('' + $rawDesc).Trim()
     
     if ($brand -and $descriptor) {
         $key = $brand + '::' + $descriptor

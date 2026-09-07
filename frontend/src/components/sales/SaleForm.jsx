@@ -275,56 +275,78 @@ export function getProductVehicleCompatibility(product, vehicle) {
       return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Ventana Individual)" };
     }
 
+    const compatVehicleTypes = Array.isArray(compatibility?.vehicle_types)
+      ? compatibility.vehicle_types.map((vt) => String(vt).toLowerCase().trim())
+      : [];
+
+    const hasCompatVehicleType = (...types) =>
+      types.some((t) => compatVehicleTypes.includes(t.toLowerCase()));
+
     // Complete Tint Product Identification
+    const isPickupTint =
+      sku === "POL-PCK-COM" ||
+      sku.includes("-PCK-") ||
+      (sku.includes("-CAM-") && !name.includes("camión") && !name.includes("camion") && !name.includes("cabezal") && !name.includes("furgón")) ||
+      name.includes("pickup") ||
+      name.includes("pick-up") ||
+      name.includes("camioneta pickup") ||
+      name.includes("doble cabina") ||
+      name.includes("cabina y media") ||
+      name.includes("cabina sencilla") ||
+      name.includes("1 cabina") ||
+      name.includes("tina") ||
+      (name.includes("camioneta") && !name.includes("cerrada") && !name.includes("suv") && !name.includes("station wagon")) ||
+      hasCompatVehicleType("pickup", "camioneta_doble_cabina", "camioneta_cabina_media", "camioneta_1_cabina", "camioneta doble cabina", "camioneta 1 cabina", "camioneta");
+
     const isSedanTint =
       sku === "POL-SED-COM" ||
       sku.includes("-SED-") ||
       ((name.includes("sedán") || name.includes("sedan") || name.includes("automóvil") || name.includes("automovil")) &&
         !name.includes("suv") &&
         !name.includes("camioneta") &&
-        !name.includes("hatchback"));
+        !name.includes("pickup") &&
+        !name.includes("hatchback")) ||
+      hasCompatVehicleType("sedan", "sedán", "automovil", "automóvil", "turismo", "coupé", "coupe");
 
     const isHatchbackTint =
       sku === "POL-HB-COM" ||
       sku.includes("-HB-") ||
       name.includes("hatchback") ||
-      name.includes("compacto");
+      name.includes("compacto") ||
+      hasCompatVehicleType("hatchback", "compacto");
 
     const isSuvTint =
       sku === "POL-SUV-COM" ||
       sku.includes("-SUV-") ||
-      ((name.includes("suv") || name.includes("station wagon") || name.includes("todo terreno")) &&
+      ((name.includes("suv") || name.includes("station wagon") || name.includes("todo terreno") || name.includes("camioneta cerrada")) &&
         !name.includes("pickup") &&
+        !name.includes("pick-up") &&
         !name.includes("doble cabina") &&
-        !name.includes("camión"));
-
-    const isPickupTint =
-      sku === "POL-PCK-COM" ||
-      sku.includes("-PCK-") ||
-      name.includes("pickup") ||
-      name.includes("pick-up") ||
-      name.includes("doble cabina") ||
-      name.includes("tina");
+        !name.includes("tina") &&
+        !name.includes("camión") &&
+        !name.includes("camion")) ||
+      (hasCompatVehicleType("suv", "station_wagon", "station wagon", "camioneta cerrada", "crossover", "todo terreno") && !isPickupTint);
 
     const isVanTint =
       sku === "POL-VAN-COM" ||
       sku.includes("-VAN-") ||
       ((name.includes("microbús") || name.includes("microbus") || name.includes("van") || name.includes("minivan")) &&
         !name.includes("camión") &&
-        !name.includes("camion"));
+        !name.includes("camion")) ||
+      hasCompatVehicleType("van", "minivan", "microbus_pasajeros", "microbus_techo_alto", "microbus_carga", "microbús");
 
     const isTruckTint =
       sku === "POL-TRK-COM" ||
       sku.includes("-TRK-") ||
-      (sku === "POL-CAM-COM" && (name.includes("camión") || name.includes("camion"))) ||
-      name.includes("camión") ||
-      name.includes("camion") ||
-      name.includes("cabezal") ||
-      name.includes("furgón");
+      ((name.includes("camión") || name.includes("camion") || name.includes("cabezal") || name.includes("furgón") || name.includes("tracto")) &&
+        !name.includes("camioneta") &&
+        !name.includes("pickup") &&
+        !name.includes("pick-up")) ||
+      hasCompatVehicleType("truck", "camion_1_cabina", "camion_2_cabinas", "camion_carga_furgon", "cabezal", "camión");
 
     const isCamLegacyTint =
-      sku === "POL-CAM-COM" ||
-      (name.includes("camión") && name.includes("microbús"));
+      (sku === "POL-CAM-COM" && (name.includes("camión") || name.includes("camion") || name.includes("pesado") || name.includes("cabezal"))) ||
+      ((name.includes("camión") || name.includes("camion")) && !name.includes("camioneta") && name.includes("microbús"));
 
     if (effectiveIsPickup) {
       if (isPickupTint) return { isCompatible: true, isSpecificTint: true, isSpecific: true, badge: "Compatible (Camioneta Pickup)" };
@@ -3501,7 +3523,10 @@ export default function SaleForm({
       const codeValues = [p?.sku, p?.barcode, p?.ean, p?.upc, p?.product_id]
         .filter(Boolean)
         .map((v) => String(v).toLowerCase().trim());
-      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""}`.toLowerCase();
+      const compatList = Array.isArray(p?.compatibility?.vehicle_types)
+        ? p.compatibility.vehicle_types.join(" ")
+        : "";
+      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""} ${p?.description || ""} ${p?.polarizado_type || ""} ${compatList}`.toLowerCase();
       return {
         product: p,
         codeValues,

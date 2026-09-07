@@ -3419,10 +3419,303 @@ async def load_core_seed_if_empty() -> None:
         logger.exception("Failed autoloading core seed data from %s", CORE_SEED_FILE)
 
 
+async def ensure_core_service_products() -> None:
+    """Ensures all standard polarizado tint services and core service products exist in db.products."""
+    core_services = [
+        {
+            "product_id": "prod_pol_001",
+            "sku": "POL-SED-COM",
+            "name": "Polarizado Completo Sedán / Automóvil",
+            "description": "Polarizado profesional película 20% todos los vidrios para autos sedán y turismo",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 120.00,
+            "cost": 40.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"],
+            "compatibility": {
+                "vehicle_types": ["Sedán", "Automóvil", "Turismo", "Coupé", "sedan", "automovil", "automóvil", "turismo"]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 120,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_002_hb",
+            "sku": "POL-HB-COM",
+            "name": "Polarizado Completo Hatchback / Compacto",
+            "description": "Polarizado profesional película 20% todos los vidrios para autos compactos y hatchback",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 105.00,
+            "cost": 38.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=400"],
+            "compatibility": {
+                "vehicle_types": ["Hatchback", "Compacto", "hatchback", "compacto", "hb"]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 110,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_002",
+            "sku": "POL-SUV-COM",
+            "name": "Polarizado Completo SUV / Station Wagon",
+            "description": "Polarizado profesional película 20% todos los vidrios SUV, station wagon y todo terreno",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 160.00,
+            "cost": 50.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=400"],
+            "compatibility": {
+                "vehicle_types": [
+                    "SUV", "Station Wagon", "Crossover", "Todo Terreno", "Jeep", "Rural",
+                    "Camioneta Cerrada", "suv", "station_wagon", "todo_terreno"
+                ]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 150,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_002_pck",
+            "sku": "POL-PCK-COM",
+            "name": "Polarizado Completo Camioneta Pickup",
+            "description": "Polarizado profesional película 20% todos los vidrios para camionetas pickup",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 140.00,
+            "cost": 45.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=400"],
+            "compatibility": {
+                "vehicle_types": [
+                    "Pickup", "Camioneta Doble Cabina", "Camioneta Cabina y Media", "Camioneta 1 Cabina", "Camioneta",
+                    "pickup", "camioneta_doble_cabina", "camioneta_cabina_media", "camioneta_1_cabina", "camioneta"
+                ]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 130,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_003_van",
+            "sku": "POL-VAN-COM",
+            "name": "Polarizado Completo Microbús / Van",
+            "description": "Polarizado profesional película 20% para microbuses de pasajeros, vans y paneles",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 200.00,
+            "cost": 65.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400"],
+            "compatibility": {
+                "vehicle_types": [
+                    "Microbús", "Van", "Minivan", "Techo Alto", "Panel", "Microbús Pasajeros", "Microbús Carga",
+                    "van", "microbus_pasajeros", "microbus_techo_alto", "microbus_carga"
+                ]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 200,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_003",
+            "sku": "POL-TRK-COM",
+            "name": "Polarizado Completo Camión / Cabezal",
+            "description": "Polarizado profesional para cabinas de camiones medianos, pesados y cabezales",
+            "category": "polarizados",
+            "subcategory": "Polarizado Completo",
+            "brand": "3M",
+            "price": 180.00,
+            "cost": 60.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400"],
+            "compatibility": {
+                "vehicle_types": [
+                    "Camión", "Cabezal", "Tracto", "Camión 1 Cabina", "Camión 2 Cabinas", "Camión Carga Furgón",
+                    "truck", "camion_1_cabina", "camion_2_cabinas", "camion_carga_furgon"
+                ]
+            },
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["completo"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 180,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_004",
+            "sku": "POL-DEL-001",
+            "name": "Polarizado Solo Vidrios Delanteros",
+            "description": "Polarizado de vidrios laterales delanteros únicamente",
+            "category": "polarizados",
+            "subcategory": "Vidrios Delanteros",
+            "brand": "3M",
+            "price": 35.00,
+            "cost": 12.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"],
+            "compatibility": {},
+            "polarizado_type": "3M FX Premium 35%",
+            "window_options": ["delanteros"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 30,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_005",
+            "sku": "POL-FRA-SUP",
+            "name": "Franja Superior Parabrisas",
+            "description": "Franja de polarizado en parte superior del parabrisas",
+            "category": "polarizados",
+            "subcategory": "Franja Superior",
+            "brand": "3M",
+            "price": 25.00,
+            "cost": 8.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"],
+            "compatibility": {},
+            "polarizado_type": "3M FX Premium Gradiente",
+            "window_options": ["franja_superior"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 20,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_006",
+            "sku": "POL-LIM-001",
+            "name": "Despolarizado / Limpieza de Vidrios",
+            "description": "Servicio de remoción de polarizado viejo y limpieza de vidrios (Despolarizado)",
+            "category": "polarizados",
+            "subcategory": "Despolarizado",
+            "brand": "Servicio",
+            "price": 45.00,
+            "cost": 10.00,
+            "product_type": "service",
+            "images": [],
+            "compatibility": {},
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 90,
+            "warranty_months": 0,
+            "window_options": ["completo"],
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_007",
+            "sku": "POL-CSS-001",
+            "name": "Polarizado Completo Sin Sellado",
+            "description": "Polarizado completo sin parabrisas delantero (Solo laterales y vidrio trasero)",
+            "category": "polarizados",
+            "subcategory": "Sin Sellado",
+            "brand": "3M",
+            "price": 85.00,
+            "cost": 35.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"],
+            "compatibility": {},
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["laterales", "trasero"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 90,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+        {
+            "product_id": "prod_pol_008",
+            "sku": "POL-VEN-001",
+            "name": "Polarizado Ventana Individual",
+            "description": "Polarizado para una o más ventanas individuales del vehículo",
+            "category": "polarizados",
+            "subcategory": "Ventana Individual",
+            "brand": "3M",
+            "price": 18.00,
+            "cost": 5.00,
+            "product_type": "service",
+            "images": ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400"],
+            "compatibility": {},
+            "polarizado_type": "3M FX Premium 20%",
+            "window_options": ["lateral"],
+            "installation_required": True,
+            "installation_type": "required",
+            "installation_price": 0,
+            "installation_time_minutes": 25,
+            "warranty_months": 60,
+            "is_active": True,
+        },
+    ]
+    try:
+        for srv in core_services:
+            sku = srv["sku"]
+            pid = srv["product_id"]
+            existing = await db.products.find_one({"$or": [{"product_id": pid}, {"sku": sku}]}, {"_id": 0})
+            if not existing:
+                doc = dict(srv)
+                doc["created_at"] = datetime.now(timezone.utc).isoformat()
+                await db.products.insert_one(doc)
+                logger.info("Inserted missing core service product: %s (%s)", srv["name"], sku)
+            else:
+                updates = {}
+                if not existing.get("compatibility") or not existing["compatibility"].get("vehicle_types"):
+                    if srv.get("compatibility", {}).get("vehicle_types"):
+                        updates["compatibility"] = srv["compatibility"]
+                if existing.get("is_active") is False and sku == "POL-PCK-COM":
+                    updates["is_active"] = True
+                if updates:
+                    await db.products.update_one({"$or": [{"product_id": pid}, {"sku": sku}]}, {"$set": updates})
+    except Exception:
+        logger.exception("Failed verifying core service products")
+
+
 @app.on_event("startup")
 async def seed_default_pin_user() -> None:
     await ensure_runtime_indexes()
     await load_core_seed_if_empty()
+    await ensure_core_service_products()
     try:
         xinon_email = os.environ.get("DEFAULT_PIN_USER_EMAIL", "xinon@local")
         xinon_attendance_pin = os.environ.get("DEFAULT_PIN_USER_PIN", "0101")
@@ -6428,6 +6721,9 @@ async def get_products(
             {"description": {"$regex": search, "$options": "i"}},
         ]
     products = await db.products.find(query, {"_id": 0}).to_list(1000)
+    if not any(p.get("sku") == "POL-PCK-COM" for p in products) and (not category or category == "polarizados"):
+        await ensure_core_service_products()
+        products = await db.products.find(query, {"_id": 0}).to_list(1000)
 
     # Ensure all products have installation_type (migration for legacy products)
     for product in products:
