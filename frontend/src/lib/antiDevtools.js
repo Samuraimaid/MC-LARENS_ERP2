@@ -97,16 +97,10 @@ export function initAntiDevtoolsShield() {
   shieldInitialized = true;
 
   // 1. Bloqueo de Clic Derecho (Menú Contextual)
+  // 1. Bloqueo de Menú Contextual Nativo del Navegador (se sustituye por el menú custom de AntiTamperGuard)
   document.addEventListener("contextmenu", (e) => {
-    // Permitir clic derecho exclusivamente en campos de texto estándar si es necesario
-    const targetTag = String(e.target?.tagName || "").toLowerCase();
-    const isEditable = targetTag === "input" || targetTag === "textarea" || e.target?.isContentEditable;
-    if (!isEditable) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-  }, { capture: true });
+    e.preventDefault();
+  });
 
   // 2. Bloqueo de Atajos de Teclado (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S)
   window.addEventListener("keydown", (e) => {
