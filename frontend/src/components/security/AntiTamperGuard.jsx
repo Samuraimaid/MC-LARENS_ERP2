@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ShieldAlert,
   Lock,
@@ -23,14 +24,20 @@ import {
   X,
   Check,
   ChevronRight,
+  ArrowLeftRight,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import axios from "axios";
 
+const DEFAULT_FX_RATE = 36.5;
+
 export function AntiTamperGuard({ children }) {
   const { user, logout } = useAuth();
   const { resolvedMode, toggleMode } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Estados de bloqueo por manipulación (DevTools)
   const [isTamperBlocked, setIsTamperBlocked] = useState(false);
@@ -57,6 +64,18 @@ export function AntiTamperGuard({ children }) {
     isOpen: false,
     imageUrl: "",
     isCapturing: false,
+    errorMsg: "",
+  });
+
+  // Widget Calculadora Rápida Integrada
+  const [calculatorWidget, setCalculatorWidget] = useState({
+    isOpen: false,
+    amount: "100",
+    from: "USD",
+    to: "NIO",
+    rate: DEFAULT_FX_RATE,
+    calcInput: "",
+    calcDisplay: "0",
   });
 
   const reportTamperIncident = useCallback(
@@ -117,7 +136,7 @@ export function AntiTamperGuard({ children }) {
         return false;
       }
 
-      if (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) {
+      if (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c", "K", "k"].includes(e.key)) {
         e.preventDefault();
         e.stopPropagation();
         reportTamperIncident("DEVTOOLS_INSPECT_SHORTCUT", { key: e.key });
@@ -129,6 +148,14 @@ export function AntiTamperGuard({ children }) {
         e.stopPropagation();
         reportTamperIncident("VIEW_SOURCE_SHORTCUT", { key: e.key });
         return false;
+      }
+
+      // Atajo global Ctrl+K para buscador
+      if (e.ctrlKey && (e.key === "k" || e.key === "K") && !e.shiftKey) {
+        e.preventDefault();
+        if (user) {
+          navigate("/workbench?tab=search");
+        }
       }
 
       if (e.key === "Escape") {
@@ -179,18 +206,27 @@ export function AntiTamperGuard({ children }) {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
 
+    // Escuchar eventos globales de herramientas
+    const handleOpenToolEvent = (e) => {
+      if (e?.detail?.tool === "calculator") {
+        setCalculatorWidget((prev) => ({ ...prev, isOpen: true }));
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("contextmenu", handleContextMenu, true);
     window.addEventListener("click", handleGlobalClick);
+    window.addEventListener("erp:open-tool", handleOpenToolEvent);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("contextmenu", handleContextMenu, true);
       window.removeEventListener("click", handleGlobalClick);
+      window.removeEventListener("erp:open-tool", handleOpenToolEvent);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [reportTamperIncident]);
+  }, [reportTamperIncident, user, navigate]);
 
   const showFeedback = (msg) => {
     setActionFeedback(msg);
@@ -282,55 +318,128 @@ export function AntiTamperGuard({ children }) {
     window.location.reload(true);
   };
 
-  // Captura de Pantalla (Carga dinámica de html2canvas / fallback nativo)
+  // Carga Robusta de html2canvas con múltiples fuentes
+  const loadHtml2Canvas = () => {
+    return new Promise((resolve) => {
+      if (window.html2canvas) {
+        return resolve(window.html2canvas);
+      }
+      const cdnUrls = [
+        "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js",
+      ];
+
+      let currentIndex = 0;
+      const tryNextCdn = () => {
+        if (currentIndex >= cdnUrls.length) {
+          return resolve(null);
+        }
+        const script = document.createElement("script");
+        script.src = cdnUrls[currentIndex];
+        script.onload = () => {
+          if (window.html2canvas) resolve(window.html2canvas);
+          else {
+            currentIndex++;
+            tryNextCdn();
+          }
+        };
+        script.onerror = () => {
+          currentIndex++;
+          tryNextCdn();
+        };
+        document.head.appendChild(script);
+      };
+
+      tryNextCdn();
+    });
+  };
+
+  // Captura de Pantalla Ultra-Robusta
   const handleCaptureScreen = async (e) => {
     e.stopPropagation();
     closeContextMenu();
-    setScreenshotModal({ isOpen: true, imageUrl: "", isCapturing: true });
+
+    setScreenshotModal({
+      isOpen: true,
+      imageUrl: "",
+      isCapturing: true,
+      errorMsg: "",
+    });
 
     try {
-      // 1. Intentar cargar html2canvas dinámicamente si no está presente
-      const getHtml2Canvas = () =>
-        new Promise((resolve) => {
-          if (window.html2canvas) return resolve(window.html2canvas);
-          const script = document.createElement("script");
-          script.src =
-            "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-          script.onload = () => resolve(window.html2canvas);
-          script.onerror = () => resolve(null);
-          document.head.appendChild(script);
-        });
-
-      const h2c = await getHtml2Canvas();
+      // 1. Cargar biblioteca html2canvas
+      const h2c = await loadHtml2Canvas();
 
       if (h2c) {
-        const canvas = await h2c(document.body, {
+        const rootElement = document.getElementById("root") || document.body;
+        const isDark = resolvedMode === "dark" || document.documentElement.classList.contains("dark");
+        const canvas = await h2c(rootElement, {
           useCORS: true,
-          allowTaint: true,
-          scale: window.devicePixelRatio || 1.5,
+          allowTaint: false,
+          scale: Math.min(2, window.devicePixelRatio || 1.5),
           logging: false,
+          backgroundColor: isDark ? "#09090b" : "#ffffff",
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          scrollX: 0,
+          scrollY: 0,
+          ignoreElements: (element) => {
+            return (
+              element.id === "mclarens-security-lockout-overlay" ||
+              element.id === "mclarens-screenshot-modal-container" ||
+              element.hasAttribute("data-screenshot-ignore") ||
+              element.classList?.contains("anti-tamper-ignore")
+            );
+          },
         });
+
         const dataUrl = canvas.toDataURL("image/png");
-        setScreenshotModal({ isOpen: true, imageUrl: dataUrl, isCapturing: false });
-      } else if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ preferCurrentTab: true });
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new window.ImageCapture(track);
-        const bitmap = await imageCapture.grabFrame();
-        track.stop();
-        const canvas = document.createElement("canvas");
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(bitmap, 0, 0);
-        setScreenshotModal({ isOpen: true, imageUrl: canvas.toDataURL("image/png"), isCapturing: false });
-      } else {
-        alert("Tu navegador no soporta captura directa de pantalla.");
-        setScreenshotModal({ isOpen: false, imageUrl: "", isCapturing: false });
+        setScreenshotModal({
+          isOpen: true,
+          imageUrl: dataUrl,
+          isCapturing: false,
+          errorMsg: "",
+        });
+        return;
       }
+
+      // 2. Fallback con MediaDevices API
+      if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { displaySurface: "browser" },
+          preferCurrentTab: true,
+        });
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        await video.play();
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || window.innerWidth;
+        canvas.height = video.videoHeight || window.innerHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        stream.getTracks().forEach((track) => track.stop());
+
+        const dataUrl = canvas.toDataURL("image/png");
+        setScreenshotModal({
+          isOpen: true,
+          imageUrl: dataUrl,
+          isCapturing: false,
+          errorMsg: "",
+        });
+        return;
+      }
+
+      throw new Error("No se pudo inicializar el motor de captura de pantalla.");
     } catch (err) {
-      console.warn("Screenshot canceled or error", err);
-      setScreenshotModal({ isOpen: false, imageUrl: "", isCapturing: false });
+      console.warn("Screenshot capture error:", err);
+      setScreenshotModal({
+        isOpen: true,
+        imageUrl: "",
+        isCapturing: false,
+        errorMsg: "No se pudo generar la captura. Verifica que las políticas de tu navegador permitan la captura local.",
+      });
     }
   };
 
@@ -349,13 +458,35 @@ export function AntiTamperGuard({ children }) {
   const handleOpenSearch = (e) => {
     e.stopPropagation();
     closeContextMenu();
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
+    if (user) {
+      if (user.role === "vendedor" || user.role === "supervisor" || user.role === "gerencia" || user.role === "programador") {
+        navigate("/workbench?tab=search");
+      } else {
+        navigate("/inventory");
+      }
+      showFeedback("Buscador abierto");
+    } else {
+      showFeedback("Inicia sesión para buscar productos");
+    }
   };
 
   const handleOpenCalculator = (e) => {
     e.stopPropagation();
     closeContextMenu();
-    window.dispatchEvent(new CustomEvent("erp:open-tool", { detail: { tool: "calculator" } }));
+    // Obtener tasa actual si está disponible
+    axios
+      .get("/api/currencies/rates?base=USD")
+      .then((res) => {
+        const nioRate = res.data?.rates?.NIO;
+        if (nioRate) {
+          setCalculatorWidget((prev) => ({ ...prev, rate: nioRate, isOpen: true }));
+        } else {
+          setCalculatorWidget((prev) => ({ ...prev, isOpen: true }));
+        }
+      })
+      .catch(() => {
+        setCalculatorWidget((prev) => ({ ...prev, isOpen: true }));
+      });
   };
 
   const handleLogout = (e) => {
@@ -396,13 +527,28 @@ export function AntiTamperGuard({ children }) {
     }
   };
 
+  // Cálculo de conversión de divisas en widget
+  const convertedFxValue = () => {
+    const amt = parseFloat(calculatorWidget.amount);
+    if (isNaN(amt) || amt <= 0) return "0.00";
+    if (calculatorWidget.from === calculatorWidget.to) return amt.toFixed(2);
+    if (calculatorWidget.from === "USD" && calculatorWidget.to === "NIO") {
+      return (amt * calculatorWidget.rate).toFixed(2);
+    }
+    if (calculatorWidget.from === "NIO" && calculatorWidget.to === "USD") {
+      return (amt / calculatorWidget.rate).toFixed(2);
+    }
+    return amt.toFixed(2);
+  };
+
   return (
     <>
       {/* Menú Contextual Estilo Google Sheets */}
       {contextMenu.visible && (
         <div
+          data-screenshot-ignore="true"
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          className="fixed z-[999999] w-[220px] rounded-xl border border-zinc-200 bg-white/95 py-1.5 shadow-2xl backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-100 text-zinc-800 text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none"
+          className="fixed z-[999999] w-[224px] rounded-xl border border-zinc-200 bg-white/95 py-1.5 shadow-2xl backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-100 text-zinc-800 text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none anti-tamper-ignore"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Grupo 1: Edición y Portapapeles */}
@@ -540,7 +686,11 @@ export function AntiTamperGuard({ children }) {
 
       {/* Modal de Previsualización y Compartir Captura de Pantalla */}
       {screenshotModal.isOpen && (
-        <div className="fixed inset-0 z-[99999999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          id="mclarens-screenshot-modal-container"
+          data-screenshot-ignore="true"
+          className="fixed inset-0 z-[99999999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-in fade-in duration-200 anti-tamper-ignore select-none"
+        >
           <div className="relative max-w-2xl w-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800">
               <div className="flex items-center gap-2">
@@ -549,8 +699,8 @@ export function AntiTamperGuard({ children }) {
               </div>
               <button
                 type="button"
-                onClick={() => setScreenshotModal({ isOpen: false, imageUrl: "", isCapturing: false })}
-                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white"
+                onClick={() => setScreenshotModal({ isOpen: false, imageUrl: "", isCapturing: false, errorMsg: "" })}
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -559,56 +709,158 @@ export function AntiTamperGuard({ children }) {
             <div className="mt-4 flex flex-col items-center">
               {screenshotModal.isCapturing ? (
                 <div className="flex flex-col items-center justify-center py-16 text-sm text-zinc-500">
-                  <RefreshCw className="h-8 w-8 animate-spin text-primary mb-2" />
-                  <span>Generando captura de pantalla de alta resolución...</span>
+                  <RefreshCw className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">Generando captura de pantalla de alta resolución...</span>
+                  <span className="text-xs text-zinc-400 mt-1">Renderizando elementos visibles del sistema</span>
+                </div>
+              ) : screenshotModal.errorMsg ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-red-500">
+                  <AlertTriangle className="h-8 w-8 text-red-500 mb-2" />
+                  <p className="max-w-md">{screenshotModal.errorMsg}</p>
                 </div>
               ) : (
-                <div className="max-h-[50vh] overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
+                <div className="max-h-[52vh] w-full overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-900/40 p-2 shadow-inner">
                   <img
                     src={screenshotModal.imageUrl}
                     alt="Captura ERP"
-                    className="w-full h-auto object-contain rounded-lg"
+                    className="w-full h-auto object-contain rounded-lg shadow-md"
                   />
                 </div>
               )}
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            {!screenshotModal.isCapturing && !screenshotModal.errorMsg && (
+              <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(screenshotModal.imageUrl);
+                      const blob = await res.blob();
+                      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                      alert("¡Imagen copiada al portapapeles con éxito!");
+                    } catch {
+                      alert("Usa el botón 'Descargar PNG' para guardar la imagen.");
+                    }
+                  }}
+                  className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copiar Imagen
+                </button>
+
+                <a
+                  href={screenshotModal.imageUrl}
+                  download={`captura_mclarens_erp_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "_")}.png`}
+                  className="flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-primary/30"
+                >
+                  <Download className="h-3.5 w-3.5" /> Descargar PNG
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const msg = encodeURIComponent("Adjunto comprobante / pantalla de MC-Larens ERP.");
+                    window.open(`https://api.whatsapp.com/send?text=${msg}`, "_blank");
+                  }}
+                  className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-emerald-700/30"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> WhatsApp
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Widget Flotante de Calculadora y Conversión USD Integrado */}
+      {calculatorWidget.isOpen && (
+        <div
+          data-screenshot-ignore="true"
+          className="fixed bottom-6 right-6 z-[9999999] w-[340px] rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/95 text-zinc-900 dark:text-zinc-100 animate-in slide-in-from-bottom-5 duration-200 select-none anti-tamper-ignore"
+        >
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-2.5 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <Calculator className="h-4 w-4 text-indigo-500" />
+              <span className="text-xs font-bold tracking-wide uppercase">Calculadora / USD</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCalculatorWidget((prev) => ({ ...prev, isOpen: false }))}
+              className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            {/* Monto y Selector de Divisas */}
+            <div>
+              <label className="text-[10px] font-semibold uppercase text-zinc-500">Monto a Convertir</label>
+              <input
+                type="number"
+                step="any"
+                value={calculatorWidget.amount}
+                onChange={(e) => setCalculatorWidget((prev) => ({ ...prev, amount: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-bold dark:border-zinc-700 dark:bg-zinc-800/80 focus:border-indigo-500 focus:outline-none"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="text-[10px] font-semibold uppercase text-zinc-500">De</label>
+                <select
+                  value={calculatorWidget.from}
+                  onChange={(e) => setCalculatorWidget((prev) => ({ ...prev, from: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800/80"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="NIO">NIO (C$)</option>
+                </select>
+              </div>
+
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    const res = await fetch(screenshotModal.imageUrl);
-                    const blob = await res.blob();
-                    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-                    alert("¡Imagen copiada al portapapeles con éxito!");
-                  } catch {
-                    alert("No se pudo copiar directamente; puedes usar el botón Descargar.");
-                  }
-                }}
-                className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                onClick={() =>
+                  setCalculatorWidget((prev) => ({
+                    ...prev,
+                    from: prev.to,
+                    to: prev.from,
+                  }))
+                }
+                className="mt-4 flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
-                <Copy className="h-3.5 w-3.5" /> Copiar Imagen
+                <ArrowLeftRight className="h-3.5 w-3.5" />
               </button>
 
-              <a
-                href={screenshotModal.imageUrl}
-                download={`captura_erp_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "_")}.png`}
-                className="flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-primary/30"
-              >
-                <Download className="h-3.5 w-3.5" /> Descargar PNG
-              </a>
+              <div className="flex-1">
+                <label className="text-[10px] font-semibold uppercase text-zinc-500">A</label>
+                <select
+                  value={calculatorWidget.to}
+                  onChange={(e) => setCalculatorWidget((prev) => ({ ...prev, to: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800/80"
+                >
+                  <option value="NIO">NIO (C$)</option>
+                  <option value="USD">USD ($)</option>
+                </select>
+              </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const msg = encodeURIComponent("Adjunto captura de comprobante / pantalla del ERP MC-Larens.");
-                  window.open(`https://api.whatsapp.com/send?text=${msg}`, "_blank");
-                }}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors shadow-md shadow-emerald-700/30"
-              >
-                <Share2 className="h-3.5 w-3.5" /> Compartir en WhatsApp
-              </button>
+            {/* Tarjeta de Resultado y Tasa */}
+            <div className="rounded-xl border border-indigo-500/30 bg-indigo-50/50 p-3 dark:border-indigo-500/20 dark:bg-indigo-950/30">
+              <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span>Tasa de Cambio:</span>
+                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  1 USD = {Number(calculatorWidget.rate).toFixed(2)} NIO
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t border-indigo-200/60 pt-2 dark:border-indigo-800/40">
+                <span className="text-xs font-semibold">Total Convertido:</span>
+                <span className="text-base font-extrabold text-indigo-700 dark:text-indigo-300">
+                  {calculatorWidget.to === "USD" ? "$" : "C$"}{" "}
+                  {convertedFxValue()}
+                </span>
+              </div>
             </div>
           </div>
         </div>
