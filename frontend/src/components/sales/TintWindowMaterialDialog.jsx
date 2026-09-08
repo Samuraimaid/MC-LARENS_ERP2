@@ -640,157 +640,65 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
   }
 ];
 
-export const DEFAULT_TINT_CONFIG = {
-  zones: {
-    windshield: {
-      zone: "windshield",
-      label: "Parabrisas delantero",
-      materials: ALL_OFFICIAL_TINT_MATERIALS,
-    },
-    front_sides: {
-      zone: "front_sides",
-      label: "Ventanas Delanteras",
-      materials: ALL_OFFICIAL_TINT_MATERIALS,
-    },
-    rear_sides: {
-      zone: "rear_sides",
-      label: "Ventanas Traseras",
-      materials: ALL_OFFICIAL_TINT_MATERIALS,
-    },
-    rear: {
-      zone: "rear",
-      label: "Parabrisas Trasero",
-      materials: ALL_OFFICIAL_TINT_MATERIALS,
-    },
+// Zonas y Nombres Oficiales
+const ZONES = [
+  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del.", dotColor: "bg-sky-400", activeBg: "bg-sky-500", ringColor: "ring-sky-400" },
+  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del.", dotColor: "bg-emerald-400", activeBg: "bg-emerald-500", ringColor: "ring-emerald-400" },
+  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras.", dotColor: "bg-emerald-400", activeBg: "bg-emerald-500", ringColor: "ring-emerald-400" },
+  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras.", dotColor: "bg-purple-400", activeBg: "bg-purple-500", ringColor: "ring-purple-400" },
+];
+
+// Las 4 Gamas Oficiales de Polarizados
+const OFFICIAL_GAMAS = [
+  {
+    id: "gama_economica",
+    name: "1. Gama Económica",
+    shortName: "Económica",
+    order: 1,
+    badgeColor: "bg-emerald-600 text-white",
+    borderColor: "border-emerald-500",
+    dotColor: "bg-emerald-400",
+    icon: BadgePercent,
+    description: "Q1 (5%, 20%), Raybar 60\"",
+    tierPill: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
   },
-  sunstrip_pricing: {
-    windshield_top: 15,
-    windshield_bottom: 15,
-    rear_top: 15,
-    rear_bottom: 15,
+  {
+    id: "tinmax",
+    name: "2. Tinmax",
+    shortName: "Tinmax",
+    order: 2,
+    badgeColor: "bg-blue-600 text-white",
+    borderColor: "border-blue-500",
+    dotColor: "bg-blue-400",
+    icon: Shield,
+    description: "Smoke, Charcoal, Raybar 40\", 3M, Quantum Regular",
+    tierPill: "text-blue-700 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800",
   },
-  policy: {
-    max_materials_per_vehicle: 4,
-    default_link_sides: true,
-    second_layer_policy: { allow_second_layer: true },
+  {
+    id: "nano_ceramico",
+    name: "3. Nano Cerámico",
+    shortName: "Nano Cerámico",
+    order: 3,
+    badgeColor: "bg-purple-600 text-white",
+    borderColor: "border-purple-500",
+    dotColor: "bg-purple-400",
+    icon: Flame,
+    description: "Supreme (4% - 42%), Solstice, Camaleón, Titanium",
+    tierPill: "text-purple-700 bg-purple-50 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300 dark:border-purple-800",
   },
-};
-
-
-// Función de sombreado y color hiper-realista basada en las muestras del catálogo
-export function getRealisticTintShade(materialId, secondLayerEnabled = false) {
-  if (!materialId || materialId === "none" || materialId === "sin_polarizado" || materialId === "no_incluido") {
-    return {
-      fill: "rgba(220, 240, 255, 0.05)",
-      opacity: 0.15,
-      border: "#64748b",
-      glow: "#94a3b8",
-      label: "Sin polarizar",
-      isNone: true,
-    };
-  }
-  const mat = String(materialId || "").toLowerCase();
-
-
-  // 1. Camaleón (Efecto iridiscente tornasol azul/violeta)
-  if (mat.includes("camaleon")) {
-    return {
-      fill: "url(#camaleonGradient)",
-      opacity: secondLayerEnabled ? 0.96 : 0.82,
-      border: "#818cf8",
-      glow: "#6366f1",
-      label: "Camaleón 20%",
-      isSpecial: true,
-    };
-  }
-
-  // 2. Titanium (Sheen plateado metálico)
-  if (mat.includes("titanium")) {
-    return {
-      fill: "#1e293b",
-      opacity: secondLayerEnabled ? 0.95 : 0.78,
-      border: "#94a3b8",
-      glow: "#cbd5e1",
-      label: "Titanium 26%",
-      isSpecial: true,
-    };
-  }
-
-  // 3. Smoke 70% / Visión Nocturna Ultra Clara (Azul cielo cristalino translúcido)
-  if (mat.includes("70")) {
-    return {
-      fill: "#38bdf8",
-      opacity: secondLayerEnabled ? 0.65 : 0.32,
-      border: "#0284c7",
-      glow: "#38bdf8",
-      label: "70% Claro",
-    };
-  }
-
-  // 4. Supreme 42% / Claro Neutro
-  if (mat.includes("42")) {
-    return {
-      fill: "#334155",
-      opacity: secondLayerEnabled ? 0.80 : 0.55,
-      border: "#64748b",
-      glow: "#94a3b8",
-      label: "42% Cerámico",
-    };
-  }
-
-  // 5. Medios: 35%, 30%, 28%, 25% (Ahumado medio / grafito)
-  if (mat.includes("35") || mat.includes("30") || mat.includes("28") || mat.includes("25")) {
-    return {
-      fill: "#0f172a",
-      opacity: secondLayerEnabled ? 0.92 : 0.68,
-      border: "#475569",
-      glow: "#64748b",
-      label: mat.includes("35") ? "35% Medio" : mat.includes("30") ? "30% Supreme" : "28% Quantum",
-    };
-  }
-
-  // 6. Oscuro 05%, 04%, 06%, 07% (Limo Black / Azabache Profundo)
-  if (mat.includes("05") || mat.includes("04") || mat.includes("06") || mat.includes("07")) {
-    return {
-      fill: "#020617",
-      opacity: 0.96,
-      border: "#090d16",
-      glow: "#1e293b",
-      label: "5% Oscuro Limo",
-    };
-  }
-
-  // 7. Oscuro Intermedio: 10%, 12%, 14%, 15%, 16%, 19%, 20%, 22% (Estándar Oscuro 20%)
-  return {
-    fill: "#050914",
-    opacity: secondLayerEnabled ? 0.95 : 0.82,
-    border: "#1e293b",
-    glow: "#334155",
-    label: mat.includes("10") ? "10% Oscuro" : mat.includes("15") ? "15% Supreme" : "20% Intermedio",
-  };
-}
-
-// Mapeo de siluetas laterales de vehículos en alta definición
-export const LATERAL_VEHICLE_IMAGES = {
-  sedan: "/vehicles/thumbnails/sedan.png",
-  suv: "/vehicles/thumbnails/suv.png",
-  suv_crossover: "/vehicles/thumbnails/suv.png",
-  camioneta_doble_cabina: "/vehicles/thumbnails/camioneta-doble-cabina.png",
-  camioneta_cabina_media: "/vehicles/thumbnails/camioneta-cabina-y-media.png",
-  camioneta_cabina_sencilla: "/vehicles/thumbnails/camioneta-1-cabina.png",
-  camioneta_1_cabina: "/vehicles/thumbnails/camioneta-1-cabina.png",
-  microbus_pasajeros: "/vehicles/thumbnails/microbus-pasajeros.png",
-  microbus_carga: "/vehicles/thumbnails/microbus-carga.png",
-  microbus_techo_alto: "/vehicles/thumbnails/microbus-pasajeros.png",
-  camion_1_cabina: "/vehicles/thumbnails/camion-carga.png",
-  camion_2_cabinas: "/vehicles/thumbnails/camion-carga.png",
-  camion_carga_furgon: "/vehicles/thumbnails/camion-carga.png",
-  station_wagon: "/vehicles/thumbnails/station-wagon.png",
-  hatchback: "/vehicles/thumbnails/hatchback.png",
-  convertible: "/vehicles/thumbnails/convertible.png",
-  bus_mediano_coaster: "/vehicles/thumbnails/microbus-pasajeros.png",
-  bus_grande_marcopolo: "/vehicles/thumbnails/cabezal.png",
-};
+  {
+    id: "gama_premium",
+    name: "4. Gama Premium",
+    shortName: "Gama Premium",
+    order: 4,
+    badgeColor: "bg-amber-500 text-black font-black",
+    borderColor: "border-amber-500",
+    dotColor: "bg-amber-400",
+    icon: Crown,
+    description: "Quantum Original (14%, 19%, 28%), Endeavor",
+    tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
+  },
+];
 
 export default function TintWindowMaterialDialog({
   isOpen,
@@ -808,8 +716,8 @@ export default function TintWindowMaterialDialog({
   const [config, setConfig] = useState(DEFAULT_TINT_CONFIG);
   const [activeZone, setActiveZone] = useState("windshield");
   const [linkSides, setLinkSides] = useState(true);
-  const [viewMode, setViewMode] = useState("lateral"); // "lateral" | "top"
-  const [orientation, setOrientation] = useState("vertical"); // "horizontal" | "vertical"
+  const [viewMode, setViewMode] = useState("lateral");
+  const [orientation, setOrientation] = useState("vertical");
   const [selectedGama, setSelectedGama] = useState("all");
   const [preselectedMeta, setPreselectedMeta] = useState(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -818,7 +726,8 @@ export default function TintWindowMaterialDialog({
   const DESPOLARIZADO_PRICE_USD = 25.0;
   const REMOVER_PRICE_USD = 15.0;
 
-  // Determinar zonas permitidas según alcance del producto
+  const [hoverTooltip, setHoverTooltip] = useState(null);
+
   const allowedZones = useMemo(() => {
     if (isUnlocked || !preselectedMeta?.allowedZones) {
       return ["windshield", "front_sides", "rear_sides", "rear"];
@@ -835,7 +744,6 @@ export default function TintWindowMaterialDialog({
   const [familyFilter, setFamilyFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Categoría de Vehículo Dinámica & Plano de Ingeniería Específico
   const matchedBlueprint = useMemo(() => findMatchingVehicleBlueprint(vehicle), [vehicle]);
   const detectedCategory = useMemo(() => resolveVehicleCategory(vehicle), [vehicle]);
   const [selectedVehicleType, setSelectedVehicleType] = useState(detectedCategory);
@@ -870,8 +778,6 @@ export default function TintWindowMaterialDialog({
     };
   }, [matchedBlueprint]);
 
-
-  // Materiales Capa 1 (Base)
   const [selectedMaterials, setSelectedMaterials] = useState({
     windshield: "std_70",
     front_sides: "std_20",
@@ -879,7 +785,6 @@ export default function TintWindowMaterialDialog({
     rear: "std_20",
   });
 
-  // Materiales Capa 2 (Doble Capa)
   const [secondLayers, setSecondLayers] = useState({
     windshield: { enabled: false, material_id: "sg_charcoal_20" },
     front_sides: { enabled: false, material_id: "sg_charcoal_20" },
@@ -887,7 +792,6 @@ export default function TintWindowMaterialDialog({
     rear: { enabled: false, material_id: "sg_charcoal_20" },
   });
 
-  // Bandas de Sol (Sunstrips)
   const [sunstrips, setSunstrips] = useState({
     windshield_top: { enabled: false, material_id: "std_20" },
     windshield_bottom: { enabled: false, material_id: "std_20" },
@@ -895,7 +799,6 @@ export default function TintWindowMaterialDialog({
     rear_bottom: { enabled: false, material_id: "std_20" },
   });
 
-  // Opción de Empalme 2x20 en Parabrisas Trasero
   const [empalmeRear, setEmpalmeRear] = useState(false);
   const [empalmeAuthorized, setEmpalmeAuthorized] = useState(false);
 
@@ -908,7 +811,6 @@ export default function TintWindowMaterialDialog({
 
   const [quoteData, setQuoteData] = useState(null);
 
-  // Helper para restaurar datos en el estado
   const applyLoadedPlan = (plan) => {
     if (!plan?.windows) return;
     const mats = {};
@@ -947,24 +849,17 @@ export default function TintWindowMaterialDialog({
     setRequiresRemover(Boolean(plan.requires_remover));
   };
 
-  // Cargar configuración de materiales al abrir y preseleccionar según producto o borrador previo
   useEffect(() => {
     if (!isOpen) return;
     setIsUnlocked(false);
     const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
 
-    // 1. Restaurar de initialPlan (si estamos editando una línea existente en el carrito)
     if (initialPlan?.windows) {
       applyLoadedPlan(initialPlan);
-      if (initialPlan.sunstrips?.windshield_top?.enabled) {
-        setActiveZone("windshield");
-        setViewMode("top");
-      }
       setPreselectedMeta(null);
     } else if (product) {
       setRequiresDespolarizado(false);
       setRequiresRemover(false);
-      // 2. Preselección INTELIGENTE según el producto clickeado en Catálogo/POS (ej. Franja Superior, Vidrios Delanteros, etc.)
       const preselected = detectTintPlanFromProduct(product, vehicle);
       if (preselected) {
         setPreselectedMeta(preselected);
@@ -990,7 +885,6 @@ export default function TintWindowMaterialDialog({
     } else {
       setRequiresDespolarizado(false);
       setRequiresRemover(false);
-      // 3. Fallback a borrador guardado en localStorage o default completo
       setPreselectedMeta(null);
       try {
         const savedDraft = localStorage.getItem(`mclarens_tint_draft_${vehicleKey}`);
@@ -1008,11 +902,9 @@ export default function TintWindowMaterialDialog({
           setEmpalmeRear(false);
         }
       } catch (e) {
-        // Fallback default
       }
     }
 
-    // 4. Cargar configuración actualizada del backend de forma silenciosa y resiliente
     const fetchConfig = async () => {
       setLoading(true);
       try {
@@ -1028,7 +920,6 @@ export default function TintWindowMaterialDialog({
           setConfig(res.data);
         }
       } catch (err) {
-        // Usar catálogo fallback embebido sin molestar con toast
         console.info("Usando catálogo de polarizados offline/embebido");
       } finally {
         setLoading(false);
@@ -1037,8 +928,6 @@ export default function TintWindowMaterialDialog({
     fetchConfig();
   }, [isOpen, vehicle, initialPlan, product]);
 
-
-  // Persistencia Dinámica en Tiempo Real (Auto-Save Reactivo en cada cambio)
   useEffect(() => {
     if (!isOpen) return;
     const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
@@ -1076,12 +965,9 @@ export default function TintWindowMaterialDialog({
     try {
       localStorage.setItem(`mclarens_tint_draft_${vehicleKey}`, JSON.stringify(draftPayload));
     } catch (e) {
-      // ignore
     }
   }, [selectedMaterials, secondLayers, sunstrips, empalmeRear, linkSides, overrideFlags, isOpen, vehicle, selectedVehicleType, isUnlocked, allowedZones]);
 
-
-  // Cotizar plan en tiempo real (Protección estricta: solo zonas contratadas)
   useEffect(() => {
     if (!isOpen || !config) return;
 
@@ -1128,15 +1014,12 @@ export default function TintWindowMaterialDialog({
     computeQuote();
   }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle, isUnlocked, allowedZones]);
 
-  // Manejar selección de material base o de banda
   const handleSelectMaterial = (zone, materialId) => {
     if (isSunstripOnly) {
       setSunstrips((prev) => ({
         ...prev,
         windshield_top: { enabled: true, material_id: materialId },
       }));
-      const matName = config?.materials?.find((m) => m.id === materialId)?.name || materialId;
-      toast.success(`Film de Banda Frontal configurado a: ${matName}`);
       return;
     }
 
@@ -1156,7 +1039,6 @@ export default function TintWindowMaterialDialog({
     });
   };
 
-  // Manejar segunda capa
   const handleToggleSecondLayer = (zone, enabled) => {
     if (!isZoneAllowed(zone)) {
       toast.warning(`La zona seleccionada no está contratada en este servicio.`);
@@ -1194,7 +1076,6 @@ export default function TintWindowMaterialDialog({
     });
   };
 
-  // Manejar toggle de bandas de sol
   const handleToggleSunstrip = (stripKey, enabled) => {
     setSunstrips((prev) => ({
       ...prev,
@@ -1202,15 +1083,8 @@ export default function TintWindowMaterialDialog({
     }));
   };
 
-  // Manejar switch de empalme 2x20 con autorización de Responsable
   const handleToggleEmpalme = (checked) => {
     if (checked) {
-      const isAuthorizedRole = ["gerencia", "programador", "admin", "coordinador_polarizados", "supervisor"].includes(
-        user?.role
-      );
-      if (!isAuthorizedRole) {
-        toast.warning("El corte con empalme requiere autorización de la Responsable de Polarizados o Gerencia.");
-      }
       setEmpalmeRear(true);
       setEmpalmeAuthorized(true);
       toast.info("Empalme activado: Se consumirán 2 pliegos de 20\" para el vidrio trasero.");
@@ -1220,7 +1094,6 @@ export default function TintWindowMaterialDialog({
     }
   };
 
-  // Aplicar material a todas las ventanas contratadas / permitidas
   const handleApplyAll = (materialId) => {
     if (isSunstripOnly) {
       setSunstrips((prev) => ({
@@ -1241,116 +1114,83 @@ export default function TintWindowMaterialDialog({
     toast.success(`Material aplicado a las zonas contratadas (${allowedZones.length})`);
   };
 
-  // Confirmar y aplicar plan al carrito
   const handleApply = () => {
     if (!quoteData?.valid) {
       toast.error(quoteData?.error || "Plan de polarizado incompleto o inválido");
       return;
     }
 
-    const despolarizadoExtra = requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0;
-    const removerExtra = requiresRemover ? REMOVER_PRICE_USD : 0;
-    const totalAddonsExtra = despolarizadoExtra + removerExtra;
-    const totalExtraSum = Number(((quoteData?.materials_extra_total || 0) + totalAddonsExtra).toFixed(2));
+    const calculatedExtraUsd =
+      (quoteData?.materials_extra_total || 0) +
+      (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) +
+      (requiresRemover ? REMOVER_PRICE_USD : 0);
 
-    const breakdownItems = [
-      ...(quoteData?.price_breakdown || []),
-      ...(requiresDespolarizado
-        ? [
-            {
-              group_label: "Servicio de Taller",
-              material_name: "Despolarizado (Retiro de film)",
-              price_extra_usd: DESPOLARIZADO_PRICE_USD,
-            },
-          ]
-        : []),
-      ...(requiresRemover
-        ? [
-            {
-              group_label: "Insumo Químico",
-              material_name: "Removedor de Pegamento Quemado",
-              price_extra_usd: REMOVER_PRICE_USD,
-            },
-          ]
-        : []),
-    ];
-
-    onApplyPlan({
-      tint_window_plan: {
-        link_sides: linkSides,
-        is_unlocked: isUnlocked,
-        requires_despolarizado: requiresDespolarizado,
-        despolarizado_price: despolarizadoExtra,
-        requires_remover: requiresRemover,
-        remover_price: removerExtra,
-        windows: {
-          windshield: {
-            material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
-            material_name: isZoneAllowed("windshield")
-              ? quoteData.rolls_consumed?.find((r) => r.zone === "windshield" && r.layer === 1)?.material_name || "Sin polarizar"
-              : "No contratado",
-            size_band: quoteData.vehicle_size_bands?.windshield,
-            override_size_band: overrideFlags.windshield,
-            second_layer: isZoneAllowed("windshield") && secondLayers.windshield.enabled ? secondLayers.windshield : null,
-          },
-          front_sides: {
-            material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
-            material_name: isZoneAllowed("front_sides")
-              ? quoteData.rolls_consumed?.find((r) => r.zone === "front_sides" && r.layer === 1)?.material_name || "Sin polarizar"
-              : "No contratado",
-            size_band: quoteData.vehicle_size_bands?.front_sides,
-            override_size_band: overrideFlags.front_sides,
-            second_layer: isZoneAllowed("front_sides") && secondLayers.front_sides.enabled ? secondLayers.front_sides : null,
-          },
-          rear_sides: {
-            material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
-            material_name: isZoneAllowed("rear_sides")
-              ? quoteData.rolls_consumed?.find((r) => r.zone === "rear_sides" && r.layer === 1)?.material_name || "Sin polarizar"
-              : "No contratado",
-            size_band: quoteData.vehicle_size_bands?.rear_sides,
-            override_size_band: overrideFlags.rear_sides,
-            second_layer: isZoneAllowed("rear_sides") && secondLayers.rear_sides.enabled ? secondLayers.rear_sides : null,
-          },
-          rear: {
-            material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
-            material_name: isZoneAllowed("rear")
-              ? quoteData.rolls_consumed?.find((r) => r.zone === "rear" && r.layer === 1)?.material_name || "Sin polarizar"
-              : "No contratado",
-            size_band: quoteData.vehicle_size_bands?.rear,
-            override_size_band: overrideFlags.rear,
-            second_layer: isZoneAllowed("rear") && secondLayers.rear.enabled ? secondLayers.rear : null,
-            empalme_2x20: empalmeRear,
-          },
+    const planPayload = {
+      vehicle_id: vehicle?.vehicle_id || vehicle?.id || null,
+      vehicle_summary: vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year || ""}`.trim() : "Vehículo",
+      vehicle_category: selectedVehicleType,
+      link_sides: linkSides,
+      windows: {
+        windshield: {
+          material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
+          material_name: isZoneAllowed("windshield")
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.windshield)?.name || selectedMaterials.windshield)
+            : "No incluido",
+          override_size_band: overrideFlags.windshield,
+          second_layer: isZoneAllowed("windshield") ? secondLayers.windshield : { enabled: false },
         },
-        sunstrips: sunstrips,
-        sunstrip_only: isSunstripOnly,
-        has_empalme: quoteData.has_empalme,
-        empalme_warning: quoteData.empalme_warning,
-        rolls_consumed: quoteData.rolls_consumed,
-        materials_extra_total: totalExtraSum,
-        price_breakdown: breakdownItems,
-        vehicle_size_bands: quoteData.vehicle_size_bands,
+        front_sides: {
+          material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
+          material_name: isZoneAllowed("front_sides")
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides)
+            : "No incluido",
+          override_size_band: overrideFlags.front_sides,
+          second_layer: isZoneAllowed("front_sides") ? secondLayers.front_sides : { enabled: false },
+        },
+        rear_sides: {
+          material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
+          material_name: isZoneAllowed("rear_sides")
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides)
+            : "No incluido",
+          override_size_band: overrideFlags.rear_sides,
+          second_layer: isZoneAllowed("rear_sides") ? secondLayers.rear_sides : { enabled: false },
+        },
+        rear: {
+          material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
+          material_name: isZoneAllowed("rear")
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear)?.name || selectedMaterials.rear)
+            : "No incluido",
+          override_size_band: overrideFlags.rear,
+          second_layer: isZoneAllowed("rear") ? secondLayers.rear : { enabled: false },
+          empalme_2x20: empalmeRear,
+        },
       },
-      materials_extra: totalExtraSum,
-    });
+      sunstrips: sunstrips,
+      requires_despolarizado: requiresDespolarizado,
+      requires_remover: requiresRemover,
+      quote: quoteData,
+      calculated_extra_usd: calculatedExtraUsd,
+      is_custom_plan: isUnlocked || allowedZones.length === 4,
+    };
 
-
+    onApplyPlan(planPayload);
+    toast.success("Plan de polarizado configurado y aplicado al carrito");
     onClose();
   };
 
-  const activeZoneConfig = config?.zones?.[activeZone];
-  const allZoneMaterials = Object.values(config?.zones || {}).flatMap((z) => z?.materials || []);
-  const uniqueAllMaterials = Array.from(new Map(allZoneMaterials.map((m) => [m.id || m.material_id, m])).values());
-  const activeMaterials = (activeZoneConfig?.materials && activeZoneConfig.materials.length > 0)
-    ? activeZoneConfig.materials
-    : (uniqueAllMaterials.length > 0 ? uniqueAllMaterials : ALL_OFFICIAL_TINT_MATERIALS);
-  const activeZoneLabel = ZONES.find((z) => z.id === activeZone)?.label || activeZone;
+  const activeMaterials = useMemo(() => {
+    return Array.isArray(config?.materials) && config.materials.length > 0
+      ? config.materials
+      : ALL_OFFICIAL_TINT_MATERIALS;
+  }, [config]);
 
-  // Filtrado de materiales por Gama Oficial, Familia y Búsqueda Inteligente Multi-Gama
+  const activeZoneLabel = useMemo(() => {
+    return ZONES.find((z) => z.id === activeZone)?.label || "Zona";
+  }, [activeZone]);
+
   const { filteredMaterials, searchMatchedInOtherGama } = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
-    // Helper de coincidencia de gama
     const isGamaMatch = (m, targetGama) => {
       const mGama = m.gama || m.gama_id || "";
       if (targetGama === "all") return true;
@@ -1362,7 +1202,6 @@ export default function TintWindowMaterialDialog({
       return false;
     };
 
-    // Helper de búsqueda por texto / tono / marca / id
     const isSearchMatch = (m) => {
       if (!term) return true;
       return (
@@ -1382,16 +1221,12 @@ export default function TintWindowMaterialDialog({
       return familyFilter === "all" || m.family === familyFilter;
     };
 
-    // Si no hay término de búsqueda, respetar estrictamente la gama seleccionada
     if (!term) {
       const filtered = activeMaterials.filter((m) => isGamaMatch(m, selectedGama) && isFamilyMatch(m));
       return { filteredMaterials: filtered, searchMatchedInOtherGama: false };
     }
 
-    // Si hay término de búsqueda:
     const strictMatches = activeMaterials.filter((m) => isGamaMatch(m, selectedGama) && isSearchMatch(m) && isFamilyMatch(m));
-    
-    // Si la gama seleccionada no era "all" pero arrojó 0 resultados, buscar en todas las gamas
     if (strictMatches.length === 0 && selectedGama !== "all") {
       const allGamaMatches = activeMaterials.filter((m) => isSearchMatch(m) && isFamilyMatch(m));
       if (allGamaMatches.length > 0) {
@@ -1408,36 +1243,107 @@ export default function TintWindowMaterialDialog({
     };
   }, [activeMaterials, selectedGama, familyFilter, searchTerm]);
 
+  const calculatedBasePrice = useMemo(() => {
+    if (salePrice && Number(salePrice) > 0) {
+      return currency === "USD" ? Number(salePrice) : Number(salePrice) / (exchangeRate || 36.5);
+    }
+    if (product?.unit_price && Number(product.unit_price) > 0) {
+      return currency === "USD" ? Number(product.unit_price) : Number(product.unit_price) / (exchangeRate || 36.5);
+    }
+    return 100.0;
+  }, [salePrice, product, currency, exchangeRate]);
+
+  const totalSurchargesUsd = useMemo(() => {
+    return (
+      (quoteData?.materials_extra_total || 0) +
+      (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) +
+      (requiresRemover ? REMOVER_PRICE_USD : 0)
+    );
+  }, [quoteData?.materials_extra_total, requiresDespolarizado, requiresRemover]);
+
+  const grandTotalUsd = useMemo(() => {
+    return calculatedBasePrice + totalSurchargesUsd;
+  }, [calculatedBasePrice, totalSurchargesUsd]);
+
+  const getZoneTooltipData = (zoneId) => {
+    const isAllowed = isZoneAllowed(zoneId) || (zoneId === "windshield" && isSunstripOnly);
+    if (!isAllowed) {
+      return {
+        zoneLabel: ZONES.find((z) => z.id === zoneId)?.label || "Ventana",
+        status: "No incluida en este paquete",
+        hasMaterial: false,
+      };
+    }
+    const matId = selectedMaterials[zoneId];
+    const matObj = activeMaterials.find((m) => m.material_id === matId || m.id === matId);
+    const gamaObj = OFFICIAL_GAMAS.find((g) => g.id === (matObj?.gama || matObj?.gama_id));
+    const isSecondLayer = secondLayers[zoneId]?.enabled;
+    const secondMatObj = isSecondLayer
+      ? activeMaterials.find((m) => m.material_id === secondLayers[zoneId]?.material_id)
+      : null;
+
+    return {
+      zoneLabel: ZONES.find((z) => z.id === zoneId)?.label || "Ventana",
+      materialName: matObj?.name || (isSunstripOnly && zoneId === "windshield" ? "Banda Frontal Superior" : matId || "Estándar"),
+      vlt: matObj?.vlt ? `${matObj.vlt}% VLT` : "",
+      gamaName: gamaObj?.name || matObj?.gama_label || "",
+      secondLayerText: isSecondLayer ? `+ 2da Capa: ${secondMatObj?.name || "Charcoal"}` : null,
+      sunstripText: sunstrips[`${zoneId}_top`]?.enabled ? "Banda Superior Activa" : null,
+      extraPrice: matObj?.price_extra_usd ? `+$${matObj.price_extra_usd.toFixed(2)} USD` : "Incluido",
+      hasMaterial: Boolean(matId && matId !== "none"),
+    };
+  };
+
+  const handleWindowMouseEnter = (e, zoneId) => {
+    const data = getZoneTooltipData(zoneId);
+    const rect = e.currentTarget.closest(".relative")?.getBoundingClientRect();
+    if (rect) {
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setHoverTooltip({ ...data, x, y });
+    }
+  };
+
+  const handleWindowMouseMove = (e) => {
+    if (!hoverTooltip) return;
+    const rect = e.currentTarget.closest(".relative")?.getBoundingClientRect();
+    if (rect) {
+      setHoverTooltip((prev) => (prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : null));
+    }
+  };
+
+  const handleWindowMouseLeave = () => {
+    setHoverTooltip(null);
+  };
+
   const isVehicleHorizontal = orientation === "horizontal";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[98dvh] h-[96dvh] md:h-[94vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
-        {/* Encabezado Responsivo */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3.5 py-2.5 sm:p-4 text-white shrink-0 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30 shrink-0">
-                <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-400/30 shrink-0">
+                <Layers className="h-5 w-5 text-blue-300" />
               </div>
               <div className="min-w-0">
-                <DialogTitle className="text-xs sm:text-base md:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate">
+                <DialogTitle className="text-xs sm:text-base md:text-lg font-bold text-white flex items-center gap-2 truncate">
                   <span>{vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year || "S/A"})` : "Seleccionador de Polarizados"}</span>
-                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] uppercase font-mono px-1 py-0 shrink-0">
+                  <Badge variant="outline" className="border-blue-400/40 text-blue-200 text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0 shrink-0">
                     {VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.shortLabel || "Pick-Up"}
                   </Badge>
                   {product && (
-                    <Badge className="bg-amber-400/25 text-amber-200 border-amber-300/40 text-[9px] sm:text-[10px] px-1.5 py-0 flex items-center gap-1 shrink-0 shadow-xs font-semibold">
-                      <Sparkles className="h-3 w-3 text-amber-300 animate-pulse" />
-                      <span>Preseleccionado: {product.name}</span>
+                    <Badge className="bg-amber-400/25 text-amber-200 border-amber-300/40 text-[9px] sm:text-[10px] px-1.5 py-0 flex items-center gap-1 shrink-0 font-semibold">
+                      <Sparkles className="h-3 w-3 text-amber-300" />
+                      <span>{product.name}</span>
                     </Badge>
                   )}
-
                 </DialogTitle>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="hidden sm:block text-[11px] text-blue-200/90 truncate">
+                <div className="flex items-center gap-2 flex-wrap text-[11px] text-blue-200/90">
+                  <span className="hidden sm:inline">
                     Bandas requeridas: {config?.vehicle_size_bands?.windshield || "Parabrisas >40\""} / {config?.vehicle_size_bands?.front_sides || "Laterales >20\""}
-                  </p>
+                  </span>
                   {preselectedMeta?.badgeNote && (
                     <span className="text-[10px] text-amber-300 font-bold bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30">
                       ⚡ {preselectedMeta.badgeNote}
@@ -1446,7 +1352,8 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-3 shrink-0">
               {!isUnlocked && (allowedZones.length < 4 || isSunstripOnly) && (
                 <Button
                   type="button"
@@ -1454,10 +1361,9 @@ export default function TintWindowMaterialDialog({
                   size="sm"
                   onClick={() => {
                     setIsUnlocked(true);
-                    toast.info("Modo personalizado activado: Todas las ventanas desbloqueadas.");
+                    toast.info("Modo personalizado activado.");
                   }}
-                  className="h-7 px-2 text-[10px] bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/40 shadow-xs"
-                  title="Desbloquear todas las zonas para cotizar cristales adicionales"
+                  className="h-7 px-2 text-[10px] bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs"
                 >
                   <Lock className="h-3 w-3 mr-1 text-amber-300" />
                   <span>Desbloquear Todo</span>
@@ -1482,28 +1388,47 @@ export default function TintWindowMaterialDialog({
                   <span>Restringir a Producto</span>
                 </Button>
               )}
-              <div className="text-right shrink-0">
-                <span className="hidden sm:block text-[10px] uppercase text-blue-300 font-mono">Recargo Total</span>
-                <span className="text-sm sm:text-lg md:text-xl font-black text-white">
-                  +${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)}{" "}
-                  <span className="text-[10px] sm:text-xs font-medium text-blue-200">USD</span>
-                </span>
+
+              <div className="text-right shrink-0 flex flex-col items-end bg-black/25 px-2.5 py-1 rounded-xl border border-white/10">
+                <div className="flex items-baseline gap-1.5 sm:gap-2">
+                  <div className="text-right">
+                    <span className="text-[9px] uppercase text-blue-300 block font-mono">Base</span>
+                    <span className="text-xs sm:text-sm font-bold text-blue-100">${calculatedBasePrice.toFixed(2)}</span>
+                  </div>
+                  {totalSurchargesUsd > 0 && (
+                    <>
+                      <span className="text-blue-300 font-bold text-xs">+</span>
+                      <div className="text-right">
+                        <span className="text-[9px] uppercase text-amber-300 block font-mono">Recargos</span>
+                        <span className="text-xs sm:text-sm font-bold text-amber-300">+${totalSurchargesUsd.toFixed(2)}</span>
+                      </div>
+                      <span className="text-blue-300 font-bold text-xs">=</span>
+                    </>
+                  )}
+                  <div className="text-right pl-0.5">
+                    <span className="text-[9px] uppercase text-emerald-300 block font-mono font-bold">Total</span>
+                    <span className="text-sm sm:text-lg md:text-xl font-black text-white tracking-tight">
+                      ${grandTotalUsd.toFixed(2)} <span className="text-[9px] sm:text-[10px] font-medium text-emerald-200">USD</span>
+                    </span>
+                  </div>
+                </div>
+                {currency === "NIO" && (
+                  <span className="text-[9.5px] text-blue-200/90 font-mono">
+                    ≈ C${(grandTotalUsd * (exchangeRate || 36.5)).toFixed(2)} NIO
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cuerpo: Diagrama Interactivo de Auto Dinámico en Tamaño Grande + Selector de Material */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
-          {/* Lado Izquierdo (5.5 cols en PC): Diagrama Interactivo Grande */}
-          <div className="md:col-span-5 lg:col-span-6 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2">
-
-
-            {/* Leyenda Interactiva y Táctil */}
+          <div className="md:col-span-5 lg:col-span-6 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2 relative">
             <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] w-full max-w-sm md:max-w-md font-semibold py-1 px-1 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shrink-0 shadow-inner">
               {ZONES.map((z) => {
                 const isActive = activeZone === z.id;
                 const allowed = isZoneAllowed(z.id) || (z.id === "windshield" && isSunstripOnly);
+                const hasMaterial = Boolean(selectedMaterials[z.id] && selectedMaterials[z.id] !== "none");
                 return (
                   <button
                     key={z.id}
@@ -1514,19 +1439,23 @@ export default function TintWindowMaterialDialog({
                         ? "opacity-35 cursor-not-allowed bg-zinc-200/40 dark:bg-zinc-800/40 text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700"
                         : isActive
                         ? `${z.activeBg} text-white font-bold shadow-sm ${z.ringColor} ring-1`
+                        : hasMaterial
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-semibold"
                         : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50"
                     }`}
                     onClick={() => {
                       if (!allowed) {
-                        toast.info(`Zona bloqueada: ${z.label} no está incluida en ${product?.name || "este servicio"}.`);
+                        toast.info(`Zona bloqueada: ${z.label} no está incluida en este paquete.`);
                         return;
                       }
                       setActiveZone(z.id);
                     }}
-                    title={!allowed ? `${z.label} (Bloqueado / No contratado)` : z.label}
+                    title={!allowed ? `${z.label} (No contratado)` : z.label}
                   >
                     {!allowed ? (
                       <Lock className="h-2.5 w-2.5 text-zinc-400 shrink-0" />
+                    ) : hasMaterial ? (
+                      <CheckCircle2 className={`h-2.5 w-2.5 ${isActive ? "text-white" : "text-emerald-500"} shrink-0`} />
                     ) : (
                       <span className={`h-2 w-2 rounded-full ${isActive ? "bg-white" : z.dotColor} shrink-0`} />
                     )}
@@ -1536,8 +1465,6 @@ export default function TintWindowMaterialDialog({
               })}
             </div>
 
-
-            {/* Selector de Modo de Vista: Lateral (Perfil Real) vs Superior (Planta) */}
             <div className="flex items-center justify-between w-full max-w-sm md:max-w-md gap-2 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700/60 shadow-xs">
               <div className="flex items-center gap-1 flex-1">
                 <button
@@ -1550,7 +1477,7 @@ export default function TintWindowMaterialDialog({
                   }`}
                 >
                   <span>🚗 Vista Lateral</span>
-                  <span className="text-[8.5px] opacity-80">(Perfil Real)</span>
+                  <span className="text-[8.5px] opacity-80">(Perfil)</span>
                 </button>
                 <button
                   type="button"
@@ -1571,16 +1498,14 @@ export default function TintWindowMaterialDialog({
                   type="button"
                   onClick={() => setOrientation((prev) => (prev === "vertical" ? "horizontal" : "vertical"))}
                   className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-2xs hover:bg-zinc-50"
-                  title="Cambiar orientación de vista de planta"
+                  title="Rotar vista superior"
                 >
                   <RotateCw className="h-3 w-3" />
                   <span>{orientation === "vertical" ? "Girar Horizontal" : "Girar Vertical"}</span>
                 </button>
               )}
-
             </div>
 
-            {/* Canvas Grande del Vehículo con Sombras Hiper-Realistas */}
             <div
               className={`relative select-none flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden rounded-2xl bg-zinc-950/15 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 my-auto shadow-inner w-full ${
                 viewMode === "lateral"
@@ -1591,52 +1516,16 @@ export default function TintWindowMaterialDialog({
               }`}
             >
               {viewMode === "lateral" ? (
-                /* ================= VISTA LATERAL (PERFIL REAL) ================= */
                 <div className="relative w-full h-full max-w-[540px] aspect-[16/9] flex items-center justify-center p-2">
-                  {/* Silueta Lateral Real del Vehículo */}
                   <img
                     src={getVehicleImageUrl(matchedBlueprint?.lateral_image) || LATERAL_VEHICLE_IMAGES[selectedVehicleType] || "/vehicles/thumbnails/camioneta-doble-cabina.png"}
                     alt="Silueta Lateral Vehículo"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-all duration-300"
                   />
 
-                  {/* Indicador de Banda de Sol Frontal Activa en Vista Lateral */}
-                  {sunstrips.windshield_top?.enabled && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveZone("windshield");
-                        setViewMode("top");
-                      }}
-                      className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-sky-500/25 border border-sky-400/60 text-[10px] font-bold text-sky-100 backdrop-blur-xs shadow-md hover:bg-sky-500/40 transition-all cursor-pointer"
-                      title="Banda Frontal Superior Activa. Toca para ver en vista de planta."
-                    >
-                      <Sun className="h-3.5 w-3.5 text-yellow-300 animate-spin" style={{ animationDuration: "12s" }} />
-                      <span>Banda Frontal ON ✓</span>
-                    </button>
-                  )}
-
-                  {/* Indicador de Banda de Sol Trasera Activa en Vista Lateral */}
-                  {sunstrips.rear_top?.enabled && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveZone("rear");
-                        setViewMode("top");
-                      }}
-                      className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-500/25 border border-purple-400/60 text-[10px] font-bold text-purple-100 backdrop-blur-xs shadow-md hover:bg-purple-500/40 transition-all cursor-pointer"
-                      title="Banda Trasera Superior Activa. Toca para ver en vista de planta."
-                    >
-                      <Sun className="h-3.5 w-3.5 text-purple-300" />
-                      <span>Banda Trasera ON ✓</span>
-                    </button>
-                  )}
-
-                  {/* Capa SVG Interactiva para Ventanas Laterales */}
-
                   {(() => {
-                    const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
-                    const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
+                    const isFrontAssigned = Boolean(selectedMaterials.front_sides && selectedMaterials.front_sides !== "none" && isZoneAllowed("front_sides"));
+                    const isRearAssigned = Boolean(selectedMaterials.rear_sides && selectedMaterials.rear_sides !== "none" && isZoneAllowed("rear_sides"));
                     const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                     const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                     const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
@@ -1645,47 +1534,48 @@ export default function TintWindowMaterialDialog({
                       LATERAL_GLASS_GEOMETRY[selectedVehicleType] ||
                       LATERAL_GLASS_GEOMETRY.camioneta_doble_cabina;
 
-
+                    const frontMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides;
+                    const rearMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides;
 
                     return (
                       <svg viewBox="0 0 640 360" className="absolute inset-0 w-full h-full select-none">
                         <defs>
-                          <linearGradient id="camaleonGradientLateral" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
-                            <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
-                            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
+                          <linearGradient id="emeraldGlassLateral" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#047857" stopOpacity="0.85" />
+                            <stop offset="100%" stopColor="#065f46" stopOpacity="0.90" />
                           </linearGradient>
-                          <filter id="neonGlowYellowLat" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#eab308" floodOpacity="0.95" />
+                          <filter id="neonGlowActiveLat" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#38bdf8" floodOpacity="0.95" />
                           </filter>
-                          <filter id="neonGlowOrangeLat" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#f97316" floodOpacity="0.95" />
+                          <filter id="emeraldGlowLat" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#10b981" floodOpacity="0.85" />
                           </filter>
                         </defs>
 
-                        {/* Ventana Delantera Lateral */}
                         {latGeom.front && (
                           <path
                             d={latGeom.front}
                             fill={
                               !isZoneAllowed("front_sides")
                                 ? "rgba(220, 240, 255, 0.04)"
-                                : shadeFrontSides.fill === "url(#camaleonGradient)"
-                                ? "url(#camaleonGradientLateral)"
-                                : shadeFrontSides.fill
+                                : isFrontAssigned
+                                ? "url(#emeraldGlassLateral)"
+                                : "rgba(30, 41, 59, 0.4)"
                             }
-                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : shadeFrontSides.opacity}
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontAssigned ? 0.88 : 0.4}
                             stroke={
                               !isZoneAllowed("front_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
                                 : isFrontSidesActive
-                                ? "#eab308"
-                                : shadeFrontSides.border
+                                ? "#38bdf8"
+                                : isFrontAssigned
+                                ? "#10b981"
+                                : "rgba(255, 255, 255, 0.4)"
                             }
-                            strokeWidth={isFrontSidesActive && isZoneAllowed("front_sides") ? "3.5" : "1.5"}
+                            strokeWidth={isFrontSidesActive ? "3.5" : isFrontAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
-                            filter={isFrontSidesActive && isZoneAllowed("front_sides") ? "url(#neonGlowYellowLat)" : undefined}
-                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            filter={isFrontSidesActive ? "url(#neonGlowActiveLat)" : isFrontAssigned ? "url(#emeraldGlowLat)" : undefined}
+                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                             onClick={() => {
                               if (!isZoneAllowed("front_sides")) {
                                 toast.info(`Ventanas delanteras no contratadas en este paquete.`);
@@ -1693,32 +1583,36 @@ export default function TintWindowMaterialDialog({
                               }
                               setActiveZone("front_sides");
                             }}
+                            onMouseEnter={(e) => handleWindowMouseEnter(e, "front_sides")}
+                            onMouseMove={handleWindowMouseMove}
+                            onMouseLeave={handleWindowMouseLeave}
                           />
                         )}
 
-                        {/* Ventana Trasera Lateral */}
                         {latGeom.rear && (
                           <path
                             d={latGeom.rear}
                             fill={
                               !isZoneAllowed("rear_sides")
                                 ? "rgba(220, 240, 255, 0.04)"
-                                : shadeRearSides.fill === "url(#camaleonGradient)"
-                                ? "url(#camaleonGradientLateral)"
-                                : shadeRearSides.fill
+                                : isRearAssigned
+                                ? "url(#emeraldGlassLateral)"
+                                : "rgba(30, 41, 59, 0.4)"
                             }
-                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : shadeRearSides.opacity}
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearAssigned ? 0.88 : 0.4}
                             stroke={
                               !isZoneAllowed("rear_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
                                 : isRearSidesActive
-                                ? "#f97316"
-                                : shadeRearSides.border
+                                ? "#38bdf8"
+                                : isRearAssigned
+                                ? "#10b981"
+                                : "rgba(255, 255, 255, 0.4)"
                             }
-                            strokeWidth={isRearSidesActive && isZoneAllowed("rear_sides") ? "3.5" : "1.5"}
+                            strokeWidth={isRearSidesActive ? "3.5" : isRearAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
-                            filter={isRearSidesActive && isZoneAllowed("rear_sides") ? "url(#neonGlowOrangeLat)" : undefined}
-                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            filter={isRearSidesActive ? "url(#neonGlowActiveLat)" : isRearAssigned ? "url(#emeraldGlowLat)" : undefined}
+                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                             onClick={() => {
                               if (!isZoneAllowed("rear_sides")) {
                                 toast.info(`Ventanas traseras no contratadas en este paquete.`);
@@ -1726,21 +1620,23 @@ export default function TintWindowMaterialDialog({
                               }
                               setActiveZone("rear_sides");
                             }}
+                            onMouseEnter={(e) => handleWindowMouseEnter(e, "rear_sides")}
+                            onMouseMove={handleWindowMouseMove}
+                            onMouseLeave={handleWindowMouseLeave}
                           />
                         )}
 
-                        {/* Etiquetas de Tonalidad en los Cristales */}
                         {latGeom.frontText && (
                           <text
                             x={latGeom.frontText.x}
                             y={latGeom.frontText.y}
                             textAnchor="middle"
-                            fill={!isZoneAllowed("front_sides") ? "#94a3b8" : "#ffffff"}
-                            fontSize="10.5"
+                            fill={isFrontAssigned ? "#a7f3d0" : "#ffffff"}
+                            fontSize="10"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Del. {!isZoneAllowed("front_sides") ? "Bloqueado" : shadeFrontSides.label}
+                            Del. {!isZoneAllowed("front_sides") ? "Bloqueado" : isFrontAssigned ? frontMatName : "Sin material"}
                           </text>
                         )}
                         {latGeom.rearText && latGeom.rearText.x > 0 && (
@@ -1748,21 +1644,19 @@ export default function TintWindowMaterialDialog({
                             x={latGeom.rearText.x}
                             y={latGeom.rearText.y}
                             textAnchor="middle"
-                            fill={!isZoneAllowed("rear_sides") ? "#94a3b8" : "#ffffff"}
-                            fontSize="10.5"
+                            fill={isRearAssigned ? "#a7f3d0" : "#ffffff"}
+                            fontSize="10"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Tras. {!isZoneAllowed("rear_sides") ? "Bloqueado" : shadeRearSides.label}
+                            Tras. {!isZoneAllowed("rear_sides") ? "Bloqueado" : isRearAssigned ? rearMatName : "Sin material"}
                           </text>
                         )}
-
                       </svg>
                     );
                   })()}
                 </div>
               ) : (
-                /* ================= VISTA SUPERIOR (PLANTA) ================= */
                 <div
                   className={`transition-all duration-300 shrink-0 ${
                     isVehicleHorizontal
@@ -1770,89 +1664,67 @@ export default function TintWindowMaterialDialog({
                       : "relative w-full h-full"
                   }`}
                 >
-                  {/* 1. Imagen Top-Down Realista de la Carrocería */}
                   <img
                     src={getVehicleImageUrl(matchedBlueprint?.top_image) || VEHICLE_CATEGORIES.find((c) => c.id === selectedVehicleType)?.image || "/vehicles/clean_camioneta_doble_cabina.png"}
                     alt="Vehículo Top-Down"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-xl transition-all duration-300"
                   />
 
-
-                  {/* 2. Capa SVG Interactiva con Shaders Hiper-Realistas */}
                   {(() => {
                     const geom =
                       VEHICLE_GLASS_GEOMETRY[selectedVehicleType] ||
                       VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
                       VEHICLE_GLASS_GEOMETRY.sedan;
 
-                    const shadeWindshield = getRealisticTintShade(selectedMaterials.windshield, secondLayers.windshield?.enabled);
-                    const shadeFrontSides = getRealisticTintShade(selectedMaterials.front_sides, secondLayers.front_sides?.enabled);
-                    const shadeRearSides = getRealisticTintShade(selectedMaterials.rear_sides, secondLayers.rear_sides?.enabled);
-                    const shadeRear = getRealisticTintShade(selectedMaterials.rear, secondLayers.rear?.enabled);
-
-                    const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
+                    const isWindshieldAssigned = Boolean(selectedMaterials.windshield && selectedMaterials.windshield !== "none" && isZoneAllowed("windshield"));
+                    const isFrontSidesAssigned = Boolean(selectedMaterials.front_sides && selectedMaterials.front_sides !== "none" && isZoneAllowed("front_sides"));
+                    const isRearSidesAssigned = Boolean(selectedMaterials.rear_sides && selectedMaterials.rear_sides !== "none" && isZoneAllowed("rear_sides"));
+                    const isRearAssigned = Boolean(selectedMaterials.rear && selectedMaterials.rear !== "none" && isZoneAllowed("rear"));
 
                     const isSidesLinkedActive = linkSides && (activeZone === "front_sides" || activeZone === "rear_sides");
                     const isFrontSidesActive = activeZone === "front_sides" || isSidesLinkedActive;
                     const isRearSidesActive = activeZone === "rear_sides" || isSidesLinkedActive;
 
+                    const textRotation = isVehicleHorizontal ? "rotate(90 100 " : null;
+
                     return (
                       <svg viewBox="0 0 200 360" className="absolute inset-0 w-full h-full select-none">
                         <defs>
-                          {/* Gradiente Tornasol para Camaleón 20% */}
-                          <linearGradient id="camaleonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#4338ca" stopOpacity="0.85" />
-                            <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.80" />
-                            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.85" />
+                          <linearGradient id="emeraldGlassTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#047857" stopOpacity="0.85" />
+                            <stop offset="100%" stopColor="#065f46" stopOpacity="0.90" />
                           </linearGradient>
-
-                          {/* Filtros de Neón para Zona Activa */}
                           <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
                             <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.95" />
                           </filter>
-                          <filter id="neonGlowYellow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#eab308" floodOpacity="0.95" />
-                          </filter>
-                          <filter id="neonGlowOrange" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#f97316" floodOpacity="0.95" />
-                          </filter>
-                          <filter id="neonGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#a855f7" floodOpacity="0.95" />
+                          <filter id="emeraldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.85" />
                           </filter>
                         </defs>
 
-                        {/* 1. PARABRISAS DELANTERO */}
                         <path
                           d={geom.windshield.d}
                           fill={
                             !isZoneAllowed("windshield") && !isSunstripOnly
                               ? "rgba(220, 240, 255, 0.04)"
-                              : isSunstripOnly
-                              ? "rgba(220, 240, 255, 0.05)"
-                              : shadeWindshield.fill
+                              : isWindshieldAssigned || isSunstripOnly
+                              ? "url(#emeraldGlassTop)"
+                              : "rgba(30, 41, 59, 0.4)"
                           }
-                          fillOpacity={
-                            !isZoneAllowed("windshield") && !isSunstripOnly
-                              ? 0.12
-                              : isSunstripOnly
-                              ? 0.18
-                              : shadeWindshield.opacity
-                          }
+                          fillOpacity={!isZoneAllowed("windshield") && !isSunstripOnly ? 0.12 : 0.88}
                           stroke={
                             !isZoneAllowed("windshield") && !isSunstripOnly
                               ? "rgba(148, 163, 184, 0.35)"
                               : activeZone === "windshield"
                               ? "#38bdf8"
-                              : shadeWindshield.border
+                              : isWindshieldAssigned
+                              ? "#10b981"
+                              : "rgba(255, 255, 255, 0.4)"
                           }
-                          strokeWidth={activeZone === "windshield" ? "3.5" : "1.5"}
+                          strokeWidth={activeZone === "windshield" ? "3.5" : isWindshieldAssigned ? "2.5" : "1.5"}
                           strokeDasharray={!isZoneAllowed("windshield") && !isSunstripOnly ? "4 3" : undefined}
-                          filter={activeZone === "windshield" ? "url(#neonGlowActive)" : undefined}
-                          className={
-                            !isZoneAllowed("windshield") && !isSunstripOnly
-                              ? "cursor-not-allowed opacity-45"
-                              : "cursor-pointer transition-all hover:opacity-90"
-                          }
+                          filter={activeZone === "windshield" ? "url(#neonGlowActive)" : isWindshieldAssigned ? "url(#emeraldGlow)" : undefined}
+                          className={!isZoneAllowed("windshield") && !isSunstripOnly ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                           onClick={() => {
                             if (!isZoneAllowed("windshield") && !isSunstripOnly) {
                               toast.info("Parabrisas delantero no contratado en este servicio.");
@@ -1860,13 +1732,15 @@ export default function TintWindowMaterialDialog({
                             }
                             setActiveZone("windshield");
                           }}
+                          onMouseEnter={(e) => handleWindowMouseEnter(e, "windshield")}
+                          onMouseMove={handleWindowMouseMove}
+                          onMouseLeave={handleWindowMouseLeave}
                         />
 
-                        {/* Bandas de Sol Parabrisas */}
                         {geom.windshield.topStrip && (
                           <path
                             d={geom.windshield.topStrip}
-                            fill={sunstrips.windshield_top?.enabled ? "#020617" : "transparent"}
+                            fill={sunstrips.windshield_top?.enabled ? "#047857" : "transparent"}
                             fillOpacity={sunstrips.windshield_top?.enabled ? 0.95 : 0.01}
                             stroke={sunstrips.windshield_top?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
                             strokeWidth={sunstrips.windshield_top?.enabled ? "1.5" : "0.5"}
@@ -1884,32 +1758,11 @@ export default function TintWindowMaterialDialog({
                           />
                         )}
 
-                        {geom.windshield.bottomStrip && (
-                          <path
-                            d={geom.windshield.bottomStrip}
-                            fill={sunstrips.windshield_bottom?.enabled ? "#020617" : "transparent"}
-                            fillOpacity={sunstrips.windshield_bottom?.enabled ? 0.95 : 0.01}
-                            stroke={sunstrips.windshield_bottom?.enabled ? "#38bdf8" : "rgba(255,255,255,0.2)"}
-                            strokeWidth={sunstrips.windshield_bottom?.enabled ? "1.5" : "0.5"}
-                            strokeDasharray={sunstrips.windshield_bottom?.enabled ? undefined : "2,2"}
-                            className="cursor-pointer transition-all hover:opacity-80"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isSunstripOnly) {
-                                toast.warning("La banda inferior no está incluida en el servicio de Franja Superior.");
-                                return;
-                              }
-                              setActiveZone("windshield");
-                              handleToggleSunstrip("windshield_bottom", !sunstrips.windshield_bottom?.enabled);
-                            }}
-                          />
-                        )}
-
                         <text
                           x="100"
                           y={geom.windshield.textY}
                           textAnchor="middle"
-                          fill={!isZoneAllowed("windshield") && !isSunstripOnly ? "#94a3b8" : "#ffffff"}
+                          fill={isWindshieldAssigned ? "#a7f3d0" : "#ffffff"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
@@ -1917,131 +1770,123 @@ export default function TintWindowMaterialDialog({
                         >
                           Parabrisas del.
                         </text>
-                        <text
-                          x="100"
-                          y={geom.windshield.subY}
-                          textAnchor="middle"
-                          fill={!isZoneAllowed("windshield") && !isSunstripOnly ? "#94a3b8" : "#e0f2fe"}
-                          fontSize="7"
-                          fontWeight="600"
-                          transform={textRotation ? `${textRotation}${geom.windshield.subY})` : undefined}
-                          className="pointer-events-none select-none"
-                        >
-                          {!isZoneAllowed("windshield") && !isSunstripOnly
-                            ? "Bloqueado"
-                            : isSunstripOnly
-                            ? "Solo Banda Frontal"
-                            : `${shadeWindshield.label}${secondLayers.windshield?.enabled ? " + 2da" : ""}`}
-                        </text>
 
-                        {/* 2. VENTANAS DELANTERAS */}
                         {geom.front_sides.map((p, idx) => (
                           <path
                             key={`fs-${idx}`}
                             d={p.d}
-                            fill={!isZoneAllowed("front_sides") ? "rgba(220, 240, 255, 0.04)" : shadeFrontSides.fill}
-                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : shadeFrontSides.opacity}
+                            fill={
+                              !isZoneAllowed("front_sides")
+                                ? "rgba(220, 240, 255, 0.04)"
+                                : isFrontSidesAssigned
+                                ? "url(#emeraldGlassTop)"
+                                : "rgba(30, 41, 59, 0.4)"
+                            }
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontSidesAssigned ? 0.88 : 0.4}
                             stroke={
                               !isZoneAllowed("front_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
                                 : isFrontSidesActive
-                                ? "#eab308"
-                                : shadeFrontSides.border
+                                ? "#38bdf8"
+                                : isFrontSidesAssigned
+                                ? "#10b981"
+                                : "rgba(255, 255, 255, 0.4)"
                             }
-                            strokeWidth={isFrontSidesActive && isZoneAllowed("front_sides") ? "3.5" : "1.5"}
+                            strokeWidth={isFrontSidesActive ? "3.5" : isFrontSidesAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
-                            filter={isFrontSidesActive && isZoneAllowed("front_sides") ? "url(#neonGlowYellow)" : undefined}
-                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            filter={isFrontSidesActive ? "url(#neonGlowActive)" : isFrontSidesAssigned ? "url(#emeraldGlow)" : undefined}
+                            className={!isZoneAllowed("front_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                             onClick={() => {
                               if (!isZoneAllowed("front_sides")) {
-                                toast.info("Ventanas delanteras no contratadas en este servicio.");
+                                toast.info("Ventanas delanteras no contratadas.");
                                 return;
                               }
                               setActiveZone("front_sides");
                             }}
+                            onMouseEnter={(e) => handleWindowMouseEnter(e, "front_sides")}
+                            onMouseMove={handleWindowMouseMove}
+                            onMouseLeave={handleWindowMouseLeave}
                           />
                         ))}
 
-                        {/* 3. VENTANAS TRASERAS */}
                         {geom.rear_sides.map((p, idx) => (
                           <path
                             key={`rs-${idx}`}
                             d={p.d}
-                            fill={!isZoneAllowed("rear_sides") ? "rgba(220, 240, 255, 0.04)" : shadeRearSides.fill}
-                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : shadeRearSides.opacity}
+                            fill={
+                              !isZoneAllowed("rear_sides")
+                                ? "rgba(220, 240, 255, 0.04)"
+                                : isRearSidesAssigned
+                                ? "url(#emeraldGlassTop)"
+                                : "rgba(30, 41, 59, 0.4)"
+                            }
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearSidesAssigned ? 0.88 : 0.4}
                             stroke={
                               !isZoneAllowed("rear_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
-                                : isSidesLinkedActive
-                                ? "#eab308"
-                                : activeZone === "rear_sides"
-                                ? "#f97316"
-                                : shadeRearSides.border
+                                : isRearSidesActive
+                                ? "#38bdf8"
+                                : isRearSidesAssigned
+                                ? "#10b981"
+                                : "rgba(255, 255, 255, 0.4)"
                             }
-                            strokeWidth={isRearSidesActive && isZoneAllowed("rear_sides") ? "3.5" : "1.5"}
+                            strokeWidth={isRearSidesActive ? "3.5" : isRearSidesAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
-                            filter={
-                              isSidesLinkedActive && isZoneAllowed("rear_sides")
-                                ? "url(#neonGlowYellow)"
-                                : activeZone === "rear_sides" && isZoneAllowed("rear_sides")
-                                ? "url(#neonGlowOrange)"
-                                : undefined
-                            }
-                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                            filter={isRearSidesActive ? "url(#neonGlowActive)" : isRearSidesAssigned ? "url(#emeraldGlow)" : undefined}
+                            className={!isZoneAllowed("rear_sides") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                             onClick={() => {
                               if (!isZoneAllowed("rear_sides")) {
-                                toast.info("Ventanas traseras no contratadas en este servicio.");
+                                toast.info("Ventanas traseras no contratadas.");
                                 return;
                               }
                               setActiveZone("rear_sides");
                             }}
+                            onMouseEnter={(e) => handleWindowMouseEnter(e, "rear_sides")}
+                            onMouseMove={handleWindowMouseMove}
+                            onMouseLeave={handleWindowMouseLeave}
                           />
                         ))}
 
-                        {/* 4. PARABRISAS TRASERO */}
                         <path
                           d={geom.rear.d}
-                          fill={!isZoneAllowed("rear") ? "rgba(220, 240, 255, 0.04)" : shadeRear.fill}
-                          fillOpacity={!isZoneAllowed("rear") ? 0.12 : shadeRear.opacity}
+                          fill={
+                            !isZoneAllowed("rear")
+                              ? "rgba(220, 240, 255, 0.04)"
+                              : isRearAssigned
+                              ? "url(#emeraldGlassTop)"
+                              : "rgba(30, 41, 59, 0.4)"
+                          }
+                          fillOpacity={!isZoneAllowed("rear") ? 0.12 : isRearAssigned ? 0.88 : 0.4}
                           stroke={
                             !isZoneAllowed("rear")
                               ? "rgba(148, 163, 184, 0.35)"
                               : activeZone === "rear"
-                              ? "#a855f7"
-                              : shadeRear.border
+                              ? "#38bdf8"
+                              : isRearAssigned
+                              ? "#10b981"
+                              : "rgba(255, 255, 255, 0.4)"
                           }
-                          strokeWidth={activeZone === "rear" && isZoneAllowed("rear") ? "3.5" : "1.5"}
+                          strokeWidth={activeZone === "rear" ? "3.5" : isRearAssigned ? "2.5" : "1.5"}
                           strokeDasharray={!isZoneAllowed("rear") ? "4 3" : undefined}
-                          filter={activeZone === "rear" && isZoneAllowed("rear") ? "url(#neonGlowPurple)" : undefined}
-                          className={!isZoneAllowed("rear") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-90"}
+                          filter={activeZone === "rear" ? "url(#neonGlowActive)" : isRearAssigned ? "url(#emeraldGlow)" : undefined}
+                          className={!isZoneAllowed("rear") ? "cursor-not-allowed opacity-45" : "cursor-pointer transition-all hover:opacity-95"}
                           onClick={() => {
                             if (!isZoneAllowed("rear")) {
-                              toast.info("Parabrisas trasero no contratado en este servicio.");
+                              toast.info("Parabrisas trasero no contratado.");
                               return;
                             }
                             setActiveZone("rear");
                           }}
+                          onMouseEnter={(e) => handleWindowMouseEnter(e, "rear")}
+                          onMouseMove={handleWindowMouseMove}
+                          onMouseLeave={handleWindowMouseLeave}
                         />
-
-                        {/* Línea visual de empalme horizontal si está activo */}
-                        {empalmeRear && (
-                          <line
-                            x1="70"
-                            y1={geom.rear.textY}
-                            x2="130"
-                            y2={geom.rear.textY}
-                            stroke="#f59e0b"
-                            strokeWidth="1"
-                            strokeDasharray="2,2"
-                            className="pointer-events-none"
-                          />
-                        )}
 
                         <text
                           x="100"
                           y={geom.rear.textY}
                           textAnchor="middle"
-                          fill={!isZoneAllowed("rear") ? "#94a3b8" : "#ffffff"}
+                          fill={isRearAssigned ? "#a7f3d0" : "#ffffff"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
@@ -2049,34 +1894,42 @@ export default function TintWindowMaterialDialog({
                         >
                           Parabrisas Tras.
                         </text>
-                        <text
-                          x="100"
-                          y={geom.rear.subY}
-                          textAnchor="middle"
-                          fill={!isZoneAllowed("rear") ? "#94a3b8" : "#f3e8ff"}
-                          fontSize="7"
-                          fontWeight="600"
-                          transform={textRotation ? `${textRotation}${geom.rear.subY})` : undefined}
-                          className="pointer-events-none select-none"
-                        >
-                          {!isZoneAllowed("rear")
-                            ? "Bloqueado"
-                            : empalmeRear
-                            ? "Empalme 2x20\""
-                            : `${shadeRear.label}${secondLayers.rear?.enabled ? " + 2da" : ""}`}
-                        </text>
                       </svg>
                     );
                   })()}
                 </div>
               )}
+
+              {hoverTooltip && (
+                <div
+                  className="absolute pointer-events-none z-30 transform -translate-x-1/2 -translate-y-full mb-2 px-3 py-2 bg-zinc-950/95 text-white border border-emerald-500/60 rounded-xl shadow-2xl backdrop-blur-md text-[11px] min-w-[160px] animate-fade-in"
+                  style={{ left: `${hoverTooltip.x}px`, top: `${hoverTooltip.y - 12}px` }}
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-1 mb-1 font-bold text-emerald-400">
+                    <span>{hoverTooltip.zoneLabel}</span>
+                    {hoverTooltip.vlt && (
+                      <span className="text-[9.5px] bg-emerald-950/80 px-1 py-0.2 rounded border border-emerald-600/40 text-emerald-200">
+                        {hoverTooltip.vlt}
+                      </span>
+                    )}
+                  </div>
+                  {hoverTooltip.status ? (
+                    <p className="text-zinc-400 text-[10px] italic">{hoverTooltip.status}</p>
+                  ) : (
+                    <div className="space-y-0.5 text-[10px]">
+                      <p className="font-semibold text-zinc-100">{hoverTooltip.materialName}</p>
+                      {hoverTooltip.gamaName && <p className="text-zinc-400">{hoverTooltip.gamaName}</p>}
+                      {hoverTooltip.secondLayerText && <p className="text-amber-300 font-semibold">{hoverTooltip.secondLayerText}</p>}
+                      {hoverTooltip.sunstripText && <p className="text-sky-300">{hoverTooltip.sunstripText}</p>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Lado Derecho (6.5 cols en PC): Selector de Gamas y Materiales */}
           <div className="md:col-span-7 lg:col-span-6 p-2.5 sm:p-4 lg:p-5 flex flex-col justify-between space-y-2.5 overflow-y-auto">
             <div>
-              {/* Barra de Control de la Zona Activa */}
               <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
@@ -2086,9 +1939,9 @@ export default function TintWindowMaterialDialog({
                         : activeZone === "windshield"
                         ? "bg-sky-400"
                         : activeZone === "front_sides"
-                        ? "bg-yellow-400"
+                        ? "bg-emerald-400"
                         : activeZone === "rear_sides"
-                        ? "bg-orange-400"
+                        ? "bg-emerald-400"
                         : "bg-purple-400"
                     }`}
                   />
@@ -2117,16 +1970,14 @@ export default function TintWindowMaterialDialog({
                       size="sm"
                       onClick={() => handleApplyAll(selectedMaterials[activeZone])}
                       className="text-[10px] sm:text-xs h-7 px-2 text-zinc-700 dark:text-zinc-300 font-semibold"
-                      title="Aplicar el material de este cristal a todas las zonas contratadas"
                     >
-                      <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                      Aplicar a contratados
+                      <Sparkles className="h-3 w-3 mr-1 text-emerald-500" />
+                      Aplicar a todos
                     </Button>
                   </div>
                 )}
               </div>
 
-              {/* Controles Rápidos: Vincular Laterales, Doble Capa, Empalme 2x20 y Bandas de Sol */}
               {!isSunstripOnly && (
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   {(activeZone === "front_sides" || activeZone === "rear_sides") && (
@@ -2148,9 +1999,7 @@ export default function TintWindowMaterialDialog({
                               ...prev,
                               rear_sides: prev.front_sides,
                             }));
-                            toast.info("Ventanas laterales vinculadas con el mismo material");
-                          } else {
-                            toast.info("Ventanas laterales desvinculadas");
+                            toast.info("Ventanas vinculadas");
                           }
                         }}
                         className="scale-75"
@@ -2158,12 +2007,11 @@ export default function TintWindowMaterialDialog({
                     </div>
                   )}
 
-                  {/* Opción de Empalme 2x20 en Parabrisas Trasero */}
                   {activeZone === "rear" && (
                     <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 rounded-lg px-2 py-1">
                       <Scissors className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                       <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 dark:text-amber-200">
-                        Empalme 2x20" (Corte Horizontal)
+                        Empalme 2x20"
                       </span>
                       <Switch
                         checked={empalmeRear}
@@ -2173,7 +2021,6 @@ export default function TintWindowMaterialDialog({
                     </div>
                   )}
 
-                  {/* Toggle de 2da Capa */}
                   <div className="flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-2 py-1">
                     <Sparkles className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                     <span className="text-[10px] sm:text-[11px] font-semibold text-amber-900 dark:text-amber-200">
@@ -2186,7 +2033,6 @@ export default function TintWindowMaterialDialog({
                     />
                   </div>
 
-                  {/* Bandas Superior e Inferior para Parabrisas */}
                   {(activeZone === "windshield" || activeZone === "rear") && (
                     <>
                       <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
@@ -2200,44 +2046,11 @@ export default function TintWindowMaterialDialog({
                           className="scale-75"
                         />
                       </div>
-
-                      <div className="flex items-center gap-1.5 bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg px-2 py-1">
-                        <Sun className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-                        <span className="text-[10px] sm:text-[11px] font-semibold text-sky-900 dark:text-sky-200">
-                          Banda Inferior
-                        </span>
-                        <Switch
-                          checked={Boolean(sunstrips[`${activeZone}_bottom`]?.enabled)}
-                          onCheckedChange={(checked) => handleToggleSunstrip(`${activeZone}_bottom`, checked)}
-                          className="scale-75"
-                        />
-                      </div>
                     </>
                   )}
                 </div>
               )}
 
-              {/* Selector de Material 2da Capa */}
-              {!isSunstripOnly && secondLayers[activeZone]?.enabled && (
-                <div className="mb-2 p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-2">
-                  <Label className="text-[10px] sm:text-[11px] font-bold text-amber-900 dark:text-amber-200">
-                    Material 2da Capa:
-                  </Label>
-                  <select
-                    value={secondLayers[activeZone]?.material_id || "sg_charcoal_20"}
-                    onChange={(e) => handleSelectSecondLayerMaterial(activeZone, e.target.value)}
-                    className="text-[11px] rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 px-2 py-1 text-zinc-900 dark:text-white font-medium"
-                  >
-                    {activeMaterials.map((m) => (
-                      <option key={m.material_id} value={m.material_id}>
-                        {m.name} ({m.price_extra_usd > 0 ? `+$${m.price_extra_usd.toFixed(2)} USD` : "Estándar"})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* LAS 4 GAMAS OFICIALES */}
               <div className="mb-2.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
@@ -2249,7 +2062,7 @@ export default function TintWindowMaterialDialog({
                       onClick={() => setSelectedGama("all")}
                       className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
                     >
-                      Ver todas las gamas
+                      Ver todas
                     </button>
                   )}
                 </div>
@@ -2257,31 +2070,20 @@ export default function TintWindowMaterialDialog({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {OFFICIAL_GAMAS.map((gama) => {
                     const isSelected = selectedGama === gama.id;
-                    const IconComp = gama.icon;
                     return (
                       <button
                         key={gama.id}
                         type="button"
                         onClick={() => setSelectedGama(isSelected ? "all" : gama.id)}
-                        className={`flex flex-col items-start p-2 rounded-xl border text-left transition-all relative overflow-hidden ${
+                        className={`flex flex-col items-start p-2 rounded-xl border text-left transition-all ${
                           isSelected
                             ? `${gama.borderColor} bg-blue-50/90 dark:bg-zinc-800/90 ring-2 ring-blue-500 shadow-md font-bold`
-                            : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+                            : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-zinc-300"
                         }`}
                       >
-                        <div className="flex items-center justify-between w-full gap-1">
-                          <span className="text-[10.5px] sm:text-[11.5px] font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 truncate">
-                            <span className={`h-2.5 w-2.5 rounded-full ${gama.dotColor} shrink-0`} />
-                            {gama.name}
-                          </span>
-                          {isSelected && (
-                            <Badge className="bg-blue-600 text-white text-[8px] px-1 py-0 font-mono shrink-0">
-                              Activo
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-[9px] text-muted-foreground truncate w-full mt-0.5">
-                          {gama.description}
+                        <span className="text-[11px] font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                          <span className={`h-2 w-2 rounded-full ${gama.dotColor}`} />
+                          {gama.shortName}
                         </span>
                       </button>
                     );
@@ -2289,57 +2091,23 @@ export default function TintWindowMaterialDialog({
                 </div>
               </div>
 
-              {/* Búsqueda Rápida */}
               <div className="space-y-1.5 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="relative flex-1">
-                    <Search className="h-3 w-3 absolute left-2 top-2 text-zinc-400" />
-                    <Input
-                      type="text"
-                      placeholder={'Buscar tono, medida o tecnología (ej. 5%, 20%, 40", Supreme)...'}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-7 text-[10px] pl-6 pr-2 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-                    />
-                  </div>
-                  {searchTerm && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSearchTerm("")}
-                      className="h-7 px-1.5 text-[10px]"
-                    >
-                      Limpiar
-                    </Button>
-                  )}
+                <div className="relative flex-1">
+                  <Search className="h-3 w-3 absolute left-2 top-2 text-zinc-400" />
+                  <Input
+                    type="text"
+                    placeholder={'Buscar tono o tecnología (ej. 5%, 20%, 40", Supreme)...'}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-7 text-[10px] pl-6 pr-2 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                  />
                 </div>
               </div>
 
-              {/* Notificación de Búsqueda Inteligente si se encontró en otra gama */}
-              {searchMatchedInOtherGama && (
-                <div className="mb-2 p-2 rounded-lg bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center justify-between text-[10.5px] text-blue-900 dark:text-blue-200">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span className="truncate">
-                      No hay resultados en la gama actual. Mostrando <b>{filteredMaterials.length}</b> resultado(s) de otras gamas para <b>&quot;{searchTerm}&quot;</b>:
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGama("all")}
-                    className="ml-2 underline font-bold shrink-0 hover:text-blue-700 dark:hover:text-blue-300 text-[10px]"
-                  >
-                    Ver todas
-                  </button>
-                </div>
-              )}
-
-              {/* Lista de Films / Materiales */}
               <div className="space-y-1.5 max-h-52 sm:max-h-60 lg:max-h-72 overflow-y-auto pr-1">
                 {filteredMaterials.length === 0 ? (
                   <div className="p-4 text-center space-y-1 text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
-                    <p>No hay materiales que coincidan con los filtros seleccionados.</p>
+                    <p>No hay materiales disponibles.</p>
                     {searchTerm && (
                       <Button
                         type="button"
@@ -2351,7 +2119,7 @@ export default function TintWindowMaterialDialog({
                         }}
                         className="text-[11px] h-7 text-blue-600 dark:text-blue-400 font-semibold"
                       >
-                        Limpiar filtros y ver catálogo completo
+                        Ver catálogo completo
                       </Button>
                     )}
                   </div>
@@ -2362,12 +2130,6 @@ export default function TintWindowMaterialDialog({
                   const isSelected = isSunstripOnly
                     ? sunstrips.windshield_top?.material_id === matId
                     : selectedMaterials[activeZone] === matId;
-                  const is3M = mat.brand === "3M" || String(matId).includes("3m") || String(mat.family).includes("3M");
-                  const isSolarGard = mat.brand === "Solar Gard" || (!is3M && mat.brand !== "Q1" && mat.brand !== "Raybar");
-                  const isRaybar = mat.brand === "Raybar" || String(matId).includes("raybar");
-
-                  const isQ1 = mat.brand === "Q1" || String(matId).includes("q1");
-
                   const matchedGama = OFFICIAL_GAMAS.find((g) => g.id === (mat.gama || mat.gama_id));
 
                   return (
@@ -2376,7 +2138,7 @@ export default function TintWindowMaterialDialog({
                       onClick={() => handleSelectMaterial(activeZone, matId)}
                       className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all gap-2 overflow-hidden ${
                         isSelected
-                          ? "border-blue-600 bg-blue-50/75 dark:bg-blue-950/60 dark:border-blue-500 shadow-sm ring-1 ring-blue-500/40 font-bold"
+                          ? "border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/60 dark:border-emerald-500 shadow-sm ring-2 ring-emerald-500/50 font-bold"
                           : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/50"
                       }`}
                     >
@@ -2384,11 +2146,11 @@ export default function TintWindowMaterialDialog({
                         <div
                           className={`h-4 w-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
                             isSelected
-                              ? "border-blue-600 bg-blue-600 text-white"
+                              ? "border-emerald-600 bg-emerald-600 text-white"
                               : "border-zinc-400 bg-transparent"
                           }`}
                         >
-                          {isSelected && <Check className="h-2.5 w-2.5" />}
+                          {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                         </div>
 
                         <div className="min-w-0 space-y-1 flex-1">
@@ -2396,16 +2158,9 @@ export default function TintWindowMaterialDialog({
                             <span className="text-[11px] sm:text-xs text-zinc-900 dark:text-white font-bold truncate">
                               {mat.name}
                             </span>
-
                             {matchedGama && (
                               <Badge variant="outline" className={`text-[8.5px] px-1.5 py-0 font-mono shrink-0 ${matchedGama.tierPill}`}>
                                 {matchedGama.shortName}
-                              </Badge>
-                            )}
-
-                            {mat.tech_type && (
-                              <Badge variant="outline" className="text-[8.5px] px-1.5 py-0 font-mono text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 shrink-0">
-                                {mat.tech_type}
                               </Badge>
                             )}
                           </div>
@@ -2416,9 +2171,6 @@ export default function TintWindowMaterialDialog({
                                 <Flame className="h-2.5 w-2.5 text-red-500" /> {mat.ir_rejection_pct}% IR
                               </span>
                             ) : null}
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono font-semibold">
-                              ☀️ {mat.uv_rejection_pct || 99}% UV
-                            </span>
                             <span className="inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 font-mono font-semibold">
                               {mat.vlt}% VLT
                             </span>
@@ -2426,40 +2178,10 @@ export default function TintWindowMaterialDialog({
                               <ShieldCheck className="h-2.5 w-2.5 text-emerald-500" /> 5a Gar.
                             </span>
                           </div>
-
-                          {mat.description && (
-                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
-                              {mat.description}
-                            </p>
-                          )}
                         </div>
                       </div>
 
                       <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-1 sm:pt-0 border-zinc-100 dark:border-zinc-800 shrink-0 z-10 space-y-1 min-w-[90px]">
-                        <div className="flex items-center gap-1 shrink-0">
-                          {is3M ? (
-                            <img
-                              src="/brands/3m.png"
-                              alt="3M"
-                              className="h-4 sm:h-5 max-w-[60px] object-contain drop-shadow-sm"
-                            />
-                          ) : isSolarGard ? (
-                            <img
-                              src="/brands/solargard.png"
-                              alt="Solar Gard"
-                              className="h-4 sm:h-5 max-w-[70px] object-contain drop-shadow-sm"
-                            />
-                          ) : isRaybar ? (
-                            <span className="text-[9px] font-bold font-mono text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900">
-                              RAYBAR
-                            </span>
-                          ) : isQ1 ? (
-                            <span className="text-[9px] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
-                              Q1
-                            </span>
-                          ) : null}
-                        </div>
-
                         <span
                           className={`text-xs ${
                             mat.price_extra_usd > 0
@@ -2471,9 +2193,6 @@ export default function TintWindowMaterialDialog({
                             ? `+$${mat.price_extra_usd.toFixed(2)} USD`
                             : "Incluido"}
                         </span>
-                        <span className="text-[9px] text-muted-foreground font-mono">
-                          Stock: {mat.virtual_qty} u
-                        </span>
                       </div>
                     </div>
                   );
@@ -2481,121 +2200,56 @@ export default function TintWindowMaterialDialog({
               </div>
             </div>
 
-            {/* Sección de Preparación y Despolarizado */}
-            <div className="rounded-xl border border-amber-300/80 bg-amber-50/80 p-2.5 dark:border-amber-900/60 dark:bg-amber-950/30 text-xs space-y-2 shrink-0">
+            <div className="rounded-xl border border-amber-300/80 bg-amber-50/80 p-2.5 dark:border-amber-900/60 dark:bg-amber-950/30 text-xs shrink-0">
               <div className="flex items-center justify-between font-bold text-amber-950 dark:text-amber-200">
                 <div className="flex items-center gap-1.5">
                   <Scissors className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                   <span>Preparación y Despolarizado</span>
                 </div>
                 <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-100/80 text-amber-900 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
-                  Taller & Tiempos
+                  Taller
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                {/* Opción 1: Despolarizar */}
                 <div
-                  className={cn(
-                    "flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none",
-                    requiresDespolarizado
-                      ? "border-amber-500 bg-amber-100/90 dark:bg-amber-900/60 shadow-xs"
-                      : "border-amber-200/80 bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
-                  )}
+                  className="flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
                   onClick={() => setRequiresDespolarizado((prev) => !prev)}
                 >
                   <div className="space-y-0.5 pr-2">
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] flex items-center gap-1.5">
-                      <span>¿Requiere Despolarizar?</span>
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">
+                      ¿Requiere Despolarizar?
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      Retirar film viejo / dañado (+${DESPOLARIZADO_PRICE_USD.toFixed(2)} USD)
+                      Retirar film viejo (+${DESPOLARIZADO_PRICE_USD.toFixed(2)} USD)
                     </div>
                   </div>
-                  <Switch
-                    checked={requiresDespolarizado}
-                    onCheckedChange={setRequiresDespolarizado}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <Switch checked={requiresDespolarizado} onCheckedChange={setRequiresDespolarizado} onClick={(e) => e.stopPropagation()} />
                 </div>
-
-                {/* Opción 2: Químico Removedor */}
                 <div
-                  className={cn(
-                    "flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none",
-                    requiresRemover
-                      ? "border-amber-500 bg-amber-100/90 dark:bg-amber-900/60 shadow-xs"
-                      : "border-amber-200/80 bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
-                  )}
+                  className="flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer bg-white/80 dark:bg-zinc-900/60 hover:bg-amber-100/40"
                   onClick={() => setRequiresRemover((prev) => !prev)}
                 >
                   <div className="space-y-0.5 pr-2">
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] flex items-center gap-1.5">
-                      <span>¿Aplicar Removedor?</span>
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">
+                      ¿Aplicar Removedor?
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      Químico pegamento quemado (+${REMOVER_PRICE_USD.toFixed(2)} USD)
+                      Pegamento quemado (+${REMOVER_PRICE_USD.toFixed(2)} USD)
                     </div>
                   </div>
-                  <Switch
-                    checked={requiresRemover}
-                    onCheckedChange={setRequiresRemover}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <Switch checked={requiresRemover} onCheckedChange={setRequiresRemover} onClick={(e) => e.stopPropagation()} />
                 </div>
-              </div>
-            </div>
-
-            {/* Resumen del Plan y Desglose de Precios */}
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-2 dark:border-zinc-800 dark:bg-zinc-900/50 text-[11px] shrink-0">
-              <div className="flex items-center justify-between font-semibold text-zinc-700 dark:text-zinc-300 pb-1 border-b border-zinc-200 dark:border-zinc-800">
-                <span>Recargo Total:</span>
-                <span className="text-primary font-mono font-bold">
-                  +${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)} USD
-                </span>
-              </div>
-              <div className="mt-1 space-y-0.5 max-h-14 overflow-y-auto text-[10px] text-muted-foreground pr-1">
-                {(quoteData?.price_breakdown || []).map((b, i) => (
-                  <div key={i} className="flex justify-between items-center py-0.5">
-                    <span className="truncate pr-2">
-                      {b.group_label} ({b.material_name}):
-                    </span>
-                    <span className="font-mono text-zinc-800 dark:text-zinc-200 font-medium shrink-0">
-                      +${b.price_extra_usd.toFixed(2)} USD
-                    </span>
-                  </div>
-                ))}
-                {requiresDespolarizado && (
-                  <div className="flex justify-between items-center py-0.5 text-amber-700 dark:text-amber-300 font-medium">
-                    <span className="truncate pr-2">Despolarizado (Retiro de film anterior):</span>
-                    <span className="font-mono shrink-0">+${DESPOLARIZADO_PRICE_USD.toFixed(2)} USD</span>
-                  </div>
-                )}
-                {requiresRemover && (
-                  <div className="flex justify-between items-center py-0.5 text-amber-700 dark:text-amber-300 font-medium">
-                    <span className="truncate pr-2">Insumo Químico Removedor de Pegamento:</span>
-                    <span className="font-mono shrink-0">+${REMOVER_PRICE_USD.toFixed(2)} USD</span>
-                  </div>
-                )}
-                {quoteData?.has_empalme && (
-                  <div className="text-amber-600 dark:text-amber-400 font-bold text-[9.5px] pt-0.5">
-                    {quoteData.empalme_warning}
-                  </div>
-                )}
-                {(!quoteData?.price_breakdown || quoteData.price_breakdown.length === 0) && !requiresDespolarizado && !requiresRemover && (
-                  <div className="text-zinc-500 italic">Sin recargos adicionales (Films Estándar / Económicos).</div>
-                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Responsivo */}
         <DialogFooter className="bg-zinc-100/90 dark:bg-zinc-900/90 px-3.5 sm:px-6 py-2 sm:py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-2 shrink-0">
           <div className="text-[11px] sm:text-xs text-muted-foreground w-full sm:w-auto text-center sm:text-left">
             {quoteData?.valid ? (
               <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-center sm:justify-start gap-1">
-                <Check className="h-3.5 w-3.5" /> Plan completo y validado
+                <Check className="h-3.5 w-3.5" /> Plan validado
               </span>
             ) : (
               <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center justify-center sm:justify-start gap-1">
@@ -2614,7 +2268,7 @@ export default function TintWindowMaterialDialog({
               size="sm"
               className="flex-1 sm:flex-initial h-8 text-xs bg-primary hover:bg-primary/90 text-white font-bold"
             >
-              Aplicar al Carrito (+${((quoteData?.materials_extra_total || 0) + (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) + (requiresRemover ? REMOVER_PRICE_USD : 0)).toFixed(2)} USD)
+              Aplicar al Carrito (${grandTotalUsd.toFixed(2)} USD)
             </Button>
           </div>
         </DialogFooter>
