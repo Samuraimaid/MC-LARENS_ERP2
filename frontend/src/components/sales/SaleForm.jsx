@@ -1207,9 +1207,15 @@ export default function SaleForm({
         setPaymentPlanLines(restoredPlanLines);
       }
       setNotes(draft?.notes || "");
-      const restoredCustomer = customers.find(
+      const restoredCustomer = (Array.isArray(customers) ? customers : []).find(
+        (c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""),
+      ) || (Array.isArray(localCustomers) ? localCustomers : []).find(
         (c) => String(c.customer_id ?? "") === String(draft?.selectedCustomerId ?? ""),
       );
+      if (restoredCustomer) {
+        setSelectedCustomer(restoredCustomer);
+        setPendingCustomerId(null);
+      }
       setApplyIVA(draft?.applyIVA ?? false);
       setApplyRetention(draft?.applyRetention ?? false);
       setRetentionRate(draft?.retentionRate ?? 2);

@@ -677,15 +677,8 @@ export function QuotationsPage() {
         if (cancelled) return;
         const serverDrafts = Array.isArray(bundle?.drafts) ? bundle.drafts : [];
         const eligibleServerDrafts = serverDrafts.filter((draft) => (
-          isSaleDraftSaveEligible(draft?.snapshot || {})
+          isSaleDraftSaveEligible(draft?.snapshot || {}) || draft?.id === bundle?.activeDraftId
         ));
-        serverDrafts
-          .filter((draft) => !isSaleDraftSaveEligible(draft?.snapshot || {}))
-          .forEach((draft) => {
-            if (draft?.id) {
-              deleteServerDraft(DRAFT_FLOW, draft.id).catch(() => {});
-            }
-          });
         const nextActiveDraftId = bundle.activeDraftId && eligibleServerDrafts.some((d) => d.id === bundle.activeDraftId)
           ? bundle.activeDraftId
           : (eligibleServerDrafts[0]?.id ?? null);
