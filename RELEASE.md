@@ -2,17 +2,22 @@
 
 Build documental actual: 2026-09-07
 
-## Control de cambios - 2026-09-07 (Blindaje Anti-DevTools, Menú Contextual Seguro y Captura de Pantalla)
+## Control de cambios - 2026-09-07 (Blindaje Anti-DevTools, Discreción Empresarial, Compartir WhatsApp y Polarizado Pickup)
 
 Estado de cierre
 - Implementado blindaje estricto contra inspección de código (F12, atajos de DevTools, purga de logs en producción).
-- Menú contextual in-app (AntiTamperGuard) reacondicionado con motor de captura de pantalla ultra-robusto (CORS, eliminación de taint canvas, multi-CDN y fallback a MediaStream).
+- Menú contextual in-app (AntiTamperGuard) con motor de captura de pantalla ultra-robusto (CORS, eliminación de taint canvas, multi-CDN y fallback a MediaStream).
+- Discreción empresarial en capturas: censura inteligente con efecto blur sobre precios mayoristas, costos, stock en bodegas y datos sensibles para permitir capturas seguras de cara al cliente.
+- Compartir capturas por WhatsApp con mensajes contextuales según el módulo activo (catálogo de productos, cotizaciones, ventas).
+- Sincronización automática de servicios esenciales en backend (`ensure_core_service_products`) garantizando la disponibilidad de `POL-PCK-COM` (Polarizado Completo Camioneta Pickup).
+- Compatibilidad y búsqueda optimizada en `SaleForm` para camionetas/pickups (Hilux, Tacoma, Frontier, D-Max, etc.).
 - Widget flotante integrado de Calculadora / Conversor cambiario USD-NIO con tasa dinámica.
 - Endpoint de auditoría de seguridad `/api/hypervisor/tamper-alert` para registro inmutable de incidentes de inspección.
 - Optimización de despliegue en Cloud Run con 2 vCPUs, 2 GiB de RAM y concurrencia de 80 peticiones para alta disponibilidad multi-sucursal.
 
 Documentación técnica asociada:
 - `docs/SECURITY_AND_TAMPER_PROTECTION_GUIDE.md`
+- `POLITICAS_CAMBIOS_CODIGO.md`
 
 ## Control de cambios - 2026-05-07 (Deshacer carrito, retencion IR y conectividad LAN)
 
