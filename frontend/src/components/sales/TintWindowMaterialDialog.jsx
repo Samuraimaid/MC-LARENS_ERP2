@@ -49,66 +49,6 @@ import { detectTintPlanFromProduct } from "@/lib/tintPlanResolver";
 
 
 
-// Zonas y Nombres Oficiales
-const ZONES = [
-  { id: "windshield", label: "Parabrisas delantero", shortLabel: "Parabrisas del.", dotColor: "bg-sky-400", activeBg: "bg-sky-500", ringColor: "ring-sky-400" },
-  { id: "front_sides", label: "Ventanas Delanteras", shortLabel: "Ventanas Del.", dotColor: "bg-yellow-400", activeBg: "bg-yellow-500", ringColor: "ring-yellow-400" },
-  { id: "rear_sides", label: "Ventanas Traseras", shortLabel: "Ventanas Tras.", dotColor: "bg-orange-400", activeBg: "bg-orange-500", ringColor: "ring-orange-400" },
-  { id: "rear", label: "Parabrisas Trasero", shortLabel: "Parabrisas Tras.", dotColor: "bg-purple-400", activeBg: "bg-purple-500", ringColor: "ring-purple-400" },
-];
-
-// Las 4 Gamas Oficiales de Polarizados (De izquierda más económica a derecha más premium)
-const OFFICIAL_GAMAS = [
-  {
-    id: "gama_economica",
-    name: "1. Gama Económica",
-    shortName: "Económica",
-    order: 1,
-    badgeColor: "bg-emerald-600 text-white",
-    borderColor: "border-emerald-500",
-    dotColor: "bg-emerald-400",
-    icon: BadgePercent,
-    description: "Q1 (5%, 20%), Raybar 60\"",
-    tierPill: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
-  },
-  {
-    id: "tinmax",
-    name: "2. Tinmax",
-    shortName: "Tinmax",
-    order: 2,
-    badgeColor: "bg-blue-600 text-white",
-    borderColor: "border-blue-500",
-    dotColor: "bg-blue-400",
-    icon: Shield,
-    description: "Smoke, Charcoal, Raybar 40\", 3M, Quantum Regular",
-    tierPill: "text-blue-700 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800",
-  },
-  {
-    id: "nano_ceramico",
-    name: "3. Nano Cerámico",
-    shortName: "Nano Cerámico",
-    order: 3,
-    badgeColor: "bg-purple-600 text-white",
-    borderColor: "border-purple-500",
-    dotColor: "bg-purple-400",
-    icon: Flame,
-    description: "Supreme (4% - 42%), Solstice, Camaleón, Titanium",
-    tierPill: "text-purple-700 bg-purple-50 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300 dark:border-purple-800",
-  },
-  {
-    id: "gama_premium",
-    name: "4. Gama Premium",
-    shortName: "Gama Premium",
-    order: 4,
-    badgeColor: "bg-amber-500 text-black font-black",
-    borderColor: "border-amber-500",
-    dotColor: "bg-amber-400",
-    icon: Crown,
-    description: "Quantum Original (14%, 19%, 28%), Endeavor",
-    tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
-  },
-];
-
 // 31 Materiales Oficiales Completos para Carga Instantánea, Resiliencia y Modo Offline
 export const ALL_OFFICIAL_TINT_MATERIALS = [
   {
