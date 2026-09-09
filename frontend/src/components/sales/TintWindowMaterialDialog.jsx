@@ -640,6 +640,53 @@ const OFFICIAL_GAMAS = [
   },
 ];
 
+// Configuración por defecto de zonas y políticas
+export const DEFAULT_TINT_CONFIG = {
+  zones: {
+    windshield: {
+      zone: "windshield",
+      label: "Parabrisas delantero",
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
+    },
+    front_sides: {
+      zone: "front_sides",
+      label: "Ventanas Delanteras",
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
+    },
+    rear_sides: {
+      zone: "rear_sides",
+      label: "Ventanas Traseras",
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
+    },
+    rear: {
+      zone: "rear",
+      label: "Parabrisas Trasero",
+      materials: ALL_OFFICIAL_TINT_MATERIALS,
+    },
+  },
+  sunstrip_pricing: {
+    windshield_top: 15,
+    windshield_bottom: 15,
+    rear_top: 15,
+    rear_bottom: 15,
+  },
+  policy: {
+    max_materials_per_vehicle: 4,
+    default_link_sides: true,
+    second_layer_policy: { allow_second_layer: true },
+  },
+};
+
+// Fallbacks de imágenes laterales
+export const LATERAL_VEHICLE_IMAGES = {
+  sedan: "/vehicles/clean_sedan.png",
+  suv: "/vehicles/clean_suv.png",
+  camioneta_doble_cabina: "/vehicles/clean_camioneta_doble_cabina.png",
+  camioneta_cabina_sencilla: "/vehicles/clean_camioneta_cabina_sencilla.png",
+  hatchback: "/vehicles/clean_hatchback.png",
+  microbus: "/vehicles/clean_microbus.png",
+};
+
 export default function TintWindowMaterialDialog({
   isOpen,
   onClose,
