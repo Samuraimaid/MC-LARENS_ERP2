@@ -1000,24 +1000,6 @@ def get_available_materials_for_zone(
     return available
 
 
-def validate_tint_window_plan(
-    plan: Optional[Dict[str, Any]],
-    vehicle_doc: Optional[Dict[str, Any]] = None,
-    policy: Optional[Dict[str, Any]] = None,
-) -> Tuple[bool, Optional[str]]:
-    """
-    Valida un plan de polarizado por ventana.
-    Reglas:
-      1. Debe contener las 4 zonas de cristal.
-      2. Los materiales elegidos (base, 2da capa o bandas) deben existir y estar activos.
-      3. Máximo 4 materiales distintos por vehículo.
-    """
-    if not plan or not isinstance(plan, dict):
-        return False, "El plan de polarizado es requerido."
-
-    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
-    materials_map = {m["id"]: m for m in pol.get("materials", [])}
-
 LEGACY_TINT_ALIASES: Dict[str, str] = {
     "cs_quantum_19": "sg_quantum_orig_19",
     "cs_quantum_14": "sg_quantum_orig_14",

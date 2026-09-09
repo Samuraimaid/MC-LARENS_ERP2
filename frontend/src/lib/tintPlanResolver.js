@@ -19,45 +19,50 @@ export function detectTintPlanFromProduct(product, vehicle) {
 
   const text = `${name} ${sku} ${desc} ${subcat} ${category} ${polarizadoType} ${windowOpts.join(" ")}`;
 
-  // 1. Detectar Gama Oficial
-  let detectedGama = "all";
-  if (
-    text.includes("nano") ||
-    text.includes("cerámic") ||
-    text.includes("ceramic") ||
-    text.includes("supreme") ||
-    text.includes("solstice") ||
-    text.includes("camaleon") ||
-    text.includes("titanium") ||
-    sku.includes("NC-")
-  ) {
+  // 1. Detectar Gama Oficial Estricta
+  // La gama por defecto para paquetes estándar (POL-*-COM, POL-DEL, POL-PAR, etc.) es 'tinmax' (Incluida, $0 USD recargo).
+  let detectedGama = "tinmax";
+
+  const isNanoCeramico =
+    sku.startsWith("NC-") ||
+    sku.startsWith("POL-NC") ||
+    polarizadoType.includes("nano") ||
+    name.includes("nano cerámic") ||
+    name.includes("nano ceramic") ||
+    name.includes("supreme") ||
+    name.includes("solstice") ||
+    name.includes("camaleon") ||
+    name.includes("titanium");
+
+  const isGamaPremium =
+    sku.startsWith("CS-") ||
+    sku.startsWith("POL-CS") ||
+    sku.startsWith("POL-PREM") ||
+    polarizadoType.includes("quantum") ||
+    polarizadoType.includes("endeavor") ||
+    name.includes("quantum") ||
+    name.includes("endeavor") ||
+    (name.includes("gama premium") && !name.includes("completo"));
+
+  const isGamaEconomica =
+    sku.startsWith("STD-") ||
+    sku.startsWith("POL-EC") ||
+    sku.startsWith("Q1-") ||
+    polarizadoType.includes("econom") ||
+    name.includes("gama económica") ||
+    name.includes("gama economica") ||
+    name.includes("raybar 60") ||
+    name.includes("q1 ");
+
+  if (isNanoCeramico) {
     detectedGama = "nano_ceramico";
-  } else if (
-    text.includes("quantum") ||
-    text.includes("endeavor") ||
-    text.includes("premium") ||
-    text.includes("carbon") ||
-    sku.includes("CS-") ||
-    sku.includes("PREM")
-  ) {
+  } else if (isGamaPremium) {
     detectedGama = "gama_premium";
-  } else if (
-    text.includes("tinmax") ||
-    text.includes("smoke") ||
-    text.includes("charcoal") ||
-    text.includes("sungard") ||
-    sku.includes("SG-")
-  ) {
-    detectedGama = "tinmax";
-  } else if (
-    text.includes("estandar") ||
-    text.includes("estándar") ||
-    text.includes("standard") ||
-    text.includes("económic") ||
-    text.includes("economica") ||
-    sku.includes("STD-")
-  ) {
+  } else if (isGamaEconomica) {
     detectedGama = "gama_economica";
+  } else {
+    // Standard Tinmax
+    detectedGama = "tinmax";
   }
 
   const selectedGama = detectedGama;

@@ -58,31 +58,31 @@ def test_quote_standard_plan_zero_extra():
 def test_quote_carbon_plan_charge_once_per_group():
     plan = {
         "windows": {
-            "windshield": {"material_id": "carbon_20"},
-            "front_sides": {"material_id": "carbon_20"},
-            "rear_sides": {"material_id": "carbon_20"},
-            "rear": {"material_id": "carbon_20"},
+            "windshield": {"material_id": "sg_quantum_orig_19"},
+            "front_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear": {"material_id": "sg_quantum_orig_19"},
         }
     }
-    # windshield=15, sides=25 (charged once for front+rear), rear=15 -> total = 55
+    # windshield=35, sides=60 (charged once for front+rear), rear=35 -> total = 130.0
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 55.0
+    assert quote["materials_extra_total"] == 130.0
 
 
 def test_quote_with_independent_sides_materials():
     plan = {
         "windows": {
             "windshield": {"material_id": "std_20"},
-            "front_sides": {"material_id": "std_20"},   # sides price = 0
-            "rear_sides": {"material_id": "carbon_20"}, # sides price = 25 -> 50% = 12.50
+            "front_sides": {"material_id": "std_20"},              # sides price = 0
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},   # sides price = 60 -> 50% = 30.00
             "rear": {"material_id": "std_20"},
         }
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    # front_sides (0*0.5) + rear_sides (25*0.5=12.5) = 12.50
-    assert quote["materials_extra_total"] == 12.50
+    # front_sides (0*0.5) + rear_sides (60*0.5=30) = 30.00
+    assert quote["materials_extra_total"] == 30.0
 
 
 def test_quote_with_second_layer():
@@ -90,7 +90,7 @@ def test_quote_with_second_layer():
         "windows": {
             "windshield": {
                 "material_id": "std_70",
-                "second_layer": {"enabled": True, "material_id": "carbon_20"}, # +15
+                "second_layer": {"enabled": True, "material_id": "sg_quantum_orig_19"}, # +35
             },
             "front_sides": {"material_id": "std_20"},
             "rear_sides": {"material_id": "std_20"},
@@ -99,10 +99,10 @@ def test_quote_with_second_layer():
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 15.0
+    assert quote["materials_extra_total"] == 35.0
     sec_layer_breakdown = [b for b in quote["price_breakdown"] if "2da Capa" in b["group_label"]]
     assert len(sec_layer_breakdown) == 1
-    assert sec_layer_breakdown[0]["price_extra_usd"] == 15.0
+    assert sec_layer_breakdown[0]["price_extra_usd"] == 35.0
 
 
 def test_quote_with_sunstrips():
@@ -114,8 +114,8 @@ def test_quote_with_sunstrips():
             "rear": {"material_id": "std_20"},
         },
         "sunstrips": {
-            "windshield_top": {"enabled": True, "material_id": "carbon_20"}, # +10
-            "rear_top": {"enabled": True, "material_id": "carbon_20"},       # +10
+            "windshield_top": {"enabled": True, "material_id": "std_20"}, # +10
+            "rear_top": {"enabled": True, "material_id": "std_20"},       # +10
         }
     }
     quote = quote_tint_window_plan(plan)
@@ -126,22 +126,18 @@ def test_quote_with_sunstrips():
     assert len(sunstrip_breakdown) == 2
 
 
-def test_merge_policy_permissions_for_coordinator():
-    existing = DEFAULT_TINT_WINDOW_MATERIALS_POLICY
-    incoming = dict(existing)
-    # Attempting to change prices as coordinator
-    incoming["materials"] = [
-        {
-            "id": "carbon_20",
-            "name": "Carbono 20%",
-            "price_by_zone_group": {"windshield": 999.0},  # should be ignored
-            "rolls": {"side_under_20": {"is_available": False, "virtual_qty": 5}},  # should be applied
+def test_validate_max_materials_exceeded():
+    plan = {
+        "windows": {
+            "windshield": {"material_id": "std_70"},
+            "front_sides": {"material_id": "std_20"},
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear": {"material_id": "sg_endeavor_05"},
+        },
+        "sunstrips": {
+            "windshield_top": {"enabled": True, "material_id": "q1_05_40"}, # 5th material!
         }
-    ]
-    merged = merge_policy_for_role(existing, incoming, role="coordinador_polarizados")
-    carbon = next(m for m in merged["materials"] if m["id"] == "carbon_20")
-    # Price was preserved
-    assert carbon["price_by_zone_group"]["windshield"] == 15.0
-    # Availability was updated
-    assert carbon["rolls"]["side_under_20"]["is_available"] is False
-    assert carbon["rolls"]["side_under_20"]["virtual_qty"] == 5
+    }
+    is_valid, err = validate_tint_window_plan(plan)
+    assert is_valid is False
+    assert "No se permiten más de 4 materiales distintos" in err

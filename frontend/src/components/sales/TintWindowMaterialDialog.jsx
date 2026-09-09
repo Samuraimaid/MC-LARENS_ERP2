@@ -837,9 +837,24 @@ export default function TintWindowMaterialDialog({
   };
 
   useEffect(() => {
+    // Purga proactiva de borradores globales legados en localStorage para evitar fugas entre clientes/vehículos
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        const keysToRemove = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i);
+          if (key && key.startsWith("mclarens_tint_draft_")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((k) => window.localStorage.removeItem(k));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isOpen) return;
     setIsUnlocked(false);
-    const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
 
     if (initialPlan?.windows) {
       applyLoadedPlan(initialPlan);
@@ -873,23 +888,14 @@ export default function TintWindowMaterialDialog({
       setRequiresDespolarizado(false);
       setRequiresRemover(false);
       setPreselectedMeta(null);
-      try {
-        const savedDraft = localStorage.getItem(`mclarens_tint_draft_${vehicleKey}`);
-        if (savedDraft) {
-          const parsed = JSON.parse(savedDraft);
-          applyLoadedPlan(parsed);
-        } else {
-          setSelectedMaterials({
-            windshield: "std_70",
-            front_sides: "std_20",
-            rear_sides: "std_20",
-            rear: "std_20",
-          });
-          setLinkSides(true);
-          setEmpalmeRear(false);
-        }
-      } catch (e) {
-      }
+      setSelectedMaterials({
+        windshield: "std_70",
+        front_sides: "std_20",
+        rear_sides: "std_20",
+        rear: "std_20",
+      });
+      setLinkSides(true);
+      setEmpalmeRear(false);
     }
 
     const fetchConfig = async () => {
@@ -914,46 +920,6 @@ export default function TintWindowMaterialDialog({
     };
     fetchConfig();
   }, [isOpen, vehicle, initialPlan, product]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const vehicleKey = vehicle?.vehicle_id || vehicle?.id || vehicle?.plate || "default";
-    const draftPayload = {
-      vehicle_id: vehicleKey,
-      selectedVehicleType,
-      windows: {
-        windshield: {
-          material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
-          override_size_band: overrideFlags.windshield,
-          second_layer: isZoneAllowed("windshield") ? secondLayers.windshield : { enabled: false },
-        },
-        front_sides: {
-          material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
-          override_size_band: overrideFlags.front_sides,
-          second_layer: isZoneAllowed("front_sides") ? secondLayers.front_sides : { enabled: false },
-        },
-        rear_sides: {
-          material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
-          override_size_band: overrideFlags.rear_sides,
-          second_layer: isZoneAllowed("rear_sides") ? secondLayers.rear_sides : { enabled: false },
-        },
-        rear: {
-          material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
-          override_size_band: overrideFlags.rear,
-          second_layer: isZoneAllowed("rear") ? secondLayers.rear : { enabled: false },
-          empalme_2x20: empalmeRear,
-        },
-      },
-      sunstrips,
-      link_sides: linkSides,
-      updated_at: Date.now(),
-    };
-
-    try {
-      localStorage.setItem(`mclarens_tint_draft_${vehicleKey}`, JSON.stringify(draftPayload));
-    } catch (e) {
-    }
-  }, [selectedMaterials, secondLayers, sunstrips, empalmeRear, linkSides, overrideFlags, isOpen, vehicle, selectedVehicleType, isUnlocked, allowedZones]);
 
   useEffect(() => {
     if (!isOpen || !config) return;
@@ -1239,7 +1205,11 @@ export default function TintWindowMaterialDialog({
       is_custom_plan: isUnlocked || allowedZones.length === 4,
     };
 
-    onApplyPlan(planPayload);
+    onApplyPlan({
+      tint_window_plan: planPayload,
+      materials_extra: calculatedExtraUsd,
+      ...planPayload,
+    });
     toast.success("Plan de polarizado configurado y aplicado al carrito");
     onClose();
   };

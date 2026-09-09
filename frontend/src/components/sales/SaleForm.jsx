@@ -2947,6 +2947,9 @@ export default function SaleForm({
     setStepThreeUnlockFlash(false);
     prevStepTwoCompleteRef.current = false;
     didStepThreeAutoScrollRef.current = false;
+    setTintDialogOpen(false);
+    setTintDialogProduct(null);
+    setTintDialogCartItem(null);
   }, []);
 
   const handleSelectCustomer = useCallback((customer) => {
@@ -3158,7 +3161,12 @@ export default function SaleForm({
     updateCartItem(productId, "quantity", nextQuantity, { persist: true });
   }, [normalizedCartItems, updateCartItem]);
 
-  const handleApplyTintPlan = useCallback(({ tint_window_plan, materials_extra }) => {
+  const handleApplyTintPlan = useCallback((planOrPayload) => {
+    const tint_window_plan = planOrPayload?.tint_window_plan || planOrPayload;
+    const materials_extra = typeof planOrPayload?.materials_extra === "number"
+      ? planOrPayload.materials_extra
+      : (typeof planOrPayload?.calculated_extra_usd === "number" ? planOrPayload.calculated_extra_usd : 0);
+
     if (tintDialogCartItem) {
       updateCartItem(tintDialogCartItem.product_id, "materials_extra", materials_extra, {
         patch: { tint_window_plan },
