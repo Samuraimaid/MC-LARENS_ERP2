@@ -103,27 +103,27 @@ export function detectTintPlanFromProduct(product, vehicle) {
   let baseWindshieldMaterial = "std_70";
 
   if (detectedGama === "nano_ceramico") {
-    if (detectedVlt === 5) baseSidesMaterial = "nc_supreme_04";
-    else if (detectedVlt === 35) baseSidesMaterial = "nc_supreme_42";
-    else baseSidesMaterial = "nc_supreme_20";
+    if (detectedVlt === 5) baseSidesMaterial = "sg_supreme_04";
+    else if (detectedVlt === 35) baseSidesMaterial = "sg_supreme_42";
+    else baseSidesMaterial = "sg_supreme_22";
 
-    baseWindshieldMaterial = detectedVlt === 70 ? "nc_solstice_70" : "nc_supreme_42";
+    baseWindshieldMaterial = detectedVlt === 70 ? "sg_supreme_42" : "sg_supreme_30";
   } else if (detectedGama === "gama_premium") {
-    if (detectedVlt === 5) baseSidesMaterial = "cs_endeavor_05";
-    else if (detectedVlt === 35) baseSidesMaterial = "cs_quantum_28";
-    else baseSidesMaterial = "cs_quantum_19";
+    if (detectedVlt === 5) baseSidesMaterial = "sg_endeavor_05";
+    else if (detectedVlt === 35) baseSidesMaterial = "sg_quantum_orig_28";
+    else baseSidesMaterial = "sg_quantum_orig_19";
 
-    baseWindshieldMaterial = detectedVlt === 70 ? "cs_quantum_28" : "cs_quantum_19";
+    baseWindshieldMaterial = detectedVlt === 70 ? "sg_quantum_orig_28" : "sg_quantum_orig_19";
   } else if (detectedGama === "tinmax") {
-    if (detectedVlt === 5) baseSidesMaterial = "sg_charcoal_05";
-    else if (detectedVlt === 35) baseSidesMaterial = "sg_smoke_35";
-    else baseSidesMaterial = "sg_charcoal_20";
-
-    baseWindshieldMaterial = "sg_smoke_35";
-  } else {
     if (detectedVlt === 5) baseSidesMaterial = "std_05";
     else if (detectedVlt === 35) baseSidesMaterial = "std_35";
     else baseSidesMaterial = "std_20";
+
+    baseWindshieldMaterial = detectedVlt === 70 ? "std_70" : "std_35";
+  } else {
+    if (detectedVlt === 5) baseSidesMaterial = "q1_05_40";
+    else if (detectedVlt === 35) baseSidesMaterial = "q1_20_40";
+    else baseSidesMaterial = "q1_20_40";
 
     baseWindshieldMaterial = "std_70";
   }

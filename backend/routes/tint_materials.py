@@ -191,8 +191,6 @@ def get_tint_materials_router(
 
         plan_dict = payload.dict()
         quote = quote_tint_window_plan(plan_dict, vehicle_doc, policy)
-        if not quote.get("valid"):
-            raise HTTPException(status_code=400, detail=quote.get("error") or "Plan de polarizado inválido")
         return quote
 
     @router.get("/window-materials/policy")

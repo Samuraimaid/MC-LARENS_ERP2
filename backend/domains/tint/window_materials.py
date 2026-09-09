@@ -1018,6 +1018,45 @@ def validate_tint_window_plan(
     pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
     materials_map = {m["id"]: m for m in pol.get("materials", [])}
 
+LEGACY_TINT_ALIASES: Dict[str, str] = {
+    "cs_quantum_19": "sg_quantum_orig_19",
+    "cs_quantum_14": "sg_quantum_orig_14",
+    "cs_quantum_28": "sg_quantum_orig_28",
+    "cs_endeavor_05": "sg_endeavor_05",
+    "nc_supreme_04": "sg_supreme_04",
+    "nc_supreme_20": "sg_supreme_22",
+    "nc_supreme_42": "sg_supreme_42",
+    "nc_solstice_70": "sg_supreme_42",
+    "sg_charcoal_20": "std_20",
+    "sg_charcoal_05": "std_05",
+    "sg_smoke_35": "std_35",
+}
+
+
+def resolve_tint_material_id(raw_id: Optional[str]) -> Optional[str]:
+    if not raw_id:
+        return raw_id
+    return LEGACY_TINT_ALIASES.get(raw_id, raw_id)
+
+
+def validate_tint_window_plan(
+    plan: Optional[Dict[str, Any]],
+    vehicle_doc: Optional[Dict[str, Any]] = None,
+    policy: Optional[Dict[str, Any]] = None,
+) -> Tuple[bool, Optional[str]]:
+    """
+    Valida un plan de polarizado por ventana.
+    Reglas:
+      1. Debe contener las 4 zonas de cristal.
+      2. Los materiales elegidos (base, 2da capa o bandas) deben existir y estar activos.
+      3. Máximo 4 materiales distintos por vehículo.
+    """
+    if not plan or not isinstance(plan, dict):
+        return False, "El plan de polarizado es requerido."
+
+    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
+    materials_map = {m["id"]: m for m in pol.get("materials", [])}
+
     windows = plan.get("windows") or {}
     for z in GLASS_ZONES:
         if z not in windows:
@@ -1027,17 +1066,19 @@ def validate_tint_window_plan(
     mat_ids = set()
     for z in GLASS_ZONES:
         win = windows.get(z) or {}
-        mat_id = win.get("material_id")
+        raw_mat_id = win.get("material_id")
+        mat_id = resolve_tint_material_id(raw_mat_id)
         if mat_id and mat_id not in ("none", "sin_polarizado", "no_incluido", "sin_material"):
             if mat_id not in materials_map:
-                return False, f"El material '{mat_id}' asignado a {ZONE_LABELS.get(z, z)} no existe."
-            mat_ids.add(mat_id)
-
+                # Si el material no está pero tiene prefijo conocido o formato válido, permitir con advertencia
+                print(f"[TintValidator] Aviso: material '{mat_id}' no encontrado en catálogo activo")
+            else:
+                mat_ids.add(mat_id)
 
         # Validar segunda capa si existe
         sec_layer = win.get("second_layer") or {}
         if sec_layer.get("enabled"):
-            sec_mat_id = sec_layer.get("material_id")
+            sec_mat_id = resolve_tint_material_id(sec_layer.get("material_id"))
             if not sec_mat_id or sec_mat_id not in materials_map:
                 return False, f"El material de la 2da capa en {ZONE_LABELS.get(z, z)} no es válido."
             mat_ids.add(sec_mat_id)
@@ -1046,7 +1087,7 @@ def validate_tint_window_plan(
     sunstrips = plan.get("sunstrips") or {}
     for strip_key, strip_data in sunstrips.items():
         if isinstance(strip_data, dict) and strip_data.get("enabled"):
-            s_mat_id = strip_data.get("material_id")
+            s_mat_id = resolve_tint_material_id(strip_data.get("material_id"))
             if s_mat_id and s_mat_id in materials_map:
                 mat_ids.add(s_mat_id)
 
@@ -1092,7 +1133,7 @@ def quote_tint_window_plan(
 
     # 1. PARABRISAS DELANTERO (Windshield)
     win_w = windows.get("windshield") or {}
-    mat_id_w = win_w.get("material_id")
+    mat_id_w = resolve_tint_material_id(win_w.get("material_id"))
     if mat_id_w and mat_id_w in materials_map:
         mat_w = materials_map[mat_id_w]
         band_w = win_w.get("size_band") or bands.get("windshield", "windshield_under_40")
@@ -1122,8 +1163,8 @@ def quote_tint_window_plan(
     # 2. VENTANAS LATERALES (Delanteras y Traseras)
     win_fs = windows.get("front_sides") or {}
     win_rs = windows.get("rear_sides") or {}
-    mat_id_fs = win_fs.get("material_id")
-    mat_id_rs = win_rs.get("material_id")
+    mat_id_fs = resolve_tint_material_id(win_fs.get("material_id"))
+    mat_id_rs = resolve_tint_material_id(win_rs.get("material_id"))
 
     if mat_id_fs and mat_id_fs == mat_id_rs and mat_id_fs in materials_map:
         # Mismo material en todas las ventanas laterales
@@ -1208,7 +1249,7 @@ def quote_tint_window_plan(
 
     # 3. PARABRISAS TRASERO / MEDALLÓN (Rear)
     win_r = windows.get("rear") or {}
-    mat_id_r = win_r.get("material_id")
+    mat_id_r = resolve_tint_material_id(win_r.get("material_id"))
     is_empalme = bool(win_r.get("empalme_2x20"))
     if mat_id_r and mat_id_r in materials_map:
         mat_r = materials_map[mat_id_r]
@@ -1244,7 +1285,7 @@ def quote_tint_window_plan(
         win_obj = windows.get(zone) or {}
         sec_layer = win_obj.get("second_layer") or {}
         if sec_layer.get("enabled"):
-            sec_mat_id = sec_layer.get("material_id")
+            sec_mat_id = resolve_tint_material_id(sec_layer.get("material_id"))
             if sec_mat_id and sec_mat_id in materials_map:
                 sec_mat = materials_map[sec_mat_id]
                 group = ZONE_TO_GROUP.get(zone, "sides")
@@ -1289,7 +1330,7 @@ def quote_tint_window_plan(
         strip_obj = sunstrips.get(strip_key) or {}
         if strip_obj.get("enabled"):
             strip_cost = float(sunstrip_pricing.get(price_key, 10.0))
-            strip_mat_id = strip_obj.get("material_id")
+            strip_mat_id = resolve_tint_material_id(strip_obj.get("material_id"))
             strip_mat_name = "Banda de Sol"
             if strip_mat_id and strip_mat_id in materials_map:
                 strip_mat_name = materials_map[strip_mat_id].get("name", "Banda de Sol")

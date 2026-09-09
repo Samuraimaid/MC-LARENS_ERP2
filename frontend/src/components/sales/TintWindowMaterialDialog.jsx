@@ -1101,16 +1101,95 @@ export default function TintWindowMaterialDialog({
     toast.success(`Material aplicado a las zonas contratadas (${allowedZones.length})`);
   };
 
+  const activeMaterials = useMemo(() => {
+    return Array.isArray(config?.materials) && config.materials.length > 0
+      ? config.materials
+      : ALL_OFFICIAL_TINT_MATERIALS;
+  }, [config]);
+
+  const activeZoneLabel = useMemo(() => {
+    return ZONES.find((z) => z.id === activeZone)?.label || "Zona";
+  }, [activeZone]);
+
+  const isPlanReady = useMemo(() => {
+    if (isSunstripOnly) {
+      return Boolean(sunstrips?.windshield_top?.material_id);
+    }
+    if (!allowedZones || allowedZones.length === 0) return true;
+    return allowedZones.every((z) => {
+      const mat = selectedMaterials[z];
+      return Boolean(mat && mat !== "none" && mat !== "");
+    });
+  }, [allowedZones, isSunstripOnly, selectedMaterials, sunstrips]);
+
+  const localMaterialsExtraTotal = useMemo(() => {
+    let total = 0;
+    const matsMap = {};
+    activeMaterials.forEach((m) => {
+      if (m.id) matsMap[m.id] = m;
+      if (m.material_id) matsMap[m.material_id] = m;
+    });
+
+    allowedZones.forEach((z) => {
+      const matId = selectedMaterials[z];
+      if (matId && matId !== "none") {
+        const matObj = matsMap[matId];
+        if (matObj?.price_extra_usd) {
+          total += Number(matObj.price_extra_usd);
+        } else if (matObj?.extra_price) {
+          total += Number(matObj.extra_price);
+        }
+      }
+      if (secondLayers[z]?.enabled) {
+        const secId = secondLayers[z]?.material_id;
+        const secObj = matsMap[secId];
+        if (secObj?.price_extra_usd) {
+          total += Number(secObj.price_extra_usd);
+        } else if (secObj?.extra_price) {
+          total += Number(secObj.extra_price);
+        }
+      }
+    });
+
+    return total;
+  }, [allowedZones, selectedMaterials, secondLayers, activeMaterials]);
+
+  const effectiveMaterialsExtra = useMemo(() => {
+    if (typeof quoteData?.materials_extra_total === "number" && quoteData.valid !== false) {
+      return quoteData.materials_extra_total;
+    }
+    return localMaterialsExtraTotal;
+  }, [quoteData, localMaterialsExtraTotal]);
+
+  const calculatedBasePrice = useMemo(() => {
+    if (salePrice && Number(salePrice) > 0) {
+      return currency === "USD" ? Number(salePrice) : Number(salePrice) / (exchangeRate || 36.5);
+    }
+    if (product?.unit_price && Number(product.unit_price) > 0) {
+      return currency === "USD" ? Number(product.unit_price) : Number(product.unit_price) / (exchangeRate || 36.5);
+    }
+    return 100.0;
+  }, [salePrice, product, currency, exchangeRate]);
+
+  const totalSurchargesUsd = useMemo(() => {
+    return (
+      effectiveMaterialsExtra +
+      (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) +
+      (requiresRemover ? REMOVER_PRICE_USD : 0)
+    );
+  }, [effectiveMaterialsExtra, requiresDespolarizado, requiresRemover]);
+
+  const grandTotalUsd = useMemo(() => {
+    return calculatedBasePrice + totalSurchargesUsd;
+  }, [calculatedBasePrice, totalSurchargesUsd]);
+
   const handleApply = () => {
-    if (!quoteData?.valid) {
-      toast.error(quoteData?.error || "Plan de polarizado incompleto o inválido");
+    if (!isPlanReady) {
+      toast.error(quoteData?.error || "Por favor seleccione un material para todas las zonas contratadas.");
       return;
     }
 
-    const calculatedExtraUsd =
-      (quoteData?.materials_extra_total || 0) +
-      (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) +
-      (requiresRemover ? REMOVER_PRICE_USD : 0);
+    const calculatedExtraUsd = totalSurchargesUsd;
 
     const planPayload = {
       vehicle_id: vehicle?.vehicle_id || vehicle?.id || null,
@@ -1121,7 +1200,7 @@ export default function TintWindowMaterialDialog({
         windshield: {
           material_id: isZoneAllowed("windshield") ? selectedMaterials.windshield : "none",
           material_name: isZoneAllowed("windshield")
-            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.windshield)?.name || selectedMaterials.windshield)
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.windshield || m.id === selectedMaterials.windshield)?.name || selectedMaterials.windshield)
             : "No incluido",
           override_size_band: overrideFlags.windshield,
           second_layer: isZoneAllowed("windshield") ? secondLayers.windshield : { enabled: false },
@@ -1129,7 +1208,7 @@ export default function TintWindowMaterialDialog({
         front_sides: {
           material_id: isZoneAllowed("front_sides") ? selectedMaterials.front_sides : "none",
           material_name: isZoneAllowed("front_sides")
-            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides)
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides || m.id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides)
             : "No incluido",
           override_size_band: overrideFlags.front_sides,
           second_layer: isZoneAllowed("front_sides") ? secondLayers.front_sides : { enabled: false },
@@ -1137,7 +1216,7 @@ export default function TintWindowMaterialDialog({
         rear_sides: {
           material_id: isZoneAllowed("rear_sides") ? selectedMaterials.rear_sides : "none",
           material_name: isZoneAllowed("rear_sides")
-            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides)
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides || m.id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides)
             : "No incluido",
           override_size_band: overrideFlags.rear_sides,
           second_layer: isZoneAllowed("rear_sides") ? secondLayers.rear_sides : { enabled: false },
@@ -1145,7 +1224,7 @@ export default function TintWindowMaterialDialog({
         rear: {
           material_id: isZoneAllowed("rear") ? selectedMaterials.rear : "none",
           material_name: isZoneAllowed("rear")
-            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear)?.name || selectedMaterials.rear)
+            ? (activeMaterials.find((m) => m.material_id === selectedMaterials.rear || m.id === selectedMaterials.rear)?.name || selectedMaterials.rear)
             : "No incluido",
           override_size_band: overrideFlags.rear,
           second_layer: isZoneAllowed("rear") ? secondLayers.rear : { enabled: false },
@@ -1155,7 +1234,7 @@ export default function TintWindowMaterialDialog({
       sunstrips: sunstrips,
       requires_despolarizado: requiresDespolarizado,
       requires_remover: requiresRemover,
-      quote: quoteData,
+      quote: quoteData || { valid: true, materials_extra_total: effectiveMaterialsExtra },
       calculated_extra_usd: calculatedExtraUsd,
       is_custom_plan: isUnlocked || allowedZones.length === 4,
     };
@@ -1164,16 +1243,6 @@ export default function TintWindowMaterialDialog({
     toast.success("Plan de polarizado configurado y aplicado al carrito");
     onClose();
   };
-
-  const activeMaterials = useMemo(() => {
-    return Array.isArray(config?.materials) && config.materials.length > 0
-      ? config.materials
-      : ALL_OFFICIAL_TINT_MATERIALS;
-  }, [config]);
-
-  const activeZoneLabel = useMemo(() => {
-    return ZONES.find((z) => z.id === activeZone)?.label || "Zona";
-  }, [activeZone]);
 
   const { filteredMaterials, searchMatchedInOtherGama } = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -1229,28 +1298,6 @@ export default function TintWindowMaterialDialog({
       searchMatchedInOtherGama: false,
     };
   }, [activeMaterials, selectedGama, familyFilter, searchTerm]);
-
-  const calculatedBasePrice = useMemo(() => {
-    if (salePrice && Number(salePrice) > 0) {
-      return currency === "USD" ? Number(salePrice) : Number(salePrice) / (exchangeRate || 36.5);
-    }
-    if (product?.unit_price && Number(product.unit_price) > 0) {
-      return currency === "USD" ? Number(product.unit_price) : Number(product.unit_price) / (exchangeRate || 36.5);
-    }
-    return 100.0;
-  }, [salePrice, product, currency, exchangeRate]);
-
-  const totalSurchargesUsd = useMemo(() => {
-    return (
-      (quoteData?.materials_extra_total || 0) +
-      (requiresDespolarizado ? DESPOLARIZADO_PRICE_USD : 0) +
-      (requiresRemover ? REMOVER_PRICE_USD : 0)
-    );
-  }, [quoteData?.materials_extra_total, requiresDespolarizado, requiresRemover]);
-
-  const grandTotalUsd = useMemo(() => {
-    return calculatedBasePrice + totalSurchargesUsd;
-  }, [calculatedBasePrice, totalSurchargesUsd]);
 
   const getZoneTooltipData = (zoneId) => {
     const isAllowed = isZoneAllowed(zoneId) || (zoneId === "windshield" && isSunstripOnly);
@@ -1521,8 +1568,8 @@ export default function TintWindowMaterialDialog({
                       LATERAL_GLASS_GEOMETRY[selectedVehicleType] ||
                       LATERAL_GLASS_GEOMETRY.camioneta_doble_cabina;
 
-                    const frontMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides;
-                    const rearMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides;
+                    const frontMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.front_sides || m.id === selectedMaterials.front_sides)?.name || selectedMaterials.front_sides;
+                    const rearMatName = activeMaterials.find((m) => m.material_id === selectedMaterials.rear_sides || m.id === selectedMaterials.rear_sides)?.name || selectedMaterials.rear_sides;
 
                     return (
                       <svg viewBox="0 0 640 360" className="absolute inset-0 w-full h-full select-none">
@@ -1530,6 +1577,10 @@ export default function TintWindowMaterialDialog({
                           <linearGradient id="emeraldGlassLateral" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#047857" stopOpacity="0.85" />
                             <stop offset="100%" stopColor="#065f46" stopOpacity="0.90" />
+                          </linearGradient>
+                          <linearGradient id="lightGrayGlassLateral" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#f8fafc" stopOpacity="0.85" />
+                            <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.90" />
                           </linearGradient>
                           <filter id="neonGlowActiveLat" x="-20%" y="-20%" width="140%" height="140%">
                             <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#38bdf8" floodOpacity="0.95" />
@@ -1547,9 +1598,9 @@ export default function TintWindowMaterialDialog({
                                 ? "rgba(220, 240, 255, 0.04)"
                                 : isFrontAssigned
                                 ? "url(#emeraldGlassLateral)"
-                                : "rgba(30, 41, 59, 0.4)"
+                                : "url(#lightGrayGlassLateral)"
                             }
-                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontAssigned ? 0.88 : 0.4}
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontAssigned ? 0.88 : 0.80}
                             stroke={
                               !isZoneAllowed("front_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
@@ -1557,7 +1608,7 @@ export default function TintWindowMaterialDialog({
                                 ? "#38bdf8"
                                 : isFrontAssigned
                                 ? "#10b981"
-                                : "rgba(255, 255, 255, 0.4)"
+                                : "#94a3b8"
                             }
                             strokeWidth={isFrontSidesActive ? "3.5" : isFrontAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
@@ -1584,9 +1635,9 @@ export default function TintWindowMaterialDialog({
                                 ? "rgba(220, 240, 255, 0.04)"
                                 : isRearAssigned
                                 ? "url(#emeraldGlassLateral)"
-                                : "rgba(30, 41, 59, 0.4)"
+                                : "url(#lightGrayGlassLateral)"
                             }
-                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearAssigned ? 0.88 : 0.4}
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearAssigned ? 0.88 : 0.80}
                             stroke={
                               !isZoneAllowed("rear_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
@@ -1594,7 +1645,7 @@ export default function TintWindowMaterialDialog({
                                 ? "#38bdf8"
                                 : isRearAssigned
                                 ? "#10b981"
-                                : "rgba(255, 255, 255, 0.4)"
+                                : "#94a3b8"
                             }
                             strokeWidth={isRearSidesActive ? "3.5" : isRearAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
@@ -1618,12 +1669,12 @@ export default function TintWindowMaterialDialog({
                             x={latGeom.frontText.x}
                             y={latGeom.frontText.y}
                             textAnchor="middle"
-                            fill={isFrontAssigned ? "#a7f3d0" : "#ffffff"}
+                            fill={!isZoneAllowed("front_sides") ? "#94a3b8" : isFrontAssigned ? "#a7f3d0" : "#1e293b"}
                             fontSize="10"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Del. {!isZoneAllowed("front_sides") ? "Bloqueado" : isFrontAssigned ? frontMatName : "Sin material"}
+                            Del. {!isZoneAllowed("front_sides") ? "Bloqueado" : isFrontAssigned ? frontMatName : "(Sin material)"}
                           </text>
                         )}
                         {latGeom.rearText && latGeom.rearText.x > 0 && (
@@ -1631,12 +1682,12 @@ export default function TintWindowMaterialDialog({
                             x={latGeom.rearText.x}
                             y={latGeom.rearText.y}
                             textAnchor="middle"
-                            fill={isRearAssigned ? "#a7f3d0" : "#ffffff"}
+                            fill={!isZoneAllowed("rear_sides") ? "#94a3b8" : isRearAssigned ? "#a7f3d0" : "#1e293b"}
                             fontSize="10"
                             fontWeight="bold"
                             className="pointer-events-none select-none drop-shadow"
                           >
-                            Tras. {!isZoneAllowed("rear_sides") ? "Bloqueado" : isRearAssigned ? rearMatName : "Sin material"}
+                            Tras. {!isZoneAllowed("rear_sides") ? "Bloqueado" : isRearAssigned ? rearMatName : "(Sin material)"}
                           </text>
                         )}
                       </svg>
@@ -1663,7 +1714,10 @@ export default function TintWindowMaterialDialog({
                       VEHICLE_GLASS_GEOMETRY.camioneta_doble_cabina ||
                       VEHICLE_GLASS_GEOMETRY.sedan;
 
-                    const isWindshieldAssigned = Boolean(selectedMaterials.windshield && selectedMaterials.windshield !== "none" && isZoneAllowed("windshield"));
+                    const isWindshieldAssigned = Boolean(
+                      (isSunstripOnly && sunstrips.windshield_top?.enabled) ||
+                      (selectedMaterials.windshield && selectedMaterials.windshield !== "none" && isZoneAllowed("windshield"))
+                    );
                     const isFrontSidesAssigned = Boolean(selectedMaterials.front_sides && selectedMaterials.front_sides !== "none" && isZoneAllowed("front_sides"));
                     const isRearSidesAssigned = Boolean(selectedMaterials.rear_sides && selectedMaterials.rear_sides !== "none" && isZoneAllowed("rear_sides"));
                     const isRearAssigned = Boolean(selectedMaterials.rear && selectedMaterials.rear !== "none" && isZoneAllowed("rear"));
@@ -1681,6 +1735,10 @@ export default function TintWindowMaterialDialog({
                             <stop offset="0%" stopColor="#047857" stopOpacity="0.85" />
                             <stop offset="100%" stopColor="#065f46" stopOpacity="0.90" />
                           </linearGradient>
+                          <linearGradient id="lightGrayGlassTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#f8fafc" stopOpacity="0.85" />
+                            <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.90" />
+                          </linearGradient>
                           <filter id="neonGlowActive" x="-20%" y="-20%" width="140%" height="140%">
                             <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.95" />
                           </filter>
@@ -1694,11 +1752,11 @@ export default function TintWindowMaterialDialog({
                           fill={
                             !isZoneAllowed("windshield") && !isSunstripOnly
                               ? "rgba(220, 240, 255, 0.04)"
-                              : isWindshieldAssigned || isSunstripOnly
+                              : isWindshieldAssigned
                               ? "url(#emeraldGlassTop)"
-                              : "rgba(30, 41, 59, 0.4)"
+                              : "url(#lightGrayGlassTop)"
                           }
-                          fillOpacity={!isZoneAllowed("windshield") && !isSunstripOnly ? 0.12 : 0.88}
+                          fillOpacity={!isZoneAllowed("windshield") && !isSunstripOnly ? 0.12 : isWindshieldAssigned ? 0.88 : 0.80}
                           stroke={
                             !isZoneAllowed("windshield") && !isSunstripOnly
                               ? "rgba(148, 163, 184, 0.35)"
@@ -1706,7 +1764,7 @@ export default function TintWindowMaterialDialog({
                               ? "#38bdf8"
                               : isWindshieldAssigned
                               ? "#10b981"
-                              : "rgba(255, 255, 255, 0.4)"
+                              : "#94a3b8"
                           }
                           strokeWidth={activeZone === "windshield" ? "3.5" : isWindshieldAssigned ? "2.5" : "1.5"}
                           strokeDasharray={!isZoneAllowed("windshield") && !isSunstripOnly ? "4 3" : undefined}
@@ -1749,13 +1807,13 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.windshield.textY}
                           textAnchor="middle"
-                          fill={isWindshieldAssigned ? "#a7f3d0" : "#ffffff"}
+                          fill={!isZoneAllowed("windshield") && !isSunstripOnly ? "#94a3b8" : isWindshieldAssigned ? "#a7f3d0" : "#1e293b"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.windshield.textY})` : undefined}
                           className="pointer-events-none select-none drop-shadow"
                         >
-                          Parabrisas del.
+                          Parabrisas del. {!isZoneAllowed("windshield") && !isSunstripOnly ? "(Bloqueado)" : !isWindshieldAssigned ? "(Sin material)" : ""}
                         </text>
 
                         {geom.front_sides.map((p, idx) => (
@@ -1767,9 +1825,9 @@ export default function TintWindowMaterialDialog({
                                 ? "rgba(220, 240, 255, 0.04)"
                                 : isFrontSidesAssigned
                                 ? "url(#emeraldGlassTop)"
-                                : "rgba(30, 41, 59, 0.4)"
+                                : "url(#lightGrayGlassTop)"
                             }
-                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontSidesAssigned ? 0.88 : 0.4}
+                            fillOpacity={!isZoneAllowed("front_sides") ? 0.12 : isFrontSidesAssigned ? 0.88 : 0.80}
                             stroke={
                               !isZoneAllowed("front_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
@@ -1777,7 +1835,7 @@ export default function TintWindowMaterialDialog({
                                 ? "#38bdf8"
                                 : isFrontSidesAssigned
                                 ? "#10b981"
-                                : "rgba(255, 255, 255, 0.4)"
+                                : "#94a3b8"
                             }
                             strokeWidth={isFrontSidesActive ? "3.5" : isFrontSidesAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("front_sides") ? "4 3" : undefined}
@@ -1805,9 +1863,9 @@ export default function TintWindowMaterialDialog({
                                 ? "rgba(220, 240, 255, 0.04)"
                                 : isRearSidesAssigned
                                 ? "url(#emeraldGlassTop)"
-                                : "rgba(30, 41, 59, 0.4)"
+                                : "url(#lightGrayGlassTop)"
                             }
-                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearSidesAssigned ? 0.88 : 0.4}
+                            fillOpacity={!isZoneAllowed("rear_sides") ? 0.12 : isRearSidesAssigned ? 0.88 : 0.80}
                             stroke={
                               !isZoneAllowed("rear_sides")
                                 ? "rgba(148, 163, 184, 0.35)"
@@ -1815,7 +1873,7 @@ export default function TintWindowMaterialDialog({
                                 ? "#38bdf8"
                                 : isRearSidesAssigned
                                 ? "#10b981"
-                                : "rgba(255, 255, 255, 0.4)"
+                                : "#94a3b8"
                             }
                             strokeWidth={isRearSidesActive ? "3.5" : isRearSidesAssigned ? "2.5" : "1.5"}
                             strokeDasharray={!isZoneAllowed("rear_sides") ? "4 3" : undefined}
@@ -1841,9 +1899,9 @@ export default function TintWindowMaterialDialog({
                               ? "rgba(220, 240, 255, 0.04)"
                               : isRearAssigned
                               ? "url(#emeraldGlassTop)"
-                              : "rgba(30, 41, 59, 0.4)"
+                              : "url(#lightGrayGlassTop)"
                           }
-                          fillOpacity={!isZoneAllowed("rear") ? 0.12 : isRearAssigned ? 0.88 : 0.4}
+                          fillOpacity={!isZoneAllowed("rear") ? 0.12 : isRearAssigned ? 0.88 : 0.80}
                           stroke={
                             !isZoneAllowed("rear")
                               ? "rgba(148, 163, 184, 0.35)"
@@ -1851,7 +1909,7 @@ export default function TintWindowMaterialDialog({
                               ? "#38bdf8"
                               : isRearAssigned
                               ? "#10b981"
-                              : "rgba(255, 255, 255, 0.4)"
+                              : "#94a3b8"
                           }
                           strokeWidth={activeZone === "rear" ? "3.5" : isRearAssigned ? "2.5" : "1.5"}
                           strokeDasharray={!isZoneAllowed("rear") ? "4 3" : undefined}
@@ -1873,13 +1931,13 @@ export default function TintWindowMaterialDialog({
                           x="100"
                           y={geom.rear.textY}
                           textAnchor="middle"
-                          fill={isRearAssigned ? "#a7f3d0" : "#ffffff"}
+                          fill={!isZoneAllowed("rear") ? "#94a3b8" : isRearAssigned ? "#a7f3d0" : "#1e293b"}
                           fontSize="7.5"
                           fontWeight="bold"
                           transform={textRotation ? `${textRotation}${geom.rear.textY})` : undefined}
                           className="pointer-events-none select-none drop-shadow"
                         >
-                          Parabrisas Tras.
+                          Parabrisas Tras. {!isZoneAllowed("rear") ? "(Bloqueado)" : !isRearAssigned ? "(Sin material)" : ""}
                         </text>
                       </svg>
                     );
@@ -2234,13 +2292,13 @@ export default function TintWindowMaterialDialog({
 
         <DialogFooter className="bg-zinc-100/90 dark:bg-zinc-900/90 px-3.5 sm:px-6 py-2 sm:py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-2 shrink-0">
           <div className="text-[11px] sm:text-xs text-muted-foreground w-full sm:w-auto text-center sm:text-left">
-            {quoteData?.valid ? (
+            {isPlanReady ? (
               <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-center sm:justify-start gap-1">
-                <Check className="h-3.5 w-3.5" /> Plan validado
+                <Check className="h-3.5 w-3.5" /> {quoteData?.valid ? "Plan validado" : "Plan listo para aplicar"}
               </span>
             ) : (
               <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center justify-center sm:justify-start gap-1">
-                <AlertCircle className="h-3.5 w-3.5" /> {quoteData?.error || "Verifique selección"}
+                <AlertCircle className="h-3.5 w-3.5" /> {quoteData?.error || "Seleccione material para todas las zonas contratadas"}
               </span>
             )}
           </div>
@@ -2251,9 +2309,9 @@ export default function TintWindowMaterialDialog({
             </Button>
             <Button
               onClick={handleApply}
-              disabled={!quoteData?.valid}
+              disabled={!isPlanReady}
               size="sm"
-              className="flex-1 sm:flex-initial h-8 text-xs bg-primary hover:bg-primary/90 text-white font-bold"
+              className="flex-1 sm:flex-initial h-8 text-xs bg-primary hover:bg-primary/90 text-white font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Aplicar al Carrito (${grandTotalUsd.toFixed(2)} USD)
             </Button>
