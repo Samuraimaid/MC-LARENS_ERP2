@@ -26545,6 +26545,11 @@ from backend.routes.tint_cutting import get_tint_cutting_router
 tint_cutting_router = get_tint_cutting_router(db, require_auth, require_roles)
 api_router.include_router(tint_cutting_router)
 
+from backend.routes.telemetry import get_telemetry_router
+
+telemetry_router = get_telemetry_router(db, require_auth, require_roles)
+api_router.include_router(telemetry_router)
+
 app.include_router(api_router)
 
 cors_origins_env = os.environ.get("CORS_ORIGINS")
