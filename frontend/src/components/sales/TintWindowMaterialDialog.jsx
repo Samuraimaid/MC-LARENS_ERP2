@@ -766,10 +766,10 @@ export default function TintWindowMaterialDialog({
   }, [matchedBlueprint]);
 
   const [selectedMaterials, setSelectedMaterials] = useState({
-    windshield: "std_70",
-    front_sides: "std_20",
-    rear_sides: "std_20",
-    rear: "std_20",
+    windshield: "none",
+    front_sides: "none",
+    rear_sides: "none",
+    rear: "none",
   });
 
   const [secondLayers, setSecondLayers] = useState({
@@ -797,6 +797,14 @@ export default function TintWindowMaterialDialog({
   });
 
   const [quoteData, setQuoteData] = useState(null);
+  const [showRecoveryPrompt, setShowRecoveryPrompt] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState(null);
+
+  // Scoped key por vehículo para almacenar borradores de sesión en progreso (Fase 2)
+  const sessionKey = useMemo(() => {
+    const vId = vehicle?.vehicle_id || vehicle?.id;
+    return vId ? `mclarens_tint_session_${vId}` : null;
+  }, [vehicle]);
 
   const applyLoadedPlan = (plan) => {
     if (!plan?.windows) return;
@@ -804,7 +812,7 @@ export default function TintWindowMaterialDialog({
     const ovs = {};
     const secs = {};
     Object.keys(plan.windows).forEach((z) => {
-      mats[z] = plan.windows[z]?.material_id || "std_20";
+      mats[z] = plan.windows[z]?.material_id || "none";
       ovs[z] = Boolean(plan.windows[z]?.override_size_band);
       if (plan.windows[z]?.second_layer) {
         secs[z] = {
@@ -836,6 +844,38 @@ export default function TintWindowMaterialDialog({
     setRequiresRemover(Boolean(plan.requires_remover));
   };
 
+  const handleRestoreDraft = () => {
+    if (!pendingDraft) return;
+    if (pendingDraft.selectedMaterials) setSelectedMaterials(pendingDraft.selectedMaterials);
+    if (pendingDraft.secondLayers) setSecondLayers(pendingDraft.secondLayers);
+    if (pendingDraft.sunstrips) setSunstrips(pendingDraft.sunstrips);
+    if (typeof pendingDraft.empalmeRear === "boolean") {
+      setEmpalmeRear(pendingDraft.empalmeRear);
+      setEmpalmeAuthorized(pendingDraft.empalmeRear);
+    }
+    if (typeof pendingDraft.requiresDespolarizado === "boolean") {
+      setRequiresDespolarizado(pendingDraft.requiresDespolarizado);
+    }
+    if (typeof pendingDraft.requiresRemover === "boolean") {
+      setRequiresRemover(pendingDraft.requiresRemover);
+    }
+    if (pendingDraft.selectedGama) setSelectedGama(pendingDraft.selectedGama);
+    if (pendingDraft.viewMode) setViewMode(pendingDraft.viewMode);
+    setShowRecoveryPrompt(false);
+    toast.success("Configuración previa en progreso restaurada");
+  };
+
+  const handleDiscardDraft = () => {
+    if (sessionKey && typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(sessionKey);
+      } catch (e) {}
+    }
+    setShowRecoveryPrompt(false);
+    setPendingDraft(null);
+    toast.info("Iniciando con formulario limpio");
+  };
+
   useEffect(() => {
     // Purga proactiva de borradores globales legados en localStorage para evitar fugas entre clientes/vehículos
     if (typeof window !== "undefined" && window.localStorage) {
@@ -857,6 +897,8 @@ export default function TintWindowMaterialDialog({
     setIsUnlocked(false);
 
     if (initialPlan?.windows) {
+      setShowRecoveryPrompt(false);
+      setPendingDraft(null);
       applyLoadedPlan(initialPlan);
       setPreselectedMeta(null);
     } else if (product) {
@@ -884,18 +926,46 @@ export default function TintWindowMaterialDialog({
           setLinkSides(preselected.linkSides);
         }
       }
+
+      // Comprobar si existe un borrador de sesión activo no consolidado para este vehículo (Fase 2)
+      if (sessionKey && typeof window !== "undefined") {
+        try {
+          const saved = sessionStorage.getItem(sessionKey);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const hasActive =
+              parsed?.selectedMaterials &&
+              Object.values(parsed.selectedMaterials).some((m) => m && m !== "none");
+            if (hasActive) {
+              setPendingDraft(parsed);
+              setShowRecoveryPrompt(true);
+            } else {
+              setShowRecoveryPrompt(false);
+              setPendingDraft(null);
+            }
+          } else {
+            setShowRecoveryPrompt(false);
+            setPendingDraft(null);
+          }
+        } catch (e) {
+          setShowRecoveryPrompt(false);
+          setPendingDraft(null);
+        }
+      }
     } else {
       setRequiresDespolarizado(false);
       setRequiresRemover(false);
       setPreselectedMeta(null);
       setSelectedMaterials({
-        windshield: "std_70",
-        front_sides: "std_20",
-        rear_sides: "std_20",
-        rear: "std_20",
+        windshield: "none",
+        front_sides: "none",
+        rear_sides: "none",
+        rear: "none",
       });
       setLinkSides(true);
       setEmpalmeRear(false);
+      setShowRecoveryPrompt(false);
+      setPendingDraft(null);
     }
 
     const fetchConfig = async () => {
@@ -919,7 +989,43 @@ export default function TintWindowMaterialDialog({
       }
     };
     fetchConfig();
-  }, [isOpen, vehicle, initialPlan, product]);
+  }, [isOpen, vehicle, initialPlan, product, sessionKey]);
+
+  // Auto-guardado en sessionStorage de cambios en progreso durante la sesión (Fase 2)
+  useEffect(() => {
+    if (!isOpen || !sessionKey || typeof window === "undefined" || showRecoveryPrompt) return;
+    const hasActive =
+      Object.values(selectedMaterials).some((m) => m && m !== "none") ||
+      Boolean(sunstrips.windshield_top?.enabled);
+    if (hasActive) {
+      try {
+        const draftObj = {
+          selectedMaterials,
+          secondLayers,
+          sunstrips,
+          empalmeRear,
+          requiresDespolarizado,
+          requiresRemover,
+          selectedGama,
+          viewMode,
+          timestamp: Date.now(),
+        };
+        sessionStorage.setItem(sessionKey, JSON.stringify(draftObj));
+      } catch (e) {}
+    }
+  }, [
+    isOpen,
+    sessionKey,
+    selectedMaterials,
+    secondLayers,
+    sunstrips,
+    empalmeRear,
+    requiresDespolarizado,
+    requiresRemover,
+    selectedGama,
+    viewMode,
+    showRecoveryPrompt,
+  ]);
 
   useEffect(() => {
     if (!isOpen || !config) return;
@@ -1048,10 +1154,20 @@ export default function TintWindowMaterialDialog({
   };
 
   const handleApplyAll = (materialId) => {
+    let targetMatId = materialId;
+    if (!targetMatId || targetMatId === "none") {
+      const defMat =
+        filteredMaterials.find((m) => m.is_default) ||
+        filteredMaterials[0] ||
+        activeMaterials.find((m) => m.is_default) ||
+        activeMaterials[0];
+      targetMatId = defMat?.material_id || defMat?.id || "std_20";
+    }
+
     if (isSunstripOnly) {
       setSunstrips((prev) => ({
         ...prev,
-        windshield_top: { enabled: true, material_id: materialId },
+        windshield_top: { enabled: true, material_id: targetMatId },
       }));
       toast.success("Material aplicado a la Banda Frontal");
       return;
@@ -1060,11 +1176,13 @@ export default function TintWindowMaterialDialog({
     setSelectedMaterials((prev) => {
       const next = { ...prev };
       allowedZones.forEach((z) => {
-        next[z] = materialId;
+        next[z] = targetMatId;
       });
       return next;
     });
-    toast.success(`Material aplicado a las zonas contratadas (${allowedZones.length})`);
+    const matName =
+      activeMaterials.find((m) => (m.material_id || m.id) === targetMatId)?.name || targetMatId;
+    toast.success(`Material "${matName}" aplicado a todas las zonas contratadas (${allowedZones.length})`);
   };
 
   const activeMaterials = useMemo(() => {
@@ -1204,6 +1322,12 @@ export default function TintWindowMaterialDialog({
       calculated_extra_usd: calculatedExtraUsd,
       is_custom_plan: isUnlocked || allowedZones.length === 4,
     };
+
+    if (sessionKey && typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(sessionKey);
+      } catch (e) {}
+    }
 
     onApplyPlan({
       tint_window_plan: planPayload,
@@ -1425,6 +1549,36 @@ export default function TintWindowMaterialDialog({
             </div>
           </div>
         </div>
+
+        {showRecoveryPrompt && pendingDraft && (
+          <div className="bg-gradient-to-r from-amber-500/15 via-blue-500/10 to-amber-500/15 border-b border-amber-400/40 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2.5 text-xs animate-in fade-in duration-200 shrink-0">
+            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200 min-w-0">
+              <Sparkles className="h-4 w-4 text-amber-500 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-medium">
+                <strong>Configuración en progreso detectada:</strong> Se encontró una selección previa para este vehículo ({vehicle?.brand} {vehicle?.model}). ¿Deseas recuperarla o comenzar en limpio?
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleRestoreDraft}
+                className="h-6 px-2.5 text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-xs"
+              >
+                Restaurar Configuración
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDiscardDraft}
+                className="h-6 px-2 text-[11px] border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Comenzar en Limpio
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto min-h-0 flex-1">
           <div className="md:col-span-5 lg:col-span-6 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 sm:p-4 flex flex-col items-center justify-between bg-zinc-50/70 dark:bg-zinc-900/50 select-none space-y-2 relative">
