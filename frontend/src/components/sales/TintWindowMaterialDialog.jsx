@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import {
@@ -737,10 +737,10 @@ export default function TintWindowMaterialDialog({
   const [customBlueprintGeom, setCustomBlueprintGeom] = useState(null);
 
   useEffect(() => {
-    if (vehicle) {
-      setSelectedVehicleType(resolveVehicleCategory(vehicle));
+    if (detectedCategory) {
+      setSelectedVehicleType((prev) => (prev !== detectedCategory ? detectedCategory : prev));
     }
-  }, [vehicle]);
+  }, [detectedCategory]);
 
   useEffect(() => {
     if (!matchedBlueprint?.lateral_image) {
@@ -799,6 +799,7 @@ export default function TintWindowMaterialDialog({
   const [quoteData, setQuoteData] = useState(null);
   const [showRecoveryPrompt, setShowRecoveryPrompt] = useState(false);
   const [pendingDraft, setPendingDraft] = useState(null);
+  const wasOpenRef = useRef(false);
 
   // Scoped key por vehículo para almacenar borradores de sesión en progreso (Fase 2)
   const sessionKey = useMemo(() => {
@@ -893,7 +894,14 @@ export default function TintWindowMaterialDialog({
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+    // Evitar reinicializar o resetear el estado del modal si ya estaba abierto (previene reinicios por autosave cada 30s del padre)
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
     setIsUnlocked(false);
 
     if (initialPlan?.windows) {
@@ -1071,7 +1079,7 @@ export default function TintWindowMaterialDialog({
     };
 
     computeQuote();
-  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle, isUnlocked, allowedZones]);
+  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle?.vehicle_id || vehicle?.id, isUnlocked, allowedZones]);
 
   const handleSelectMaterial = (zone, materialId) => {
     if (isSunstripOnly) {
