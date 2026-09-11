@@ -3242,8 +3242,20 @@ async def ensure_runtime_indexes() -> None:
         await db.quotations.create_index("customer_name")
         await db.quotations.create_index("created_at")
         await db.vehicles.create_index("plate")
+        await db.products.create_index("product_id", unique=True, sparse=True)
+        await db.products.create_index("category")
+        await db.products.create_index("sku")
+        await db.products.create_index("barcode")
+        await db.inventory.create_index([("warehouse_id", 1), ("product_id", 1)])
+        await db.inventory.create_index("product_id")
+        await db.work_orders.create_index([("status", 1), ("department", 1)])
+        await db.work_orders.create_index("technician_id")
+        await db.tint_orders.create_index([("status", 1), ("assignment_status", 1)])
+        await db.tint_orders.create_index("assigned_technician_id")
+        await db.tint_cutting_orders.create_index("cut_order_id", unique=True, sparse=True)
+        await db.tint_cutting_orders.create_index("status")
     except Exception as exc:
-        logger.warning("Could not create unified search indexes: %s", exc)
+        logger.warning("Could not create core indexes: %s", exc)
 
     try:
         await db.hypervisor_events.create_index("timestamp")
@@ -5681,6 +5693,10 @@ USER_LIST_PROJECTION: Dict[str, int] = {
     "kiosk_pin_plain": 0,
     "failed_pin_attempts": 0,
     "pin_lockout_until": 0,
+    "password_hash": 0,
+    "hashed_password": 0,
+    "token": 0,
+    "auth_tokens": 0,
 }
 
 
@@ -5786,12 +5802,20 @@ async def _enrich_user_directory_rows(users: List[Dict[str, Any]]) -> List[Dict[
     return rows
 
 
-# Basic users list (sanitized) - required by frontend admin pages
+# Basic users list (sanitized) - required by frontend coordinator, calendar, and admin pages
 @api_router.get("/users")
-async def list_users(request: Request):
-    # Gerencia and Programador may list users in the admin UI
-    await require_roles(request, ["gerencia", "programador"])
-    users = await db.users.find({}, USER_LIST_PROJECTION).to_list(1000)
+async def list_users(
+    request: Request,
+    role: Optional[str] = None,
+    branch_id: Optional[str] = None,
+):
+    await require_auth(request)
+    query: Dict[str, Any] = {"is_active": {"$ne": False}}
+    if role and str(role).strip() != "all":
+        query["role"] = str(role).strip()
+    if branch_id and str(branch_id).strip() != "all":
+        query["branch_id"] = str(branch_id).strip()
+    users = await db.users.find(query, USER_LIST_PROJECTION).to_list(1000)
     return users
 
 
@@ -18756,30 +18780,10 @@ async def get_dashboard_stats(request: Request):
     month_prefix = datetime.now(timezone.utc).strftime("%Y-%m")
     sales_scope_query = build_sales_visibility_query(user)
 
-    # Sales today
+    # Execute queries concurrently to eliminate waterfalls
     sales_today_query = merge_queries(
         sales_scope_query, {"created_at": {"$regex": f"^{today}"}}
     )
-    sales_today = await db.sales.find(sales_today_query, {"_id": 0}).to_list(1000)
-
-    total_sales_today = sum(s["total"] for s in sales_today)
-
-    # Pending work orders
-    pending_wo = await db.work_orders.count_documents(
-        {"status": {"$in": ["pending", "in_progress"]}}
-    )
-
-    # Low stock items
-    low_stock = await db.inventory.count_documents(
-        {"$expr": {"$lte": ["$quantity", "$min_stock"]}}
-    )
-
-    # Pending deliveries
-    pending_deliveries = await db.sales.count_documents(
-        merge_queries(sales_scope_query, {"delivery_status": "pending"})
-    )
-
-    # Deliveries completed today
     delivered_today_query = merge_queries(
         sales_scope_query,
         {
@@ -18787,32 +18791,34 @@ async def get_dashboard_stats(request: Request):
             "delivery_completed_at": {"$regex": f"^{today}"},
         },
     )
-    delivered_today_sales = await db.sales.find(
-        delivered_today_query,
-        {"_id": 0, "created_at": 1, "delivery_completed_at": 1, "sale_id": 1},
-    ).to_list(1000)
-    deliveries_completed_today = len(delivered_today_sales)
-
-    deliveries_completed_month = await db.sales.count_documents(
-        merge_queries(
-            sales_scope_query,
-            {
-                "delivery_status": "delivered",
-                "delivery_completed_at": {"$regex": f"^{month_prefix}"},
-            },
-        )
+    delivered_month_query = merge_queries(
+        sales_scope_query,
+        {
+            "delivery_status": "delivered",
+            "delivery_completed_at": {"$regex": f"^{month_prefix}"},
+        },
     )
 
-    delivered_month_sales = await db.sales.find(
-        merge_queries(
-            sales_scope_query,
-            {
-                "delivery_status": "delivered",
-                "delivery_completed_at": {"$regex": f"^{month_prefix}"},
-            },
-        ),
-        {"_id": 0, "created_at": 1, "delivery_completed_at": 1, "sale_id": 1},
-    ).to_list(3000)
+    (
+        sales_today,
+        pending_wo,
+        low_stock,
+        pending_deliveries,
+        delivered_today_sales,
+        deliveries_completed_month,
+        delivered_month_sales,
+    ) = await asyncio.gather(
+        db.sales.find(sales_today_query, {"_id": 0, "total": 1}).to_list(1000),
+        db.work_orders.count_documents({"status": {"$in": ["pending", "in_progress"]}}),
+        db.inventory.count_documents({"$expr": {"$lte": ["$quantity", "$min_stock"]}}),
+        db.sales.count_documents(merge_queries(sales_scope_query, {"delivery_status": "pending"})),
+        db.sales.find(delivered_today_query, {"_id": 0, "created_at": 1, "delivery_completed_at": 1, "sale_id": 1}).to_list(1000),
+        db.sales.count_documents(delivered_month_query),
+        db.sales.find(delivered_month_query, {"_id": 0, "created_at": 1, "delivery_completed_at": 1, "sale_id": 1}).to_list(3000),
+    )
+
+    total_sales_today = sum(s.get("total", 0) for s in sales_today)
+    deliveries_completed_today = len(delivered_today_sales)
 
     # Average delivery time in minutes (today)
     def _avg_delivery_minutes(sales: List[Dict[str, Any]]) -> float:

@@ -53,7 +53,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { getBrandingForBranch } from "../../lib/branding";
+import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
 import { APP_ENV } from "../../lib/env";
 import { fetchNodeProfile, getCachedNodeProfile, isRouteEnabledByNodeProfile } from "../../lib/nodeProfile";
 
@@ -63,30 +63,28 @@ const navigation = [
   { name: "Buscador ERP", href: "/workbench?tab=search", icon: Search, roles: ["all"] },
   { name: "Centro Unificado", href: "/workbench", icon: PanelsTopLeft, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Caja", href: "/cashier", icon: Wallet, roles: ["gerencia", "supervisor", "programador", "cajero"] },
-  { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
-  { name: "Despacho", href: "/dispatch", icon: PackageCheck, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
-  { name: "Traslados de Productos", href: "/product-transfers", icon: ArrowRightLeft, roles: ["gerencia", "supervisor", "bodegas"] },
-  { name: "Coord. Instalaciones", href: "/coordinator/instalaciones", icon: Wrench, roles: ["gerencia", "supervisor", "coordinador_instalaciones"] },
+  { name: "Cotizaciones", href: "/quotations", icon: FileText, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Ventas", href: "/sales", icon: ShoppingCart, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Catálogo", href: "/catalog", icon: Tag, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Muestras", href: "/samples", icon: FlaskConical, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
   { name: "Coord. Polarizados", href: "/coordinator/polarizados", icon: Palette, roles: ["gerencia", "supervisor", "coordinador_polarizados"] },
-  { name: "Kiosko Técnico", href: "/technician", icon: Smartphone, roles: ["instalaciones", "instalador", "electrico", "polarizador"] },
-  { name: "Órdenes de Trabajo", href: "/work-orders", icon: Wrench, roles: ["gerencia", "supervisor", "instalaciones", "electrico"] },
+  { name: "Coord. Instalaciones", href: "/coordinator/instalaciones", icon: Wrench, roles: ["gerencia", "supervisor", "coordinador_instalaciones"] },
   { name: "Mis Trabajos Realizados", href: "/my-completed-jobs", icon: ClipboardList, roles: ["gerencia", "supervisor", "instalaciones", "electrico", "polarizador", "coordinador_instalaciones", "coordinador_polarizados"] },
-  { name: "Polarizados", href: "/tint-orders", icon: Palette, roles: ["gerencia", "supervisor", "instalaciones", "polarizador"] },
-  { name: "Calendario", href: "/calendar", icon: Calendar, roles: ["gerencia", "supervisor", "instalaciones"] },
-  { name: "Control de Calidad", href: "/quality-control", icon: ClipboardCheck, roles: ["gerencia", "supervisor", "coordinador_instalaciones"] },
-  { name: "KDS Bodega", href: "/kds/bodega", icon: Monitor, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
   { name: "KDS Instalaciones", href: "/kds/instalaciones", icon: Monitor, roles: ["gerencia", "supervisor", "instalaciones", "electrico", "coordinador_instalaciones"] },
   { name: "KDS Polarizados", href: "/kds/polarizados", icon: Monitor, roles: ["gerencia", "supervisor", "polarizador", "coordinador_polarizados"] },
-  { name: "Entregas", href: "/deliveries", icon: Truck, roles: ["gerencia", "supervisor", "transporte"] },
-  { name: "Créditos", href: "/credits", icon: CreditCard, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
-  { name: "Devoluciones", href: "/returns", icon: RotateCcw, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Inventario", href: "/inventory", icon: Package, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
+  { name: "Despacho", href: "/dispatch", icon: PackageCheck, roles: ["gerencia", "supervisor", "bodegas", "jefe_tienda"] },
+  { name: "Entregas", href: "/deliveries", icon: Truck, roles: ["gerencia", "supervisor", "transporte", "entregador"] },
+  { name: "Clientes", href: "/customers", icon: Users, roles: ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Vehículos", href: "/vehicles", icon: Car, roles: ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Control de Calidad", href: "/quality-control", icon: ClipboardCheck, roles: ["gerencia", "supervisor", "coordinador_instalaciones", "coordinador_polarizados", "jefe_tienda"] },
   { name: "Garantías", href: "/warranties", icon: Shield, roles: ["gerencia", "supervisor", "instalaciones"] },
+  { name: "Créditos", href: "/credits", icon: CreditCard, roles: ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Devoluciones", href: "/returns", icon: RotateCcw, roles: ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"] },
   { name: "Promociones", href: "/promotions", icon: Tag, roles: ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"] },
+  { name: "Calendario", href: "/calendar", icon: Calendar, roles: ["gerencia", "supervisor", "instalaciones", "coordinador_instalaciones"] },
   { name: "Reportes", href: "/reports", icon: TrendingUp, roles: ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"] },
-  { name: "Contabilidad", href: "/accounting", icon: Calculator, roles: ["gerencia", "recursos_humanos", "supervisor"] },
-  { name: "Recursos Humanos", href: "/human-resources", icon: Briefcase, roles: ["gerencia", "supervisor", "recursos_humanos"] },
-  { name: "HyiperVisor", href: "/hypervisor", icon: Eye, roles: ["gerencia", "programador", "recursos_humanos"] },
-  { name: "Centro Servidor", href: "/server-dashboard", icon: Monitor, roles: ["gerencia", "programador"] },
+  { name: "Recursos Humanos", href: "/human-resources", icon: Briefcase, roles: ["gerencia", "recursos_humanos", "supervisor"] },
   { name: "Sucursales", href: "/branches", icon: Building2, roles: ["gerencia"] },
   { name: "Bodegas", href: "/warehouses", icon: Warehouse, roles: ["gerencia", "supervisor"] },
   { name: "Usuarios", href: "/users", icon: Users, roles: ["gerencia"] },
@@ -94,12 +92,6 @@ const navigation = [
   { name: "Configuración", href: "/settings", icon: Settings, roles: ["gerencia"] },
   { name: "Tutoriales", href: "/help/tutorials", icon: BookOpen, roles: ["all"] },
 ];
-
-const BRANCH_LABELS = {
-  branch_main: "Mundo de Accesorios",
-  branch_north: "TopCar El Calvario",
-  branch_south: "TopCar La Tigre",
-};
 
 export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggleSessionLock }) {
   const { user, hasRole, hasPermission, logout } = useAuth();
@@ -111,7 +103,7 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
   const branding = getBrandingForBranch(user?.branch_id);
   const isIconOnly = mode === "icon";
   const logoSrc = `${branding.logo}${String(branding.logo).includes("?") ? "&" : "?"}v=${encodeURIComponent(buildVersion)}`;
-  const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
+  const branchLabel = formatUserBranchLabel(user);
 
   const routePermissionMap = {
     "/dashboard": "dashboard",

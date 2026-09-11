@@ -6,6 +6,7 @@ import { API_BASE as API } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 import { formatQuincenaLabel, getQuincenaIsoRange } from "@/lib/payrollPeriods";
 import { TechnicianKioskNav } from "@/components/technician/TechnicianKioskNav";
+import { erpActionButtonClass } from "@/lib/erpDesignSystem";
 
 const ROLES_LABEL = {
   instalaciones: "Instalador",

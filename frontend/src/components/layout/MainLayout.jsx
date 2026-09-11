@@ -6,7 +6,7 @@ import { Toaster } from "../ui/sonner";
 import { FloatingTools } from "../FloatingTools";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getBrandingForBranch } from "../../lib/branding";
+import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
 import { getWatermarkLogoForSkin } from "../../lib/themeSkins";
 import { APP_ENV } from "../../lib/env";
 import { API_BASE as API } from "@/lib/api";
@@ -31,12 +31,6 @@ import { IdleSessionCountdown } from "../auth/IdleSessionCountdown";
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
 const SELLER_CONNECTIVITY_POLL_MS = 10000;
-
-const BRANCH_LABELS = {
-  branch_main: "Mundo de Accesorios",
-  branch_north: "TopCar El Calvario",
-  branch_south: "TopCar La Tigre",
-};
 
 const WORKBENCH_TAB_ITEMS = [
   { key: "notifications", label: "Notificaciones", icon: Bell },
@@ -109,7 +103,7 @@ export function MainLayout() {
   const [sellerServerStatus, setSellerServerStatus] = useState("unknown");
   const lastBackWarningRef = useRef(0);
   const branding = getBrandingForBranch(user?.branch_id);
-  const branchLabel = BRANCH_LABELS[user?.branch_id] || user?.branch_id || "Sucursal no asignada";
+  const branchLabel = formatUserBranchLabel(user);
   const roleLabel = formatRoleBadgeLabel(user);
   const userFirstName = String(user?.name || "").trim();
   const userLastName = String(user?.last_name || user?.lastname || user?.apellido || "").trim();

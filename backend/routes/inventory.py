@@ -88,13 +88,21 @@ def get_inventory_router(
 
     async def _branch_warehouse_ids(branch_id: Optional[str]) -> List[str]:
         bid = str(branch_id or "").strip()
-        if not bid:
+        if not bid or bid in {"all", "central"}:
             return []
         rows = await db.warehouses.find(
-            {"branch_id": bid, "is_active": True},
+            {"branch_id": bid, "is_active": {"$ne": False}},
             {"_id": 0, "warehouse_id": 1},
         ).to_list(100)
-        return [str(row.get("warehouse_id")) for row in rows if row.get("warehouse_id")]
+        res = [str(row.get("warehouse_id")) for row in rows if row.get("warehouse_id")]
+        if not res:
+            if bid == "branch_main":
+                res = ["wh_main"]
+            elif bid == "branch_north":
+                res = ["wh_north1", "wh_north2"]
+            elif bid == "branch_south":
+                res = ["wh_south1", "wh_south2"]
+        return res
 
     async def _resolve_actor_branch(user) -> str:
         return str(user.branch_id or deployment_branch_id or "").strip()
@@ -172,13 +180,13 @@ def get_inventory_router(
         query: dict[str, Any] = {}
         if user.role == "bodegas" and user.warehouse_id:
             query["warehouse_id"] = user.warehouse_id
-        elif warehouse_id:
+        elif warehouse_id and warehouse_id != "all":
             query["warehouse_id"] = warehouse_id
         elif user.warehouse_id:
             query["warehouse_id"] = user.warehouse_id
         else:
             branch_scope = await _resolve_actor_branch(user)
-            if branch_scope:
+            if branch_scope and branch_scope not in {"all", "central"}:
                 warehouse_ids = await _branch_warehouse_ids(branch_scope)
                 if warehouse_ids:
                     query["warehouse_id"] = {"$in": warehouse_ids}
@@ -186,15 +194,19 @@ def get_inventory_router(
         inventory = await db.inventory.find(query, {"_id": 0}).to_list(5000)
 
         if low_stock:
-            inventory = [i for i in inventory if i["quantity"] <= i["min_stock"]]
+            inventory = [i for i in inventory if i.get("quantity", 0) <= i.get("min_stock", 0)]
 
-        # Enrich with product data
-        for item in inventory:
-            product = await db.products.find_one(
-                {"product_id": item["product_id"]}, {"_id": 0}
-            )
-            if product:
-                item["product"] = product
+        # High-performance batch enrichment with product data
+        product_ids = list({str(i.get("product_id")) for i in inventory if i.get("product_id")})
+        if product_ids:
+            products = await db.products.find(
+                {"product_id": {"$in": product_ids}}, {"_id": 0}
+            ).to_list(len(product_ids))
+            product_map = {str(p.get("product_id")): p for p in products}
+            for item in inventory:
+                pid = str(item.get("product_id"))
+                if pid in product_map:
+                    item["product"] = product_map[pid]
 
         return inventory
 

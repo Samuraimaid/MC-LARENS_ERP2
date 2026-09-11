@@ -72,6 +72,23 @@ function JobCard({ job, driverType, onAction, busy, requiresProof }) {
   );
 }
 
+function formatGeolocationError(err) {
+  if (!err) return "No se pudo obtener la ubicación GPS.";
+  const msg = String(err.message || "").toLowerCase();
+  const code = err.code;
+
+  if (code === 1 || msg.includes("not allowed") || msg.includes("denied") || msg.includes("permission")) {
+    return "Permiso de ubicación denegado en el navegador. Por favor active los permisos de GPS o ubicación en la configuración del navegador para registrar la entrega.";
+  }
+  if (code === 2 || msg.includes("unavailable") || msg.includes("failed")) {
+    return "Señal GPS no disponible en este momento. Verifique que el servicio de ubicación esté encendido en su teléfono.";
+  }
+  if (code === 3 || msg.includes("timeout") || msg.includes("timed out")) {
+    return "Tiempo de espera agotado al consultar GPS. Por favor intente de nuevo.";
+  }
+  return "No se pudo obtener coordenadas GPS. Active la ubicación del dispositivo.";
+}
+
 function captureGeolocation() {
   return new Promise((resolve, reject) => {
     if (!navigator?.geolocation) {
@@ -83,7 +100,7 @@ function captureGeolocation() {
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
       }),
-      (err) => reject(err),
+      (err) => reject(new Error(formatGeolocationError(err))),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   });
@@ -103,6 +120,7 @@ export function DriverPortalPage() {
   const [proofFile, setProofFile] = useState(null);
   const [gpsCoords, setGpsCoords] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState("");
   const [liveGpsEnabled, setLiveGpsEnabled] = useState(true);
   const [lastGpsPing, setLastGpsPing] = useState(null);
   const [gpsSpeed, setGpsSpeed] = useState(0);
@@ -237,6 +255,7 @@ export function DriverPortalPage() {
     setProofJob(null);
     setProofFile(null);
     setGpsCoords(null);
+    setGpsError("");
     setGpsLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -250,12 +269,15 @@ export function DriverPortalPage() {
     setProofJob(job);
     setProofFile(null);
     setGpsCoords(null);
+    setGpsError("");
     setGpsLoading(true);
     try {
       const coords = await captureGeolocation();
       setGpsCoords(coords);
     } catch (error) {
-      toast.error(error?.message || "No se pudo obtener GPS. Active ubicación en el celular.");
+      const friendlyMsg = formatGeolocationError(error);
+      setGpsError(friendlyMsg);
+      toast.error(friendlyMsg, { duration: 6000 });
     } finally {
       setGpsLoading(false);
     }
@@ -449,11 +471,52 @@ export function DriverPortalPage() {
                 <MapPin className="h-4 w-4" />
                 Coordenadas GPS
               </Label>
-              <p className="text-sm text-muted-foreground mt-1">
-                {gpsLoading ? "Capturando ubicación..." : gpsCoords
-                  ? `LAT ${gpsCoords.latitude.toFixed(4)} / LON ${gpsCoords.longitude.toFixed(4)}`
-                  : "GPS pendiente — active ubicación"}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+                <p className="text-sm text-muted-foreground">
+                  {gpsLoading ? (
+                    <span className="flex items-center gap-1.5 text-amber-500">
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Capturando ubicación GPS...
+                    </span>
+                  ) : gpsCoords ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                      ✓ LAT {gpsCoords.latitude.toFixed(4)} / LON {gpsCoords.longitude.toFixed(4)}
+                    </span>
+                  ) : gpsError ? (
+                    <span className="text-rose-600 dark:text-rose-400 text-xs">
+                      ⚠️ {gpsError}
+                    </span>
+                  ) : (
+                    "GPS pendiente — active ubicación en el celular"
+                  )}
+                </p>
+                {!gpsCoords && !gpsLoading ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={async () => {
+                      setGpsLoading(true);
+                      setGpsError("");
+                      try {
+                        const coords = await captureGeolocation();
+                        setGpsCoords(coords);
+                        toast.success("GPS obtenido correctamente");
+                      } catch (err) {
+                        const friendlyMsg = formatGeolocationError(err);
+                        setGpsError(friendlyMsg);
+                        toast.error(friendlyMsg);
+                      } finally {
+                        setGpsLoading(false);
+                      }
+                    }}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Reintentar GPS
+                  </Button>
+                ) : null}
+              </div>
             </div>
             {cameraBlocked ? (
               <div className="rounded-lg border border-amber-300/50 bg-amber-50/90 px-3 py-2 text-sm text-amber-950">
