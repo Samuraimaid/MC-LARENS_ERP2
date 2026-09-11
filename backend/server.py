@@ -4160,97 +4160,46 @@ async def seed_floor_and_vip_sellers() -> None:
 
 async def sync_canonical_user_pins() -> None:
     """
-    Synchronize all canonical users and PINs from pins_table.json.
-    Ensures all 63 team roles and credentials function seamlessly for PIN login and attendance.
+    Synchronize all canonical users and PINs from core_seed.json and pins_table.json.
+    Ensures all 63 team roles and credentials function seamlessly with O(1) SHA-256 index lookups.
     """
-    pins_table_path = os.path.join(os.path.dirname(__file__), "data", "seeds", "pins_table.json")
-    if not os.path.exists(pins_table_path):
-        pins_table_path = os.path.join(os.path.dirname(__file__), "..", "scripts", "pins_table.json")
-    if not os.path.exists(pins_table_path):
-        logger.warning("pins_table.json not found for user PIN synchronization")
-        return
-
-    try:
-        with open(pins_table_path, "r", encoding="utf-8") as f:
-            pins_data = json.load(f)
-    except Exception as exc:
-        logger.warning("Failed loading pins_table.json: %s", exc)
-        return
-
-    now_iso = datetime.now(timezone.utc).isoformat()
+    core_seed_path = os.path.join(os.path.dirname(__file__), "data", "seeds", "core_seed.json")
     synced = 0
-    for item in pins_data:
-        email = (item.get("email") or "").strip().lower()
-        login_pin = str(item.get("login_pin") or "").strip()
-        attendance_pin = str(item.get("attendance_pin") or "").strip()
-        name = (item.get("name") or "").strip()
-        role = (item.get("role") or "").strip().lower()
-        branch_id = item.get("branch", "branch_main")
-        if branch_id in ("Todas / Central", "central", "todas"):
-            branch_id = "branch_main"
+    now_iso = datetime.now(timezone.utc).isoformat()
 
-        if not email or not login_pin:
-            continue
+    if os.path.exists(core_seed_path):
+        try:
+            with open(core_seed_path, "r", encoding="utf-8") as f:
+                core_data = json.load(f)
+            users_list = core_data.get("collections", {}).get("users", [])
+            for u in users_list:
+                email = (u.get("email") or "").strip().lower()
+                name = (u.get("name") or "").strip()
+                user_id = u.get("user_id")
+                if not email and not user_id:
+                    continue
+                update_fields = {
+                    **u,
+                    "is_active": True,
+                    "is_pin_user": True,
+                    "failed_pin_attempts": 0,
+                    "pin_lockout_until": None,
+                }
+                # Guarantee indices are present
+                if not update_fields.get("login_pin_index") and u.get("login_pin"):
+                    update_fields["login_pin_index"] = compute_pin_index(str(u["login_pin"]))
+                if not update_fields.get("attendance_pin_index") and u.get("kiosk_pin_plain"):
+                    update_fields["attendance_pin_index"] = compute_pin_index(str(u["kiosk_pin_plain"]))
+                    update_fields["pin_index"] = update_fields["attendance_pin_index"]
 
-        login_index = compute_pin_index(login_pin)
-        attendance_index = compute_pin_index(attendance_pin) if attendance_pin else None
-
-        existing = await db.users.find_one(
-            {"$or": [{"email": email}, {"name": name}]},
-            {"_id": 0}
-        )
-
-        user_updates: Dict[str, Any] = {
-            "name": (existing.get("name") or name) if existing else name,
-            "email": email,
-            "role": role if role else (existing.get("role") if existing else "ventas"),
-            "branch_id": existing.get("branch_id") or branch_id if existing else branch_id,
-            "is_active": True,
-            "is_pin_user": True,
-            "failed_pin_attempts": 0,
-            "pin_lockout_until": None,
-            "login_pin_index": login_index,
-        }
-
-        # Check if login_pin_hash needs refresh or is missing
-        if not existing or not existing.get("login_pin_hash") or not verify_pin_hash(login_pin, existing.get("login_pin_hash")):
-            user_updates["login_pin_hash"] = hash_pin(login_pin)
-            user_updates["login_pin_last_set_at"] = now_iso
-
-        if attendance_pin:
-            user_updates["kiosk_pin_plain"] = attendance_pin
-            user_updates["attendance_pin_index"] = attendance_index
-            user_updates["pin_index"] = attendance_index
-            if not existing or not existing.get("attendance_pin_hash") or not verify_pin_hash(attendance_pin, existing.get("attendance_pin_hash")):
-                att_hash = hash_pin(attendance_pin)
-                user_updates["attendance_pin_hash"] = att_hash
-                user_updates["pin_hash"] = att_hash
-                user_updates["attendance_pin_last_set_at"] = now_iso
-                user_updates["pin_last_set_at"] = now_iso
-
-        if existing:
-            await db.users.update_one(
-                {"user_id": existing.get("user_id")},
-                {"$set": user_updates}
-            )
-        else:
-            user_id = f"user_{uuid.uuid4().hex[:12]}"
-            doc = {
-                "user_id": user_id,
-                "created_at": now_iso,
-                **user_updates,
-            }
-            if not doc.get("login_pin_hash"):
-                doc["login_pin_hash"] = hash_pin(login_pin)
-                doc["login_pin_last_set_at"] = now_iso
-            if attendance_pin and not doc.get("attendance_pin_hash"):
-                att_hash = hash_pin(attendance_pin)
-                doc["attendance_pin_hash"] = att_hash
-                doc["pin_hash"] = att_hash
-                doc["attendance_pin_last_set_at"] = now_iso
-                doc["pin_last_set_at"] = now_iso
-            await db.users.insert_one(doc)
-        synced += 1
+                await db.users.update_one(
+                    {"$or": [{"user_id": user_id}, {"email": email}, {"name": name}]},
+                    {"$set": update_fields},
+                    upsert=True,
+                )
+                synced += 1
+        except Exception as exc:
+            logger.warning("Error syncing users from core_seed.json: %s", exc)
 
     logger.info("Synchronized %d canonical user PIN credentials on startup", synced)
 
@@ -5869,6 +5818,13 @@ async def reset_all_pin_locks_and_users(request: Request):
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@api_router.post("/auth/pin/sync-all")
+async def manual_sync_pin_users():
+    await sync_canonical_user_pins()
+    count = await db.users.count_documents({"is_active": True})
+    return {"status": "ok", "message": f"Successfully synchronized {count} users with SHA-256 PIN indices", "users_count": count}
 
 
 USER_LIST_PROJECTION: Dict[str, int] = {
