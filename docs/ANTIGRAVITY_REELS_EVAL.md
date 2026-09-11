@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-11 (R-004)
+**Actualizado:** 2026-09-11 (R-005)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,18 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-005 — 10 algoritmos de load balancing
+- **Fecha evaluación:** 2026-09-11
+- **Fuente:** Facebook Reel — VikStack  
+  https://www.facebook.com/share/r/1DG3NrnVja/  
+  (reel `1752114135821720`)
+- **Idea (resumen):** Catálogo visual de algoritmos de balanceo: round robin, weighted, least connections, least response, IP hash, consistent hashing, random, sticky sessions, least bandwidth, failover.
+- **Veredicto:** **OBVIAR**
+- **Impacto en McLarens ERP:** Nulo como trabajo de repo. El tráfico ya lo reparte **Cloud Run / balanceador de Google**; no se implementan estos algoritmos en FastAPI. Sticky sessions solo importarían si la sesión viviera solo en memoria de una instancia (ustedes usan cookie + backend/Mongo).
+- **Acción Antigravity ahora:** ninguna. No abrir PR de load balancer.
+- **Relacionado:** R-003 (un solo servicio Cloud Run); escala horizontal la gestiona la plataforma.
 
 
 ### R-004 — Database failover (HA primario → backup)
