@@ -1,0 +1,13 @@
+{
+  "generated_at_utc": "2026-09-11T22:16:05.095544+00:00",
+  "total": 220,
+  "matched": 216,
+  "universal": 0,
+  "unmatched": 4,
+  "con_imagen": 42,
+  "con_precio": 23,
+  "afn_pt_products": 216,
+  "shopify_usa_products": 26,
+  "images_downloaded": 42,
+  "output_dir": "/workspace/erp-catalogs/catalogos/AFN"
+}
