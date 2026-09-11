@@ -1,0 +1,3694 @@
+[
+  {
+    "id": "546",
+    "handle": "capota-maritima-grx-pro-black-compactas",
+    "linkText": "capota-maritima-grx-pro-black-compactas",
+    "url": "https://www.keko.com.br/capota-maritima-grx-pro-black-compactas/p",
+    "nombre": "Capota marítima GRX Pro Black pickups compactas | GENERACIÓN 1",
+    "nombre_original": "Capota Marítima GRX Pro Black Picapes Compactas | GERAÇÃO 1",
+    "sku": "GRXPCOMP",
+    "skus": [
+      "GRXPCOMP",
+      "9.056.12.001GR",
+      "9.230.12.012GR",
+      "9.042.12.016GR",
+      "9.042.12.014GR",
+      "9.042.12.017",
+      "K0145",
+      "9.226.12.030",
+      "K0140"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capotas marítimas",
+    "colecciones": [
+      "Capotas Marítimas",
+      "Capota marítima GRX Pro Black pickups compactas | GENERACIÓN 1"
+    ],
+    "descripcion": "Quando você escolhe a Capota marítima GRX Pro Black, está investindo en um acessório premium con tecnologia de ponta y design exclusivo.\nAlém de proteger sua carga con eficiência, ela é projetada para durar y facilitar sua vida.\nConfira o que ela pode lhe oferecer:\n- Design premium: acabamento totalmente Negro, incluindo a parte interna de la lona y componentes, para um visual elegante y diferenciado.\n- Autorregulación de la lona: a Capota possui um sistema integrado de controle de tensão que mantém a lona sempre ajustada, evitando ruídos o folgas, independentemente de las variações de temperatura, seja en climas quentes o frios.\n- Abertura facilitada: permite abrir con apenas uma mão, garantindo agilidade y praticidade.\n- Sellado Extra: a Capotas GRX Pro Black conta con um bulbo de Sellado extra na parte traseira y Sellado adicional na parte frontal, que auxilia na Sellado contra umidade y poeira, mesmo en condições desafiadoras.\n- Tecnología en grafeno: os componentes para travamento de la capota são produzidos en plástico con adição de grafeno. Esta solução oferece a robustez necessária para suportar as demandas del dia-a-dia y proporcionar uma auto lubrificação que reduz o desgaste y prolonga a vida útil del produto.\n- Traviesas fijadas a la lona: con um design funcional y inteligente, as Traviesas são costuradas diretamente na lona, permitindo que se enrolam junto con ela durante o uso. Essa solução simplifica o manuseio, garantindo praticidade.\n- Instalación facilitada: pode ser instalada pelo próprio cliente, sin complicações. Tudo o que você precisa é de uma parafusadeira con cachimbo de 10mm y pronto! en cerca de 10 minutos, sua capota estará perfeitamente ajustada, pronta para uso. Simples assim!\n- Manutenção simples: caso alguma peça precise ser substituída, não é necessário trocar a capota inteira. A Keko oferece Ítems de reposición exclusivos, garantindo agilidade na solução y economia no seu bolso. Confira no link abaixo os componentes disponíveis:\nhttps://www.keko.con.br/pt/itens-de-reposicao/reposicao-capotas-maritimas",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "Destacados del producto": "All black; Autorregulación de la lona; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona; Sellado extra entre caja de carga y cabina"
+    },
+    "precio": {
+      "valor_min": 1369.0,
+      "valor_max": 1597.0,
+      "moneda": "BRL",
+      "texto": "R$ 1369.00 – R$ 1597.00"
+    },
+    "variantes": [
+      {
+        "id": "210",
+        "titulo": "Capota Marítima GRX Pro Black Montana 2023 a 2026 Keko KC245GR",
+        "sku": "9.056.12.001GR",
+        "ref_id": "9.056.12.001GR",
+        "ean": "",
+        "precio": 1369.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Chevrolet"
+        ],
+        "sku_modelo": [
+          "Montana"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "397",
+        "titulo": "Capota Marítima GRX Pro Black Rampage 2023 a 2026 Keko KC254GR",
+        "sku": "9.230.12.012GR",
+        "ref_id": "9.230.12.012GR",
+        "ean": "7898732989860",
+        "precio": 1467.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      },
+      {
+        "id": "1278",
+        "titulo": "Capota Marítima GRX Pro Black Strada com Santo Antônio CD 2021 a 2025 Keko KC258GR",
+        "sku": "9.042.12.016GR",
+        "ref_id": "9.042.12.016GR",
+        "ean": "A Definir",
+        "precio": 1369.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Com Santo Antônio"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1280",
+        "titulo": "Capota Marítima GRX Pro Black Strada sem Santo Antônio CD 2021 a 2025 Keko KC252GR",
+        "sku": "9.042.12.014GR",
+        "ref_id": "9.042.12.014GR",
+        "ean": "A Definir",
+        "precio": 1369.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Sem Santo Antônio"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1432",
+        "titulo": "Capota Marítima GRX Pro Black Strada Plus 2021 a 2025 Keko K0145",
+        "sku": "K0145",
+        "ref_id": "9.042.12.017",
+        "ean": "7908878000715",
+        "precio": 1597.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada Plus"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      },
+      {
+        "id": "1435",
+        "titulo": "Capota Marítima GRX Pro Black Toro 2016 a 2025 Keko K0140",
+        "sku": "K0140",
+        "ref_id": "9.226.12.030",
+        "ean": "7908878000838",
+        "precio": 1467.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "CHEVROLET",
+        "RAM",
+        "FIAT"
+      ],
+      "models": [
+        "Montana",
+        "Rampage",
+        "Strada",
+        "Strada Plus",
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        },
+        {
+          "start": 2021,
+          "end": 2026
+        },
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "CHEVROLET",
+          "model": "Montana",
+          "tokens": [
+            "montana"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada Plus",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "CHEVROLET Montana ['2023 em diante']",
+        "RAM Rampage ['2023 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada Plus ['2021 em diante']",
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "CHEVROLET Montana 2023-ON | RAM Rampage 2023-ON | FIAT Strada 2021-ON | FIAT Strada Plus 2021-ON | FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/capota-maritima-grx-pro-black-compactas/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/155408/KC207GR_1.jpg?v=638761762739900000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/155409/KC207GR_2.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155410/KC207GR_3.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155411/KC207GR_4.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155412/KC207GR_5.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155413/KC207GR_6.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159661/KC254GR_1.jpg?v=638459370267470000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159662/KC254GR_2.jpg?v=638761762740370000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159663/KC254GR_3.jpg?v=638761762740500000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159664/KC254GR_4.jpg?v=638761762740500000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159665/KC254GR_5.jpg?v=638761762740500000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159666/KC254GR_6.jpg?v=638761762740500000"
+    ],
+    "source_url": "https://www.keko.com.br/capota-maritima-grx-pro-black-compactas/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "381",
+    "handle": "reposicao-capota-maritima-multitrava-superior-grx",
+    "linkText": "reposicao-capota-maritima-multitrava-superior-grx",
+    "url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-superior-grx/p",
+    "nombre": "Multitrava Superior Capota GRX",
+    "nombre_original": "Multitrava Superior Capota GRX",
+    "sku": "RKCMMS",
+    "skus": [
+      "RKCMMS",
+      "9.222.12.014",
+      "RK0560",
+      "9.042.12.009",
+      "RK0561"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 a 2024 /\nTriton L200 modelo 2008 a 2016.\nPara Fiat Toro, utilize RK0561.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "438",
+        "titulo": "Conjunto Multitrava Superior Capota GRX Keko RK0560",
+        "sku": "RK0560",
+        "ref_id": "9.222.12.014",
+        "ean": "7898732982618",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "746",
+        "titulo": "Conjunto Multitrava Superior Capota GRX Rampage 2023 em diante RK0561",
+        "sku": "RK0561",
+        "ref_id": "9.042.12.009",
+        "ean": "7898732982625",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "SKU 438: Universal",
+        "RAM Rampage ['2023 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2023-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-capota-maritima-multitrava-superior-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167384/SKU438-Conjunto-Multitrava-Superior-Capota-GRX-Keko-RK0560.png?v=639065963130800000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/167393/SKU746-Conjunto Multitrava Superior Capota GRX Rampage 2023 a 2026 RK0561.png?v=639065963131430000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-superior-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "616",
+    "handle": "reposicao-borracha-vedacao",
+    "linkText": "reposicao-borracha-vedacao",
+    "url": "https://www.keko.com.br/reposicao-borracha-vedacao/p",
+    "nombre": "Reposición Goma de Sellado",
+    "nombre_original": "Reposição Borracha de Vedação",
+    "sku": "RKBORVED",
+    "skus": [
+      "RKBORVED",
+      "9.395.57.036",
+      "RK1372"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 59.0,
+      "moneda": "BRL",
+      "texto": "R$ 59.00"
+    },
+    "variantes": [
+      {
+        "id": "1756",
+        "titulo": "Adesivo Acabamento Lateral Titano Keko RK1372",
+        "sku": "RK1372",
+        "ref_id": "9.395.57.036",
+        "ean": "",
+        "precio": 59.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Titano"
+        ],
+        "sku_ano": [
+          "2024 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Titano"
+      ],
+      "years": [
+        {
+          "start": 2024,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Titano",
+          "tokens": [
+            "titano"
+          ],
+          "years": [
+            {
+              "start": 2024,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Titano ['2024 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Titano 2024-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-borracha-vedacao/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168743/RK1372.jpg?v=639237971706430000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-borracha-vedacao/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "612",
+    "handle": "kit-suporte-santo-antonio-dakota-titano-keko",
+    "linkText": "kit-suporte-santo-antonio-dakota-titano-keko",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-dakota-titano-keko/p",
+    "nombre": "Kit de soporte Santo Antonio Original Dakota y Titano Keko",
+    "nombre_original": "Kit Suporte Santo Antônio Original Dakota e Titano Keko",
+    "sku": "KITSUDAK",
+    "skus": [
+      "KITSUDAK",
+      "9.395.76.037",
+      "K0303"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte para Instalación del Santo Antonio Keko na Capota rígida retráctil Dakota y Titano.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 299.0,
+      "moneda": "BRL",
+      "texto": "R$ 299.00"
+    },
+    "variantes": [
+      {
+        "id": "1728",
+        "titulo": "Kit Suporte para Santo Antônio Original Dakota para Capota Rígida Retrátil Keko K0303",
+        "sku": "K0303",
+        "ref_id": "9.395.76.037",
+        "ean": "7908878003761",
+        "precio": 299.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Dakota"
+        ],
+        "sku_ano": [
+          "2026 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Dakota"
+      ],
+      "years": [
+        {
+          "start": 2026,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Dakota",
+          "tokens": [
+            "dakota"
+          ],
+          "years": [
+            {
+              "start": 2026,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Dakota ['2026 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Dakota 2026",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-dakota-titano-keko/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167758/Sem-Titulo-1.jpg?v=639148169622670000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-dakota-titano-keko/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "607",
+    "handle": "conjunto-esteira-capota-rigida-retratil-rkestcrr",
+    "linkText": "conjunto-esteira-capota-rigida-retratil-rkestcrr",
+    "url": "https://www.keko.com.br/conjunto-esteira-capota-rigida-retratil-rkestcrr/p",
+    "nombre": "Conjunto Banda Capota rígida retráctil",
+    "nombre_original": "Conjunto Esteira Capota Rígida Retrátil",
+    "sku": "RKESTCRR",
+    "skus": [
+      "RKESTCRR",
+      "9.276.39.623AT",
+      "RK1062"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Item de Reposición Conjunto Banda Capota rígida retráctil",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 3346.0,
+      "moneda": "BRL",
+      "texto": "R$ 3346.00"
+    },
+    "variantes": [
+      {
+        "id": "1715",
+        "titulo": "Conjunto Esteira Capota Rígida Retrátil Automática RAM Classic 2022 a 2026 Keko RK1062",
+        "sku": "RK1062",
+        "ref_id": "9.276.39.623AT",
+        "ean": "7898732989549",
+        "precio": 3346.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Classic"
+        ],
+        "sku_ano": [
+          "2022 em diante"
+        ],
+        "sku_version": [
+          "Sem Rambox"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Classic"
+      ],
+      "years": [
+        {
+          "start": 2022,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Classic",
+          "tokens": [
+            "classic"
+          ],
+          "years": [
+            {
+              "start": 2022,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Classic ['2022 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Classic 2022-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/conjunto-esteira-capota-rigida-retratil-rkestcrr/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167468/Sem-Titulo-1.jpg?v=639076196477070000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/conjunto-esteira-capota-rigida-retratil-rkestcrr/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "589",
+    "handle": "reposicao-ponteira-lado-esquerdo-rampage",
+    "linkText": "reposicao-ponteira-lado-esquerdo-rampage",
+    "url": "https://www.keko.com.br/reposicao-ponteira-lado-esquerdo-rampage/p",
+    "nombre": "Puntera Estribo My Way RAM Rampage - Lado Izquierdo",
+    "nombre_original": "Ponteira Estribo My Way RAM Rampage - Lado Esquerdo",
+    "sku": "RKEMWRE",
+    "skus": [
+      "RKEMWRE",
+      "9.230.00.016",
+      "RK0111"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 102.0,
+      "moneda": "BRL",
+      "texto": "R$ 102.00"
+    },
+    "variantes": [
+      {
+        "id": "1449",
+        "titulo": "Ponteira Estribo My Way RAM Rampage Lado Esquerdo RK0111",
+        "sku": "RK0111",
+        "ref_id": "9.230.00.016",
+        "ean": "7908878000333",
+        "precio": 102.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Rampage ['2023 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2023-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteira-lado-esquerdo-rampage/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167444/Ponteira Estribo My Way RAM Rampage - Lado Esquerdo.png?v=639070146003570000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-ponteira-lado-esquerdo-rampage/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "588",
+    "handle": "ponteira-estribo-my-way-rampage-direito",
+    "linkText": "ponteira-estribo-my-way-rampage-direito",
+    "url": "https://www.keko.com.br/ponteira-estribo-my-way-rampage-direito/p",
+    "nombre": "Puntera Estribo My Way RAM Rampage - Lado Derecho",
+    "nombre_original": "Ponteira Estribo My Way RAM Rampage - Lado Direito",
+    "sku": "RKEMWRD",
+    "skus": [
+      "RKEMWRD",
+      "9.230.00.017",
+      "RK0215"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 102.0,
+      "moneda": "BRL",
+      "texto": "R$ 102.00"
+    },
+    "variantes": [
+      {
+        "id": "1534",
+        "titulo": "Ponteira Estribo My Way RAM Rampage Lado Direito RK0215",
+        "sku": "RK0215",
+        "ref_id": "9.230.00.017",
+        "ean": "A Definir",
+        "precio": 102.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Rampage ['2023 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2023-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-estribo-my-way-rampage-direito/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167421/Design sem nome.png?v=639068391634900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/ponteira-estribo-my-way-rampage-direito/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "545",
+    "handle": "capota-maritima-grx-compactas",
+    "linkText": "capota-maritima-grx-compactas",
+    "url": "https://www.keko.com.br/capota-maritima-grx-compactas/p",
+    "nombre": "Capota marítima GRX pickups compactas | GENERACIÓN 1",
+    "nombre_original": "Capota Marítima GRX Picapes Compactas | GERAÇÃO 1",
+    "sku": "GRXCOMP",
+    "skus": [
+      "GRXCOMP",
+      "9.056.12.000GR",
+      "9.230.12.011GR",
+      "9.042.12.013GR",
+      "9.042.12.015GR",
+      "9.042.12.018",
+      "K0144"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capotas marítimas",
+    "colecciones": [
+      "Capotas Marítimas",
+      "Capota marítima GRX pickups compactas | GENERACIÓN 1"
+    ],
+    "descripcion": "Quando você escolhe a Capota marítima GRX, está investindo en um acessório de qualidade con excelente custo-benefício.\nAlém de proteger sua carga con eficiência, ela é projetada para durar y facilitar sua vida. Confira o que ela pode lhe oferecer:\n- Autorregulación de la lona: a Capota possui um sistema integrado de controle de tensão que mantém a lona sempre ajustada, evitando ruídos o folgas independentemente de las variações de temperatura, seja en climas quentes o frios.\n- Melhor Sellado: a linha de Capotas GRX conta con um bulbo de Sellado extra na parte traseira, que auxilia na Sellado contra umidade y poeira, mesmo en condições desafiadoras.\n- Sistema de apertura seguro: não é possível abrir a capota con a tampa de la Caja de carga fechada.\n- Tecnología en grafeno: os componentes para travamento de la capota são produzidos en plástico con adição de grafeno. Esta solução oferece a robustez necessária para suportar as demandas del dia-a-dia y proporcionar uma auto lubrificação que reduz o desgaste y prolonga a vida útil del produto.\n- Traviesas fijadas a la lona: con um design funcional y inteligente, as Traviesas são costuradas diretamente na lona, permitindo que se enrolam junto con ela durante o uso. Essa solução simplifica o manuseio, garantindo praticidade y eficiência no dia a dia.\n- Instalación facilitada: pode ser instalada pelo próprio cliente, sin complicações. Tudo o que você precisa é de uma parafusadeira con cachimbo de 10mm y pronto! en cerca de 10 minutos, sua capota estará perfeitamente ajustada, pronta para uso. Simples assim!\n- Manutenção simples: caso alguma peça precise ser substituída, não é necessário trocar a capota inteira. A Keko oferece Ítems de reposición exclusivos, garantindo agilidade na solução y economia no seu bolso. Confira no link abaixo os componentes disponíveis: https://www.keko.con.br/pt/itens-de-reposicao/reposicao-capotas-maritimas",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "Destacados del producto": "Autorregulación de la lona; Melhor Sellado; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona"
+    },
+    "precio": {
+      "valor_min": 954.0,
+      "valor_max": 1190.0,
+      "moneda": "BRL",
+      "texto": "R$ 954.00 – R$ 1190.00"
+    },
+    "variantes": [
+      {
+        "id": "327",
+        "titulo": "Capota Marítima GRX Montana 2023 a 2026 Keko KC244GR",
+        "sku": "9.056.12.000GR",
+        "ref_id": "9.056.12.000GR",
+        "ean": "",
+        "precio": 954.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Chevrolet"
+        ],
+        "sku_modelo": [
+          "Montana"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      },
+      {
+        "id": "396",
+        "titulo": "Capota Marítima GRX Rampage 2023 a 2026 Keko KC253GR",
+        "sku": "9.230.12.011GR",
+        "ref_id": "9.230.12.011GR",
+        "ean": "7898732989853",
+        "precio": 1112.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      },
+      {
+        "id": "1279",
+        "titulo": "Capota Marítima GRX Strada sem Santo Antônio CD 2021 a 2025 Keko KC251GR",
+        "sku": "9.042.12.013GR",
+        "ref_id": "9.042.12.013GR",
+        "ean": "A Definir",
+        "precio": 999.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Sem Santo Antônio"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1281",
+        "titulo": "Capota Marítima GRX Strada com Santo Antônio CD 2021 a 2025 Keko KC257GR",
+        "sku": "9.042.12.015GR",
+        "ref_id": "9.042.12.015GR",
+        "ean": "7908878000487",
+        "precio": 999.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Com Santo Antônio"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1433",
+        "titulo": "Capota Marítima GRX Strada Plus 2021 a 2025 Keko K0144",
+        "sku": "K0144",
+        "ref_id": "9.042.12.018",
+        "ean": "7908878000708",
+        "precio": 1190.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada Plus"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "CHEVROLET",
+        "RAM",
+        "FIAT"
+      ],
+      "models": [
+        "Montana",
+        "Rampage",
+        "Strada",
+        "Strada Plus"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        },
+        {
+          "start": 2021,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "CHEVROLET",
+          "model": "Montana",
+          "tokens": [
+            "montana"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada Plus",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "CHEVROLET Montana ['2023 em diante']",
+        "RAM Rampage ['2023 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada Plus ['2021 em diante']"
+      ]
+    },
+    "compatibilidad": "CHEVROLET Montana 2023-ON | RAM Rampage 2023-ON | FIAT Strada 2021-ON | FIAT Strada Plus 2021-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/capota-maritima-grx-compactas/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/155463/KC203GR_1.jpg?v=638761954456070000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/155464/KC203GR_2.jpg?v=638761954456070000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155465/KC203GR_3.jpg?v=638761954456070000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155466/KC203GR_4.jpg?v=638761954456230000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155467/KC203GR_5.jpg?v=638761954456230000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155469/KC203GR_7.jpg?v=638761954456230000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159652/KC253GR_1.jpg?v=638760236863100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159653/KC253GR_2.jpg?v=638761954456530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159654/KC253GR_3.jpg?v=638761954456530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159655/KC253GR_4.jpg?v=638761954456530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159656/KC253GR_5.jpg?v=638761954456530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159658/KC253GR_7.jpg?v=638761954456700000"
+    ],
+    "source_url": "https://www.keko.com.br/capota-maritima-grx-compactas/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "533",
+    "handle": "kit-suporte-santo-antonio-rampage-keko",
+    "linkText": "kit-suporte-santo-antonio-rampage-keko",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage-keko/p",
+    "nombre": "Kit de soporte Santo Antonio Rampage Keko",
+    "nombre_original": "Kit Suporte Santo Antônio Rampage Keko",
+    "sku": "KITSUPRK",
+    "skus": [
+      "KITSUPRK",
+      "9.230.57.004",
+      "K0131"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte para Instalación del Santo Antonio Keko na Capota rígida retráctil de la Rampage.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 245.0,
+      "moneda": "BRL",
+      "texto": "R$ 245.00"
+    },
+    "variantes": [
+      {
+        "id": "1284",
+        "titulo": "Kit Suporte Santo Antônio para Capota Rígida Retrátil Rampage 2023 em diante Keko K0131",
+        "sku": "K0131",
+        "ref_id": "9.230.57.004",
+        "ean": "7908878000265",
+        "precio": 245.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Rampage ['2023 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2023-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-rampage-keko/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162008/K0131_1.jpg.jpg?v=638799932200730000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage-keko/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "530",
+    "handle": "reposicao-conjunto-montado-santo-antonio-strada-plus-preto",
+    "linkText": "reposicao-conjunto-montado-santo-antonio-strada-plus-preto",
+    "url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-antonio-strada-plus-preto/p",
+    "nombre": "Conjunto Montado Santo Antonio Sunset Strada Plus Negro",
+    "nombre_original": "Conjunto Montado Santo Antônio Sunset Strada Plus Preto",
+    "sku": "RK0213",
+    "skus": [
+      "RK0213",
+      "9.042.05.012PR",
+      "RK0213PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Montado Santo Antonio Sunset Strada Plus Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 858.0,
+      "moneda": "BRL",
+      "texto": "R$ 858.00"
+    },
+    "variantes": [
+      {
+        "id": "1165",
+        "titulo": "Conjunto  Montado Santo Sunset 2 Strada Plus 2021 a 2024 Keko RK0213PR  Preto",
+        "sku": "RK0213PR",
+        "ref_id": "9.042.05.012PR",
+        "ean": "7898133779121",
+        "precio": 858.0,
+        "disponible": true,
+        "sku_montadora": [],
+        "sku_modelo": [],
+        "sku_ano": [],
+        "sku_version": [],
+        "sku_cabine": []
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "strada"
+      ],
+      "years": [],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [],
+          "source": "name"
+        }
+      ],
+      "snippets": [
+        "FIAT strada (nombre)"
+      ]
+    },
+    "compatibilidad": "FIAT strada",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-montado-santo-antonio-strada-plus-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167482/_RK0213PR  Preto.png?v=639080485243300000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-antonio-strada-plus-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "527",
+    "handle": "reposicao-conjunto-montado-santo-k1-2-pol-preto",
+    "linkText": "reposicao-conjunto-montado-santo-k1-2-pol-preto",
+    "url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1-2-pol-preto/p",
+    "nombre": "Reposición Conjunto Montado Santo Antonio K1 2 Pol Negro",
+    "nombre_original": "Reposição Conjunto Montado Santo Antônio K1 2 Pol Preto",
+    "sku": "RK0219",
+    "skus": [
+      "RK0219",
+      "9.042.05.010PR",
+      "RK0211PR",
+      "9.226.05.029PR",
+      "RK0219PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Reposición Conjunto Montado Santo Antonio K1 2 Pol Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 858.0,
+      "moneda": "BRL",
+      "texto": "R$ 858.00"
+    },
+    "variantes": [
+      {
+        "id": "776",
+        "titulo": "Conjunto Montado Santo K1 2 Strada Plus 2021 a 2024 Keko RK0211PR",
+        "sku": "RK0211PR",
+        "ref_id": "9.042.05.010PR",
+        "ean": "7898133779107",
+        "precio": 858.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      },
+      {
+        "id": "1162",
+        "titulo": "Conjunto Montado Santo Antônio K1 2 Toro 2016 a 2024 Keko RK0219PR Preto",
+        "sku": "RK0219PR",
+        "ref_id": "9.226.05.029PR",
+        "ean": "7898133779183",
+        "precio": 858.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Strada",
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2021,
+          "end": 2026
+        },
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Strada 2021-ON | FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-montado-santo-k1-2-pol-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167484/RK0211PR.png?v=639080489439200000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/167485/RK0211PR.png?v=639080489586900000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1-2-pol-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "508",
+    "handle": "reposicao-ponteiras-para-estribo-tubular-k1",
+    "linkText": "reposicao-ponteiras-para-estribo-tubular-k1",
+    "url": "https://www.keko.com.br/reposicao-ponteiras-para-estribo-tubular-k1/p",
+    "nombre": "Punteras para Estribo tubular K1",
+    "nombre_original": "Ponteiras para Estribo Tubular K1",
+    "sku": "RECPONT",
+    "skus": [
+      "RECPONT",
+      "9.000.00.005",
+      "RK0116",
+      "9.000.00.003",
+      "RK0114"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Punteras para Estribo tubular K1 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 72.0,
+      "moneda": "BRL",
+      "texto": "R$ 72.00"
+    },
+    "variantes": [
+      {
+        "id": "866",
+        "titulo": "Ponteiras para Estribo Tubular K1 RK0116",
+        "sku": "RK0116",
+        "ref_id": "9.000.00.005",
+        "ean": "",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "1302",
+        "titulo": "Ponteiras para Estribo Tubular 76X120 Keko RK0114",
+        "sku": "RK0114",
+        "ref_id": "9.000.00.003",
+        "ean": "7908878000197",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1454",
+        "titulo": "Ponteiras para Estribo Tubular 76X120 Keko Strada CD/Plus 2021 em diante RK0114",
+        "sku": "RK0114",
+        "ref_id": "",
+        "ean": "7908878000197",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla e Cabine Plus"
+        ]
+      },
+      {
+        "id": "1455",
+        "titulo": "Ponteiras para Estribo Tubular 76X120 Keko Rampage 2023 em diante RK0114",
+        "sku": "RK0114",
+        "ref_id": "",
+        "ean": "7908878000197",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      },
+      {
+        "id": "1456",
+        "titulo": "Ponteiras para Estribo Tubular 76X120 Keko Duster Oroch 2015 em diante RK0114",
+        "sku": "RK0114",
+        "ref_id": "",
+        "ean": "7908878000197",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Renault"
+        ],
+        "sku_modelo": [
+          "Duster Oroch"
+        ],
+        "sku_ano": [
+          "2015 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT",
+        "RAM",
+        "RENAULT"
+      ],
+      "models": [
+        "Toro",
+        "Strada",
+        "Rampage",
+        "Duster Oroch"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        },
+        {
+          "start": 2021,
+          "end": 2026
+        },
+        {
+          "start": 2023,
+          "end": 2026
+        },
+        {
+          "start": 2015,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "RENAULT",
+          "model": "Duster Oroch",
+          "tokens": [
+            "oroch"
+          ],
+          "years": [
+            {
+              "start": 2015,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "SKU 866: Universal",
+        "FIAT Toro ['2016 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "RAM Rampage ['2023 em diante']",
+        "RENAULT Duster Oroch ['2015 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON | FIAT Strada 2021-ON | RAM Rampage 2023-ON | RENAULT Duster Oroch 2015-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteiras-para-estribo-tubular-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167495/Ponteiras Estribo Integral K1 -3-.png?v=639080513690900000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/160923/RK0114.jpg?v=638603648781400000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-ponteiras-para-estribo-tubular-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "506",
+    "handle": "kit-suporte-santo-antonio-rampage",
+    "linkText": "kit-suporte-santo-antonio-rampage",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage/p",
+    "nombre": "Kit de soporte Santo Antonio Original Rambar Rampage",
+    "nombre_original": "Kit Suporte Santo Antônio Original Rambar Rampage",
+    "sku": "KITSUPSU",
+    "skus": [
+      "KITSUPSU",
+      "9.230.57.230",
+      "K0064"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte para Instalación del Santo Antonio Original Rambar na Capota rígida retráctil de la Rampage.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 279.0,
+      "moneda": "BRL",
+      "texto": "R$ 279.00"
+    },
+    "variantes": [
+      {
+        "id": "831",
+        "titulo": "Kit Suporte Santo Antônio Original Rampage para Capota Rígida Retrátil K0064",
+        "sku": "K0064",
+        "ref_id": "9.230.57.230",
+        "ean": "7908878000036",
+        "precio": 279.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2023 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2023,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2023,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Rampage ['2023 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2023-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-rampage/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162007/K0064_1.jpg.jpg?v=638799925906570000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "501",
+    "handle": "reposicao-conjunto-capa-lateral-direita-santo-k1-2pol",
+    "linkText": "reposicao-conjunto-capa-lateral-direita-santo-k1-2pol",
+    "url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-direita-santo-k1-2pol/p",
+    "nombre": "Conjunto Capa Lateral Direita Santo Antonio K1 2 Pol.",
+    "nombre_original": "Conjunto Capa Lateral Direita Santo Antônio K1 2 Pol.",
+    "sku": "RKSACL2D",
+    "skus": [
+      "RKSACL2D",
+      "9.226.05.027PR",
+      "RK0151",
+      "9.226.05.033PR",
+      "RK0652"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Capa Lateral Direita Santo Antonio K1 2 Pol Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor_min": 77.0,
+      "valor_max": 159.0,
+      "moneda": "BRL",
+      "texto": "R$ 77.00 – R$ 159.00"
+    },
+    "variantes": [
+      {
+        "id": "447",
+        "titulo": "Capa lateral Direita Santo Antônio K1 2 Polegadas Keko RK0151",
+        "sku": "RK0151",
+        "ref_id": "9.226.05.027PR",
+        "ean": "7898133779077",
+        "precio": 77.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "1543",
+        "titulo": "Conjunto Capa Lateral Santo Antônio K1 2\" Toro 2016 a 2025 Keko RK0652 Preto",
+        "sku": "RK0652",
+        "ref_id": "9.226.05.033PR",
+        "ean": "7898732985565",
+        "precio": 159.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "SKU 447: Universal",
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-capa-lateral-direita-santo-k1-2pol/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161230/RK0151.jpg?v=638627185559300000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166574/1.jpg?v=638956087242430000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-direita-santo-k1-2pol/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "480",
+    "handle": "reposicao-conjunto-gvt-santo-antonio-k1-amarok",
+    "linkText": "reposicao-conjunto-gvt-santo-antonio-k1-amarok",
+    "url": "https://www.keko.com.br/reposicao-conjunto-gvt-santo-antonio-k1-amarok/p",
+    "nombre": "Reposición Conjunto Rejilla de vidrio trasero para Santo Antonio K1",
+    "nombre_original": "Reposição Conjunto Grade do Vidro Traseiro para Santo Antônio K1",
+    "sku": "RK0203",
+    "skus": [
+      "RK0203",
+      "9.101.05.018PR",
+      "RK0208PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Reposición Conjunto Rejilla de vidrio trasero para Santo Antonio K1 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 117.0,
+      "moneda": "BRL",
+      "texto": "R$ 117.00"
+    },
+    "variantes": [
+      {
+        "id": "730",
+        "titulo": "Conjunto Grade de Vidro Traseira Santo Antônio K1 S10 2012 em diante RK0208PR",
+        "sku": "RK0208PR",
+        "ref_id": "9.101.05.018PR",
+        "ean": "7898133778476",
+        "precio": 117.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Chevrolet"
+        ],
+        "sku_modelo": [
+          "S10"
+        ],
+        "sku_ano": [
+          "2012 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "CHEVROLET"
+      ],
+      "models": [
+        "S10"
+      ],
+      "years": [
+        {
+          "start": 2012,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "CHEVROLET",
+          "model": "S10",
+          "tokens": [
+            "s10",
+            "s-10",
+            "s 10"
+          ],
+          "years": [
+            {
+              "start": 2012,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "CHEVROLET S10 ['2012 em diante']"
+      ]
+    },
+    "compatibilidad": "CHEVROLET S10 2012-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-gvt-santo-antonio-k1-amarok/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161201/RK0208PR.jpg?v=638627138136470000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-gvt-santo-antonio-k1-amarok/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "473",
+    "handle": "reposicao-conjunto-montado-santo-sunset-strada-plus",
+    "linkText": "reposicao-conjunto-montado-santo-sunset-strada-plus",
+    "url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-sunset-strada-plus/p",
+    "nombre": "Reposición Conjunto Montado para Santo Antonio Sunset Strada Plus",
+    "nombre_original": "Reposição Conjunto Montado para Santo Antônio Sunset Strada Plus",
+    "sku": "RK0212",
+    "skus": [
+      "RK0212",
+      "9.042.05.012CR",
+      "RK0212CR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Reposición Conjunto Montado para Santo Antonio Sunset Strada Plus Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1201.0,
+      "moneda": "BRL",
+      "texto": "R$ 1201.00"
+    },
+    "variantes": [
+      {
+        "id": "777",
+        "titulo": "Conjunto Montado Santo Sunset 2 Strada Plus 2021 a 2024 Keko RK0212CR",
+        "sku": "RK0212CR",
+        "ref_id": "9.042.05.012CR",
+        "ean": "7898133779114",
+        "precio": 1201.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Strada"
+      ],
+      "years": [
+        {
+          "start": 2021,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Strada ['2021 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Strada 2021-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-montado-santo-sunset-strada-plus/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167491/RK0211PR -7-.png?v=639080503056730000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-sunset-strada-plus/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "472",
+    "handle": "reposicao-conjunto-montado-santo-k1",
+    "linkText": "reposicao-conjunto-montado-santo-k1",
+    "url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1/p",
+    "nombre": "Reposición Conjunto Montado para Santo Antonio K1 2 Pol Cromo",
+    "nombre_original": "Reposição Conjunto Montado para Santo Antônio K1 2 Pol Cromo",
+    "sku": "RK0210",
+    "skus": [
+      "RK0210",
+      "9.042.05.010CR",
+      "RK0210CR",
+      "9.226.05.029CR",
+      "RK0218CR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Reposición Conjunto Montado para Santo Antonio K1 2 Pol Cromo Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1201.0,
+      "moneda": "BRL",
+      "texto": "R$ 1201.00"
+    },
+    "variantes": [
+      {
+        "id": "773",
+        "titulo": "Conjunto Montado Santo K1 2 Polegadas Strada Plus 2021 em diante RK0210CR",
+        "sku": "RK0210CR",
+        "ref_id": "9.042.05.010CR",
+        "ean": "7898133779091",
+        "precio": 1201.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      },
+      {
+        "id": "1118",
+        "titulo": "Conjunto Montado Santo Antônio K1 2 Toro 2016 em diante Keko RK0218CR Cromo",
+        "sku": "RK0218CR",
+        "ref_id": "9.226.05.029CR",
+        "ean": "7898133779176",
+        "precio": 1201.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Strada",
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2021,
+          "end": 2026
+        },
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Strada 2021-ON | FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-montado-santo-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161196/RK0210CR.jpg?v=638895853027100000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "470",
+    "handle": "reposicao-base-santo-strada-plus",
+    "linkText": "reposicao-base-santo-strada-plus",
+    "url": "https://www.keko.com.br/reposicao-base-santo-strada-plus/p",
+    "nombre": "Base  para Santo Antonio K1 2 Pol",
+    "nombre_original": "Base  para Santo Antônio K1 2 Pol",
+    "sku": "RK0079",
+    "skus": [
+      "RK0079",
+      "9.042.05.006",
+      "9.042.05.007",
+      "RK0080",
+      "9.226.05.025",
+      "RK0085"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Base para Santo Antonio K1 2 Pol Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 199.0,
+      "moneda": "BRL",
+      "texto": "R$ 199.00"
+    },
+    "variantes": [
+      {
+        "id": "774",
+        "titulo": "Bases Santo Antônio K1 2 polegadas Strada Plus 2021 em diante RK0079",
+        "sku": "RK0079",
+        "ref_id": "9.042.05.006",
+        "ean": "7898133778711",
+        "precio": 199.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      },
+      {
+        "id": "775",
+        "titulo": "Bases Santo Antônio K1 2 polegadas Strada Cabine Dupla 2021 em diante RK0080",
+        "sku": "RK0080",
+        "ref_id": "9.042.05.007",
+        "ean": "7898133778728",
+        "precio": 199.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      },
+      {
+        "id": "1117",
+        "titulo": "Bases Santo Antônio K1 2 Toro 2016 em diante RK0085",
+        "sku": "RK0085",
+        "ref_id": "9.226.05.025",
+        "ean": "7898133779213",
+        "precio": 199.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Strada",
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2021,
+          "end": 2026
+        },
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Strada 2021-ON | FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-base-santo-strada-plus/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161223/RK0079.jpg?v=638895854460070000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161224/RK0080.jpg?v=638627182252030000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-base-santo-strada-plus/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "463",
+    "handle": "extensao-para-santo-antonio-2-pol-cromo",
+    "linkText": "extensao-para-santo-antonio-2-pol-cromo",
+    "url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-cromo/p",
+    "nombre": "Extensão para Santo Antonio 2 Pol Cromo",
+    "nombre_original": "Extensão para Santo Antônio 2 Pol Cromo",
+    "sku": "EXTSTOCR",
+    "skus": [
+      "EXTSTOCR",
+      "9.226.05.022CR",
+      "K003CR",
+      "9.042.05.002CR",
+      "K146CR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Santo Antonio",
+    "colecciones": [
+      "Santo Antonio",
+      "Accesorios para Santo Antonio"
+    ],
+    "descripcion": "con design discreto y funcional, a Extensão protege as bordas laterais de la Caja de carga durante o transporte de cargas, tudo isso sin interferir na estrutura original del veículo.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "Acabamento": "Cromo"
+    },
+    "precio": {
+      "valor": 422.0,
+      "moneda": "BRL",
+      "texto": "R$ 422.00"
+    },
+    "variantes": [
+      {
+        "id": "132",
+        "titulo": "Extensão Santo Antônio K1 2\" Toro 2016 a 2024 Keko K003CR Cromo",
+        "sku": "K003CR",
+        "ref_id": "9.226.05.022CR",
+        "ean": "7898133776489",
+        "precio": 422.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      },
+      {
+        "id": "333",
+        "titulo": "Extensão Santo Antônio 2\" Strada Plus 2021 a 2024 K146CR Cromo",
+        "sku": "K146CR",
+        "ref_id": "9.042.05.002CR",
+        "ean": "7898133776090",
+        "precio": 422.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro",
+        "Strada"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        },
+        {
+          "start": 2021,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']",
+        "FIAT Strada ['2021 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON | FIAT Strada 2021-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/extensao-para-santo-antonio-2-pol-cromo/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/156421/imagem.jpg?v=638433599132500000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/156425/imagem1.jpg?v=638433599145130000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/156511/imagem.jpg?v=638433599503100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/156516/imagem1.jpg?v=638433599518170000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/156520/imagem2.jpg?v=638433599534800000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/156525/imagem3.jpg?v=638433599551170000"
+    ],
+    "source_url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-cromo/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "452",
+    "handle": "extensao-para-santo-antonio-2-pol-preto",
+    "linkText": "extensao-para-santo-antonio-2-pol-preto",
+    "url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-preto/p",
+    "nombre": "Extensão para Santo Antonio 2 Pol Negro",
+    "nombre_original": "Extensão para Santo Antônio 2 Pol Preto",
+    "sku": "EXTSTOPR",
+    "skus": [
+      "EXTSTOPR",
+      "9.226.05.022PR",
+      "K003PR",
+      "9.042.05.002PR",
+      "K146PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Santo Antonio",
+    "colecciones": [
+      "Santo Antonio",
+      "Accesorios para Santo Antonio"
+    ],
+    "descripcion": "con design discreto y funcional, a Extensão protege as bordas laterais de la Caja de carga durante o transporte de cargas, tudo isso sin interferir na estrutura original del veículo.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "Acabamento": "Negro"
+    },
+    "precio": {
+      "valor": 327.0,
+      "moneda": "BRL",
+      "texto": "R$ 327.00"
+    },
+    "variantes": [
+      {
+        "id": "72",
+        "titulo": "Extensão Santo Antônio K1 2\" Toro 2016 a 2024 Keko K003PR Preto",
+        "sku": "K003PR",
+        "ref_id": "9.226.05.022PR",
+        "ean": "7898133776496",
+        "precio": 327.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      },
+      {
+        "id": "195",
+        "titulo": "Extensão Santo Antônio 2\" Strada Plus 2021 a 2024 Keko K146PR Preto",
+        "sku": "K146PR",
+        "ref_id": "9.042.05.002PR",
+        "ean": "7898133776106",
+        "precio": 327.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro",
+        "Strada"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        },
+        {
+          "start": 2021,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        },
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']",
+        "FIAT Strada ['2021 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON | FIAT Strada 2021-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/extensao-para-santo-antonio-2-pol-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/156429/imagem.jpg?v=638433599159270000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/156433/imagem1.jpg?v=639227439148970000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/156528/imagem.jpg?v=638433599568300000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159200/K146PR_2.jpg?v=639227439149570000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159201/K146PR_3.jpg?v=639227439149730000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159202/K146PR_4.jpg?v=639227439149730000"
+    ],
+    "source_url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "449",
+    "handle": "kit-suporte-santo-antonio-toro-ranch",
+    "linkText": "kit-suporte-santo-antonio-toro-ranch",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-ranch/p",
+    "nombre": "Kit de soporte Santo Antonio Original Toro Ranch",
+    "nombre_original": "Kit Suporte Santo Antônio Original Toro Ranch",
+    "sku": "KITSPSTT",
+    "skus": [
+      "KITSPSTT",
+      "9.226.39.000PR",
+      "K267PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte para Instalación del Santo Antonio Original Toro Ranch na Capota rígida retráctil de la Toro Ranch.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+    },
+    "precio": {
+      "valor": 279.0,
+      "moneda": "BRL",
+      "texto": "R$ 279.00"
+    },
+    "variantes": [
+      {
+        "id": "230",
+        "titulo": "Kit Suporte para Santo Antônio Original Toro Ranch para Capota Rígida Retrátil Keko K267PR",
+        "sku": "K267PR",
+        "ref_id": "9.226.39.000PR",
+        "ean": "7898133778230",
+        "precio": 279.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "Ranch"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-toro-ranch/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159736/K267PR_1.jpg?v=638461028418030000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159737/K267PR_2.jpg?v=638461039352200000"
+    ],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-ranch/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "446",
+    "handle": "kit-suporte-santo-antonio-toro-2-pol",
+    "linkText": "kit-suporte-santo-antonio-toro-2-pol",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-2-pol/p",
+    "nombre": "Kit de soporte para Santo Antonio 2 Pol",
+    "nombre_original": "Kit Suporte para Santo Antônio 2 Pol",
+    "sku": "KITSPST2",
+    "skus": [
+      "KITSPST2",
+      "9.226.39.001PR",
+      "K266PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte para Santo Antonio 2 Pol Keko.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+    },
+    "precio": {
+      "valor": 245.0,
+      "moneda": "BRL",
+      "texto": "R$ 245.00"
+    },
+    "variantes": [
+      {
+        "id": "209",
+        "titulo": "Kit Suporte Santo Antônio Toro K1 2\" para Capota Rígida Retrátil Keko K266PR",
+        "sku": "K266PR",
+        "ref_id": "9.226.39.001PR",
+        "ean": "7898133778247",
+        "precio": 245.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-toro-2-pol/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159731/K266PR_1.jpg?v=638460247574070000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159732/K266PR_2.jpg?v=638895873214330000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159733/K266PR_3.jpg?v=638895873216830000"
+    ],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-2-pol/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "429",
+    "handle": "santo-antonio-sunset-2-pol-cromo",
+    "linkText": "santo-antonio-sunset-2-pol-cromo",
+    "url": "https://www.keko.com.br/santo-antonio-sunset-2-pol-cromo/p",
+    "nombre": "Santo Antonio Sunset 2 Pol Cromo",
+    "nombre_original": "Santo Antônio Sunset 2 Pol Cromo",
+    "sku": "STOSUNCR",
+    "skus": [
+      "STOSUNCR",
+      "9.042.05.001CR",
+      "K145CR",
+      "9.042.05.004CR",
+      "K153CR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Santo Antonio",
+    "colecciones": [
+      "Santo Antonio",
+      "Santo Antonio Sunset 2 Pol"
+    ],
+    "descripcion": "O Santo Antonio Sunset possui batentes limitadores en sua própria estrutura, que ajudam a evitar que a carga se movimente. con ele a sua carga fica mais segura y sua viagem mais tranquila. Desenvolvido en aço-carbono, material de alta qualidade que aumenta a durabilidade del acessório.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "Destacados del producto": "Auxilia no transporte de carga; con batentes limitadores; Fixação junto à furação original; Pintura padrão OEM; Possui espera para extensão",
+      "Material": "Aço carbono",
+      "Padrão de Pintura": "Automotivo",
+      "Acabamento": "Cromo",
+      "Dimensão Tubo": "2\"",
+      "Compatível con a Instalación de capotas": "Sim",
+      "Fixação lateral": "Nos pontos originais del veículo",
+      "Acompanha Rejilla de vidrio trasero": "Não",
+      "Instalación": "fácil",
+      "Garantía de fábrica": "3 anos"
+    },
+    "precio": {
+      "valor": 788.0,
+      "moneda": "BRL",
+      "texto": "R$ 788.00"
+    },
+    "variantes": [
+      {
+        "id": "567",
+        "titulo": "Santo Antônio Sunset 2\" Strada Plus 2021 a 2024 Keko K145CR",
+        "sku": "K145CR",
+        "ref_id": "9.042.05.001CR",
+        "ean": "7898133776021",
+        "precio": 788.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Plus"
+        ]
+      },
+      {
+        "id": "568",
+        "titulo": "Santo Antônio Sunset 2\" Strada CD 2021 a 2024 Keko K153CR",
+        "sku": "K153CR",
+        "ref_id": "9.042.05.004CR",
+        "ean": "7898133776144",
+        "precio": 788.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Strada"
+        ],
+        "sku_ano": [
+          "2021 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Strada"
+      ],
+      "years": [
+        {
+          "start": 2021,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Strada",
+          "tokens": [
+            "strada"
+          ],
+          "years": [
+            {
+              "start": 2021,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Strada ['2021 em diante']",
+        "FIAT Strada ['2021 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Strada 2021-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/santo-antonio-sunset-2-pol-cromo/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159210/K145CR_1.jpg?v=638434245474530000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159211/K145CR_2.jpg?v=639221323638500000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159212/K145CR_3.jpg?v=639221323638670000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155505/K153CR_1.jpg?v=638430102292970000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155506/K153CR_2.jpg?v=639221323638970000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155507/K153CR_3.jpg?v=639221323638970000"
+    ],
+    "source_url": "https://www.keko.com.br/santo-antonio-sunset-2-pol-cromo/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "401",
+    "handle": "reposicao-conjunto-dreno",
+    "linkText": "reposicao-conjunto-dreno",
+    "url": "https://www.keko.com.br/reposicao-conjunto-dreno/p",
+    "nombre": "Conjunto Dreno para Capota rígida retráctil",
+    "nombre_original": "Conjunto Dreno para Capota Rígida Retrátil",
+    "sku": "RKCRRCJD",
+    "skus": [
+      "RKCRRCJD",
+      "9.631.39.031",
+      "RK0057",
+      "9.226.39.608",
+      "RK0879"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Conjunto Dreno para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+    },
+    "precio": {
+      "valor": 151.0,
+      "moneda": "BRL",
+      "texto": "R$ 151.00"
+    },
+    "variantes": [
+      {
+        "id": "424",
+        "titulo": "Conjunto Kit Dreno Capota Rígida Retrátil Keko RK0057",
+        "sku": "RK0057",
+        "ref_id": "9.631.39.031",
+        "ean": "7898133776793",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "1477",
+        "titulo": "Conjunto Kit Dreno Capota Rígida Retrátil Rampage 2024 em diante Keko RK0879",
+        "sku": "RK0879",
+        "ref_id": "9.226.39.608",
+        "ean": "7898732987514",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Rampage"
+        ],
+        "sku_ano": [
+          "2024 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Rampage"
+      ],
+      "years": [
+        {
+          "start": 2024,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Rampage",
+          "tokens": [
+            "rampage"
+          ],
+          "years": [
+            {
+              "start": 2024,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "SKU 424: Universal",
+        "RAM Rampage ['2024 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Rampage 2024-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-dreno/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167378/SKU424-Conjunto Kit Dreno Capota Rigida Retratil Keko RK0057.png?v=639065134431770000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159875/RK0057.jpg?v=638895832817230000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-dreno/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "382",
+    "handle": "reposicao-conjunto-perfil-traseiro-capota-grx-pro",
+    "linkText": "reposicao-conjunto-perfil-traseiro-capota-grx-pro",
+    "url": "https://www.keko.com.br/reposicao-conjunto-perfil-traseiro-capota-grx-pro/p",
+    "nombre": "Conjunto Perfil trasero para Capota GRX",
+    "nombre_original": "Conjunto Perfil Traseiro para Capota GRX",
+    "sku": "RKCMCPT",
+    "skus": [
+      "RKCMCPT",
+      "RK0551"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Conjunto Perfil trasero para Capota GRX Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 133.0,
+      "moneda": "BRL",
+      "texto": "R$ 133.00"
+    },
+    "variantes": [
+      {
+        "id": "828",
+        "titulo": "Perfil Traseiro Capota GRX S10 2012 a 2025 Keko RK0551",
+        "sku": "RK0551",
+        "ref_id": "",
+        "ean": "7898732981147",
+        "precio": 133.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Chevrolet"
+        ],
+        "sku_modelo": [
+          "S10"
+        ],
+        "sku_ano": [
+          "2012 em diante"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "CHEVROLET"
+      ],
+      "models": [
+        "S10"
+      ],
+      "years": [
+        {
+          "start": 2012,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "CHEVROLET",
+          "model": "S10",
+          "tokens": [
+            "s10",
+            "s-10",
+            "s 10"
+          ],
+          "years": [
+            {
+              "start": 2012,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "CHEVROLET S10 ['2012 em diante']"
+      ]
+    },
+    "compatibilidad": "CHEVROLET S10 2012-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-perfil-traseiro-capota-grx-pro/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161321/RK0551.jpg?v=638627970607900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-perfil-traseiro-capota-grx-pro/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "25",
+    "handle": "sistema-de-escoamento",
+    "linkText": "sistema-de-escoamento",
+    "url": "https://www.keko.com.br/sistema-de-escoamento/p",
+    "nombre": "Sistema de drenaje Para Caja de carga",
+    "nombre_original": "Sistema de Escoamento Para Caçamba",
+    "sku": "SIST_ESC",
+    "skus": [
+      "SIST_ESC",
+      "9.226.63.700",
+      "K013"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Utilitarios",
+    "colecciones": [
+      "Utilitarios",
+      "Sistema de drenaje para Caja de carga",
+      "Juntos pelo Rio Grande del Sul"
+    ],
+    "descripcion": "O Sistema de drenaje de la Keko é composto por três peças plásticas instaladas na borda de la Caja de carga, que, juntas, formam um Conjunto de calhas responsável por coletar y direcionar a água de la chuva para fora del compartimento de carga, mantendo a bagagem seca y protegida. Além de las calhas, o sistema conta con Gomas de Sellado na Tapa trasera, garantindo ainda mais eficiência contra a entrada de água nessa região de la Caja de carga.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 meses",
+      "Destacados del producto": "Acompanha Kit Sellado de Tapa trasera; Design discreto; Menos infiltração; Producto patentado; Produto testado; Redução drástica de entrada de água",
+      "Material": "Polímero",
+      "Compatibilidade": "Toro",
+      "Requer ferramentas": "Sim",
+      "Instalación": "Média",
+      "Garantía de fábrica": "1 año"
+    },
+    "precio": {
+      "valor": 393.0,
+      "moneda": "BRL",
+      "texto": "R$ 393.00"
+    },
+    "variantes": [
+      {
+        "id": "151",
+        "titulo": "Sistema de Escoamento para Caçamba Toro 2016 a 2026 Keko K013",
+        "sku": "K013",
+        "ref_id": "9.226.63.700",
+        "ean": "7898133777547",
+        "precio": 393.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/sistema-de-escoamento/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167127/K013_1.jpg?v=638989771502000000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/167128/2.jpg?v=638989771502470000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167129/3.jpg?v=638989771502600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167130/K013_2.jpg?v=638989771502600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167131/K013_3.jpg?v=638989771502770000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167132/K013_5.jpg?v=638989771502770000"
+    ],
+    "source_url": "https://www.keko.com.br/sistema-de-escoamento/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "12",
+    "handle": "capota-maritima-grx-pro-black",
+    "linkText": "capota-maritima-grx-pro-black",
+    "url": "https://www.keko.com.br/capota-maritima-grx-pro-black/p",
+    "nombre": "Capota marítima GRX Pro Black pickups medianas y grandes | GENERACIÓN 1",
+    "nombre_original": "Capota Marítima GRX Pro Black Picapes Médias e Grandes | GERAÇÃO 1",
+    "sku": "CAP_GRXP",
+    "skus": [
+      "CAP_GRXP",
+      "9.276.12.003GR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capotas marítimas",
+    "colecciones": [
+      "Capotas Marítimas",
+      "Capota marítima GRX Pro Black pickups medianas y grandes| GENERACIÓN 1",
+      "Accesorios para Rampage",
+      "Accesorios Hilux"
+    ],
+    "descripcion": "Quando você escolhe a Capota marítima GRX Pro Black, está investindo en um acessório premium con tecnologia de ponta y design exclusivo.\nAlém de proteger sua carga con eficiência, ela é projetada para durar y facilitar sua vida.\nConfira o que ela pode lhe oferecer:\n- Design premium: acabamento totalmente Negro, incluindo a parte interna de la lona y componentes, para um visual elegante y diferenciado.\n- Autorregulación de la lona: a Capota possui um sistema integrado de controle de tensão que mantém a lona sempre ajustada, evitando ruídos o folgas, independentemente de las variações de temperatura, seja en climas quentes o frios.\n- Lona desmontable: a capota conta con um exclusivo sistema que permite remoção total de la lona de forma prática y eficiente.\n- Abertura facilitada: permite abrir con apenas uma mão, garantindo agilidade y praticidade.\n- Sellado Extra: a Capotas GRX Pro Black conta con um bulbo de Sellado extra na parte traseira y Sellado adicional na parte frontal, que auxilia na Sellado contra umidade y poeira, mesmo en condições desafiadoras.\n- Tecnología en grafeno: os componentes para travamento de la capota são produzidos en plástico con adição de grafeno. Esta solução oferece a robustez necessária para suportar as demandas del dia-a-dia y proporcionar uma auto lubrificação que reduz o desgaste y prolonga a vida útil del produto.\n- Traviesas fijadas a la lona: con um design funcional y inteligente, as Traviesas são costuradas diretamente na lona, permitindo que se enrolam junto con ela durante o uso. Essa solução simplifica o manuseio, garantindo praticidade.\n- Instalación facilitada: pode ser instalada pelo próprio cliente, sin complicações. Tudo o que você precisa é de uma parafusadeira con cachimbo de 10mm y pronto! en cerca de 10 minutos, sua capota estará perfeitamente ajustada, pronta para uso. Simples assim!\n- Manutenção simples: caso alguma peça precise ser substituída, não é necessário trocar a capota inteira. A Keko oferece Ítems de reposición exclusivos, garantindo agilidade na solução y economia no seu bolso. Confira no link abaixo os componentes disponíveis:",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "Destacados del producto": "All black; Autorregulación de la lona; Lona desmontable; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona; Sellado extra entre caja de carga y cabina",
+      "Autorregulación de la lona": "Sim",
+      "NCM": "CAP_GRXP",
+      "meli_shipping_mode": "ME2",
+      "Lona desmontable": "Sim",
+      "Traviesas fijadas a la lona": "Sim",
+      "Material de la estructura": "Alumínio pintado na cor preta",
+      "Material de fijación": "Polímero con adição de grafeno",
+      "Acabado interno de la lona": "Negro",
+      "Sistema de apertura": "Único central",
+      "Sellado delantero": "Sim",
+      "Sellado trasero": "Sim",
+      "Permite instalación de Santo Antonio": "Sim",
+      "Material": "Lona",
+      "Instalación": "fácil",
+      "Garantía de fábrica": "1 año"
+    },
+    "precio": {
+      "valor": 1597.0,
+      "moneda": "BRL",
+      "texto": "R$ 1597.00"
+    },
+    "variantes": [
+      {
+        "id": "260",
+        "titulo": "Capota Marítima GRX Pro Black RAM Classic 2022 a 2023 Keko KC240GR",
+        "sku": "9.276.12.003GR",
+        "ref_id": "9.276.12.003GR",
+        "ean": "7898732985299",
+        "precio": 1597.0,
+        "disponible": true,
+        "sku_montadora": [
+          "RAM"
+        ],
+        "sku_modelo": [
+          "Classic"
+        ],
+        "sku_ano": [
+          "2022 em diante"
+        ],
+        "sku_version": [
+          "Sem Rambox"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "RAM"
+      ],
+      "models": [
+        "Classic"
+      ],
+      "years": [
+        {
+          "start": 2022,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "RAM",
+          "model": "Classic",
+          "tokens": [
+            "classic"
+          ],
+          "years": [
+            {
+              "start": 2022,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "RAM Classic ['2022 em diante']"
+      ]
+    },
+    "compatibilidad": "RAM Classic 2022-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/capota-maritima-grx-pro-black/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/155449/KC240GR_12.jpg?v=638362515802930000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/155408/KC207GR_1.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155409/KC207GR_2.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155410/KC207GR_3.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155411/KC207GR_4.jpg?v=638761762739900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/155412/KC207GR_5.jpg?v=638761762739900000"
+    ],
+    "source_url": "https://www.keko.com.br/capota-maritima-grx-pro-black/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "8",
+    "handle": "grade-do-vidro-traseiro",
+    "linkText": "grade-do-vidro-traseiro",
+    "url": "https://www.keko.com.br/grade-do-vidro-traseiro/p",
+    "nombre": "Rejilla de vidrio trasero Para Fiat Toro",
+    "nombre_original": "Grade do Vidro Traseiro Para Fiat Toro",
+    "sku": "GR_VIDRO",
+    "skus": [
+      "GR_VIDRO",
+      "9.226.05.001PR",
+      "K454PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Rejilla de vidrio trasero",
+    "colecciones": [
+      "Rejilla de vidrio trasero"
+    ],
+    "descripcion": "A Rejilla de vidrio trasero Keko foi desenvolvida para quem busca mais segurança, resistência y estilo ao dirigir sua Fiat Toro. O acessório protege o vidro trasero de la Toro contra impactos durante o transporte de cargas, valoriza o design de la pickup.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "Destacados del producto": "Pintura padrão OEM; Protege a cabine de la pickup",
+      "Instalación": "fácil",
+      "Garantía de fábrica": "3 anos"
+    },
+    "precio": {
+      "valor": 245.0,
+      "moneda": "BRL",
+      "texto": "R$ 245.00"
+    },
+    "variantes": [
+      {
+        "id": "12",
+        "titulo": "Grade do Vidro Traseiro Toro 2017 a 2024 Keko K454PR",
+        "sku": "K454PR",
+        "ref_id": "9.226.05.001PR",
+        "ean": "7898133771941",
+        "precio": 245.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Fiat"
+        ],
+        "sku_modelo": [
+          "Toro"
+        ],
+        "sku_ano": [
+          "2016 em diante"
+        ],
+        "sku_version": [
+          "4x2 e 4x4"
+        ],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [
+        "FIAT"
+      ],
+      "models": [
+        "Toro"
+      ],
+      "years": [
+        {
+          "start": 2016,
+          "end": 2026
+        }
+      ],
+      "pairs": [
+        {
+          "brand": "FIAT",
+          "model": "Toro",
+          "tokens": [
+            "toro"
+          ],
+          "years": [
+            {
+              "start": 2016,
+              "end": 2026
+            }
+          ],
+          "source": "sku"
+        }
+      ],
+      "snippets": [
+        "FIAT Toro ['2016 em diante']"
+      ]
+    },
+    "compatibilidad": "FIAT Toro 2016-ON",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/grade-do-vidro-traseiro/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159213/K454PR_1.jpg?v=638434257263600000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/grade-do-vidro-traseiro/p",
+    "fuente": "https://www.keko.com.br/"
+  }
+]
