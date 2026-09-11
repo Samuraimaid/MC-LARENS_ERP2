@@ -2,12 +2,11 @@
 
 Catálogo generado desde https://auxbeam.com/collections/driving-light (194 productos).
 
-## Contenido del zip
-- `catalogo.json` — productos en español (descripción, specs, caja, tensión, potencia, URLs de imágenes CDN)
-- `catalogo.xlsx` — misma data en Excel
-- `README.txt` — notas de extracción
+## Contenido
+- `auxbeam_catalogo_datos.zip` — `catalogo.json` + `catalogo.xlsx` + notas (descripción, specs, caja, tensión, potencia, URLs CDN de imágenes)
+- `imagenes/` — imágenes locales por producto (`<handle>/principal.jpg` + `adicional_XX.jpg`), ~854 MB / ~3569 archivos
 
 ## Campos principales
 nombre, handle, url, skus, precio, tension_trabajo, potencia, descripcion, especificaciones, contenido_caja, imagen_principal_url, imagenes_adicionales_urls
 
-Imágenes locales no incluidas aquí (paquete completo ~834 MB). Usar las URLs CDN del JSON/Excel.
+Las URLs CDN siguen en el JSON/Excel. Las fotos locales están en `imagenes/<handle>/` para el ERP.
