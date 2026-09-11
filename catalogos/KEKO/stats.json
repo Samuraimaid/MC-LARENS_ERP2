@@ -22,5 +22,10 @@
   "images_failed": 0,
   "erp_entries": 8318,
   "erp_match_cap": 40,
-  "output_dir": "/workspace/erp-catalogs/catalogos/KEKO"
+  "output_dir": "/workspace/erp-catalogs/catalogos/KEKO",
+  "with_barcode": 191,
+  "without_barcode": 21,
+  "variant_ean_filled": 948,
+  "variant_ean_total": 970,
+  "barcode_source": "VTEX items[].ean (filtered; excludes \"A Definir\")"
 }
