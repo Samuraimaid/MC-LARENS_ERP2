@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2
+  Truck, Trash2, Star, Check, Loader2
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -87,6 +87,7 @@ export function InventoryPage() {
     warehouseId: "",
     quantity: 1,
   });
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -763,6 +764,77 @@ export function InventoryPage() {
       ...newProduct,
       images: newProduct.images.filter(img => img !== url)
     });
+  };
+
+  const handleFileUpload = async (e, isEditing = false) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const currentTarget = isEditing ? editingProduct : newProduct;
+    const currentSku = currentTarget?.sku || "";
+    
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("files", file);
+    });
+    if (currentSku) formData.append("sku", currentSku);
+    if (isEditing && editingProduct?.product_id) formData.append("product_id", editingProduct.product_id);
+
+    try {
+      setUploadingImages(true);
+      const res = await axios.post(`${API}/products/images/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true
+      });
+      
+      const newUrls = res.data.image_urls || [];
+      if (isEditing) {
+        setEditingProduct(prev => ({
+          ...prev,
+          images: [...(prev.images || []), ...newUrls]
+        }));
+      } else {
+        setNewProduct(prev => ({
+          ...prev,
+          images: [...prev.images, ...newUrls]
+        }));
+      }
+      toast.success(`${newUrls.length} imagen(es) subida(s) y renombradas con SKU`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error subiendo imágenes");
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
+  };
+
+  const setPrimaryImage = (url, isEditing = false) => {
+    if (isEditing) {
+      setEditingProduct(prev => {
+        const remaining = (prev.images || []).filter(img => img !== url);
+        return { ...prev, images: [url, ...remaining] };
+      });
+    } else {
+      setNewProduct(prev => {
+        const remaining = prev.images.filter(img => img !== url);
+        return { ...prev, images: [url, ...remaining] };
+      });
+    }
+    toast.success("Imagen establecida como Principal");
+  };
+
+  const removeProductImage = (url, isEditing = false) => {
+    if (isEditing) {
+      setEditingProduct(prev => ({
+        ...prev,
+        images: (prev.images || []).filter(img => img !== url)
+      }));
+    } else {
+      setNewProduct(prev => ({
+        ...prev,
+        images: prev.images.filter(img => img !== url)
+      }));
+    }
   };
 
   const addCompatibilityBrand = () => {
@@ -1807,42 +1879,108 @@ export function InventoryPage() {
                   
                   {/* Media Tab */}
                   <TabsContent value="media" className="space-y-4 mt-4">
-                    <div>
-                      <Label>Imágenes del Producto</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          placeholder="https://ejemplo.com/imagen.jpg"
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
-                        />
-                        <Button type="button" onClick={addImageUrl}>
-                          <Image className="h-4 w-4 mr-2" />
-                          Agregar
-                        </Button>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold">Cargar Imágenes del Producto</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Sube las fotos del producto desde tu equipo (se renombrarán automáticamente como <code className="bg-muted px-1 rounded">{'{SKU}_main'}</code> y <code className="bg-muted px-1 rounded">{'{SKU}_add_XX'}</code>) o añade enlaces directos.
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                        <label className="flex-1 flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/60 hover:bg-muted/40 transition bg-muted/20 text-sm font-medium">
+                          {uploadingImages ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              <span>Subiendo y renombrando imágenes...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 text-primary" />
+                              <span>Seleccionar múltiples archivos</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            disabled={uploadingImages}
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e, false)}
+                          />
+                        </label>
+
+                        <div className="flex flex-1 gap-2">
+                          <Input
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            placeholder="https://ejemplo.com/foto.jpg"
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+                          />
+                          <Button type="button" variant="outline" onClick={addImageUrl}>
+                            <Image className="h-4 w-4 mr-1.5" />
+                            Agregar URL
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     
-                    {newProduct.images.length > 0 && (
-                      <div className="grid grid-cols-3 gap-4">
-                        {newProduct.images.map((url, idx) => (
-                          <div key={idx} className="relative group">
-                            <img
-                              src={url}
-                              alt={`Producto ${idx + 1}`}
-                              className="w-full h-32 object-cover rounded-lg border"
-                              onError={(e) => e.target.src = 'https://via.placeholder.com/150?text=Error'}
-                            />
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
-                              onClick={() => removeImage(url)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
+                    {newProduct.images.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                          <span>Galería de Imágenes ({newProduct.images.length})</span>
+                          <span>La primera imagen es la Principal</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1 border rounded-lg bg-background/50">
+                          {newProduct.images.map((url, idx) => (
+                            <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted/20 transition hover:shadow-md">
+                              <img
+                                src={url}
+                                alt={`Producto ${idx + 1}`}
+                                className="w-full h-28 object-cover"
+                                onError={(e) => e.target.src = 'https://via.placeholder.com/150?text=Error'}
+                              />
+                              <div className="absolute top-1.5 left-1.5 flex gap-1">
+                                {idx === 0 ? (
+                                  <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 shadow">
+                                    ⭐ Principal (main)
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-black/70 text-white text-[10px] font-normal px-1.5 py-0.5 backdrop-blur-sm">
+                                    Adicional #{idx} (add_{idx < 10 ? '0' + idx : idx})
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                                {idx !== 0 && (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    className="h-7 text-xs px-2 shadow bg-white/90 hover:bg-white text-slate-800"
+                                    title="Hacer imagen principal"
+                                    onClick={() => setPrimaryImage(url, false)}
+                                  >
+                                    <Star className="h-3.5 w-3.5 mr-1 text-amber-500 fill-amber-500" />
+                                    Principal
+                                  </Button>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="h-7 w-7 shadow"
+                                  title="Eliminar imagen"
+                                  onClick={() => removeProductImage(url, false)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 border border-dashed rounded-lg text-center text-muted-foreground text-xs">
+                        No hay imágenes agregadas aún. Selecciona archivos para cargar o ingresa una URL.
                       </div>
                     )}
                   </TabsContent>
@@ -2969,6 +3107,80 @@ export function InventoryPage() {
                   onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                   rows={3}
                 />
+              </div>
+
+              {/* Edit Product Images Section */}
+              <div className="space-y-3 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Imágenes del Producto ({editingProduct.images?.length || 0})</Label>
+                  <label className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline cursor-pointer">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Subir más fotos</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      disabled={uploadingImages}
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, true)}
+                    />
+                  </label>
+                </div>
+
+                {editingProduct.images && editingProduct.images.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-lg bg-background/50">
+                    {editingProduct.images.map((url, idx) => (
+                      <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted/20 transition hover:shadow-md">
+                        <img
+                          src={url}
+                          alt={`Producto ${idx + 1}`}
+                          className="w-full h-24 object-cover"
+                          onError={(e) => e.target.src = 'https://via.placeholder.com/150?text=Error'}
+                        />
+                        <div className="absolute top-1 left-1 flex gap-1">
+                          {idx === 0 ? (
+                            <Badge className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 shadow">
+                              ⭐ Principal
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-black/70 text-white text-[9px] font-normal px-1 py-0.5 backdrop-blur-sm">
+                              #{idx}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5">
+                          {idx !== 0 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="h-6 text-[10px] px-1.5 shadow bg-white text-slate-800"
+                              title="Hacer imagen principal"
+                              onClick={() => setPrimaryImage(url, true)}
+                            >
+                              <Star className="h-3 w-3 mr-0.5 text-amber-500 fill-amber-500" />
+                              Principal
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="h-6 w-6 shadow"
+                            title="Eliminar imagen"
+                            onClick={() => removeProductImage(url, true)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 border border-dashed rounded-lg text-center text-xs text-muted-foreground">
+                    Sin imágenes asignadas. Haz clic en "Subir más fotos" para agregar.
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProduct(null)}>

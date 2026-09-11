@@ -6819,6 +6819,36 @@ async def create_product(product_data: ProductCreate, request: Request):
     else:
         doc.pop("barcode", None)
 
+    # Handle multi-image lists, image_url and media metadata
+    raw_images = doc.get("images")
+    if isinstance(raw_images, list) and len(raw_images) > 0:
+        clean_imgs = [str(x).strip() for x in raw_images if str(x).strip()]
+        doc["images"] = clean_imgs
+        if not doc.get("image_url") and clean_imgs:
+            doc["image_url"] = clean_imgs[0]
+        if not doc.get("media"):
+            doc["media"] = [
+                {
+                    "url": img,
+                    "gcs_url": f"https://storage.googleapis.com/mclarens-erp-products/products/{Path(img.split('?')[0]).name}" if not img.startswith("http") else img,
+                    "type": "main" if idx == 0 else "additional",
+                    "is_primary": idx == 0,
+                    "filename": Path(img.split("?")[0]).name
+                }
+                for idx, img in enumerate(clean_imgs)
+            ]
+    elif doc.get("image_url"):
+        img_u = str(doc["image_url"]).strip()
+        doc["images"] = [img_u]
+        if not doc.get("media"):
+            doc["media"] = [{
+                "url": img_u,
+                "gcs_url": f"https://storage.googleapis.com/mclarens-erp-products/products/{Path(img_u.split('?')[0]).name}" if not img_u.startswith("http") else img_u,
+                "type": "main",
+                "is_primary": True,
+                "filename": Path(img_u.split("?")[0]).name
+            }]
+
     await db.products.insert_one(doc)
 
     if initial_stock > 0:
@@ -6874,6 +6904,82 @@ async def create_product(product_data: ProductCreate, request: Request):
     return stored
 
 
+@api_router.post("/products/images/upload")
+async def upload_product_images(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    sku: Optional[str] = Form(None),
+    product_id: Optional[str] = Form(None),
+):
+    """Upload multiple product images with standardized {SKU}_main / {SKU}_add_XX naming."""
+    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
+    raw_sku = str(sku or "").strip()
+    if not raw_sku and product_id:
+        existing_p = await db.products.find_one({"product_id": product_id}, {"_id": 0, "sku": 1})
+        if existing_p and existing_p.get("sku"):
+            raw_sku = existing_p.get("sku")
+            
+    clean_sku = re.sub(r"[^a-zA-Z0-9_-]", "-", raw_sku or uuid.uuid4().hex[:8]).strip("-_") or "PROD"
+    
+    # Target directory on filesystem
+    if Path("/app/uploads/products").exists() or Path("/app").exists():
+        upload_dir = Path("/app/uploads/products")
+    else:
+        upload_dir = ROOT_DIR.parent / "frontend" / "public" / "uploads" / "products"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    saved_images = []
+    
+    for idx, f in enumerate(files):
+        ext = Path(f.filename or "image.jpg").suffix.lower()
+        if ext not in (".jpg", ".jpeg", ".png", ".webp", ".gif"):
+            ext = ".jpg"
+        if ext == ".jpeg":
+            ext = ".jpg"
+            
+        suffix = "main" if idx == 0 else f"add_{idx:02d}"
+        filename = f"{clean_sku}_{suffix}{ext}"
+        target_path = upload_dir / filename
+        
+        content = await f.read()
+        target_path.write_bytes(content)
+        
+        media_url = f"/uploads/products/{filename}"
+        gcs_url = f"https://storage.googleapis.com/mclarens-erp-products/products/{filename}"
+        
+        saved_images.append({
+            "url": media_url,
+            "gcs_url": gcs_url,
+            "type": "main" if idx == 0 else "additional",
+            "is_primary": idx == 0,
+            "filename": filename,
+            "size_bytes": len(content)
+        })
+        
+    image_urls = [img["url"] for img in saved_images]
+    
+    if product_id:
+        await db.products.update_one(
+            {"product_id": product_id},
+            {
+                "$set": {
+                    "image_url": image_urls[0],
+                    "images": image_urls,
+                    "media": saved_images,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+    return {
+        "status": "ok",
+        "sku": clean_sku,
+        "total_uploaded": len(saved_images),
+        "images": saved_images,
+        "image_urls": image_urls
+    }
+
+
 @api_router.post("/products/seed-dlaa")
 async def seed_dlaa_catalog(request: Request):
     user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
@@ -6885,6 +6991,9 @@ async def seed_dlaa_catalog(request: Request):
         products = json.loads(seed_file.read_text(encoding="utf-8"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error leyendo archivo semilla: {e}")
+
+    # Remove any old dummy/obsolete DLAA products
+    await db.products.delete_many({"brand": "DLAA", "source_catalog": {"$ne": "dlaa"}})
 
     inserted = 0
     updated = 0
@@ -6909,10 +7018,82 @@ async def seed_dlaa_catalog(request: Request):
 
     return {
         "status": "ok",
-        "message": "Catálogo DLAA sincronizado con éxito",
+        "message": "Catálogo DLAA actualizado y sincronizado con éxito",
         "total_processed": len(products),
         "inserted": inserted,
         "updated": updated
+    }
+
+
+@api_router.post("/products/sync-all-catalogs")
+async def sync_all_catalogs(request: Request, catalog: Optional[str] = None):
+    """Sync all 6 Grok catalogs or a specific catalog (dlaa, fernandez_sera, meguiars, pioneer, ds18, auxbeam)."""
+    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
+    seeds_dir = ROOT_DIR / "data" / "seeds"
+    
+    catalog_files = {
+        "dlaa": "dlaa_halogens_seed.json",
+        "fernandez_sera": "fernandez_sera_seed.json",
+        "meguiars": "meguiars_seed.json",
+        "pioneer": "pioneer_seed.json",
+        "ds18": "ds18_seed.json",
+        "auxbeam": "auxbeam_seed.json",
+    }
+    
+    selected = [catalog.lower()] if (catalog and catalog.lower() in catalog_files) else list(catalog_files.keys())
+    
+    results = {}
+    now_iso = datetime.now(timezone.utc).isoformat()
+    total_inserted = 0
+    total_updated = 0
+    
+    for cat_key in selected:
+        fname = catalog_files[cat_key]
+        fpath = seeds_dir / fname
+        if not fpath.exists():
+            results[cat_key] = {"error": f"Seed file {fname} not found"}
+            continue
+            
+        try:
+            prods = json.loads(fpath.read_text(encoding="utf-8"))
+        except Exception as ex:
+            results[cat_key] = {"error": str(ex)}
+            continue
+            
+        inserted = 0
+        updated = 0
+        for p in prods:
+            sku = p.get("sku")
+            if not sku:
+                continue
+            p["updated_at"] = now_iso
+            if not p.get("created_at"):
+                p["created_at"] = now_iso
+            res = await db.products.update_one(
+                {"sku": sku},
+                {"$set": p},
+                upsert=True
+            )
+            if res.upserted_id:
+                inserted += 1
+            else:
+                updated += 1
+                
+        results[cat_key] = {
+            "total": len(prods),
+            "inserted": inserted,
+            "updated": updated
+        }
+        total_inserted += inserted
+        total_updated += updated
+        
+    return {
+        "status": "ok",
+        "message": "Sincronización de catálogos completada exitosamente",
+        "catalogs_processed": selected,
+        "total_inserted": total_inserted,
+        "total_updated": total_updated,
+        "details": results
     }
 
 
@@ -6952,6 +7133,33 @@ async def update_product(product_id: str, updates: Dict[str, Any], request: Requ
         updates["price"] = updates["precio1"]
     if "price" in updates and "precio1" not in updates:
         updates["precio1"] = updates["price"]
+
+    # Handle multi-images in updates
+    if "images" in updates and isinstance(updates["images"], list):
+        clean_imgs = [str(x).strip() for x in updates["images"] if str(x).strip()]
+        updates["images"] = clean_imgs
+        if clean_imgs and not updates.get("image_url"):
+            updates["image_url"] = clean_imgs[0]
+        updates["media"] = [
+            {
+                "url": img,
+                "gcs_url": f"https://storage.googleapis.com/mclarens-erp-products/products/{Path(img.split('?')[0]).name}" if not img.startswith("http") else img,
+                "type": "main" if idx == 0 else "additional",
+                "is_primary": idx == 0,
+                "filename": Path(img.split("?")[0]).name
+            }
+            for idx, img in enumerate(clean_imgs)
+        ]
+    elif "image_url" in updates and updates["image_url"]:
+        img_u = str(updates["image_url"]).strip()
+        updates["images"] = [img_u]
+        updates["media"] = [{
+            "url": img_u,
+            "gcs_url": f"https://storage.googleapis.com/mclarens-erp-products/products/{Path(img_u.split('?')[0]).name}" if not img_u.startswith("http") else img_u,
+            "type": "main",
+            "is_primary": True,
+            "filename": Path(img_u.split("?")[0]).name
+        }]
 
     if "low_stock_threshold" in updates:
         try:
@@ -7603,48 +7811,79 @@ async def check_product_compatibility(
 
     compatibility = product.get("compatibility")
 
-    # If no compatibility restrictions, it's compatible with all
-    if not compatibility:
+    # If no compatibility restrictions or marked universal, it's compatible with all
+    if not compatibility or compatibility.get("is_universal") or compatibility.get("universal"):
         return {
             "compatible": True,
             "message": "Producto universal, compatible con todos los vehículos",
-            "product": product["name"],
-            "vehicle": f"{vehicle['brand']} {vehicle['model']} {vehicle['year']}",
+            "product": product.get("name"),
+            "vehicle": f"{vehicle.get('brand', '')} {vehicle.get('model', '')} {vehicle.get('year', '')}",
         }
 
     is_compatible = True
     reasons = []
 
+    v_brand = str(vehicle.get("brand") or "").strip().upper()
+    v_model = str(vehicle.get("model") or "").strip().lower()
+    v_year = vehicle.get("year")
+    try:
+        v_year_int = int(v_year) if v_year is not None else None
+    except Exception:
+        v_year_int = None
+
+    # Check erp_matches direct match if available
+    erp_matches = compatibility.get("erp_matches") or []
+    if erp_matches:
+        has_erp_match = False
+        for m in erp_matches:
+            m_brand = str(m.get("brand") or "").strip().upper()
+            m_model = str(m.get("model") or "").strip().lower()
+            if m_brand == v_brand and (m_model in v_model or v_model in m_model):
+                has_erp_match = True
+                break
+        if not has_erp_match and compatibility.get("brands"):
+            compat_brands = [str(b).strip().upper() for b in compatibility["brands"]]
+            if v_brand not in compat_brands:
+                is_compatible = False
+                reasons.append(f"Marca no compatible. Compatible con: {', '.join(compatibility['brands'])}")
+
     # Check brand compatibility
-    if compatibility.get("brands") and len(compatibility["brands"]) > 0:
-        if vehicle["brand"] not in compatibility["brands"]:
+    if is_compatible and compatibility.get("brands") and len(compatibility["brands"]) > 0:
+        compat_brands = [str(b).strip().upper() for b in compatibility["brands"]]
+        if v_brand not in compat_brands:
             is_compatible = False
             reasons.append(
                 f"Marca no compatible. Compatible con: {', '.join(compatibility['brands'])}"
             )
 
     # Check model compatibility
-    if compatibility.get("models") and len(compatibility["models"]) > 0:
-        if vehicle["model"] not in compatibility["models"]:
+    if is_compatible and compatibility.get("models") and len(compatibility["models"]) > 0:
+        compat_models = [str(m).strip().lower() for m in compatibility["models"]]
+        model_matched = any(
+            (cm in v_model or v_model in cm) for cm in compat_models
+        )
+        if not model_matched:
             is_compatible = False
             reasons.append(
                 f"Modelo no compatible. Compatible con: {', '.join(compatibility['models'])}"
             )
 
     # Check year compatibility
-    year_from = compatibility.get("year_from")
-    year_to = compatibility.get("year_to")
-    if year_from and vehicle["year"] < year_from:
-        is_compatible = False
-        reasons.append(f"Año muy antiguo. Compatible desde año {year_from}")
-    if year_to and vehicle["year"] > year_to:
-        is_compatible = False
-        reasons.append(f"Año muy reciente. Compatible hasta año {year_to}")
+    if is_compatible and v_year_int is not None:
+        year_from = compatibility.get("year_from")
+        year_to = compatibility.get("year_to")
+        if year_from and v_year_int < int(year_from):
+            is_compatible = False
+            reasons.append(f"Año muy antiguo ({v_year_int}). Compatible desde año {year_from}")
+        if year_to and v_year_int > int(year_to):
+            is_compatible = False
+            reasons.append(f"Año muy reciente ({v_year_int}). Compatible hasta año {year_to}")
 
     # Check vehicle type (for polarizados)
-    if compatibility.get("vehicle_types") and len(compatibility["vehicle_types"]) > 0:
+    if is_compatible and compatibility.get("vehicle_types") and len(compatibility["vehicle_types"]) > 0:
         vehicle_type = vehicle.get("vehicle_type", "Sedán")
-        if vehicle_type not in compatibility["vehicle_types"]:
+        v_types_lower = [str(vt).strip().lower() for vt in compatibility["vehicle_types"]]
+        if str(vehicle_type).strip().lower() not in v_types_lower:
             is_compatible = False
             reasons.append(
                 f"Tipo de vehículo no compatible. Compatible con: {', '.join(compatibility['vehicle_types'])}"
@@ -7654,8 +7893,8 @@ async def check_product_compatibility(
         "compatible": is_compatible,
         "message": "Producto compatible" if is_compatible else "Producto NO compatible",
         "reasons": reasons,
-        "product": product["name"],
-        "vehicle": f"{vehicle['brand']} {vehicle['model']} {vehicle['year']} ({vehicle.get('vehicle_type', 'N/A')})",
+        "product": product.get("name"),
+        "vehicle": f"{vehicle.get('brand', '')} {vehicle.get('model', '')} {vehicle.get('year', '')} ({vehicle.get('vehicle_type', 'N/A')})",
     }
 
 

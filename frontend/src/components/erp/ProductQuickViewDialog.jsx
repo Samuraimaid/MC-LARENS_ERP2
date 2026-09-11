@@ -67,9 +67,11 @@ export default function ProductQuickViewDialog({
   // Gather all valid images
   const rawImages = Array.isArray(product.images) && product.images.length > 0
     ? product.images
-    : product.image
-      ? [product.image]
-      : [];
+    : product.image_url
+      ? [product.image_url]
+      : product.image
+        ? [product.image]
+        : [];
   
   const images = rawImages.filter(Boolean);
   const currentImage = images[selectedImageIndex] || null;
