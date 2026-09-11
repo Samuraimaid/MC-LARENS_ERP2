@@ -1418,6 +1418,406 @@ def process_taller_suspension_rines() -> Tuple[List[Dict[str, Any]], List[Dict[s
     print(f"[Taller_Suspension_Rines] Processed {len(processed)} foundational products and services.")
     return processed, images_manifest
 
+def process_keko() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Process KEKO (Brasil) catalog (212 4x4 exterior accessories)."""
+    p_path = Path("catalogos/KEKO/catalogo.json")
+    matched_path = Path("catalogos/KEKO/catalogo_matched.json")
+    if not p_path.exists():
+        return [], []
+        
+    with open(p_path, "r", encoding="utf-8") as f:
+        all_prods = json.load(f)
+
+    matched_map = {}
+    if matched_path.exists():
+        with open(matched_path, "r", encoding="utf-8") as f:
+            for p in json.load(f):
+                h = p.get("handle") or p.get("sku")
+                if h:
+                    matched_map[h] = p
+
+    processed = []
+    images_manifest = []
+
+    for raw in all_prods:
+        h = raw.get("handle") or raw.get("sku")
+        matched = matched_map.get(h, raw)
+        sku = sanitize_sku(raw.get("sku") or raw.get("skus", [""])[0] or h, "KEKO")
+        name = raw.get("nombre") or raw.get("nombre_original") or f"Accesorio KEKO {sku}"
+        cat_raw = str(raw.get("categoria") or "").lower()
+        name_lower = name.lower()
+
+        # Classification
+        if any(k in name_lower or k in cat_raw for k in ["capota", "grx", "lona"]):
+            subcat = "Capotas y Lonas Marítimas"
+        elif any(k in name_lower or k in cat_raw for k in ["estribo", "tubular", "degrau", "grada"]):
+            subcat = "Estribos y Gradas Laterales"
+        elif any(k in name_lower or k in cat_raw for k in ["santo", "rollbar", "antivuelco", "barra"]):
+            subcat = "Barras Antivuelco (Rollbar)"
+        elif any(k in name_lower or k in cat_raw for k in ["engate", "reboque", "remolque", "tiro"]):
+            subcat = "Enganches y Tiros de Remolque"
+        elif any(k in name_lower or k in cat_raw for k in ["defensa", "overfender", "parachoque", "aplique"]):
+            subcat = "Defensas y Molduras 4x4"
+        else:
+            subcat = "Accesorios Exteriores KEKO 4x4"
+
+        # Price in BRL -> USD (~5.50 BRL/USD)
+        p_obj = raw.get("precio") or {}
+        val_brl = float(p_obj.get("valor_min") or 0.0) if isinstance(p_obj, dict) else 0.0
+        if val_brl > 0:
+            price_usd = round(val_brl / 5.50, 2)
+        else:
+            price_usd = 280.0 if "capota" in subcat.lower() else (220.0 if "estribo" in subcat.lower() else 180.0)
+
+        # Compatibility
+        erp_matches = matched.get("erp_matches", [])
+        brands = set()
+        models = set()
+        years = []
+        for m in erp_matches:
+            if m.get("brand"):
+                brands.add(m["brand"].upper())
+            if m.get("model"):
+                models.add(m["model"])
+            label = m.get("label", "")
+            y_matches = re.findall(r'\b(19\d\d|20\d\d)\b', label)
+            for y in y_matches:
+                years.append(int(y))
+
+        year_from = min(years) if years else None
+        year_to = max(years) if years else None
+
+        main_source = raw.get("imagen_principal") or (raw.get("imagenes", [""])[0] if raw.get("imagenes") else "")
+        if isinstance(main_source, str) and not main_source.startswith("http") and main_source:
+            main_source = f"https://raw.githubusercontent.com/Samuraimaid/MC-LARENS_ERP2/master/catalogos/KEKO/{main_source}"
+        main_ext = get_ext_from_url_or_path(str(main_source), ".jpg")
+        main_filename = f"{sku}_main{main_ext}"
+        main_url = f"/uploads/products/{main_filename}"
+
+        image_urls = [main_url]
+        media_list = [{
+            "url": main_url,
+            "gcs_url": f"{GCS_PRODUCT_PREFIX}/{main_filename}",
+            "type": "main",
+            "is_primary": True,
+            "filename": main_filename,
+            "source_url": main_source
+        }]
+
+        if main_source:
+            images_manifest.append({
+                "source": main_source,
+                "target_filename": main_filename,
+                "sku": sku,
+                "type": "main"
+            })
+
+        prod_doc = {
+            "product_id": f"prod_keko_{sku.lower()}",
+            "sku": sku,
+            "name": name,
+            "brand": "KEKO",
+            "category": "accesorios_4x4_exterior",
+            "subcategory": subcat,
+            "description": raw.get("descripcion") or f"Accesorio 4x4 original KEKO Brasil {name}.",
+            "specs": raw.get("especificaciones") or {},
+            "price": price_usd,
+            "precio1": price_usd,
+            "precio2": round(price_usd * 0.92, 2),
+            "precio_vip": round(price_usd * 0.88, 2),
+            "precio_casa_comercial": round(price_usd * 0.82, 2),
+            "cost": round(price_usd * 0.58, 2),
+            "installation_type": "optional",
+            "installation_price": 30.0 if "capota" in subcat.lower() or "barra" in subcat.lower() else 20.0,
+            "installation_time_minutes": 60,
+            "warranty_months": 24,
+            "low_stock_threshold": 3,
+            "stock": 0,
+            "image_url": main_url,
+            "images": image_urls,
+            "media": media_list,
+            "compatibility": {
+                "brands": sorted(list(brands)),
+                "models": sorted(list(models)),
+                "year_from": year_from,
+                "year_to": year_to,
+                "erp_matches": erp_matches,
+                "compatibilidad_texto": (f"{', '.join(brands)} - {', '.join(models)}" if brands else "Universal Pickups 4x4"),
+                "is_universal": len(brands) == 0
+            },
+            "source_catalog": "KEKO",
+            "is_active": True
+        }
+        processed.append(prod_doc)
+
+    print(f"[KEKO] Processed {len(processed)} products, {len(images_manifest)} images to sync.")
+    return processed, images_manifest
+
+def process_afn() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Process AFN 4x4 catalog (220 heavy duty bumpers, skid plates, rock sliders)."""
+    p_path = Path("catalogos/AFN/catalogo.json")
+    matched_path = Path("catalogos/AFN/catalogo_matched.json")
+    if not p_path.exists():
+        return [], []
+        
+    with open(p_path, "r", encoding="utf-8") as f:
+        all_prods = json.load(f)
+
+    matched_map = {}
+    if matched_path.exists():
+        with open(matched_path, "r", encoding="utf-8") as f:
+            for p in json.load(f):
+                h = p.get("handle") or p.get("sku")
+                if h:
+                    matched_map[h] = p
+
+    processed = []
+    images_manifest = []
+
+    for raw in all_prods:
+        h = raw.get("handle") or raw.get("sku")
+        matched = matched_map.get(h, raw)
+        sku = sanitize_sku(raw.get("sku") or raw.get("skus", [""])[0] or h, "AFN")
+        name = raw.get("nombre") or raw.get("nombre_original") or f"Equipamiento AFN {sku}"
+        cat_raw = str(raw.get("categoria") or "").lower()
+        name_lower = name.lower()
+
+        # Classification
+        if any(k in name_lower or k in cat_raw for k in ["skid", "protec", "bajos", "sump", "carter", "transferencia"]):
+            subcat = "Protecciones Inferiores (Skid Plates)"
+            est_price = 350.0
+            inst_price = 25.0
+        elif any(k in name_lower or k in cat_raw for k in ["bumper", "parachoque", "defensa", "bull bar"]):
+            subcat = "Parachoques y Defensas Heavy Duty"
+            est_price = 1250.0
+            inst_price = 60.0
+        elif any(k in name_lower or k in cat_raw for k in ["slider", "estribo", "rock slider", "lateral"]):
+            subcat = "Estribos y Rock Sliders 4x4"
+            est_price = 520.0
+            inst_price = 30.0
+        elif any(k in name_lower or k in cat_raw for k in ["hardtop", "cabina"]):
+            subcat = "Hardtops y Cabinas 4x4"
+            est_price = 2100.0
+            inst_price = 80.0
+        else:
+            subcat = "Equipamiento Off-Road AFN 4x4"
+            est_price = 280.0
+            inst_price = 25.0
+
+        erp_matches = matched.get("erp_matches", [])
+        brands = set()
+        models = set()
+        years = []
+        for m in erp_matches:
+            if m.get("brand"):
+                brands.add(m["brand"].upper())
+            if m.get("model"):
+                models.add(m["model"])
+            label = m.get("label", "")
+            y_matches = re.findall(r'\b(19\d\d|20\d\d)\b', label)
+            for y in y_matches:
+                years.append(int(y))
+
+        year_from = min(years) if years else None
+        year_to = max(years) if years else None
+
+        main_source = raw.get("imagen_principal") or (raw.get("imagenes", [""])[0] if raw.get("imagenes") else "")
+        if isinstance(main_source, str) and not main_source.startswith("http") and main_source and main_source != "No especificado":
+            main_source = f"https://raw.githubusercontent.com/Samuraimaid/MC-LARENS_ERP2/master/catalogos/AFN/{main_source}"
+        else:
+            main_source = ""
+
+        main_ext = get_ext_from_url_or_path(str(main_source), ".jpg")
+        main_filename = f"{sku}_main{main_ext}"
+        main_url = f"/uploads/products/{main_filename}"
+
+        image_urls = [main_url]
+        media_list = [{
+            "url": main_url,
+            "gcs_url": f"{GCS_PRODUCT_PREFIX}/{main_filename}",
+            "type": "main",
+            "is_primary": True,
+            "filename": main_filename,
+            "source_url": main_source
+        }]
+
+        if main_source:
+            images_manifest.append({
+                "source": main_source,
+                "target_filename": main_filename,
+                "sku": sku,
+                "type": "main"
+            })
+
+        prod_doc = {
+            "product_id": f"prod_afn_{sku.lower()}",
+            "sku": sku,
+            "name": name,
+            "brand": "AFN 4X4",
+            "category": "accesorios_4x4_exterior",
+            "subcategory": subcat,
+            "description": raw.get("descripcion") or f"Equipamiento de protección y expedición off-road AFN {name}.",
+            "specs": raw.get("especificaciones") or {},
+            "price": est_price,
+            "precio1": est_price,
+            "precio2": round(est_price * 0.92, 2),
+            "precio_vip": round(est_price * 0.88, 2),
+            "precio_casa_comercial": round(est_price * 0.82, 2),
+            "cost": round(est_price * 0.60, 2),
+            "installation_type": "optional",
+            "installation_price": inst_price,
+            "installation_time_minutes": 60,
+            "warranty_months": 36,
+            "low_stock_threshold": 2,
+            "stock": 0,
+            "image_url": main_url,
+            "images": image_urls,
+            "media": media_list,
+            "compatibility": {
+                "brands": sorted(list(brands)),
+                "models": sorted(list(models)),
+                "year_from": year_from,
+                "year_to": year_to,
+                "erp_matches": erp_matches,
+                "compatibilidad_texto": (f"{', '.join(brands)} - {', '.join(models)}" if brands else "Universal Off-Road"),
+                "is_universal": len(brands) == 0
+            },
+            "source_catalog": "AFN",
+            "is_active": True
+        }
+        processed.append(prod_doc)
+
+    print(f"[AFN] Processed {len(processed)} products, {len(images_manifest)} images to sync.")
+    return processed, images_manifest
+
+def process_fox() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Process Fox Shocks catalog (632 premium performance shocks & coil-overs)."""
+    p_path = Path("catalogos/Fox/catalogo.json")
+    matched_path = Path("catalogos/Fox/catalogo_matched.json")
+    if not p_path.exists():
+        return [], []
+        
+    with open(p_path, "r", encoding="utf-8") as f:
+        all_prods = json.load(f)
+
+    matched_map = {}
+    if matched_path.exists():
+        with open(matched_path, "r", encoding="utf-8") as f:
+            for p in json.load(f):
+                h = p.get("handle") or p.get("sku")
+                if h:
+                    matched_map[h] = p
+
+    processed = []
+    images_manifest = []
+
+    for raw in all_prods:
+        h = raw.get("handle") or raw.get("sku")
+        matched = matched_map.get(h, raw)
+        sku = sanitize_sku(raw.get("sku") or raw.get("skus", [""])[0] or h, "FOX")
+        name = raw.get("nombre") or raw.get("nombre_original") or f"Amortiguador Fox {sku}"
+        cat_raw = str(raw.get("categoria") or "").lower()
+        name_lower = name.lower()
+
+        # Subcategory
+        if "coil-over" in cat_raw or "coil-overs" in cat_raw or "coilover" in name_lower:
+            subcat = "Coil-Overs y Lift Kits Fox"
+        elif "elite" in name_lower or "performance elite" in cat_raw or "reservoir" in name_lower:
+            subcat = "Amortiguadores 2.5 Performance Elite / Reservoir"
+        elif "stabilizer" in name_lower or "estabilizador" in name_lower:
+            subcat = "Estabilizadores de Dirección Fox"
+        else:
+            subcat = "Amortiguadores 2.0 Performance Series"
+
+        # Price in USD
+        p_obj = raw.get("precio") or {}
+        price_usd = float(p_obj.get("valor_min") or 0.0) if isinstance(p_obj, dict) else 0.0
+        if price_usd <= 0:
+            price_usd = 850.0 if "2.5" in subcat else (1450.0 if "coil-over" in subcat.lower() else 380.0)
+
+        erp_matches = matched.get("erp_matches", [])
+        brands = set()
+        models = set()
+        years = []
+        for m in erp_matches:
+            if m.get("brand"):
+                brands.add(m["brand"].upper())
+            if m.get("model"):
+                models.add(m["model"])
+            label = m.get("label", "")
+            y_matches = re.findall(r'\b(19\d\d|20\d\d)\b', label)
+            for y in y_matches:
+                years.append(int(y))
+
+        year_from = min(years) if years else None
+        year_to = max(years) if years else None
+
+        main_source = raw.get("imagen_principal") or (raw.get("imagenes", [""])[0] if raw.get("imagenes") else "")
+        if isinstance(main_source, str) and not main_source.startswith("http") and main_source:
+            main_source = f"https://raw.githubusercontent.com/Samuraimaid/MC-LARENS_ERP2/master/catalogos/Fox/{main_source}"
+        main_ext = get_ext_from_url_or_path(str(main_source), ".jpg")
+        main_filename = f"{sku}_main{main_ext}"
+        main_url = f"/uploads/products/{main_filename}"
+
+        image_urls = [main_url]
+        media_list = [{
+            "url": main_url,
+            "gcs_url": f"{GCS_PRODUCT_PREFIX}/{main_filename}",
+            "type": "main",
+            "is_primary": True,
+            "filename": main_filename,
+            "source_url": main_source
+        }]
+
+        if main_source:
+            images_manifest.append({
+                "source": main_source,
+                "target_filename": main_filename,
+                "sku": sku,
+                "type": "main"
+            })
+
+        prod_doc = {
+            "product_id": f"prod_fox_{sku.lower()}",
+            "sku": sku,
+            "name": name,
+            "brand": "FOX SHOCKS",
+            "category": "suspension_alzas",
+            "subcategory": subcat,
+            "description": raw.get("descripcion") or f"Amortiguador de alto rendimiento Fox Racing {name}.",
+            "specs": raw.get("especificaciones") or {},
+            "price": round(price_usd, 2),
+            "precio1": round(price_usd, 2),
+            "precio2": round(price_usd * 0.92, 2),
+            "precio_vip": round(price_usd * 0.88, 2),
+            "precio_casa_comercial": round(price_usd * 0.82, 2),
+            "cost": round(price_usd * 0.65, 2),
+            "installation_type": "optional",
+            "installation_price": 25.0,
+            "installation_time_minutes": 60,
+            "warranty_months": 24,
+            "low_stock_threshold": 2,
+            "stock": 0,
+            "image_url": main_url,
+            "images": image_urls,
+            "media": media_list,
+            "compatibility": {
+                "brands": sorted(list(brands)),
+                "models": sorted(list(models)),
+                "year_from": year_from,
+                "year_to": year_to,
+                "erp_matches": erp_matches,
+                "compatibilidad_texto": (f"{', '.join(brands)} - {', '.join(models)}" if brands else "Universal Fox Racing"),
+                "is_universal": len(brands) == 0
+            },
+            "source_catalog": "Fox",
+            "is_active": True
+        }
+        processed.append(prod_doc)
+
+    print(f"[Fox] Processed {len(processed)} products, {len(images_manifest)} images to sync.")
+    return processed, images_manifest
+
 def main():
     seeds_dir = Path("backend/data/seeds")
     seeds_dir.mkdir(parents=True, exist_ok=True)
@@ -1431,6 +1831,9 @@ def main():
     ds18_prods, ds18_imgs = process_ds18()
     aux_prods, aux_imgs = process_auxbeam()
     taller_prods, taller_imgs = process_taller_suspension_rines()
+    keko_prods, keko_imgs = process_keko()
+    afn_prods, afn_imgs = process_afn()
+    fox_prods, fox_imgs = process_fox()
 
     # Save specific catalog seeds
     seeds = {
@@ -1441,6 +1844,9 @@ def main():
         "ds18_seed.json": ds18_prods,
         "auxbeam_seed.json": aux_prods,
         "taller_suspension_rines_seed.json": taller_prods,
+        "keko_seed.json": keko_prods,
+        "afn_seed.json": afn_prods,
+        "fox_seed.json": fox_prods,
     }
 
     all_unified = []
@@ -1460,6 +1866,9 @@ def main():
     all_images_manifest.extend(ds18_imgs)
     all_images_manifest.extend(aux_imgs)
     all_images_manifest.extend(taller_imgs)
+    all_images_manifest.extend(keko_imgs)
+    all_images_manifest.extend(afn_imgs)
+    all_images_manifest.extend(fox_imgs)
 
     # Save master seed
     master_seed_path = seeds_dir / "all_catalogs_unified_seed.json"
