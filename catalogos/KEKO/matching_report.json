@@ -1,0 +1,1178 @@
+{
+  "generated_at_utc": "2026-09-11T22:11:26.611914+00:00",
+  "source": "https://www.keko.com.br/",
+  "api": {
+    "products_search": "https://www.keko.com.br/api/catalog_system/pub/products/search",
+    "category_tree": "https://www.keko.com.br/api/catalog_system/pub/category/tree/3",
+    "products_fetched": 212
+  },
+  "totals": {
+    "all_products": 212,
+    "matched": 104,
+    "universal": 80,
+    "unmatched": 28
+  },
+  "brand_usage": {
+    "FORD": 78,
+    "CHEVROLET": 62,
+    "VOLKSWAGEN": 54,
+    "NISSAN": 52,
+    "TOYOTA": 49,
+    "MITSUBISHI": 48,
+    "FIAT": 46,
+    "RAM": 45,
+    "GREATWALL": 12,
+    "JEEP": 11,
+    "HYUNDAI": 6,
+    "RENAULT": 5,
+    "FOTON": 3,
+    "SUZUKI": 3,
+    "VOLVO": 2,
+    "HONDA": 2,
+    "LAND ROVER": 1,
+    "CHERY": 1,
+    "KIA": 1,
+    "BMW": 1,
+    "AUDI": 1,
+    "MERCEDES BENZ": 1
+  },
+  "model_usage": {
+    "Ranger": 66,
+    "S10": 52,
+    "Amarok": 52,
+    "Frontier": 51,
+    "Hilux": 48,
+    "L200 Triton": 47,
+    "Maverick": 31,
+    "Toro": 30,
+    "Strada": 22,
+    "Rampage": 21,
+    "Titano": 20,
+    "2500": 19,
+    "Montana": 13,
+    "1500": 12,
+    "Triton": 11,
+    "Poer P30": 11,
+    "Classic": 11,
+    "Silverado": 10,
+    "3500": 9,
+    "F-150": 9,
+    "Gladiator": 7,
+    "Dakota": 6,
+    "Creta": 5,
+    "Tracker": 5,
+    "Saveiro": 5,
+    "Renegade": 5,
+    "Duster Oroch": 4,
+    "Tunland": 3,
+    "Jimny Sierra": 3,
+    "Tiguan": 2,
+    "RAV4": 2,
+    "Ecosport": 2,
+    "Hilux SW4": 2,
+    "Wrangler": 2,
+    "IX35": 2,
+    "L200 Triton Sport": 2,
+    "Strada Plus": 2,
+    "Corolla Cross": 1,
+    "T-Cross": 1,
+    "Duster": 1,
+    "Taos": 1,
+    "Nivus": 1,
+    "XC40": 1,
+    "Kicks": 1,
+    "Virtus": 1,
+    "Polo": 1,
+    "HR-V": 1,
+    "Discovery Sport": 1,
+    "Tiggo 7": 1,
+    "Territory": 1,
+    "Tera": 1,
+    "Tiggo 8": 1,
+    "Eclipse Cross": 1,
+    "Commander": 1,
+    "Yaris Cross": 1,
+    "Haval H6": 1,
+    "F-150 com Tampa Traseira Bipartida": 1,
+    "Bronco Sport": 1,
+    "Tank 300": 1,
+    "Santa Fé": 1,
+    "Sorento": 1,
+    "Captiva": 1,
+    "Outlander": 1,
+    "Tucson": 1,
+    "X1": 1,
+    "Q3": 1,
+    "Grand Cherokee": 1,
+    "Compass": 1,
+    "New Tucson": 1,
+    "XC60": 1,
+    "WR-V": 1,
+    "Trailblazer": 1,
+    "ASX": 1,
+    "GLA 250": 1,
+    "Equinox": 1,
+    "Pajero Sport": 1,
+    "XC90": 1,
+    "Pajero Dakar": 1,
+    "1200": 1,
+    "Colorado": 1,
+    "strada": 1
+  },
+  "categories": {
+    "Ítems de reposición": 137,
+    "Enganches de remolque": 26,
+    "Capota rígida retráctil": 14,
+    "Santo Antonio": 10,
+    "Capotas marítimas": 8,
+    "Estribos": 8,
+    "Utilitarios": 5,
+    "Traviesas": 2,
+    "Estribo eléctrico": 1,
+    "Rejilla de vidrio trasero": 1
+  },
+  "erp_match_cap": 40,
+  "erp_vehicles": 8318,
+  "erp_brands": 40,
+  "notes": [
+    "Fitment se extrae de sku-montadora / sku-modelo / sku-ano (prioridad) y, si faltan, de Montadora/Modelo/Ano o del nombre.",
+    "SKU marcado Universal → producto universal (facetas VTEX masivas no se usan como fitment inventado).",
+    "FIAT (Toro, Strada, Titano) y VOLVO no están en vehicleCatalog ERP.",
+    "Chevrolet S10 y Montana no tienen entradas ERP limpias; solos quedan unmatched.",
+    "RAM 1500/2500/3500 se intenta contra entradas RAM (Ram Model); ERP RAM con OCR sucio.",
+    "GWM / Great Wall → GREATWALL (Poer, Wingle).",
+    "No se inventan specs ni fitment; faltantes = 'No especificado'.",
+    "erp_matches truncado a 40; erp_match_count conserva el total.",
+    "Precios en BRL según oferta comercial VTEX."
+  ],
+  "matched_handles": [
+    "nova-geracao-de-capotas-grx-pro-black",
+    "engate-de-reboque-k2",
+    "kit-de-vedacao-para-tampa-traseira",
+    "engate-de-reboque-k1",
+    "nova-geracao-de-capotas-grx",
+    "lona-para-capota-grx-pro-black-g1",
+    "capota-maritima-flex",
+    "kit-instalacao-estribo-my-road---my-trip-kit_inst",
+    "capota-rigida-retratil-manual",
+    "santo-antonio-k3-preto",
+    "conjunto-perfil-lateral-para-capota-grx",
+    "reposicao-conjunto-perfil-lateral-grx-pro-black",
+    "reposicao-perfil-borracha-tampa-traseira-para-capota-rigida-retratil",
+    "reposicao-kit-de-fixacao-para-capota-rigida-retratil",
+    "reposicao-travessa-para-capota-grx-pro-black",
+    "reposicao-lona-para-capota-maritima-grx",
+    "reposicao-multitrava-para-capota-maritima-flex",
+    "capota-rigida-retratil-automatica",
+    "lona-para-capota-grx-pro-black-g2",
+    "conjunto-perfil-dianteiro-grx-pro-black-geracao-2",
+    "conjunto-tampa-crr",
+    "reposicao-conjunto-perfil-lateral-capota-maritima-flex",
+    "conjunto-perfil-esteira-crr",
+    "prefil-traseiro-grx-pro-black",
+    "reposicao-conjunto-travessa-para-capota-flex-rkcftrav",
+    "trilho-lateral-direito-crr",
+    "trilho-lateral-esquerdo-crr",
+    "reposicao-conjunto-lona-para-flex",
+    "nova-geracao-de-capotas-grx-pro-black-picapes-compactas",
+    "borracha-perfil-lateral-crr",
+    "nova-geracao-de-capotas-grx-picapes-compactas",
+    "conjunto-perfil-lateral-crr-esquerdo",
+    "conjunto-perfil-lateral-crr-direito",
+    "reposicao-santo-antonio-sport",
+    "perfil-lateral-nova-geracao-capota-grx-pro-black",
+    "conjunto-perfil-lateral-nova-geracao-capota-grx-pro-black",
+    "conjunto-varao-nova-geracao-capota-grx-pro-black",
+    "conjunto-perfil-traseiro-nova-geracao-capota-grx-pro-black",
+    "conjunto-perfil-lateral-nova-geracao-capota-grx",
+    "conjunto-travessas-nova-geracao-capota-grx",
+    "conjunto-lona-nova-geracao-capota-grx",
+    "reposicao-travessa-retangular-capota-maritima-flex",
+    "conjunto-perfil-lateral-esquerdo-flex",
+    "ponteira-para-engate-154-244",
+    "reposicao-travessa-para-capota-grx",
+    "kit-vedacao-borda-cacamba",
+    "reposicao-ponteiras-estribo-my-way-lado-esquerdo",
+    "ponteira-k1-para-engate-de-reboque-35t",
+    "reposicao-ponteira-estribo-my-way",
+    "reposicao-conjunto-capa-lateral-direita-preto-santo-antonio-k3",
+    "conjunto-capa-lateral-esquerda-preto-santo-antonio-k3",
+    "reposicao-chapa-dianteira-para-capota-maritima",
+    "reposicao-perfil-vedacao-traseira-para-capota-grx",
+    "reposicao-borracha-eva-para-capota-grx",
+    "perfil-lateral-para-capota-grx",
+    "conjunto-perfil-traseiro-capota-grx",
+    "conjunto-perfil-lateral-dianteiro-capotas-grx-pro-black",
+    "reposicao-perfil-lateral-capota-grx-pro-black",
+    "conjunto-perfil-traseiro-grx-pro-black",
+    "reposicao-perfil-traseiro-capotas-grx",
+    "estribo-eletrico",
+    "reposicao-tampas-perfis-laterais-g2-capota-rigida-retratil",
+    "reposicao-base-santo-antonio-k3",
+    "reposicao-conjunto-multitrava-amarok-extreme",
+    "reposicao-conjunto-lona-flex-amarok-sem-santo",
+    "reposicao-conjunto-base-santo-k3-amarok",
+    "reposicao-conjunto-contorno-traseiro-santo-k1-amarok",
+    "reposicao-acessorio-de-fixacao-santo-antonio-k3",
+    "reposicao-acessorio-fixacao-amarok-e-frontier",
+    "conjunto-lona-capota-flex-strada",
+    "reposicao-sargento-capota-maritima-flex",
+    "ponteira-k1-para-engate-de-reboque-15t",
+    "complemento-kit-suporte-santo-antonio-ranger-xlt-storm-fx4",
+    "kit-suporte-santo-antonio-maverick",
+    "complemento-kit-suporte-santo-antonio-original--amarok",
+    "sistema-de-escoamento-para-capota-rigida-retratil-automatica-ranger-black-limited",
+    "sistema-de-escoamento-para-capota-rigida-retratil-manual-ranger-black-limited",
+    "travessa-para-bagageiro-prata",
+    "santo-antonio-k1-cromo",
+    "estribo-integral-k1-prata",
+    "estribo-tubular-k1-cromo",
+    "santo-antonio-k3-cromo",
+    "santo-antonio-k1-2-pol-cromo",
+    "reposicao-tampas-perfis-laterais-capota-rigida-retratil",
+    "reposicao-grade-do-vidro-traseiro",
+    "reposicao-base-para-santo-antonio",
+    "reposicao-kit-vedacao-para-tampa-traseira",
+    "reposicao-kit-de-molas-para-capota-rigida-retratil",
+    "reposicao-acessorio-de-fixacao-para-santo-antonio",
+    "reposicao-calhas-de-borracha",
+    "reposicao-perfil-dianteiro-capota-maritima",
+    "reposicao-perfil-lateral-capota-maritima",
+    "reposicao-varao-capota-grx-pro-black",
+    "conjunto-trilho-de-fixacao-crr",
+    "travessa-para-bagageiro-preto",
+    "estribo-my-road-preto",
+    "estribo-tubular-k1-preto",
+    "defletor-para-estribo-my-road",
+    "santo-antonio-k1-preto",
+    "estribo-integral-k1-preto",
+    "estribo-k2-my-way",
+    "santo-antonio-k1-2-pol-preto",
+    "santo-antonio-sunset-2-pol-preto",
+    "estribo-my-trip"
+  ],
+  "universal_handles": [
+    "kit-eletrico-para-engate-de-reboque",
+    "ponteira-252-mm",
+    "reposicao-varao-capota-maritima-grx",
+    "ponteira-para-engate-de-reboque-141mm",
+    "esfera-cromo-duro-50-mm",
+    "plataforma-my-road-1915-mm-preto",
+    "kit-suporte-santo-antonio-para-capota-rigida-retratil",
+    "ponteira-para-engate-de-reboque-224mm",
+    "rreposicao-conjunto-sobrecapa-k3",
+    "ponteira-para-engate-de-reboque-183mm",
+    "suporte-motor-capota-rigida",
+    "borracha-perfil-traseiro-crr",
+    "clipe-elastico-capotas-grx",
+    "reposicao-ponteira-de-travessa-capotas-grx",
+    "perfil-vedacao-traseira-nova-geracao-capota-grx",
+    "conversor-de-ponteira-k2-para-k1-conv_pon",
+    "pino-e-contrapino-k2",
+    "kit-tampa-perfil-esteira-crr",
+    "pino-e-contrapino",
+    "plataforma-my-trip-1915-mm",
+    "plataforma-my-trip-2025-mm",
+    "plataforma-my-trip-2280-mm",
+    "plataforma-my-trip-2140-mm",
+    "plataforma-my-road-2280-mm-preto",
+    "plataforma-my-road-2140-preto",
+    "plataforma-my-road-2025-preto",
+    "reposicao-estribo-tubular-k1-76",
+    "reposicao-ponteiras-estribo-tubular-k1-olongo",
+    "repoiscao-ponteira-estribo-my-trip",
+    "reposicao-pisantes-para-estribo-tubular-k1",
+    "reposicao-pisante-my-road",
+    "reposicao-ponteira-estribo-integral",
+    "reposicao-bucha-de-uniao-santo-antonio-k1-2-pol",
+    "reposicao-suporte-protecao-para-capota-maritima",
+    "reposicao-borracha-eva-lateral-para-capota-grx",
+    "reposicao-perfil-vedacao-frontal-capota-grx",
+    "reposicao-pisantes-estribo-tubular-k1",
+    "reposicao-conjunto-capa-lateral-esquerda-k1",
+    "reposicao-capota-rigida-retratil-motor-24v",
+    "reposicao-conjunto-capa-lateral-k1-2-pol-esquerda",
+    "reposicao-conjunto-ponteira-estribo-my-road",
+    "reposicao-de-modulo-de-controle-g3-crr",
+    "reposicao-kit-de-compatibilizacao-de-modulo-crr",
+    "reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex",
+    "controle-remoto-2",
+    "tampa-engate-de-reboque-k1",
+    "ponteira-para-engate-de-reboque-288-2-furos",
+    "ponteira-para-engate-de-reboque-158mm",
+    "engate-perno",
+    "tomada-7-polos",
+    "plug-7-polos",
+    "esfera-cromada-50-mm",
+    "kit-suporte-barras-transversais-para-capota-rigida-retratil",
+    "reposicao-ponteira-129",
+    "ponteira-170mm",
+    "ponteira-engate-156mm",
+    "ponteira-para-engate-de-reboque-201mm",
+    "reposicao-trinco-capota-rigida-retratil",
+    "reposicao-perfil-borracha-pestana-capota-rigida-retratil",
+    "tampa-engate-de-reboque-k2",
+    "reposicao-sobrecapa-para-santo-antonio",
+    "reposicao-motor-e-suporte",
+    "reposicao-capa-plastica",
+    "reposicao-modulo-para-capota-rigida-retratil",
+    "reposicao-conjunto-capa-lateral",
+    "reposicao-conjunto-sistema-abertura-capota-rigida-retratil",
+    "reposicao-conjunto-manipulo",
+    "conjunto-chicote-para-capota-rigida-retratil",
+    "capota-rigida-retratil-controle",
+    "reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil",
+    "reposicao-conjunto-borrachas-para-capota-rigida-retratil",
+    "reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga",
+    "reposicao-travessa-oblongo-para-capota-maritima-flex",
+    "reposicao-sargento-para-capota-grx",
+    "reposicao-borracha-superior-lateral-para-capota-rigida-retratil",
+    "reposicao-cantoneira-dianteira-capota-grx",
+    "reposicao-capota-maritima-multitrava-inferior-grx",
+    "reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol",
+    "renovador-new-black",
+    "soleira-de-porta-adesiva"
+  ],
+  "unmatched": [
+    {
+      "handle": "capota-maritima-grx-pro-black-compactas",
+      "title": "Capota Marítima GRX Pro Black Picapes Compactas | GERAÇÃO 1",
+      "skus": [
+        "GRXPCOMP",
+        "9.056.12.001GR",
+        "9.230.12.012GR",
+        "9.042.12.016GR",
+        "9.042.12.014GR",
+        "9.042.12.017",
+        "K0145",
+        "9.226.12.030",
+        "K0140"
+      ],
+      "fitment": {
+        "brands": [
+          "CHEVROLET",
+          "RAM",
+          "FIAT"
+        ],
+        "models": [
+          "Montana",
+          "Rampage",
+          "Strada",
+          "Strada Plus",
+          "Toro"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ],
+          [
+            2021,
+            2026
+          ],
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "CHEVROLET Montana ['2023 em diante']",
+          "RAM Rampage ['2023 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada Plus ['2021 em diante']",
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-capota-maritima-multitrava-superior-grx",
+      "title": "Multitrava Superior Capota GRX",
+      "skus": [
+        "RKCMMS",
+        "9.222.12.014",
+        "RK0560",
+        "9.042.12.009",
+        "RK0561"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ]
+        ],
+        "snippets": [
+          "SKU 438: Universal",
+          "RAM Rampage ['2023 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-borracha-vedacao",
+      "title": "Reposição Borracha de Vedação",
+      "skus": [
+        "RKBORVED",
+        "9.395.57.036",
+        "RK1372"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Titano"
+        ],
+        "years": [
+          [
+            2024,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Titano ['2024 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "kit-suporte-santo-antonio-dakota-titano-keko",
+      "title": "Kit Suporte Santo Antônio Original Dakota e Titano Keko",
+      "skus": [
+        "KITSUDAK",
+        "9.395.76.037",
+        "K0303"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Dakota"
+        ],
+        "years": [
+          [
+            2026,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Dakota ['2026 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "conjunto-esteira-capota-rigida-retratil-rkestcrr",
+      "title": "Conjunto Esteira Capota Rígida Retrátil",
+      "skus": [
+        "RKESTCRR",
+        "9.276.39.623AT",
+        "RK1062"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Classic"
+        ],
+        "years": [
+          [
+            2022,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Classic ['2022 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-ponteira-lado-esquerdo-rampage",
+      "title": "Ponteira Estribo My Way RAM Rampage - Lado Esquerdo",
+      "skus": [
+        "RKEMWRE",
+        "9.230.00.016",
+        "RK0111"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Rampage ['2023 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "ponteira-estribo-my-way-rampage-direito",
+      "title": "Ponteira Estribo My Way RAM Rampage - Lado Direito",
+      "skus": [
+        "RKEMWRD",
+        "9.230.00.017",
+        "RK0215"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Rampage ['2023 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "capota-maritima-grx-compactas",
+      "title": "Capota Marítima GRX Picapes Compactas | GERAÇÃO 1",
+      "skus": [
+        "GRXCOMP",
+        "9.056.12.000GR",
+        "9.230.12.011GR",
+        "9.042.12.013GR",
+        "9.042.12.015GR",
+        "9.042.12.018",
+        "K0144"
+      ],
+      "fitment": {
+        "brands": [
+          "CHEVROLET",
+          "RAM",
+          "FIAT"
+        ],
+        "models": [
+          "Montana",
+          "Rampage",
+          "Strada",
+          "Strada Plus"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ],
+          [
+            2021,
+            2026
+          ]
+        ],
+        "snippets": [
+          "CHEVROLET Montana ['2023 em diante']",
+          "RAM Rampage ['2023 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada Plus ['2021 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "kit-suporte-santo-antonio-rampage-keko",
+      "title": "Kit Suporte Santo Antônio Rampage Keko",
+      "skus": [
+        "KITSUPRK",
+        "9.230.57.004",
+        "K0131"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Rampage ['2023 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-montado-santo-antonio-strada-plus-preto",
+      "title": "Conjunto Montado Santo Antônio Sunset Strada Plus Preto",
+      "skus": [
+        "RK0213",
+        "9.042.05.012PR",
+        "RK0213PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "strada"
+        ],
+        "years": [],
+        "snippets": [
+          "FIAT strada (nombre)"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-montado-santo-k1-2-pol-preto",
+      "title": "Reposição Conjunto Montado Santo Antônio K1 2 Pol Preto",
+      "skus": [
+        "RK0219",
+        "9.042.05.010PR",
+        "RK0211PR",
+        "9.226.05.029PR",
+        "RK0219PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Strada",
+          "Toro"
+        ],
+        "years": [
+          [
+            2021,
+            2026
+          ],
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-ponteiras-para-estribo-tubular-k1",
+      "title": "Ponteiras para Estribo Tubular K1",
+      "skus": [
+        "RECPONT",
+        "9.000.00.005",
+        "RK0116",
+        "9.000.00.003",
+        "RK0114"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT",
+          "RAM",
+          "RENAULT"
+        ],
+        "models": [
+          "Toro",
+          "Strada",
+          "Rampage",
+          "Duster Oroch"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ],
+          [
+            2021,
+            2026
+          ],
+          [
+            2023,
+            2026
+          ],
+          [
+            2015,
+            2026
+          ]
+        ],
+        "snippets": [
+          "SKU 866: Universal",
+          "FIAT Toro ['2016 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "RAM Rampage ['2023 em diante']",
+          "RENAULT Duster Oroch ['2015 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "kit-suporte-santo-antonio-rampage",
+      "title": "Kit Suporte Santo Antônio Original Rambar Rampage",
+      "skus": [
+        "KITSUPSU",
+        "9.230.57.230",
+        "K0064"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2023,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Rampage ['2023 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-capa-lateral-direita-santo-k1-2pol",
+      "title": "Conjunto Capa Lateral Direita Santo Antônio K1 2 Pol.",
+      "skus": [
+        "RKSACL2D",
+        "9.226.05.027PR",
+        "RK0151",
+        "9.226.05.033PR",
+        "RK0652"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "SKU 447: Universal",
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-gvt-santo-antonio-k1-amarok",
+      "title": "Reposição Conjunto Grade do Vidro Traseiro para Santo Antônio K1",
+      "skus": [
+        "RK0203",
+        "9.101.05.018PR",
+        "RK0208PR"
+      ],
+      "fitment": {
+        "brands": [
+          "CHEVROLET"
+        ],
+        "models": [
+          "S10"
+        ],
+        "years": [
+          [
+            2012,
+            2026
+          ]
+        ],
+        "snippets": [
+          "CHEVROLET S10 ['2012 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-montado-santo-sunset-strada-plus",
+      "title": "Reposição Conjunto Montado para Santo Antônio Sunset Strada Plus",
+      "skus": [
+        "RK0212",
+        "9.042.05.012CR",
+        "RK0212CR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Strada"
+        ],
+        "years": [
+          [
+            2021,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Strada ['2021 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-montado-santo-k1",
+      "title": "Reposição Conjunto Montado para Santo Antônio K1 2 Pol Cromo",
+      "skus": [
+        "RK0210",
+        "9.042.05.010CR",
+        "RK0210CR",
+        "9.226.05.029CR",
+        "RK0218CR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Strada",
+          "Toro"
+        ],
+        "years": [
+          [
+            2021,
+            2026
+          ],
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-base-santo-strada-plus",
+      "title": "Base  para Santo Antônio K1 2 Pol",
+      "skus": [
+        "RK0079",
+        "9.042.05.006",
+        "9.042.05.007",
+        "RK0080",
+        "9.226.05.025",
+        "RK0085"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Strada",
+          "Toro"
+        ],
+        "years": [
+          [
+            2021,
+            2026
+          ],
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "extensao-para-santo-antonio-2-pol-cromo",
+      "title": "Extensão para Santo Antônio 2 Pol Cromo",
+      "skus": [
+        "EXTSTOCR",
+        "9.226.05.022CR",
+        "K003CR",
+        "9.042.05.002CR",
+        "K146CR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro",
+          "Strada"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ],
+          [
+            2021,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']",
+          "FIAT Strada ['2021 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "extensao-para-santo-antonio-2-pol-preto",
+      "title": "Extensão para Santo Antônio 2 Pol Preto",
+      "skus": [
+        "EXTSTOPR",
+        "9.226.05.022PR",
+        "K003PR",
+        "9.042.05.002PR",
+        "K146PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro",
+          "Strada"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ],
+          [
+            2021,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']",
+          "FIAT Strada ['2021 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "kit-suporte-santo-antonio-toro-ranch",
+      "title": "Kit Suporte Santo Antônio Original Toro Ranch",
+      "skus": [
+        "KITSPSTT",
+        "9.226.39.000PR",
+        "K267PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "kit-suporte-santo-antonio-toro-2-pol",
+      "title": "Kit Suporte para Santo Antônio 2 Pol",
+      "skus": [
+        "KITSPST2",
+        "9.226.39.001PR",
+        "K266PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "santo-antonio-sunset-2-pol-cromo",
+      "title": "Santo Antônio Sunset 2 Pol Cromo",
+      "skus": [
+        "STOSUNCR",
+        "9.042.05.001CR",
+        "K145CR",
+        "9.042.05.004CR",
+        "K153CR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Strada"
+        ],
+        "years": [
+          [
+            2021,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Strada ['2021 em diante']",
+          "FIAT Strada ['2021 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-dreno",
+      "title": "Conjunto Dreno para Capota Rígida Retrátil",
+      "skus": [
+        "RKCRRCJD",
+        "9.631.39.031",
+        "RK0057",
+        "9.226.39.608",
+        "RK0879"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Rampage"
+        ],
+        "years": [
+          [
+            2024,
+            2026
+          ]
+        ],
+        "snippets": [
+          "SKU 424: Universal",
+          "RAM Rampage ['2024 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "reposicao-conjunto-perfil-traseiro-capota-grx-pro",
+      "title": "Conjunto Perfil Traseiro para Capota GRX",
+      "skus": [
+        "RKCMCPT",
+        "RK0551"
+      ],
+      "fitment": {
+        "brands": [
+          "CHEVROLET"
+        ],
+        "models": [
+          "S10"
+        ],
+        "years": [
+          [
+            2012,
+            2026
+          ]
+        ],
+        "snippets": [
+          "CHEVROLET S10 ['2012 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "sistema-de-escoamento",
+      "title": "Sistema de Escoamento Para Caçamba",
+      "skus": [
+        "SIST_ESC",
+        "9.226.63.700",
+        "K013"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "capota-maritima-grx-pro-black",
+      "title": "Capota Marítima GRX Pro Black Picapes Médias e Grandes | GERAÇÃO 1",
+      "skus": [
+        "CAP_GRXP",
+        "9.276.12.003GR"
+      ],
+      "fitment": {
+        "brands": [
+          "RAM"
+        ],
+        "models": [
+          "Classic"
+        ],
+        "years": [
+          [
+            2022,
+            2026
+          ]
+        ],
+        "snippets": [
+          "RAM Classic ['2022 em diante']"
+        ]
+      }
+    },
+    {
+      "handle": "grade-do-vidro-traseiro",
+      "title": "Grade do Vidro Traseiro Para Fiat Toro",
+      "skus": [
+        "GR_VIDRO",
+        "9.226.05.001PR",
+        "K454PR"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "Toro"
+        ],
+        "years": [
+          [
+            2016,
+            2026
+          ]
+        ],
+        "snippets": [
+          "FIAT Toro ['2016 em diante']"
+        ]
+      }
+    }
+  ]
+}
