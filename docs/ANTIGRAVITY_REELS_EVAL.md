@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-11 (R-003)
+**Actualizado:** 2026-09-11 (R-004)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,22 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-004 — Database failover (HA primario → backup)
+- **Fecha evaluación:** 2026-09-11
+- **Fuente:** Facebook Reel — Afzal Web Solutions  
+  https://www.facebook.com/share/r/1GwvQDFsoE/  
+  (reel `1380542970859531`)
+- **Idea (resumen):** Database failover = cambiar automáticamente a una DB de respaldo cuando cae la primaria, en un setup de alta disponibilidad.
+- **Veredicto:** **OBVIAR** (para código/Antigravity)
+- **Impacto en McLarens ERP:** Bajo como tarea nueva. El ERP ya usa **MongoDB Atlas** (`mongodb+srv://…?retryWrites=true&w=majority`) según `deploy/GUIA_DESPLIEGUE_GOOGLE_CLOUD.md`, más backups diarios a Google Drive. Atlas con replica set ya hace failover automático del primario; no hace falta reimplementar failover en FastAPI.
+- **Si algún día duele (ops, no feature):**
+  - Verificar tier/cluster Atlas (réplicas, región GCP alineada a Cloud Run).
+  - Ensayo controlado de failover / alertas Atlas.
+  - No escribir lógica casera “si primary down, conectar a secondary” en `server.py`.
+- **Acción Antigravity ahora:** ninguna. No abrir PR de failover.
+- **Relacionado:** guía deploy Atlas + backups Drive; P0 seguridad del handoff tiene prioridad.
 
 
 ### R-003 — Monolito vs microservicios (Amazon “back to monolith”)
