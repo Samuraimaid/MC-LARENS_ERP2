@@ -214,7 +214,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados (2026-09-11):** R-001 Event-driven → **APARCAR**; R-002 Cron/crontab → **OBVIAR** (confirmado Xinon; no aplica en Cloud Run). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados (2026-09-11):** R-001 EDA → APARCAR; R-002 cron → OBVIAR; R-003 monolito vs microservicios → **APLICAR (guardrail: no partir a microservicios)**. Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
@@ -272,6 +272,7 @@ Cada PR: descripción con **Tema Torti → Evidencia → Riesgo ERP → Acción 
 ## 6. Fuera de alcance de este handoff
 
 - Reescritura total del monolito en un solo PR
+- Partir el ERP en microservicios (R-003: quedarse en monolito modular / mismo Cloud Run)
 - Migración de Mongo a SQL
 - Rebrand / rediseño UX
 - Activar Cloud Agents de Cursor (plan del usuario; irrelevante para Antigravity)
