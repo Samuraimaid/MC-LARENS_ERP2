@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-11
+**Actualizado:** 2026-09-11 (R-002)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,23 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-002 — Cron jobs / crontab (tareas programadas)
+- **Fecha evaluación:** 2026-09-11
+- **Fuente:** Facebook Reel — Afzal Web Solutions  
+  https://www.facebook.com/share/r/1C8MvafK84/  
+  (reel `28104495745874142`)
+- **Idea (resumen):** Explica qué es un cron job y la sintaxis de 5 campos del crontab (minuto, hora, día…) para correr código en el servidor sin que alguien esté presente.
+- **Veredicto:** **APARCAR** (útil como recordatorio; **no** aplicar crontab literal en Cloud Run)
+- **Impacto en McLarens ERP:** Bajo-medio. El ERP **ya** tiene programación interna: `backend/services/weekly_business_sentinel.py` (APScheduler + resumen ejecutivo Telegram) y la guía de deploy menciona `crontab -e` para sync nocturno. En **Cloud Run** el contenedor es efímero (scale-to-zero / multi-instancia): un crontab clásico o un APScheduler solo en proceso es frágil (jobs duplicados o que no corren).
+- **Si se retoma (post P1 / higiene deploy):**
+  - Preferir **Cloud Scheduler → HTTP autenticado** (OIDC / `SCHEDULER_TOKEN`) a endpoints internos, no `crontab` dentro del Dockerfile.
+  - Auditar que `weekly_business_sentinel` no dependa de `localhost:8001` frágil en producción.
+  - Candidatos de schedule: resumen semanal, limpieza de drafts/sesiones, reconciliación inventario, alertas de locks PIN — uno por uno.
+- **Por qué no APLICAR ya:** El reel es tutorial básico; no aporta diseño nuevo. Meter crontab en la imagen Cloud Run empeoraría ops. Prioridad sigue en P0 seguridad + issues #4–#7.
+- **Acción Antigravity ahora:** ninguna. No abrir PR de “agregar crontab”.
+- **Relacionado handoff / código:** P4 higiene deploy; `weekly_business_sentinel.py`; `deploy/GUIA_DESPLIEGUE_GOOGLE_CLOUD.md` (sección crontab).
 
 ### R-001 — Event-driven vs llamadas síncronas en cadena
 - **Fecha evaluación:** 2026-09-11
