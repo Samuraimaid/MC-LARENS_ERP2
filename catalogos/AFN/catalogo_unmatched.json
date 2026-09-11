@@ -1,0 +1,201 @@
+[
+  {
+    "id": 48002430,
+    "handle": "48002430",
+    "url": "https://www.afn.pt/detail-mercedes-classx",
+    "nombre": "OEM Soporte de winche — Mercedes-Benz Class X 2017-2020",
+    "nombre_original": "48002430 | OEM winch mount | Mercedes Class X 2017-2020",
+    "sku": "48002430",
+    "skus": [
+      "48002430"
+    ],
+    "vendor": "AFN",
+    "categoria": "Protección delantera",
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "Marca": "AFN",
+      "Referencia": "48002430",
+      "Origen": "Portugal",
+      "Fabricante": "AFN 4x4 Accessories (Portugal)",
+      "Años": "2017-2020",
+      "Marcas vehículo": "MERCEDES BENZ",
+      "Modelos": "clase x, class x, x-class, x class"
+    },
+    "precio": "No especificado",
+    "moneda": "No especificado",
+    "fitment_raw": {
+      "brands": [
+        "MERCEDES BENZ"
+      ],
+      "models": [
+        "clase x",
+        "class x",
+        "x-class",
+        "x class"
+      ],
+      "years": [
+        [
+          2017,
+          2020
+        ]
+      ],
+      "snippets": [
+        "Mercedes Class X 2017 - 2020 | Wich Mount & Skid Plate | AFN (https://www.afn.pt/detail-mercedes-classx)"
+      ]
+    },
+    "compatibilidad": "MERCEDES BENZ | Clase X, Class X, X-Class, X Class | 2017-2020",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "No especificado",
+    "source_url": "https://www.afn.pt/detail-mercedes-classx",
+    "fuente": "afn.pt"
+  },
+  {
+    "id": 48002923,
+    "handle": "48002923",
+    "url": "https://www.afn.pt/detail-ineos-grenadier",
+    "nombre": "Parachoques delantero — Ineos Grenadier 2023-Actual",
+    "nombre_original": "48002923 | Front Bumper | Ineos Grenadier 2023-Actual",
+    "sku": "48002923",
+    "skus": [
+      "48002923"
+    ],
+    "vendor": "AFN",
+    "categoria": "Protección delantera",
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "Marca": "AFN",
+      "Referencia": "48002923",
+      "Origen": "Portugal",
+      "Fabricante": "AFN 4x4 Accessories (Portugal)",
+      "Años": "2023-Actual",
+      "Marcas vehículo": "INEOS",
+      "Modelos": "grenadier"
+    },
+    "precio": "No especificado",
+    "moneda": "No especificado",
+    "fitment_raw": {
+      "brands": [
+        "INEOS"
+      ],
+      "models": [
+        "grenadier"
+      ],
+      "years": [
+        [
+          2023,
+          2026
+        ]
+      ],
+      "snippets": [
+        "Ineos Grenadier 2023+ | Front & Rear Bumpers and Side Steps | AFN (https://www.afn.pt/detail-ineos-grenadier)"
+      ]
+    },
+    "compatibilidad": "INEOS | Grenadier | 2023-Actual",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "No especificado",
+    "source_url": "https://www.afn.pt/detail-ineos-grenadier",
+    "fuente": "afn.pt"
+  },
+  {
+    "id": 48002929,
+    "handle": "48002929",
+    "url": "https://www.afn.pt/detail-ineos-grenadier",
+    "nombre": "Rear Step Bar con Trailer Hitch — Ineos Grenadier 2023-Actual",
+    "nombre_original": "48002929 | Rear Step Bar w/ Trailer Hitch | Ineos Grenadier 2023-Actual",
+    "sku": "48002929",
+    "skus": [
+      "48002929"
+    ],
+    "vendor": "AFN",
+    "categoria": "Protección trasera",
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "Marca": "AFN",
+      "Referencia": "48002929",
+      "Origen": "Portugal",
+      "Fabricante": "AFN 4x4 Accessories (Portugal)",
+      "Años": "2023-Actual",
+      "Marcas vehículo": "INEOS",
+      "Modelos": "grenadier"
+    },
+    "precio": "No especificado",
+    "moneda": "No especificado",
+    "fitment_raw": {
+      "brands": [
+        "INEOS"
+      ],
+      "models": [
+        "grenadier"
+      ],
+      "years": [
+        [
+          2023,
+          2026
+        ]
+      ],
+      "snippets": [
+        "Ineos Grenadier 2023+ | Front & Rear Bumpers and Side Steps | AFN (https://www.afn.pt/detail-ineos-grenadier)"
+      ]
+    },
+    "compatibilidad": "INEOS | Grenadier | 2023-Actual",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "No especificado",
+    "source_url": "https://www.afn.pt/detail-ineos-grenadier",
+    "fuente": "afn.pt"
+  },
+  {
+    "id": 48002930,
+    "handle": "48002930",
+    "url": "https://www.afn.pt/detail-ineos-grenadier",
+    "nombre": "Estribos laterales — Ineos Grenadier 2023-Actual",
+    "nombre_original": "48002930 | Side Steps | Ineos Grenadier 2023-Actual",
+    "sku": "48002930",
+    "skus": [
+      "48002930"
+    ],
+    "vendor": "AFN",
+    "categoria": "Protección inferior / lateral",
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "Marca": "AFN",
+      "Referencia": "48002930",
+      "Origen": "Portugal",
+      "Fabricante": "AFN 4x4 Accessories (Portugal)",
+      "Años": "2023-Actual",
+      "Marcas vehículo": "INEOS",
+      "Modelos": "grenadier"
+    },
+    "precio": "No especificado",
+    "moneda": "No especificado",
+    "fitment_raw": {
+      "brands": [
+        "INEOS"
+      ],
+      "models": [
+        "grenadier"
+      ],
+      "years": [
+        [
+          2023,
+          2026
+        ]
+      ],
+      "snippets": [
+        "Ineos Grenadier 2023+ | Front & Rear Bumpers and Side Steps | AFN (https://www.afn.pt/detail-ineos-grenadier)"
+      ]
+    },
+    "compatibilidad": "INEOS | Grenadier | 2023-Actual",
+    "match_status": "unmatched",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "No especificado",
+    "source_url": "https://www.afn.pt/detail-ineos-grenadier",
+    "fuente": "afn.pt"
+  }
+]
