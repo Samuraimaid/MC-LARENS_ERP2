@@ -214,7 +214,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados (2026-09-11):** R-001 Event-driven → **APARCAR**; R-002 Cron/crontab → **APARCAR** (Cloud Scheduler a futuro, no crontab en Cloud Run). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados (2026-09-11):** R-001 Event-driven → **APARCAR**; R-002 Cron/crontab → **OBVIAR** (confirmado Xinon; no aplica en Cloud Run). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
