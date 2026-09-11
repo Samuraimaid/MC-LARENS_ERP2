@@ -1,0 +1,6145 @@
+[
+  {
+    "id": "398",
+    "handle": "kit-eletrico-para-engate-de-reboque",
+    "linkText": "kit-eletrico-para-engate-de-reboque",
+    "url": "https://www.keko.com.br/kit-eletrico-para-engate-de-reboque/p",
+    "nombre": "Kit eléctrico para Enganche de remolque",
+    "nombre_original": "Kit Elétrico para Engate de Reboque",
+    "sku": "ENG_KIT",
+    "skus": [
+      "ENG_KIT",
+      "9.860.03.005",
+      "K0197"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Kit eléctrico para Enganche de remolque"
+    ],
+    "descripcion": "O Kit eléctrico para Enganche de remolque Keko integra a iluminação del reboque con a del veículo con uma Instalación rápida y sin cortes na fiação original. Garante, assim, que o sistema de iluminação del seu reboque esteja en perfeito estado de funcionamento.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "Destacados del producto": "Atende CONTRAN y INMETRO; Chicote elétrico completo padrão montadora; Compatível con todos os modelos de veículos del mercado; Função de luz de ré inclusa; Instalación rápida y sin cortes na fiação original; Isola a elétrica del reboque evitando danos ao veículo",
+      "Regulamentação": "CONTRAN 197/06 y 234/07",
+      "Compatibilidade": "con todos os modelos de engate del mercado",
+      "Função de luz de ré": "Sim",
+      "Resistente a água y esguichos": "Sim",
+      "Instalación": "Difícil",
+      "Garantía de fábrica": "3 anos"
+    },
+    "precio": {
+      "valor": 572.0,
+      "moneda": "BRL",
+      "texto": "R$ 572.00"
+    },
+    "variantes": [
+      {
+        "id": "415",
+        "titulo": "Kit Elétrico para Engate de Reboque Keko K0197",
+        "sku": "K0197",
+        "ref_id": "9.860.03.005",
+        "ean": "7898732985350",
+        "precio": 572.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 415: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-eletrico-para-engate-de-reboque/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159448/K0197PR_1.jpg?v=638455228109700000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-eletrico-para-engate-de-reboque/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "440",
+    "handle": "ponteira-252-mm",
+    "linkText": "ponteira-252-mm",
+    "url": "https://www.keko.com.br/ponteira-252-mm/p",
+    "nombre": "Puntera Engate 252mm",
+    "nombre_original": "Ponteira Engate 252mm",
+    "sku": "PONT_252",
+    "skus": [
+      "PONT_252",
+      "9.580.03.007PR",
+      "K983PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, con aplicação sugerida para L200 Triton.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "362",
+        "titulo": "Ponteira Engate de Reboque 252mm Keko K983PR",
+        "sku": "K983PR",
+        "ref_id": "9.580.03.007PR",
+        "ean": "7908878000777",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 362: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-252-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161156/1.jpg?v=638620907249900000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166337/2.jpg?v=638932988595700000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-252-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "541",
+    "handle": "reposicao-varao-capota-maritima-grx",
+    "linkText": "reposicao-varao-capota-maritima-grx",
+    "url": "https://www.keko.com.br/reposicao-varao-capota-maritima-grx/p",
+    "nombre": "Varão para Capota marítima GRX",
+    "nombre_original": "Varão para Capota Marítima GRX",
+    "sku": "RKCMVGRX",
+    "skus": [
+      "RKCMVGRX",
+      "9.101.12.032",
+      "RK0542"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Varão para Capota marítima GRX Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "442",
+        "titulo": "Conjunto Varão Capota GRX todas picapes RK0542",
+        "sku": "RK0542",
+        "ref_id": "9.101.12.032",
+        "ean": "7898732982724",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 442: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-varao-capota-maritima-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167387/SKU442-Conjunto Varao Capota GRX todas picapes RK0542.png?v=639065947005300000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-varao-capota-maritima-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "442",
+    "handle": "ponteira-para-engate-de-reboque-141mm",
+    "linkText": "ponteira-para-engate-de-reboque-141mm",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-141mm/p",
+    "nombre": "Puntera para Enganche de remolque 141mm",
+    "nombre_original": "Ponteira para Engate de Reboque 141mm",
+    "sku": "PONT_141",
+    "skus": [
+      "PONT_141",
+      "9.308.03.001PR",
+      "K047PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, esfera para cima, con aplicação sugerida para Creta, Corolla Cross, Haval H6, Kicks, Nivus, RAV4, Saveiro, T-Cross, Tracker, Virtus, XC40. Esfera para baixo aplicação sugerida para Captur, Discovery Sport, HR-V, Montana, Tiguan.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 151.0,
+      "moneda": "BRL",
+      "texto": "R$ 151.00"
+    },
+    "variantes": [
+      {
+        "id": "366",
+        "titulo": "Ponteira Engate de Reboque 141mm Keko K047PR",
+        "sku": "K047PR",
+        "ref_id": "9.308.03.001PR",
+        "ean": "7898133777752",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 366: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-141mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162502/1.jpg?v=638841205028470000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/162503/2.jpg?v=638841205028470000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/162504/3.jpg?v=638841205028600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/162505/4.jpg?v=638841205028600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/162506/5.jpg?v=638841205028600000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-141mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "437",
+    "handle": "esfera-cromo-duro-50-mm",
+    "linkText": "esfera-cromo-duro-50-mm",
+    "url": "https://www.keko.com.br/esfera-cromo-duro-50-mm/p",
+    "nombre": "Esfera Cromo Duro 50mm",
+    "nombre_original": "Esfera Cromo Duro 50mm",
+    "sku": "ESF_CD50",
+    "skus": [
+      "ESF_CD50",
+      "9.860.03.150",
+      "K992"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Esfera para Enganche de remolque en cromo duro 50mm.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+    },
+    "precio": {
+      "valor": 174.0,
+      "moneda": "BRL",
+      "texto": "R$ 174.00"
+    },
+    "variantes": [
+      {
+        "id": "351",
+        "titulo": "Esfera 50mm Cromo Duro Keko K992",
+        "sku": "K992",
+        "ref_id": "9.860.03.150",
+        "ean": "7898133774010",
+        "precio": 174.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 351: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/esfera-cromo-duro-50-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159902/ESFERA_OK.jpg?v=638487770397900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/esfera-cromo-duro-50-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "552",
+    "handle": "plataforma-my-road-1915-mm-preto",
+    "linkText": "plataforma-my-road-1915-mm-preto",
+    "url": "https://www.keko.com.br/plataforma-my-road-1915-mm-preto/p",
+    "nombre": "Plataforma My Road 1915mm Negro",
+    "nombre_original": "Plataforma My Road 1915mm Preto",
+    "sku": "MYR481PR",
+    "skus": [
+      "MYR481PR",
+      "9.101.00.620PR",
+      "K481PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Road 1915mm Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1387.0,
+      "moneda": "BRL",
+      "texto": "R$ 1387.00"
+    },
+    "variantes": [
+      {
+        "id": "35",
+        "titulo": "Plataforma My Road 1915mm Preto K481PR",
+        "sku": "K481PR",
+        "ref_id": "9.101.00.620PR",
+        "ean": "7898133775406",
+        "precio": 1387.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 35: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-road-1915-mm-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161691/MY-ROAD-PR.jpg?v=638721055942570000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161692/MY-ROAD-PR--2-.jpg?v=638895867665500000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161693/MY-ROAD-PR--3-.jpg?v=638895867665530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161694/MY-ROAD-PR--4-.jpg?v=638895867665570000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-road-1915-mm-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "24",
+    "handle": "kit-suporte-santo-antonio-para-capota-rigida-retratil",
+    "linkText": "kit-suporte-santo-antonio-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/kit-suporte-santo-antonio-para-capota-rigida-retratil/p",
+    "nombre": "Kit de soporte Santo Antonio para Capota rígida retráctil",
+    "nombre_original": "Kit Suporte Santo Antônio para Capota Rígida Retrátil",
+    "sku": "KIT_STO",
+    "skus": [
+      "KIT_STO",
+      "9.631.39.005PR",
+      "K456PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte Santo Antonio para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 349.0,
+      "moneda": "BRL",
+      "texto": "R$ 349.00"
+    },
+    "variantes": [
+      {
+        "id": "329",
+        "titulo": "Kit Suporte Santo Antônios Keko para Capota Rígida Retrátil Keko K456PR",
+        "sku": "K456PR",
+        "ref_id": "9.631.39.005PR",
+        "ean": "7898732985343",
+        "precio": 349.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 329: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-santo-antonio-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159728/K456PR_1.jpg?v=638460234747400000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159729/K456PR_2.jpg?v=638895873367600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159730/K456PR_3.jpg?v=638895873367670000"
+    ],
+    "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "615",
+    "handle": "ponteira-para-engate-de-reboque-224mm",
+    "linkText": "ponteira-para-engate-de-reboque-224mm",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-224mm/p",
+    "nombre": "Puntera para Enganche de remolque 224mm",
+    "nombre_original": "Ponteira para Engate de Reboque 224mm",
+    "sku": "PONT_224",
+    "skus": [
+      "PONT_224",
+      "9.613.03.002",
+      "K0341"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para cima, con aplicação sugerida para Tank 300.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "1755",
+        "titulo": "Ponteira Engate de Reboque 224mm Keko K0341",
+        "sku": "K0341",
+        "ref_id": "9.613.03.002",
+        "ean": "7908878004027",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1755: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-224mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168288/Imagens-Site.jpg?v=639210070659130000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-224mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "613",
+    "handle": "rreposicao-conjunto-sobrecapa-k3",
+    "linkText": "rreposicao-conjunto-sobrecapa-k3",
+    "url": "https://www.keko.com.br/rreposicao-conjunto-sobrecapa-k3/p",
+    "nombre": "Conjunto Sobrecubierta Santo Antonio K3",
+    "nombre_original": "Conjunto Sobrecapa Santo Antônio K3",
+    "sku": "RKCJSCK3",
+    "skus": [
+      "RKCJSCK3",
+      "9.395.05.017",
+      "RK0728"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 240.0,
+      "moneda": "BRL",
+      "texto": "R$ 240.00"
+    },
+    "variantes": [
+      {
+        "id": "1730",
+        "titulo": "Conjunto Sobrecapa Santo Antônio K3 RK0728",
+        "sku": "RK0728",
+        "ref_id": "9.395.05.017",
+        "ean": "7898732986326",
+        "precio": 240.0,
+        "disponible": true,
+        "sku_montadora": [],
+        "sku_modelo": [],
+        "sku_ano": [],
+        "sku_version": [],
+        "sku_cabine": []
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "Sin vehículo específico en ficha VTEX"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/rreposicao-conjunto-sobrecapa-k3/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167767/RK0728.png?v=639148717846370000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/rreposicao-conjunto-sobrecapa-k3/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "610",
+    "handle": "ponteira-para-engate-de-reboque-183mm",
+    "linkText": "ponteira-para-engate-de-reboque-183mm",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-183mm/p",
+    "nombre": "Puntera para Enganche de remolque 183mm",
+    "nombre_original": "Ponteira para Engate de Reboque 183mm",
+    "sku": "PONT_183",
+    "skus": [
+      "PONT_183",
+      "9.000.03.032",
+      "K0246"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, esfera para cima, con aplicação sugerida para Tiggo 7 y Haval H6.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 151.0,
+      "moneda": "BRL",
+      "texto": "R$ 151.00"
+    },
+    "variantes": [
+      {
+        "id": "1723",
+        "titulo": "Ponteira para Engate de Reboque 183mm Keko K0246",
+        "sku": "K0246",
+        "ref_id": "9.000.03.032",
+        "ean": "7908878001514",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1723: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-183mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167804/3.jpg?v=639178196621570000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/167805/1.jpg?v=639178196621870000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167806/4.jpg?v=639178196622200000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167807/2.jpg?v=639178196622200000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-183mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "609",
+    "handle": "suporte-motor-capota-rigida",
+    "linkText": "suporte-motor-capota-rigida",
+    "url": "https://www.keko.com.br/suporte-motor-capota-rigida/p",
+    "nombre": "Soporte Motor Capota rígida retráctil",
+    "nombre_original": "Suporte Motor Capota Rígida Retrátil",
+    "sku": "RKSMCRR",
+    "skus": [
+      "RKSMCRR",
+      "9.000.39.025",
+      "K0640"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 51.0,
+      "moneda": "BRL",
+      "texto": "R$ 51.00"
+    },
+    "variantes": [
+      {
+        "id": "1720",
+        "titulo": "Suporte Motor Capota Rígida Retrátil K0640",
+        "sku": "K0640",
+        "ref_id": "9.000.39.025",
+        "ean": "",
+        "precio": 51.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1720: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/suporte-motor-capota-rigida/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167667/K0640.png?v=639105752176800000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/suporte-motor-capota-rigida/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "599",
+    "handle": "borracha-perfil-traseiro-crr",
+    "linkText": "borracha-perfil-traseiro-crr",
+    "url": "https://www.keko.com.br/borracha-perfil-traseiro-crr/p",
+    "nombre": "Goma Perfil trasero Capota rígida retráctil",
+    "nombre_original": "Borracha Perfil Traseiro Capota Rígida Retrátil",
+    "sku": "RKBPTCRR",
+    "skus": [
+      "RKBPTCRR",
+      "9.000.39.041",
+      "RK1363"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 101.0,
+      "moneda": "BRL",
+      "texto": "R$ 101.00"
+    },
+    "variantes": [
+      {
+        "id": "1573",
+        "titulo": "Borracha Perfil Traseiro Capota Rígida Retrátil RK1363",
+        "sku": "RK1363",
+        "ref_id": "9.000.39.041",
+        "ean": "7908878003303",
+        "precio": 101.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1573: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/borracha-perfil-traseiro-crr/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167406/Design-sem-nome.png?v=639110988588100000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/borracha-perfil-traseiro-crr/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "593",
+    "handle": "clipe-elastico-capotas-grx",
+    "linkText": "clipe-elastico-capotas-grx",
+    "url": "https://www.keko.com.br/clipe-elastico-capotas-grx/p",
+    "nombre": "Clip elástico para Capotas GRX",
+    "nombre_original": "Clipe Elástico para Capotas GRX",
+    "sku": "RKCLIPE",
+    "skus": [
+      "RKCLIPE",
+      "9.042.12.700",
+      "RK0944"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "No especificado",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 33.0,
+      "moneda": "BRL",
+      "texto": "R$ 33.00"
+    },
+    "variantes": [
+      {
+        "id": "1552",
+        "titulo": "Conjunto Clipe Elástico para Capotas GRX RK0944",
+        "sku": "RK0944",
+        "ref_id": "9.042.12.700",
+        "ean": "7898732988528",
+        "precio": 33.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1552: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/clipe-elastico-capotas-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167425/Design-sem-nome--2-.png?v=639110988870670000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/clipe-elastico-capotas-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "591",
+    "handle": "reposicao-ponteira-de-travessa-capotas-grx",
+    "linkText": "reposicao-ponteira-de-travessa-capotas-grx",
+    "url": "https://www.keko.com.br/reposicao-ponteira-de-travessa-capotas-grx/p",
+    "nombre": "Puntera de Traviesas para Capotas GRX y GRX Pro Black",
+    "nombre_original": "Ponteira de Travessas para Capotas GRX e GRX Pro Black",
+    "sku": "PONT_TRA",
+    "skus": [
+      "PONT_TRA",
+      "9.000.12.033",
+      "RK1360"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Puntera de Traviesas para Capotas GRX y GRX Pro Black.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 31.0,
+      "moneda": "BRL",
+      "texto": "R$ 31.00"
+    },
+    "variantes": [
+      {
+        "id": "1537",
+        "titulo": "Ponteira de Travessas para Capotas GRX e GRX Pro Black RK1360",
+        "sku": "RK1360",
+        "ref_id": "9.000.12.033",
+        "ean": "7908878001538",
+        "precio": 31.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1537: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteira-de-travessa-capotas-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/166336/1.jpg?v=638923345538330000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-ponteira-de-travessa-capotas-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "582",
+    "handle": "perfil-vedacao-traseira-nova-geracao-capota-grx",
+    "linkText": "perfil-vedacao-traseira-nova-geracao-capota-grx",
+    "url": "https://www.keko.com.br/perfil-vedacao-traseira-nova-geracao-capota-grx/p",
+    "nombre": "Perfil Sellado trasero para nueva GENERACIÓN de Capotas Marítimas GRX",
+    "nombre_original": "Perfil Vedação Traseira para Nova Geração de Capotas Marítimas GRX",
+    "sku": "VED_TRAS",
+    "skus": [
+      "VED_TRAS",
+      "9.655.12.106",
+      "RK1199"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Perfil Sellado trasero para nueva GENERACIÓN de Capotas Marítimas GRX.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "1506",
+        "titulo": "Perfil Vedação Traseira para Nova Geração de Capotas Marítimas GRX RK1199",
+        "sku": "RK1199",
+        "ref_id": "9.655.12.106",
+        "ean": "A Definir",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1506: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/perfil-vedacao-traseira-nova-geracao-capota-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/166398/1.jpg?v=638938811910500000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/perfil-vedacao-traseira-nova-geracao-capota-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "572",
+    "handle": "conversor-de-ponteira-k2-para-k1-conv_pon",
+    "linkText": "conversor-de-ponteira-k2-para-k1-conv_pon",
+    "url": "https://www.keko.com.br/conversor-de-ponteira-k2-para-k1-conv_pon/p",
+    "nombre": "Conversor de Puntera K2 para Puntera K1",
+    "nombre_original": "Conversor de Ponteira K2 para Ponteira K1",
+    "sku": "CONV_PON",
+    "skus": [
+      "CONV_PON",
+      "9.000.03.028",
+      "K0222"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Conversor para Puntera de Enganche de remolque. con ele, é possível utilizar uma Puntera K1 en um Enganche de remolque K2.",
+    "especificaciones": {
+      "Destacados del producto": "Facilidade de manuseio; Pintura padrão OEM; Preserva o ângulo de saída del veículo"
+    },
+    "precio": {
+      "valor": 285.0,
+      "moneda": "BRL",
+      "texto": "R$ 285.00"
+    },
+    "variantes": [
+      {
+        "id": "1471",
+        "titulo": "Conversor de Ponteira K2 para Ponteira K1 K0222",
+        "sku": "K0222",
+        "ref_id": "9.000.03.028",
+        "ean": "7908878001033",
+        "precio": 285.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1471: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/conversor-de-ponteira-k2-para-k1-conv_pon/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164920/K0222_1.jpg?v=638859315197600000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/164921/K0222_2.jpg?v=638859315197900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/164922/K0222_3.jpg?v=638859315198070000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/164923/K0222_3-ES.jpg?v=638859315198400000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/164924/K0222_4.jpg?v=638859315198400000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/164925/K0222_4-ES.jpg?v=638859315198400000"
+    ],
+    "source_url": "https://www.keko.com.br/conversor-de-ponteira-k2-para-k1-conv_pon/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "569",
+    "handle": "pino-e-contrapino-k2",
+    "linkText": "pino-e-contrapino-k2",
+    "url": "https://www.keko.com.br/pino-e-contrapino-k2/p",
+    "nombre": "Pino y Contrapino para Enganche de remolque K2",
+    "nombre_original": "Pino e Contrapino para Engate de Reboque K2",
+    "sku": "RK_ENGK2",
+    "skus": [
+      "RK_ENGK2",
+      "9.000.03.030",
+      "RK0065"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Pino y contrapino para Enganches de remolque Keko K2.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 54.0,
+      "moneda": "BRL",
+      "texto": "R$ 54.00"
+    },
+    "variantes": [
+      {
+        "id": "1462",
+        "titulo": "Pino e Contrapino Engate de Reboque K2 Keko RK0065",
+        "sku": "RK0065",
+        "ref_id": "9.000.03.030",
+        "ean": "7908878000920",
+        "precio": 54.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1462: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/pino-e-contrapino-k2/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164904/RK0065.jpg?v=638857800084770000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/pino-e-contrapino-k2/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "566",
+    "handle": "kit-tampa-perfil-esteira-crr",
+    "linkText": "kit-tampa-perfil-esteira-crr",
+    "url": "https://www.keko.com.br/kit-tampa-perfil-esteira-crr/p",
+    "nombre": "Reposición Kit Tampa Perfil Banda Capota rígida retráctil",
+    "nombre_original": "Reposição Kit Tampa Perfil Esteira Capota Rígida Retrátil",
+    "sku": "RKKTPECR",
+    "skus": [
+      "RKKTPECR",
+      "9.631.39.700",
+      "RK0948"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Reposición Kit Tampa Perfil Banda Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 33.0,
+      "moneda": "BRL",
+      "texto": "R$ 33.00"
+    },
+    "variantes": [
+      {
+        "id": "1450",
+        "titulo": "Kit Tampa Perfil Esteira Capota Rígida Retrátil Keko RK0948",
+        "sku": "RK0948",
+        "ref_id": "9.631.39.700",
+        "ean": "7898732988542",
+        "precio": 33.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1450: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-tampa-perfil-esteira-crr/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161960/RK.png?v=638791938386030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-tampa-perfil-esteira-crr/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "562",
+    "handle": "pino-e-contrapino",
+    "linkText": "pino-e-contrapino",
+    "url": "https://www.keko.com.br/pino-e-contrapino/p",
+    "nombre": "Pino y Contrapino para Enganche de remolque K1",
+    "nombre_original": "Pino e Contrapino para Engate de Reboque K1",
+    "sku": "RKPINO",
+    "skus": [
+      "RKPINO",
+      "9.000.03.029",
+      "RK0558"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Pino y contrapino para Enganches de remolque Keko K1. Pino con medidas: 5/8” y 147 mm de comprimento.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 54.0,
+      "moneda": "BRL",
+      "texto": "R$ 54.00"
+    },
+    "variantes": [
+      {
+        "id": "1441",
+        "titulo": "Pino e Contrapino Engate de Reboque K1 Keko RK0558",
+        "sku": "RK0558",
+        "ref_id": "9.000.03.029",
+        "ean": "7908878000869",
+        "precio": 54.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1441: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/pino-e-contrapino/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161957/RK0558_1.jpg.jpg?v=638780902943470000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161958/RK0558_2.jpg.jpg?v=638780902943630000"
+    ],
+    "source_url": "https://www.keko.com.br/pino-e-contrapino/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "558",
+    "handle": "plataforma-my-trip-1915-mm",
+    "linkText": "plataforma-my-trip-1915-mm",
+    "url": "https://www.keko.com.br/plataforma-my-trip-1915-mm/p",
+    "nombre": "Plataforma My Trip 1915mm",
+    "nombre_original": "Plataforma My Trip 1915mm",
+    "sku": "MTKI481",
+    "skus": [
+      "MTKI481",
+      "9.655.00.610PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Trip 1915mm Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1269.0,
+      "moneda": "BRL",
+      "texto": "R$ 1269.00"
+    },
+    "variantes": [
+      {
+        "id": "304",
+        "titulo": "Plataforma My Trip 1915mm KI481 Preto",
+        "sku": "9.655.00.610PR",
+        "ref_id": "9.655.00.610PR",
+        "ean": "7898732985473",
+        "precio": 1269.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 304: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-trip-1915-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161713/MY-TRIP-PR.jpg?v=638721068845700000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161714/MY-TRIP-PR--2-.jpg?v=638895866373800000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161715/MY-TRIP-PR--3-.jpg?v=638895866373800000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-trip-1915-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "557",
+    "handle": "plataforma-my-trip-2025-mm",
+    "linkText": "plataforma-my-trip-2025-mm",
+    "url": "https://www.keko.com.br/plataforma-my-trip-2025-mm/p",
+    "nombre": "Plataforma My Trip 2025mm",
+    "nombre_original": "Plataforma My Trip 2025mm",
+    "sku": "MTKI403",
+    "skus": [
+      "MTKI403",
+      "9.631.00.636PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Trip 2025mm Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1269.0,
+      "moneda": "BRL",
+      "texto": "R$ 1269.00"
+    },
+    "variantes": [
+      {
+        "id": "313",
+        "titulo": "Plataforma My Trip 2025mm KI403 Preto",
+        "sku": "9.631.00.636PR",
+        "ref_id": "9.631.00.636PR",
+        "ean": "7898732985480",
+        "precio": 1269.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 313: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-trip-2025-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161716/MY-TRIP-PR.jpg?v=638721069505830000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161717/MY-TRIP-PR--2-.jpg?v=638895866273830000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161718/MY-TRIP-PR--3-.jpg?v=638895866274000000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-trip-2025-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "556",
+    "handle": "plataforma-my-trip-2280-mm",
+    "linkText": "plataforma-my-trip-2280-mm",
+    "url": "https://www.keko.com.br/plataforma-my-trip-2280-mm/p",
+    "nombre": "Plataforma My Trip 2280mm",
+    "nombre_original": "Plataforma My Trip 2280mm",
+    "sku": "MTKI718",
+    "skus": [
+      "MTKI718",
+      "9.279.00.601PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Trip 2280mm Keko",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1374.0,
+      "moneda": "BRL",
+      "texto": "R$ 1374.00"
+    },
+    "variantes": [
+      {
+        "id": "297",
+        "titulo": "Plataforma My Trip 2280mm KI718 Preto",
+        "sku": "9.279.00.601PR",
+        "ref_id": "9.279.00.601PR",
+        "ean": "7898732985503",
+        "precio": 1374.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 297: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-trip-2280-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161725/MY-TRIP-PR.jpg?v=638721079731770000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161726/MY-TRIP-PR--2-.jpg?v=638895865892200000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161727/MY-TRIP-PR--3-.jpg?v=638895865893000000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-trip-2280-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "555",
+    "handle": "plataforma-my-trip-2140-mm",
+    "linkText": "plataforma-my-trip-2140-mm",
+    "url": "https://www.keko.com.br/plataforma-my-trip-2140-mm/p",
+    "nombre": "Plataforma My Trip 2140mm",
+    "nombre_original": "Plataforma My Trip 2140mm",
+    "sku": "MTKI469",
+    "skus": [
+      "MTKI469",
+      "9.276.00.631PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Trip 2140mm Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1374.0,
+      "moneda": "BRL",
+      "texto": "R$ 1374.00"
+    },
+    "variantes": [
+      {
+        "id": "293",
+        "titulo": "Plataforma My Trip 2140 mm KI469 Preto",
+        "sku": "9.276.00.631PR",
+        "ref_id": "9.276.00.631PR",
+        "ean": "7898732985497",
+        "precio": 1374.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 293: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-trip-2140-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161719/MY-TRIP-PR.jpg?v=638721070672400000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161720/MY-TRIP-PR--2-.jpg?v=638895866130400000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161721/MY-TRIP-PR--3-.jpg?v=638895866130570000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-trip-2140-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "553",
+    "handle": "plataforma-my-road-2280-mm-preto",
+    "linkText": "plataforma-my-road-2280-mm-preto",
+    "url": "https://www.keko.com.br/plataforma-my-road-2280-mm-preto/p",
+    "nombre": "Plataforma My Road 2280mm Negro",
+    "nombre_original": "Plataforma My Road 2280mm Preto",
+    "sku": "MYR718PR",
+    "skus": [
+      "MYR718PR",
+      "9.298.00.601PR",
+      "K718PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Road 2280mm Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1581.0,
+      "moneda": "BRL",
+      "texto": "R$ 1581.00"
+    },
+    "variantes": [
+      {
+        "id": "142",
+        "titulo": "Plataforma My Road 2280mm Preto K718PR",
+        "sku": "K718PR",
+        "ref_id": "9.298.00.601PR",
+        "ean": "7898133775673",
+        "precio": 1581.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 142: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-road-2280-mm-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161687/MY-ROAD-PR.jpg?v=638721053725630000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161688/MY-ROAD-PR--2-.jpg?v=638895866004700000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161689/MY-ROAD-PR--3-.jpg?v=638895866004700000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161690/MY-ROAD-PR--4-.jpg?v=638895866004830000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-road-2280-mm-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "550",
+    "handle": "plataforma-my-road-2140-preto",
+    "linkText": "plataforma-my-road-2140-preto",
+    "url": "https://www.keko.com.br/plataforma-my-road-2140-preto/p",
+    "nombre": "Plataforma My Road 2140mm Negro",
+    "nombre_original": "Plataforma My Road 2140mm Preto",
+    "sku": "MYR469PR",
+    "skus": [
+      "MYR469PR",
+      "9.276.00.628PR",
+      "K469PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Road 2140mm Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1581.0,
+      "moneda": "BRL",
+      "texto": "R$ 1581.00"
+    },
+    "variantes": [
+      {
+        "id": "129",
+        "titulo": "Plataforma My Road 2140mm Preto K469PR",
+        "sku": "K469PR",
+        "ref_id": "9.276.00.628PR",
+        "ean": "7898133776533",
+        "precio": 1581.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 129: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-road-2140-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161699/MY-ROAD-PR.jpg?v=638721059279330000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161700/MY-ROAD-PR--2-.jpg?v=638895867086470000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161701/MY-ROAD-PR--3-.jpg?v=638895867086630000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161702/MY-ROAD-PR--4-.jpg?v=638895867086630000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-road-2140-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "548",
+    "handle": "plataforma-my-road-2025-preto",
+    "linkText": "plataforma-my-road-2025-preto",
+    "url": "https://www.keko.com.br/plataforma-my-road-2025-preto/p",
+    "nombre": "Plataforma My Road 2025mm Negro",
+    "nombre_original": "Plataforma My Road 2025mm Preto",
+    "sku": "MYR403PR",
+    "skus": [
+      "MYR403PR",
+      "9.275.00.617PR",
+      "K403PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Plataforma My Road 2025mm Negro Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1387.0,
+      "moneda": "BRL",
+      "texto": "R$ 1387.00"
+    },
+    "variantes": [
+      {
+        "id": "11",
+        "titulo": "Plataforma My Road 2025mm Preto K403PR",
+        "sku": "K403PR",
+        "ref_id": "9.275.00.617PR",
+        "ean": "7898133775413",
+        "precio": 1387.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 11: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plataforma-my-road-2025-preto/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161709/MY-ROAD-PR.jpg?v=638721067566900000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161710/MY-ROAD-PR--2-.jpg?v=638895866684900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161711/MY-ROAD-PR--3-.jpg?v=638895866684900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161712/MY-ROAD-PR--4-.jpg?v=638895866684900000"
+    ],
+    "source_url": "https://www.keko.com.br/plataforma-my-road-2025-preto/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "547",
+    "handle": "reposicao-estribo-tubular-k1-76",
+    "linkText": "reposicao-estribo-tubular-k1-76",
+    "url": "https://www.keko.com.br/reposicao-estribo-tubular-k1-76/p",
+    "nombre": "Pisantes para Estribo tubular K1 de dimensão 76X120",
+    "nombre_original": "Pisantes para Estribo Tubular K1 de dimensão 76X120",
+    "sku": "RECPK176",
+    "skus": [
+      "RECPK176",
+      "9.000.00.004",
+      "RK0115"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Pisantes para Estribo tubular K1 de dimensão 76X120 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 93.0,
+      "moneda": "BRL",
+      "texto": "R$ 93.00"
+    },
+    "variantes": [
+      {
+        "id": "1311",
+        "titulo": "Pisantes para Estribo Tubular K1 Keko RK0115",
+        "sku": "RK0115",
+        "ref_id": "9.000.00.004",
+        "ean": "7908878000449",
+        "precio": 93.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1311: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-estribo-tubular-k1-76/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167501/Pisante -6-.png?v=639080523016400000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-estribo-tubular-k1-76/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "539",
+    "handle": "reposicao-ponteiras-estribo-tubular-k1-olongo",
+    "linkText": "reposicao-ponteiras-estribo-tubular-k1-olongo",
+    "url": "https://www.keko.com.br/reposicao-ponteiras-estribo-tubular-k1-olongo/p",
+    "nombre": "Punteras Estribo tubular K1 Oblongo",
+    "nombre_original": "Ponteiras Estribo Tubular K1 Oblongo",
+    "sku": "RKPTEK1",
+    "skus": [
+      "RKPTEK1",
+      "9.000.00.012",
+      "RK0244"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Punteras Estribo tubular K1 Oblongo Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 72.0,
+      "moneda": "BRL",
+      "texto": "R$ 72.00"
+    },
+    "variantes": [
+      {
+        "id": "1287",
+        "titulo": "Ponteiras  Estribo Tubular K1 Oblongo Keko RK0244",
+        "sku": "RK0244",
+        "ref_id": "9.000.00.012",
+        "ean": "",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1287: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteiras-estribo-tubular-k1-olongo/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167505/Pisante -2-.png?v=639080623765770000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-ponteiras-estribo-tubular-k1-olongo/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "538",
+    "handle": "repoiscao-ponteira-estribo-my-trip",
+    "linkText": "repoiscao-ponteira-estribo-my-trip",
+    "url": "https://www.keko.com.br/repoiscao-ponteira-estribo-my-trip/p",
+    "nombre": "Punteras Estribo My Trip",
+    "nombre_original": "Ponteiras Estribo My Trip",
+    "sku": "RKPTEMT",
+    "skus": [
+      "RKPTEMT",
+      "9.000.00.009",
+      "RK0217"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Punteras Estribo My Trip Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 72.0,
+      "moneda": "BRL",
+      "texto": "R$ 72.00"
+    },
+    "variantes": [
+      {
+        "id": "1286",
+        "titulo": "Ponteiras Estribo My Trip Keko RK0217",
+        "sku": "RK0217",
+        "ref_id": "9.000.00.009",
+        "ean": "A Definir",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1286: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/repoiscao-ponteira-estribo-my-trip/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167500/Pisante -5-.png?v=639080522053630000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/repoiscao-ponteira-estribo-my-trip/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "537",
+    "handle": "reposicao-pisantes-para-estribo-tubular-k1",
+    "linkText": "reposicao-pisantes-para-estribo-tubular-k1",
+    "url": "https://www.keko.com.br/reposicao-pisantes-para-estribo-tubular-k1/p",
+    "nombre": "Pisantes para Estribo tubular K1 de dimensão 40x80",
+    "nombre_original": "Pisantes para Estribo Tubular K1 de dimensão 40x80",
+    "sku": "RECPISK1",
+    "skus": [
+      "RECPISK1",
+      "9.000.00.013",
+      "RK0249"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Composto por 2 Pisantes para Estribo tubular K1 Keko - Tubo con dimensão de 40mmx80mm.\nCompatível con:\n- Montana\n- Renegade .",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 93.0,
+      "moneda": "BRL",
+      "texto": "R$ 93.00"
+    },
+    "variantes": [
+      {
+        "id": "1288",
+        "titulo": "Pisantes para Estribo Tubular K1 Oblongo Keko RK0249",
+        "sku": "RK0249",
+        "ref_id": "9.000.00.013",
+        "ean": "A Definir",
+        "precio": 93.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1288: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-pisantes-para-estribo-tubular-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167497/Pisante.png?v=639080516752370000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-pisantes-para-estribo-tubular-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "536",
+    "handle": "reposicao-pisante-my-road",
+    "linkText": "reposicao-pisante-my-road",
+    "url": "https://www.keko.com.br/reposicao-pisante-my-road/p",
+    "nombre": "Pisantes para Estribo My Road",
+    "nombre_original": "Pisantes para Estribo My Road",
+    "sku": "RKPSTMR",
+    "skus": [
+      "RKPSTMR",
+      "9.000.00.011",
+      "RK0243"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Pisantes para Estribo My Road Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 93.0,
+      "moneda": "BRL",
+      "texto": "R$ 93.00"
+    },
+    "variantes": [
+      {
+        "id": "1289",
+        "titulo": "Pisantes para Estribo My Road Keko RK0243",
+        "sku": "RK0243",
+        "ref_id": "9.000.00.011",
+        "ean": "A Definir",
+        "precio": 93.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1289: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-pisante-my-road/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167498/Pisante -3-.png?v=639080519399170000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-pisante-my-road/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "534",
+    "handle": "reposicao-ponteira-estribo-integral",
+    "linkText": "reposicao-ponteira-estribo-integral",
+    "url": "https://www.keko.com.br/reposicao-ponteira-estribo-integral/p",
+    "nombre": "Punteras Estribo integral K1",
+    "nombre_original": "Ponteiras Estribo Integral K1",
+    "sku": "RKPTEI",
+    "skus": [
+      "RKPTEI",
+      "9.000.00.007",
+      "RK0138"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Punteras Estribo integral K1 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 72.0,
+      "moneda": "BRL",
+      "texto": "R$ 72.00"
+    },
+    "variantes": [
+      {
+        "id": "1290",
+        "titulo": "Ponteiras Estribo Integral K1 Keko RK0138",
+        "sku": "RK0138",
+        "ref_id": "9.000.00.007",
+        "ean": "A Definir",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1290: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteira-estribo-integral/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167494/Ponteiras Estribo Integral K1 -1-.png?v=639080511339730000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-ponteira-estribo-integral/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "529",
+    "handle": "reposicao-bucha-de-uniao-santo-antonio-k1-2-pol",
+    "linkText": "reposicao-bucha-de-uniao-santo-antonio-k1-2-pol",
+    "url": "https://www.keko.com.br/reposicao-bucha-de-uniao-santo-antonio-k1-2-pol/p",
+    "nombre": "Bucha de União para Santo Antonio K1 2 Pol",
+    "nombre_original": "Bucha de União para Santo Antônio K1 2 Pol",
+    "sku": "RK0220",
+    "skus": [
+      "RK0220",
+      "9.226.05.030PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Bucha de União para Santo Antonio K1 2 Pol Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 74.0,
+      "moneda": "BRL",
+      "texto": "R$ 74.00"
+    },
+    "variantes": [
+      {
+        "id": "1163",
+        "titulo": "Conjunto Bucha de União Tubo Santo Antônio K1 2 Keko RK0220",
+        "sku": "RK0220",
+        "ref_id": "9.226.05.030PR",
+        "ean": "7898133779060",
+        "precio": 74.0,
+        "disponible": true,
+        "sku_montadora": [],
+        "sku_modelo": [],
+        "sku_ano": [],
+        "sku_version": [],
+        "sku_cabine": []
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "Sin vehículo específico en ficha VTEX"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-bucha-de-uniao-santo-antonio-k1-2-pol/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167483/_RK0220.png?v=639080487182070000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-bucha-de-uniao-santo-antonio-k1-2-pol/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "523",
+    "handle": "reposicao-suporte-protecao-para-capota-maritima",
+    "linkText": "reposicao-suporte-protecao-para-capota-maritima",
+    "url": "https://www.keko.com.br/reposicao-suporte-protecao-para-capota-maritima/p",
+    "nombre": "Soporte Proteção para Capota marítima Flex",
+    "nombre_original": "Suporte Proteção para Capota Marítima Flex",
+    "sku": "RKCMSUPP",
+    "skus": [
+      "RKCMSUPP",
+      "9.631.12.035",
+      "RK0133"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Soporte Proteção para Capota marítima Flex Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 42.0,
+      "moneda": "BRL",
+      "texto": "R$ 42.00"
+    },
+    "variantes": [
+      {
+        "id": "1039",
+        "titulo": "Kit Reposição Conjunto  Suporte Proteção Keko RK0133",
+        "sku": "RK0133",
+        "ref_id": "9.631.12.035",
+        "ean": "7898732984575",
+        "precio": 42.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1039: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-suporte-protecao-para-capota-maritima/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161228/RK0133.jpg?v=638627184753600000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-suporte-protecao-para-capota-maritima/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "521",
+    "handle": "reposicao-borracha-eva-lateral-para-capota-grx",
+    "linkText": "reposicao-borracha-eva-lateral-para-capota-grx",
+    "url": "https://www.keko.com.br/reposicao-borracha-eva-lateral-para-capota-grx/p",
+    "nombre": "Goma y.V.A Lateral para Capota GRX",
+    "nombre_original": "Borracha E.V.A Lateral para Capota GRX",
+    "sku": "RKCMBORL",
+    "skus": [
+      "RKCMBORL",
+      "9.222.12.018",
+      "RK0573"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Goma y.V.A Lateral para Capota GRX Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "1027",
+        "titulo": "Conjunto Borracha EVA Lateral Capota GRX Keko RK0573",
+        "sku": "RK0573",
+        "ref_id": "9.222.12.018",
+        "ean": "7898732982793",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1027: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-borracha-eva-lateral-para-capota-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167503/Pisante.png?v=639080620258730000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-borracha-eva-lateral-para-capota-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "519",
+    "handle": "reposicao-perfil-vedacao-frontal-capota-grx",
+    "linkText": "reposicao-perfil-vedacao-frontal-capota-grx",
+    "url": "https://www.keko.com.br/reposicao-perfil-vedacao-frontal-capota-grx/p",
+    "nombre": "Perfil Sellado Frontal para Capota GRX",
+    "nombre_original": "Perfil Vedação Frontal para Capota GRX",
+    "sku": "RKCMPVF",
+    "skus": [
+      "RKCMPVF",
+      "9.582.12.019",
+      "RK0548",
+      "9.101.12.034",
+      "RK0547"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Perfil Sellado Frontal para Capota GRX Keko compativel con Amarok CD 2010 en adelante y RAM Classic 2022 en adelante.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "1022",
+        "titulo": "Conjunto Perfil Vedação Frontal 1550mm Cap GRX Keko RK0548",
+        "sku": "RK0548",
+        "ref_id": "9.582.12.019",
+        "ean": "7898732982823",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "1023",
+        "titulo": "Conjunto Perfil Vedação Frontal 1650mm Cap GRX Pro Black Amarok 2010 em diante/ RAM Classic 2022 em diante Keko RK0547",
+        "sku": "RK0547",
+        "ref_id": "9.101.12.034",
+        "ean": "7898732982830",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Não aplica"
+        ],
+        "sku_version": [
+          "Todas"
+        ],
+        "sku_cabine": [
+          "Cabine Dupla"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1022: Universal",
+        "SKU 1023: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-perfil-vedacao-frontal-capota-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161318/RK0547.jpg?v=638895848185030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-perfil-vedacao-frontal-capota-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "509",
+    "handle": "reposicao-pisantes-estribo-tubular-k1",
+    "linkText": "reposicao-pisantes-estribo-tubular-k1",
+    "url": "https://www.keko.com.br/reposicao-pisantes-estribo-tubular-k1/p",
+    "nombre": "Pisantes para Estribo tubular K1 de dimensão 70X105",
+    "nombre_original": "Pisantes para Estribo Tubular K1 de dimensão 70X105",
+    "sku": "RECPIS",
+    "skus": [
+      "RECPIS",
+      "9.000.00.006",
+      "RK0117"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Composto por 2 Pisantes para Estribo tubular K1 Keko - Tubo con dimensão de 70mmx105mm .\nCompatível con:\n- S10\n- Titano\n- Ranger\n- L200 Triton\n- Frontier\n- Duster\n- Hilux\n- Amarok.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 93.0,
+      "moneda": "BRL",
+      "texto": "R$ 93.00"
+    },
+    "variantes": [
+      {
+        "id": "865",
+        "titulo": "Pisantes para Estribo Tubular K1 Keko RK0117",
+        "sku": "RK0117",
+        "ref_id": "9.000.00.006",
+        "ean": "",
+        "precio": 93.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 865: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-pisantes-estribo-tubular-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167460/conjunto Perfil Lateral.png?v=639070320150530000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-pisantes-estribo-tubular-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "504",
+    "handle": "reposicao-conjunto-capa-lateral-esquerda-k1",
+    "linkText": "reposicao-conjunto-capa-lateral-esquerda-k1",
+    "url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-esquerda-k1/p",
+    "nombre": "Conjunto Capa Lateral Esquerda Santo Antonio K1",
+    "nombre_original": "Conjunto Capa Lateral Esquerda Santo Antônio K1",
+    "sku": "RKSACLE",
+    "skus": [
+      "RKSACLE",
+      "9.631.05.038",
+      "RK0154"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Capa Lateral Esquerda Santo Antonio K1 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 159.0,
+      "moneda": "BRL",
+      "texto": "R$ 159.00"
+    },
+    "variantes": [
+      {
+        "id": "530",
+        "titulo": "Capa Lateral Esquerda Santo Antônio K1 Keko RK0154",
+        "sku": "RK0154",
+        "ref_id": "9.631.05.038",
+        "ean": "7898133779206",
+        "precio": 159.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 530: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-capa-lateral-esquerda-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161233/RK0154.jpg?v=638627186752570000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-esquerda-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "503",
+    "handle": "reposicao-capota-rigida-retratil-motor-24v",
+    "linkText": "reposicao-capota-rigida-retratil-motor-24v",
+    "url": "https://www.keko.com.br/reposicao-capota-rigida-retratil-motor-24v/p",
+    "nombre": "Motor y Soporte para Capota rígida retráctil 24V",
+    "nombre_original": "Motor e Suporte para Capota Rígida Retrátil 24V",
+    "sku": "RKCRRM24",
+    "skus": [
+      "RKCRRM24",
+      "9.631.39.033",
+      "RK0055"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Motor y Soporte para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1003.0,
+      "moneda": "BRL",
+      "texto": "R$ 1003.00"
+    },
+    "variantes": [
+      {
+        "id": "813",
+        "titulo": "Motor e Suporte para Capota Rígida Retrátil RK0055",
+        "sku": "RK0055",
+        "ref_id": "9.631.39.033",
+        "ean": "7898133777004",
+        "precio": 1003.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 813: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-capota-rigida-retratil-motor-24v/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167369/SKU813-Motor-e-Suporte-para-Capota-Rigida-Retratil-RK0055.png?v=639193031768030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-capota-rigida-retratil-motor-24v/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "500",
+    "handle": "reposicao-conjunto-capa-lateral-k1-2-pol-esquerda",
+    "linkText": "reposicao-conjunto-capa-lateral-k1-2-pol-esquerda",
+    "url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-k1-2-pol-esquerda/p",
+    "nombre": "Conjunto Capa Lateral Esquerda K1 2 Pol",
+    "nombre_original": "Conjunto Capa Lateral Esquerda K1 2 Pol",
+    "sku": "RKSACL2E",
+    "skus": [
+      "RKSACL2E",
+      "9.226.05.028PR",
+      "RK0152"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Capa Lateral Esquerda K1 2 Pol Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 77.0,
+      "moneda": "BRL",
+      "texto": "R$ 77.00"
+    },
+    "variantes": [
+      {
+        "id": "412",
+        "titulo": "Capa Lateral Esquerda Santo Antônio K1 2 Pol Keko RK0152",
+        "sku": "RK0152",
+        "ref_id": "9.226.05.028PR",
+        "ean": "7898133779084",
+        "precio": 77.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 412: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-capa-lateral-k1-2-pol-esquerda/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161231/RK0152.jpg?v=638627185973070000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-k1-2-pol-esquerda/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "497",
+    "handle": "reposicao-conjunto-ponteira-estribo-my-road",
+    "linkText": "reposicao-conjunto-ponteira-estribo-my-road",
+    "url": "https://www.keko.com.br/reposicao-conjunto-ponteira-estribo-my-road/p",
+    "nombre": "Punteras Estribo My Road",
+    "nombre_original": "Ponteiras Estribo My Road",
+    "sku": "RKCJPEMR",
+    "skus": [
+      "RKCJPEMR",
+      "9.000.00.010",
+      "RK0121"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Estribo"
+    ],
+    "descripcion": "Punteras para Estribo My Road Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 72.0,
+      "moneda": "BRL",
+      "texto": "R$ 72.00"
+    },
+    "variantes": [
+      {
+        "id": "1259",
+        "titulo": "Ponteiras Estribo My Road Keko RK0121",
+        "sku": "RK0121",
+        "ref_id": "9.000.00.010",
+        "ean": "",
+        "precio": 72.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 1259: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-ponteira-estribo-my-road/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167427/Design sem nome -6-.png?v=639068452473330000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-ponteira-estribo-my-road/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "496",
+    "handle": "reposicao-de-modulo-de-controle-g3-crr",
+    "linkText": "reposicao-de-modulo-de-controle-g3-crr",
+    "url": "https://www.keko.com.br/reposicao-de-modulo-de-controle-g3-crr/p",
+    "nombre": "Módulo de Controle Capota rígida retráctil G3",
+    "nombre_original": "Módulo de Controle Capota Rígida Retrátil G3",
+    "sku": "RKCRRMG3",
+    "skus": [
+      "RKCRRMG3",
+      "9.631.39.039",
+      "RK0139"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Módulo de Controle Capota rígida retráctil G3 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1299.0,
+      "moneda": "BRL",
+      "texto": "R$ 1299.00"
+    },
+    "variantes": [
+      {
+        "id": "812",
+        "titulo": "Módulo de Controle Capota Rígida Retrátil G3 Keko RK0139",
+        "sku": "RK0139",
+        "ref_id": "9.631.39.039",
+        "ean": "7898133777998",
+        "precio": 1299.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 812: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-de-modulo-de-controle-g3-crr/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159981/RK0139.jpg?v=638513040981300000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-de-modulo-de-controle-g3-crr/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "495",
+    "handle": "reposicao-kit-de-compatibilizacao-de-modulo-crr",
+    "linkText": "reposicao-kit-de-compatibilizacao-de-modulo-crr",
+    "url": "https://www.keko.com.br/reposicao-kit-de-compatibilizacao-de-modulo-crr/p",
+    "nombre": "Kit de Compatibilização de Módulo Capota rígida retráctil",
+    "nombre_original": "Kit de Compatibilização de Módulo Capota Rígida Retrátil",
+    "sku": "RKCRRKCM",
+    "skus": [
+      "RKCRRKCM",
+      "9.965.39.000AT",
+      "RK0049"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Possui todos os componentes necessários para realizar uma compatibilização del módulo G1 para o G2 (atualizado y melhorado).",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1417.0,
+      "moneda": "BRL",
+      "texto": "R$ 1417.00"
+    },
+    "variantes": [
+      {
+        "id": "817",
+        "titulo": "Kit de Compatibilização novo Módulo Capota Rígida RK0049",
+        "sku": "RK0049",
+        "ref_id": "9.965.39.000AT",
+        "ean": "A Definir",
+        "precio": 1417.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 817: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-kit-de-compatibilizacao-de-modulo-crr/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159977/RK0049.jpg?v=638512251554030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-kit-de-compatibilizacao-de-modulo-crr/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "468",
+    "handle": "reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex",
+    "linkText": "reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex",
+    "url": "https://www.keko.com.br/reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex/p",
+    "nombre": "Punteras de la Traviesa para Capota marítima Flex",
+    "nombre_original": "Ponteiras da Travessa para Capota Marítima Flex",
+    "sku": "RKCMFTR",
+    "skus": [
+      "RKCMFTR",
+      "9.655.12.026",
+      "RK0135"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Punteras de la Traviesa para Capota marítima Flex Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 33.0,
+      "moneda": "BRL",
+      "texto": "R$ 33.00"
+    },
+    "variantes": [
+      {
+        "id": "453",
+        "titulo": "Kit Ponteira da Travessa Retangular Capota Keko RK0135",
+        "sku": "RK0135",
+        "ref_id": "9.655.12.026",
+        "ean": "7898732984681",
+        "precio": 33.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 453: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159862/RK0135.jpg?v=638469862230300000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "466",
+    "handle": "controle-remoto-2",
+    "linkText": "controle-remoto-2",
+    "url": "https://www.keko.com.br/controle-remoto-2/p",
+    "nombre": "Controle Remoto para Capota rígida retráctil Keko con fabricação após 08/08/2021",
+    "nombre_original": "Controle Remoto para Capota Rígida Retrátil Keko com fabricação após 08/08/2021",
+    "sku": "RKCRRCR2",
+    "skus": [
+      "RKCRRCR2",
+      "9.631.39.038",
+      "RK0064"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Controle Remoto para Capota rígida retráctil Keko con fabricação após 08/08/2021",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 136.0,
+      "moneda": "BRL",
+      "texto": "R$ 136.00"
+    },
+    "variantes": [
+      {
+        "id": "428",
+        "titulo": "Controle Remoto para Capota Rígida Retrátil Keko com fabricação após 08/08/2021 RK0064",
+        "sku": "RK0064",
+        "ref_id": "9.631.39.038",
+        "ean": "7898133777868",
+        "precio": 136.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 428: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/controle-remoto-2/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167395/SKU428-Controle Remoto para Capota Rigida Retratil Keko com fabricacao apos 08082021 RK0064.png?v=639065967880470000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/controle-remoto-2/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "465",
+    "handle": "tampa-engate-de-reboque-k1",
+    "linkText": "tampa-engate-de-reboque-k1",
+    "url": "https://www.keko.com.br/tampa-engate-de-reboque-k1/p",
+    "nombre": "Tampa para Enganche de remolque K1",
+    "nombre_original": "Tampa para Engate de Reboque K1",
+    "sku": "RKERTK1",
+    "skus": [
+      "RKERTK1",
+      "9.631.03.011",
+      "RK0647"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Tampa para Enganche de remolque compatível con modelo K1.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 54.0,
+      "moneda": "BRL",
+      "texto": "R$ 54.00"
+    },
+    "variantes": [
+      {
+        "id": "780",
+        "titulo": "Conjunto Tampa plástica engate de reboque K1 Keko RK0647",
+        "sku": "RK0647",
+        "ref_id": "9.631.03.011",
+        "ean": "7898732985442",
+        "precio": 54.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 780: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/tampa-engate-de-reboque-k1/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159928/RK0647.jpg?v=638488624526900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/tampa-engate-de-reboque-k1/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "464",
+    "handle": "ponteira-para-engate-de-reboque-288-2-furos",
+    "linkText": "ponteira-para-engate-de-reboque-288-2-furos",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-288-2-furos/p",
+    "nombre": "Puntera para Enganche de remolque 288mm 2 furos",
+    "nombre_original": "Ponteira para Engate de Reboque 288mm 2 furos",
+    "sku": "PONT_288",
+    "skus": [
+      "PONT_288",
+      "9.157.03.005PR",
+      "K492PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Puntera Enganche de remolque 288mm con 2 furos. sin sugestão de compatibilidade.",
+    "especificaciones": {
+      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "369",
+        "titulo": "Ponteira para Engate de Reboque 288mm 2 furos Keko K492PR",
+        "sku": "K492PR",
+        "ref_id": "9.157.03.005PR",
+        "ean": "7898133777639",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 369: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-288-2-furos/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/166754/K492PR_1.jpg?v=638961327194270000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166755/K492PR_1.jpg?v=638961327194730000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/166756/K492PR_2.jpg?v=638961327194900000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/166757/K492PR_2.jpg?v=638961327195070000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-288-2-furos/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "462",
+    "handle": "ponteira-para-engate-de-reboque-158mm",
+    "linkText": "ponteira-para-engate-de-reboque-158mm",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-158mm/p",
+    "nombre": "Puntera para Enganche de remolque 158 mm",
+    "nombre_original": "Ponteira para Engate de Reboque 158 mm",
+    "sku": "PONT_158",
+    "skus": [
+      "PONT_158",
+      "9.075.03.006PR",
+      "K978PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para baixo, con aplicação sugerida para Bronco Sport, Compass, CR-V, EcoSport, Edge, GLA, Gladiator, Grand Cherokee, IX35, New Tucson, Outlander, Q3, Rampage, Santa Fé, Sorento, SW4, Toro, Tucson, XC60, XC90, WR-V. Esfera para cima aplicação sugerida para ASX, Compass, Captiva, Oroch, RAV4, Renegade, S10, Strada, Tiguan.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "358",
+        "titulo": "Ponteira Engate de Reboque 158mm Keko K978PR",
+        "sku": "K978PR",
+        "ref_id": "9.075.03.006PR",
+        "ean": "7908878000760",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 358: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-158mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167800/1.jpg?v=639173860409400000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/167801/K978PR_A_site.jpg?v=639173860409700000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167802/3.jpg?v=639173860409870000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/167803/K978PR_B_site.jpg?v=639173860409870000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-158mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "461",
+    "handle": "engate-perno",
+    "linkText": "engate-perno",
+    "url": "https://www.keko.com.br/engate-perno/p",
+    "nombre": "Engate Perno",
+    "nombre_original": "Engate Perno",
+    "sku": "ENG_PERN",
+    "skus": [
+      "ENG_PERN",
+      "9.860.03.002PR",
+      "K604PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Para quem precisa de força extra na hora de rebocar, apresentamos o Engate Perno. Possui homologação del INMETRO, é produzido con as melhores matérias primas del mercado, resistência garantida y ainda pode ser utilizado en carretas y máquinas agrícolas. sin sugestão de compatibilidade.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+    },
+    "precio": {
+      "valor": 342.0,
+      "moneda": "BRL",
+      "texto": "R$ 342.00"
+    },
+    "variantes": [
+      {
+        "id": "137",
+        "titulo": "Engate Perno Keko K604PR",
+        "sku": "K604PR",
+        "ref_id": "9.860.03.002PR",
+        "ean": "7908878000791",
+        "precio": 342.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 137: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/engate-perno/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159718/K604PR_1.jpg?v=638460139263200000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/159719/K604PR_2.jpg?v=638760997111830000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/159720/K604PR_3.jpg?v=638760997111830000"
+    ],
+    "source_url": "https://www.keko.com.br/engate-perno/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "460",
+    "handle": "tomada-7-polos",
+    "linkText": "tomada-7-polos",
+    "url": "https://www.keko.com.br/tomada-7-polos/p",
+    "nombre": "Tomada 7 Polos",
+    "nombre_original": "Tomada 7 Polos",
+    "sku": "TOMADA_7",
+    "skus": [
+      "TOMADA_7",
+      "9.860.03.007",
+      "K986"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Tomada 7 Polos Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 68.0,
+      "moneda": "BRL",
+      "texto": "R$ 68.00"
+    },
+    "variantes": [
+      {
+        "id": "346",
+        "titulo": "Tomada 7 Pólos 12V Fêmea K986",
+        "sku": "K986",
+        "ref_id": "9.860.03.007",
+        "ean": "7898133773990",
+        "precio": 68.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 346: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/tomada-7-polos/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159999/Tomada.jpg?v=638518105868030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/tomada-7-polos/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "457",
+    "handle": "plug-7-polos",
+    "linkText": "plug-7-polos",
+    "url": "https://www.keko.com.br/plug-7-polos/p",
+    "nombre": "Plug 7 Polos",
+    "nombre_original": "Plug 7 Polos",
+    "sku": "PLUG_7",
+    "skus": [
+      "PLUG_7",
+      "9.860.03.107",
+      "K985"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Plug 7 Polos Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 59.0,
+      "moneda": "BRL",
+      "texto": "R$ 59.00"
+    },
+    "variantes": [
+      {
+        "id": "347",
+        "titulo": "Plug 7 Pólos 12V Macho K985",
+        "sku": "K985",
+        "ref_id": "9.860.03.107",
+        "ean": "7898133774003",
+        "precio": 59.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 347: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/plug-7-polos/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164900/K985_1.jpg?v=638857782280170000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/plug-7-polos/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "456",
+    "handle": "esfera-cromada-50-mm",
+    "linkText": "esfera-cromada-50-mm",
+    "url": "https://www.keko.com.br/esfera-cromada-50-mm/p",
+    "nombre": "Esfera Cromada 50mm",
+    "nombre_original": "Esfera Cromada 50mm",
+    "sku": "ESF_50",
+    "skus": [
+      "ESF_50",
+      "9.860.03.250",
+      "K996"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Esfera para Enganche de remolque en cromo decorativo 50mm.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+    },
+    "precio": {
+      "valor": 117.0,
+      "moneda": "BRL",
+      "texto": "R$ 117.00"
+    },
+    "variantes": [
+      {
+        "id": "350",
+        "titulo": "Esfera Cromada 50mm Keko K996",
+        "sku": "K996",
+        "ref_id": "9.860.03.250",
+        "ean": "7898133774027",
+        "precio": 117.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 350: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/esfera-cromada-50-mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159903/ESFERA_OK.jpg?v=638487770667870000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/esfera-cromada-50-mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "448",
+    "handle": "kit-suporte-barras-transversais-para-capota-rigida-retratil",
+    "linkText": "kit-suporte-barras-transversais-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/kit-suporte-barras-transversais-para-capota-rigida-retratil/p",
+    "nombre": "Kit de soporte Barras Transversais para Capota rígida retráctil",
+    "nombre_original": "Kit Suporte Barras Transversais para Capota Rígida Retrátil",
+    "sku": "KITSUPBT",
+    "skus": [
+      "KITSUPBT",
+      "9.631.39.006PR",
+      "K457PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Capota rígida retráctil",
+    "colecciones": [
+      "Capota rígida retráctil",
+      "Accesorios para Capota rígida retráctil"
+    ],
+    "descripcion": "Kit de soporte Barras Transversais para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+    },
+    "precio": {
+      "valor": 245.0,
+      "moneda": "BRL",
+      "texto": "R$ 245.00"
+    },
+    "variantes": [
+      {
+        "id": "226",
+        "titulo": "Kit Suporte Barra Transversal para Capota Rígida Retrátil Keko K457PR",
+        "sku": "K457PR",
+        "ref_id": "9.631.39.006PR",
+        "ean": "7898732985336",
+        "precio": 245.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 226: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/kit-suporte-barras-transversais-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159734/K457PR_1.jpg?v=638460254426070000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/kit-suporte-barras-transversais-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "443",
+    "handle": "reposicao-ponteira-129",
+    "linkText": "reposicao-ponteira-129",
+    "url": "https://www.keko.com.br/reposicao-ponteira-129/p",
+    "nombre": "Puntera 129mm",
+    "nombre_original": "Ponteira 129mm",
+    "sku": "PONT_129",
+    "skus": [
+      "PONT_129",
+      "9.120.03.005PR",
+      "K049PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, con aplicação sugerida para Polo, Duster.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 151.0,
+      "moneda": "BRL",
+      "texto": "R$ 151.00"
+    },
+    "variantes": [
+      {
+        "id": "365",
+        "titulo": "Ponteira Engate de Reboque 129mm Keko K049PR",
+        "sku": "K049PR",
+        "ref_id": "9.120.03.005PR",
+        "ean": "7898133777738",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 365: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-ponteira-129/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162507/1.jpg?v=638841212961800000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/162508/2.jpg?v=638841212962100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/162509/3.jpg?v=638841212962270000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/162510/4.jpg?v=638841212962270000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-ponteira-129/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "441",
+    "handle": "ponteira-170mm",
+    "linkText": "ponteira-170mm",
+    "url": "https://www.keko.com.br/ponteira-170mm/p",
+    "nombre": "Puntera para Enganche de remolque 170mm",
+    "nombre_original": "Ponteira para Engate de Reboque 170mm",
+    "sku": "PONT_170",
+    "skus": [
+      "PONT_170",
+      "9.654.03.006PR",
+      "K979PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, con aplicação sugerida para SW4.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "363",
+        "titulo": "Ponteira Engate de Reboque 170mm Keko K979PR",
+        "sku": "K979PR",
+        "ref_id": "9.654.03.006PR",
+        "ean": "7908878000753",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 363: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-170mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161150/1.jpg?v=638620905309500000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166341/2.jpg?v=638935447386030000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-170mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "439",
+    "handle": "ponteira-engate-156mm",
+    "linkText": "ponteira-engate-156mm",
+    "url": "https://www.keko.com.br/ponteira-engate-156mm/p",
+    "nombre": "Puntera Engate 156mm",
+    "nombre_original": "Ponteira Engate 156mm",
+    "sku": "PONT_156",
+    "skus": [
+      "PONT_156",
+      "9.180.03.003PR",
+      "K048PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, con aplicação sugerida para Polo, Taos, T-Cross.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 151.0,
+      "moneda": "BRL",
+      "texto": "R$ 151.00"
+    },
+    "variantes": [
+      {
+        "id": "359",
+        "titulo": "Ponteira Engate de Reboque 156mm Keko K048PR",
+        "sku": "K048PR",
+        "ref_id": "9.180.03.003PR",
+        "ean": "7898133777745",
+        "precio": 151.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 359: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-engate-156mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161164/1.jpg?v=638620911648830000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161165/2.jpg?v=639209335173600000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161166/3.jpg?v=639209335173900000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-engate-156mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "438",
+    "handle": "ponteira-para-engate-de-reboque-201mm",
+    "linkText": "ponteira-para-engate-de-reboque-201mm",
+    "url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-201mm/p",
+    "nombre": "Puntera para Enganche de remolque 201mm",
+    "nombre_original": "Ponteira para Engate de Reboque 201mm",
+    "sku": "PONT_201",
+    "skus": [
+      "PONT_201",
+      "9.307.03.004PR",
+      "K980PR"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para baixo, con aplicação sugerida para Amarok, Frontier, Ranger, Ranger FX4, Trailblazer, L200 Triton Sport, Pajero Dakar, Pajero Sport, Hilux, Titano y Triton. Esfera para cima con aplicação para Equinox y Tracker.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 227.0,
+      "moneda": "BRL",
+      "texto": "R$ 227.00"
+    },
+    "variantes": [
+      {
+        "id": "361",
+        "titulo": "Ponteira Engate de Reboque 201mm Keko K980PR",
+        "sku": "K980PR",
+        "ref_id": "9.307.03.004PR",
+        "ean": "7908878000784",
+        "precio": 227.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 361: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/ponteira-para-engate-de-reboque-201mm/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162494/1.jpg?v=638841189128270000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166338/2.jpg?v=638935392806030000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/166339/3.jpg?v=638935392806330000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/166340/4.jpg?v=638935392806330000"
+    ],
+    "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-201mm/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "420",
+    "handle": "reposicao-trinco-capota-rigida-retratil",
+    "linkText": "reposicao-trinco-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-trinco-capota-rigida-retratil/p",
+    "nombre": "Trinco para Capota rígida retráctil",
+    "nombre_original": "Trinco para Capota Rígida Retrátil",
+    "sku": "RKCRRTR",
+    "skus": [
+      "RKCRRTR",
+      "9.631.39.030",
+      "RK0056"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Trinco para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 217.0,
+      "moneda": "BRL",
+      "texto": "R$ 217.00"
+    },
+    "variantes": [
+      {
+        "id": "811",
+        "titulo": "Conjunto Trinco Adesivado Capota Rígida RK0056",
+        "sku": "RK0056",
+        "ref_id": "9.631.39.030",
+        "ean": "7898133777011",
+        "precio": 217.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 811: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-trinco-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159980/RK0056.jpg?v=638512257250900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-trinco-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "419",
+    "handle": "reposicao-perfil-borracha-pestana-capota-rigida-retratil",
+    "linkText": "reposicao-perfil-borracha-pestana-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-perfil-borracha-pestana-capota-rigida-retratil/p",
+    "nombre": "Perfil Goma Pestana",
+    "nombre_original": "Perfil Borracha Pestana",
+    "sku": "RKCRRPBP",
+    "skus": [
+      "RKCRRPBP",
+      "9.631.39.025",
+      "RK0019"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Perfil Goma Pestana Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 79.0,
+      "moneda": "BRL",
+      "texto": "R$ 79.00"
+    },
+    "variantes": [
+      {
+        "id": "809",
+        "titulo": "Perfil Borracha Pestana J para Capota Rígida RK0019",
+        "sku": "RK0019",
+        "ref_id": "9.631.39.025",
+        "ean": "7898133776809",
+        "precio": 79.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 809: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-perfil-borracha-pestana-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159974/RK0019.jpg?v=638512228097500000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-perfil-borracha-pestana-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "418",
+    "handle": "tampa-engate-de-reboque-k2",
+    "linkText": "tampa-engate-de-reboque-k2",
+    "url": "https://www.keko.com.br/tampa-engate-de-reboque-k2/p",
+    "nombre": "Tampa para Enganche de remolque K2",
+    "nombre_original": "Tampa para Engate de Reboque K2",
+    "sku": "RKERTAM",
+    "skus": [
+      "RKERTAM",
+      "9.308.03.002",
+      "RK0648"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Enganches de remolque",
+    "colecciones": [
+      "Enganches de remolque",
+      "Accesorios para Enganche de remolque"
+    ],
+    "descripcion": "Tampa para Enganche de remolque K2 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 54.0,
+      "moneda": "BRL",
+      "texto": "R$ 54.00"
+    },
+    "variantes": [
+      {
+        "id": "561",
+        "titulo": "Conjunto Tampa plástica engate de reboque K2 Keko RK0648",
+        "sku": "RK0648",
+        "ref_id": "9.308.03.002",
+        "ean": "7898732985435",
+        "precio": 54.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 561: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/tampa-engate-de-reboque-k2/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159888/RK0648.jpg?v=638482004332030000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/tampa-engate-de-reboque-k2/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "415",
+    "handle": "reposicao-sobrecapa-para-santo-antonio",
+    "linkText": "reposicao-sobrecapa-para-santo-antonio",
+    "url": "https://www.keko.com.br/reposicao-sobrecapa-para-santo-antonio/p",
+    "nombre": "Reposición Sobrecubierta para Santo Antonio",
+    "nombre_original": "Reposição Sobrecapa para Santo Antônio",
+    "sku": "RKSASOBR",
+    "skus": [
+      "RKSASOBR",
+      "9.275.05.045",
+      "RK0120"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Reposición Sobrecubierta para Santo Antonio Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 113.0,
+      "moneda": "BRL",
+      "texto": "R$ 113.00"
+    },
+    "variantes": [
+      {
+        "id": "555",
+        "titulo": "Conjunto Sobrecapa Santo Antônio K3 RK0120",
+        "sku": "RK0120",
+        "ref_id": "9.275.05.045",
+        "ean": "7898732980393",
+        "precio": 113.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 555: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-sobrecapa-para-santo-antonio/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161194/RK0120.jpg?v=638627129943970000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-sobrecapa-para-santo-antonio/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "413",
+    "handle": "reposicao-motor-e-suporte",
+    "linkText": "reposicao-motor-e-suporte",
+    "url": "https://www.keko.com.br/reposicao-motor-e-suporte/p",
+    "nombre": "Motor 12V y Soporte para Capota rígida retráctil",
+    "nombre_original": "Motor 12V e Suporte para Capota Rígida Retrátil",
+    "sku": "RKCRRMS",
+    "skus": [
+      "RKCRRMS",
+      "9.226.39.605",
+      "RK0565"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Motor y Soporte para Capota rígida retráctil Keko. Composto por 2 Soportes del motor (Izquierdo y Derecho) y etiqueta vinil 3M.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1003.0,
+      "moneda": "BRL",
+      "texto": "R$ 1003.00"
+    },
+    "variantes": [
+      {
+        "id": "552",
+        "titulo": "Conjunto Suporte com Motor 12V Capota Rígida Retrátil RK0565",
+        "sku": "RK0565",
+        "ref_id": "9.226.39.605",
+        "ean": "",
+        "precio": 1003.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 552: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-motor-e-suporte/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/165996/1.jpg?v=638890604616030000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/165997/3.jpg?v=638890604616170000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-motor-e-suporte/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "412",
+    "handle": "reposicao-capa-plastica",
+    "linkText": "reposicao-capa-plastica",
+    "url": "https://www.keko.com.br/reposicao-capa-plastica/p",
+    "nombre": "Capa Plástica para Santo Antonio",
+    "nombre_original": "Capa Plástica para Santo Antônio",
+    "sku": "RKSACAPP",
+    "skus": [
+      "RKSACAPP",
+      "9.275.05.043",
+      "RK0118"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Capa Plástica para Santo Antonio Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 201.0,
+      "moneda": "BRL",
+      "texto": "R$ 201.00"
+    },
+    "variantes": [
+      {
+        "id": "554",
+        "titulo": "Conjunto Capa Plástica Santo Antônio K3 RK0118",
+        "sku": "RK0118",
+        "ref_id": "9.275.05.043",
+        "ean": "7898732980218",
+        "precio": 201.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [],
+        "sku_ano": [],
+        "sku_version": [],
+        "sku_cabine": []
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 554: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-capa-plastica/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168215/RK-s-Site.jpg?v=639204289649730000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-capa-plastica/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "407",
+    "handle": "reposicao-modulo-para-capota-rigida-retratil",
+    "linkText": "reposicao-modulo-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-modulo-para-capota-rigida-retratil/p",
+    "nombre": "Módulo de Controle Capota rígida retráctil G2",
+    "nombre_original": "Módulo de Controle Capota Rígida Retrátil G2",
+    "sku": "RKCRRMOD",
+    "skus": [
+      "RKCRRMOD",
+      "9.631.39.036",
+      "RK0060"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Módulo de Controle Capota rígida retráctil G2 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 1299.0,
+      "moneda": "BRL",
+      "texto": "R$ 1299.00"
+    },
+    "variantes": [
+      {
+        "id": "532",
+        "titulo": "Módulo de Controle Capota Rígida Retrátil G2 Keko RK0060",
+        "sku": "RK0060",
+        "ref_id": "9.631.39.036",
+        "ean": "7898133777028",
+        "precio": 1299.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 532: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-modulo-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159887/RK0060.jpg?v=638482002781530000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-modulo-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "406",
+    "handle": "reposicao-conjunto-capa-lateral",
+    "linkText": "reposicao-conjunto-capa-lateral",
+    "url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral/p",
+    "nombre": "Conjunto Capa Lateral Direita Santo K1",
+    "nombre_original": "Conjunto Capa Lateral Direita Santo K1",
+    "sku": "RKSACJCL",
+    "skus": [
+      "RKSACJCL",
+      "9.631.05.037",
+      "RK0153"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Capa Lateral Direita Santo K1 Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 159.0,
+      "moneda": "BRL",
+      "texto": "R$ 159.00"
+    },
+    "variantes": [
+      {
+        "id": "803",
+        "titulo": "Capa Lateral Direita Santo Antônio K1 RK0153",
+        "sku": "RK0153",
+        "ref_id": "9.631.05.037",
+        "ean": "7898133779190",
+        "precio": 159.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 803: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-capa-lateral/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161232/RK0153.jpg?v=638627186343330000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "402",
+    "handle": "reposicao-conjunto-sistema-abertura-capota-rigida-retratil",
+    "linkText": "reposicao-conjunto-sistema-abertura-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-conjunto-sistema-abertura-capota-rigida-retratil/p",
+    "nombre": "Conjunto Sistema Abertura Capota rígida retráctil",
+    "nombre_original": "Conjunto Sistema Abertura Capota Rígida Retrátil",
+    "sku": "RKCRRCSA",
+    "skus": [
+      "RKCRRCSA",
+      "9.631.39.037",
+      "RK0063"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Conjunto Sistema Abertura Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 390.0,
+      "moneda": "BRL",
+      "texto": "R$ 390.00"
+    },
+    "variantes": [
+      {
+        "id": "427",
+        "titulo": "Conjunto Acessórios Sistema de Abertura Capota Rígida Retrátil Automática e Manual RK0063",
+        "sku": "RK0063",
+        "ref_id": "9.631.39.037",
+        "ean": "7898133777035",
+        "precio": 390.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 427: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-sistema-abertura-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167379/SKU427-Conjunto Acessorios Sistema de Abertura Capota Rigida Retratil Automatica e Manual RK0063.png?v=639065136088330000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-sistema-abertura-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "400",
+    "handle": "reposicao-conjunto-manipulo",
+    "linkText": "reposicao-conjunto-manipulo",
+    "url": "https://www.keko.com.br/reposicao-conjunto-manipulo/p",
+    "nombre": "Conjunto Manípulo para Capota rígida retráctil",
+    "nombre_original": "Conjunto Manípulo para Capota Rígida Retrátil",
+    "sku": "RKCRRCJM",
+    "skus": [
+      "RKCRRCJM",
+      "9.631.39.008",
+      "RK0058"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Conjunto Manípulo para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 63.0,
+      "moneda": "BRL",
+      "texto": "R$ 63.00"
+    },
+    "variantes": [
+      {
+        "id": "425",
+        "titulo": "Manípulo de Emergência Capota Rígida Retrátil Automática e Manual Keko RK0058",
+        "sku": "RK0058",
+        "ref_id": "9.631.39.008",
+        "ean": "7898133777288",
+        "precio": 63.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 425: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-manipulo/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/160676/RK0058a.jpg?v=638555269184700000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/160677/RK0058b.jpg?v=638809262196670000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-manipulo/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "399",
+    "handle": "conjunto-chicote-para-capota-rigida-retratil",
+    "linkText": "conjunto-chicote-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/conjunto-chicote-para-capota-rigida-retratil/p",
+    "nombre": "Conjunto Chicote para Capota rígida retráctil",
+    "nombre_original": "Conjunto Chicote para Capota Rígida Retrátil",
+    "sku": "RKCRRCJC",
+    "skus": [
+      "RKCRRCJC",
+      "9.631.39.022",
+      "RK0054"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Conjunto Chicote para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 436.0,
+      "moneda": "BRL",
+      "texto": "R$ 436.00"
+    },
+    "variantes": [
+      {
+        "id": "423",
+        "titulo": "Conjunto Chicote Elétrico Capota Rígida Automática Keko RK0054",
+        "sku": "RK0054",
+        "ref_id": "9.631.39.022",
+        "ean": "7898133776991",
+        "precio": 436.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 423: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/conjunto-chicote-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159874/RK0054.jpg?v=638471636250200000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/conjunto-chicote-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "395",
+    "handle": "capota-rigida-retratil-controle",
+    "linkText": "capota-rigida-retratil-controle",
+    "url": "https://www.keko.com.br/capota-rigida-retratil-controle/p",
+    "nombre": "Controle Remoto para Capota rígida retráctil Keko con fabricação hasta 08/08/2021",
+    "nombre_original": "Controle Remoto para Capota Rígida Retrátil Keko com fabricação até 08/08/2021",
+    "sku": "RKCRRCCR",
+    "skus": [
+      "RKCRRCCR",
+      "9.631.39.007",
+      "RK0062"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Controle Remoto para Capota rígida retráctil Keko con fabricação hasta 08/08/2021",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 136.0,
+      "moneda": "BRL",
+      "texto": "R$ 136.00"
+    },
+    "variantes": [
+      {
+        "id": "426",
+        "titulo": "Controle Remoto para Capota Rígida Retrátil Keko com fabricação até 08/08/2021 RK0062",
+        "sku": "RK0062",
+        "ref_id": "9.631.39.007",
+        "ean": "7898133777318",
+        "precio": 136.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 426: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/capota-rigida-retratil-controle/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159877/RK0062.jpg?v=638477693520430000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/capota-rigida-retratil-controle/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "394",
+    "handle": "reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil",
+    "linkText": "reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil/p",
+    "nombre": "Goma Sellado Tampa Dianteira para Capota rígida retráctil",
+    "nombre_original": "Borracha Vedação Tampa Dianteira para Capota Rígida Retrátil",
+    "sku": "RKCRRBTD",
+    "skus": [
+      "RKCRRBTD",
+      "9.631.39.035",
+      "RK0024"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Goma Sellado Tampa Dianteira para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 142.0,
+      "moneda": "BRL",
+      "texto": "R$ 142.00"
+    },
+    "variantes": [
+      {
+        "id": "416",
+        "titulo": "Borracha de Vedação Tampa Dianteira Capota Rígida Retrátil Keko RK0024",
+        "sku": "RK0024",
+        "ref_id": "9.631.39.035",
+        "ean": "7898133776830",
+        "precio": 142.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 416: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159870/RK0024.jpg?v=638471616929800000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "393",
+    "handle": "reposicao-conjunto-borrachas-para-capota-rigida-retratil",
+    "linkText": "reposicao-conjunto-borrachas-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-conjunto-borrachas-para-capota-rigida-retratil/p",
+    "nombre": "Conjunto Gomas para Capota rígida retráctil",
+    "nombre_original": "Conjunto Borrachas para Capota Rígida Retrátil",
+    "sku": "RKCRRCJB",
+    "skus": [
+      "RKCRRCJB",
+      "9.631.39.027",
+      "RK0020"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Conjunto Gomas para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 122.0,
+      "moneda": "BRL",
+      "texto": "R$ 122.00"
+    },
+    "variantes": [
+      {
+        "id": "417",
+        "titulo": "Conjunto Borrachas Capotas Rígidas Keko RK0020",
+        "sku": "RK0020",
+        "ref_id": "9.631.39.027",
+        "ean": "7898133776816",
+        "precio": 122.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 417: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-borrachas-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167374/SKU417-Conjunto Borrachas Capotas Rigidas Keko RK0020.png?v=639065123218430000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-borrachas-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "389",
+    "handle": "reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga",
+    "linkText": "reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga",
+    "url": "https://www.keko.com.br/reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga/p",
+    "nombre": "Punteras de la Traviesa para Capota marítima Flex",
+    "nombre_original": "Ponteiras da Travessa para Capota Marítima Flex",
+    "sku": "RKCMPTRA",
+    "skus": [
+      "RKCMPTRA",
+      "9.631.12.036",
+      "RK0134"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Punteras de la Traviesa para Capota marítima Flex Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 33.0,
+      "moneda": "BRL",
+      "texto": "R$ 33.00"
+    },
+    "variantes": [
+      {
+        "id": "449",
+        "titulo": "Kit Ponteira da Travessa Oblongo Capota Marítima Keko RK0134",
+        "sku": "RK0134",
+        "ref_id": "9.631.12.036",
+        "ean": "7898732983981",
+        "precio": 33.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 449: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167389/SKU449-Kit Ponteira da Travessa Oblongo Capota Maritima Keko RK0134.png?v=639065950000530000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "388",
+    "handle": "reposicao-travessa-oblongo-para-capota-maritima-flex",
+    "linkText": "reposicao-travessa-oblongo-para-capota-maritima-flex",
+    "url": "https://www.keko.com.br/reposicao-travessa-oblongo-para-capota-maritima-flex/p",
+    "nombre": "Traviesa Oblongo para Capota marítima Flex",
+    "nombre_original": "Travessa Oblongo para Capota Marítima Flex",
+    "sku": "RKCMREPT",
+    "skus": [
+      "RKCMREPT",
+      "9.631.12.037",
+      "RK0136"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Traviesa Oblongo para Capota marítima Flex Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 190.0,
+      "moneda": "BRL",
+      "texto": "R$ 190.00"
+    },
+    "variantes": [
+      {
+        "id": "450",
+        "titulo": "Kit Travessa Oblongo Capota Marítima Keko RK0136",
+        "sku": "RK0136",
+        "ref_id": "9.631.12.037",
+        "ean": "7898732984698",
+        "precio": 190.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 450: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-travessa-oblongo-para-capota-maritima-flex/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159860/RK0136.jpg?v=638469849548400000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-travessa-oblongo-para-capota-maritima-flex/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "386",
+    "handle": "reposicao-sargento-para-capota-grx",
+    "linkText": "reposicao-sargento-para-capota-grx",
+    "url": "https://www.keko.com.br/reposicao-sargento-para-capota-grx/p",
+    "nombre": "Sargento para Capota GRX",
+    "nombre_original": "Sargento para Capota GRX",
+    "sku": "RKCMSARG",
+    "skus": [
+      "RKCMSARG",
+      "9.222.12.016",
+      "RK0533",
+      "9.222.12.017",
+      "RK0576"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Compatível con:\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton L200 modelo 2008 a 2021.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor_min": 63.0,
+      "valor_max": 81.0,
+      "moneda": "BRL",
+      "texto": "R$ 63.00 – R$ 81.00"
+    },
+    "variantes": [
+      {
+        "id": "435",
+        "titulo": "Conjunto Sargento Capota GRX Keko (3uni) RK0533",
+        "sku": "RK0533",
+        "ref_id": "9.222.12.016",
+        "ean": "7898732985381",
+        "precio": 81.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "1028",
+        "titulo": "Conjunto Sargento Capota GRX todas picapes (2X) Keko RK0576",
+        "sku": "RK0576",
+        "ref_id": "9.222.12.017",
+        "ean": "7898732984568",
+        "precio": 63.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 435: Universal",
+        "SKU 1028: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-sargento-para-capota-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167381/SKU435-Conjunto Sargento Capota GRX Keko -3uni- RK0533.png?v=639065139408070000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/166584/SKU1028-RK0576.png?v=638957138182400000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-sargento-para-capota-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "384",
+    "handle": "reposicao-borracha-superior-lateral-para-capota-rigida-retratil",
+    "linkText": "reposicao-borracha-superior-lateral-para-capota-rigida-retratil",
+    "url": "https://www.keko.com.br/reposicao-borracha-superior-lateral-para-capota-rigida-retratil/p",
+    "nombre": "Goma Superior Lateral para Capota rígida retráctil",
+    "nombre_original": "Borracha Superior Lateral para Capota Rígida Retrátil",
+    "sku": "RKCRRBSL",
+    "skus": [
+      "RKCRRBSL",
+      "9.631.39.026",
+      "RK0033"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capota rígida retráctil"
+    ],
+    "descripcion": "Goma Superior Lateral para Capota rígida retráctil Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 84.0,
+      "moneda": "BRL",
+      "texto": "R$ 84.00"
+    },
+    "variantes": [
+      {
+        "id": "419",
+        "titulo": "Perfil Borracha Superior Lateral Capota Rígida Retrátil Keko RK0033",
+        "sku": "RK0033",
+        "ref_id": "9.631.39.026",
+        "ean": "7898133776908",
+        "precio": 84.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 419: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-borracha-superior-lateral-para-capota-rigida-retratil/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167375/SKU419-Perfil Borracha Superior Lateral Capota Rigida Retratil Keko RK0033.png?v=639065127753900000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-borracha-superior-lateral-para-capota-rigida-retratil/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "383",
+    "handle": "reposicao-cantoneira-dianteira-capota-grx",
+    "linkText": "reposicao-cantoneira-dianteira-capota-grx",
+    "url": "https://www.keko.com.br/reposicao-cantoneira-dianteira-capota-grx/p",
+    "nombre": "Cantoneira Dianteira Capota GRX y GRX Pro Black",
+    "nombre_original": "Cantoneira Dianteira Capota GRX e GRX Pro Black",
+    "sku": "RKCMCD",
+    "skus": [
+      "RKCMCD",
+      "9.222.12.012",
+      "RK0569",
+      "9.042.12.007",
+      "RK0570"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton L200 modelo 2008 a 2016.\nPara a Toro usar RK0570.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 40.0,
+      "moneda": "BRL",
+      "texto": "R$ 40.00"
+    },
+    "variantes": [
+      {
+        "id": "439",
+        "titulo": "Conjunto Cantoneira Dianteira Capota GRX Keko RK0569",
+        "sku": "RK0569",
+        "ref_id": "9.222.12.012",
+        "ean": "7898732983202",
+        "precio": 40.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "756",
+        "titulo": "Conjunto Cantoneira Dianteira Capota GRX e GRX Pro Black Toro (2016 em diante)/Strada (2021 em diante)/Rampage (2023 em diante) RK0570",
+        "sku": "RK0570",
+        "ref_id": "9.042.12.007",
+        "ean": "7898732982038",
+        "precio": 40.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Não aplica"
+        ],
+        "sku_version": [],
+        "sku_cabine": [
+          "Monobloco"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 439: Universal",
+        "SKU 756: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-cantoneira-dianteira-capota-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167385/SKU439-Conjunto Cantoneira Dianteira Capota GRX Keko RK0569.png?v=639065945326000000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161328/RK0570.jpg?v=638627975855270000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-cantoneira-dianteira-capota-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "380",
+    "handle": "reposicao-capota-maritima-multitrava-inferior-grx",
+    "linkText": "reposicao-capota-maritima-multitrava-inferior-grx",
+    "url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-inferior-grx/p",
+    "nombre": "Multitrava Inferior Capota GRX",
+    "nombre_original": "Multitrava Inferior Capota GRX",
+    "sku": "RKCMMI",
+    "skus": [
+      "RKCMMI",
+      "9.222.12.013",
+      "9.042.12.008",
+      "RK0563"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Capotas Marítimas"
+    ],
+    "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 a 2023 /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton 2008 a 2016. Para Fiat Toro, utilize RK0563",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 40.0,
+      "moneda": "BRL",
+      "texto": "R$ 40.00"
+    },
+    "variantes": [
+      {
+        "id": "437",
+        "titulo": "ConjuntoRK0562",
+        "sku": "9.222.12.013",
+        "ref_id": "9.222.12.013",
+        "ean": "7898732982632",
+        "precio": 40.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "747",
+        "titulo": "Conjunto Multitrava Inferior Capota GRX Toro 2016 em diante | Strada 2021 em diante em diante RK0563",
+        "sku": "RK0563",
+        "ref_id": "9.042.12.008",
+        "ean": "7898732982649",
+        "precio": 40.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Não se aplica"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 437: Universal",
+        "SKU 747: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-capota-maritima-multitrava-inferior-grx/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167383/Design sem nome.png?v=639065916530970000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161212/RK0563.jpg?v=638627148784270000"
+    ],
+    "source_url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-inferior-grx/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "375",
+    "handle": "reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol",
+    "linkText": "reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol",
+    "url": "https://www.keko.com.br/reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol/p",
+    "nombre": "Conjunto Punteras para Santo Antonio K1 2 Pol",
+    "nombre_original": "Conjunto Ponteiras para Santo Antônio K1 2 Pol",
+    "sku": "RKSAPONT",
+    "skus": [
+      "RKSAPONT",
+      "9.036.05.008",
+      "RK0221"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Ítems de reposición",
+    "colecciones": [
+      "Ítems de reposición",
+      "Reposición Santo Antonio"
+    ],
+    "descripcion": "Conjunto Punteras para Santo Antonio K1 2 Pol Keko.",
+    "especificaciones": {
+      "No especificado": "No especificado"
+    },
+    "precio": {
+      "valor": 36.0,
+      "moneda": "BRL",
+      "texto": "R$ 36.00"
+    },
+    "variantes": [
+      {
+        "id": "340",
+        "titulo": "Conjunto Ponteiras Tubo Santo Antônio K1 2pol Keko RK0221",
+        "sku": "RK0221",
+        "ref_id": "9.036.05.008",
+        "ean": "7898133778414",
+        "precio": 36.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 340: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164940/340.jpg?v=638859411635000000",
+    "imagenes_adicionales_urls": [],
+    "source_url": "https://www.keko.com.br/reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "26",
+    "handle": "renovador-new-black",
+    "linkText": "renovador-new-black",
+    "url": "https://www.keko.com.br/renovador-new-black/p",
+    "nombre": "Renovador New Black",
+    "nombre_original": "Renovador New Black",
+    "sku": "RENOVAD",
+    "skus": [
+      "RENOVAD",
+      "9.860.12.003PT",
+      "K001PT"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Utilitarios",
+    "colecciones": [
+      "Utilitarios",
+      "Renovador New Black",
+      "Juntos pelo Rio Grande del Sul"
+    ],
+    "descripcion": "O Renovador New Black protege a capota nueva y renova a antiga con agilidade y praticidade. Os resultados aparecem 15 minutos após a aplicação.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 meses",
+      "Destacados del producto": "Aplicação: faça você mesmo!; Excelente aderência; Formula atóxica; Impermeabiliza y sela as costuras; Resultado en 15 minutos; Vida útil de la capota prolongada",
+      "Material": "Tinta de acabamento de alta flexibilidade y excelente aderência",
+      "Compatibilidade": "Universal",
+      "Usabilidade": "Pneus, Gomas, plásticos, tapetes, acabamentos internos y externos del veículo",
+      "Rendimento": "3 aplicações",
+      "Conteúdo líquido": "140ml",
+      "Periodicidade de aplicação": "a cada 3 meses",
+      "Fórmula atóxica": "Sim",
+      "Aplicação": "fácil"
+    },
+    "precio": {
+      "valor": 81.0,
+      "moneda": "BRL",
+      "texto": "R$ 81.00"
+    },
+    "variantes": [
+      {
+        "id": "238",
+        "titulo": "Renovador de Capota Marítitma New Black K001PT",
+        "sku": "K001PT",
+        "ref_id": "9.860.12.003PT",
+        "ean": "7898133777042",
+        "precio": 81.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 238: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/renovador-new-black/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161047/K001PT_1A.jpg?v=638614893698400000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161048/K001PT_2.jpg?v=638868850829200000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161049/K001PT_3.jpg?v=638868850829670000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161050/K001PT_4.jpg?v=638868850829670000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161051/K001PT_5.jpg?v=638868850829670000"
+    ],
+    "source_url": "https://www.keko.com.br/renovador-new-black/p",
+    "fuente": "https://www.keko.com.br/"
+  },
+  {
+    "id": "13",
+    "handle": "soleira-de-porta-adesiva",
+    "linkText": "soleira-de-porta-adesiva",
+    "url": "https://www.keko.com.br/soleira-de-porta-adesiva/p",
+    "nombre": "Umbral de puerta adhesivo",
+    "nombre_original": "Soleira de Porta Adesiva",
+    "sku": "SOLEIRA",
+    "skus": [
+      "SOLEIRA",
+      "9.860.57.000",
+      "K868",
+      "9.042.57.001",
+      "K014"
+    ],
+    "vendor": "KEKO",
+    "categoria": "Utilitarios",
+    "colecciones": [
+      "Utilitarios",
+      "Umbral de puerta adhesivo",
+      "Juntos pelo Rio Grande del Sul"
+    ],
+    "descripcion": "Altamente durável, resistente y con excelente adaptação a superfícies irregulares, a Soleira de Porta Universal de la Keko é diferente de todas que você já conhece. Ela vem acompanhada de uma película invisível, que cobre todo o raio inferior de la porta, protegendo muito mais o seu veículo contra danos y impactos.",
+    "especificaciones": {
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "Destacados del producto": "Adesivo 3M altamente durável; Aplicação: faça você mesmo!; Blindagem para o seu veículo; Maior proteção y cobertura; Produto universal",
+      "Material": "Adesivo 3M",
+      "Compatibilidade": "Universal",
+      "Requer ferramentas": "Não",
+      "Instalación": "fácil",
+      "Garantía de fábrica": "1 año"
+    },
+    "precio": {
+      "valor_min": 181.0,
+      "valor_max": 217.0,
+      "moneda": "BRL",
+      "texto": "R$ 181.00 – R$ 217.00"
+    },
+    "variantes": [
+      {
+        "id": "54",
+        "titulo": "Soleira Adesiva 4 Portas Universal Keko K868",
+        "sku": "K868",
+        "ref_id": "9.860.57.000",
+        "ean": "7898133775161",
+        "precio": 217.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      },
+      {
+        "id": "215",
+        "titulo": "Soleira Adesiva 2 Portas Universal Keko K014",
+        "sku": "K014",
+        "ref_id": "9.042.57.001",
+        "ean": "7898133776045",
+        "precio": 181.0,
+        "disponible": true,
+        "sku_montadora": [
+          "Universal"
+        ],
+        "sku_modelo": [
+          "Universal"
+        ],
+        "sku_ano": [
+          "Universal"
+        ],
+        "sku_version": [
+          "Universal"
+        ],
+        "sku_cabine": [
+          "Universal"
+        ]
+      }
+    ],
+    "fitment_raw": {
+      "brands": [],
+      "models": [],
+      "years": [],
+      "pairs": [],
+      "snippets": [
+        "SKU 54: Universal",
+        "SKU 215: Universal",
+        "SKU marcado Universal"
+      ]
+    },
+    "compatibilidad": "Universal / multi-fit sin vehículo único",
+    "match_status": "universal",
+    "erp_match_count": 0,
+    "erp_matches": [],
+    "imagen_principal": "imagenes/soleira-de-porta-adesiva/principal.jpg",
+    "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161034/K868_1A.jpg?v=638614888665230000",
+    "imagenes_adicionales_urls": [
+      "https://ekeko.vteximg.com.br/arquivos/ids/161035/K868_2.jpg?v=638939010725800000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161036/K868_3.jpg?v=638939010726100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161037/K868_4.jpg?v=638939010726100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161038/K868_5.jpg?v=638939010726100000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161039/K868_6.jpg?v=638939010726270000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161042/K014_1A.jpg?v=638614892362530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161043/K014_2.jpg?v=638939010732370000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161044/K014_3.jpg?v=638939010732530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161045/K014_4.jpg?v=638939010732530000",
+      "https://ekeko.vteximg.com.br/arquivos/ids/161046/K014_5.jpg?v=638939010732530000"
+    ],
+    "source_url": "https://www.keko.com.br/soleira-de-porta-adesiva/p",
+    "fuente": "https://www.keko.com.br/"
+  }
+]
