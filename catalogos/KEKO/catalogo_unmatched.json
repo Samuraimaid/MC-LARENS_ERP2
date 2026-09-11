@@ -27,7 +27,8 @@
     "descripcion": "Quando você escolhe a Capota marítima GRX Pro Black, está investindo en um acessório premium con tecnologia de ponta y design exclusivo.\nAlém de proteger sua carga con eficiência, ela é projetada para durar y facilitar sua vida.\nConfira o que ela pode lhe oferecer:\n- Design premium: acabamento totalmente Negro, incluindo a parte interna de la lona y componentes, para um visual elegante y diferenciado.\n- Autorregulación de la lona: a Capota possui um sistema integrado de controle de tensão que mantém a lona sempre ajustada, evitando ruídos o folgas, independentemente de las variações de temperatura, seja en climas quentes o frios.\n- Abertura facilitada: permite abrir con apenas uma mão, garantindo agilidade y praticidade.\n- Sellado Extra: a Capotas GRX Pro Black conta con um bulbo de Sellado extra na parte traseira y Sellado adicional na parte frontal, que auxilia na Sellado contra umidade y poeira, mesmo en condições desafiadoras.\n- Tecnología en grafeno: os componentes para travamento de la capota são produzidos en plástico con adição de grafeno. Esta solução oferece a robustez necessária para suportar as demandas del dia-a-dia y proporcionar uma auto lubrificação que reduz o desgaste y prolonga a vida útil del produto.\n- Traviesas fijadas a la lona: con um design funcional y inteligente, as Traviesas são costuradas diretamente na lona, permitindo que se enrolam junto con ela durante o uso. Essa solução simplifica o manuseio, garantindo praticidade.\n- Instalación facilitada: pode ser instalada pelo próprio cliente, sin complicações. Tudo o que você precisa é de uma parafusadeira con cachimbo de 10mm y pronto! en cerca de 10 minutos, sua capota estará perfeitamente ajustada, pronta para uso. Simples assim!\n- Manutenção simples: caso alguma peça precise ser substituída, não é necessário trocar a capota inteira. A Keko oferece Ítems de reposición exclusivos, garantindo agilidade na solução y economia no seu bolso. Confira no link abaixo os componentes disponíveis:\nhttps://www.keko.con.br/pt/itens-de-reposicao/reposicao-capotas-maritimas",
     "especificaciones": {
       "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
-      "Destacados del producto": "All black; Autorregulación de la lona; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona; Sellado extra entre caja de carga y cabina"
+      "Destacados del producto": "All black; Autorregulación de la lona; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona; Sellado extra entre caja de carga y cabina",
+      "EAN / código de barras": "7898732989860, 7908878000715, 7908878000838"
     },
     "precio": {
       "valor_min": 1369.0,
@@ -41,7 +42,7 @@
         "titulo": "Capota Marítima GRX Pro Black Montana 2023 a 2026 Keko KC245GR",
         "sku": "9.056.12.001GR",
         "ref_id": "9.056.12.001GR",
-        "ean": "",
+        "ean": "7898732989860",
         "precio": 1369.0,
         "disponible": true,
         "sku_montadora": [
@@ -58,7 +59,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732989860"
       },
       {
         "id": "397",
@@ -82,14 +84,15 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898732989860"
       },
       {
         "id": "1278",
         "titulo": "Capota Marítima GRX Pro Black Strada com Santo Antônio CD 2021 a 2025 Keko KC258GR",
         "sku": "9.042.12.016GR",
         "ref_id": "9.042.12.016GR",
-        "ean": "A Definir",
+        "ean": "7898732989860",
         "precio": 1369.0,
         "disponible": true,
         "sku_montadora": [
@@ -106,14 +109,15 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732989860"
       },
       {
         "id": "1280",
         "titulo": "Capota Marítima GRX Pro Black Strada sem Santo Antônio CD 2021 a 2025 Keko KC252GR",
         "sku": "9.042.12.014GR",
         "ref_id": "9.042.12.014GR",
-        "ean": "A Definir",
+        "ean": "7898732989860",
         "precio": 1369.0,
         "disponible": true,
         "sku_montadora": [
@@ -130,7 +134,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732989860"
       },
       {
         "id": "1432",
@@ -154,7 +159,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000715"
       },
       {
         "id": "1435",
@@ -178,7 +184,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000838"
       }
     ],
     "fitment_raw": {
@@ -309,7 +316,14 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159666/KC254GR_6.jpg?v=638761762740500000"
     ],
     "source_url": "https://www.keko.com.br/capota-maritima-grx-pro-black-compactas/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732989860",
+    "codigos_barras": [
+      "7898732989860",
+      "7908878000715",
+      "7908878000838"
+    ],
+    "ean": "7898732989860"
   },
   {
     "id": "381",
@@ -334,7 +348,8 @@
     ],
     "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 a 2024 /\nTriton L200 modelo 2008 a 2016.\nPara Fiat Toro, utilize RK0561.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732982618, 7898732982625"
     },
     "precio": {
       "valor": 68.0,
@@ -364,7 +379,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732982618"
       },
       {
         "id": "746",
@@ -388,7 +404,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898732982625"
       }
     ],
     "fitment_raw": {
@@ -435,7 +452,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/167393/SKU746-Conjunto Multitrava Superior Capota GRX Rampage 2023 a 2026 RK0561.png?v=639065963131430000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-superior-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732982618",
+    "codigos_barras": [
+      "7898732982618",
+      "7898732982625"
+    ],
+    "ean": "7898732982618"
   },
   {
     "id": "616",
@@ -532,7 +555,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168743/RK1372.jpg?v=639237971706430000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-borracha-vedacao/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "612",
@@ -555,7 +581,8 @@
     ],
     "descripcion": "Kit de soporte para Instalación del Santo Antonio Keko na Capota rígida retráctil Dakota y Titano.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878003761"
     },
     "precio": {
       "valor": 299.0,
@@ -585,7 +612,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7908878003761"
       }
     ],
     "fitment_raw": {
@@ -629,7 +657,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167758/Sem-Titulo-1.jpg?v=639148169622670000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-dakota-titano-keko/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878003761",
+    "codigos_barras": [
+      "7908878003761"
+    ],
+    "ean": "7908878003761"
   },
   {
     "id": "607",
@@ -652,7 +685,8 @@
     ],
     "descripcion": "Item de Reposición Conjunto Banda Capota rígida retráctil",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732989549"
     },
     "precio": {
       "valor": 3346.0,
@@ -682,7 +716,8 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898732989549"
       }
     ],
     "fitment_raw": {
@@ -726,7 +761,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167468/Sem-Titulo-1.jpg?v=639076196477070000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/conjunto-esteira-capota-rigida-retratil-rkestcrr/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732989549",
+    "codigos_barras": [
+      "7898732989549"
+    ],
+    "ean": "7898732989549"
   },
   {
     "id": "589",
@@ -749,7 +789,8 @@
     ],
     "descripcion": "No especificado",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000333"
     },
     "precio": {
       "valor": 102.0,
@@ -779,7 +820,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000333"
       }
     ],
     "fitment_raw": {
@@ -823,7 +865,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167444/Ponteira Estribo My Way RAM Rampage - Lado Esquerdo.png?v=639070146003570000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-ponteira-lado-esquerdo-rampage/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000333",
+    "codigos_barras": [
+      "7908878000333"
+    ],
+    "ean": "7908878000333"
   },
   {
     "id": "588",
@@ -859,7 +906,7 @@
         "titulo": "Ponteira Estribo My Way RAM Rampage Lado Direito RK0215",
         "sku": "RK0215",
         "ref_id": "9.230.00.017",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 102.0,
         "disponible": true,
         "sku_montadora": [
@@ -876,7 +923,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -920,7 +968,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167421/Design sem nome.png?v=639068391634900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/ponteira-estribo-my-way-rampage-direito/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "545",
@@ -948,7 +999,8 @@
     "descripcion": "Quando você escolhe a Capota marítima GRX, está investindo en um acessório de qualidade con excelente custo-benefício.\nAlém de proteger sua carga con eficiência, ela é projetada para durar y facilitar sua vida. Confira o que ela pode lhe oferecer:\n- Autorregulación de la lona: a Capota possui um sistema integrado de controle de tensão que mantém a lona sempre ajustada, evitando ruídos o folgas independentemente de las variações de temperatura, seja en climas quentes o frios.\n- Melhor Sellado: a linha de Capotas GRX conta con um bulbo de Sellado extra na parte traseira, que auxilia na Sellado contra umidade y poeira, mesmo en condições desafiadoras.\n- Sistema de apertura seguro: não é possível abrir a capota con a tampa de la Caja de carga fechada.\n- Tecnología en grafeno: os componentes para travamento de la capota são produzidos en plástico con adição de grafeno. Esta solução oferece a robustez necessária para suportar as demandas del dia-a-dia y proporcionar uma auto lubrificação que reduz o desgaste y prolonga a vida útil del produto.\n- Traviesas fijadas a la lona: con um design funcional y inteligente, as Traviesas são costuradas diretamente na lona, permitindo que se enrolam junto con ela durante o uso. Essa solução simplifica o manuseio, garantindo praticidade y eficiência no dia a dia.\n- Instalación facilitada: pode ser instalada pelo próprio cliente, sin complicações. Tudo o que você precisa é de uma parafusadeira con cachimbo de 10mm y pronto! en cerca de 10 minutos, sua capota estará perfeitamente ajustada, pronta para uso. Simples assim!\n- Manutenção simples: caso alguma peça precise ser substituída, não é necessário trocar a capota inteira. A Keko oferece Ítems de reposición exclusivos, garantindo agilidade na solução y economia no seu bolso. Confira no link abaixo os componentes disponíveis: https://www.keko.con.br/pt/itens-de-reposicao/reposicao-capotas-maritimas",
     "especificaciones": {
       "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
-      "Destacados del producto": "Autorregulación de la lona; Melhor Sellado; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona"
+      "Destacados del producto": "Autorregulación de la lona; Melhor Sellado; Producto patentado; Sistema de apertura facilitado; Tecnología en grafeno; Traviesas fijadas a la lona",
+      "EAN / código de barras": "7898732989853, 7908878000487, 7908878000708"
     },
     "precio": {
       "valor_min": 954.0,
@@ -962,7 +1014,7 @@
         "titulo": "Capota Marítima GRX Montana 2023 a 2026 Keko KC244GR",
         "sku": "9.056.12.000GR",
         "ref_id": "9.056.12.000GR",
-        "ean": "",
+        "ean": "7898732989853",
         "precio": 954.0,
         "disponible": true,
         "sku_montadora": [
@@ -979,7 +1031,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898732989853"
       },
       {
         "id": "396",
@@ -1003,14 +1056,15 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898732989853"
       },
       {
         "id": "1279",
         "titulo": "Capota Marítima GRX Strada sem Santo Antônio CD 2021 a 2025 Keko KC251GR",
         "sku": "9.042.12.013GR",
         "ref_id": "9.042.12.013GR",
-        "ean": "A Definir",
+        "ean": "7898732989853",
         "precio": 999.0,
         "disponible": true,
         "sku_montadora": [
@@ -1027,7 +1081,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732989853"
       },
       {
         "id": "1281",
@@ -1051,7 +1106,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7908878000487"
       },
       {
         "id": "1433",
@@ -1075,7 +1131,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000708"
       }
     ],
     "fitment_raw": {
@@ -1186,7 +1243,14 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159658/KC253GR_7.jpg?v=638761954456700000"
     ],
     "source_url": "https://www.keko.com.br/capota-maritima-grx-compactas/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732989853",
+    "codigos_barras": [
+      "7898732989853",
+      "7908878000487",
+      "7908878000708"
+    ],
+    "ean": "7898732989853"
   },
   {
     "id": "533",
@@ -1209,7 +1273,8 @@
     ],
     "descripcion": "Kit de soporte para Instalación del Santo Antonio Keko na Capota rígida retráctil de la Rampage.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000265"
     },
     "precio": {
       "valor": 245.0,
@@ -1239,7 +1304,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000265"
       }
     ],
     "fitment_raw": {
@@ -1283,7 +1349,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162008/K0131_1.jpg.jpg?v=638799932200730000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage-keko/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000265",
+    "codigos_barras": [
+      "7908878000265"
+    ],
+    "ean": "7908878000265"
   },
   {
     "id": "530",
@@ -1306,7 +1377,8 @@
     ],
     "descripcion": "Conjunto Montado Santo Antonio Sunset Strada Plus Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779121"
     },
     "precio": {
       "valor": 858.0,
@@ -1326,7 +1398,8 @@
         "sku_modelo": [],
         "sku_ano": [],
         "sku_version": [],
-        "sku_cabine": []
+        "sku_cabine": [],
+        "codigo_barras": "7898133779121"
       }
     ],
     "fitment_raw": {
@@ -1360,7 +1433,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167482/_RK0213PR  Preto.png?v=639080485243300000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-antonio-strada-plus-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779121",
+    "codigos_barras": [
+      "7898133779121"
+    ],
+    "ean": "7898133779121"
   },
   {
     "id": "527",
@@ -1385,7 +1463,8 @@
     ],
     "descripcion": "Reposición Conjunto Montado Santo Antonio K1 2 Pol Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779107, 7898133779183"
     },
     "precio": {
       "valor": 858.0,
@@ -1415,7 +1494,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133779107"
       },
       {
         "id": "1162",
@@ -1439,7 +1519,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133779183"
       }
     ],
     "fitment_raw": {
@@ -1505,7 +1586,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/167485/RK0211PR.png?v=639080489586900000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1-2-pol-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779107",
+    "codigos_barras": [
+      "7898133779107",
+      "7898133779183"
+    ],
+    "ean": "7898133779107"
   },
   {
     "id": "508",
@@ -1530,7 +1617,8 @@
     ],
     "descripcion": "Punteras para Estribo tubular K1 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000197"
     },
     "precio": {
       "valor": 72.0,
@@ -1543,7 +1631,7 @@
         "titulo": "Ponteiras para Estribo Tubular K1 RK0116",
         "sku": "RK0116",
         "ref_id": "9.000.00.005",
-        "ean": "",
+        "ean": "7908878000197",
         "precio": 72.0,
         "disponible": true,
         "sku_montadora": [
@@ -1560,7 +1648,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000197"
       },
       {
         "id": "1302",
@@ -1584,7 +1673,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7908878000197"
       },
       {
         "id": "1454",
@@ -1608,7 +1698,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla e Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7908878000197"
       },
       {
         "id": "1455",
@@ -1632,7 +1723,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000197"
       },
       {
         "id": "1456",
@@ -1656,7 +1748,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7908878000197"
       }
     ],
     "fitment_raw": {
@@ -1765,7 +1858,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/160923/RK0114.jpg?v=638603648781400000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-ponteiras-para-estribo-tubular-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000197",
+    "codigos_barras": [
+      "7908878000197"
+    ],
+    "ean": "7908878000197"
   },
   {
     "id": "506",
@@ -1788,7 +1886,8 @@
     ],
     "descripcion": "Kit de soporte para Instalación del Santo Antonio Original Rambar na Capota rígida retráctil de la Rampage.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000036"
     },
     "precio": {
       "valor": 279.0,
@@ -1818,7 +1917,8 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7908878000036"
       }
     ],
     "fitment_raw": {
@@ -1862,7 +1962,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/162007/K0064_1.jpg.jpg?v=638799925906570000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-rampage/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000036",
+    "codigos_barras": [
+      "7908878000036"
+    ],
+    "ean": "7908878000036"
   },
   {
     "id": "501",
@@ -1887,7 +1992,8 @@
     ],
     "descripcion": "Conjunto Capa Lateral Direita Santo Antonio K1 2 Pol Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779077, 7898732985565"
     },
     "precio": {
       "valor_min": 77.0,
@@ -1918,7 +2024,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133779077"
       },
       {
         "id": "1543",
@@ -1942,7 +2049,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898732985565"
       }
     ],
     "fitment_raw": {
@@ -1989,7 +2097,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166574/1.jpg?v=638956087242430000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-direita-santo-k1-2pol/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779077",
+    "codigos_barras": [
+      "7898133779077",
+      "7898732985565"
+    ],
+    "ean": "7898133779077"
   },
   {
     "id": "480",
@@ -2012,7 +2126,8 @@
     ],
     "descripcion": "Reposición Conjunto Rejilla de vidrio trasero para Santo Antonio K1 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133778476"
     },
     "precio": {
       "valor": 117.0,
@@ -2042,7 +2157,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898133778476"
       }
     ],
     "fitment_raw": {
@@ -2088,7 +2204,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161201/RK0208PR.jpg?v=638627138136470000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-gvt-santo-antonio-k1-amarok/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133778476",
+    "codigos_barras": [
+      "7898133778476"
+    ],
+    "ean": "7898133778476"
   },
   {
     "id": "473",
@@ -2111,7 +2232,8 @@
     ],
     "descripcion": "Reposición Conjunto Montado para Santo Antonio Sunset Strada Plus Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779114"
     },
     "precio": {
       "valor": 1201.0,
@@ -2141,7 +2263,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133779114"
       }
     ],
     "fitment_raw": {
@@ -2185,7 +2308,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167491/RK0211PR -7-.png?v=639080503056730000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-sunset-strada-plus/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779114",
+    "codigos_barras": [
+      "7898133779114"
+    ],
+    "ean": "7898133779114"
   },
   {
     "id": "472",
@@ -2210,7 +2338,8 @@
     ],
     "descripcion": "Reposición Conjunto Montado para Santo Antonio K1 2 Pol Cromo Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779091, 7898133779176"
     },
     "precio": {
       "valor": 1201.0,
@@ -2240,7 +2369,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133779091"
       },
       {
         "id": "1118",
@@ -2264,7 +2394,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133779176"
       }
     ],
     "fitment_raw": {
@@ -2328,7 +2459,13 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161196/RK0210CR.jpg?v=638895853027100000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-montado-santo-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779091",
+    "codigos_barras": [
+      "7898133779091",
+      "7898133779176"
+    ],
+    "ean": "7898133779091"
   },
   {
     "id": "470",
@@ -2354,7 +2491,8 @@
     ],
     "descripcion": "Base para Santo Antonio K1 2 Pol Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133778711, 7898133778728, 7898133779213"
     },
     "precio": {
       "valor": 199.0,
@@ -2382,7 +2520,8 @@
         "sku_version": [],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133778711"
       },
       {
         "id": "775",
@@ -2406,7 +2545,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898133778728"
       },
       {
         "id": "1117",
@@ -2430,7 +2570,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133779213"
       }
     ],
     "fitment_raw": {
@@ -2497,7 +2638,14 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161224/RK0080.jpg?v=638627182252030000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-base-santo-strada-plus/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133778711",
+    "codigos_barras": [
+      "7898133778711",
+      "7898133778728",
+      "7898133779213"
+    ],
+    "ean": "7898133778711"
   },
   {
     "id": "463",
@@ -2523,7 +2671,8 @@
     "descripcion": "con design discreto y funcional, a Extensão protege as bordas laterais de la Caja de carga durante o transporte de cargas, tudo isso sin interferir na estrutura original del veículo.",
     "especificaciones": {
       "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
-      "Acabamento": "Cromo"
+      "Acabamento": "Cromo",
+      "EAN / código de barras": "7898133776489, 7898133776090"
     },
     "precio": {
       "valor": 422.0,
@@ -2553,7 +2702,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133776489"
       },
       {
         "id": "333",
@@ -2577,7 +2727,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133776090"
       }
     ],
     "fitment_raw": {
@@ -2647,7 +2798,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/156525/imagem3.jpg?v=638433599551170000"
     ],
     "source_url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-cromo/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776489",
+    "codigos_barras": [
+      "7898133776489",
+      "7898133776090"
+    ],
+    "ean": "7898133776489"
   },
   {
     "id": "452",
@@ -2673,7 +2830,8 @@
     "descripcion": "con design discreto y funcional, a Extensão protege as bordas laterais de la Caja de carga durante o transporte de cargas, tudo isso sin interferir na estrutura original del veículo.",
     "especificaciones": {
       "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
-      "Acabamento": "Negro"
+      "Acabamento": "Negro",
+      "EAN / código de barras": "7898133776496, 7898133776106"
     },
     "precio": {
       "valor": 327.0,
@@ -2703,7 +2861,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133776496"
       },
       {
         "id": "195",
@@ -2727,7 +2886,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133776106"
       }
     ],
     "fitment_raw": {
@@ -2797,7 +2957,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159202/K146PR_4.jpg?v=639227439149730000"
     ],
     "source_url": "https://www.keko.com.br/extensao-para-santo-antonio-2-pol-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776496",
+    "codigos_barras": [
+      "7898133776496",
+      "7898133776106"
+    ],
+    "ean": "7898133776496"
   },
   {
     "id": "449",
@@ -2820,7 +2986,8 @@
     ],
     "descripcion": "Kit de soporte para Instalación del Santo Antonio Original Toro Ranch na Capota rígida retráctil de la Toro Ranch.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "EAN / código de barras": "7898133778230"
     },
     "precio": {
       "valor": 279.0,
@@ -2850,7 +3017,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133778230"
       }
     ],
     "fitment_raw": {
@@ -2896,7 +3064,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159737/K267PR_2.jpg?v=638461039352200000"
     ],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-ranch/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133778230",
+    "codigos_barras": [
+      "7898133778230"
+    ],
+    "ean": "7898133778230"
   },
   {
     "id": "446",
@@ -2919,7 +3092,8 @@
     ],
     "descripcion": "Kit de soporte para Santo Antonio 2 Pol Keko.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "EAN / código de barras": "7898133778247"
     },
     "precio": {
       "valor": 245.0,
@@ -2949,7 +3123,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133778247"
       }
     ],
     "fitment_raw": {
@@ -2996,7 +3171,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159733/K266PR_3.jpg?v=638895873216830000"
     ],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-toro-2-pol/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133778247",
+    "codigos_barras": [
+      "7898133778247"
+    ],
+    "ean": "7898133778247"
   },
   {
     "id": "429",
@@ -3031,7 +3211,8 @@
       "Fixação lateral": "Nos pontos originais del veículo",
       "Acompanha Rejilla de vidrio trasero": "Não",
       "Instalación": "fácil",
-      "Garantía de fábrica": "3 anos"
+      "Garantía de fábrica": "3 anos",
+      "EAN / código de barras": "7898133776021, 7898133776144"
     },
     "precio": {
       "valor": 788.0,
@@ -3061,7 +3242,8 @@
         ],
         "sku_cabine": [
           "Cabine Plus"
-        ]
+        ],
+        "codigo_barras": "7898133776021"
       },
       {
         "id": "568",
@@ -3085,7 +3267,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898133776144"
       }
     ],
     "fitment_raw": {
@@ -3136,7 +3319,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/155507/K153CR_3.jpg?v=639221323638970000"
     ],
     "source_url": "https://www.keko.com.br/santo-antonio-sunset-2-pol-cromo/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776021",
+    "codigos_barras": [
+      "7898133776021",
+      "7898133776144"
+    ],
+    "ean": "7898133776021"
   },
   {
     "id": "401",
@@ -3161,7 +3350,8 @@
     ],
     "descripcion": "Conjunto Dreno para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "EAN / código de barras": "7898133776793, 7898732987514"
     },
     "precio": {
       "valor": 151.0,
@@ -3191,7 +3381,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776793"
       },
       {
         "id": "1477",
@@ -3215,7 +3406,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898732987514"
       }
     ],
     "fitment_raw": {
@@ -3262,7 +3454,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159875/RK0057.jpg?v=638895832817230000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-dreno/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776793",
+    "codigos_barras": [
+      "7898133776793",
+      "7898732987514"
+    ],
+    "ean": "7898133776793"
   },
   {
     "id": "382",
@@ -3284,7 +3482,8 @@
     ],
     "descripcion": "Conjunto Perfil trasero para Capota GRX Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732981147"
     },
     "precio": {
       "valor": 133.0,
@@ -3314,7 +3513,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732981147"
       }
     ],
     "fitment_raw": {
@@ -3360,7 +3560,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161321/RK0551.jpg?v=638627970607900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-perfil-traseiro-capota-grx-pro/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732981147",
+    "codigos_barras": [
+      "7898732981147"
+    ],
+    "ean": "7898732981147"
   },
   {
     "id": "25",
@@ -3390,7 +3595,8 @@
       "Compatibilidade": "Toro",
       "Requer ferramentas": "Sim",
       "Instalación": "Média",
-      "Garantía de fábrica": "1 año"
+      "Garantía de fábrica": "1 año",
+      "EAN / código de barras": "7898133777547"
     },
     "precio": {
       "valor": 393.0,
@@ -3420,7 +3626,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133777547"
       }
     ],
     "fitment_raw": {
@@ -3470,7 +3677,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/167132/K013_5.jpg?v=638989771502770000"
     ],
     "source_url": "https://www.keko.com.br/sistema-de-escoamento/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777547",
+    "codigos_barras": [
+      "7898133777547"
+    ],
+    "ean": "7898133777547"
   },
   {
     "id": "12",
@@ -3510,7 +3722,8 @@
       "Permite instalación de Santo Antonio": "Sim",
       "Material": "Lona",
       "Instalación": "fácil",
-      "Garantía de fábrica": "1 año"
+      "Garantía de fábrica": "1 año",
+      "EAN / código de barras": "7898732985299"
     },
     "precio": {
       "valor": 1597.0,
@@ -3540,7 +3753,8 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898732985299"
       }
     ],
     "fitment_raw": {
@@ -3590,7 +3804,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/155412/KC207GR_5.jpg?v=638761762739900000"
     ],
     "source_url": "https://www.keko.com.br/capota-maritima-grx-pro-black/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985299",
+    "codigos_barras": [
+      "7898732985299"
+    ],
+    "ean": "7898732985299"
   },
   {
     "id": "8",
@@ -3615,7 +3834,8 @@
       "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
       "Destacados del producto": "Pintura padrão OEM; Protege a cabine de la pickup",
       "Instalación": "fácil",
-      "Garantía de fábrica": "3 anos"
+      "Garantía de fábrica": "3 anos",
+      "EAN / código de barras": "7898133771941"
     },
     "precio": {
       "valor": 245.0,
@@ -3645,7 +3865,8 @@
         ],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898133771941"
       }
     ],
     "fitment_raw": {
@@ -3689,6 +3910,11 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159213/K454PR_1.jpg?v=638434257263600000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/grade-do-vidro-traseiro/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133771941",
+    "codigos_barras": [
+      "7898133771941"
+    ],
+    "ean": "7898133771941"
   }
 ]
