@@ -27,7 +27,8 @@
       "Função de luz de ré": "Sim",
       "Resistente a água y esguichos": "Sim",
       "Instalación": "Difícil",
-      "Garantía de fábrica": "3 anos"
+      "Garantía de fábrica": "3 anos",
+      "EAN / código de barras": "7898732985350"
     },
     "precio": {
       "valor": 572.0,
@@ -57,7 +58,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985350"
       }
     ],
     "fitment_raw": {
@@ -78,7 +80,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159448/K0197PR_1.jpg?v=638455228109700000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-eletrico-para-engate-de-reboque/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985350",
+    "codigos_barras": [
+      "7898732985350"
+    ],
+    "ean": "7898732985350"
   },
   {
     "id": "440",
@@ -101,7 +108,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, con aplicação sugerida para L200 Triton.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000777"
     },
     "precio": {
       "valor": 227.0,
@@ -131,7 +139,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000777"
       }
     ],
     "fitment_raw": {
@@ -154,7 +163,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166337/2.jpg?v=638932988595700000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-252-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000777",
+    "codigos_barras": [
+      "7908878000777"
+    ],
+    "ean": "7908878000777"
   },
   {
     "id": "541",
@@ -177,7 +191,8 @@
     ],
     "descripcion": "Varão para Capota marítima GRX Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732982724"
     },
     "precio": {
       "valor": 68.0,
@@ -207,7 +222,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732982724"
       }
     ],
     "fitment_raw": {
@@ -228,7 +244,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167387/SKU442-Conjunto Varao Capota GRX todas picapes RK0542.png?v=639065947005300000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-varao-capota-maritima-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732982724",
+    "codigos_barras": [
+      "7898732982724"
+    ],
+    "ean": "7898732982724"
   },
   {
     "id": "442",
@@ -251,7 +272,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, esfera para cima, con aplicação sugerida para Creta, Corolla Cross, Haval H6, Kicks, Nivus, RAV4, Saveiro, T-Cross, Tracker, Virtus, XC40. Esfera para baixo aplicação sugerida para Captur, Discovery Sport, HR-V, Montana, Tiguan.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777752"
     },
     "precio": {
       "valor": 151.0,
@@ -281,7 +303,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777752"
       }
     ],
     "fitment_raw": {
@@ -307,7 +330,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/162506/5.jpg?v=638841205028600000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-141mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777752",
+    "codigos_barras": [
+      "7898133777752"
+    ],
+    "ean": "7898133777752"
   },
   {
     "id": "437",
@@ -330,7 +358,8 @@
     ],
     "descripcion": "Esfera para Enganche de remolque en cromo duro 50mm.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "EAN / código de barras": "7898133774010"
     },
     "precio": {
       "valor": 174.0,
@@ -360,7 +389,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133774010"
       }
     ],
     "fitment_raw": {
@@ -381,7 +411,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159902/ESFERA_OK.jpg?v=638487770397900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/esfera-cromo-duro-50-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133774010",
+    "codigos_barras": [
+      "7898133774010"
+    ],
+    "ean": "7898133774010"
   },
   {
     "id": "552",
@@ -404,7 +439,8 @@
     ],
     "descripcion": "Plataforma My Road 1915mm Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133775406"
     },
     "precio": {
       "valor": 1387.0,
@@ -434,7 +470,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133775406"
       }
     ],
     "fitment_raw": {
@@ -459,7 +496,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161694/MY-ROAD-PR--4-.jpg?v=638895867665570000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-road-1915-mm-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133775406",
+    "codigos_barras": [
+      "7898133775406"
+    ],
+    "ean": "7898133775406"
   },
   {
     "id": "24",
@@ -482,7 +524,8 @@
     ],
     "descripcion": "Kit de soporte Santo Antonio para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985343"
     },
     "precio": {
       "valor": 349.0,
@@ -512,7 +555,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985343"
       }
     ],
     "fitment_raw": {
@@ -536,7 +580,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159730/K456PR_3.jpg?v=638895873367670000"
     ],
     "source_url": "https://www.keko.com.br/kit-suporte-santo-antonio-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985343",
+    "codigos_barras": [
+      "7898732985343"
+    ],
+    "ean": "7898732985343"
   },
   {
     "id": "615",
@@ -559,7 +608,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para cima, con aplicação sugerida para Tank 300.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878004027"
     },
     "precio": {
       "valor": 227.0,
@@ -589,7 +639,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878004027"
       }
     ],
     "fitment_raw": {
@@ -610,7 +661,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168288/Imagens-Site.jpg?v=639210070659130000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-224mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878004027",
+    "codigos_barras": [
+      "7908878004027"
+    ],
+    "ean": "7908878004027"
   },
   {
     "id": "613",
@@ -633,7 +689,8 @@
     ],
     "descripcion": "No especificado",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732986326"
     },
     "precio": {
       "valor": 240.0,
@@ -653,7 +710,8 @@
         "sku_modelo": [],
         "sku_ano": [],
         "sku_version": [],
-        "sku_cabine": []
+        "sku_cabine": [],
+        "codigo_barras": "7898732986326"
       }
     ],
     "fitment_raw": {
@@ -673,7 +731,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167767/RK0728.png?v=639148717846370000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/rreposicao-conjunto-sobrecapa-k3/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732986326",
+    "codigos_barras": [
+      "7898732986326"
+    ],
+    "ean": "7898732986326"
   },
   {
     "id": "610",
@@ -696,7 +759,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, esfera para cima, con aplicação sugerida para Tiggo 7 y Haval H6.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878001514"
     },
     "precio": {
       "valor": 151.0,
@@ -726,7 +790,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878001514"
       }
     ],
     "fitment_raw": {
@@ -751,7 +816,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/167807/2.jpg?v=639178196622200000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-183mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878001514",
+    "codigos_barras": [
+      "7908878001514"
+    ],
+    "ean": "7908878001514"
   },
   {
     "id": "609",
@@ -825,7 +895,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167667/K0640.png?v=639105752176800000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/suporte-motor-capota-rigida/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "599",
@@ -848,7 +921,8 @@
     ],
     "descripcion": "No especificado",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878003303"
     },
     "precio": {
       "valor": 101.0,
@@ -878,7 +952,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878003303"
       }
     ],
     "fitment_raw": {
@@ -899,7 +974,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167406/Design-sem-nome.png?v=639110988588100000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/borracha-perfil-traseiro-crr/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878003303",
+    "codigos_barras": [
+      "7908878003303"
+    ],
+    "ean": "7908878003303"
   },
   {
     "id": "593",
@@ -922,7 +1002,8 @@
     ],
     "descripcion": "No especificado",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732988528"
     },
     "precio": {
       "valor": 33.0,
@@ -952,7 +1033,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732988528"
       }
     ],
     "fitment_raw": {
@@ -973,7 +1055,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167425/Design-sem-nome--2-.png?v=639110988870670000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/clipe-elastico-capotas-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732988528",
+    "codigos_barras": [
+      "7898732988528"
+    ],
+    "ean": "7898732988528"
   },
   {
     "id": "591",
@@ -996,7 +1083,8 @@
     ],
     "descripcion": "Puntera de Traviesas para Capotas GRX y GRX Pro Black.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878001538"
     },
     "precio": {
       "valor": 31.0,
@@ -1026,7 +1114,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878001538"
       }
     ],
     "fitment_raw": {
@@ -1047,7 +1136,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/166336/1.jpg?v=638923345538330000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-ponteira-de-travessa-capotas-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878001538",
+    "codigos_barras": [
+      "7908878001538"
+    ],
+    "ean": "7908878001538"
   },
   {
     "id": "582",
@@ -1083,7 +1177,7 @@
         "titulo": "Perfil Vedação Traseira para Nova Geração de Capotas Marítimas GRX RK1199",
         "sku": "RK1199",
         "ref_id": "9.655.12.106",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 68.0,
         "disponible": true,
         "sku_montadora": [
@@ -1100,7 +1194,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -1121,7 +1216,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/166398/1.jpg?v=638938811910500000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/perfil-vedacao-traseira-nova-geracao-capota-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "572",
@@ -1144,7 +1242,8 @@
     ],
     "descripcion": "Conversor para Puntera de Enganche de remolque. con ele, é possível utilizar uma Puntera K1 en um Enganche de remolque K2.",
     "especificaciones": {
-      "Destacados del producto": "Facilidade de manuseio; Pintura padrão OEM; Preserva o ângulo de saída del veículo"
+      "Destacados del producto": "Facilidade de manuseio; Pintura padrão OEM; Preserva o ângulo de saída del veículo",
+      "EAN / código de barras": "7908878001033"
     },
     "precio": {
       "valor": 285.0,
@@ -1174,7 +1273,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878001033"
       }
     ],
     "fitment_raw": {
@@ -1201,7 +1301,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/164925/K0222_4-ES.jpg?v=638859315198400000"
     ],
     "source_url": "https://www.keko.com.br/conversor-de-ponteira-k2-para-k1-conv_pon/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878001033",
+    "codigos_barras": [
+      "7908878001033"
+    ],
+    "ean": "7908878001033"
   },
   {
     "id": "569",
@@ -1224,7 +1329,8 @@
     ],
     "descripcion": "Pino y contrapino para Enganches de remolque Keko K2.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000920"
     },
     "precio": {
       "valor": 54.0,
@@ -1254,7 +1360,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000920"
       }
     ],
     "fitment_raw": {
@@ -1275,7 +1382,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164904/RK0065.jpg?v=638857800084770000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/pino-e-contrapino-k2/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000920",
+    "codigos_barras": [
+      "7908878000920"
+    ],
+    "ean": "7908878000920"
   },
   {
     "id": "566",
@@ -1298,7 +1410,8 @@
     ],
     "descripcion": "Reposición Kit Tampa Perfil Banda Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732988542"
     },
     "precio": {
       "valor": 33.0,
@@ -1328,7 +1441,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732988542"
       }
     ],
     "fitment_raw": {
@@ -1349,7 +1463,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161960/RK.png?v=638791938386030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-tampa-perfil-esteira-crr/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732988542",
+    "codigos_barras": [
+      "7898732988542"
+    ],
+    "ean": "7898732988542"
   },
   {
     "id": "562",
@@ -1372,7 +1491,8 @@
     ],
     "descripcion": "Pino y contrapino para Enganches de remolque Keko K1. Pino con medidas: 5/8” y 147 mm de comprimento.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000869"
     },
     "precio": {
       "valor": 54.0,
@@ -1402,7 +1522,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000869"
       }
     ],
     "fitment_raw": {
@@ -1425,7 +1546,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161958/RK0558_2.jpg.jpg?v=638780902943630000"
     ],
     "source_url": "https://www.keko.com.br/pino-e-contrapino/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000869",
+    "codigos_barras": [
+      "7908878000869"
+    ],
+    "ean": "7908878000869"
   },
   {
     "id": "558",
@@ -1447,7 +1573,8 @@
     ],
     "descripcion": "Plataforma My Trip 1915mm Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985473"
     },
     "precio": {
       "valor": 1269.0,
@@ -1477,7 +1604,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985473"
       }
     ],
     "fitment_raw": {
@@ -1501,7 +1629,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161715/MY-TRIP-PR--3-.jpg?v=638895866373800000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-trip-1915-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985473",
+    "codigos_barras": [
+      "7898732985473"
+    ],
+    "ean": "7898732985473"
   },
   {
     "id": "557",
@@ -1523,7 +1656,8 @@
     ],
     "descripcion": "Plataforma My Trip 2025mm Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985480"
     },
     "precio": {
       "valor": 1269.0,
@@ -1553,7 +1687,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985480"
       }
     ],
     "fitment_raw": {
@@ -1577,7 +1712,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161718/MY-TRIP-PR--3-.jpg?v=638895866274000000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-trip-2025-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985480",
+    "codigos_barras": [
+      "7898732985480"
+    ],
+    "ean": "7898732985480"
   },
   {
     "id": "556",
@@ -1599,7 +1739,8 @@
     ],
     "descripcion": "Plataforma My Trip 2280mm Keko",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985503"
     },
     "precio": {
       "valor": 1374.0,
@@ -1629,7 +1770,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985503"
       }
     ],
     "fitment_raw": {
@@ -1653,7 +1795,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161727/MY-TRIP-PR--3-.jpg?v=638895865893000000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-trip-2280-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985503",
+    "codigos_barras": [
+      "7898732985503"
+    ],
+    "ean": "7898732985503"
   },
   {
     "id": "555",
@@ -1675,7 +1822,8 @@
     ],
     "descripcion": "Plataforma My Trip 2140mm Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985497"
     },
     "precio": {
       "valor": 1374.0,
@@ -1705,7 +1853,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985497"
       }
     ],
     "fitment_raw": {
@@ -1729,7 +1878,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161721/MY-TRIP-PR--3-.jpg?v=638895866130570000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-trip-2140-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985497",
+    "codigos_barras": [
+      "7898732985497"
+    ],
+    "ean": "7898732985497"
   },
   {
     "id": "553",
@@ -1752,7 +1906,8 @@
     ],
     "descripcion": "Plataforma My Road 2280mm Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133775673"
     },
     "precio": {
       "valor": 1581.0,
@@ -1782,7 +1937,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133775673"
       }
     ],
     "fitment_raw": {
@@ -1807,7 +1963,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161690/MY-ROAD-PR--4-.jpg?v=638895866004830000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-road-2280-mm-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133775673",
+    "codigos_barras": [
+      "7898133775673"
+    ],
+    "ean": "7898133775673"
   },
   {
     "id": "550",
@@ -1830,7 +1991,8 @@
     ],
     "descripcion": "Plataforma My Road 2140mm Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776533"
     },
     "precio": {
       "valor": 1581.0,
@@ -1860,7 +2022,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776533"
       }
     ],
     "fitment_raw": {
@@ -1885,7 +2048,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161702/MY-ROAD-PR--4-.jpg?v=638895867086630000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-road-2140-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776533",
+    "codigos_barras": [
+      "7898133776533"
+    ],
+    "ean": "7898133776533"
   },
   {
     "id": "548",
@@ -1908,7 +2076,8 @@
     ],
     "descripcion": "Plataforma My Road 2025mm Negro Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133775413"
     },
     "precio": {
       "valor": 1387.0,
@@ -1938,7 +2107,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133775413"
       }
     ],
     "fitment_raw": {
@@ -1963,7 +2133,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161712/MY-ROAD-PR--4-.jpg?v=638895866684900000"
     ],
     "source_url": "https://www.keko.com.br/plataforma-my-road-2025-preto/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133775413",
+    "codigos_barras": [
+      "7898133775413"
+    ],
+    "ean": "7898133775413"
   },
   {
     "id": "547",
@@ -1986,7 +2161,8 @@
     ],
     "descripcion": "Pisantes para Estribo tubular K1 de dimensão 76X120 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000449"
     },
     "precio": {
       "valor": 93.0,
@@ -2016,7 +2192,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000449"
       }
     ],
     "fitment_raw": {
@@ -2037,7 +2214,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167501/Pisante -6-.png?v=639080523016400000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-estribo-tubular-k1-76/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000449",
+    "codigos_barras": [
+      "7908878000449"
+    ],
+    "ean": "7908878000449"
   },
   {
     "id": "539",
@@ -2111,7 +2293,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167505/Pisante -2-.png?v=639080623765770000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-ponteiras-estribo-tubular-k1-olongo/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "538",
@@ -2147,7 +2332,7 @@
         "titulo": "Ponteiras Estribo My Trip Keko RK0217",
         "sku": "RK0217",
         "ref_id": "9.000.00.009",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 72.0,
         "disponible": true,
         "sku_montadora": [
@@ -2164,7 +2349,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -2185,7 +2371,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167500/Pisante -5-.png?v=639080522053630000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/repoiscao-ponteira-estribo-my-trip/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "537",
@@ -2221,7 +2410,7 @@
         "titulo": "Pisantes para Estribo Tubular K1 Oblongo Keko RK0249",
         "sku": "RK0249",
         "ref_id": "9.000.00.013",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 93.0,
         "disponible": true,
         "sku_montadora": [
@@ -2238,7 +2427,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -2259,7 +2449,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167497/Pisante.png?v=639080516752370000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-pisantes-para-estribo-tubular-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "536",
@@ -2295,7 +2488,7 @@
         "titulo": "Pisantes para Estribo My Road Keko RK0243",
         "sku": "RK0243",
         "ref_id": "9.000.00.011",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 93.0,
         "disponible": true,
         "sku_montadora": [
@@ -2312,7 +2505,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -2333,7 +2527,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167498/Pisante -3-.png?v=639080519399170000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-pisante-my-road/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "534",
@@ -2369,7 +2566,7 @@
         "titulo": "Ponteiras Estribo Integral K1 Keko RK0138",
         "sku": "RK0138",
         "ref_id": "9.000.00.007",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 72.0,
         "disponible": true,
         "sku_montadora": [
@@ -2386,7 +2583,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -2407,7 +2605,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167494/Ponteiras Estribo Integral K1 -1-.png?v=639080511339730000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-ponteira-estribo-integral/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "529",
@@ -2429,7 +2630,8 @@
     ],
     "descripcion": "Bucha de União para Santo Antonio K1 2 Pol Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779060"
     },
     "precio": {
       "valor": 74.0,
@@ -2449,7 +2651,8 @@
         "sku_modelo": [],
         "sku_ano": [],
         "sku_version": [],
-        "sku_cabine": []
+        "sku_cabine": [],
+        "codigo_barras": "7898133779060"
       }
     ],
     "fitment_raw": {
@@ -2469,7 +2672,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167483/_RK0220.png?v=639080487182070000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-bucha-de-uniao-santo-antonio-k1-2-pol/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779060",
+    "codigos_barras": [
+      "7898133779060"
+    ],
+    "ean": "7898133779060"
   },
   {
     "id": "523",
@@ -2492,7 +2700,8 @@
     ],
     "descripcion": "Soporte Proteção para Capota marítima Flex Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732984575"
     },
     "precio": {
       "valor": 42.0,
@@ -2522,7 +2731,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732984575"
       }
     ],
     "fitment_raw": {
@@ -2543,7 +2753,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161228/RK0133.jpg?v=638627184753600000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-suporte-protecao-para-capota-maritima/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732984575",
+    "codigos_barras": [
+      "7898732984575"
+    ],
+    "ean": "7898732984575"
   },
   {
     "id": "521",
@@ -2566,7 +2781,8 @@
     ],
     "descripcion": "Goma y.V.A Lateral para Capota GRX Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732982793"
     },
     "precio": {
       "valor": 68.0,
@@ -2596,7 +2812,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732982793"
       }
     ],
     "fitment_raw": {
@@ -2617,7 +2834,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167503/Pisante.png?v=639080620258730000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-borracha-eva-lateral-para-capota-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732982793",
+    "codigos_barras": [
+      "7898732982793"
+    ],
+    "ean": "7898732982793"
   },
   {
     "id": "519",
@@ -2642,7 +2864,8 @@
     ],
     "descripcion": "Perfil Sellado Frontal para Capota GRX Keko compativel con Amarok CD 2010 en adelante y RAM Classic 2022 en adelante.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732982823, 7898732982830"
     },
     "precio": {
       "valor": 68.0,
@@ -2672,7 +2895,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732982823"
       },
       {
         "id": "1023",
@@ -2696,7 +2920,8 @@
         ],
         "sku_cabine": [
           "Cabine Dupla"
-        ]
+        ],
+        "codigo_barras": "7898732982830"
       }
     ],
     "fitment_raw": {
@@ -2718,7 +2943,13 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161318/RK0547.jpg?v=638895848185030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-perfil-vedacao-frontal-capota-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732982823",
+    "codigos_barras": [
+      "7898732982823",
+      "7898732982830"
+    ],
+    "ean": "7898732982823"
   },
   {
     "id": "509",
@@ -2792,7 +3023,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167460/conjunto Perfil Lateral.png?v=639070320150530000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-pisantes-estribo-tubular-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "504",
@@ -2815,7 +3049,8 @@
     ],
     "descripcion": "Conjunto Capa Lateral Esquerda Santo Antonio K1 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779206"
     },
     "precio": {
       "valor": 159.0,
@@ -2845,7 +3080,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133779206"
       }
     ],
     "fitment_raw": {
@@ -2866,7 +3102,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161233/RK0154.jpg?v=638627186752570000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-esquerda-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779206",
+    "codigos_barras": [
+      "7898133779206"
+    ],
+    "ean": "7898133779206"
   },
   {
     "id": "503",
@@ -2889,7 +3130,8 @@
     ],
     "descripcion": "Motor y Soporte para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777004"
     },
     "precio": {
       "valor": 1003.0,
@@ -2919,7 +3161,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777004"
       }
     ],
     "fitment_raw": {
@@ -2940,7 +3183,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167369/SKU813-Motor-e-Suporte-para-Capota-Rigida-Retratil-RK0055.png?v=639193031768030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-capota-rigida-retratil-motor-24v/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777004",
+    "codigos_barras": [
+      "7898133777004"
+    ],
+    "ean": "7898133777004"
   },
   {
     "id": "500",
@@ -2963,7 +3211,8 @@
     ],
     "descripcion": "Conjunto Capa Lateral Esquerda K1 2 Pol Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779084"
     },
     "precio": {
       "valor": 77.0,
@@ -2993,7 +3242,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133779084"
       }
     ],
     "fitment_raw": {
@@ -3014,7 +3264,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161231/RK0152.jpg?v=638627185973070000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral-k1-2-pol-esquerda/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779084",
+    "codigos_barras": [
+      "7898133779084"
+    ],
+    "ean": "7898133779084"
   },
   {
     "id": "497",
@@ -3088,7 +3343,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167427/Design sem nome -6-.png?v=639068452473330000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-ponteira-estribo-my-road/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "496",
@@ -3111,7 +3369,8 @@
     ],
     "descripcion": "Módulo de Controle Capota rígida retráctil G3 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777998"
     },
     "precio": {
       "valor": 1299.0,
@@ -3141,7 +3400,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777998"
       }
     ],
     "fitment_raw": {
@@ -3162,7 +3422,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159981/RK0139.jpg?v=638513040981300000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-de-modulo-de-controle-g3-crr/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777998",
+    "codigos_barras": [
+      "7898133777998"
+    ],
+    "ean": "7898133777998"
   },
   {
     "id": "495",
@@ -3198,7 +3463,7 @@
         "titulo": "Kit de Compatibilização novo Módulo Capota Rígida RK0049",
         "sku": "RK0049",
         "ref_id": "9.965.39.000AT",
-        "ean": "A Definir",
+        "ean": "No especificado",
         "precio": 1417.0,
         "disponible": true,
         "sku_montadora": [
@@ -3215,7 +3480,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "No especificado"
       }
     ],
     "fitment_raw": {
@@ -3236,7 +3502,10 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159977/RK0049.jpg?v=638512251554030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-kit-de-compatibilizacao-de-modulo-crr/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "468",
@@ -3259,7 +3528,8 @@
     ],
     "descripcion": "Punteras de la Traviesa para Capota marítima Flex Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732984681"
     },
     "precio": {
       "valor": 33.0,
@@ -3289,7 +3559,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732984681"
       }
     ],
     "fitment_raw": {
@@ -3310,7 +3581,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159862/RK0135.jpg?v=638469862230300000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-kit-ponteira-para-travessa-retangular-para-capota-maritima-flex/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732984681",
+    "codigos_barras": [
+      "7898732984681"
+    ],
+    "ean": "7898732984681"
   },
   {
     "id": "466",
@@ -3333,7 +3609,8 @@
     ],
     "descripcion": "Controle Remoto para Capota rígida retráctil Keko con fabricação após 08/08/2021",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777868"
     },
     "precio": {
       "valor": 136.0,
@@ -3363,7 +3640,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777868"
       }
     ],
     "fitment_raw": {
@@ -3384,7 +3662,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167395/SKU428-Controle Remoto para Capota Rigida Retratil Keko com fabricacao apos 08082021 RK0064.png?v=639065967880470000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/controle-remoto-2/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777868",
+    "codigos_barras": [
+      "7898133777868"
+    ],
+    "ean": "7898133777868"
   },
   {
     "id": "465",
@@ -3407,7 +3690,8 @@
     ],
     "descripcion": "Tampa para Enganche de remolque compatível con modelo K1.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985442"
     },
     "precio": {
       "valor": 54.0,
@@ -3437,7 +3721,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985442"
       }
     ],
     "fitment_raw": {
@@ -3458,7 +3743,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159928/RK0647.jpg?v=638488624526900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/tampa-engate-de-reboque-k1/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985442",
+    "codigos_barras": [
+      "7898732985442"
+    ],
+    "ean": "7898732985442"
   },
   {
     "id": "464",
@@ -3481,7 +3771,8 @@
     ],
     "descripcion": "Puntera Enganche de remolque 288mm con 2 furos. sin sugestão de compatibilidade.",
     "especificaciones": {
-      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+      "Avisos de compra": "Compra 100% segura; Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "EAN / código de barras": "7898133777639"
     },
     "precio": {
       "valor": 227.0,
@@ -3511,7 +3802,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777639"
       }
     ],
     "fitment_raw": {
@@ -3536,7 +3828,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166757/K492PR_2.jpg?v=638961327195070000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-288-2-furos/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777639",
+    "codigos_barras": [
+      "7898133777639"
+    ],
+    "ean": "7898133777639"
   },
   {
     "id": "462",
@@ -3559,7 +3856,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para baixo, con aplicação sugerida para Bronco Sport, Compass, CR-V, EcoSport, Edge, GLA, Gladiator, Grand Cherokee, IX35, New Tucson, Outlander, Q3, Rampage, Santa Fé, Sorento, SW4, Toro, Tucson, XC60, XC90, WR-V. Esfera para cima aplicação sugerida para ASX, Compass, Captiva, Oroch, RAV4, Renegade, S10, Strada, Tiguan.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000760"
     },
     "precio": {
       "valor": 227.0,
@@ -3589,7 +3887,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000760"
       }
     ],
     "fitment_raw": {
@@ -3614,7 +3913,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/167803/K978PR_B_site.jpg?v=639173860409870000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-158mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000760",
+    "codigos_barras": [
+      "7908878000760"
+    ],
+    "ean": "7908878000760"
   },
   {
     "id": "461",
@@ -3637,7 +3941,8 @@
     ],
     "descripcion": "Para quem precisa de força extra na hora de rebocar, apresentamos o Engate Perno. Possui homologação del INMETRO, é produzido con as melhores matérias primas del mercado, resistência garantida y ainda pode ser utilizado en carretas y máquinas agrícolas. sin sugestão de compatibilidade.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "EAN / código de barras": "7908878000791"
     },
     "precio": {
       "valor": 342.0,
@@ -3667,7 +3972,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000791"
       }
     ],
     "fitment_raw": {
@@ -3691,7 +3997,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/159720/K604PR_3.jpg?v=638760997111830000"
     ],
     "source_url": "https://www.keko.com.br/engate-perno/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000791",
+    "codigos_barras": [
+      "7908878000791"
+    ],
+    "ean": "7908878000791"
   },
   {
     "id": "460",
@@ -3714,7 +4025,8 @@
     ],
     "descripcion": "Tomada 7 Polos Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133773990"
     },
     "precio": {
       "valor": 68.0,
@@ -3744,7 +4056,8 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898133773990"
       }
     ],
     "fitment_raw": {
@@ -3765,7 +4078,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159999/Tomada.jpg?v=638518105868030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/tomada-7-polos/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133773990",
+    "codigos_barras": [
+      "7898133773990"
+    ],
+    "ean": "7898133773990"
   },
   {
     "id": "457",
@@ -3788,7 +4106,8 @@
     ],
     "descripcion": "Plug 7 Polos Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133774003"
     },
     "precio": {
       "valor": 59.0,
@@ -3818,7 +4137,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133774003"
       }
     ],
     "fitment_raw": {
@@ -3839,7 +4159,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164900/K985_1.jpg?v=638857782280170000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/plug-7-polos/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133774003",
+    "codigos_barras": [
+      "7898133774003"
+    ],
+    "ean": "7898133774003"
   },
   {
     "id": "456",
@@ -3862,7 +4187,8 @@
     ],
     "descripcion": "Esfera para Enganche de remolque en cromo decorativo 50mm.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantia Keko por 3 anos",
+      "EAN / código de barras": "7898133774027"
     },
     "precio": {
       "valor": 117.0,
@@ -3892,7 +4218,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133774027"
       }
     ],
     "fitment_raw": {
@@ -3913,7 +4240,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159903/ESFERA_OK.jpg?v=638487770667870000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/esfera-cromada-50-mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133774027",
+    "codigos_barras": [
+      "7898133774027"
+    ],
+    "ean": "7898133774027"
   },
   {
     "id": "448",
@@ -3936,7 +4268,8 @@
     ],
     "descripcion": "Kit de soporte Barras Transversais para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año"
+      "Avisos de compra": "Devolución gratis en hasta 7 días; Garantía Keko por 1 año",
+      "EAN / código de barras": "7898732985336"
     },
     "precio": {
       "valor": 245.0,
@@ -3966,7 +4299,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985336"
       }
     ],
     "fitment_raw": {
@@ -3987,7 +4321,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159734/K457PR_1.jpg?v=638460254426070000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/kit-suporte-barras-transversais-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985336",
+    "codigos_barras": [
+      "7898732985336"
+    ],
+    "ean": "7898732985336"
   },
   {
     "id": "443",
@@ -4010,7 +4349,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, con aplicação sugerida para Polo, Duster.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777738"
     },
     "precio": {
       "valor": 151.0,
@@ -4040,7 +4380,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777738"
       }
     ],
     "fitment_raw": {
@@ -4065,7 +4406,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/162510/4.jpg?v=638841212962270000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-ponteira-129/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777738",
+    "codigos_barras": [
+      "7898133777738"
+    ],
+    "ean": "7898133777738"
   },
   {
     "id": "441",
@@ -4088,7 +4434,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, con aplicação sugerida para SW4.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000753"
     },
     "precio": {
       "valor": 227.0,
@@ -4118,7 +4465,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000753"
       }
     ],
     "fitment_raw": {
@@ -4141,7 +4489,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166341/2.jpg?v=638935447386030000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-170mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000753",
+    "codigos_barras": [
+      "7908878000753"
+    ],
+    "ean": "7908878000753"
   },
   {
     "id": "439",
@@ -4164,7 +4517,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K2, sin esfera, con aplicação sugerida para Polo, Taos, T-Cross.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777745"
     },
     "precio": {
       "valor": 151.0,
@@ -4194,7 +4548,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777745"
       }
     ],
     "fitment_raw": {
@@ -4218,7 +4573,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161166/3.jpg?v=639209335173900000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-engate-156mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777745",
+    "codigos_barras": [
+      "7898133777745"
+    ],
+    "ean": "7898133777745"
   },
   {
     "id": "438",
@@ -4241,7 +4601,8 @@
     ],
     "descripcion": "Punteras para Enganche de remolque linha K1, sin esfera, esfera para baixo, con aplicação sugerida para Amarok, Frontier, Ranger, Ranger FX4, Trailblazer, L200 Triton Sport, Pajero Dakar, Pajero Sport, Hilux, Titano y Triton. Esfera para cima con aplicação para Equinox y Tracker.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7908878000784"
     },
     "precio": {
       "valor": 227.0,
@@ -4271,7 +4632,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7908878000784"
       }
     ],
     "fitment_raw": {
@@ -4296,7 +4658,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166340/4.jpg?v=638935392806330000"
     ],
     "source_url": "https://www.keko.com.br/ponteira-para-engate-de-reboque-201mm/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7908878000784",
+    "codigos_barras": [
+      "7908878000784"
+    ],
+    "ean": "7908878000784"
   },
   {
     "id": "420",
@@ -4319,7 +4686,8 @@
     ],
     "descripcion": "Trinco para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777011"
     },
     "precio": {
       "valor": 217.0,
@@ -4349,7 +4717,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777011"
       }
     ],
     "fitment_raw": {
@@ -4370,7 +4739,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159980/RK0056.jpg?v=638512257250900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-trinco-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777011",
+    "codigos_barras": [
+      "7898133777011"
+    ],
+    "ean": "7898133777011"
   },
   {
     "id": "419",
@@ -4393,7 +4767,8 @@
     ],
     "descripcion": "Perfil Goma Pestana Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776809"
     },
     "precio": {
       "valor": 79.0,
@@ -4423,7 +4798,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776809"
       }
     ],
     "fitment_raw": {
@@ -4444,7 +4820,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159974/RK0019.jpg?v=638512228097500000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-perfil-borracha-pestana-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776809",
+    "codigos_barras": [
+      "7898133776809"
+    ],
+    "ean": "7898133776809"
   },
   {
     "id": "418",
@@ -4467,7 +4848,8 @@
     ],
     "descripcion": "Tampa para Enganche de remolque K2 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985435"
     },
     "precio": {
       "valor": 54.0,
@@ -4497,7 +4879,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985435"
       }
     ],
     "fitment_raw": {
@@ -4518,7 +4901,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159888/RK0648.jpg?v=638482004332030000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/tampa-engate-de-reboque-k2/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985435",
+    "codigos_barras": [
+      "7898732985435"
+    ],
+    "ean": "7898732985435"
   },
   {
     "id": "415",
@@ -4541,7 +4929,8 @@
     ],
     "descripcion": "Reposición Sobrecubierta para Santo Antonio Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732980393"
     },
     "precio": {
       "valor": 113.0,
@@ -4571,7 +4960,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732980393"
       }
     ],
     "fitment_raw": {
@@ -4592,7 +4982,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161194/RK0120.jpg?v=638627129943970000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-sobrecapa-para-santo-antonio/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732980393",
+    "codigos_barras": [
+      "7898732980393"
+    ],
+    "ean": "7898732980393"
   },
   {
     "id": "413",
@@ -4668,7 +5063,10 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/165997/3.jpg?v=638890604616170000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-motor-e-suporte/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "No especificado",
+    "codigos_barras": [],
+    "ean": "No especificado"
   },
   {
     "id": "412",
@@ -4691,7 +5089,8 @@
     ],
     "descripcion": "Capa Plástica para Santo Antonio Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732980218"
     },
     "precio": {
       "valor": 201.0,
@@ -4713,7 +5112,8 @@
         "sku_modelo": [],
         "sku_ano": [],
         "sku_version": [],
-        "sku_cabine": []
+        "sku_cabine": [],
+        "codigo_barras": "7898732980218"
       }
     ],
     "fitment_raw": {
@@ -4734,7 +5134,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/168215/RK-s-Site.jpg?v=639204289649730000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-capa-plastica/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732980218",
+    "codigos_barras": [
+      "7898732980218"
+    ],
+    "ean": "7898732980218"
   },
   {
     "id": "407",
@@ -4757,7 +5162,8 @@
     ],
     "descripcion": "Módulo de Controle Capota rígida retráctil G2 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777028"
     },
     "precio": {
       "valor": 1299.0,
@@ -4787,7 +5193,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777028"
       }
     ],
     "fitment_raw": {
@@ -4808,7 +5215,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159887/RK0060.jpg?v=638482002781530000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-modulo-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777028",
+    "codigos_barras": [
+      "7898133777028"
+    ],
+    "ean": "7898133777028"
   },
   {
     "id": "406",
@@ -4831,7 +5243,8 @@
     ],
     "descripcion": "Conjunto Capa Lateral Direita Santo K1 Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133779190"
     },
     "precio": {
       "valor": 159.0,
@@ -4861,7 +5274,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133779190"
       }
     ],
     "fitment_raw": {
@@ -4882,7 +5296,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/161232/RK0153.jpg?v=638627186343330000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-capa-lateral/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133779190",
+    "codigos_barras": [
+      "7898133779190"
+    ],
+    "ean": "7898133779190"
   },
   {
     "id": "402",
@@ -4905,7 +5324,8 @@
     ],
     "descripcion": "Conjunto Sistema Abertura Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777035"
     },
     "precio": {
       "valor": 390.0,
@@ -4935,7 +5355,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777035"
       }
     ],
     "fitment_raw": {
@@ -4956,7 +5377,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167379/SKU427-Conjunto Acessorios Sistema de Abertura Capota Rigida Retratil Automatica e Manual RK0063.png?v=639065136088330000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-sistema-abertura-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777035",
+    "codigos_barras": [
+      "7898133777035"
+    ],
+    "ean": "7898133777035"
   },
   {
     "id": "400",
@@ -4979,7 +5405,8 @@
     ],
     "descripcion": "Conjunto Manípulo para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777288"
     },
     "precio": {
       "valor": 63.0,
@@ -5009,7 +5436,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777288"
       }
     ],
     "fitment_raw": {
@@ -5032,7 +5460,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/160677/RK0058b.jpg?v=638809262196670000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-manipulo/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777288",
+    "codigos_barras": [
+      "7898133777288"
+    ],
+    "ean": "7898133777288"
   },
   {
     "id": "399",
@@ -5055,7 +5488,8 @@
     ],
     "descripcion": "Conjunto Chicote para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776991"
     },
     "precio": {
       "valor": 436.0,
@@ -5085,7 +5519,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776991"
       }
     ],
     "fitment_raw": {
@@ -5106,7 +5541,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159874/RK0054.jpg?v=638471636250200000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/conjunto-chicote-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776991",
+    "codigos_barras": [
+      "7898133776991"
+    ],
+    "ean": "7898133776991"
   },
   {
     "id": "395",
@@ -5129,7 +5569,8 @@
     ],
     "descripcion": "Controle Remoto para Capota rígida retráctil Keko con fabricação hasta 08/08/2021",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133777318"
     },
     "precio": {
       "valor": 136.0,
@@ -5159,7 +5600,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777318"
       }
     ],
     "fitment_raw": {
@@ -5180,7 +5622,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159877/RK0062.jpg?v=638477693520430000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/capota-rigida-retratil-controle/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777318",
+    "codigos_barras": [
+      "7898133777318"
+    ],
+    "ean": "7898133777318"
   },
   {
     "id": "394",
@@ -5203,7 +5650,8 @@
     ],
     "descripcion": "Goma Sellado Tampa Dianteira para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776830"
     },
     "precio": {
       "valor": 142.0,
@@ -5233,7 +5681,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776830"
       }
     ],
     "fitment_raw": {
@@ -5254,7 +5703,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159870/RK0024.jpg?v=638471616929800000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-borracha-vedacao-tampa-traseira-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776830",
+    "codigos_barras": [
+      "7898133776830"
+    ],
+    "ean": "7898133776830"
   },
   {
     "id": "393",
@@ -5277,7 +5731,8 @@
     ],
     "descripcion": "Conjunto Gomas para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776816"
     },
     "precio": {
       "valor": 122.0,
@@ -5307,7 +5762,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776816"
       }
     ],
     "fitment_raw": {
@@ -5328,7 +5784,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167374/SKU417-Conjunto Borrachas Capotas Rigidas Keko RK0020.png?v=639065123218430000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-borrachas-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776816",
+    "codigos_barras": [
+      "7898133776816"
+    ],
+    "ean": "7898133776816"
   },
   {
     "id": "389",
@@ -5351,7 +5812,8 @@
     ],
     "descripcion": "Punteras de la Traviesa para Capota marítima Flex Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732983981"
     },
     "precio": {
       "valor": 33.0,
@@ -5381,7 +5843,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732983981"
       }
     ],
     "fitment_raw": {
@@ -5402,7 +5865,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167389/SKU449-Kit Ponteira da Travessa Oblongo Capota Maritima Keko RK0134.png?v=639065950000530000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-kit-ponteira-capota-maritima-flex-travessa-oblonga/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732983981",
+    "codigos_barras": [
+      "7898732983981"
+    ],
+    "ean": "7898732983981"
   },
   {
     "id": "388",
@@ -5425,7 +5893,8 @@
     ],
     "descripcion": "Traviesa Oblongo para Capota marítima Flex Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732984698"
     },
     "precio": {
       "valor": 190.0,
@@ -5455,7 +5924,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732984698"
       }
     ],
     "fitment_raw": {
@@ -5476,7 +5946,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/159860/RK0136.jpg?v=638469849548400000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-travessa-oblongo-para-capota-maritima-flex/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732984698",
+    "codigos_barras": [
+      "7898732984698"
+    ],
+    "ean": "7898732984698"
   },
   {
     "id": "386",
@@ -5501,7 +5976,8 @@
     ],
     "descripcion": "Compatível con:\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton L200 modelo 2008 a 2021.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732985381, 7898732984568"
     },
     "precio": {
       "valor_min": 63.0,
@@ -5532,7 +6008,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732985381"
       },
       {
         "id": "1028",
@@ -5556,7 +6033,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732984568"
       }
     ],
     "fitment_raw": {
@@ -5580,7 +6058,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/166584/SKU1028-RK0576.png?v=638957138182400000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-sargento-para-capota-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732985381",
+    "codigos_barras": [
+      "7898732985381",
+      "7898732984568"
+    ],
+    "ean": "7898732985381"
   },
   {
     "id": "384",
@@ -5603,7 +6087,8 @@
     ],
     "descripcion": "Goma Superior Lateral para Capota rígida retráctil Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133776908"
     },
     "precio": {
       "valor": 84.0,
@@ -5633,7 +6118,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776908"
       }
     ],
     "fitment_raw": {
@@ -5654,7 +6140,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/167375/SKU419-Perfil Borracha Superior Lateral Capota Rigida Retratil Keko RK0033.png?v=639065127753900000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-borracha-superior-lateral-para-capota-rigida-retratil/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133776908",
+    "codigos_barras": [
+      "7898133776908"
+    ],
+    "ean": "7898133776908"
   },
   {
     "id": "383",
@@ -5679,7 +6170,8 @@
     ],
     "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 en adelante /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton L200 modelo 2008 a 2016.\nPara a Toro usar RK0570.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732983202, 7898732982038"
     },
     "precio": {
       "valor": 40.0,
@@ -5709,7 +6201,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732983202"
       },
       {
         "id": "756",
@@ -5731,7 +6224,8 @@
         "sku_version": [],
         "sku_cabine": [
           "Monobloco"
-        ]
+        ],
+        "codigo_barras": "7898732982038"
       }
     ],
     "fitment_raw": {
@@ -5755,7 +6249,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161328/RK0570.jpg?v=638627975855270000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-cantoneira-dianteira-capota-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732983202",
+    "codigos_barras": [
+      "7898732983202",
+      "7898732982038"
+    ],
+    "ean": "7898732983202"
   },
   {
     "id": "380",
@@ -5779,7 +6279,8 @@
     ],
     "descripcion": "Compatível con:\nAmarok modelo 2010 en adelante /\nFrontier modelo 2008 a 2023 /\nHilux modelo 2005 en adelante /\nMaverick modelo 2022 en adelante /\nRanger modelo 1998 a 2023 /\nS10 modelo 1998 en adelante /\nTriton 2008 a 2016. Para Fiat Toro, utilize RK0563",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898732982632, 7898732982649"
     },
     "precio": {
       "valor": 40.0,
@@ -5809,7 +6310,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898732982632"
       },
       {
         "id": "747",
@@ -5833,7 +6335,8 @@
         ],
         "sku_cabine": [
           "Não se aplica"
-        ]
+        ],
+        "codigo_barras": "7898732982649"
       }
     ],
     "fitment_raw": {
@@ -5857,7 +6360,13 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161212/RK0563.jpg?v=638627148784270000"
     ],
     "source_url": "https://www.keko.com.br/reposicao-capota-maritima-multitrava-inferior-grx/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898732982632",
+    "codigos_barras": [
+      "7898732982632",
+      "7898732982649"
+    ],
+    "ean": "7898732982632"
   },
   {
     "id": "375",
@@ -5880,7 +6389,8 @@
     ],
     "descripcion": "Conjunto Punteras para Santo Antonio K1 2 Pol Keko.",
     "especificaciones": {
-      "No especificado": "No especificado"
+      "No especificado": "No especificado",
+      "EAN / código de barras": "7898133778414"
     },
     "precio": {
       "valor": 36.0,
@@ -5910,7 +6420,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133778414"
       }
     ],
     "fitment_raw": {
@@ -5931,7 +6442,12 @@
     "imagen_principal_url": "https://ekeko.vteximg.com.br/arquivos/ids/164940/340.jpg?v=638859411635000000",
     "imagenes_adicionales_urls": [],
     "source_url": "https://www.keko.com.br/reposicao-conjunto-ponteiras-para-santo-antonio-k1-2pol/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133778414",
+    "codigos_barras": [
+      "7898133778414"
+    ],
+    "ean": "7898133778414"
   },
   {
     "id": "26",
@@ -5964,7 +6480,8 @@
       "Conteúdo líquido": "140ml",
       "Periodicidade de aplicação": "a cada 3 meses",
       "Fórmula atóxica": "Sim",
-      "Aplicação": "fácil"
+      "Aplicação": "fácil",
+      "EAN / código de barras": "7898133777042"
     },
     "precio": {
       "valor": 81.0,
@@ -5994,7 +6511,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133777042"
       }
     ],
     "fitment_raw": {
@@ -6020,7 +6538,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161051/K001PT_5.jpg?v=638868850829670000"
     ],
     "source_url": "https://www.keko.com.br/renovador-new-black/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133777042",
+    "codigos_barras": [
+      "7898133777042"
+    ],
+    "ean": "7898133777042"
   },
   {
     "id": "13",
@@ -6052,7 +6575,8 @@
       "Compatibilidade": "Universal",
       "Requer ferramentas": "Não",
       "Instalación": "fácil",
-      "Garantía de fábrica": "1 año"
+      "Garantía de fábrica": "1 año",
+      "EAN / código de barras": "7898133775161, 7898133776045"
     },
     "precio": {
       "valor_min": 181.0,
@@ -6083,7 +6607,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133775161"
       },
       {
         "id": "215",
@@ -6107,7 +6632,8 @@
         ],
         "sku_cabine": [
           "Universal"
-        ]
+        ],
+        "codigo_barras": "7898133776045"
       }
     ],
     "fitment_raw": {
@@ -6140,6 +6666,12 @@
       "https://ekeko.vteximg.com.br/arquivos/ids/161046/K014_5.jpg?v=638939010732530000"
     ],
     "source_url": "https://www.keko.com.br/soleira-de-porta-adesiva/p",
-    "fuente": "https://www.keko.com.br/"
+    "fuente": "https://www.keko.com.br/",
+    "codigo_barras": "7898133775161",
+    "codigos_barras": [
+      "7898133775161",
+      "7898133776045"
+    ],
+    "ean": "7898133775161"
   }
 ]
