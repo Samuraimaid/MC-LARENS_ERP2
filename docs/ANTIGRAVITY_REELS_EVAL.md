@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-11 (R-002 OBVIAR)
+**Actualizado:** 2026-09-11 (R-003)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,23 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-003 — Monolito vs microservicios (Amazon “back to monolith”)
+- **Fecha evaluación:** 2026-09-11
+- **Fuente:** Facebook Reel — Coding Chops  
+  https://www.facebook.com/share/r/19dxtNisUA/  
+  (reel `1721221349207912`)
+- **Idea (resumen):** Amazon habría vuelto a un monolito y bajado costos ~90%. Mensaje: **los microservicios no siempre son la respuesta**.
+- **Veredicto:** **APLICAR (solo guardrail / sin PR de feature)**
+- **Impacto en McLarens ERP:** Alto como *criterio de arquitectura*, nulo como tarea de código nueva. Refuerza R-001 (EDA/microservicios aparcado), el handoff §6 (“no reescritura total del monolito”) y `SAFE_FIRST_REFACTORS.md` / `MONOLITH_DECOMPOSITION_PLAN.md` (helpers y módulos *dentro* del mismo deploy).
+- **Matiz factual:** el caso famoso suele ser **Prime Video** (monitoreo AV) consolidando servicios, no “todo Amazon”. La lección para un ERP Cloud Run de una PyME sí aplica: ops y costo de red/latencia entre N servicios suelen ser peores que un monolito modular bien acotado.
+- **Acción Antigravity ahora:**
+  1. **No** proponer ni abrir PRs de “partir en microservicios”.
+  2. Seguir P0–P3 del handoff: seguridad, contratos, perf de lecturas, extracción de helpers **en el mismo artefacto Cloud Run**.
+  3. Si alguien pide split: citar este R-003 + handoff §6 y escalar a Xinon/Case.
+- **Por qué no OBVIAR:** sí aporta utilidad — alinea decisiones y evita trabajo caro. No es un feature; es política.
+- **Relacionado:** R-001 APARCAR; handoff §6; P3 descomposición incremental interna.
 
 
 ### R-002 — Cron jobs / crontab (tareas programadas)
