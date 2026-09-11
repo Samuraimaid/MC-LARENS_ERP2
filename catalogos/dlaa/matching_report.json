@@ -1,0 +1,584 @@
+{
+  "generated_at_utc": "2026-09-11T14:30:29.343149+00:00",
+  "source": "https://dlaa.com.cn/products.json",
+  "totals": {
+    "all_products": 142,
+    "matched": 105,
+    "universal": 22,
+    "unmatched": 15
+  },
+  "brand_code_map": {
+    "NS": "NISSAN",
+    "TY": "TOYOTA",
+    "HD": "HONDA",
+    "MB": "MITSUBISHI",
+    "JP": "JEEP",
+    "RN": "RENAULT",
+    "VW": "VOLKSWAGEN",
+    "KA": "KIA",
+    "CV": "CHEVROLET",
+    "FD": "FORD",
+    "AD": "AUDI",
+    "DW": "DAEWOO",
+    "FT": "FIAT",
+    "HV": "HUMMER",
+    "PL": "UNIVERSAL",
+    "HL": "JEEP",
+    "CTL": "JEEP"
+  },
+  "brand_code_usage": {
+    "NS": 7,
+    "TY": 30,
+    "HD": 5,
+    "AD": 2,
+    "DW": 8,
+    "KA": 13,
+    "FD": 1,
+    "CV": 21,
+    "FT": 1,
+    "PL": 7,
+    "JP": 3,
+    "MB": 20,
+    "RN": 4,
+    "VW": 22
+  },
+  "erp_match_cap": 40,
+  "notes": [
+    "MB en códigos DLAA = MITSUBISHI (Pajero/Triton/Lancer/ASX), no Mercedes Benz.",
+    "DW=DAEWOO y FT=FIAT y HV=HUMMER no están en vehicleCatalog ERP → unmatched si no hay otro brand match.",
+    "PL=series off-road/universal.",
+    "No se inventan specs ni fitment; faltantes = 'No especificado'.",
+    "erp_matches truncado a 40 entradas; erp_match_count conserva el total."
+  ],
+  "matched_handles": [
+    "dlaa-ns0134-led-fog-lamp-for-nissan-trail-fog-light-for-nissan-serena-fog-light-nissan-ad",
+    "dlaa-ns2822-fog-light-for-nissan-frontier-np300-2020-2021-led-round-light-offroad-lens-fog-lamp",
+    "dlaa-ty1017ll-for-toyota-hilux-revo-2020-light-bulb-fog-lights-fog-lamp-light-offroad-fog",
+    "dlaa-ty1017ll-for-toyota-hilux-revo-2020-light-fog-light-led-fog-new-led-fog-light",
+    "dlaa-hd115-for-honda-fit-shuttle-2017-2018-2019-2020-2021-universal-projector-fog-lights-van-fog-lamps",
+    "dlaa-hd115-for-honda-fit-shuttle-2017-2018-2019-2020-2021-universal-halogen-fog-light-led-fog-light",
+    "dlaa-ty1046-for-fog-lamps-chrome-with-lead-lights-toyota-prado-rear-fog-lamp-accessories-fog-light",
+    "dlaa-ty1055-led-for-toyota-innova-2021-2022-fog-lights-innova-crysta-fog-light-lamps-type-4-fog-lamp",
+    "dlaa-ns1384-led-for-nissan-maxima-2020-car-rear-bumper-fog-lamp-led-drl-daytime-running-light-fog",
+    "dlaa-ad183-auto-fog-lamp-for-audi-a6-2007-halogen-off-road-fog-light-lamp-55w-h3-halogen-bulb",
+    "dlaa-ka274-halogen-fog-lamp-for-cerato-2007-yellow-light-halogen-fog-for-cerato-2007-2008",
+    "dlaa-hd1225-l2led-drl-cover-for-hd-fit-jazz-fog-light-for-fit-2020-honda-fit-fog-lamp-drl",
+    "dlaa-fd1814-led-fog-lamp-for-ford-transit-10w-led-fog-lamp-for-ford-escape-2020-2021-2022-fog-light",
+    "dlaa-ty3706-halogen-h3-35w-fog-light-for-toyota-yaris-x-urba-ativ-2022-toyota-yaris-fog-lamps-2022",
+    "dlaa-ty1129-led-6w-led-anti-fog-cover-for-toyota-camry-se-2022-fog-running-lights-camry-fog-lamp-camry",
+    "dlaa-ty879l-drl-drl-fog-lamp-for-toyota-hilux-recco-hilux-dakar-2018-2019-auto-light-fog-light-lamp-for-toyota-hilux",
+    "dlaa-ty879-l2led-led-fog-light-lamp-drl-fog-light-for-toyota-hilux-revo-2018-2019-car-drl-fog-lamp",
+    "dlaa-ty908b-led-3-daylight-led-fog-light-for-toyota-land-cruiser-2020-2021-toyota-fog-light-lens-fog-lamp",
+    "dlaa-ty946-3000k-halogen-19w-fog-lights-for-toyota-prado-automobile-anti-fog-lamp-for-toyota-prado",
+    "dlaa-ty950-h16-19w-automobile-anti-fog-lamp-auto-lighting-for-sienna-2017-2018-2019-2020-bumper-fog-light-lamp",
+    "dlaa-ty1079-ip66-waterproof-led-fog-lamp-revo-for-toyota-revo-rocco-2020-2021-fog-lamp-car-fog-lamp-projector",
+    "dlaa-ns9300-toyota-roomy-fog-light-fit-for-nissan-x-trail-frontier-rogue-2021-on-fog-lamp-for-x-trail-fog-light",
+    "dlaa-ty9308-fog-lamp-for-toyota-probox-for-toyota-baqua-prious-2018-2019-toyota-4runner-fog-light",
+    "dlaa-ty1071-led-3-led-fog-lamp-lx-design-fit-for-toyota-c-hrasia-type-2017-2019-fog-light-lamp",
+    "dlaa-cv9382-led-10w-daylight-fog-lamp-for-chevrolet-silveado-2019-on-fog-light-lamp-1",
+    "dlaa-cv9382-led-10w-daylight-fog-lamp-for-chevrolet-silveado-2019-on-fog-light-lamp",
+    "dlaa-ty1316-led-fog-lamp-daylight-turning-light-for-toyota-raize-2021-on-auto-lamp-fog-light",
+    "dlaa-ns2822-led-for-nissan-sentra-fog-light-frontier-se-fog-light-switch-bluebird-sylphy-fog-light",
+    "auto-head-lamp-for-jp-wrangler-2008-on-hl-jp484led",
+    "car-tail-lamp-for-jp-wrangler-2008-on-ctl-jp474led",
+    "oe-daytime-auto-running-lights-for-ty-vitz-2017-on-ty110-l2led",
+    "oe-daytime-running-light-led-drl-lights-for-ty-avalon-2019-on-ty1940-led",
+    "oe-daytime-auto-running-lights-for-ty-corolla-sedan-2019-on-ty9377-l2led",
+    "universal-round-fog-lights-oe-styling-for-ns-kicks-2017-on-ns332",
+    "oe-styling-auto-parts-fog-lights-for-jp-wrangler-2008-on-jp675-led",
+    "oe-styling-driving-fog-light-for-hd-city-2020-on-hd1047-led",
+    "best-oe-styling-fog-lights-for-ty-corolla-sedan-2019-on-ty9377e-led",
+    "oe-styling-fog-light-front-fog-lamps-for-mb-pajero-2015-on-mb812-led",
+    "oe-styling-fog-light-lamps-for-mb-triton-l200-strada-2019-on-mb9049-led",
+    "best-automotive-led-fog-lights-for-car-ty-land-cruiser",
+    "oe-fog-lamp-for-cv-silverado-2009-2014-tahoe-lt-4-4-2010-2014-avalanche-suburban-and-more-cv287",
+    "best-oe-dlaa-led-fog-light-for-avalanche-lte-suburban-and-more",
+    "oe-fog-lmap-for-cv-colorado-cng-2008-2010-asia-type-cv288x",
+    "new-fog-lamp-lights-for-cv-colarado-2016-on-cv588b",
+    "styling-fog-lamp-car-fog-lights-kit-for-cv-silverado",
+    "high-quality-led-fog-lamp-price-for-cv-colarado-cng",
+    "powerful-fog-lamps-for-cars-for-cv-silverado-2000-2006",
+    "halogen-fog-lamp-for-sale-for-cv-tahoe-2015-on-cv761",
+    "off-road-led-fog-lamp-lights-for-cv-silverado-cv927l",
+    "dlaa-fog-lamp-light-kits-for-cv-trax-tracker-2014-2016-cv734",
+    "autozone-fog-lights-for-sale-for-cv-trax-2017-2018-cv928",
+    "car-fog-light-price-for-cv-trax-tracker-2017-2018-cv928-1",
+    "best-auto-fog-light-for-car-for-cv-trax-tracker",
+    "high-quality-led-fog-lights-for-cv-silverado-2015-cv98",
+    "oem-fog-lamp-for-mb-outlander-2017-on-mb182",
+    "oem-fog-lamp-for-vw-jetta-2018-on-vw0189",
+    "oem-fog-lamp-for-vw-gol-8-voyage-2019-on-vw1004",
+    "oem-fog-lamp-for-ka-sportage-2011-2013-ka480-1",
+    "oem-fog-lamp-for-ka-picanto-2019-ka0813e",
+    "oem-fog-lamp-for-mb-lancer-2008-mb282",
+    "oem-fog-lamp-for-mb-lancer-ex-2008-mb285",
+    "oem-fog-lamp-for-mb-xpander-2017-on-mb0153",
+    "oem-fog-lamp-for-mb-asx-2017-on-mb181",
+    "car-light-wholesale-for-pajero-montero-2004-2006-mb301",
+    "oem-fog-lamp-for-mb-pajero-2000-2003-mb300e",
+    "car-light-wholesale-for-mb-asx-2011-2013-mb433",
+    "oem-fog-lamp-for-gol-7-voyage-2016-2018-vw904",
+    "oem-fog-lamp-for-vw-jetta-2015-2018-vw889",
+    "oem-fog-lamp-for-gol-7-voyage-2016-2018-vw904e",
+    "oe-styling-fog-lamp-for-ka-kx5-sportage-2016-2018-ka166-led-2",
+    "oe-styling-fog-lamp-for-kia-sportage-fe-2016-2018-ka166",
+    "oe-styling-fog-lamp-for-ka-cerato-2007-2008-ka274",
+    "oem-fog-lamp-for-ka-picanto-morning-2007-2009-ka383",
+    "oem-fog-lamp-for-ka-picanto-morning-2004-2006-ka389",
+    "oem-fog-lamp-for-ka-cerato-2009-2012-ka386b",
+    "oe-fog-lmap-for-ka-sportage-2008-2010-ka466",
+    "oem-fog-lamp-for-ka-sportage-2011-2013-ka480",
+    "oem-fog-lamp-for-ka-picanto-2016-2017-ka713",
+    "car-light-wholesale-for-mb-pajero-2007-2009-mb302e",
+    "oem-fog-lamp-for-ad-a6-2007-ad183",
+    "oem-fog-lamp-for-vw-fox-2015-on-vw826",
+    "oem-fog-lamp-for-vw-vento-2017-on-vw844",
+    "oem-fog-lamp-for-vw-amarok-2016-on-vw958",
+    "oem-fog-lamp-for-mb-nativa-1998-2002-mb038",
+    "car-light-wholesale-for-mb-lancer-sport-2009-mb382",
+    "fog-lamp-wholesale-for-mb-lancer-2005-2007-2011-mb601",
+    "fog-lamp-wholesale-for-mb-lancer-2004-mb600",
+    "fog-lamp-wholesale-for-mb-mirage-2012-2015-mb548",
+    "fog-lamp-wholesale-for-mb-triton-l200-2006-2008-mb439",
+    "fog-lamp-wholesale-for-mb-triton-l200-2006-2008-mb539e",
+    "car-light-wholesale-for-mb-pajero-sport-2010-2014-l200-triton-2013-2015-mb402",
+    "oem-fog-lamp-for-vw-up-2014-on-spacefox-2013-vw766",
+    "oem-fog-lamp-for-vw-golf-2013-2017-vw763",
+    "oem-fog-lamp-for-vw-fox-2020-vw526x",
+    "oem-fog-lamp-for-vw-fox-2020-vw526",
+    "oem-fog-lamp-for-vw-gol-6-2021-2015-vw504",
+    "oem-fog-lamp-for-vw-jetta-2011-2014-vw489",
+    "oem-fog-lamp-for-vw-golf-2011-2012-vw469",
+    "oem-fog-lamp-for-vw-amarok-2011-2015-vw458e",
+    "oem-fog-lamp-for-vw-amarok-2011-2015-vw458",
+    "oem-fog-lamp-for-vw-gol-g5-2008-on-voyage-saveiro-2010-on-vw325e",
+    "vw-gol-g5-2008-on-voyage-saveiro-2010-on-vw325b",
+    "front-fog-lamp-car-light-for-vw-transporter-t5-polo-2007-2009-vw269",
+    "oem-fog-lamp-for-vw-fox-2007-gol-2007-vw183",
+    "oem-fog-lamp-for-vw-saveiro-2017-on-vw165"
+  ],
+  "universal_handles": [
+    "dlaa-cv1266-led-universal-fog-light-for-chevrolet-gmc-angle-eye-fog-lamp-high-power-led-universal-bulb",
+    "best-cheap-off-road-light-pl1220",
+    "off-road-light-led-light-kits-pl1320",
+    "high-quality-off-road-light-for-car-pl2530",
+    "led-car-signal-lamp-for-ns-car-bl12",
+    "custom-universal-fog-lights-for-cars-pl1275",
+    "universal-car-daytime-running-fog-lights-pl1196",
+    "top-fog-lights-oe-styling-fog-light-for-ns-cars-ns034",
+    "oe-styling-fog-light-rn099-bright-led-fog-lights",
+    "best-quality-oe-led-fog-light-bulbs-ty8032-led",
+    "oe-led-fog-lights-led-cars-ty967-led",
+    "oe-led-fog-light-auto-fog-light-kits-ty807-led",
+    "oe-led-fog-light-custom-fog-lights-rn3099-led",
+    "oe-led-fog-light-autozone-fog-lights-rn198-led",
+    "custom-oe-led-fog-lamp-bulbs-ty7032-led",
+    "oe-led-fog-light-rn098-led-advance-auto-fog-lights",
+    "universal-led-fog-lamp-hd881-led-the-best-fog-lights",
+    "best-led-styling-fog-lights-lamps-aftermarket-for-ty22",
+    "dlaa-best-oe-fog-lamp-lights-for-different-cars",
+    "professional-dlaa-led-fog-light-fog-led-light-for-cars",
+    "high-power-styling-car-led-fog-lights-for-car-safety",
+    "aftermarket-fog-foggy-lights-on-car-for-lighting-road"
+  ],
+  "unmatched": [
+    {
+      "handle": "dlaa-ty3977-led-universal-fog-lights-for-toyota-new-toyota-harrier-rear-bumper-reflector-fog-lamp",
+      "title": "DLAA TY3977-LED universal fog lights for  toyota new toyota harrier rear bumper reflector fog lamp",
+      "skus": [
+        "TY3977-LED"
+      ],
+      "fitment": {
+        "brands": [
+          "TOYOTA"
+        ],
+        "models": [
+          "harrier"
+        ],
+        "years": [
+          [
+            2019,
+            2026
+          ],
+          [
+            2006,
+            2016
+          ]
+        ],
+        "raw_snippets": [
+          "Compatibilidad: Toyota"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "dlaa-ty3977-led-for-toyota-harrier-rear-reflector-universal-fog-lights-for-toyota-new-toyota-running-light-fog-lamp",
+      "title": "DLAA TY3977-LED For toyota harrier rear reflector universal fog lights for  toyota new toyota running light fog lamp",
+      "skus": [
+        "TY3977-LED"
+      ],
+      "fitment": {
+        "brands": [
+          "TOYOTA"
+        ],
+        "models": [
+          "harrier"
+        ],
+        "years": [
+          [
+            2019,
+            2026
+          ],
+          [
+            2006,
+            2016
+          ]
+        ],
+        "raw_snippets": [
+          "Compatibilidad: Toyota"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "dlaa-dw304e-fog-lamp-for-daewoo-gentra-sedan-2006-h3-55w-halogen-fog-light-for-for-daewoo-gentra-sedan-2006",
+      "title": "DLAA DW304E fog lamp For DAEWOO GENTRA SEDAN 2006 h3 55w halogen fog light for For DAEWOO GENTRA SEDAN 2006",
+      "skus": [
+        "DW304E"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "gentra"
+        ],
+        "years": [
+          [
+            2006,
+            2006
+          ],
+          [
+            2003,
+            2005
+          ]
+        ],
+        "raw_snippets": [
+          "DAEWOO GENTRA SEDAN 2006",
+          "For DAEWOO GENTRA SEDAN 2006",
+          "Compatibilidad: Daewoo - Europe"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "dlaa-dw447-fog-lamp-for-lanos-1999-2000-9006-bulb-51w-halogen-fog-light-for-daewoo-lanos-1999-2000",
+      "title": "DLAA DW447 fog lamp For LANOS 1999  2000 9006 bulb 51w halogen fog light For DAEWOO LANOS 1999  2000",
+      "skus": [
+        "DW447"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "lanos"
+        ],
+        "years": [
+          [
+            1999,
+            2000
+          ],
+          [
+            1999,
+            2002
+          ]
+        ],
+        "raw_snippets": [
+          "LANOS 1999  2000 9006",
+          "DAEWOO LANOS 1999  2000",
+          "Compatibilidad: Daewoo"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "dlaa-ft1444-led-7w-led-6000k-daylight-color-fog-lamp-light-for-fiat-toro-2021-2022-fiat-toro-fog-light-lamp",
+      "title": "DLAA FT1444-LED 7W LED 6000K daylight color fog lamp light for Fiat Toro 2021 2022 Fiat Toro fog light lamp",
+      "skus": [
+        "FT1444-LED"
+      ],
+      "fitment": {
+        "brands": [
+          "FIAT"
+        ],
+        "models": [
+          "toro"
+        ],
+        "years": [
+          [
+            2021,
+            2022
+          ]
+        ],
+        "raw_snippets": [
+          "Fiat Toro 2021 2022 Fiat",
+          "Compatibilidad: For Fiat Toro 2021 2022"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "car-parts-decoration-for-hummer-h3-2005-on-hv-hm03",
+      "title": "Car Parts Decoration For HUMMER H3 2005-ON HV-HM03",
+      "skus": [
+        "HV-HM03"
+      ],
+      "fitment": {
+        "brands": [
+          "HUMMER"
+        ],
+        "models": [],
+        "years": [
+          [
+            2005,
+            2026
+          ]
+        ],
+        "raw_snippets": [
+          "HUMMER H3 2005-ON HV-HM03"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oe-automotive-led-daytime-running-lights-for-ty-vios-hatchback-2017-on-ty972-led",
+      "title": "OE Automotive Led Daytime Running Lights For TY VIOS HATCHBACK 2017-ON TY972-LED",
+      "skus": [
+        "TY972-LED"
+      ],
+      "fitment": {
+        "brands": [
+          "TOYOTA"
+        ],
+        "models": [
+          "vios"
+        ],
+        "years": [
+          [
+            2017,
+            2026
+          ]
+        ],
+        "raw_snippets": [
+          "TY VIOS HATCHBACK 2017-ON TY972-LED"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "high-power-fog-light-for-car-for-dw-lanos-2002-dw037",
+      "title": "High Power Fog Light For Car For Dw Lanos 2002 Dw037",
+      "skus": [
+        "DW037"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "lanos"
+        ],
+        "years": [
+          [
+            2002,
+            2002
+          ]
+        ],
+        "raw_snippets": [
+          "Car For Dw Lanos 2002"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "best-led-fog-light-bulbs-for-dw-kalos-2002-dw247",
+      "title": "Best Led Fog Light Bulbs For Dw Kalos 2002 Dw247",
+      "skus": [
+        "DW247"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "kalos"
+        ],
+        "years": [
+          [
+            2002,
+            2002
+          ]
+        ],
+        "raw_snippets": [
+          "Dw Kalos 2002 Dw247"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "best-aftermarket-fog-lights-for-dw-gentra-2006-on-dw304b",
+      "title": "Best Aftermarket Fog Lights For Dw Gentra 2006~on Dw304b",
+      "skus": [
+        "DW304B"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "gentra"
+        ],
+        "years": [
+          [
+            2006,
+            2026
+          ]
+        ],
+        "raw_snippets": [
+          "Dw Gentra 2006"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oe-styling-fog-lamp-for-dw-matiz-2004-dw078",
+      "title": "OE STYLING FOG LAMP FOR DW  MATIZ  2004 DW078",
+      "skus": [
+        "DW078"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "matiz"
+        ],
+        "years": [
+          [
+            2004,
+            2004
+          ]
+        ],
+        "raw_snippets": [
+          "DW MATIZ  2004 DW078"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oe-styling-fog-lamp-for-dw-lanos-1999-2001-dw447",
+      "title": "OE STYLING FOG LAMP FOR DW LANOS  1999~2001 DW447",
+      "skus": [
+        "DW447"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "lanos"
+        ],
+        "years": [
+          [
+            1999,
+            2001
+          ]
+        ],
+        "raw_snippets": [
+          "DW LANOS  1999"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oe-styling-fog-lamp-for-ka-spectra-2006-on-ka273",
+      "title": "OE STYLING FOG LAMP FOR KA SPECTRA  2006~ON KA273",
+      "skus": [
+        "KA273"
+      ],
+      "fitment": {
+        "brands": [
+          "KIA"
+        ],
+        "models": [
+          "spectra"
+        ],
+        "years": [
+          [
+            2006,
+            2026
+          ]
+        ],
+        "raw_snippets": [
+          "KA SPECTRA  2006"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oe-styling-fog-lamp-for-dw-gentra-2006-on-dw304e",
+      "title": "OE STYLING FOG LAMP FOR DW GENTRA  2006~ON DW304E",
+      "skus": [
+        "DW304E"
+      ],
+      "fitment": {
+        "brands": [
+          "DAEWOO"
+        ],
+        "models": [
+          "gentra"
+        ],
+        "years": [
+          [
+            2006,
+            2026
+          ]
+        ],
+        "raw_snippets": [
+          "DW GENTRA  2006"
+        ],
+        "is_universal_candidate": false
+      }
+    },
+    {
+      "handle": "oem-fog-lamp-for-mb-freeca-adventure-jolie-2004-mb045",
+      "title": "OEM FOG LAMP FOR MB FREECA/ADVENTURE/JOLIE 2004 MB045",
+      "skus": [
+        "MB045"
+      ],
+      "fitment": {
+        "brands": [
+          "MITSUBISHI"
+        ],
+        "models": [
+          "adventure",
+          "freeca",
+          "jolie"
+        ],
+        "years": [
+          [
+            2004,
+            2004
+          ]
+        ],
+        "raw_snippets": [
+          "MB FREECA",
+          "ADVENTURE",
+          "JOLIE 2004 MB045"
+        ],
+        "is_universal_candidate": false
+      }
+    }
+  ]
+}
