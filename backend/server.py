@@ -3753,7 +3753,35 @@ async def ensure_unified_catalog_products_seeded() -> Dict[str, Any]:
                 filter_q = {"sku": sku} if sku else {"product_id": pid}
                 p_copy = dict(p)
                 p_copy["is_active"] = p_copy.get("is_active", True)
-                operations.append(UpdateOne(filter_q, {"$setOnInsert": p_copy}, upsert=True))
+                
+                # Fields to update on existing documents so categories and subcategories stay fresh
+                update_fields = {
+                    "category": p.get("category"),
+                    "subcategory": p.get("subcategory"),
+                    "name": p.get("name"),
+                    "brand": p.get("brand"),
+                    "specs": p.get("specs"),
+                    "installation_type": p.get("installation_type", "none"),
+                    "installation_price": p.get("installation_price", 0.0),
+                    "is_active": p.get("is_active", True),
+                }
+                if p.get("compatibility"):
+                    update_fields["compatibility"] = p.get("compatibility")
+                if p.get("images"):
+                    update_fields["images"] = p.get("images")
+                if p.get("image_url"):
+                    update_fields["image_url"] = p.get("image_url")
+
+                operations.append(
+                    UpdateOne(
+                        filter_q,
+                        {
+                            "$set": update_fields,
+                            "$setOnInsert": {k: v for k, v in p_copy.items() if k not in update_fields},
+                        },
+                        upsert=True,
+                    )
+                )
 
             if operations:
                 res = await db.products.bulk_write(operations, ordered=False)

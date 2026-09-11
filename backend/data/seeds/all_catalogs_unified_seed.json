@@ -148295,5 +148295,1572 @@
     },
     "source_catalog": "auxbeam_driving_light",
     "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_cam_ace_liv",
+    "sku": "SRV-CAM-ACE-LIV",
+    "name": "Mano de Obra: Cambio de Aceite y Filtro de Motor (Gasolina)",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Servicios de Cambio de Aceite",
+    "product_type": "service",
+    "description": "Servicio profesional de drenado de aceite de motor, reemplazo de filtro de aceite y revisión de niveles de fluidos para vehículos sedán, hatchback y SUV compactos a gasolina.",
+    "specs": {},
+    "price": 8.0,
+    "precio1": 8.0,
+    "precio2": 7.36,
+    "precio_vip": 7.04,
+    "precio_casa_comercial": 6.56,
+    "cost": 2.0,
+    "installation_type": "required",
+    "installation_price": 8.0,
+    "installation_time_minutes": 30,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-CAM-ACE-LIV_main.jpg",
+    "images": [
+      "/uploads/products/SRV-CAM-ACE-LIV_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-CAM-ACE-LIV_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-CAM-ACE-LIV_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-CAM-ACE-LIV_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal / Vehículos Livianos Gasolina"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_cam_ace_4x4",
+    "sku": "SRV-CAM-ACE-4X4",
+    "name": "Mano de Obra: Cambio de Aceite y Filtro de Motor (Camioneta / SUV Diésel)",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Servicios de Cambio de Aceite",
+    "product_type": "service",
+    "description": "Servicio de cambio de aceite y filtro de motor para camionetas pickup y SUV con motor Turbo Diésel (Hilux, Ranger, D-Max, Frontier, Prado, L200). Incluye revisión de filtro de aire y engrase de crucetas.",
+    "specs": {},
+    "price": 12.0,
+    "precio1": 12.0,
+    "precio2": 11.04,
+    "precio_vip": 10.56,
+    "precio_casa_comercial": 9.84,
+    "cost": 3.0,
+    "installation_type": "required",
+    "installation_price": 12.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-CAM-ACE-4X4_main.jpg",
+    "images": [
+      "/uploads/products/SRV-CAM-ACE-4X4_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-CAM-ACE-4X4_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-CAM-ACE-4X4_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-CAM-ACE-4X4_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Frontier",
+        "Prado",
+        "L200",
+        "Navara",
+        "Amarok"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Camionetas y SUV Diésel"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_cam_ace_trans",
+    "sku": "SRV-CAM-ACE-TRANS",
+    "name": "Mano de Obra: Cambio de Aceite de Transmisión (Manual / Automática)",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Aceites de Transmisión y Engranajes",
+    "product_type": "service",
+    "description": "Drenado y relleno de aceite de transmisión / caja de velocidades según especificación de fabricante (MTF / ATF / CVT).",
+    "specs": {},
+    "price": 15.0,
+    "precio1": 15.0,
+    "precio2": 13.8,
+    "precio_vip": 13.2,
+    "precio_casa_comercial": 12.3,
+    "cost": 4.0,
+    "installation_type": "required",
+    "installation_price": 15.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-CAM-ACE-TRANS_main.jpg",
+    "images": [
+      "/uploads/products/SRV-CAM-ACE-TRANS_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-CAM-ACE-TRANS_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-CAM-ACE-TRANS_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-CAM-ACE-TRANS_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_cam_ace_dif",
+    "sku": "SRV-CAM-ACE-DIF",
+    "name": "Mano de Obra: Cambio de Aceite de Diferencial / Corona (Delantera / Trasera)",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Aceites de Transmisión y Engranajes",
+    "product_type": "service",
+    "description": "Servicio de cambio de valvulina / aceite para diferencial y corona 4x4 y 4x2.",
+    "specs": {},
+    "price": 10.0,
+    "precio1": 10.0,
+    "precio2": 9.2,
+    "precio_vip": 8.8,
+    "precio_casa_comercial": 8.2,
+    "cost": 3.0,
+    "installation_type": "required",
+    "installation_price": 10.0,
+    "installation_time_minutes": 30,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-CAM-ACE-DIF_main.jpg",
+    "images": [
+      "/uploads/products/SRV-CAM-ACE-DIF_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-CAM-ACE-DIF_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-CAM-ACE-DIF_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-CAM-ACE-DIF_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal Vehículos Tracción Trasera y 4x4"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_lav_eng_chasis",
+    "sku": "SRV-LAV-ENG-CHASIS",
+    "name": "Mano de Obra: Lavado a Presión y Engrase Completo de Chasis",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Servicios de Taller",
+    "product_type": "service",
+    "description": "Lavado minucioso de partes bajas con desengrasante y engrase de terminales, rótulas, crucetas y gemelos de suspensión.",
+    "specs": {},
+    "price": 15.0,
+    "precio1": 15.0,
+    "precio2": 13.8,
+    "precio_vip": 13.2,
+    "precio_casa_comercial": 12.3,
+    "cost": 4.0,
+    "installation_type": "required",
+    "installation_price": 15.0,
+    "installation_time_minutes": 60,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-LAV-ENG-CHASIS_main.jpg",
+    "images": [
+      "/uploads/products/SRV-LAV-ENG-CHASIS_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-LAV-ENG-CHASIS_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-LAV-ENG-CHASIS_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-LAV-ENG-CHASIS_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal Pickups y 4x4"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_purga_frenos",
+    "sku": "SRV-PURGA-FRENOS",
+    "name": "Mano de Obra: Purga y Reemplazo Total de Líquido de Frenos DOT 3 / DOT 4",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Líquidos de Frenos y Dirección",
+    "product_type": "service",
+    "description": "Purga completa del sistema hidráulico de frenos en las 4 ruedas y reposición con líquido nuevo de alto punto de ebullición.",
+    "specs": {},
+    "price": 12.0,
+    "precio1": 12.0,
+    "precio2": 11.04,
+    "precio_vip": 10.56,
+    "precio_casa_comercial": 9.84,
+    "cost": 3.0,
+    "installation_type": "required",
+    "installation_price": 12.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-PURGA-FRENOS_main.jpg",
+    "images": [
+      "/uploads/products/SRV-PURGA-FRENOS_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-PURGA-FRENOS_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-PURGA-FRENOS_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-PURGA-FRENOS_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_flush_coolant",
+    "sku": "SRV-FLUSH-COOLANT",
+    "name": "Mano de Obra: Limpieza / Flush de Sistema de Enfriamiento y Reemplazo de Coolant",
+    "brand": "MCLARENS TALLER",
+    "category": "lubricantes_fluidos",
+    "subcategory": "Refrigerantes y Aditivos de Radiador",
+    "product_type": "service",
+    "description": "Drenado de refrigerante viejo, lavado químico interno de radiador y bloque motor, y llenado con nuevo refrigerante 50/50.",
+    "specs": {},
+    "price": 15.0,
+    "precio1": 15.0,
+    "precio2": 13.8,
+    "precio_vip": 13.2,
+    "precio_casa_comercial": 12.3,
+    "cost": 4.0,
+    "installation_type": "required",
+    "installation_price": 15.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-FLUSH-COOLANT_main.jpg",
+    "images": [
+      "/uploads/products/SRV-FLUSH-COOLANT_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-FLUSH-COOLANT_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-FLUSH-COOLANT_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-FLUSH-COOLANT_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_rin_off_17x9_6x139",
+    "sku": "RIN-OFF-17X9-6X139",
+    "name": "Rin 17x9 Off-Road Black Satin 6x139.7 ET-12",
+    "brand": "BLACK RHINO",
+    "category": "rines_llantas",
+    "subcategory": "Rines Off-Road y Deportivos",
+    "product_type": "product",
+    "description": "Rin de aleación reforzada de alta resistencia para camionetas 4x4. Patrón de pernos 6x139.7 mm (6 huecos) con acabado negro satinado mate y centro cóncavo.",
+    "specs": {},
+    "price": 185.0,
+    "precio1": 185.0,
+    "precio2": 170.2,
+    "precio_vip": 162.8,
+    "precio_casa_comercial": 151.7,
+    "cost": 120.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/RIN-OFF-17X9-6X139_main.jpg",
+    "images": [
+      "/uploads/products/RIN-OFF-17X9-6X139_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/RIN-OFF-17X9-6X139_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/RIN-OFF-17X9-6X139_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "RIN-OFF-17X9-6X139_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN",
+        "MITSUBISHI",
+        "CHEVROLET"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Frontier",
+        "Prado",
+        "L200",
+        "Colorado",
+        "4Runner"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Camionetas 6x139.7 (Hilux, Ranger, D-Max, Frontier, Prado)"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_rin_off_16x8_6x139",
+    "sku": "RIN-OFF-16X8-6X139",
+    "name": "Rin 16x8 Off-Road Beadlock Style 6x139.7 ET0",
+    "brand": "METHOD RACE",
+    "category": "rines_llantas",
+    "subcategory": "Rines Off-Road y Deportivos",
+    "product_type": "product",
+    "description": "Rin todoterreno 16x8 estilo Beadlock simulado con labio reforzado y acabado en negro satinado con remaches de acero inoxidable.",
+    "specs": {},
+    "price": 160.0,
+    "precio1": 160.0,
+    "precio2": 147.2,
+    "precio_vip": 140.8,
+    "precio_casa_comercial": 131.2,
+    "cost": 105.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/RIN-OFF-16X8-6X139_main.jpg",
+    "images": [
+      "/uploads/products/RIN-OFF-16X8-6X139_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/RIN-OFF-16X8-6X139_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/RIN-OFF-16X8-6X139_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "RIN-OFF-16X8-6X139_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "NISSAN",
+        "MITSUBISHI",
+        "ISUZU"
+      ],
+      "models": [
+        "Hilux",
+        "Land Cruiser 70",
+        "Patrol",
+        "L200",
+        "Trooper"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "4x4 Tradicional 6x139.7"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_rin_off_18x9_6x139",
+    "sku": "RIN-OFF-18X9-6X139",
+    "name": "Rin 18x9 Off-Road Bronze Edition 6x139.7 ET0",
+    "brand": "FUEL OFF-ROAD",
+    "category": "rines_llantas",
+    "subcategory": "Rines Off-Road y Deportivos",
+    "product_type": "product",
+    "description": "Rin premium 18 pulgadas color bronce mate con labio exterior negro satinado. Ideal para Hilux Revo / Rocco, Ranger Raptor y Colorado.",
+    "specs": {},
+    "price": 210.0,
+    "precio1": 210.0,
+    "precio2": 193.2,
+    "precio_vip": 184.8,
+    "precio_casa_comercial": 172.2,
+    "cost": 140.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/RIN-OFF-18X9-6X139_main.jpg",
+    "images": [
+      "/uploads/products/RIN-OFF-18X9-6X139_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/RIN-OFF-18X9-6X139_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/RIN-OFF-18X9-6X139_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "RIN-OFF-18X9-6X139_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "CHEVROLET"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Colorado",
+        "Tahoe"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups Modernas 6x139.7"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_rin_off_17x8_5_5x114",
+    "sku": "RIN-OFF-17X8-5-5X114",
+    "name": "Rin 17x8.5 Off-Road / SUV 5x114.3 ET+30",
+    "brand": "KMC WHEELS",
+    "category": "rines_llantas",
+    "subcategory": "Rines Off-Road y Deportivos",
+    "product_type": "product",
+    "description": "Rin deportivo y overland para SUV compactas y medianas con patrón 5x114.3 mm.",
+    "specs": {},
+    "price": 165.0,
+    "precio1": 165.0,
+    "precio2": 151.8,
+    "precio_vip": 145.2,
+    "precio_casa_comercial": 135.3,
+    "cost": 110.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/RIN-OFF-17X8-5-5X114_main.jpg",
+    "images": [
+      "/uploads/products/RIN-OFF-17X8-5-5X114_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/RIN-OFF-17X8-5-5X114_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/RIN-OFF-17X8-5-5X114_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "RIN-OFF-17X8-5-5X114_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "HONDA",
+        "HYUNDAI",
+        "KIA",
+        "MAZDA",
+        "NISSAN"
+      ],
+      "models": [
+        "Rav4",
+        "CR-V",
+        "Tucson",
+        "Sportage",
+        "CX-5",
+        "X-Trail"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "SUV 5x114.3"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_lla_at_265_70r17",
+    "sku": "LLA-AT-265-70R17",
+    "name": "Llanta 265/70R17 All-Terrain (A/T) Letras Blancas 10PR",
+    "brand": "BFGOODRICH / MAXXIS",
+    "category": "rines_llantas",
+    "subcategory": "Llantas All-Terrain y Mud-Terrain",
+    "product_type": "product",
+    "description": "Llanta todoterreno All-Terrain (A/T) 265/70R17 con hombros reforzados, tecnología anti-cortes y letras blancas destacadas. Tracción óptima 50% asfalto / 50% terracería.",
+    "specs": {},
+    "price": 165.0,
+    "precio1": 165.0,
+    "precio2": 151.8,
+    "precio_vip": 145.2,
+    "precio_casa_comercial": 135.3,
+    "cost": 115.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/LLA-AT-265-70R17_main.jpg",
+    "images": [
+      "/uploads/products/LLA-AT-265-70R17_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/LLA-AT-265-70R17_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/LLA-AT-265-70R17_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "LLA-AT-265-70R17_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Frontier",
+        "Prado",
+        "L200",
+        "4Runner"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups y SUV con Rin 17"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_lla_at_265_65r17",
+    "sku": "LLA-AT-265-65R17",
+    "name": "Llanta 265/65R17 All-Terrain (A/T) Medida Original",
+    "brand": "MAXXIS / YOKOHAMA",
+    "category": "rines_llantas",
+    "subcategory": "Llantas All-Terrain y Mud-Terrain",
+    "product_type": "product",
+    "description": "Medida estándar original de agencia para Toyota Hilux, Fortuner y Prado. Diseño A/T con bajo nivel de ruido en carretera y excelente agarre en lodo y lluvia.",
+    "specs": {},
+    "price": 155.0,
+    "precio1": 155.0,
+    "precio2": 142.6,
+    "precio_vip": 136.4,
+    "precio_casa_comercial": 127.1,
+    "cost": 105.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/LLA-AT-265-65R17_main.jpg",
+    "images": [
+      "/uploads/products/LLA-AT-265-65R17_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/LLA-AT-265-65R17_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/LLA-AT-265-65R17_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "LLA-AT-265-65R17_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Fortuner",
+        "Prado",
+        "Ranger",
+        "D-Max",
+        "L200",
+        "Frontier"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Hilux, Prado, Ranger, D-Max original"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_lla_mt_285_70r17",
+    "sku": "LLA-MT-285-70R17",
+    "name": "Llanta 285/70R17 Mud-Terrain (M/T) Tracción Extrema (33 Pulgadas)",
+    "brand": "MAXXIS RAZR",
+    "category": "rines_llantas",
+    "subcategory": "Llantas All-Terrain y Mud-Terrain",
+    "product_type": "product",
+    "description": "Llanta Mud-Terrain de 33 pulgadas de alto para barro profundo, roca y expedición off-road extrema. Tacos autolimpiantes y triple capa de carcasa resistente a pinchaduras.",
+    "specs": {},
+    "price": 210.0,
+    "precio1": 210.0,
+    "precio2": 193.2,
+    "precio_vip": 184.8,
+    "precio_casa_comercial": 172.2,
+    "cost": 145.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/LLA-MT-285-70R17_main.jpg",
+    "images": [
+      "/uploads/products/LLA-MT-285-70R17_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/LLA-MT-285-70R17_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/LLA-MT-285-70R17_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "LLA-MT-285-70R17_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "JEEP",
+        "NISSAN"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "Wrangler",
+        "Gladiator",
+        "Land Cruiser",
+        "Patrol"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Vehículos 4x4 con Kit de Alzas / Lift Kit"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_lla_at_31x10_5r15",
+    "sku": "LLA-AT-31X10-5R15",
+    "name": "Llanta 31x10.50R15 All-Terrain (A/T) para Rin 15",
+    "brand": "MAXXIS BIGHORN",
+    "category": "rines_llantas",
+    "subcategory": "Llantas All-Terrain y Mud-Terrain",
+    "product_type": "product",
+    "description": "Llanta clásica 31x10.50R15 de alta flotación y agarre para camionetas tradicionales con rin 15.",
+    "specs": {},
+    "price": 145.0,
+    "precio1": 145.0,
+    "precio2": 133.4,
+    "precio_vip": 127.6,
+    "precio_casa_comercial": 118.9,
+    "cost": 98.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/LLA-AT-31X10-5R15_main.jpg",
+    "images": [
+      "/uploads/products/LLA-AT-31X10-5R15_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/LLA-AT-31X10-5R15_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/LLA-AT-31X10-5R15_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "LLA-AT-31X10-5R15_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "NISSAN",
+        "ISUZU",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux 2.5/2.8",
+        "D21",
+        "D22",
+        "Trooper",
+        "Montero"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Camionetas con Rin 15"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_acc_tuerca_seg_6l",
+    "sku": "ACC-TUERCA-SEG-6L",
+    "name": "Juego de 24 Tuercas de Seguridad Cónicas y Llave Antirrobo M12x1.5",
+    "brand": "GORILLA AUTOMOTIVE",
+    "category": "rines_llantas",
+    "subcategory": "Accesorios de Rines y Llantas",
+    "product_type": "product",
+    "description": "Kit completo de 24 tuercas de seguridad estriadas en cromo de alto brillo con dado especial de instalación para rines de 6 pernos.",
+    "specs": {},
+    "price": 28.0,
+    "precio1": 28.0,
+    "precio2": 25.76,
+    "precio_vip": 24.64,
+    "precio_casa_comercial": 22.96,
+    "cost": 14.0,
+    "installation_type": "optional",
+    "installation_price": 5.0,
+    "installation_time_minutes": 15,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/ACC-TUERCA-SEG-6L_main.jpg",
+    "images": [
+      "/uploads/products/ACC-TUERCA-SEG-6L_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/ACC-TUERCA-SEG-6L_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/ACC-TUERCA-SEG-6L_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "ACC-TUERCA-SEG-6L_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Camionetas 6 Pernos (Rosca M12x1.5)"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_mon_bal_4r",
+    "sku": "SRV-MON-BAL-4R",
+    "name": "Mano de Obra: Montaje y Balanceo Computarizado (Juego de 4 Ruedas)",
+    "brand": "MCLARENS TALLER",
+    "category": "rines_llantas",
+    "subcategory": "Servicios de Rines y Llantas",
+    "product_type": "service",
+    "description": "Desmontaje de llantas viejas, montaje en rines nuevos, reemplazo de válvulas y balanceo dinámico con plomos adhesivos o de grapa en balanceadora digital.",
+    "specs": {},
+    "price": 20.0,
+    "precio1": 20.0,
+    "precio2": 18.4,
+    "precio_vip": 17.6,
+    "precio_casa_comercial": 16.4,
+    "cost": 5.0,
+    "installation_type": "required",
+    "installation_price": 20.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-MON-BAL-4R_main.jpg",
+    "images": [
+      "/uploads/products/SRV-MON-BAL-4R_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-MON-BAL-4R_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-MON-BAL-4R_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-MON-BAL-4R_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal 4 Ruedas"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_alin_3d_4x4",
+    "sku": "SRV-ALIN-3D-4X4",
+    "name": "Mano de Obra: Alineación Computarizada 3D por Cámaras HD",
+    "brand": "MCLARENS TALLER",
+    "category": "rines_llantas",
+    "subcategory": "Servicios de Rines y Llantas",
+    "product_type": "service",
+    "description": "Alineación láser 3D de alta precisión para corregir camber, caster y convergencia en vehículos levantados y convencionales.",
+    "specs": {},
+    "price": 25.0,
+    "precio1": 25.0,
+    "precio2": 23.0,
+    "precio_vip": 22.0,
+    "precio_casa_comercial": 20.5,
+    "cost": 6.0,
+    "installation_type": "required",
+    "installation_price": 25.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-ALIN-3D-4X4_main.jpg",
+    "images": [
+      "/uploads/products/SRV-ALIN-3D-4X4_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-ALIN-3D-4X4_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-ALIN-3D-4X4_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-ALIN-3D-4X4_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_kit_alza_2p_hilux",
+    "sku": "KIT-ALZA-2P-HILUX",
+    "name": "Kit de Alzas de Suspensión de 2 Pulgadas (Toyota Hilux Revo / Rocco / Vigo 2005-2024)",
+    "brand": "PRO COMP / OME",
+    "category": "suspension_alzas",
+    "subcategory": "Kits de Alzas y Nivelación",
+    "product_type": "product",
+    "description": "Kit completo para levantar 2 pulgadas la suspensión. Incluye 2 espaciadores de amortiguador delantero en aluminio mecanizado CNC y 2 tacos traseros con pernos en U (U-bolts) reforzados.",
+    "specs": {},
+    "price": 120.0,
+    "precio1": 120.0,
+    "precio2": 110.4,
+    "precio_vip": 105.6,
+    "precio_casa_comercial": 98.4,
+    "cost": 75.0,
+    "installation_type": "optional",
+    "installation_price": 40.0,
+    "installation_time_minutes": 90,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/KIT-ALZA-2P-HILUX_main.jpg",
+    "images": [
+      "/uploads/products/KIT-ALZA-2P-HILUX_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/KIT-ALZA-2P-HILUX_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/KIT-ALZA-2P-HILUX_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "KIT-ALZA-2P-HILUX_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA"
+      ],
+      "models": [
+        "Hilux",
+        "Fortuner"
+      ],
+      "year_from": 2005,
+      "year_to": 2026,
+      "is_universal": false,
+      "compatibilidad_texto": "Toyota Hilux 2005-2026 (Todas las versiones 4x4 y 4x2 Prerunner)"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_kit_alza_2p_ranger",
+    "sku": "KIT-ALZA-2P-RANGER",
+    "name": "Kit de Alzas de Suspensión de 2 Pulgadas (Ford Ranger 2012-2024)",
+    "brand": "ROUGH COUNTRY",
+    "category": "suspension_alzas",
+    "subcategory": "Kits de Alzas y Nivelación",
+    "product_type": "product",
+    "description": "Kit de nivelación y levante de 2 pulgadas para Ford Ranger T6/T7/T8 (XLT, Limited, FX4, Wildtrak).",
+    "specs": {},
+    "price": 125.0,
+    "precio1": 125.0,
+    "precio2": 115.0,
+    "precio_vip": 110.0,
+    "precio_casa_comercial": 102.5,
+    "cost": 78.0,
+    "installation_type": "optional",
+    "installation_price": 40.0,
+    "installation_time_minutes": 90,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/KIT-ALZA-2P-RANGER_main.jpg",
+    "images": [
+      "/uploads/products/KIT-ALZA-2P-RANGER_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/KIT-ALZA-2P-RANGER_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/KIT-ALZA-2P-RANGER_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "KIT-ALZA-2P-RANGER_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "FORD"
+      ],
+      "models": [
+        "Ranger",
+        "Everest"
+      ],
+      "year_from": 2012,
+      "year_to": 2026,
+      "is_universal": false,
+      "compatibilidad_texto": "Ford Ranger 2012-2026"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_kit_alza_2p_dmax",
+    "sku": "KIT-ALZA-2P-DMAX",
+    "name": "Kit de Alzas de Suspensión de 2 Pulgadas (Isuzu D-Max / Chevrolet Colorado 2012-2024)",
+    "brand": "IRONMAN 4X4",
+    "category": "suspension_alzas",
+    "subcategory": "Kits de Alzas y Nivelación",
+    "product_type": "product",
+    "description": "Kit de levante de 2 pulgadas diseñado a la medida para Isuzu D-Max y Chevrolet D-Max.",
+    "specs": {},
+    "price": 125.0,
+    "precio1": 125.0,
+    "precio2": 115.0,
+    "precio_vip": 110.0,
+    "precio_casa_comercial": 102.5,
+    "cost": 78.0,
+    "installation_type": "optional",
+    "installation_price": 40.0,
+    "installation_time_minutes": 90,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/KIT-ALZA-2P-DMAX_main.jpg",
+    "images": [
+      "/uploads/products/KIT-ALZA-2P-DMAX_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/KIT-ALZA-2P-DMAX_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/KIT-ALZA-2P-DMAX_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "KIT-ALZA-2P-DMAX_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "ISUZU",
+        "CHEVROLET"
+      ],
+      "models": [
+        "D-Max",
+        "Colorado",
+        "DMax"
+      ],
+      "year_from": 2012,
+      "year_to": 2026,
+      "is_universal": false,
+      "compatibilidad_texto": "Isuzu D-Max 2012-2026"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_kit_alza_2p_navara",
+    "sku": "KIT-ALZA-2P-NAVARA",
+    "name": "Kit de Alzas de Suspensión de 2 Pulgadas (Nissan NP300 / Frontier 2015-2024)",
+    "brand": "PRO COMP",
+    "category": "suspension_alzas",
+    "subcategory": "Kits de Alzas y Nivelación",
+    "product_type": "product",
+    "description": "Kit de nivelación y elevación de 2 pulgadas para Nissan NP300 / Frontier D23 con espaciadores de resorte traseros / tacos según suspensión.",
+    "specs": {},
+    "price": 125.0,
+    "precio1": 125.0,
+    "precio2": 115.0,
+    "precio_vip": 110.0,
+    "precio_casa_comercial": 102.5,
+    "cost": 78.0,
+    "installation_type": "optional",
+    "installation_price": 40.0,
+    "installation_time_minutes": 90,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/KIT-ALZA-2P-NAVARA_main.jpg",
+    "images": [
+      "/uploads/products/KIT-ALZA-2P-NAVARA_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/KIT-ALZA-2P-NAVARA_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/KIT-ALZA-2P-NAVARA_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "KIT-ALZA-2P-NAVARA_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "NISSAN"
+      ],
+      "models": [
+        "NP300",
+        "Frontier",
+        "Navara"
+      ],
+      "year_from": 2015,
+      "year_to": 2026,
+      "is_universal": false,
+      "compatibilidad_texto": "Nissan NP300 / Frontier 2015-2026"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_esp_rueda_6x139_1_5p",
+    "sku": "ESP-RUEDA-6X139-1-5P",
+    "name": "Par de Espaciadores de Rueda 1.5 Pulgadas Aluminio Forjado 6x139.7 (Centrador Hubcentric)",
+    "brand": "SPACER PRO",
+    "category": "suspension_alzas",
+    "subcategory": "Espaciadores de Rueda (Wheel Spacers)",
+    "product_type": "product",
+    "description": "Par de espaciadores de rueda de 1.5 pulgadas (38 mm) fabricados en aleación de aluminio aeroespacial 6061-T6 forjado con espárragos Grado 10.9 templados. Ensancha la trocha para mayor estabilidad y look robusto.",
+    "specs": {},
+    "price": 75.0,
+    "precio1": 75.0,
+    "precio2": 69.0,
+    "precio_vip": 66.0,
+    "precio_casa_comercial": 61.5,
+    "cost": 45.0,
+    "installation_type": "optional",
+    "installation_price": 8.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/ESP-RUEDA-6X139-1-5P_main.jpg",
+    "images": [
+      "/uploads/products/ESP-RUEDA-6X139-1-5P_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/ESP-RUEDA-6X139-1-5P_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/ESP-RUEDA-6X139-1-5P_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "ESP-RUEDA-6X139-1-5P_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Prado",
+        "L200",
+        "4Runner"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups 6x139.7 con centro 106mm / 93mm"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_esp_rueda_6x139_2p",
+    "sku": "ESP-RUEDA-6X139-2P",
+    "name": "Par de Espaciadores de Rueda 2.0 Pulgadas Aluminio Forjado 6x139.7",
+    "brand": "SPACER PRO",
+    "category": "suspension_alzas",
+    "subcategory": "Espaciadores de Rueda (Wheel Spacers)",
+    "product_type": "product",
+    "description": "Par de espaciadores de 2.0 pulgadas (50 mm) de aluminio forjado para postura ancha y evitar roce de llantas 285/70 o 33 pulgadas con el chasis.",
+    "specs": {},
+    "price": 85.0,
+    "precio1": 85.0,
+    "precio2": 78.2,
+    "precio_vip": 74.8,
+    "precio_casa_comercial": 69.7,
+    "cost": 52.0,
+    "installation_type": "optional",
+    "installation_price": 8.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/ESP-RUEDA-6X139-2P_main.jpg",
+    "images": [
+      "/uploads/products/ESP-RUEDA-6X139-2P_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/ESP-RUEDA-6X139-2P_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/ESP-RUEDA-6X139-2P_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "ESP-RUEDA-6X139-2P_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Prado",
+        "L200"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups 6x139.7"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_esp_rueda_5x114_1_25p",
+    "sku": "ESP-RUEDA-5X114-1-25P",
+    "name": "Par de Espaciadores de Rueda 1.25 Pulgadas 5x114.3",
+    "brand": "SPACER PRO",
+    "category": "suspension_alzas",
+    "subcategory": "Espaciadores de Rueda (Wheel Spacers)",
+    "product_type": "product",
+    "description": "Par de espaciadores de 1.25 pulgadas para vehículos y SUV con 5 pernos 5x114.3 mm.",
+    "specs": {},
+    "price": 65.0,
+    "precio1": 65.0,
+    "precio2": 59.8,
+    "precio_vip": 57.2,
+    "precio_casa_comercial": 53.3,
+    "cost": 38.0,
+    "installation_type": "optional",
+    "installation_price": 8.0,
+    "installation_time_minutes": 20,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/ESP-RUEDA-5X114-1-25P_main.jpg",
+    "images": [
+      "/uploads/products/ESP-RUEDA-5X114-1-25P_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/ESP-RUEDA-5X114-1-25P_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/ESP-RUEDA-5X114-1-25P_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "ESP-RUEDA-5X114-1-25P_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "HONDA",
+        "HYUNDAI",
+        "KIA",
+        "MAZDA",
+        "NISSAN"
+      ],
+      "models": [
+        "Rav4",
+        "CR-V",
+        "Tucson",
+        "Sportage",
+        "CX-5"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "SUV y Autos 5x114.3"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_gem_confort_hilux",
+    "sku": "GEM-CONFORT-HILUX",
+    "name": "Par de Gemelos / Grilletes Confort Engrasables para Ballestas Traseras (Toyota Hilux 2005-2024)",
+    "brand": "JSK 4X4",
+    "category": "suspension_alzas",
+    "subcategory": "Amortiguadores y Componentes de Suspensión",
+    "product_type": "product",
+    "description": "Grilletes articulados tipo gemelo confort con diseño de doble pivote para suavizar drásticamente los saltos y vibraciones de la batea en terracería. Proporciona 1.5 a 2 pulgadas de elevación trasera.",
+    "specs": {},
+    "price": 95.0,
+    "precio1": 95.0,
+    "precio2": 87.4,
+    "precio_vip": 83.6,
+    "precio_casa_comercial": 77.9,
+    "cost": 55.0,
+    "installation_type": "optional",
+    "installation_price": 20.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/GEM-CONFORT-HILUX_main.jpg",
+    "images": [
+      "/uploads/products/GEM-CONFORT-HILUX_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/GEM-CONFORT-HILUX_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/GEM-CONFORT-HILUX_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "GEM-CONFORT-HILUX_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA"
+      ],
+      "models": [
+        "Hilux",
+        "Vigo",
+        "Revo",
+        "Rocco"
+      ],
+      "year_from": 2005,
+      "year_to": 2026,
+      "is_universal": false,
+      "compatibilidad_texto": "Toyota Hilux 2005-2026"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_amo_hd_nitro_del",
+    "sku": "AMO-HD-NITRO-DEL",
+    "name": "Par de Amortiguadores Delanteros Heavy Duty Nitro Gas 4x4",
+    "brand": "OLD MAN EMU / PROFENDER",
+    "category": "suspension_alzas",
+    "subcategory": "Amortiguadores y Componentes de Suspensión",
+    "product_type": "product",
+    "description": "Amortiguadores presurizados con gas nitrógeno de pistón reforzado de 35mm para soportar peso adicional (defensas de acero, winches) y brindar control superior en curvas y caminos difíciles.",
+    "specs": {},
+    "price": 180.0,
+    "precio1": 180.0,
+    "precio2": 165.6,
+    "precio_vip": 158.4,
+    "precio_casa_comercial": 147.6,
+    "cost": 115.0,
+    "installation_type": "optional",
+    "installation_price": 25.0,
+    "installation_time_minutes": 60,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/AMO-HD-NITRO-DEL_main.jpg",
+    "images": [
+      "/uploads/products/AMO-HD-NITRO-DEL_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/AMO-HD-NITRO-DEL_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/AMO-HD-NITRO-DEL_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "AMO-HD-NITRO-DEL_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Frontier",
+        "Prado"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups 4x4"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_amo_hd_nitro_tra",
+    "sku": "AMO-HD-NITRO-TRA",
+    "name": "Par de Amortiguadores Traseros Heavy Duty Nitro Gas 4x4 (Largo Extendido para Alzas)",
+    "brand": "OLD MAN EMU / PROFENDER",
+    "category": "suspension_alzas",
+    "subcategory": "Amortiguadores y Componentes de Suspensión",
+    "product_type": "product",
+    "description": "Amortiguadores traseros de recorrido largo calibrados para vehículos levantados de 0 a 2.5 pulgadas.",
+    "specs": {},
+    "price": 160.0,
+    "precio1": 160.0,
+    "precio2": 147.2,
+    "precio_vip": 140.8,
+    "precio_casa_comercial": 131.2,
+    "cost": 100.0,
+    "installation_type": "optional",
+    "installation_price": 20.0,
+    "installation_time_minutes": 45,
+    "warranty_months": 24,
+    "low_stock_threshold": 4,
+    "stock": 10,
+    "image_url": "/uploads/products/AMO-HD-NITRO-TRA_main.jpg",
+    "images": [
+      "/uploads/products/AMO-HD-NITRO-TRA_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/AMO-HD-NITRO-TRA_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/AMO-HD-NITRO-TRA_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "AMO-HD-NITRO-TRA_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [
+        "TOYOTA",
+        "FORD",
+        "ISUZU",
+        "NISSAN",
+        "MITSUBISHI"
+      ],
+      "models": [
+        "Hilux",
+        "Ranger",
+        "D-Max",
+        "Frontier",
+        "L200"
+      ],
+      "is_universal": false,
+      "compatibilidad_texto": "Pickups con Suspensión Elevada"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_inst_alzas_4x4",
+    "sku": "SRV-INST-ALZAS-4X4",
+    "name": "Mano de Obra: Instalación y Calibración de Kit de Alzas Delantero y Trasero",
+    "brand": "MCLARENS TALLER",
+    "category": "suspension_alzas",
+    "subcategory": "Servicios de Suspensión y Taller",
+    "product_type": "service",
+    "description": "Instalación completa de espaciadores de amortiguador delantero, tacos y abrazaderas traseras, torqueado a especificación de fábrica y prueba de recorrido.",
+    "specs": {},
+    "price": 40.0,
+    "precio1": 40.0,
+    "precio2": 36.8,
+    "precio_vip": 35.2,
+    "precio_casa_comercial": 32.8,
+    "cost": 10.0,
+    "installation_type": "required",
+    "installation_price": 40.0,
+    "installation_time_minutes": 90,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-INST-ALZAS-4X4_main.jpg",
+    "images": [
+      "/uploads/products/SRV-INST-ALZAS-4X4_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-INST-ALZAS-4X4_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-INST-ALZAS-4X4_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-INST-ALZAS-4X4_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Camionetas 4x4"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
+  },
+  {
+    "product_id": "prod_taller_srv_inst_esp_4r",
+    "sku": "SRV-INST-ESP-4R",
+    "name": "Mano de Obra: Instalación y Torqueado de Espaciadores de Rueda (4 Ruedas)",
+    "brand": "MCLARENS TALLER",
+    "category": "suspension_alzas",
+    "subcategory": "Servicios de Suspensión y Taller",
+    "product_type": "service",
+    "description": "Limpieza de bocinas/hubs, aplicación de traba-roscas de media fuerza (Loctite azul) y ajuste con torquímetro calibrado para máxima seguridad.",
+    "specs": {},
+    "price": 15.0,
+    "precio1": 15.0,
+    "precio2": 13.8,
+    "precio_vip": 13.2,
+    "precio_casa_comercial": 12.3,
+    "cost": 4.0,
+    "installation_type": "required",
+    "installation_price": 15.0,
+    "installation_time_minutes": 30,
+    "warranty_months": 12,
+    "low_stock_threshold": 4,
+    "stock": 999,
+    "image_url": "/uploads/products/SRV-INST-ESP-4R_main.jpg",
+    "images": [
+      "/uploads/products/SRV-INST-ESP-4R_main.jpg"
+    ],
+    "media": [
+      {
+        "url": "/uploads/products/SRV-INST-ESP-4R_main.jpg",
+        "gcs_url": "https://storage.googleapis.com/mclarens-erp-products/products/SRV-INST-ESP-4R_main.jpg",
+        "type": "main",
+        "is_primary": true,
+        "filename": "SRV-INST-ESP-4R_main.jpg",
+        "source_url": ""
+      }
+    ],
+    "compatibility": {
+      "brands": [],
+      "models": [],
+      "is_universal": true,
+      "compatibilidad_texto": "Universal 4 Ruedas"
+    },
+    "source_catalog": "taller_suspension_rines",
+    "is_active": true
   }
 ]

@@ -51,6 +51,9 @@ export function getBrandingForBranch(branchId) {
 }
 
 export const ERP_CATEGORY_LABELS = {
+  suspension_alzas: "Suspensión, Alzas y Espaciadores",
+  rines_llantas: "Rines, Llantas y Accesorios",
+  taller_mecanica: "Servicios y Mano de Obra",
   detailing_cuidado: "Detailing y Cuidado Automotriz",
   cuidado_automotriz: "Detailing y Cuidado Automotriz",
   lubricantes_fluidos: "Lubricantes, Grasas y Fluidos",
