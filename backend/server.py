@@ -3183,10 +3183,8 @@ async def _find_pin_user_by_legacy_scan(
     *,
     extra_filter: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Match PIN across active users as a robust fallback if direct index lookup fails."""
-    query: Dict[str, Any] = {"is_active": {"$ne": False}}
-    if extra_filter:
-        query = {**query, **extra_filter}
+    """Match PIN only across active users that lack login_pin_index (prevents multi-second bcrypt timeouts)."""
+    query = _users_missing_login_pin_index_query(extra_filter)
     async for candidate in db.users.find(query, {"_id": 0}):
         hash_val = get_login_pin_hash(candidate)
         if hash_val and verify_pin_hash(pin, hash_val):
