@@ -189,6 +189,7 @@ inventory_central_sync = InventoryCentralSyncService(
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 ROOT_DIR = Path(__file__).resolve().parent
 CORE_SEED_FILE = ROOT_DIR / "data" / "seeds" / "core_seed.json"
+UNIFIED_CATALOG_SEED_FILE = ROOT_DIR / "data" / "seeds" / "all_catalogs_unified_seed.json"
 BACKUP_SCHEMA_VERSION = 2
 
 HYPERVISOR_FULL_ROLES = {"gerencia", "programador"}
@@ -3723,11 +3724,66 @@ async def ensure_core_service_products() -> None:
         logger.exception("Failed verifying core service products")
 
 
+async def ensure_unified_catalog_products_seeded() -> Dict[str, Any]:
+    """Ensures all products from the unified Grok catalogs are loaded into db.products."""
+    if not UNIFIED_CATALOG_SEED_FILE.exists():
+        logger.info("Unified catalog seed file not found: %s", UNIFIED_CATALOG_SEED_FILE)
+        return {"status": "skipped", "reason": "seed_file_not_found"}
+
+    try:
+        raw_text = UNIFIED_CATALOG_SEED_FILE.read_text(encoding="utf-8")
+        products = json.loads(raw_text)
+        if not isinstance(products, list) or not products:
+            return {"status": "skipped", "reason": "empty_seed"}
+
+        total_seed = len(products)
+        from pymongo import UpdateOne
+        chunk_size = 300
+        total_upserted = 0
+        total_matched = 0
+
+        for i in range(0, total_seed, chunk_size):
+            chunk = products[i : i + chunk_size]
+            operations = []
+            for p in chunk:
+                sku = str(p.get("sku") or "").strip()
+                pid = str(p.get("product_id") or "").strip()
+                if not sku and not pid:
+                    continue
+                filter_q = {"sku": sku} if sku else {"product_id": pid}
+                p_copy = dict(p)
+                p_copy["is_active"] = p_copy.get("is_active", True)
+                operations.append(UpdateOne(filter_q, {"$setOnInsert": p_copy}, upsert=True))
+
+            if operations:
+                res = await db.products.bulk_write(operations, ordered=False)
+                total_upserted += (res.upserted_count or 0)
+                total_matched += (res.matched_count or 0)
+
+        logger.info(
+            "Unified catalog products verified. Seed count: %d, Upserted: %d, Existing: %d",
+            total_seed,
+            total_upserted,
+            total_matched,
+        )
+        return {
+            "status": "success",
+            "seed_count": total_seed,
+            "upserted": total_upserted,
+            "existing": total_matched,
+            "total_in_db": await db.products.count_documents({}),
+        }
+    except Exception as exc:
+        logger.exception("Error verifying unified catalog products: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
 @app.on_event("startup")
 async def seed_default_pin_user() -> None:
     await ensure_runtime_indexes()
     await load_core_seed_if_empty()
     await ensure_core_service_products()
+    await ensure_unified_catalog_products_seeded()
     try:
         xinon_email = os.environ.get("DEFAULT_PIN_USER_EMAIL", "xinon@local")
         xinon_attendance_pin = os.environ.get("DEFAULT_PIN_USER_PIN", "0101")
@@ -6744,10 +6800,15 @@ async def get_products(
             {"sku": {"$regex": search, "$options": "i"}},
             {"description": {"$regex": search, "$options": "i"}},
         ]
-    products = await db.products.find(query, {"_id": 0}).to_list(1000)
+    products_count = await db.products.count_documents({})
+    if products_count < 100:
+        await ensure_unified_catalog_products_seeded()
+        await ensure_core_service_products()
+
+    products = await db.products.find(query, {"_id": 0}).to_list(10000)
     if not any(p.get("sku") == "POL-PCK-COM" for p in products) and (not category or category == "polarizados"):
         await ensure_core_service_products()
-        products = await db.products.find(query, {"_id": 0}).to_list(1000)
+        products = await db.products.find(query, {"_id": 0}).to_list(10000)
 
     # Ensure all products have installation_type (migration for legacy products)
     for product in products:
@@ -6770,6 +6831,23 @@ async def get_products(
         product["low_stock_threshold"] = max(1, normalized_low_stock_threshold)
 
     return products
+
+
+@api_router.post("/products/seed-catalogs")
+async def seed_catalogs_endpoint(request: Request):
+    """Admin endpoint to force sync and upsert all Grok catalog seeds into db.products."""
+    user = await require_auth(request)
+    if user.role not in {"gerencia", "supervisor", "programador", "jefe_tienda", "bodegas"}:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    result = await ensure_unified_catalog_products_seeded()
+    total = await db.products.count_documents({})
+    return {
+        "status": "success",
+        "result": result,
+        "total_products_in_db": total,
+        "message": f"Catálogos sincronizados con éxito. Total productos en base de datos: {total}",
+    }
 
 
 @api_router.get("/pricing/sale-context")
