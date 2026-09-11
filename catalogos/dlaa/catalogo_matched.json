@@ -3750,8 +3750,7 @@
         "frontier",
         "x-trail",
         "roomy",
-        "rogue",
-        "fit"
+        "rogue"
       ],
       "years": [
         {
@@ -3765,7 +3764,7 @@
         "Rogue 2021"
       ]
     },
-    "compatibilidad": "NISSAN, TOYOTA | Frontier, X-Trail, Roomy, Rogue, FIT | 2021-ON",
+    "compatibilidad": "NISSAN, TOYOTA | Frontier, X-Trail, Roomy, Rogue | 2021-ON",
     "match_status": "matched",
     "erp_match_count": 9,
     "erp_matches": [
@@ -3911,8 +3910,7 @@
         "4runner",
         "probox",
         "prious",
-        "baqua",
-        "fit"
+        "baqua"
       ],
       "years": [
         {
@@ -3924,7 +3922,7 @@
         "Toyota Baqua/ Prious 2018 2019"
       ]
     },
-    "compatibilidad": "TOYOTA | 4Runner, Probox, Prious, Baqua, FIT | 2018-2019",
+    "compatibilidad": "TOYOTA | 4Runner, Probox, Prious, Baqua | 2018-2019",
     "match_status": "matched",
     "erp_match_count": 13,
     "erp_matches": [
@@ -4078,8 +4076,7 @@
         "TOYOTA"
       ],
       "models": [
-        "c-hr",
-        "fit"
+        "c-hr"
       ],
       "years": [
         {
@@ -4091,7 +4088,7 @@
         "Toyota C-HR"
       ]
     },
-    "compatibilidad": "TOYOTA | C-Hr, FIT | 2017-2019",
+    "compatibilidad": "TOYOTA | C-Hr | 2017-2019",
     "match_status": "matched",
     "erp_match_count": 4,
     "erp_matches": [
