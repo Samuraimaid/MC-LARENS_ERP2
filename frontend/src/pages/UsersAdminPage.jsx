@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Checkbox } from "../components/ui/checkbox";
 import { toast } from "sonner";
-import { RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff, Shield } from "lucide-react";
+import { RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff, Shield, Copy, Check, Unlock } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { formatPhone } from "@/lib/formatters";
 import { UserDirectoryPicker } from "@/components/users/UserDirectoryPicker";
@@ -99,6 +99,31 @@ export function UsersAdminPage() {
   const [loadingKioskPins, setLoadingKioskPins] = useState(false);
   const [syncingKioskPins, setSyncingKioskPins] = useState(false);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [showLoginPins, setShowLoginPins] = useState(false);
+  const [kioskTableSearch, setKioskTableSearch] = useState("");
+  const [copiedPinId, setCopiedPinId] = useState(null);
+  const [resettingLocks, setResettingLocks] = useState(false);
+
+  const handleCopyPin = (text, id) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedPinId(id);
+    toast.success(`PIN ${text} copiado`);
+    setTimeout(() => setCopiedPinId(null), 2000);
+  };
+
+  const handleResetAllLocks = async () => {
+    setResettingLocks(true);
+    try {
+      const res = await axios.post(`${API}/auth/pin/reset-all-locks`, {}, { withCredentials: true });
+      toast.success(res.data?.message || "Bloqueos restablecidos para todos los usuarios.");
+      await fetchData();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Error al restablecer bloqueos"));
+    } finally {
+      setResettingLocks(false);
+    }
+  };
 
   // Permissions panel
   const [permissionsCatalog, setPermissionsCatalog] = useState(null);
@@ -1298,10 +1323,49 @@ export function UsersAdminPage() {
           </Card>
 
           <Card className="mt-4 border-primary/20 shadow-sm ui-panel animate-fade-up-soft">
-            <CardHeader>
-              <CardTitle>Tabla de PIN Kiosko</CardTitle>
-              <CardDescription>PIN de marcación actuales para pruebas de entrada/salida</CardDescription>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="h-5 w-5 text-primary" />
+                  Tabla Maestra de Credenciales y PINes
+                </CardTitle>
+                <CardDescription>
+                  PIN de marcación (Kiosko 4 dígitos) y PIN de acceso (Login 8 dígitos) de todo el personal
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLoginPins(!showLoginPins)}
+                  className="text-xs"
+                >
+                  {showLoginPins ? <EyeOff className="h-3.5 w-3.5 mr-1" /> : <Eye className="h-3.5 w-3.5 mr-1" />}
+                  {showLoginPins ? "Ocultar PIN Login" : "Revelar PIN Login"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetAllLocks}
+                  disabled={resettingLocks}
+                  className="text-xs text-amber-600 border-amber-500/30 hover:bg-amber-500/10"
+                >
+                  <Unlock className={`h-3.5 w-3.5 mr-1 ${resettingLocks ? "animate-spin" : ""}`} />
+                  Restablecer Bloqueos
+                </Button>
+              </div>
             </CardHeader>
+            <div className="px-6 py-2 border-b bg-muted/20 flex flex-wrap items-center gap-3">
+              <Input
+                placeholder="Buscar por nombre, correo o rol..."
+                value={kioskTableSearch}
+                onChange={(e) => setKioskTableSearch(e.target.value)}
+                className="max-w-xs h-8 text-xs"
+              />
+              <span className="text-xs text-muted-foreground ml-auto">
+                {kioskPinsTable.length} usuarios registrados
+              </span>
+            </div>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -1310,28 +1374,122 @@ export function UsersAdminPage() {
                     <TableHead>Apellidos</TableHead>
                     <TableHead>Rol</TableHead>
                     <TableHead>Sucursal</TableHead>
-                    <TableHead>PIN Kiosko</TableHead>
+                    <TableHead>PIN Kiosko (4 dig)</TableHead>
+                    <TableHead>PIN Login (8 dig)</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {kioskPinsTable.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                        No hay PIN Kiosko generados aún.
+                      <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                        No hay PINes registrados aún.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    kioskPinsTable.map((item) => (
-                      <TableRow key={`kiosk-${item.user_id}`}>
-                        <TableCell>{item.name || item.user_id}</TableCell>
-                        <TableCell>{item.last_name || "-"}</TableCell>
-                        <TableCell>{getUserRoleLabel(item.role)}</TableCell>
-                        <TableCell>{branches.find((b) => b.branch_id === item.branch_id)?.name || "Sin sucursal"}</TableCell>
-                        <TableCell className="font-mono tracking-widest">
-                          {(item.role === "bodegas" || item.role === "transporte") ? (item.kiosk_pin || "----") : "N/A"}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    kioskPinsTable
+                      .filter((item) => {
+                        if (!kioskTableSearch.trim()) return true;
+                        const term = kioskTableSearch.toLowerCase();
+                        return (
+                          (item.name && item.name.toLowerCase().includes(term)) ||
+                          (item.last_name && item.last_name.toLowerCase().includes(term)) ||
+                          (item.email && item.email.toLowerCase().includes(term)) ||
+                          (item.role && item.role.toLowerCase().includes(term))
+                        );
+                      })
+                      .map((item) => (
+                        <TableRow key={`kiosk-${item.user_id}`} className="hover:bg-muted/40">
+                          <TableCell className="font-medium">
+                            <div>
+                              <p>{item.name || item.user_id}</p>
+                              {item.email && (
+                                <p className="text-[11px] text-muted-foreground">{item.email}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.last_name || "-"}</TableCell>
+                          <TableCell>
+                            <Badge className={`${getRoleColor(item.role)} text-white text-xs`}>
+                              {(rolesMap && rolesMap[item.role]?.label) || ROLES[item.role]?.label || item.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {branches.find((b) => b.branch_id === item.branch_id)?.name || "Central / Todas"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5 font-mono tracking-widest text-sm bg-muted/60 px-2 py-0.5 rounded w-fit">
+                              <span>{item.kiosk_pin || "----"}</span>
+                              {item.kiosk_pin && item.kiosk_pin !== "----" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleCopyPin(item.kiosk_pin, `kiosk-${item.user_id}`)}
+                                  title="Copiar PIN Kiosko"
+                                >
+                                  {copiedPinId === `kiosk-${item.user_id}` ? (
+                                    <Check className="h-3 w-3 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5 font-mono tracking-widest text-sm bg-primary/10 text-primary px-2 py-0.5 rounded w-fit">
+                              <span>
+                                {showLoginPins
+                                  ? (item.login_pin || "••••••••")
+                                  : (item.login_pin ? "••••••••" : "No asignado")}
+                              </span>
+                              {item.login_pin && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleCopyPin(item.login_pin, `login-${item.user_id}`)}
+                                  title="Copiar PIN Login"
+                                >
+                                  {copiedPinId === `login-${item.user_id}` ? (
+                                    <Check className="h-3 w-3 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {item.is_locked ? (
+                              <Badge variant="destructive" className="text-[10px]">
+                                Bloqueado ({item.failed_attempts} intentos)
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">
+                                Activo
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingPinUser(item);
+                                  setNewPin("");
+                                }}
+                                className="h-7 px-2 text-xs"
+                              >
+                                Cambiar
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>
