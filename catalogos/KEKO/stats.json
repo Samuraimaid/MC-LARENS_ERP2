@@ -1,0 +1,26 @@
+{
+  "generated_at_utc": "2026-09-11T22:11:26.611914+00:00",
+  "source": "https://www.keko.com.br/",
+  "products": 212,
+  "matched": 104,
+  "universal": 80,
+  "unmatched": 28,
+  "skus_total": 970,
+  "categories": {
+    "Ítems de reposición": 137,
+    "Enganches de remolque": 26,
+    "Capota rígida retráctil": 14,
+    "Santo Antonio": 10,
+    "Capotas marítimas": 8,
+    "Estribos": 8,
+    "Utilitarios": 5,
+    "Traviesas": 2,
+    "Estribo eléctrico": 1,
+    "Rejilla de vidrio trasero": 1
+  },
+  "images_downloaded": 30,
+  "images_failed": 0,
+  "erp_entries": 8318,
+  "erp_match_cap": 40,
+  "output_dir": "/workspace/erp-catalogs/catalogos/KEKO"
+}
