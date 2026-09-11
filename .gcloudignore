@@ -16,6 +16,8 @@ backend/__pycache__/
 *.pyc
 
 # Excluir directorios pesados de planos, modelos 3D y videos (se sirven vía Google Cloud Storage CDN Bucket)
+catalogos/
+catalogos/**
 backend/data/blueprints_raw/
 backend/data/blueprints_cleaned/
 frontend/public/vehicles/models/
