@@ -1,0 +1,2582 @@
+[
+  {
+    "sku": "KIT2026-01",
+    "slug": "kit-ceramico-meguiars-baltap-g240748-g230416-g200416-2",
+    "codigos": [
+      "KIT2026",
+      "G240748",
+      "G230416",
+      "G200416",
+      "BALTAP",
+      "KIT2026-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G240748_ef907e99-2085-411a-be0d-fc83b8c6b950.jpg?v=1734731303",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/kit-ceramico-meguiars-baltap-g240748-g230416-g200416-2/principal.jpg"
+  },
+  {
+    "sku": "G15816-01",
+    "slug": "ultimate-black-restorer-1x16oz",
+    "codigos": [
+      "G15816",
+      "1X16OZ",
+      "G15816-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G15816_UltimateBlack_Front.jpg?v=1784673286",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-black-restorer-1x16oz/principal.jpg"
+  },
+  {
+    "sku": "G14516-01",
+    "slug": "ultimate-protectant-1x16oz-2",
+    "codigos": [
+      "G14516",
+      "1X16OZ",
+      "G14516-01",
+      "G191016"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G191016_3in1Wax_Hero.png?v=1736986930",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-protectant-1x16oz-2/principal.jpg"
+  },
+  {
+    "sku": "M6MFP2-01",
+    "slug": "professional-6-microfiber-pad-dmc6",
+    "codigos": [
+      "M6MFP2",
+      "DMC6",
+      "M6MFP2-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M6MFP2_6in-MicrofiberPad_Exploded-Front_10x10_8e8131bf-32ce-40e0-909b-df5d4abf1290.jpg?v=1765578027",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/professional-6-microfiber-pad-dmc6/principal.jpg"
+  },
+  {
+    "sku": "M5CFP2-01",
+    "slug": "professional-5-compound-foam-pad-dfc5",
+    "codigos": [
+      "M5CFP2",
+      "DFC5",
+      "M5CFP2-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M5CFP2_5in-FoamCompoundingPad_Exploded-Front_10x10_7684881d-ad6f-4576-8c01-bddb76615faf.jpg?v=1765497542",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/professional-5-compound-foam-pad-dfc5/principal.jpg"
+  },
+  {
+    "sku": "KIT2025-01",
+    "slug": "kit-ceramico-meguiars-baltap-g240748-g230416-g200416",
+    "codigos": [
+      "KIT2025",
+      "BALTAP",
+      "G240748",
+      "G230416",
+      "G200416",
+      "KIT2025-01",
+      "M6701"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M6701_Marine-RV-OneStep-Compound_HDPE_Front_10x10_f9e3c79b-8651-44d5-a293-ad7a286bdf50.jpg?v=1749249650",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/kit-ceramico-meguiars-baltap-g240748-g230416-g200416/principal.jpg"
+  },
+  {
+    "sku": "G17916-01",
+    "slug": "gold-class-leather-cleaner-conditioner",
+    "codigos": [
+      "G17916",
+      "G17916-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2025/06/G17916_GCRichLeatherGel_HDPE_Hero_10x10-scaled.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-class-leather-cleaner-conditioner/principal.jpg"
+  },
+  {
+    "sku": "G240748-01",
+    "slug": "hybrid-ceramic-wash-wax-1x48oz",
+    "codigos": [
+      "G240748",
+      "1X48OZ",
+      "G240748-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G240748_ef907e99-2085-411a-be0d-fc83b8c6b950.jpg?v=1734731303",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-wash-wax-1x48oz/principal.jpg"
+  },
+  {
+    "sku": "G251024-01",
+    "slug": "hybrid-ceramic-waterless-wash-wax-1x24oz",
+    "codigos": [
+      "G251024",
+      "1X24OZ",
+      "G251024-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G251024_HybridCeramicWaterlessWashWax_Hero_10x10_03f9d0a3-b589-485b-92d1-d1783cd88c60.jpg?v=1734999825",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-waterless-wash-wax-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "G250816-01",
+    "slug": "ultimate-insane-shine-tire-spray-16oz",
+    "codigos": [
+      "G250816",
+      "G250816-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250816_UltimateInsaneShineTrigger_Hero_10x10_68367182-b071-41bf-a78f-cc38547f169d.jpg?v=1734998932",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-insane-shine-tire-spray-16oz/principal.jpg"
+  },
+  {
+    "sku": "G250708-01",
+    "slug": "trigger-air-refresher-black-chrome-8oz",
+    "codigos": [
+      "G250708",
+      "G250708-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250708_AirRefreshTriggrBlkChrm_Hero_10x10_84b208ef-a92e-42bb-8691-f24cee310625.png?v=1737157405",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/trigger-air-refresher-black-chrome-8oz/principal.jpg"
+  },
+  {
+    "sku": "G250608-01",
+    "slug": "trigger-air-refresher-new-car-8oz",
+    "codigos": [
+      "G250608",
+      "G250608-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250608_AirRefreshTriggrNewCar_Hero_10x10_2a5fab7c-c821-41f7-9bc4-770613c412e0.jpg?v=1734997476",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/trigger-air-refresher-new-car-8oz/principal.jpg"
+  },
+  {
+    "sku": "G250524-01",
+    "slug": "ultimate-iron-remover-1x24oz",
+    "codigos": [
+      "G250524",
+      "1X24OZ",
+      "G250524-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250524_UltimateIronRemover_Hero_10x10_ef2a7012-8a8c-4a9f-9409-e92221e07aaf.png?v=1736985439",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-iron-remover-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "G250464-01",
+    "slug": "watermelon-car-wash-64oz",
+    "codigos": [
+      "G250464",
+      "G250464-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250464_WatermelonBubblegumWash_Front_10x10_1bbc5f61-94f9-4610-a22e-0d2c9d50b5fd.jpg?v=1765409912",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/watermelon-car-wash-64oz/principal.jpg"
+  },
+  {
+    "sku": "G250224-01",
+    "slug": "paint-dash-glass-1x24oz",
+    "codigos": [
+      "G250224",
+      "1X24OZ",
+      "G250224-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250224_PaintDash_Glass_Hero_10x10_79880bfe-b567-44c9-86ed-5d2686b6dea9.jpg?v=1735000153",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/paint-dash-glass-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "G250100-01",
+    "slug": "heavy-duty-trim-restoration-kit",
+    "codigos": [
+      "G250100",
+      "G250100-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G250100_HeavyDutyTrimRestorationKit_Hero_10x10_26f21dea-8b1d-4af3-9e17-605447023a00.jpg?v=1734998254",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/heavy-duty-trim-restoration-kit/principal.jpg"
+  },
+  {
+    "sku": "DRTU11032-01",
+    "slug": "drtu-hyper-wash-32oz",
+    "codigos": [
+      "DRTU11032",
+      "DRTU11032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU11032_WatermelonBlastHyperWash_Hero_10x10_f9956a19-22e7-4582-a1f8-5c8ef29adaeb.png?v=1737413560",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/drtu-hyper-wash-32oz/principal.jpg"
+  },
+  {
+    "sku": "G7116-01",
+    "slug": "gold-class-car-wash-shampoo-cond-1x473-ml",
+    "codigos": [
+      "G7116",
+      "1473ML",
+      "G7116-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2025/03/G7116_GCWash16.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-class-car-wash-shampoo-cond-1x473-ml/principal.jpg"
+  },
+  {
+    "sku": "D14301-01",
+    "slug": "non-acid-wheel-tire-cleaner-meguars-1x1-gl",
+    "codigos": [
+      "D14301",
+      "11GL",
+      "D14301-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D14301_NonAcidWheelAndTireCleaner_HDPE_Front_10x10_a63c8b29-c84a-4045-8f74-4f003b8dc2c5.jpg?v=1749251061",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/non-acid-wheel-tire-cleaner-meguars-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "M2716-01",
+    "slug": "pro-hybrid-ceramic-sealant-1x16oz",
+    "codigos": [
+      "M2716",
+      "1X16OZ",
+      "M2716-01",
+      "G191016"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G191016_3in1Wax_Hero.png?v=1736986930",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-hybrid-ceramic-sealant-1x16oz/principal.jpg"
+  },
+  {
+    "sku": "M2701-01",
+    "slug": "pro-hybrid-ceramic-sealant",
+    "codigos": [
+      "M2701",
+      "M2701-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M2701_Pro_Hybrid_Ceramic_Sealant_HDPE_Front_10x10_df8f6770-b527-4585-8862-4313374c8222.jpg?v=1749254369",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-hybrid-ceramic-sealant/principal.jpg"
+  },
+  {
+    "sku": "Balde Meg 5 gl",
+    "slug": "balde-meguiars-aros-color-gris-5-galones-sin-tapa",
+    "codigos": [
+      "BALDEMEG5GL"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/BaldeMeg5G-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/balde-meguiars-aros-color-gris-5-galones-sin-tapa/principal.jpg"
+  },
+  {
+    "sku": "G2990SRP",
+    "slug": "ultimate-headlight-restoration-kit",
+    "codigos": [
+      "G2990SRP",
+      "G2990"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G2990SRP_0_50761fc4-6977-4e2c-b845-648fba928e9d.jpg?v=1734731291",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-headlight-restoration-kit/principal.jpg"
+  },
+  {
+    "sku": "M4364-01",
+    "slug": "boat-wash-1x1-89-lt",
+    "codigos": [
+      "M4364",
+      "1189LT",
+      "M4364-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M4364_BoatWash_PET_Front_10x10_c3de8a1e-d918-4390-8bdc-ce0e96cd2fbc.jpg?v=1749248027",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/boat-wash-1x1-89-lt/principal.jpg"
+  },
+  {
+    "sku": "BaldeBlanco",
+    "slug": "balde-meguiars-lavado-color-blanco-5-galones-sin-tapa",
+    "codigos": [
+      "BALDEBLANCO"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/Baldeblanco-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/balde-meguiars-lavado-color-blanco-5-galones-sin-tapa/principal.jpg"
+  },
+  {
+    "sku": "M4516-01",
+    "slug": "boat-rv-polish-1x473-ml",
+    "codigos": [
+      "M4516",
+      "M4516-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M4516_Marine_RV_High_Gloss_Polish_HDPE_Front_10x10_5625f036-dfbb-4704-a51e-9b8090354f38.jpg?v=1749248103",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/boat-rv-polish-1x473-ml/principal.jpg"
+  },
+  {
+    "sku": "BALTAP",
+    "slug": "balde-meguiars-color-amarillo-2-5-galones-con-tapa",
+    "codigos": [
+      "BALTAP",
+      "M6701"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M6701_Marine-RV-OneStep-Compound_HDPE_Front_10x10_f9e3c79b-8651-44d5-a293-ad7a286bdf50.jpg?v=1749249650",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/balde-meguiars-color-amarillo-2-5-galones-con-tapa/principal.jpg"
+  },
+  {
+    "sku": "G17316-01",
+    "slug": "engine-dressing-1x473ml",
+    "codigos": [
+      "G17316",
+      "G17316-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2024/06/g17316.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/engine-dressing-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "M88800-01",
+    "slug": "beyond-ceramic-coating-kit",
+    "codigos": [
+      "M88800",
+      "M88800-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M88800_BeyondCeramicPaintCoating_10x10_c82f3c1b-5990-4aa2-ab1f-c84fa4a502e3.png?v=1737157325",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/beyond-ceramic-coating-kit/principal.jpg"
+  },
+  {
+    "sku": "M30032-01",
+    "slug": "so1o-all-in-one-946ml",
+    "codigos": [
+      "M30032",
+      "M30032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M30032_95100294-0d23-4b73-b57e-d3d9d621bb35.jpg?v=1734731264",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/so1o-all-in-one-946ml/principal.jpg"
+  },
+  {
+    "sku": "M20032-01",
+    "slug": "pro-speed-polish-946ml",
+    "codigos": [
+      "M20032",
+      "M20032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M20032_0_d0bbe026-7c9c-42b7-b316-c74315b95927.jpg?v=1734731278",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-speed-polish-946ml/principal.jpg"
+  },
+  {
+    "sku": "G240616-01",
+    "slug": "all-surface-interior-cleaner-473ml",
+    "codigos": [
+      "G240616",
+      "G240616-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G240616_AllSurfaceInteriorCleaner_10x10_a4130d2d-12e4-4ce8-8645-acf82a721855.png?v=1736977225",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-surface-interior-cleaner-473ml/principal.jpg"
+  },
+  {
+    "sku": "G240416-01",
+    "slug": "ultimate-glass-cleaner-water-repellent-473ml",
+    "codigos": [
+      "G240416",
+      "G240416-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G240416_8748497e-6899-40d9-b69e-c12054e74807.jpg?v=1734731330",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-glass-cleaner-water-repellent-473ml/principal.jpg"
+  },
+  {
+    "sku": "G240108-01",
+    "slug": "ultimate-ceramic-coating-236ml",
+    "codigos": [
+      "G240108",
+      "G240108-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G240100_UltimateCeramicCoatingKit_Exploded_10x10_31a68ff9-ab43-432b-b5dc-d31281cd72b2.jpg?v=1734739209",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-ceramic-coating-236ml/principal.jpg"
+  },
+  {
+    "sku": "G2970-01",
+    "slug": "two-step-headlight-restoration-kit",
+    "codigos": [
+      "G2970",
+      "G2970-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G2970_v1_1264059b-f496-47c9-a016-af26117ee10f.jpg?v=1734732062",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/two-step-headlight-restoration-kit/principal.jpg"
+  },
+  {
+    "sku": "M5032-01",
+    "slug": "one-step-boat-rv-cleaner-wax-liquid-1x945-ml",
+    "codigos": [
+      "M5032",
+      "1945ML",
+      "M5032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M5032_MarineCleanerWax_HDPE_Front_10x10_3c5d5a0d-bca7-472c-9d98-3a99835bd90f.jpg?v=1749248665",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/one-step-boat-rv-cleaner-wax-liquid-1x945-ml/principal.jpg"
+  },
+  {
+    "sku": "M5001-01",
+    "slug": "one-step-boat-rv-cleaner-wax-liquid-1x3-78-lt",
+    "codigos": [
+      "M5001",
+      "1378LT",
+      "M5001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M5001_Marine_RV_Cleaner_Wax_HDPE_Front_10x10_2d2f60da-9aae-4bf5-ad6e-79416e5c0dbe.jpg?v=1749248489",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/one-step-boat-rv-cleaner-wax-liquid-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "MDFAUCET",
+    "slug": "meguiars-clear-faucet-x-5-gl-bottle",
+    "codigos": [
+      "MDFAUCET",
+      "M8501"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M8501_DiamondCutCompound_HDPE_Front_10x10_74a89332-1860-4c16-92b3-318d07c045d5.jpg?v=1784837184",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/meguiars-clear-faucet-x-5-gl-bottle/principal.jpg"
+  },
+  {
+    "sku": "S2025-01",
+    "slug": "unigrit-sanding-paper-2000-gri-1x25",
+    "codigos": [
+      "S2025",
+      "S2025-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/S2025.jpg?v=1734654092",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/unigrit-sanding-paper-2000-gri-1x25/principal.jpg"
+  },
+  {
+    "sku": "M79901-01",
+    "slug": "pro-hybrid-ceramic-bead-booster-galon",
+    "codigos": [
+      "M79901",
+      "M79901-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/10/M79901.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/pro-hybrid-ceramic-bead-booster-galon/principal.jpg"
+  },
+  {
+    "sku": "MT103-01",
+    "slug": "lampara-led-meguiars",
+    "codigos": [
+      "MT103",
+      "MT103-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/10/MT103.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/lampara-led-meguiars/principal.jpg"
+  },
+  {
+    "sku": "D20181-01",
+    "slug": "leather-cleaner-bottel-16oz",
+    "codigos": [
+      "D20181",
+      "D20181-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D201801.jpg?v=1734654445",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/leather-cleaner-bottel-16oz/principal.jpg"
+  },
+  {
+    "sku": "M78802-01",
+    "slug": "deep-crystal-ceramic-paint-coating-kit",
+    "codigos": [
+      "M78802",
+      "M78802-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/10/M78802_DeepCrystalCeramicCoating_Box_thmb.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/deep-crystal-ceramic-paint-coating-kit/principal.jpg"
+  },
+  {
+    "sku": "G200916-01",
+    "slug": "ultimate-quik-wax-16oz",
+    "codigos": [
+      "G200916",
+      "G200916-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G200924_UltimateQuikWax_HDPE_Front_10x10_b8602a81-7861-4e17-96b4-e6d6212aab8b.jpg?v=1749247617",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-quik-wax-16oz/principal.jpg"
+  },
+  {
+    "sku": "G211606-01",
+    "slug": "metal-polish-6oz-177ml",
+    "codigos": [
+      "G211606",
+      "G211606-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G211606_8_547a8e1e-4b27-4c48-ad9a-102ed439976e.jpg?v=1734732134",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/metal-polish-6oz-177ml/principal.jpg"
+  },
+  {
+    "sku": "G230524-01",
+    "slug": "hot-rims-black-wheel-cleaner",
+    "codigos": [
+      "G230524",
+      "G230524-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G230524_0_55a08b79-fc76-4ad8-ab46-9acce58507b7.jpg?v=1734732075",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-rims-black-wheel-cleaner/principal.jpg"
+  },
+  {
+    "sku": "G230416-01",
+    "slug": "hybrid-ceramic-tire-shine",
+    "codigos": [
+      "G230416",
+      "G230416-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G230416_HybridCeramicTireShine_Hero_10x10_6aaf9b56-0ed0-4aed-b445-5b01473b2607.png?v=1737158127",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-tire-shine/principal.jpg"
+  },
+  {
+    "sku": "G230316-01",
+    "slug": "ultimate-insane-shine-paint-glosser",
+    "codigos": [
+      "G230316",
+      "G230316-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G230316_0_33910339-c650-46d9-a493-6c8c79fb1a9f.jpg?v=1734732099",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-insane-shine-paint-glosser/principal.jpg"
+  },
+  {
+    "sku": "G4216-01",
+    "slug": "new-car-scent-protectant-6x16oz",
+    "codigos": [
+      "G4216",
+      "G4216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G4216_NewCarProtectantSprayHDPE_Front_10x10_4a7051b1-0513-4267-9438-997431df49a9.jpg?v=1749159786",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/new-car-scent-protectant-6x16oz/principal.jpg"
+  },
+  {
+    "sku": "G2016-01",
+    "slug": "convertible-top-cleane-1x450-ml",
+    "codigos": [
+      "G2016",
+      "G2016-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G2016_CnvrtblTopClnr_10x10.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/convertible-top-cleane-1x450-ml/principal.jpg"
+  },
+  {
+    "sku": "X3070-01",
+    "slug": "high-tech-applicator-pad-1x1-unid",
+    "codigos": [
+      "X3070",
+      "X3070-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/X3070.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/high-tech-applicator-pad-1x1-unid/principal.jpg"
+  },
+  {
+    "sku": "G220416-01",
+    "slug": "hybrid-ceramic-pre-wax-prep-16oz",
+    "codigos": [
+      "G220416",
+      "G220416-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G220416_hybridceramicpre-waxprep.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/hybrid-ceramic-pre-wax-prep-16oz/principal.jpg"
+  },
+  {
+    "sku": "G7516-01",
+    "slug": "gold-c-endurance-high-gloss-1x473ml",
+    "codigos": [
+      "G7516",
+      "G7516-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/Meguiars-Endurance-Tire-Gel.jpg?v=1773375922",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-endurance-high-gloss-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "D17001-01",
+    "slug": "hyper-dressing-1x1gl",
+    "codigos": [
+      "D17001",
+      "D17001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D17001_HyperDressing_HDPE_Front_10x10_128add56-8477-4bf6-97fc-978491bd0ab2.jpg?v=1749251955",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hyper-dressing-1x1gl/principal.jpg"
+  },
+  {
+    "sku": "D16001-01",
+    "slug": "all-season-shine-1x3-785-lt",
+    "codigos": [
+      "D16001",
+      "D16001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D16001_AllSeasonDressing_HDPE_Front_10x10_8cb62ac7-3f09-4c4a-afec-627374b0858c.jpg?v=1749251703",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-season-shine-1x3-785-lt/principal.jpg"
+  },
+  {
+    "sku": "G210608-01",
+    "slug": "ultimate-paste-wax-8oz",
+    "codigos": [
+      "G210608",
+      "G210608-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G210608_27ffb0bc-fc88-4f47-9e38-9c808da6a291.jpg?v=1734732141",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-paste-wax-8oz/principal.jpg"
+  },
+  {
+    "sku": "M3401-01",
+    "slug": "meguiars-final-inspection-1x3-78-lt",
+    "codigos": [
+      "M3401",
+      "M3401-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M3401_FinalInspection_HDPE_Front_10x10_f73d8b7e-f33a-4227-b761-5896b47f81f9.jpg?v=1784837031",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/meguiars-final-inspection-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "G14324-01",
+    "slug": "hot-rims-aluminum-wheel-wash-1x710",
+    "codigos": [
+      "G14324",
+      "G14324-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G14324_HotRimsAluminumWheelCleaner_HDPE_Fr_10x10_0e1b1ee0-0df8-4154-a738-3f4ddf29e3e3.jpg?v=1749163114",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-rims-aluminum-wheel-wash-1x710/principal.jpg"
+  },
+  {
+    "sku": "D12001-01",
+    "slug": "glass-cleaner-concentrate-1x3-78lt",
+    "codigos": [
+      "D12001",
+      "D12001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D12001_GlassCleanerConcentrate_HDPE_Front_10x10_f36559b9-5214-4614-b3f2-773afbf971e7.jpg?v=1749250992",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/glass-cleaner-concentrate-1x3-78lt/principal.jpg"
+  },
+  {
+    "sku": "G10464-01",
+    "slug": "deep-crystal-car-wash-1x1-89-lt",
+    "codigos": [
+      "G10464",
+      "1189LT",
+      "G10464-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G10464_DeepCrystalCarWash_PET_Front_10x10_371604bd-2ec6-4176-aa06-be0f29591c72.jpg?v=1749161758",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/deep-crystal-car-wash-1x1-89-lt/principal.jpg"
+  },
+  {
+    "sku": "D16005-01",
+    "slug": "all-season-shine-1x5-gl",
+    "codigos": [
+      "D16005",
+      "15GL",
+      "D16005-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D16005_AllSeasonDressing.png?v=1737157229",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-season-shine-1x5-gl/principal.jpg"
+  },
+  {
+    "sku": "G3626-01",
+    "slug": "ultimate-wash-wax-anywhere",
+    "codigos": [
+      "G3626",
+      "G3626-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G3626_UltimateWaterlessWashAndWax_PET_Front_10x10_48ba1978-345e-4bc6-b712-1bbb9f06f2a7.jpg?v=1749156625",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-wash-wax-anywhere/principal.jpg"
+  },
+  {
+    "sku": "DBP5-01",
+    "slug": "soft-buff-dbp5-da-polisher-5-inch-backing-plate",
+    "codigos": [
+      "DBP5",
+      "DBP5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DBP5_Front.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/soft-buff-dbp5-da-polisher-5-inch-backing-plate/principal.jpg"
+  },
+  {
+    "sku": "G7014J-01",
+    "slug": "gold-c-clear-coat-paste-car-wax-1x445ml",
+    "codigos": [
+      "G7014J",
+      "G7014J-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G7014J.jpg?v=1734654243",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-clear-coat-paste-car-wax-1x445ml/principal.jpg"
+  },
+  {
+    "sku": "G8224-01",
+    "slug": "perfect-clarity-cleaner-spray-1x710ml",
+    "codigos": [
+      "G8224",
+      "G8224-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G8224.jpg?v=1734654232",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/perfect-clarity-cleaner-spray-1x710ml/principal.jpg"
+  },
+  {
+    "sku": "G14512-01",
+    "slug": "ultimate-protectan-1x355-ml",
+    "codigos": [
+      "G14512",
+      "1355ML",
+      "G14512-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G14512EU-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-protectan-1x355-ml/principal.jpg"
+  },
+  {
+    "sku": "A1214-01",
+    "slug": "cleaner-wax-paste-1x311gr",
+    "codigos": [
+      "A1214",
+      "A1214-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A1214_CleanerWaxPaste_NEW.png?v=1737158340",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/cleaner-wax-paste-1x311gr/principal.jpg"
+  },
+  {
+    "sku": "G180515-01",
+    "slug": "foaming-bug-tar-remover-15-oz",
+    "codigos": [
+      "G180515",
+      "G180515-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G180515_Bug_Tar_Remover.png?v=1737157700",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/foaming-bug-tar-remover-15-oz/principal.jpg"
+  },
+  {
+    "sku": "D20156-01",
+    "slug": "synthetic-x-press-spray-wax-bottle-945ml",
+    "codigos": [
+      "D20156",
+      "945ML",
+      "D20156-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/D20156_SyntheticXprssSpryWx.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/synthetic-x-press-spray-wax-bottle-945ml/principal.jpg"
+  },
+  {
+    "sku": "A3714-01",
+    "slug": "water-spot-remover",
+    "codigos": [
+      "A3714",
+      "A3714-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A3714_WaterSpotRemover_HDPE_Front_10x10_4fe87233-744d-4748-91f6-be1584726aac.jpg?v=1748991733",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/water-spot-remover/principal.jpg"
+  },
+  {
+    "sku": "X210300-01",
+    "slug": "perfect-clarity-glass-towel",
+    "codigos": [
+      "X210300",
+      "X210300-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/X210300f.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/perfect-clarity-glass-towel/principal.jpg"
+  },
+  {
+    "sku": "G190526-01",
+    "slug": "hybrid-ceramic-wax-1x768-ml",
+    "codigos": [
+      "G190526",
+      "G190526-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G190526_HybridCeramicWax-PET_Front_10x10_159e7560-9e8a-4bc3-bd4c-2426e14b1032.jpg?v=1749246917",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-wax-1x768-ml/principal.jpg"
+  },
+  {
+    "sku": "G10307-01",
+    "slug": "scratch-x-1x207ml",
+    "codigos": [
+      "G10307",
+      "G10307-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G10307_aee9d047-9b00-4d4c-a2df-0aaaeff18825.jpg?v=1734732528",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/scratch-x-1x207ml/principal.jpg"
+  },
+  {
+    "sku": "X2020-01",
+    "slug": "suprime-shine-microfiber-1x3-unid",
+    "codigos": [
+      "X2020",
+      "X2020-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/X2020_3PkMicrofiber_Peg_50857409-39a6-4f2e-9465-158393798c74.jpg?v=1734731405",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/suprime-shine-microfiber-1x3-unid/principal.jpg"
+  },
+  {
+    "sku": "DMC5-01",
+    "slug": "da-microfiber-cutting-pad-5",
+    "codigos": [
+      "DMC5",
+      "DMC5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMC5.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/da-microfiber-cutting-pad-5/principal.jpg"
+  },
+  {
+    "sku": "D10801-01",
+    "slug": "super-degreaser-1x1-gl",
+    "codigos": [
+      "D10801",
+      "D10801-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D10801_SuperDegreaser_HDPE_Front_10x10_ffc68aba-ae85-4813-a1c8-9aa5f6d48571.jpg?v=1749250289",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/super-degreaser-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "G200416-01",
+    "slug": "hybrid-ceramic-liquid-wax-16oz",
+    "codigos": [
+      "G200416",
+      "G200416-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G200416_0_97c2dcb0-b13b-47bf-ba3f-56464fd39b49.jpg?v=1734732211",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-liquid-wax-16oz/principal.jpg"
+  },
+  {
+    "sku": "A1216-01",
+    "slug": "cleaner-wax-liquid-1x473ml",
+    "codigos": [
+      "A1216",
+      "A1216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A1216_CleanerWax.jpg?v=1748986172",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/cleaner-wax-liquid-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "G9524-01",
+    "slug": "hot-rims-care-all-wheel-1x710ml",
+    "codigos": [
+      "G9524",
+      "G9524-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G9524_HotRimsWheelAndTireCleaner_HDPE_Fr_10x10_51360ef6-22e0-4423-b87b-d0abf887c20d.jpg?v=1749161313",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-rims-care-all-wheel-1x710ml/principal.jpg"
+  },
+  {
+    "sku": "G191532-01",
+    "slug": "snow-foam-32oz-meguiars",
+    "codigos": [
+      "G191532",
+      "G191532-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G191532-2.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/snow-foam-32oz-meguiars/principal.jpg"
+  },
+  {
+    "sku": "M4916-01",
+    "slug": "heavy-duty-oxidation-remover-1x473-ml",
+    "codigos": [
+      "M4916",
+      "1473ML",
+      "M4916-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M4916_Marine_RV_Oxidation_Remover_HDPE_Front_10x10_b60540e1-e48e-41bc-a96b-ebd0530a1e52.jpg?v=1749248318",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/heavy-duty-oxidation-remover-1x473-ml/principal.jpg"
+  },
+  {
+    "sku": "G16402-01",
+    "slug": "air-re-fresher-aerosol-1x-740-ml",
+    "codigos": [
+      "G16402",
+      "1X740ML",
+      "G16402-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G16402_AirRefreshNewCar_Fr.jpg?v=1749163789",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/air-re-fresher-aerosol-1x-740-ml/principal.jpg"
+  },
+  {
+    "sku": "DRTU15532-01",
+    "slug": "rtu-last-touch-detailer-945-ml",
+    "codigos": [
+      "DRTU15532",
+      "DRTU15532-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU15532_8231beb1-0718-4723-9e2b-5542548d4bb0.jpg?v=1734732548",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rtu-last-touch-detailer-945-ml/principal.jpg"
+  },
+  {
+    "sku": "D11001-01",
+    "slug": "hyper-wash-1x3-78-lt",
+    "codigos": [
+      "D11001",
+      "1378LT",
+      "D11001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D11001_HyperWash_HDPE_Front_10x10_35dae131-213e-4773-816c-839c8a1e01cd.jpg?v=1749250378",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hyper-wash-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "G200526-01",
+    "slug": "hybrid-ceramic-detailer-26oz",
+    "codigos": [
+      "G200526",
+      "G200526-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G200526_0.png?v=1744239052",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-ceramic-detailer-26oz/principal.jpg"
+  },
+  {
+    "sku": "G190200-01",
+    "slug": "quik-scrath-eraser",
+    "codigos": [
+      "G190200",
+      "G190200-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G190200_e9026a4f-963a-4085-b085-e060bb5e5ade.jpg?v=1734732317",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-scrath-eraser/principal.jpg"
+  },
+  {
+    "sku": "G9624-01",
+    "slug": "all-purpose-cleaner",
+    "codigos": [
+      "G9624",
+      "G9624-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/Img18319253091.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-purpose-cleaner/principal.jpg"
+  },
+  {
+    "sku": "M21032-01",
+    "slug": "ultra-pro-finishing-polish-1x-32-oz",
+    "codigos": [
+      "M21032",
+      "M21032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M21032_Ultra_Pro_Finishing_Polish_HDPE_Front_10x10_12c086e0-6bf0-4c8c-805d-0167abb6bbcf.jpg?v=1749256742",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-pro-finishing-polish-1x-32-oz/principal.jpg"
+  },
+  {
+    "sku": "M21001-01",
+    "slug": "ultra-pro-finish-polish-1-gal",
+    "codigos": [
+      "M21001",
+      "M21001-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/M21001.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/ultra-pro-finish-polish-1-gal/principal.jpg"
+  },
+  {
+    "sku": "D10805-01",
+    "slug": "super-degreaser-1x5-gl",
+    "codigos": [
+      "D10805",
+      "D10805-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D10805.jpg?v=1734654524",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/super-degreaser-1x5-gl/principal.jpg"
+  },
+  {
+    "sku": "D30101-01",
+    "slug": "da-microfiber-finishing-wax-1x-3-78l",
+    "codigos": [
+      "D30101",
+      "1X378L",
+      "D30101-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D30101_0_85563a39-53c7-48cc-9ef7-d710925b3ca3.jpg?v=1734732773",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-finishing-wax-1x-3-78l/principal.jpg"
+  },
+  {
+    "sku": "D16601-01",
+    "slug": "ultra-polishing-wax-1-gallon-1gl-x3-78l",
+    "codigos": [
+      "D16601",
+      "1GLX378L",
+      "D16601-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D16601_UltraPolishingWax_HDPE_Front_10x10_c6cd2850-eabb-4273-9332-b2de2f609d28.jpg?v=1749251854",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-polishing-wax-1-gallon-1gl-x3-78l/principal.jpg"
+  },
+  {
+    "sku": "M6332-01",
+    "slug": "flagship-premium-marine-wax-1x946-ml",
+    "codigos": [
+      "M6332",
+      "1946ML",
+      "M6332-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M6332_Flagship_Marine_Wax_HDPE_Front_10x10_fd3a1fcc-9c5d-409a-9f77-9da61f2867c7.jpg?v=1749249561",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/flagship-premium-marine-wax-1x946-ml/principal.jpg"
+  },
+  {
+    "sku": "D30016-01",
+    "slug": "da-microfiber-correction-compound-1x-473-ml",
+    "codigos": [
+      "D30016",
+      "D30016-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D30032_0_864ae7bc-4c95-434b-8c17-427b2b8d4367.jpg?v=1737159020",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-correction-compound-1x-473-ml/principal.jpg"
+  },
+  {
+    "sku": "X3002-01",
+    "slug": "microfiber-wash-mitt-1x1",
+    "codigos": [
+      "X3002",
+      "X3002-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/X3002_MicrofiberWashMitt_10x10_96379b50-39c0-49b4-a2aa-ce1f98c4cd06.jpg?v=1734731384",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/microfiber-wash-mitt-1x1/principal.jpg"
+  },
+  {
+    "sku": "DMC6-01",
+    "slug": "da-microfiber-cutting-pad-61x-59-mm",
+    "codigos": [
+      "DMC6",
+      "DMC6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMC6_Pkg_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/da-microfiber-cutting-pad-61x-59-mm/principal.jpg"
+  },
+  {
+    "sku": "X3080-01",
+    "slug": "even-coat-applicator-pad-1x1-unid",
+    "codigos": [
+      "X3080",
+      "X3080-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/X3080.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/even-coat-applicator-pad-1x1-unid/principal.jpg"
+  },
+  {
+    "sku": "G191419-01",
+    "slug": "carper-upholstery-cleaner-19-oz-570-ml",
+    "codigos": [
+      "G191419",
+      "570ML",
+      "G191419-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G191419_CarpetUpholsterCleaner_Hero.png?v=1737158032",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/carper-upholstery-cleaner-19-oz-570-ml/principal.jpg"
+  },
+  {
+    "sku": "M2616-01",
+    "slug": "hi-tech-yellow-wax-1x473-ml",
+    "codigos": [
+      "M2616",
+      "1473ML",
+      "M2616-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M2616_HiTechYellowWax_HDPE_Front_10x10_0c27080e-c575-4f74-9fd4-d3bc9d24fc29.jpg?v=1749254242",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hi-tech-yellow-wax-1x473-ml/principal.jpg"
+  },
+  {
+    "sku": "M2601-01",
+    "slug": "hi-tech-yellow-liquid-wax-3-48l",
+    "codigos": [
+      "M2601",
+      "348L",
+      "M2601-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M2601_MirrorGlazeHiTechYellowWax_HDPE_Front_10x10_903cfe57-9cb7-4e2d-b033-cf1764757b22.jpg?v=1784836879",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hi-tech-yellow-liquid-wax-3-48l/principal.jpg"
+  },
+  {
+    "sku": "D15601-01",
+    "slug": "synthetic-x-press-spray-wax-1x3-78-lt",
+    "codigos": [
+      "D15601",
+      "D15601-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D15601_SyntheticXpressSprayWax_HDPE_Front_10x10_c2236fd3-a372-4df1-808d-d62888d0f2fb.jpg?v=1749251545",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/synthetic-x-press-spray-wax-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "D11101-01",
+    "slug": "shampoo-plus-1x1-gl",
+    "codigos": [
+      "D11101",
+      "D11101-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D11101_ShampooPlus_HDPE_Front_10x10_3e5cd3e1-933b-4ece-805e-68723202eb64.jpg?v=1749250487",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/shampoo-plus-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "D110542-01",
+    "slug": "chemical-resistant-sprayer-1x1-unid",
+    "codigos": [
+      "D110542",
+      "11UNID",
+      "D110542-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D110542_1.jpg?v=1738885511",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/chemical-resistant-sprayer-1x1-unid/principal.jpg"
+  },
+  {
+    "sku": "DFP5-01",
+    "slug": "meguiars-dfp5-5-inch-da-foam-polishing-disc",
+    "codigos": [
+      "DFP5",
+      "DFP5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFP5-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/meguiars-dfp5-5-inch-da-foam-polishing-disc/principal.jpg"
+  },
+  {
+    "sku": "G180124-01",
+    "slug": "ultimate-all-wheel-cleaner-1x24oz",
+    "codigos": [
+      "G180124",
+      "G180124-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G180124_UltimateAllWheelCleaner_HDPE_Fr_10x10_70498f77-20f8-4325-bf27-c6af2a8ab548.jpg?v=1749246713",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-all-wheel-cleaner-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "G1001-01",
+    "slug": "individual-clay-bar-w-case",
+    "codigos": [
+      "G1001",
+      "G1001-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G1001.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/individual-clay-bar-w-case/principal.jpg"
+  },
+  {
+    "sku": "D30116-01",
+    "slug": "da-microfiber-finnishing-wax-1x480-ml",
+    "codigos": [
+      "D30116",
+      "D30116-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D30116_b3a14479-381e-4708-ac1f-50011ecc75b8.jpg?v=1734732765",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-finnishing-wax-1x480-ml/principal.jpg"
+  },
+  {
+    "sku": "D18001-01",
+    "slug": "leather-cleaner-cond-1x1-gl",
+    "codigos": [
+      "D18001",
+      "D18001-01",
+      "D180101"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D180101_WheelAndPaintIronDecon_HDPE_Front_10x10_23feebc6-d1a2-435a-ae2b-e92c45beffaa.jpg?v=1749252303",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/leather-cleaner-cond-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "G18616-01",
+    "slug": "gold-c-leather-conditioner-1x473ml",
+    "codigos": [
+      "G18616",
+      "G18616-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G18616_c0e7a01e-4d4f-4b65-ad44-816329e8e8e6.jpg?v=1734732324",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-leather-conditioner-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "M79932-01",
+    "slug": "pro-hybrid-ceramic-bead-booster-32oz",
+    "codigos": [
+      "M79932",
+      "32OZ",
+      "M79932-01",
+      "M20532"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M20532_Ultra_Finish_Polish_HDPE_Front_10x10_5570863b-6e2e-45eb-a5fb-cc3a95d90a90.jpg?v=1749256442",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-hybrid-ceramic-bead-booster-32oz/principal.jpg"
+  },
+  {
+    "sku": "A2516-01",
+    "slug": "soft-wash-gel-1x473ml",
+    "codigos": [
+      "A2516",
+      "A2516-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/A2516_SoftWashGel-19.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/soft-wash-gel-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "DMC3-01",
+    "slug": "da-microfiber-cutting-pad-3",
+    "codigos": [
+      "DMC3",
+      "DMC3-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMC3_Pkg_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/da-microfiber-cutting-pad-3/principal.jpg"
+  },
+  {
+    "sku": "D11501-01",
+    "slug": "rinse-free-express-was-wax-3-78-l",
+    "codigos": [
+      "D11501",
+      "378L",
+      "D11501-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D11501_RinseFreeExpressWashAndWax_HDPE_Front_10x10_c09673bf-6d28-4a4d-9637-cbad4ec40907.jpg?v=1749250832",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rinse-free-express-was-wax-3-78-l/principal.jpg"
+  },
+  {
+    "sku": "WRFP7-01",
+    "slug": "soft-buff-rotary-foam-polishing-pad-7",
+    "codigos": [
+      "WRFP7",
+      "WRFP7-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/WRFP7_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/soft-buff-rotary-foam-polishing-pad-7/principal.jpg"
+  },
+  {
+    "sku": "WRFF7-01",
+    "slug": "soft-buff-rotary-foam-finishing-pad-7",
+    "codigos": [
+      "WRFF7",
+      "WRFF7-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/WRFF7_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/soft-buff-rotary-foam-finishing-pad-7/principal.jpg"
+  },
+  {
+    "sku": "DMF3-01",
+    "slug": "da-microfiber-finnishing-pad-3-2",
+    "codigos": [
+      "DMF3",
+      "DMF3-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMF3-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-finnishing-pad-3-2/principal.jpg"
+  },
+  {
+    "sku": "X210100-01",
+    "slug": "supreme-shine-drying-towel",
+    "codigos": [
+      "X210100",
+      "X210100-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/x210100.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/supreme-shine-drying-towel/principal.jpg"
+  },
+  {
+    "sku": "D11005-01",
+    "slug": "hyper-wash-1x5-gl",
+    "codigos": [
+      "D11005",
+      "D11005-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D11005_c2856327-d230-45f7-ba85-64d46b077520.jpg?v=1734732981",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hyper-wash-1x5-gl/principal.jpg"
+  },
+  {
+    "sku": "D20149-01",
+    "slug": "secondary-bottle-quik-interior-cleaner",
+    "codigos": [
+      "D20149",
+      "D20149-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D20149.jpg?v=1734654457",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/secondary-bottle-quik-interior-cleaner/principal.jpg"
+  },
+  {
+    "sku": "D110516-01",
+    "slug": "standard-sprayer-1x1-ud",
+    "codigos": [
+      "D110516",
+      "D110516-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D110516.jpg?v=1738885042",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/standard-sprayer-1x1-ud/principal.jpg"
+  },
+  {
+    "sku": "G191016-01",
+    "slug": "3-en-1-wax-1x473-ml-meguiars",
+    "codigos": [
+      "G191016",
+      "G191016-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G191016_3in1Wax_Hero.png?v=1736986930",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/3-en-1-wax-1x473-ml-meguiars/principal.jpg"
+  },
+  {
+    "sku": "D14901-01",
+    "slug": "quik-interior-detailer-1x-3-78-lt",
+    "codigos": [
+      "D14901",
+      "D14901-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D14901_QuikInteriorDetailer_HDPE_Front_10x10_d69de7c6-5cf1-464b-a7cd-eef4c60d2881.jpg?v=1749251143",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-interior-detailer-1x-3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "D15501-01",
+    "slug": "last-touch-spray-detailer-1x1-gl",
+    "codigos": [
+      "D15501",
+      "D15501-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D15501_LastTouchSprayDetailer_HDPE_Front_10x10_6b02870d-83b7-4491-9a28-723c4e3e90bf.jpg?v=1749251282",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/last-touch-spray-detailer-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "G8504-01",
+    "slug": "perfect-clarity-glass-sealant",
+    "codigos": [
+      "G8504",
+      "G8504-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G8504-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/perfect-clarity-glass-sealant/principal.jpg"
+  },
+  {
+    "sku": "X2010-01",
+    "slug": "supreme-shine-microfiber-single-1x1-ud",
+    "codigos": [
+      "X2010",
+      "X2010-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/X2010_@2x.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/supreme-shine-microfiber-single-1x1-ud/principal.jpg"
+  },
+  {
+    "sku": "A1624-01",
+    "slug": "quik-wax-24-oz",
+    "codigos": [
+      "A1624",
+      "A1624-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A1624_QuikWax_HDPE_Front_10x10_c6b03295-983e-4f2c-935b-d09427cebb63.jpg?v=1748986491",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-wax-24-oz/principal.jpg"
+  },
+  {
+    "sku": "DFF5-01",
+    "slug": "meguiars-dff5-5-inch-da-foamn-finishing-disc",
+    "codigos": [
+      "DFF5",
+      "DFF5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFF5_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/meguiars-dff5-5-inch-da-foamn-finishing-disc/principal.jpg"
+  },
+  {
+    "sku": "M10101-01",
+    "slug": "foam-cut-compound-1x-3-78-lt",
+    "codigos": [
+      "M10101",
+      "M10101-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/m10101.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/foam-cut-compound-1x-3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "D10105-01",
+    "slug": "all-purpose-cleaner-1x-5-gl",
+    "codigos": [
+      "D10105",
+      "D10105-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D10105_AllPrpsClnr.png?v=1737152422",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-purpose-cleaner-1x-5-gl/principal.jpg"
+  },
+  {
+    "sku": "G4116-01",
+    "slug": "natural-shine-1x473ml",
+    "codigos": [
+      "G4116",
+      "G4116-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G4116_NaturalShineProtectantSpray_HDPE_Front_10x10_5b5e82dc-f939-4443-92bf-5eee731e2e6f.jpg?v=1749159058",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/natural-shine-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "M5716-01",
+    "slug": "vinyl-rubber-cleaner-cond-1x473-ml-2",
+    "codigos": [
+      "M5716",
+      "M5716-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M5716_Marine_RV_Vinyl_Rubber_HDPE_Front_10x10_9d0d1b70-39b0-4edf-beca-ae59da6b36f5.jpg?v=1749248899",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/vinyl-rubber-cleaner-cond-1x473-ml-2/principal.jpg"
+  },
+  {
+    "sku": "G14816-01",
+    "slug": "engine-clean",
+    "codigos": [
+      "G14816",
+      "G14816-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G14816-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/engine-clean/principal.jpg"
+  },
+  {
+    "sku": "X2000-01",
+    "slug": "water-magnet-microfiber-drying-towel-1x1-unid",
+    "codigos": [
+      "X2000",
+      "X2000-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/X2000_61e4723f-c115-470c-bea6-fbcde8d053b1.jpg?v=1734731417",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/water-magnet-microfiber-drying-towel-1x1-unid/principal.jpg"
+  },
+  {
+    "sku": "DBP3-01",
+    "slug": "soft-buff-dbp3-da-polisher-3-inch-backing-plate",
+    "codigos": [
+      "DBP3",
+      "DBP3-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DBP3_Front.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/soft-buff-dbp3-da-polisher-3-inch-backing-plate/principal.jpg"
+  },
+  {
+    "sku": "M6601-01",
+    "slug": "quick-detailer-1x1-gl",
+    "codigos": [
+      "M6601",
+      "11GL",
+      "M6601-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M6601_QuickDetailer_HDPE_Front_10x10_4288df7f-1759-4bb7-b832-d416068922ef.jpg?v=1749254867",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quick-detailer-1x1-gl/principal.jpg"
+  },
+  {
+    "sku": "G18516-01",
+    "slug": "gold-c-leather-vinyl-cleaner-1x473ml",
+    "codigos": [
+      "G18516",
+      "G18516-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G18516_8f6460ef-e83c-4b88-aed3-394070d2d98f.jpg?v=1734732332",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-leather-vinyl-cleaner-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "G180224-01",
+    "slug": "heavy-duty-multi-purpose-spray-1x24oz",
+    "codigos": [
+      "G180224",
+      "1X24OZ",
+      "G180224-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/g180224.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/heavy-duty-multi-purpose-spray-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "G201502-01",
+    "slug": "air-re-fresher-fiji-1x-20oz",
+    "codigos": [
+      "G201502",
+      "1X20OZ",
+      "G201502-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G201502.jpg?v=1734654293",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/air-re-fresher-fiji-1x-20oz/principal.jpg"
+  },
+  {
+    "sku": "G16602-01",
+    "slug": "air-refresher-aerosol-sweet-summer-breeze-2-5-oz",
+    "codigos": [
+      "G16602",
+      "G16602-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G16602_AirRefreshSmmrBreez_Fr.jpg?v=1749163899",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/air-refresher-aerosol-sweet-summer-breeze-2-5-oz/principal.jpg"
+  },
+  {
+    "sku": "G181302-01",
+    "slug": "air-re-fresher-black-chrome-1x2-oz",
+    "codigos": [
+      "G181302",
+      "12OZ",
+      "G181302-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G181302_AirRefreshBlkChrm_Fr.jpg?v=1749246872",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/air-re-fresher-black-chrome-1x2-oz/principal.jpg"
+  },
+  {
+    "sku": "G12024-01",
+    "slug": "hot-shine-tire-spray-trigger-1x710ml",
+    "codigos": [
+      "G12024",
+      "G12024-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G12024_HotShineTireSpray_PET_Front_10x10_bef19b5d-03f4-4ad3-be40-1b7674ce1251.jpg?v=1749162747",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-shine-tire-spray-trigger-1x710ml/principal.jpg"
+  },
+  {
+    "sku": "G8408-01",
+    "slug": "perfect-clarity-glass-polishing-compound-236ml",
+    "codigos": [
+      "G8408",
+      "G8408-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/05/G8408-01.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/perfect-clarity-glass-polishing-compound-236ml/principal.jpg"
+  },
+  {
+    "sku": "G4016-01",
+    "slug": "supreme-shine-protectant-1x450ml",
+    "codigos": [
+      "G4016",
+      "G4016-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G4016_SupremeShineProtectantSpray_HDPE_Front_10x10_fee2c1fe-0c47-4c84-a5f0-7dfba9bd682f.jpg?v=1749157467",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/supreme-shine-protectant-1x450ml/principal.jpg"
+  },
+  {
+    "sku": "G17748-01",
+    "slug": "ultimate-wash-wax-1x48oz",
+    "codigos": [
+      "G17748",
+      "G17748-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G17748_0a5f1944-af14-4090-afa6-f629c779b1cb.jpg?v=1734732387",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-wash-wax-1x48oz/principal.jpg"
+  },
+  {
+    "sku": "G13616-01",
+    "slug": "quik-interior-detailer-r-1x473ml",
+    "codigos": [
+      "G13616",
+      "G13616-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G13616_QuikInteriorDetailer-Spray_HDPE_Front_10x10_756bbe8f-e374-4d64-a06c-0894bd5ee961.jpg?v=1749162990",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-interior-detailer-r-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "G10916-01",
+    "slug": "gold-c-rich-leather-spray-1x473ml",
+    "codigos": [
+      "G10916",
+      "G10916-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G10916_GoldClassLeatherCleanerConditioner_HDPE_Front_10x10_2fb3a9dc-8b1b-4a98-9eca-49acb2ddbc38.jpg?v=1749162582",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-rich-leather-spray-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "G13919-01",
+    "slug": "hot-shine-tire-foam-1x570-ml",
+    "codigos": [
+      "G13919",
+      "G13919-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G13919.jpg?v=1734654357",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-shine-tire-foam-1x570-ml/principal.jpg"
+  },
+  {
+    "sku": "G9416-01",
+    "slug": "gold-c-carpet-int-cleaner-1x473ml",
+    "codigos": [
+      "G9416",
+      "G9416-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G9416-1.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-carpet-int-cleaner-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "DRTU10732-01",
+    "slug": "rtu-citrus-power-cleaner-32-oz",
+    "codigos": [
+      "DRTU10732",
+      "DRTU10732-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU10732_CitrusPowerCleanerPlus_Fr.jpg?v=1749252586",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rtu-citrus-power-cleaner-32-oz/principal.jpg"
+  },
+  {
+    "sku": "G191700-01",
+    "slug": "smooth-surface-clay-kit-1x1-kit",
+    "codigos": [
+      "G191700",
+      "G191700-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G191700_v4_a9d94af7-751b-4234-b9d8-c310f867447a.jpg?v=1734732233",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/smooth-surface-clay-kit-1x1-kit/principal.jpg"
+  },
+  {
+    "sku": "G190315-01",
+    "slug": "ultimate-insane-shine-tire-coating-1x15oz",
+    "codigos": [
+      "G190315",
+      "G190315-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G190315_0_e313348a-e12c-4b5e-b024-79ef10a45740.jpg?v=1734732297",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-insane-shine-tire-coating-1x15oz/principal.jpg"
+  },
+  {
+    "sku": "D14005-01",
+    "slug": "wheel-brigthtener-1x-5-gl",
+    "codigos": [
+      "D14005",
+      "D14005-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/d14005.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/wheel-brigthtener-1x-5-gl/principal.jpg"
+  },
+  {
+    "sku": "A2216-01",
+    "slug": "deep-cryst-carnauba-liquid-wax-1x473ml",
+    "codigos": [
+      "A2216",
+      "A2216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A2216_DCWax.png?v=1737413413",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/deep-cryst-carnauba-liquid-wax-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "G201316-01",
+    "slug": "ultimate-leather-detailer-16oz",
+    "codigos": [
+      "G201316",
+      "G201316-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G201316_0_bc69b8cd-b18f-490a-b39a-5804f272a744.jpg?v=1734732177",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-leather-detailer-16oz/principal.jpg"
+  },
+  {
+    "sku": "M10001-01",
+    "slug": "pro-speed-compound-1x-3-78l",
+    "codigos": [
+      "M10001",
+      "1X378L",
+      "M10001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M10001_Pro_Speed_Compound_HDPE_Front_10x10_7533da62-306e-4a6b-bdd9-dfe1ee54f62b.jpg?v=1749255213",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-speed-compound-1x-3-78l/principal.jpg"
+  },
+  {
+    "sku": "G7164-01",
+    "slug": "gold-c-car-wash-shampoo-conditioner",
+    "codigos": [
+      "G7164",
+      "G7164-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G7164_GoldClassCarWashShampooConditioner_PET_Front_10x10_ee8c5c06-c80d-4369-8ab4-411ae5c68291.jpg?v=1785518912",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-car-wash-shampoo-conditioner/principal.jpg"
+  },
+  {
+    "sku": "G3500-01",
+    "slug": "d-a-power-system-international",
+    "codigos": [
+      "G3500",
+      "G3500-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G3500.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/d-a-power-system-international/principal.jpg"
+  },
+  {
+    "sku": "D9916-01",
+    "slug": "dispensador-p-botellas-16oz-meguiars",
+    "codigos": [
+      "D9916",
+      "D9916-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D9916_SecondaryBottle_Main.jpg?v=1760113814",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/dispensador-p-botellas-16oz-meguiars/principal.jpg"
+  },
+  {
+    "sku": "G201024-01",
+    "slug": "ultimate-quik-detailer-1x24oz",
+    "codigos": [
+      "G201024",
+      "1X24OZ",
+      "G201024-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G201024_UltimateQuikDetailer_PT05_bf114eac-6472-402e-9905-ba93603be9b0.jpg?v=1749247900",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-quik-detailer-1x24oz/principal.jpg"
+  },
+  {
+    "sku": "DFC6-01",
+    "slug": "meguiars-dfc6-6-inch-da-foam-cutting-disc",
+    "codigos": [
+      "DFC6",
+      "DFC6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFC6_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/meguiars-dfc6-6-inch-da-foam-cutting-disc/principal.jpg"
+  },
+  {
+    "sku": "DMF6-01",
+    "slug": "da-microfiber-finnishing-pad-6-1x1-und",
+    "codigos": [
+      "DMF6",
+      "11UND",
+      "DMF6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMF6_Pkg_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/da-microfiber-finnishing-pad-6-1x1-und/principal.jpg"
+  },
+  {
+    "sku": "M20532-01",
+    "slug": "ultra-finishing-polish-1x946-ml",
+    "codigos": [
+      "M20532",
+      "1946ML",
+      "M20532-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M20532_Ultra_Finish_Polish_HDPE_Front_10x10_5570863b-6e2e-45eb-a5fb-cc3a95d90a90.jpg?v=1749256442",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-finishing-polish-1x946-ml/principal.jpg"
+  },
+  {
+    "sku": "X3003-01",
+    "slug": "grit-guard",
+    "codigos": [
+      "X3003",
+      "X3003-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/X3003_v1_d3817813-09d5-48f4-8ca9-d86108449485.jpg?v=1734731373",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/grit-guard/principal.jpg"
+  },
+  {
+    "sku": "G7624-01",
+    "slug": "gold-class-detailer-1x-710ml",
+    "codigos": [
+      "G7624",
+      "1X710ML",
+      "G7624-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G7624_GoldClassQuikDetailer_HDPE_Front_10x10_8e2fce52-0b70-4b17-8196-f1489dd32ef8.jpg?v=1749160264",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-class-detailer-1x-710ml/principal.jpg"
+  },
+  {
+    "sku": "DBP6-01",
+    "slug": "soft-buff-dbp6-da-polisher-6-inch-backing-plate",
+    "codigos": [
+      "DBP6",
+      "DBP6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DBP5_Side.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/soft-buff-dbp6-da-polisher-6-inch-backing-plate/principal.jpg"
+  },
+  {
+    "sku": "G12310-01",
+    "slug": "plast-x-clear-plastic-cleaner-1x296-ml",
+    "codigos": [
+      "G12310",
+      "G12310-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G12310_PlastX_HDPE_Hero_10x10_1dd3bd6b-89dc-44b1-8487-47ff981d3638.jpg?v=1760742453",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/plast-x-clear-plastic-cleaner-1x296-ml/principal.jpg"
+  },
+  {
+    "sku": "D17005-01",
+    "slug": "hyper-dressing-1x5gl",
+    "codigos": [
+      "D17005",
+      "D17005-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D17005_e6b1ed21-c040-4d61-ac2b-5e705020e67d.jpg?v=1734732835",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hyper-dressing-1x5gl/principal.jpg"
+  },
+  {
+    "sku": "D20100-01",
+    "slug": "generic-spray-bottle-1x0-945-lt",
+    "codigos": [
+      "D20100",
+      "D20100-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D20100_27fc494d-691b-4086-be10-f5336fce3a90.jpg?v=1734732801",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/generic-spray-bottle-1x0-945-lt/principal.jpg"
+  },
+  {
+    "sku": "C2100-01",
+    "slug": "detailing-clay-agresive-1x200gr",
+    "codigos": [
+      "C2100",
+      "C2100-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/C2100_d146ecb7-9ce7-4a97-a60a-d12b2bf3891e.jpg?v=1734733009",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/detailing-clay-agresive-1x200gr/principal.jpg"
+  },
+  {
+    "sku": "C2000-01",
+    "slug": "mirror-glaze-prof-detailing-clay-1x1",
+    "codigos": [
+      "C2000",
+      "C2000-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/C2000_d16b4e84-1240-458e-a6a5-fa430914253e.jpg?v=1734733016",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/mirror-glaze-prof-detailing-clay-1x1/principal.jpg"
+  },
+  {
+    "sku": "DMCKIT5-01",
+    "slug": "da-microfiber-correction-system-kit-5",
+    "codigos": [
+      "DMCKIT5",
+      "DMCKIT5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/05/DMCKIT5-01.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-correction-system-kit-5/principal.jpg"
+  },
+  {
+    "sku": "G210516-01",
+    "slug": "ultimate-liquid-wax-16-oz",
+    "codigos": [
+      "G210516",
+      "G210516-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G210516_v3.png?v=1744239578",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-liquid-wax-16-oz/principal.jpg"
+  },
+  {
+    "sku": "DFP6-01",
+    "slug": "meguiars-dfp6-inch-da-foam-polishing-disc",
+    "codigos": [
+      "DFP6",
+      "DFP6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFP6_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/meguiars-dfp6-inch-da-foam-polishing-disc/principal.jpg"
+  },
+  {
+    "sku": "G18715-01",
+    "slug": "hot-shine-tire-reflect",
+    "codigos": [
+      "G18715",
+      "G18715-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G18715.jpg?v=1734654326",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hot-shine-tire-reflect/principal.jpg"
+  },
+  {
+    "sku": "G180724-01",
+    "slug": "carpet-cloth-refresher-1-x-24oz",
+    "codigos": [
+      "G180724",
+      "1X24OZ",
+      "G180724-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G180724_CarpetClothReFresher_HDPE_Front.jpg?v=1749246751",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/carpet-cloth-refresher-1-x-24oz/principal.jpg"
+  },
+  {
+    "sku": "M10032-01",
+    "slug": "pro-speed-compound-1x-945-ml",
+    "codigos": [
+      "M10032",
+      "1X945ML",
+      "M10032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M10032_Pro_Speed_Compound_HDPE_Front_10x10_7d5aee5b-2e71-43ce-8113-7af52133c4c0.jpg?v=1749255350",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/pro-speed-compound-1x-945-ml/principal.jpg"
+  },
+  {
+    "sku": "G19216-01",
+    "slug": "ultimate-polish16oz",
+    "codigos": [
+      "G19216",
+      "G19216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G19216_UltimatePolish_HDPE_Front_10x10_a5a7d9e3-3e83-4a8d-8a27-f5b926fb23d9.jpg?v=1749246488",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-polish16oz/principal.jpg"
+  },
+  {
+    "sku": "G13600-01",
+    "slug": "quik-interior-detailer-wipes",
+    "codigos": [
+      "G13600",
+      "G13600-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G13600_QuikInteriorDetailerWipes_Front.jpg?v=1749162868",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-interior-detailer-wipes/principal.jpg"
+  },
+  {
+    "sku": "M8401-01",
+    "slug": "compound-power-cleaner-1x3-78-lt",
+    "codigos": [
+      "M8401",
+      "1378LT",
+      "M8401-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/M8401.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/compound-power-cleaner-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "DMF5-01",
+    "slug": "da-microfiber-finnishing-pad-5",
+    "codigos": [
+      "DMF5",
+      "DMF5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMF5_Pkg_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/da-microfiber-finnishing-pad-5/principal.jpg"
+  },
+  {
+    "sku": "D30001-01",
+    "slug": "da-microfiber-correction-compound-1x-3-78l",
+    "codigos": [
+      "D30001",
+      "1X378L",
+      "D30001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D30001_1_238e87fd-049a-4ac9-9157-adcbc328cfeb.jpg?v=1737158476",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/da-microfiber-correction-compound-1x-3-78l/principal.jpg"
+  },
+  {
+    "sku": "G220216-01",
+    "slug": "ultimate-insane-shine-protectant-16oz",
+    "codigos": [
+      "G220216",
+      "G220216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G220216_0_14e423b7-74ab-41f0-92e4-0fcfa4ab6f62.jpg?v=1734732122",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-insane-shine-protectant-16oz/principal.jpg"
+  },
+  {
+    "sku": "G7016-01",
+    "slug": "gold-c-clear-coat-liquid-car-wax-1x473ml",
+    "codigos": [
+      "G7016",
+      "G7016-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G7016_6_f173b2ae-0275-4b2a-8eec-b428e3a47416.jpg?v=1734732001",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-clear-coat-liquid-car-wax-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "M20501-01",
+    "slug": "ultra-finishing-polish-3-78l",
+    "codigos": [
+      "M20501",
+      "M20501-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M20501_Ultra_Finish_Polish_HDPE_Front_10x10_0e868a0b-64b2-49f8-9098-1672d478930d.jpg?v=1749256336",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-finishing-polish-3-78l/principal.jpg"
+  },
+  {
+    "sku": "DMX5-01",
+    "slug": "xtra-cut-disk-5",
+    "codigos": [
+      "DMX5",
+      "DMX5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DMX5_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/xtra-cut-disk-5/principal.jpg"
+  },
+  {
+    "sku": "DRTU14332-01",
+    "slug": "rtu-wheel-and-tire-cleaner-32-oz",
+    "codigos": [
+      "DRTU14332",
+      "DRTU14332-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU14332_NonAcidWheelTireCleaner_Fr.jpg?v=1749253052",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rtu-wheel-and-tire-cleaner-32-oz/principal.jpg"
+  },
+  {
+    "sku": "M11032-01",
+    "slug": "ultra-pro-speed-compound-1x32-oz",
+    "codigos": [
+      "M11032",
+      "M11032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M11032_Ultra_Pro_Speed_Compound_HDPE_Front_10x10_3201b1b7-0b07-4515-ab84-fa9e9e8c1c3c.jpg?v=1749256060",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-pro-speed-compound-1x32-oz/principal.jpg"
+  },
+  {
+    "sku": "M11001-01",
+    "slug": "ultra-pro-speed-compound-1-gal",
+    "codigos": [
+      "M11001",
+      "M11001-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M11001_Ultra_Pro_Speed_Compound_HDPE_Front_10x10_da7130ce-ab99-41cf-9cd9-2c8f108d1e10.jpg?v=1749255913",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-pro-speed-compound-1-gal/principal.jpg"
+  },
+  {
+    "sku": "M10532-01",
+    "slug": "ultra-cut-compound-1x0-95-ml",
+    "codigos": [
+      "M10532",
+      "1095ML",
+      "M10532-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M10532_Ultra_Cut_Compound_HDPE_Front_10x10_72136744-1a37-4230-b34a-a0547bb325e3.jpg?v=1749255652",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultra-cut-compound-1x0-95-ml/principal.jpg"
+  },
+  {
+    "sku": "D10101-01",
+    "slug": "all-purpose-cleaner-1x3-785-ltl",
+    "codigos": [
+      "D10101",
+      "D10101-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D10101_AllPurposeCleaner_HDPE_Front_10x10_71306dc4-2481-4c36-9236-baf3d111fae0.jpg?v=1749250050",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/all-purpose-cleaner-1x3-785-ltl/principal.jpg"
+  },
+  {
+    "sku": "D16101-01",
+    "slug": "silicone-free-dressing-1x3-78-lt",
+    "codigos": [
+      "D16101",
+      "1378LT",
+      "D16101-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D16101_SiliconeFreeDressing_HDPE_Front_10x10_99386c89-50fc-4251-9a55-7cb9e7eb9c2e.jpg?v=1749251781",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/silicone-free-dressing-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "G14716-01",
+    "slug": "ultimate-protectant-1x16oz",
+    "codigos": [
+      "G14716",
+      "G14716-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G14716_UltimateProtectant_HDPE_Front_10x10_271d4551-8dfe-48aa-aaec-2c59b302a788.jpg?v=1749163243",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-protectant-1x16oz/principal.jpg"
+  },
+  {
+    "sku": "DRTU200232-01",
+    "slug": "rtu-iron-removing-clay-32-oz",
+    "codigos": [
+      "DRTU200232",
+      "DRTU200232-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU200232_IronRemovingSprayClay_Fr.jpg?v=1749253466",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rtu-iron-removing-clay-32-oz/principal.jpg"
+  },
+  {
+    "sku": "DRTU17032-01",
+    "slug": "rtu-hyper-dressing-32-oz",
+    "codigos": [
+      "DRTU17032",
+      "DRTU17032-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/DRTU17032_HyperDressing_Fr.jpg?v=1749253401",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/rtu-hyper-dressing-32-oz/principal.jpg"
+  },
+  {
+    "sku": "D180101-01",
+    "slug": "d1801-wheel-paint-iron-decon",
+    "codigos": [
+      "D180101",
+      "D1801",
+      "D180101-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D180101_WheelAndPaintIronDecon_HDPE_Front_10x10_23feebc6-d1a2-435a-ae2b-e92c45beffaa.jpg?v=1749252303",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/d1801-wheel-paint-iron-decon/principal.jpg"
+  },
+  {
+    "sku": "M12201-01",
+    "slug": "surface-prep-1x3-78-lt",
+    "codigos": [
+      "M12201",
+      "M12201-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/M12201_2_f95a0523-84cc-4df5-88d9-1a1ab19bcfea.jpg?v=1734731855",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/surface-prep-1x3-78-lt/principal.jpg"
+  },
+  {
+    "sku": "W0004-01",
+    "slug": "hand-applicator-pads-1x4-unids",
+    "codigos": [
+      "W0004",
+      "14UNIDS",
+      "W0004-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/W0004.jpg?v=1745608936",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hand-applicator-pads-1x4-unids/principal.jpg"
+  },
+  {
+    "sku": "G7716-01",
+    "slug": "gold-c-quik-wax-1x473ml",
+    "codigos": [
+      "G7716",
+      "G7716-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G7716_GoldClassQuikWax_HDPE_Front_10x10_591daaed-2272-4292-9dd6-6964668b57f3.jpg?v=1749161111",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-c-quik-wax-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "D11301-01",
+    "slug": "detailer-citrus-blast-wash-and-wax",
+    "codigos": [
+      "D11301",
+      "D11301-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/05/D11301-01.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/detailer-citrus-blast-wash-and-wax/principal.jpg"
+  },
+  {
+    "sku": "WRFC7-01",
+    "slug": "soft-buff-rotary-foam-cutting-pad-7",
+    "codigos": [
+      "WRFC7",
+      "WRFC7-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/WRFC7_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/soft-buff-rotary-foam-cutting-pad-7/principal.jpg"
+  },
+  {
+    "sku": "D20180-01",
+    "slug": "leather-cleaner-conditioner-bottle-355ml",
+    "codigos": [
+      "D20180",
+      "D20180-01",
+      "D201801"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/D201801.jpg?v=1734654445",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/leather-cleaner-conditioner-bottle-355ml/principal.jpg"
+  },
+  {
+    "sku": "M1808-01",
+    "slug": "plastic-detailer-1x1ud",
+    "codigos": [
+      "M1808",
+      "M1808-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/05/M1808-01-e1683845556181.png",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/plastic-detailer-1x1ud/principal.jpg"
+  },
+  {
+    "sku": "G3507-01",
+    "slug": "d-a-power-system-cutting-pad-pack-international",
+    "codigos": [
+      "G3507",
+      "G3507-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/G3507_CompoundPads.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/d-a-power-system-cutting-pad-pack-international/principal.jpg"
+  },
+  {
+    "sku": "G10900-01",
+    "slug": "gold-class-rich-leather-wipes-1x1unid",
+    "codigos": [
+      "G10900",
+      "G10900-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G10900_GoldClassRichLeatherWipes-30ct_Front_10x10_9617a664-dcdb-45b3-80a4-b4f7af772a31.jpg?v=1749162452",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/gold-class-rich-leather-wipes-1x1unid/principal.jpg"
+  },
+  {
+    "sku": "DFC5-01",
+    "slug": "meguiars-dfc5-5-inch-da-foam-cutting-disc",
+    "codigos": [
+      "DFC5",
+      "DFC5-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFC5_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/meguiars-dfc5-5-inch-da-foam-cutting-disc/principal.jpg"
+  },
+  {
+    "sku": "X210200-01",
+    "slug": "hybrid-wash-mitt-1x1-und",
+    "codigos": [
+      "X210200",
+      "X210200-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/X210200_v1.png?v=1744240147",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/hybrid-wash-mitt-1x1-und/principal.jpg"
+  },
+  {
+    "sku": "G17216-01",
+    "slug": "ultimate-compound-1x450ml",
+    "codigos": [
+      "G17216",
+      "G17216-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/G17216_UltimateCompound_HDPE_Front_10x10_6ebcac01-7ae4-4eba-9fa2-9800b329e83d.jpg?v=1749164068",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/ultimate-compound-1x450ml/principal.jpg"
+  },
+  {
+    "sku": "A3316-01",
+    "slug": "quik-detalier-1x473ml",
+    "codigos": [
+      "A3316",
+      "A3316-01"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/A3316_QuikDetailer-HDPE_Front_10x10_4dd0feb1-0ca1-4b34-8d4b-69776c15e3b9.jpg?v=1748987179",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/quik-detalier-1x473ml/principal.jpg"
+  },
+  {
+    "sku": "DFF6-01",
+    "slug": "meguiars-dff6-6-inch-da-foam-finishing-disc",
+    "codigos": [
+      "DFF6",
+      "DFF6-01"
+    ],
+    "imagen_fuente": "local_site",
+    "imagen_fuente_url": "https://meguiars.cr/wp-content/uploads/2023/04/DFF6_InPackage_10x10.png",
+    "imagen_calidad": "baja",
+    "imagen_principal": "imagenes/meguiars-dff6-6-inch-da-foam-finishing-disc/principal.jpg"
+  },
+  {
+    "sku": "MT300-01",
+    "slug": "dual-action-polisher",
+    "codigos": [
+      "MT300",
+      "MT300-01",
+      "MT001"
+    ],
+    "imagen_fuente": "official",
+    "imagen_fuente_url": "https://cdn.shopify.com/s/files/1/0706/3686/3773/files/MT001.jpg?v=1734653985",
+    "imagen_calidad": "alta",
+    "imagen_principal": "imagenes/dual-action-polisher/principal.jpg"
+  }
+]

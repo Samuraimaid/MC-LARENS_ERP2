@@ -1,0 +1,17 @@
+{
+  "total": 210,
+  "con_imagen": 210,
+  "pct_imagen": 100.0,
+  "clean_ext": 156,
+  "pct_clean": 74.28571428571429,
+  "official": 156,
+  "local": 54,
+  "retail": 0,
+  "alta": 183,
+  "media": 0,
+  "baja": 27,
+  "con_precio": 210,
+  "con_desc": 209,
+  "sin_desc": 1,
+  "errors": []
+}
