@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
+import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
 import { buildTransferJobId } from "@/lib/driverDispatch";
@@ -1032,7 +1033,7 @@ export function InventoryPage() {
     return rows;
   }, [inventory, products, search, selectedCategory, selectedWarehouse, showLowStock]);
 
-  const getCategoryName = (key) => categories[key]?.name || key;
+  const getCategoryName = (key) => categories[key]?.name || formatCategoryLabel(key);
   const getSubcategories = (catKey) => categories[catKey]?.subcategories || [];
   const getReasonLabel = (reason) => {
     const map = {

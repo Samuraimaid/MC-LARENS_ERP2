@@ -17,6 +17,7 @@ import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
+import { formatCategoryLabel } from "@/lib/branding";
 import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 
@@ -654,14 +655,14 @@ export function CatalogPage() {
                 <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
                   <div className="flex min-w-0 items-center gap-2">
                     <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{category === "all" ? "Todas las categorías" : category}</span>
+                    <span className="truncate">{formatCategoryLabel(category)}</span>
                   </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las categorías</SelectItem>
                   {Object.keys(categories || {}).map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {cat}
+                      {formatCategoryLabel(cat)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -903,7 +904,7 @@ export function CatalogPage() {
                           {/* Categories and types */}
                           <div className="flex flex-wrap items-center gap-1.5">
                             <Badge variant="outline" className="text-xs font-normal">
-                              {product.category || "Sin categoría"}
+                              {formatCategoryLabel(product.category) || "Sin categoría"}
                             </Badge>
                             {product.subcategory ? (
                               <Badge variant="secondary" className="text-xs">

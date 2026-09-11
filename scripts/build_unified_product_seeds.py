@@ -40,6 +40,115 @@ def get_ext_from_url_or_path(url_or_path: str, default_ext: str = ".jpg") -> str
         return ext if ext != ".jpeg" else ".jpg"
     return default_ext
 
+def classify_fernandez_sera_item(name: str, raw_cats: List[str], desc: str) -> Tuple[str, str]:
+    """Classifies a Fernandez Sera product into detailing vs lubricants with clean subcategories."""
+    text = f"{name} {' '.join(raw_cats)} {desc}".lower()
+    
+    # 1. Lubricantes y Fluidos
+    if any(k in text for k in ["aceite", "lubricante", "diesel", "diésel", "gasolina", "15w", "20w", "5w", "10w", "0w", "sae", "hidraulico", "hidráulico", "engranaje", "diferencial", "atf", "aw68", "aw46"]):
+        if any(k in text for k in ["moto", "2t", "4t", "motus"]):
+            return "lubricantes_fluidos", "Aceites para Motocicletas"
+        elif any(k in text for k in ["diesel", "diésel"]):
+            return "lubricantes_fluidos", "Aceites de Motor Diésel"
+        elif any(k in text for k in ["gasolina", "synthetic", "sintetico", "sintético", "diamantis", "ignis", "euro"]):
+            return "lubricantes_fluidos", "Aceites de Motor a Gasolina"
+        elif any(k in text for k in ["engranaje", "diferencial", "transmision", "transmisión", "80w90", "85w140", "sae-90"]):
+            return "lubricantes_fluidos", "Aceites de Transmisión y Engranajes"
+        elif any(k in text for k in ["hidraulico", "hidráulico", "aw68", "aw46", "antidesgaste"]):
+            return "lubricantes_fluidos", "Aceites Hidráulicos e Industriales"
+        return "lubricantes_fluidos", "Aceites y Lubricantes de Motor"
+    
+    if any(k in text for k in ["freno", "frenos", "dot 3", "dot 4", "dot3", "dot4"]):
+        return "lubricantes_fluidos", "Líquidos de Frenos y Dirección"
+        
+    if any(k in text for k in ["refrigerante", "coolant", "radiador", "anticongelante"]):
+        return "lubricantes_fluidos", "Refrigerantes y Aditivos de Radiador"
+        
+    if any(k in text for k in ["aditivo", "tratamiento", "inyector", "octane", "combustible", "limpiador de carburador", "carb"]):
+        return "lubricantes_fluidos", "Aditivos para Motor y Combustible"
+
+    # 2. Detailing y Cuidado Automotriz
+    if any(k in text for k in ["llanta", "llantas", "tire", "tire shine", "abrillantador de llanta", "stoner", "cristal"]):
+        return "detailing_cuidado", "Abrillantadores y Cuidado de Llantas"
+        
+    if any(k in text for k in ["cera", "wax", "pulimento", "compound", "polish", "sellador", "brillo", "pasta"]):
+        return "detailing_cuidado", "Ceras, Selladores y Pulimentos"
+        
+    if any(k in text for k in ["shampoo", "jabon", "jabón", "lavado", "foam", "espuma"]):
+        return "detailing_cuidado", "Shampoo y Lavado Exterior"
+        
+    if any(k in text for k in ["ambientador", "aroma", "spray", "organico", "orgánico", "lata", "rejilla", "wrap"]):
+        return "detailing_cuidado", "Aromatizantes y Purificadores"
+        
+    if any(k in text for k in ["interior", "cuero", "leather", "vinil", "tapiceria", "tapicería", "tablero"]):
+        return "detailing_cuidado", "Limpieza y Restauración de Interiores"
+        
+    if any(k in text for k in ["desengrasante", "degreaser", "limpiador", "cleaner", "brake cleaner", "limpia contacto"]):
+        return "detailing_cuidado", "Desengrasantes y Limpiadores Multiuso"
+        
+    if any(k in text for k in ["toalla", "microfibra", "esponja", "aplicador", "pad", "guante"]):
+        return "detailing_cuidado", "Toallas, Microfibras y Aplicadores"
+
+    # Default fallback to Detailing
+    return "detailing_cuidado", "Cuidado Estético y Detailing"
+
+def classify_meguiars_item(name: str, desc: str) -> Tuple[str, str]:
+    text = f"{name} {desc}".lower()
+    if any(k in text for k in ["cera", "wax", "ceramic", "cerámico", "sealant", "sellador"]):
+        return "detailing_cuidado", "Ceras, Selladores y Cerámicos"
+    if any(k in text for k in ["compound", "polish", "pulimento", "corte", "scratch", "ultra-pro", "swirl"]):
+        return "detailing_cuidado", "Pulimentos y Compuestos de Corte"
+    if any(k in text for k in ["shampoo", "wash", "lavado", "foam", "snow"]):
+        return "detailing_cuidado", "Shampoo y Lavado Exterior"
+    if any(k in text for k in ["tire", "wheel", "llanta", "rin", "endurance", "hot shine", "gel"]):
+        return "detailing_cuidado", "Abrillantadores y Cuidado de Llantas"
+    if any(k in text for k in ["interior", "leather", "cuero", "detailer", "cockpit", "tapiceria", "air re-fresher", "odor"]):
+        return "detailing_cuidado", "Limpieza y Restauración de Interiores"
+    if any(k in text for k in ["towel", "toalla", "microfiber", "microfibra", "pad", "applicator", "esponja"]):
+        return "detailing_cuidado", "Toallas, Microfibras y Aplicadores"
+    return "detailing_cuidado", "Cuidado y Mantenimiento Estético"
+
+def classify_auxbeam_item(name: str, desc: str) -> Tuple[str, str]:
+    text = f"{name} {desc}".lower()
+    if any(k in text for k in ["light bar", "barra led", "barra de luz", "curved", "curva"]):
+        return "iluminacion", "Barras LED y Focos Auxiliares"
+    if any(k in text for k in ["bulb", "bombillo", "h4", "h7", "h11", "9005", "9006", "faro led"]):
+        return "iluminacion", "Bombillos LED y Faros Delanteros"
+    if any(k in text for k in ["pod", "fog", "neblinera", "driving light", "spot", "flood", "work light"]):
+        return "iluminacion", "Faros Auxiliares y Driving Lights Off-Road"
+    return "iluminacion", "Iluminación LED y Auxiliar"
+
+def classify_pioneer_item(name: str, subcat: str) -> Tuple[str, str]:
+    text = f"{name} {subcat}".lower()
+    if any(k in text for k in ["multimedia", "dmh", "avh", "sph", "pantalla", "carplay", "android auto", "receptor"]):
+        return "audio_multimedia", "Pantallas y Receptores Multimedia"
+    if any(k in text for k in ["parlante", "ts-a", "ts-g", "coaxial", "set de medios", "bocina", "speaker"]):
+        return "audio_multimedia", "Parlantes y Sets de Medios"
+    if any(k in text for k in ["subwoofer", "ts-w", "bajo", "caja"]):
+        return "audio_multimedia", "Subwoofers y Bajos"
+    if any(k in text for k in ["amplificador", "gm-", "potencia", "power"]):
+        return "audio_multimedia", "Amplificadores y Potencias"
+    return "audio_multimedia", "Componentes de Audio Pioneer"
+
+def classify_ds18_item(name: str, subcat: str) -> Tuple[str, str]:
+    text = f"{name} {subcat}".lower()
+    if any(k in text for k in ["subwoofer", "bajo", "zxi", "exl", "elite", "pro-"]):
+        if "subwoofer" in text or "sub" in text:
+            return "audio_multimedia", "Subwoofers y Bajos Pro Audio"
+    if any(k in text for k in ["amplificador", "amp", "monoblock", "4 channel", "candor", "g2400"]):
+        return "audio_multimedia", "Amplificadores y Potencias"
+    if any(k in text for k in ["tweeter", "driver", "horn", "corneta", "difusor", "pro-tw"]):
+        return "audio_multimedia", "Tweeters, Drivers y Cornetas"
+    if any(k in text for k in ["medio", "midrange", "pro-x", "pro-gm", "pro-neor", "bocina", "parlante"]):
+        return "audio_multimedia", "Parlantes y Medios Rangos Pro Audio"
+    if any(k in text for k in ["cable", "kit", "rca", "fuse", "distribuidor", "porta"]):
+        return "audio_multimedia", "Cableado e Instalación de Audio"
+    if any(k in text for k in ["dsp", "crossover", "ecualizador", "procesador"]):
+        return "audio_multimedia", "Procesadores DSP y Ecualizadores"
+    if any(k in text for k in ["receptor", "radio", "pantalla", "head unit"]):
+        return "audio_multimedia", "Pantallas y Receptores Multimedia"
+    return "audio_multimedia", "Accesorios y Pro Audio DS18"
+
 def process_dlaa_catalog() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Process DLAA catalog combining matched, universal, and unmatched."""
     dlaa_dir = Path("catalogos/dlaa")
@@ -83,7 +192,6 @@ def process_dlaa_catalog() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
                     brands.add(m["brand"].upper())
                 if m.get("model"):
                     models.add(m["model"])
-                # Extract years from label like "Hilux [2018-2022]"
                 label = m.get("label", "")
                 y_matches = re.findall(r'\b(19\d\d|20\d\d)\b', label)
                 for y in y_matches:
@@ -104,8 +212,8 @@ def process_dlaa_catalog() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         year_to = max(years) if years else None
         
         # Images processing with {sku}_main and {sku}_add_XX
-        main_source = raw.get("imagen_principal_url") or raw.get("imagen_principal")
-        add_sources = raw.get("imagenes_adicionales_urls") or raw.get("imagenes_adicionales") or []
+        main_source = raw.get("imagen_fuente_url") or raw.get("imagen_principal") or (raw.get("imagenes", [""])[0] if raw.get("imagenes") else "")
+        add_sources = raw.get("imagenes_adicionales") or (raw.get("imagenes", [])[1:] if raw.get("imagenes") and len(raw.get("imagenes")) > 1 else [])
         
         main_ext = get_ext_from_url_or_path(main_source, ".jpg")
         main_filename = f"{sku}_main{main_ext}"
@@ -130,6 +238,9 @@ def process_dlaa_catalog() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             })
             
         for idx, add_src in enumerate(add_sources, 1):
+            if isinstance(add_src, dict):
+                add_src = add_src.get("imagen_fuente_url") or add_src.get("url") or ""
+            add_src = str(add_src)
             add_ext = get_ext_from_url_or_path(add_src, ".jpg")
             add_filename = f"{sku}_add_{idx:02d}{add_ext}"
             add_url = f"/uploads/products/{add_filename}"
@@ -164,8 +275,8 @@ def process_dlaa_catalog() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             "sku": sku,
             "name": name,
             "brand": "DLAA",
-            "category": "accesorios_iluminacion",
-            "subcategory": "Faros antiniebla / Neblineras",
+            "category": "iluminacion",
+            "subcategory": "Faros Antiniebla / Neblineras",
             "description": raw.get("descripcion") or f"Juego de halógenos / faros antiniebla originales DLAA modelo {sku}.",
             "specs": raw.get("especificaciones") or {},
             "potencia": raw.get("potencia", "12V"),
@@ -273,16 +384,17 @@ def process_fernandez_sera() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]
                 })
 
         cats = raw.get("categorias", [])
-        cat_name = cats[0] if cats else "repuestos_mantenimiento"
+        desc = raw.get("descripcion") or ""
+        cat_name, subcat_name = classify_fernandez_sera_item(name, cats, desc)
 
         prod_doc = {
             "product_id": f"prod_fs_{sku.lower()}",
             "sku": sku,
             "name": name,
             "brand": brand,
-            "category": "repuestos_mantenimiento",
-            "subcategory": cat_name,
-            "description": raw.get("descripcion") or f"{name} distribuido por Fernández Sera Nicaragua.",
+            "category": cat_name,
+            "subcategory": subcat_name,
+            "description": desc or f"{name} distribuido por Fernández Sera Nicaragua.",
             "specs": raw.get("especificaciones") or {},
             "price_nio": precio_nio,
             "price": price_usd,
@@ -305,7 +417,7 @@ def process_fernandez_sera() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]
                 "models": [],
                 "year_from": None,
                 "year_to": None,
-                "compatibilidad_texto": "Universal / Insumo de Mantenimiento",
+                "compatibilidad_texto": "Universal / Insumo y Detailing",
                 "is_universal": True
             },
             "source_catalog": "Fernandez_Sera",
@@ -332,6 +444,7 @@ def process_meguiars() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     for raw in items:
         sku = sanitize_sku(raw.get("sku") or raw.get("codigos", [""])[0] or raw.get("slug"), "MEG")
         name = raw.get("nombre") or f"Meguiar's {sku}"
+        desc = raw.get("descripcion") or ""
         
         precio_crc = float(raw.get("precio_crc") or 0.0)
         price_usd = round(precio_crc / 515.0, 2) if precio_crc > 0 else 18.0
@@ -382,14 +495,16 @@ def process_meguiars() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
                     "type": "additional"
                 })
 
+        cat_name, subcat_name = classify_meguiars_item(name, desc)
+
         prod_doc = {
             "product_id": f"prod_meg_{sku.lower()}",
             "sku": sku,
             "name": name,
             "brand": "Meguiar's",
-            "category": "cuidado_automotriz",
-            "subcategory": "Detailing y Pulido",
-            "description": raw.get("descripcion") or f"Línea profesional Meguiar's {name}.",
+            "category": cat_name,
+            "subcategory": subcat_name,
+            "description": desc or f"Línea profesional Meguiar's {name}.",
             "specs": raw.get("especificaciones") or {},
             "price": price_usd,
             "precio1": price_usd,
@@ -437,18 +552,18 @@ def process_pioneer() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     for raw in items:
         sku = sanitize_sku(raw.get("sku") or raw.get("modelo") or raw.get("nombre"), "PIO")
         name = raw.get("nombre") or f"Pioneer {sku}"
-        subcat = raw.get("categoria", "Receptores Multimedia")
+        raw_subcat = raw.get("categoria", "Receptores Multimedia")
+        cat_name, subcat_name = classify_pioneer_item(name, raw_subcat)
 
-        # Base pricing heuristic for Pioneer components
         price = float(raw.get("precio", 0) or 0)
         if price <= 0:
-            if "Multimedia" in subcat or "Pantalla" in subcat:
+            if "Multimedia" in subcat_name or "Pantalla" in subcat_name:
                 price = 280.0
-            elif "Amplificador" in subcat:
+            elif "Amplificador" in subcat_name:
                 price = 190.0
-            elif "Subwoofer" in subcat:
+            elif "Subwoofer" in subcat_name:
                 price = 130.0
-            elif "Parlantes" in subcat:
+            elif "Parlantes" in subcat_name:
                 price = 75.0
             else:
                 price = 110.0
@@ -507,8 +622,8 @@ def process_pioneer() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             "sku": sku,
             "name": name,
             "brand": "Pioneer",
-            "category": "car_audio",
-            "subcategory": subcat,
+            "category": cat_name,
+            "subcategory": subcat_name,
             "description": raw.get("descripcion") or f"Equipo Pioneer {name} con alta fidelidad y conectividad.",
             "specs": raw.get("especificaciones") or {
                 "CarPlay": raw.get("carplay", "No especificado"),
@@ -562,6 +677,8 @@ def process_ds18() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     for raw in items:
         sku = sanitize_sku(raw.get("sku") or raw.get("modelo") or raw.get("nombre"), "DS18")
         name = raw.get("nombre") or f"DS18 {sku}"
+        raw_subcat = raw.get("categoria", "")
+        cat_name, subcat_name = classify_ds18_item(name, raw_subcat)
         
         try:
             price = float(raw.get("precio", 0) or 0)
@@ -624,8 +741,8 @@ def process_ds18() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             "sku": sku,
             "name": name,
             "brand": "DS18",
-            "category": "car_audio",
-            "subcategory": "Pro Audio / Altavoces y Drivers",
+            "category": cat_name,
+            "subcategory": subcat_name,
             "description": raw.get("descripcion") or f"Componente de audio de alta potencia DS18 {name}.",
             "specs": raw.get("especificaciones") or {},
             "price": round(price, 2),
@@ -674,6 +791,8 @@ def process_auxbeam() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     for raw in items:
         sku = sanitize_sku(raw.get("sku") or raw.get("skus", [""])[0] or raw.get("handle"), "AUX")
         name = raw.get("nombre") or f"Auxbeam LED {sku}"
+        desc = raw.get("descripcion") or ""
+        cat_name, subcat_name = classify_auxbeam_item(name, desc)
         
         try:
             price = float(raw.get("precio", 0) or 0)
@@ -732,9 +851,9 @@ def process_auxbeam() -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             "sku": sku,
             "name": name,
             "brand": "Auxbeam",
-            "category": "accesorios_iluminacion",
-            "subcategory": "Barras y Pods LED Offroad",
-            "description": raw.get("descripcion") or f"Faro auxiliar / barra LED Auxbeam {name}.",
+            "category": cat_name,
+            "subcategory": subcat_name,
+            "description": desc or f"Faro auxiliar / barra LED Auxbeam {name}.",
             "specs": raw.get("especificaciones") or {},
             "potencia": raw.get("potencia", "LED High Output"),
             "tension_trabajo": raw.get("tension_trabajo", "9-32V DC"),

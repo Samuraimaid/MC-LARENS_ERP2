@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, cn } from "@/lib/utils";
+import { formatCategoryLabel } from "@/lib/branding";
 import {
   Car,
   Wrench,
@@ -256,7 +257,7 @@ export default function ProductQuickViewDialog({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <Badge variant="outline" className="text-xs font-medium">
-                    Categoría: <strong className="ml-1 text-foreground">{product.category || "General"}</strong>
+                    Categoría: <strong className="ml-1 text-foreground">{formatCategoryLabel(product.category) || "General"}</strong>
                   </Badge>
                   {product.subcategory && (
                     <Badge variant="secondary" className="text-xs">

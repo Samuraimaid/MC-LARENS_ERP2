@@ -4,8 +4,8 @@
     "sku": "KIT2026-01",
     "name": "Kit ceramico Meguiars (G240748, G230416, G200416,BALTAP)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Este kit contiene todo lo necesario para garantizar un protección cerámica desde el lavado, también contiene cera y abrillantador para llantas",
     "specs": {
       "Tipo_oficial": "Wash"
@@ -88,8 +88,8 @@
     "sku": "G15816-01",
     "name": "Ultimate Black Restorer (1x16oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Restaura y protege las molduras para recuperar el tono original de los plásticos externos. Ofrece protección contra el agua y los rayos UV.",
     "specs": {
       "Presentación": "16oz",
@@ -174,8 +174,8 @@
     "sku": "G14516-01",
     "name": "Ultimate Protectant (1x16oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Protector y acondicionador de plásticos internos y externos. Recupera el tono mientras brinda protección a las superficies plásticas",
     "specs": {
       "Presentación": "16oz",
@@ -260,8 +260,8 @@
     "sku": "M6MFP2-01",
     "name": "Professional 6 Microfiber Pad (DMC6)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Desbloquea el verdadero potencial de tu proceso de corrección de pintura con las pastillas universales de microfibra profesional 6\" de Meguiar, disponibles en una cómoda 2-paquete. Diseñado para abordar una amplia gama de defectos superficiales, estos discos de corte son la opción de ir a elegir para los detallistas profesionales y entusiastas automotrices por igual. Eliminar los arañazos sin mirar, las marcas de lluvia ácida, los arañazos, los hologramas y otras imperfecciones con el poder de la tecnología de microfibra de vanguardia de Meguiar. Estos discos están diseñados para eliminar rápidamente y eficazmente los defectos de superficie pesados sin crear marcas de giro, dando resultados increíbles. Cada almohadilla de detalle profesional está diseñada para ofrecer los resultados que estás buscando y está diseñada para su uso en un pulidor de acción dual. Estas almohadillas versátiles se pueden emparejar con compuestos para la eliminación de defectos pesados, ceras limpiadoras, pulidos o productos de detallamiento todo en uno para el acabado de un solo paso, o incluso con limpiadores interiores para limpiar superficies de cuero, vinilo o tela. No sólo estos discos de corte ofrecen un rendimiento excepcional, sino que también están diseñados con sostenibilidad en mente. Cada disco es lavable y reutilizable, garantizando un uso duradero y reduciendo los residuos. Esto les hace una opción rentable para cualquiera, ya sea un entusiasta detallador o un profesional experimentado",
     "specs": {
       "Tipo_oficial": "DA Discs, Pads & Backing Plates"
@@ -344,8 +344,8 @@
     "sku": "M5CFP2-01",
     "name": "Professional 5 Compound Foam Pad (DFC5)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Desbloquea el verdadero potencial de tu proceso de corrección de pintura con las Pads de compilación de espuma profesional 5\" de Meguiar, disponibles en un cómodo 2-pack. Diseñado para abordar una amplia gama de defectos superficiales, estos discos de corte son la opción de ir a elegir para los detallistas profesionales y entusiastas automotrices por igual. Eliminar los arañazos sin mirar, las marcas de lluvia ácida, los arañazos, los hologramas, las marcas de arena y otras imperfecciones con el poder de la tecnología de espuma de corte de Meguiar. Estos discos están diseñados para eliminar rápidamente y eficazmente los defectos de superficie pesados sin crear marcas de giro, dando resultados increíbles. Cada almohadilla profesional está diseñada para ofrecer los resultados que buscas, ya sea con un pulidor rotativo o un pulidor de acción dual. Estas almohadillas versátiles se pueden combinar con compuestos para la eliminación de defectos pesados. No sólo estos discos de corte ofrecen un rendimiento excepcional, sino que también están diseñados con sostenibilidad en mente. Cada disco es lavable y reutilizable, garantizando un uso duradero y reduciendo los residuos. Esto les hace una opción rentable para cualquiera, ya sea un entusiasta detallador o un profesional experimentado. Lleve su corrección de pintura al siguiente nivel con los 5\" Foam Cutting Pads. Confianza en la marca que ha sido sinónimo de excelencia automotriz durante más de un siglo. Experimente la diferencia y ",
     "specs": {
       "Tipo_oficial": "DA Discs, Pads & Backing Plates"
@@ -428,8 +428,8 @@
     "sku": "KIT2025-01",
     "name": "Kit ceramico Meguiars (BALTAP, G240748, G230416, G200416)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Kit Cerámico Meguiar’s: protección cerámica avanzada, brillo profundo y repelencia al agua para tu auto. ¡Acabado profesional en casa!",
     "specs": {
       "Tipo_oficial": "Marine/RV Cleaning & Oxidation Removal"
@@ -512,8 +512,8 @@
     "sku": "G17916-01",
     "name": "Gold Class Leather Cleaner/Conditioner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Esta fórmula premium en gel ofrece una solución simple pero altamente eficaz en un solo paso: limpia, acondiciona y protege el cuero sin dejar residuos blancos ni brillo artificial, ideal para todas las superficies de cuero",
     "specs": {
       "Nota": "No especificado"
@@ -560,8 +560,8 @@
     "sku": "G240748-01",
     "name": "Hybrid Ceramic Wash & Wax (1x48oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Shampoo con protección cerámica, elimina contaminantes dejando una protección con mucha repelencia al agua",
     "specs": {
       "Presentación": "48oz",
@@ -646,8 +646,8 @@
     "sku": "G251024-01",
     "name": "Hybrid Ceramic Waterless Wash & Wax (1x24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Su formulación de alta tecnología permite lavar el auto sin necesidad de utilizar agua, dejando una perdurable protección cerámica que repele el agua.",
     "specs": {
       "Presentación": "24oz",
@@ -732,8 +732,8 @@
     "sku": "G250816-01",
     "name": "Ultimate Insane Shine Tire Spray – 16oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Fórmula avanzada para un brillo increíble y duradero en la llantas! Tecnología de polímero sintético para un acabado con mucho brillo y protección.",
     "specs": {
       "Presentación": "16oz",
@@ -817,8 +817,8 @@
     "sku": "G250708-01",
     "name": "Trigger Air Refresher Black Chrome – 8oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Combate los olores y deja una fragancia fresca y duradera. Combate los olores al instante. Fácil y práctico: simplemente rocíe y listo. Deja un aroma que perdura.",
     "specs": {
       "Presentación": "8oz",
@@ -902,8 +902,8 @@
     "sku": "G250608-01",
     "name": "Trigger Air Refresher New Car – 8oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Combate los olores y deja una fragancia fresca y duradera. Combate los olores al instante. Fácil y práctico: simplemente rocíe y listo. Deja un aroma a carro nuevo que perdura.",
     "specs": {
       "Presentación": "8oz",
@@ -987,8 +987,8 @@
     "sku": "G250524-01",
     "name": "Ultimate Iron Remover (1x24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Meguiar’s® Ultimate Iron Remover elimina rápidamente los contaminantes ferrosos incrustados y los residuos industriales que afectan la suavidad, el color y la claridad. Esto prepara la superficie para las condiciones óptimas para el pulido, la aplicación de la protección superficial y el curado.",
     "specs": {
       "Presentación": "24oz",
@@ -1073,8 +1073,8 @@
     "sku": "G250464-01",
     "name": "Watermelon Car Wash – 64oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Shampoo para autos, elimina los contaminantes de forma fácil y rápida. Ideal para cañon de espuma o preparación en cubeta",
     "specs": {
       "Presentación": "64oz",
@@ -1158,8 +1158,8 @@
     "sku": "G250224-01",
     "name": "Paint Dash & Glass (1x24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Este revolucionario detallador proporciona una limpieza rápida y sencilla con protección hidrofóbica en superficies exteriores e interiores de automóviles. Perfecto para retoques, después de lavados a mano, para mantener el vehículo limpio o para la limpieza de marcas en la pintura.",
     "specs": {
       "Presentación": "24oz",
@@ -1244,8 +1244,8 @@
     "sku": "G250100-01",
     "name": "Heavy Duty Trim Restoration Kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "El Meguiar’s® Heavy Duty Trim Restoration Kit restaura las molduras en minutos, dejando una protección durable que resiste a los elementos",
     "specs": {
       "Tipo_oficial": "Exterior Trim"
@@ -1328,8 +1328,8 @@
     "sku": "DRTU11032-01",
     "name": "DRTU Hyper Wash – 32oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Shampoo profesional ultra concentrado. Excelente rendimiento para profesionales. Apto para uso en cañon de espuma y método de cubetas",
     "specs": {
       "Presentación": "32oz",
@@ -1413,8 +1413,8 @@
     "sku": "G7116-01",
     "name": "Gold Class Car Wash Shampoo / Cond (1×473 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Shampoo para autos que remueve gentilmente los contaminantes y suciedad mientras acondiciona la pintura. Restaura el color y la claridad con cada lavada.",
     "specs": {
       "Presentación": "473 ml"
@@ -1461,8 +1461,8 @@
     "sku": "D14301-01",
     "name": "Non-Acid Wheel & Tire Cleaner Meguiars (1×1 gl)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Non-Acid Wheel & Tire Cleaner Meguiars (1×1 gl)",
     "specs": {
       "Presentación": "1 gl",
@@ -1537,8 +1537,8 @@
     "sku": "M2716-01",
     "name": "PRO Hybrid Ceramic Sealant (1x16oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Presentación": "16oz",
@@ -1623,8 +1623,8 @@
     "sku": "M2701-01",
     "name": "Pro Hybrid Ceramic Sealant",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Tipo_oficial": "Professional Waxes, Sealants & Coatings"
@@ -1707,8 +1707,8 @@
     "sku": "Balde-Meg-5-gl",
     "name": "Balde Meguiars Aros color gris -5 galones sin Tapa-",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Balde Meguiars Aros color gris -5 galones sin Tapa-",
     "specs": {
       "Nota": "No especificado"
@@ -1755,8 +1755,8 @@
     "sku": "G2990SRP",
     "name": "Ultimate headlight Restoration Kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Si tienes faros de plástico que no parecen tan claros como deberían, ¿qué haces? Reemplazar los faros puede ser caro, y dependiendo de la marca, modelo y edad de su vehículo, pueden ser difíciles de encontrar. Aquí es donde un kit de luz de calidad puede hacer toda la diferencia. El último kit de restauración de la luz de cabeza de Meguiar elimina la oxidación, la nube y el amarillento mientras entrega un acabado cristalino para restaurar los faros de plástico transparentes. Este kit de restauración de lentes de luz superior incluye todo lo necesario para obtener resultados profesionales sin necesidad de un taladro o herramientas de potencia. Incluido en el kit de limpieza de faros, se obtienen dos grados diferentes de discos de lijado que funcionan de forma rápida y completa para eliminar la oxidación y preparar la superficie para el siguiente paso. El agarre fácil ofrece comodidad y control, proporcionando una agradable experiencia de lijado. Finalizar el proceso con el sellador Ultimate Headlight que seca claro y deja atrás la durabilidad extrema y la protección UV. El sellador patentado de Meguiar contiene tecnología de recubrimiento de cerámica que evita la reoxidación durante 18+ meses! Este kit de restauración de lentes de luz de Meguiar de Meguiar hace que sea fácil para cualquiera lograr resultados increíbles de forma rápida y sencilla en la comodidad de su garaje. El kit incluye dos grados de discos de lijado (1000 grit y 3000 grit), una almohadilla de agarre fácil,",
     "specs": {
       "Tipo_oficial": "Headlight Restoration"
@@ -1839,8 +1839,8 @@
     "sku": "M4364-01",
     "name": "Boat Wash (1×1.89 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Elimina de forma segura y rápida la suciedad, sin quitar la protección de la cera. La acción jabonosa duradera y la fórmula con pH neutro ayudan a proporcionar una limpieza suave. La fórmula que no deja rayas limpiará e iluminará suavemente el acabado del barco con ricos acondicionadores que dejan un acabado deslumbrante.",
     "specs": {
       "Tipo_oficial": "Marine/RV Wash"
@@ -1923,8 +1923,8 @@
     "sku": "BaldeBlanco",
     "name": "Balde Meguiars Lavado Color Blanco -5 galones sin tapa-",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Balde Meguiars Lavado Color Blanco -5 galones sin tapa-",
     "specs": {
       "Nota": "No especificado"
@@ -1971,8 +1971,8 @@
     "sku": "M4516-01",
     "name": "Boat / RV Polish 1×473 ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Restaurar un brillante brillo a su superficie marina o RV después de la limpieza con el M45 Marine/RV High Gloss Polish de Meguiar. Nuestra fórmula contiene aceites de pulido ricos que alimentan y nutren el gel y las superficies de fibra de vidrio y RV para producir brillo óptimo. Un excelente tratamiento de pulido para aplicar entre limpieza y cera o sellado. Efectivamente a mano o máquina, se puede utilizar en todas las superficies de fibra de vidrio y pintura marina o RV, y es especialmente eficaz en colores oscuros.",
     "specs": {
       "Presentación": "473 ml",
@@ -2056,8 +2056,8 @@
     "sku": "BALTAP",
     "name": "Balde Meguiars Color Amarillo -2.5 galones con tapa-",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El M67 Marine/RV One-Step Compound de Meguiar es un compuesto avanzado y agresivo, pero seguro de corte con pulido que limpia y restaura brillo a las superficies de gel en un solo paso. Elimina oxidación moderada a pesada, rasguños, manchas y puntos de agua duros en todas las superficies de fibra de vidrio y gel. Obtenga resultados sorprendentes a mano o por máquina.",
     "specs": {
       "Tipo_oficial": "Marine/RV Cleaning & Oxidation Removal"
@@ -2140,8 +2140,8 @@
     "sku": "G17316-01",
     "name": "Engine Dressing 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "TOP CLEANER                                                                        • Limpiador de motores seguro para todo tipo de superficies.               • Su formula no grasosa restaura y protege • Este limpiador remueve la suciedad y manchas de las capotas de               • Se atomiza directamente al motor mojado y asi remueve polvo,               mangueras, plásticos, hules, pintura y metales",
     "specs": {
       "Presentación": "473ml"
@@ -2188,8 +2188,8 @@
     "sku": "M88800-01",
     "name": "Beyond Ceramic Coating Kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Más allá de la pintura de cerámica de Meguiar M888 es un emocionante recubrimiento profesional que utiliza química patentada construida sobre tecnología anterior que hemos seguido mejorando. M888 es una protección multianual de pintura(1) que ofrece una excelente durabilidad y resistencia química envuelta en un impresionante revestimiento de cerámica de coche que es extremadamente fácil de usar. Con M888, usted consigue un recubrimiento profesional de larga duración pero no tiene que preocuparse por ser un instalador certificado o entrenado para aplicar; cualquiera puede comprar y utilizar Beyond Ceramic Paint Coating. La fórmula avanzada permite una aplicación fácil con un bajo riesgo de manchas altas, una aplicación de capa única y fácil de limpiar. Para ayudarle a obtener los mejores resultados posibles, también hemos incluido una guía de aplicación profesional en el kit con un código QR donde puede obtener el SOP, videos y SDS. Este recubrimiento de coche cerámico es diferente a nuestros productos tradicionales SiO2 de cerámica, proporcionando aún mejor durabilidad, desperdicio de agua, deslizamiento y brillo con 100% activos, lo que significa que no hay portadores de flash como otros recubrimientos y ceras tradicionales. Al igual que con cualquier revestimiento o protector, el mantenimiento jugará un factor clave para maximizar el rendimiento excepcional. Recomendamos un lavado frecuente con un lavado de coche balanceado con el método de dos bolsillos y accesorios premiu",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -2272,8 +2272,8 @@
     "sku": "M30032-01",
     "name": "So1o All-In-One 946ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "El So1o All-In-One M300 de Meguiar ofrece lo mejor de ambos mundos al proporcionar una considerable eliminación de defectos y protección duradera de la carga de agua en una sola fórmula. También deja nuestra protección más duradera hasta la fecha de un producto todo en uno (AiO). Formulado con el detallista profesional en mente, este avanzado limpiador y pulido estaba bien ajustado tanto para pulverizadores DA altos y de corta duración, pero puede ser utilizado efectivamente por rotación o a mano. Esta cera de coche para profesionales y entusiastas de detallamiento también fue diseñada para que pueda utilizarse con diferentes tipos de pads y discos, lo que le permite aumentar o disminuir la cantidad de cortes de producto para que pueda marcar en la combinación correcta para el trabajo específico en el que está trabajando. Esta cera limpiadora profesional es una fórmula totalmente nueva que construye nuestro concepto original de So1o, pero con mejores tecnologías abrasivas y cera para asegurar que usted está recibiendo un corte efectivo, grandes resultados de pulido y protección duradera, todo en una fórmula de vanguardia pro-grado.",
     "specs": {
       "Presentación": "946ml",
@@ -2357,8 +2357,8 @@
     "sku": "M20032-01",
     "name": "Pro Speed Polish 946ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El profesional Pro Speed Polish M200 de Meguiar es un pulido de calidad profesional extremadamente fácil de usar que está formulado para limpiar y eliminar defectos de pintura ligera mientras deja la superficie con un acabado profundo y brillante sin girar, incluso en pinturas oscuras y sensibles. Creado con tiendas de carros profesionales y detallistas en mente, esta fórmula avanzada elimina rápidamente defectos de pintura ligera como la escotilla DA y los giratorios rotativos, terminando bellamente sin crear más escobillas, swirls o hologramas. Los ricos aceites de pulido aumentan brillo y brillo para un acabado brillante, incluso cuando se trabaja en colores más oscuros y acabados de pintura que son más sensibles. Esta fórmula exclusiva es la tienda de cuerpo seguro y fino para los pulverizadores DA de alto y corto. M200 es también un pulido limpiador versátil que es seguro y eficaz al trabajar a mano, pulidor de velocidad variable de acción dual o amortiguador rotativo en pintura brillante. Fue formulado a propósito entregando un largo ciclo de trabajo y es un polvo bajo para limpiar rápidamente. M200 es también el paso final perfecto para obtener un coche de demostración, resultado libre de arañazos después de usar un compuesto más agresivo como el Compound Profesional Pro Speed de Meguiar M100 para eliminar defectos de pintura más pesados.",
     "specs": {
       "Presentación": "946ml",
@@ -2442,8 +2442,8 @@
     "sku": "G240616-01",
     "name": "All Surface Interior Cleaner 473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "¿Está buscando un limpiador de todo propósito de calidad formulado para superficies interiores de automóviles con las que es fácil trabajar, tiene un olor agradable, y ofrece limpieza profunda y completa a todas las superficies interiores? Si es así, estamos emocionados de decirles que toda su búsqueda ha terminado. El limpiador de interiores All Surface de Meguiar es un limpiador de interiores premium que efectivamente ofrece limpieza profunda a todas las superficies interiores de su coche. ¿Ha construido suciedad y mueca que se acumula en superficies tocadas comúnmente con el tiempo? No hay problema. Retire los aceites de suciedad, polvo, grime y huella de vinilo, cuero, caucho y plásticos, y este limpiador interior deja las superficies limpias sin brillo ni brillo. ¿Tiene manchas en alfombras o asientos tapizados de accidentes interiores o derrames? No te preocupes. Retire las manchas de alfombra y tapicería para un aspecto limpio, refrescado, uniforme, restaurando alfombra, tela y tapicería para gustar nuevo. Algunos limpiadores de interiores tienen un fuerte olor químico o usan olores de sobrepoder. ¡No nuestro limpiador de todo propósito para interiores! Tiene un aroma cítrico fresco que hace que el uso del producto sea una experiencia fácil y positiva. Este limpiador de superficie interior limpiará profundamente y dejará las superficies con un acabado OEM sin brillo. Si desea añadir brillo y una barrera protectora al vinilo interior, cuero, goma y superficies plásticas",
     "specs": {
       "Presentación": "473ml",
@@ -2527,8 +2527,8 @@
     "sku": "G240416-01",
     "name": "Ultimate Glass Cleaner & Water Repellent 473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Limpia y protege tus vidrios externos con Ultimate Glass Cleaner & Water Repellent. Mejora la visibilidad y crea un efecto hidrofóbico para repeler el agua",
     "specs": {
       "Presentación": "473ml",
@@ -2612,8 +2612,8 @@
     "sku": "G240108-01",
     "name": "Ultimate Ceramic Coating 236ML",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Ultimate Ceramic Coating 236ML",
     "specs": {
       "Presentación": "236ML"
@@ -2660,8 +2660,8 @@
     "sku": "G2970-01",
     "name": "Two Step headlight Restoration Kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Elimina de forma permanente y sencilla, la oxidación y el amarillento de los focos. Ideal para utilizar en focos con defectos leves y medios",
     "specs": {
       "Tipo_oficial": "Headlight Restoration"
@@ -2744,8 +2744,8 @@
     "sku": "M5032-01",
     "name": "One Step Boat / RV Cleaner Wax Liquid (1×945 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "One Step Boat / RV Cleaner Wax Liquid (1×945 ml)",
     "specs": {
       "Presentación": "945 ml",
@@ -2829,8 +2829,8 @@
     "sku": "M5001-01",
     "name": "One Step Boat / RV Cleaner Wax Liquid (1×3.78 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "One Step Boat / RV Cleaner Wax Liquid (1×3.78 lt)",
     "specs": {
       "Tipo_oficial": "Marine/RV Polish, Wax & Protect"
@@ -2913,8 +2913,8 @@
     "sku": "MDFAUCET",
     "name": "Meguiars Clear Faucet",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El Mirror Glaze Diamond Cut Compound 2.0 de Meguiar es un compuesto swirl súper rápido y bajo. Es la respuesta para la pintura de sólidos altos; corta súper rápido con mínimos aros. Prueba exitosamente en tiendas de producción de sólidos altos. Fórmula de baja industria y baja salpicadura que también es segura en un ambiente de taller de cuerpo.",
     "specs": {
       "Tipo_oficial": "Professional Compounds"
@@ -2997,8 +2997,8 @@
     "sku": "S2025-01",
     "name": "Unigrit Sanding Paper-2000 Grit 25 sheets",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "UNIGRIT SANDING                                      HI-TECH BACKING PAD                               UNIGRIT SANDING BLOCK • Distribuye la presión de la mano                  • Excelente para la eliminación de • Lijas de varios grados, según la necesidad. • Discos de 6 pulgadas para lijar con • Su construcción de células cerradas lo              cualquier superficie pintada. hace más duradera y flexible.                     • Seguro y efectivo para uso",
     "specs": {
       "Tipo_oficial": "Professional Abrasives"
@@ -3054,8 +3054,8 @@
     "sku": "M79901-01",
     "name": "PRO Hybrid Ceramic Bead Booster (galon)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Nota": "No especificado"
@@ -3102,8 +3102,8 @@
     "sku": "MT103-01",
     "name": "Lampara LED -Meguiars-",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Movimiento oscilatorio que no quema la pintura.           • El cuidado automotriz es un trabajo que consume             • Lámpara profesional para la • Se puede usar para encerar, abrillantar, pulir y hasta      mucho tiempo y esfuerzo; con el DA Power System               inspección de defectos en la pintura. lijar.                                                      este esfuerzo puede ser reducido a menos de la mitad.       • Fabricada en conjunto con Scangrip. • Velocidades desde 3000 hasta 7500 opm´s                     Básicamente, se obtiene mejor brillo en menos tiempo.       • Lumens regulables de 50 hasta 500",
     "specs": {
       "Nota": "No especificado"
@@ -3159,8 +3159,8 @@
     "sku": "D20181-01",
     "name": "Leather Cleaner Bottel -16oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Leather Cleaner Bottel -16oz",
     "specs": {
       "Presentación": "16oz"
@@ -3207,8 +3207,8 @@
     "sku": "M78802-01",
     "name": "Deep Crystal Ceramic Paint Coating Kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Tratamiento cerámico para pintura. formulación única que reduce la posibilidad de malas nivelaciones durante la aplicación, haciendo que sea muy sencilla y extremadamente fácil de utilizar.",
     "specs": {
       "Nota": "No especificado"
@@ -3255,8 +3255,8 @@
     "sku": "G200916-01",
     "name": "Ultimate Quik Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera de aplicación rápida en Spray, con polímeros sintéticos que proteger la superficie y dejan repelencia contra el agua. Aumenta el brillo y reflejo.",
     "specs": {
       "Nota": "No especificado"
@@ -3303,8 +3303,8 @@
     "sku": "G211606-01",
     "name": "Metal Polish – 6oz 170 gramos",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "TIRE DRESSING                                                                            • Es la solución perfecta para limpiar todo tipo de metales puros, ya sea hierro, • Sus polímeros resistentes al agua y tecnología anti ozonante mantienen la llanta       aluminio, oro, plata, bronce o cromo. negra por muchos días. El Hot Shine deja un acabado como nuevo en las llantas.       • La tecnología de de Abrasivos Disminuyentes remueve la suciedad y las • Perfecto para los autos donde no se desee un brillo muy alto. Presentación de          manchas de forma rápida y segura.",
     "specs": {
       "Presentación": "6oz",
@@ -3388,8 +3388,8 @@
     "sku": "G230524-01",
     "name": "Hot Rims Black Wheel Cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Su poderosa fórmula remueve suciedad, contaminantes como polvo de fibra y barro, manteniendo el brillo y apariencia de los aros de tono negro.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -3472,8 +3472,8 @@
     "sku": "G230416-01",
     "name": "Hybrid Ceramic Tire Shine",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Abrillanta y crea una protección y repelencia cerámica en las llantas. Repele el agua y es resistente a los elementos, perdurando a pesar de las lluvias.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -3556,8 +3556,8 @@
     "sku": "G230316-01",
     "name": "Ultimate Insane Shine Paint Glosser",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Aumenta el color, la saturación y realza el brillo nutriendo la pintura. Abrillantador para pintura que disimula rayones ligeros",
     "specs": {
       "Tipo_oficial": "Polish"
@@ -3640,8 +3640,8 @@
     "sku": "G4216-01",
     "name": "New Car Scent Protectant Spray 16oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "• El Quik Interior Detailer mantiene la apariencia de      • Ideal para los dash donde se desea reavivar el       • Abrillantador y protector para dash.            PROTECTANT",
     "specs": {
       "Presentación": "16oz",
@@ -3725,8 +3725,8 @@
     "sku": "G2016-01",
     "name": "Convertible Top Cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "TOP CLEANER                                                                        • Limpiador de motores seguro para todo tipo de superficies.               • Su formula no grasosa restaura y protege • Este limpiador remueve la suciedad y manchas de las capotas de               • Se atomiza directamente al motor mojado y asi remueve polvo,               mangueras, plásticos, hules, pintura y metales",
     "specs": {
       "Nota": "No especificado"
@@ -3773,8 +3773,8 @@
     "sku": "X3070-01",
     "name": "High Tech Applicator Pad 2 Pack",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Nota": "No especificado"
@@ -3821,8 +3821,8 @@
     "sku": "G220416-01",
     "name": "Hybrid Ceramic Pre-Wax Prep",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "MEGUIAR'S®                                                        MEGUIAR'S® HYBRID CERAMIC ULTIMATE POLISH                                                   PRE-WAX PREP • El Polish es el paso intermedio entre el pulidor y la cera.     • Remueve remolinos y otros defectos leves, mientras incrementa la profundidad del color y aplicar la cera.                                                • Su tecnología de SiO2 deja una capa que facilita la adherencia de las ceras cerámicas y • Remueve defectos leves mientas enriquece los aceites              prácticamente cualquier otro tipo de sellador de pintura. Se puede aplicar a mano, o con de la pintura. Ideal para color",
     "specs": {
       "Nota": "No especificado"
@@ -3869,8 +3869,8 @@
     "sku": "G7516-01",
     "name": "Gold C. Endurance High Gloss",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "COATING                                                               • El abrillantador de llantas de mas durabilidad del mercado.               • Este novedoso producto no solo protege y • Tecnología de polímeros sintéticos deja una brillo muy alto     • En presentación Gel y Aerosol.                                              abrillanta las llantas de los autos, también en las llantas.                                                 • Aseguran el brillo y colo",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -3953,8 +3953,8 @@
     "sku": "D17001-01",
     "name": "Hyper Dressing 1x1gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "ABRILLANTADORES • Fórmula de alto brillo.                         • Alto brillo uniforme.                       • Brillo superior para el interior y            • Limpiador y abrillantador para • Acabado como mojado de alta                     • Ideal para un ambiente susceptible            exterior.                                       viniles y plásticos.",
     "specs": {
       "Presentación": "1gl",
@@ -4038,8 +4038,8 @@
     "sku": "D16001-01",
     "name": "All Season dressing 1 galon",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "ABRILLANTADORES • Fórmula de alto brillo.                         • Alto brillo uniforme.                       • Brillo superior para el interior y            • Limpiador y abrillantador para • Acabado como mojado de alta                     • Ideal para un ambiente susceptible            exterior.                                       viniles y plásticos.",
     "specs": {
       "Tipo_oficial": "Professional Dressings"
@@ -4113,8 +4113,8 @@
     "sku": "G210608-01",
     "name": "Ultimate Paste Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera de alta tecnología 100% polímero sintético, aumenta el brillo y reflejo sobre la pintura, dejando una excelente protección.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -4197,8 +4197,8 @@
     "sku": "M3401-01",
     "name": "Meguiars Final Inspection 1×3.78 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "M799        PRO HYBRID CERAMIC BEAD                   M34      FINAL INSPECTION                          D155 “LAST TOUCH” BOOSTER                                                                                           ABRILLANTADOR DE PINTURA                              WASH AND WAX • Sellador y detallador en un mismo                   • Rápido y fácil de usar. Solo rociar y limpiar.   • Resaltador de brillo, ideal para el                • Lavado en seco, no requiere producto.                                           • Se usa para dar brillo a la pintura o e",
     "specs": {
       "Tipo_oficial": "Professional Surface Prep & Maintenance"
@@ -4281,8 +4281,8 @@
     "sku": "G14324-01",
     "name": "Hot Rims Aluminum Wheel Wash",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "• El All Wheel es la solución para los que buscan remover el polvo     • El Hot Rims Aluminum Cleaner es el limpiador ideal • No mancha ni daña los componentes de suspensión y frenos.              aros de aluminio pulidos y sin capa de transparente 24oz Código: G9524                                                       • También puede ser usado en aros pintados.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -4365,8 +4365,8 @@
     "sku": "D12001-01",
     "name": "Glass Cleaner Concentrate 1×3.78lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "LIMPIADORES & DESENGRASANTES • Formulado especialmente para uso • Limpia todo tipo de superficie interior          • Acción rápida y fuerte para los trabajos más difíciles. y exterior.                                      • Rendimiento sin residuo. • Resultados sin manchas. • Ideal para limpieza de al",
     "specs": {
       "Tipo_oficial": "Professional Cleaners & Degreasers"
@@ -4449,8 +4449,8 @@
     "sku": "G10464-01",
     "name": "Deep Crystal Car Wash (1×1.89 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "El Shampoo Meguiar's® Deep Crystal contiene ingredientes especiales que forman espuma para eliminar de forma segura y eficaz la suciedad suelta y los contaminantes sin dañar la protección de la cera. Su formulación pH neutra abrillantará la pintura de forma segura y dejará un acabado deslumbrante.",
     "specs": {
       "Tipo_oficial": "Wash"
@@ -4533,8 +4533,8 @@
     "sku": "D16005-01",
     "name": "All Season Shine (1×5 gl)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "ABRILLANTADORES • Fórmula de alto brillo.                         • Alto brillo uniforme.                       • Brillo superior para el interior y            • Limpiador y abrillantador para • Acabado como mojado de alta                     • Ideal para un ambiente susceptible            exterior.                                       viniles y plásticos.",
     "specs": {
       "Presentación": "5 gl",
@@ -4591,8 +4591,8 @@
     "sku": "G3626-01",
     "name": "Ultimate Wash & Wax Anywhere",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "¡No necesitas manguera ni cubeta! Simplemente rocía y limpia para obtener una superficie limpia, recién lavada y encerada en minutos.",
     "specs": {
       "Tipo_oficial": "Wash"
@@ -4675,8 +4675,8 @@
     "sku": "DBP5-01",
     "name": "Soft Buff DBP5 DA Polisher 5 inch Backing Plate",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Soft Buff DBP5 DA Polisher 5 inch Backing Plate",
     "specs": {
       "Nota": "No especificado"
@@ -4723,8 +4723,8 @@
     "sku": "G7014J-01",
     "name": "Gold Class Clear Coat Paste Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera Premium con una mezcla de carnauba y polímeros que brinda a tu auto una protección fuerte y duradera para preservar el acabado de la pintura con un brillo espectacular.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -4780,8 +4780,8 @@
     "sku": "G8224-01",
     "name": "Perfect Clarity Cleaner Spray 1x710ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "GLASS CLEANER                                        GLASS POLISHING                                       GLASS SEALANT                                               • El producto ideal para remover gota seca de • Su formula especialmente diseñada para autos     COMPOUND",
     "specs": {
       "Presentación": "710ml",
@@ -4838,8 +4838,8 @@
     "sku": "G14512-01",
     "name": "Ultimate Protectan (1×355 ml )",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Acondicionador para plásticos internos y externos. Recupera el tono mientras brinda protección a las superficies plásticas",
     "specs": {
       "Presentación": "355 ml"
@@ -4886,8 +4886,8 @@
     "sku": "A1214-01",
     "name": "Cleaner Wax Paste",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "La legendaria cera de Meguiar´s. Limpia, abrillanta y protege en un solo paso. Perfecta para vehículos con exposición constante a los elementos. Ahora con presentación de edición especial.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -4970,8 +4970,8 @@
     "sku": "G180515-01",
     "name": "Foaming Bug & Tar Remover 15 oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Potente acción espumosa que disuelve los insectos adheridos a la pintura. ¡Eficaz contra los insectos, suave con la pintura!",
     "specs": {
       "Presentación": "15 oz",
@@ -5055,8 +5055,8 @@
     "sku": "D20156-01",
     "name": "Synthetic X-Press Spray Wax Bottle (945ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Presentación": "945ml"
@@ -5103,8 +5103,8 @@
     "sku": "A3714-01",
     "name": "Water Spot Remover",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "ERASER KIT                                              • El ScratchX es la solución ideal para remover los     • El producto ideal para remover gota seca de pintura, vidrio, cromo y todo tipo de • Este práctico kit contiene un pad que se adapta       defectos aislados en las pinturas de cualquier          superficie. a cualquier taladro convencional y un ScratchX        tipo y color.                                         • Mas eficiente que cualquier otro pulidor pues su formula esta diseñada específicamente con su famosa fórmula p",
     "specs": {
       "Tipo_oficial": "Surface Contaminant Removal"
@@ -5187,8 +5187,8 @@
     "sku": "X210300-01",
     "name": "Perfect Clarity Glass Towel",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Ideado para trabajar en conjunto con el Hybrid Ceramic           • Este nuevo guante de microfibraayuda a lograr un lavado libre de    GLASS TOWEL Wash and Wax.                                                      rayones                                                               • El detallado de vidrios es la parte mas compleja al • Su lado de fibras largas está diseñado para el lavado de         • Su gruesa capa demicrofibra levanta y atrapa la suciedad.",
     "specs": {
       "Nota": "No especificado"
@@ -5235,8 +5235,8 @@
     "sku": "G190526-01",
     "name": "Hybrid Ceramic Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "La sofisticada tecnología Hybrid Ceramic deja una protección con alta repelencia, con un modo de empleo sencillo para cubrir de forma rápida y sencilla.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -5319,8 +5319,8 @@
     "sku": "G10307-01",
     "name": "Scratch-X 1x207ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "ERASER KIT                                              • El ScratchX es la solución ideal para remover los     • El producto ideal para remover gota seca de pintura, vidrio, cromo y todo tipo de • Este práctico kit contiene un pad que se adapta       defectos aislados en las pinturas de cualquier          superficie. a cualquier taladro convencional y un ScratchX        tipo y color.                                         • Mas eficiente que cualquier otro pulidor pues su formula esta diseñada específicamente con su famosa fórmula p",
     "specs": {
       "Presentación": "207ml",
@@ -5404,8 +5404,8 @@
     "sku": "X2020-01",
     "name": "Supreme Shine Microfiber 3 pack",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Tipo_oficial": "Towels, Mitts & Applicators"
@@ -5488,8 +5488,8 @@
     "sku": "DMC5-01",
     "name": "DA Microfiber Cutting Pad 5",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "DA Microfiber Cutting Pad 5",
     "specs": {
       "Nota": "No especificado"
@@ -5536,8 +5536,8 @@
     "sku": "D10801-01",
     "name": "Super Degreaser 1x1gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "LIMPIADORES & DESENGRASANTES • Formulado especialmente para uso • Limpia todo tipo de superficie interior          • Acción rápida y fuerte para los trabajos más difíciles. y exterior.                                      • Rendimiento sin residuo. • Resultados sin manchas. • Ideal para limpieza de al",
     "specs": {
       "Presentación": "1gl",
@@ -5612,8 +5612,8 @@
     "sku": "G200416-01",
     "name": "Hybrid Ceramic Liquid Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CLEANER WAX                                                  QUIK WAX™                                           HYBRID                                                HYBRID CERAMIC • La legendaria cera de Meguiars. La Cleaner wax tiene       • La cera más fácil de usar. Puede ser aplicada   CERAMIC LIQUID                                        WAX mas de 40 años en el mercado y sigue ganando                 con el vehículo seco o mojado, al sol o a la    WAX                                                     • Tecnología hibrida de Si2O de muy fácil aplicación.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -5696,8 +5696,8 @@
     "sku": "A1216-01",
     "name": "Cleaner Wax Liquid",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera limpiadora con la misma gran fórmulación. Duradera y fácil de aplicar y quitar, Meguiar's Cleaner Wax elimina de manera efectiva y segura los contaminantes y las imperfecciones de la superficie que opacan su acabado, incluidos rayones finos y marcas de remolinos para dejar un brillo intenso.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -5780,8 +5780,8 @@
     "sku": "G9524-01",
     "name": "Hot Rims Care All Wheel",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Elimina la suciedad de aros y llantas de forma rápida y efectiva, sin dañar la superficie de los aros pintados y con recubrimiento de capa transparente.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -5864,8 +5864,8 @@
     "sku": "G191532-01",
     "name": "Snow Foam – 32oz – Meguiars-",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "ULTIMATE SNOW                                           ULTIMATE                                                     ULTIMATE                                            HYBRID CERAMIC • No todos los shampoo se deben usar en una           WASH & WAX                                                     • El Ultimate Wash & Wax es el único shampoo        • Dos líquidos distintos que se mezclan para un",
     "specs": {
       "Presentación": "32oz"
@@ -5912,8 +5912,8 @@
     "sku": "M4916-01",
     "name": "Heavy Duty Oxidation Remover (1×473 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "El Quitador de oxidación Marine/RV de Meguiar restaura el color original de las superficies de gel de fibra de vidrio antiguo eliminando eficazmente la degradación de la superficie. Formulado con aceites de alimentador enriquecidos para mejorar el acabado y abrasivos de disminución únicos que descomponen con seguridad y desaparecen durante la aplicación. Ideal para eliminar con seguridad la oxidación moderada, las manchas y los arañazos de la capa de gel y las superficies de fibra de vidrio.",
     "specs": {
       "Presentación": "473 ml",
@@ -5997,8 +5997,8 @@
     "sku": "G16402-01",
     "name": "Air Re-fresher Aerosol (1x 740 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Elimina malos olores dentro de la cabina, dejando un agradable aroma a auto nuevo. Refresca el interior del vehículo de forma fácil y sencilla",
     "specs": {
       "Presentación": "740 ml",
@@ -6083,8 +6083,8 @@
     "sku": "DRTU15532-01",
     "name": "RTU Last Touch Detailer 945 ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "D155 Last Touch Spray Detailer de Meguiar es el detallista perfecto para cualquier persona que detalla los coches en casa, en el lado o a tiempo completo para levantar contaminantes frescos y obtener una profundidad increíble, brillo y brillo. Este pulverizador profesional detallista simplemente se pulveriza y se limpia para mejorar el brillo y la protección. Nuestra mezcla única de agentes lubricantes poliméricos elimina suavemente el polvo, las huellas dactilares, los lodos y otros contaminantes para dejar un brillo de showroom impecable. Además, ya que Last Touch Spray Detailer ya está pre-diluido a la 1:1, hace que el lubricante perfecto para usar con Meguiar's Professional Detailing Clay C2000 & C2100.",
     "specs": {
       "Presentación": "945 ml",
@@ -6159,8 +6159,8 @@
     "sku": "D11001-01",
     "name": "Hyper Wash (1×3.78 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "• Rica espuma que provee un excelente rendimiento. • Súper concentrado. • Biodegradable. • Ideal para lavados con espuma. • 1 galón rinde hasta para 400 carros.",
     "specs": {
       "Tipo_oficial": "Professional Washes"
@@ -6234,8 +6234,8 @@
     "sku": "G200526-01",
     "name": "Hybrid Ceramic Detailer 26oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "El detallador ideal para realizar mantenimientos entre lavado. Reestablece la capacidad de repelencia de la cera y puede utilizarse para suciedad liviana.",
     "specs": {
       "Presentación": "26oz",
@@ -6319,8 +6319,8 @@
     "sku": "G190200-01",
     "name": "QUIK SCRATH ERASER",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Borre rayones finos y elimine imperfecciones de pintura rápidamente y con el mínimo esfuerzo.",
     "specs": {
       "Tipo_oficial": "Scratch Removal"
@@ -6403,8 +6403,8 @@
     "sku": "G9624-01",
     "name": "All Purpose Cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "• Este versátil limpiador remueve mugre de todo tipo de superficies interiores y     • Este limpiador todo propósito es el producto mas versátil que limpia • Es perfecto para motores, chasis, guardabarros, estribos y otras áreas que el      • Se puede usar en vinil, plásticos, molduras, motores, llantas, aros, etc. lavado común no puede limpiar.                                                   24oz Código: G9624 • También se puede usar en moldur",
     "specs": {
       "Nota": "No especificado"
@@ -6451,8 +6451,8 @@
     "sku": "M21032-01",
     "name": "Ultra PRO Finishing Polish 1X 32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El Ultra Pro Acabado Polaco de Meguiar es la siguiente evolución en pulidos limpios que ofrece resultados increíbles, incluso en pinturas sensibles. Formulado con tiendas de cuerpo profesional y detallistas en mente, esta nueva fórmula elimina rápidamente defectos de pintura ligera como la estufa DA y giradores rotatorios, terminando de forma impecable sin estufa DA, swirls o hologramas. Ultra Pro Acabar Los ricos aceites de pulido polacos crean un acabado profundo, brillante y brillante, incluso cuando trabajan con pinturas oscuras y sensibles. Esta fórmula exclusiva es segura para la tienda de cadáveres y se limpia fácilmente para revelar verdaderos resultados. M210 es también un limpiador y pulido versátil que es seguro y eficaz cuando se trabaja a mano, doble acción pulidor o amortiguador rotativo con prácticamente ningún polvo o hongo, y está disponible en tamaños de 32 onzas y 1 galón. Ultra Pro Speed Polish es el paso final perfecto para obtener el coche del espectáculo, resultados sin giras después de usar el M110 Mirror Glaze Ultra Pro Speed Compound para eliminar defectos pesados.",
     "specs": {
       "Presentación": "32 OZ",
@@ -6536,8 +6536,8 @@
     "sku": "M21001-01",
     "name": "Ultra PRO Finish Polish 1 GAL",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Ultra PRO Finish Polish 1 GAL",
     "specs": {
       "Presentación": "1 GAL"
@@ -6584,8 +6584,8 @@
     "sku": "D10805-01",
     "name": "Super Degreaser 1×5 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "LIMPIADORES & DESENGRASANTES • Formulado especialmente para uso • Limpia todo tipo de superficie interior          • Acción rápida y fuerte para los trabajos más difíciles. y exterior.                                      • Rendimiento sin residuo. • Resultados sin manchas. • Ideal para limpieza de al",
     "specs": {
       "Presentación": "5 gl",
@@ -6642,8 +6642,8 @@
     "sku": "D30101-01",
     "name": "Da Microfiber Finishing Wax (1x 3.78L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Microfibra de Meguiar Acabando con Wax – D301 utiliza limpiadores suaves, polímeros, siliconas y carnauba para refinar la superficie de la pintura después de aplicar el Complejo de Corrección de Microfibra de Meguiar - D300 al dejar la protección duradera de alta brillo. Diseñado para su uso con el disco de terminación de microfibras DA de Meguiar no proporciona un rendimiento de sling, bajo polvo con un solo paso.",
     "specs": {
       "Presentación": "78L",
@@ -6728,8 +6728,8 @@
     "sku": "D16601-01",
     "name": "Ultra Polishing Wax 1 gallon( 1gl x3.78L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "¿Alguna vez has tenido la necesidad de un paso eficaz para ahorrar a tiempo, pero no quería sacrificar la capacidad de eliminar adecuadamente los defectos de pintura? Con el ultra pulido de Meguiar Wax puede obtener una eliminación considerable de defectos y protección duradera en un paso fácil. Formulado con SMAT avanzado (Super-Micro Abrasive Technology) para proporcionar un corte que es rápido y consistente eliminando una variedad de defectos por debajo de la superficie incluyendo swirls, oxidación ligera a moderada, rasguños ligeros, manchas de agua, manchas y más. Con una mezcla de polímeros sintéticos, siliconas y cera de carnauba se termina con una protección duradera que es fácil y fácil de usar. La solución de un solo paso más avanzada de Meguiar le ahorrará tiempo y dinero mientras entrega resultados brillantes.",
     "specs": {
       "Presentación": "1gl",
@@ -6813,8 +6813,8 @@
     "sku": "M6332-01",
     "name": "Flagship Premium Marine Wax (1×946 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera premium para aplicaciones marinas. Protege contra los rayos UV y elementos. Provee enriquecimiento del color y el brillo",
     "specs": {
       "Presentación": "946 ml",
@@ -6898,8 +6898,8 @@
     "sku": "D30016-01",
     "name": "Da Microfiber Correction Compound 1x 473 ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M84 COMPOUND POWER CLEANER M85 DIAMOND CUT COMPOUND D300 CORRECTION COMPOUND ALTO ALTO 12 12 11 PODER DE ABRASIÓN 11 PODER DE ABRASIÓN 10 10 ",
     "specs": {
       "Presentación": "473 ml"
@@ -6946,8 +6946,8 @@
     "sku": "X3002-01",
     "name": "Microfiber Wash Mitt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Ideado para trabajar en conjunto con el Hybrid Ceramic           • Este nuevo guante de microfibraayuda a lograr un lavado libre de    GLASS TOWEL Wash and Wax.                                                      rayones                                                               • El detallado de vidrios es la parte mas compleja al • Su lado de fibras largas está diseñado para el lavado de         • Su gruesa capa demicrofibra levanta y atrapa la suciedad.",
     "specs": {
       "Tipo_oficial": "Towels, Mitts & Applicators"
@@ -7030,8 +7030,8 @@
     "sku": "DMC6-01",
     "name": "Da Microfiber Cutting Pad 6‘‘1x 59 mm",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "Da Microfiber Cutting Pad 6‘‘1x 59 mm",
     "specs": {
       "Nota": "No especificado"
@@ -7078,8 +7078,8 @@
     "sku": "X3080-01",
     "name": "Even-Coat Applicator Pad 2 Pack",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Nota": "No especificado"
@@ -7126,8 +7126,8 @@
     "sku": "G191419-01",
     "name": "Carper & Upholstery Cleaner 19 oz (570 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "La espuma activa penetra y disuelve rápidamente las manchas de abajo hacia arriba para una limpieza profunda. Esta eficaz combinación de limpiadores elimina las manchas más difíciles y ayuda a restaurar la alfombra y la tapicería del carro como nuevas.",
     "specs": {
       "Presentación": "19 oz",
@@ -7211,8 +7211,8 @@
     "sku": "M2616-01",
     "name": "Hi-Tech Yellow Wax (1×473 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M20 POLYMER SEALANT                                     M21 SYNTHETIC SEALANT 2.0                           M26 HI-TECH YELLOW WAX • Sellador sintético tradicional                 • Tecnología de polímeros hidrofóbicos deja           • Cera con extractos de carnauba amarilla • Limpiadores leves para remover oxidación         una capa que repele el agua.                          de primera. calidad mezclada con moderada                                       • Muy fácil de remover.                                 siliconas, polímeros y otras ceras. • Se puede usar con mano o maquina.              • Sus polímeros sintéticos dejan la mejor             • Añade profundidad y riqueza al color.",
     "specs": {
       "Presentación": "473 ml",
@@ -7296,8 +7296,8 @@
     "sku": "M2601-01",
     "name": "Hi Tech Yellow Liquid Wax (3.48L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M20 POLYMER SEALANT                                     M21 SYNTHETIC SEALANT 2.0                           M26 HI-TECH YELLOW WAX • Sellador sintético tradicional                 • Tecnología de polímeros hidrofóbicos deja           • Cera con extractos de carnauba amarilla • Limpiadores leves para remover oxidación         una capa que repele el agua.                          de primera. calidad mezclada con moderada                                       • Muy fácil de remover.                                 siliconas, polímeros y otras ceras. • Se puede usar con mano o maquina.              • Sus polímeros sintéticos dejan la mejor             • Añade profundidad y riqueza al color.",
     "specs": {
       "Presentación": "48L",
@@ -7381,8 +7381,8 @@
     "sku": "D15601-01",
     "name": "Synthetic X-Press Spray Wax 1×3.78 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Tipo_oficial": "Professional Waxes, Sealants & Coatings"
@@ -7465,8 +7465,8 @@
     "sku": "D11101-01",
     "name": "Shampoo Plus 1×1 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Rica espuma que provee un excelente   • Único shampoo Detailer con cera.                    • Shampoo y acondicionador en un solo",
     "specs": {
       "Presentación": "1 gl",
@@ -7550,8 +7550,8 @@
     "sku": "D110542-01",
     "name": "Chemical Resistant Sprayer (1×1 unid)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Resistente a solventes agresivos y químicos que normalmente acortan la vida de un rociador estándar. Salida mL: 1.4 Thread Acabado: 28/400 Dip Tube Duración: 9 1/2′′",
     "specs": {
       "Tipo_oficial": "Professional Secondary Bottles & Sprayers"
@@ -7616,8 +7616,8 @@
     "sku": "DFP5-01",
     "name": "Meguiars DFP5 5 inch DA Foam Polishing Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Meguiars DFP5 5 inch DA Foam Polishing Disc",
     "specs": {
       "Nota": "No especificado"
@@ -7664,8 +7664,8 @@
     "sku": "G180124-01",
     "name": "Ultimate all wheel cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "• El limpiador para aros más avanzado del mercado. Su formula     TIRE no acida de ph balanceado remueve polvo de frenos y mugre de      • 2 productos en 1: limpia y deja brillo en un solo paso. Se debe • Su profunda fórmula limpiadora cambia de color al reaccionar        paño de microfibra para remover suciedad de manera fácil. con las partículas metalicas de los frenos sin dañar caliper,     • No es necesario el uso de agua.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -7748,8 +7748,8 @@
     "sku": "G1001-01",
     "name": "Individual Clay Bar W/Case",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAMIC QUIK CLAY KIT                                                           SURFACE™ CLAY KIT                                                   ULTIMATE • Descontamina y protege en un solo paso.                                       • El Sistema Smooth Surface esta hecho para descontaminar         COMPOUND • El pad remueve todos los contaminantes adheridos a la pintura mientras el       pintura, regresando la textura lisa y suave que originalmente     • El Ultimate Compund Restaura las pinturas",
     "specs": {
       "Nota": "No especificado"
@@ -7796,8 +7796,8 @@
     "sku": "D30116-01",
     "name": "Da Microfiber Finishing Wax 1×480 ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Microfibra de Meguiar Acabando con Wax – D301 utiliza limpiadores suaves, polímeros, siliconas y carnauba para refinar la superficie de la pintura después de aplicar el Complejo de Corrección de Microfibra de Meguiar - D300 al dejar la protección duradera de alta brillo. Diseñado para su uso con el disco de terminación de microfibras DA de Meguiar no proporciona un rendimiento de sling, bajo polvo con un solo paso.",
     "specs": {
       "Presentación": "480 ml",
@@ -7881,8 +7881,8 @@
     "sku": "D18001-01",
     "name": "Leather Cleaner & Cond 1×1 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "WHOLE CAR AIR RE-FRESHER • Contiene protección UV para                 • Limpiador agresivo exclusivo para              • Limpiador y acondicionador.                 • Remueve los olores de manera preservar la apariencia original.             cueros y viniles.                              • No permite que el cuero se agriete.           segura y permanente. • Diseñado para las superficies de",
     "specs": {
       "Presentación": "1 gl",
@@ -7966,8 +7966,8 @@
     "sku": "G18616-01",
     "name": "Gold C. Leather Conditioner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "• Protege y limpia de forma segura todo tipo de cuero.                                   • Es un sistema de dos pasos para rejuvenecer cualquier tipo de cuero ó vinil.     • La formula única de este producto limpia, • Su formula a base de aloe suaviza el cuero y no permite que se agriete con el uso.     -Paso #1: Limpia de manera segura suciedad y manchas sin importar el color del       acondiciona y protege en un sol",
     "specs": {
       "Tipo_oficial": "Leather Care"
@@ -8050,8 +8050,8 @@
     "sku": "M79932-01",
     "name": "PRO Hybrid Ceramic Bead Booster (32oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAS & SELLADORES M799 PRO HYBRID CERAMIC BEAD BOOSTER                      M27 PRO HYBRID CERAMIC SEALANT                        D156 CERA SINTETICA X-PRESS • Sellador con base cerámica.                        • Protección duradera de aplicación y • Sellador y detallador en un mismo producto.             • SiO2 real como repelente y                           limpieza fácil. • Base cerámica para repelencia y protección                protector.                                         • Puede ser aplicado en sol directo. duraderos                                               • Provee meses de protecci",
     "specs": {
       "Presentación": "32oz",
@@ -8135,8 +8135,8 @@
     "sku": "A2516-01",
     "name": "Soft Wash Gel 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "WASH                                                     SHAMPOO &                                                • Súper espeso. Tiene pH balanceado y es            • Formula súper concentrada para máxima • Uno de los shampoo con más años en el mercado        CONDITIONER",
     "specs": {
       "Presentación": "473ml"
@@ -8183,8 +8183,8 @@
     "sku": "DMC3-01",
     "name": "DA Microfiber Cutting Pad 3",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "DA Microfiber Cutting Pad 3",
     "specs": {
       "Nota": "No especificado"
@@ -8231,8 +8231,8 @@
     "sku": "D11501-01",
     "name": "Rinse Free Express Was & Wax (3.78 L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "M799        PRO HYBRID CERAMIC BEAD                   M34      FINAL INSPECTION                          D155 “LAST TOUCH” BOOSTER                                                                                           ABRILLANTADOR DE PINTURA                              WASH AND WAX • Sellador y detallador en un mismo                   • Rápido y fácil de usar. Solo rociar y limpiar.   • Resaltador de brillo, ideal para el                • Lavado en seco, no requiere producto.                                           • Se usa para dar brillo a la pintura o e",
     "specs": {
       "Presentación": "78 L",
@@ -8316,8 +8316,8 @@
     "sku": "WRFP7-01",
     "name": "Soft Buff Rotary Foam Polishing Pad – 7″",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Soft Buff Rotary Foam Polishing Pad – 7″",
     "specs": {
       "Nota": "No especificado"
@@ -8364,8 +8364,8 @@
     "sku": "WRFF7-01",
     "name": "Soft Buff Rotary Foam Finishing Pad – 7″",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Soft Buff Rotary Foam Finishing Pad – 7″",
     "specs": {
       "Nota": "No especificado"
@@ -8412,8 +8412,8 @@
     "sku": "DMF3-01",
     "name": "Da Microfiber Finnishing Pad 3",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "Da Microfiber Finnishing Pad 3",
     "specs": {
       "Nota": "No especificado"
@@ -8460,8 +8460,8 @@
     "sku": "X210100-01",
     "name": "Supreme Shine Drying Towel",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Nota": "No especificado"
@@ -8508,8 +8508,8 @@
     "sku": "D11005-01",
     "name": "Hyper Wash 1×5 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "• Rica espuma que provee un excelente rendimiento. • Súper concentrado. • Biodegradable. • Ideal para lavados con espuma. • 1 galón rinde hasta para 400 carros.",
     "specs": {
       "Presentación": "5 gl",
@@ -8575,8 +8575,8 @@
     "sku": "D20149-01",
     "name": "Secondary Bottle – Quik Interior Cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "WHOLE CAR AIR RE-FRESHER • Contiene protección UV para                 • Limpiador agresivo exclusivo para              • Limpiador y acondicionador.                 • Remueve los olores de manera preservar la apariencia original.             cueros y viniles.                              • No permite que el cuero se agriete.           segura y permanente. • Diseñado para las superficies de",
     "specs": {
       "Tipo_oficial": "Professional Secondary Bottles & Sprayers"
@@ -8632,8 +8632,8 @@
     "sku": "D110516-01",
     "name": "Standard Sprayer 1×1 ud",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "El pulverizador económico produce una niebla fina y es ideal para productos de limpieza de vidrio, niebla y limpiaparabrisas, y apósitos basados en agua. Salida mL: 1.4 Thread Acabado: 28/400 Dip Tube Duración: 9 1/2′′",
     "specs": {
       "Tipo_oficial": "Professional Secondary Bottles & Sprayers"
@@ -8698,8 +8698,8 @@
     "sku": "G191016-01",
     "name": "3 en 1 Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera limpiadora, ideal para remover ligeras marcas en la pintura, restaurando el brillo y tono con cada encerada, dejando una excelente protección",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -8782,8 +8782,8 @@
     "sku": "D14901-01",
     "name": "Quik Interior Detailer 1x 3.78 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "WHOLE CAR AIR RE-FRESHER • Contiene protección UV para                 • Limpiador agresivo exclusivo para              • Limpiador y acondicionador.                 • Remueve los olores de manera preservar la apariencia original.             cueros y viniles.                              • No permite que el cuero se agriete.           segura y permanente. • Diseñado para las superficies de",
     "specs": {
       "Tipo_oficial": "Interior Cleaners & Protectants"
@@ -8866,8 +8866,8 @@
     "sku": "D15501-01",
     "name": "Last Touch Spray Detailer 1×1 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "M799        PRO HYBRID CERAMIC BEAD                   M34      FINAL INSPECTION                          D155 “LAST TOUCH” BOOSTER                                                                                           ABRILLANTADOR DE PINTURA                              WASH AND WAX • Sellador y detallador en un mismo                   • Rápido y fácil de usar. Solo rociar y limpiar.   • Resaltador de brillo, ideal para el                • Lavado en seco, no requiere producto.                                           • Se usa para dar brillo a la pintura o e",
     "specs": {
       "Presentación": "1 gl",
@@ -8951,8 +8951,8 @@
     "sku": "G8504-01",
     "name": "Perfect Clarity Glass Sealant",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "GLASS CLEANER                                        GLASS POLISHING                                       GLASS SEALANT                                               • El producto ideal para remover gota seca de • Su formula especialmente diseñada para autos     COMPOUND",
     "specs": {
       "Nota": "No especificado"
@@ -8999,8 +8999,8 @@
     "sku": "X2010-01",
     "name": "Supreme Shine Microfiber Single",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Nota": "No especificado"
@@ -9047,8 +9047,8 @@
     "sku": "A1624-01",
     "name": "Quik Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CLEANER WAX                                                  QUIK WAX™                                           HYBRID                                                HYBRID CERAMIC • La legendaria cera de Meguiars. La Cleaner wax tiene       • La cera más fácil de usar. Puede ser aplicada   CERAMIC LIQUID                                        WAX mas de 40 años en el mercado y sigue ganando                 con el vehículo seco o mojado, al sol o a la    WAX                                                     • Tecnología hibrida de Si2O de muy fácil aplicación.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -9131,8 +9131,8 @@
     "sku": "DFF5-01",
     "name": "Meguiars DFF5 5 inch DA Foamn Finishing Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Meguiars DFF5 5 inch DA Foamn Finishing Disc",
     "specs": {
       "Nota": "No especificado"
@@ -9179,8 +9179,8 @@
     "sku": "M10101-01",
     "name": "Foam-Cut Compound 1x 3.78 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M100 FAST CUT COMPOUND M101 FOAM CUT COMPOUND ALTO 12 ALTO 12 11 11 PODER DE ABRASIÓN PODER DE ABRASIÓN 10 10 9 9 8 8 7 ",
     "specs": {
       "Nota": "No especificado"
@@ -9227,8 +9227,8 @@
     "sku": "D10105-01",
     "name": "All Purpose Cleaner 1x 5 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "LIMPIADORES & DESENGRASANTES • Formulado especialmente para uso • Limpia todo tipo de superficie interior          • Acción rápida y fuerte para los trabajos más difíciles. y exterior.                                      • Rendimiento sin residuo. • Resultados sin manchas. • Ideal para limpieza de al",
     "specs": {
       "Presentación": "5 gl",
@@ -9312,8 +9312,8 @@
     "sku": "G4116-01",
     "name": "Natural Shine 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Limpiador y protector para interiores, acabado natural para proteger todo tipo de plásticos internos",
     "specs": {
       "Presentación": "473ml",
@@ -9397,8 +9397,8 @@
     "sku": "M5716-01",
     "name": "Vinyl & Rubber Cleaner/Cond",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "El Marine/RV Vinyl de Meguiar y Protector de Caucho se fabrica con una mezcla de ingredientes premium y compleja para limpiar, brillar y proteger. Hace todo esto sin dejar una mirada plástica gras o artificiales. Los acondicionadores ayudan a evitar que las superficies sequen, se descoloren o se quebran. La protección UV reducirá los daños causados por el sol.",
     "specs": {
       "Tipo_oficial": "Marine/RV Vinyl & Specialty"
@@ -9481,8 +9481,8 @@
     "sku": "G14816-01",
     "name": "Engine Clean",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "TOP CLEANER                                                                        • Limpiador de motores seguro para todo tipo de superficies.               • Su formula no grasosa restaura y protege • Este limpiador remueve la suciedad y manchas de las capotas de               • Se atomiza directamente al motor mojado y asi remueve polvo,               mangueras, plásticos, hules, pintura y metales",
     "specs": {
       "Nota": "No especificado"
@@ -9529,8 +9529,8 @@
     "sku": "X2000-01",
     "name": "Water Magnet Microfiber Drying Towel",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• Las toallas de secado no deberian ser iguales a las que usamos en el resto de • Nuestras toallas Supreme Shine Drying Towel son exageradamente",
     "specs": {
       "Tipo_oficial": "Towels, Mitts & Applicators"
@@ -9613,8 +9613,8 @@
     "sku": "DBP3-01",
     "name": "Soft Buff DBP3 DA Polisher 3 inch Backing Plate",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Soft Buff DBP3 DA Polisher 3 inch Backing Plate",
     "specs": {
       "Nota": "No especificado"
@@ -9661,8 +9661,8 @@
     "sku": "M6601-01",
     "name": "Quick Detailer (1×1 gl)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "El Mirror Glaze Quick Detailer de Meguiar es un limpiador de un solo paso / cera, especialmente formulado para el reacondicionamiento de pintura de alta producción. Funciona para eliminar rápidamente y de forma segura la oxidación y las manchas al restaurar el brillo profundo y proporcionar un acabado de cera duradero.",
     "specs": {
       "Presentación": "1 gl",
@@ -9746,8 +9746,8 @@
     "sku": "G18516-01",
     "name": "Gold C. Leather & Vinyl Cleaner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "• Protege y limpia de forma segura todo tipo de cuero.                                   • Es un sistema de dos pasos para rejuvenecer cualquier tipo de cuero ó vinil.     • La formula única de este producto limpia, • Su formula a base de aloe suaviza el cuero y no permite que se agriete con el uso.     -Paso #1: Limpia de manera segura suciedad y manchas sin importar el color del       acondiciona y protege en un sol",
     "specs": {
       "Tipo_oficial": "Interior Cleaners & Protectants"
@@ -9830,8 +9830,8 @@
     "sku": "G180224-01",
     "name": "Heavy Duty Multi Purpose SPRAY (1x24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "• Este versátil limpiador remueve mugre de todo tipo de superficies interiores y     • Este limpiador todo propósito es el producto mas versátil que limpia • Es perfecto para motores, chasis, guardabarros, estribos y otras áreas que el      • Se puede usar en vinil, plásticos, molduras, motores, llantas, aros, etc. lavado común no puede limpiar.                                                   24oz Código: G9624 • También se puede usar en moldur",
     "specs": {
       "Presentación": "24oz",
@@ -9879,8 +9879,8 @@
     "sku": "G201502-01",
     "name": "Air Re-fresher – Fiji (1x 20oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "RE-FRESHER • Este novedoso producto es la solución instantánea para • Solo se debe atomizar a las alfombras para eliminar",
     "specs": {
       "Presentación": "20oz",
@@ -9938,8 +9938,8 @@
     "sku": "G16602-01",
     "name": "Air Refresher Aerosol Sweet Summer Breeze 2.5 Oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Air Refresher Aerosol Sweet Summer Breeze 2.5 Oz",
     "specs": {
       "Presentación": "5 Oz",
@@ -10023,8 +10023,8 @@
     "sku": "G181302-01",
     "name": "Air Re-fresher – Black Chrome (1×2 oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "RE-FRESHER • Este novedoso producto es la solución instantánea para • Solo se debe atomizar a las alfombras para eliminar",
     "specs": {
       "Presentación": "2 oz",
@@ -10108,8 +10108,8 @@
     "sku": "G12024-01",
     "name": "Hot Shine Tire Spray Trigger",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "TIRE DRESSING                                                                            • Es la solución perfecta para limpiar todo tipo de metales puros, ya sea hierro, • Sus polímeros resistentes al agua y tecnología anti ozonante mantienen la llanta       aluminio, oro, plata, bronce o cromo. negra por muchos días. El Hot Shine deja un acabado como nuevo en las llantas.       • La tecnología de de Abrasivos Disminuyentes remueve la suciedad y las • Perfecto para los autos donde no se desee un brillo muy alto. Presentación de          manchas de forma rápida y segura.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -10192,8 +10192,8 @@
     "sku": "G8408-01",
     "name": "Perfect Clarity Glass Polishing Compound 236ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "GLASS CLEANER                                        GLASS POLISHING                                       GLASS SEALANT                                               • El producto ideal para remover gota seca de • Su formula especialmente diseñada para autos     COMPOUND",
     "specs": {
       "Presentación": "236ml"
@@ -10240,8 +10240,8 @@
     "sku": "G4016-01",
     "name": "Supreme Shine Protectant 1x450ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "• El Quik Interior Detailer mantiene la apariencia de      • Ideal para los dash donde se desea reavivar el       • Abrillantador y protector para dash.            PROTECTANT",
     "specs": {
       "Presentación": "450ml",
@@ -10325,8 +10325,8 @@
     "sku": "G17748-01",
     "name": "Ultimate Wash & Wax 1x48oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Shampoo con cera Meguiar's Ultimate Wash & Wax. Limpia la pintura, aumenta el brillo y refuerza la protección con una fórmula de pH balanceada.",
     "specs": {
       "Presentación": "48oz",
@@ -10410,8 +10410,8 @@
     "sku": "G13616-01",
     "name": "Quik Interior Detailer r 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Quik Interior Detailer™ ofrece la manera más rápida de limpiar de forma segura plásticos, vinilo, cuero, goma, metal y pantallas de navegación.",
     "specs": {
       "Presentación": "473ml",
@@ -10495,8 +10495,8 @@
     "sku": "G10916-01",
     "name": "Gold C. Rich Leather Spray",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "• Protege y limpia de forma segura todo tipo de cuero.                                   • Es un sistema de dos pasos para rejuvenecer cualquier tipo de cuero ó vinil.     • La formula única de este producto limpia, • Su formula a base de aloe suaviza el cuero y no permite que se agriete con el uso.     -Paso #1: Limpia de manera segura suciedad y manchas sin importar el color del       acondiciona y protege en un sol",
     "specs": {
       "Tipo_oficial": "Leather Care"
@@ -10579,8 +10579,8 @@
     "sku": "G13919-01",
     "name": "Hot Shine Tire Foam",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "TIRE DRESSING                                                                            • Es la solución perfecta para limpiar todo tipo de metales puros, ya sea hierro, • Sus polímeros resistentes al agua y tecnología anti ozonante mantienen la llanta       aluminio, oro, plata, bronce o cromo. negra por muchos días. El Hot Shine deja un acabado como nuevo en las llantas.       • La tecnología de de Abrasivos Disminuyentes remueve la suciedad y las • Perfecto para los autos donde no se desee un brillo muy alto. Presentación de          manchas de forma rápida y segura.",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -10636,8 +10636,8 @@
     "sku": "G9416-01",
     "name": "Gold C. Carpet/Int.Cleaner 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Limpia de forma profunda todo tipo de materiales en el interior de vehículo. Ideal para despercudir y eliminar manchas en los textiles, hules y otros",
     "specs": {
       "Presentación": "473ml"
@@ -10684,8 +10684,8 @@
     "sku": "DRTU10732-01",
     "name": "RTU Citrus Power Cleaner 32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "El D107 Citrus Power Cleaner Plus de Meguiar es la solución ideal para detallar profesionales y entusiastas que necesitan eliminar rápidamente y completamente grasa, musgo y manchas de superficies interiores y exteriores. Ahora, ya que está disponible en una botella de pulverización prediluida y lista para usar, alfombra de limpieza, tapicería, plásticos, motores, rueda bien y neumáticos es más fácil que nunca! Si necesita un limpiador de pro-grado listo para usar todo propósito que es potente, eficaz y limpia las superficies rápidamente, Citrus Power Cleaner Plus es la solución perfecta!",
     "specs": {
       "Presentación": "32 OZ",
@@ -10769,8 +10769,8 @@
     "sku": "G191700-01",
     "name": "Smooth Surface Clay Kit 1×1 kit",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAMIC QUIK CLAY KIT                                                           SURFACE™ CLAY KIT                                                   ULTIMATE • Descontamina y protege en un solo paso.                                       • El Sistema Smooth Surface esta hecho para descontaminar         COMPOUND • El pad remueve todos los contaminantes adheridos a la pintura mientras el       pintura, regresando la textura lisa y suave que originalmente     • El Ultimate Compund Restaura las pinturas",
     "specs": {
       "Tipo_oficial": "Surface Contaminant Removal"
@@ -10853,8 +10853,8 @@
     "sku": "G190315-01",
     "name": "Ultimate Insane Shine Tire Coating",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "Tecnología de polímero sintético para entregar el mayor brillo y duración en las llantas. Deja una capa muy duradera que evita que la llanta pierda el color",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -10937,8 +10937,8 @@
     "sku": "D14005-01",
     "name": "Wheel Brigthtener 1x 5 gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "LIMPIADORES PARA AROS • Limpiador descontaminante de particulas                • Limpiador para aros y llantas. Remueve polvo de freno     • Ideado para aros con capa de transparente • Remueve los residuos de polvo de freno                   llantas de todo tipo.                                     • Elimina el polvo de freno dejando un alto brillo. acumulados en aros y pintura                           • No es ácido, esto hace posible la limpieza en éstas dos   • Formula concentrada. • Cambia",
     "specs": {
       "Presentación": "5 gl"
@@ -10985,8 +10985,8 @@
     "sku": "A2216-01",
     "name": "Deep Cryst Carnauba Liquid Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "MEGUIAR'S® 3-IN-1 WAX                                                        MEGUIAR'S® DEEP • Pule abrillanta y protege en un solo paso.                               CRYSTAL CARNAUBA • Se debe usar en autos con alta exposición a los elementos y que tienen   WAX defectos en la pintura que deseamos remover en un forma rápida.            • Cera a base de Carnauba que se enfoca en dar brillo y reflejo a pinturas • No desgasta la pintura, se puede usar con frecuencia sin producir            de todo tipo. problemas.                                                                 • Excelente para pinturas nuevas o en muy buen estado.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -11069,8 +11069,8 @@
     "sku": "G201316-01",
     "name": "Ultimate Leather Detailer",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "DETAILER                                                   INTERIOR                                             • Mismo poder de limpieza y funcionamiento que el anterior Carpet and • Producto perfecto para el mantenimiento de todo tipo   CLEANER                                                Upholstery Cleaner pero ahora con tecnología de eliminación de olores. de cuero.                                                • El producto ideal para remover suciedad de       • También incorpora un útil cepillo para alfombras. • Limpia",
     "specs": {
       "Tipo_oficial": "Interior Cleaners & Protectants"
@@ -11153,8 +11153,8 @@
     "sku": "M10001-01",
     "name": "Pro Speed Compound (1x 3.78L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M100 FAST CUT COMPOUND M101 FOAM CUT COMPOUND ALTO 12 ALTO 12 11 11 PODER DE ABRASIÓN PODER DE ABRASIÓN 10 10 9 9 8 8 7 ",
     "specs": {
       "Presentación": "78L",
@@ -11239,8 +11239,8 @@
     "sku": "G7164-01",
     "name": "Gold C. Car Wash Shampoo & Conditioner",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Shampoo y acondicionador que elimina contaminantes y abrillanta la superficie",
     "specs": {
       "Tipo_oficial": "Wash"
@@ -11323,8 +11323,8 @@
     "sku": "G3500-01",
     "name": "D/A Power System",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• El cuidado automotriz es un trabajo que consume mucho tiempo y esfuerzo; con el DA   PADS Power System este esfuerzo puede ser reducido a menos de la mitad.                     • Restaure fácilmente el color y la claridad de las pinturas opacas y • Básicamente, se obtiene mejor brillo en menos tiempo.                                    oxidadas. • El accesorio puede ser montado en cualquier taladro convencional.                      • Remueva oxidación, gota seca, rayones y otros defectos • El sistema doble acción provee resultados más rápidos de una manera segura.",
     "specs": {
       "Nota": "No especificado"
@@ -11380,8 +11380,8 @@
     "sku": "D9916-01",
     "name": "Dispensador p / botellas 16oz Meguiars",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "La botella de dispensador HDPE de Meguiar (D9916) ofrece un contenedor duradero y resistente a los químicos ideal para la dispensación precisa de soluciones de limpieza y detallamiento. Con 16 oz. capacidad, esta botella de polietileno de alta densidad garantiza un uso y fiabilidad duraderos en entornos profesionales. Su diseño promueve un manejo fácil y una aplicación controlada, ayudando a mantener la eficiencia y la precisión en su flujo de trabajo de detalle.",
     "specs": {
       "Presentación": "16oz",
@@ -11465,8 +11465,8 @@
     "sku": "G201024-01",
     "name": "Ultimate Quik Detailer (1x24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAMIC DETAILER                                                       QUIK DETAILER™ • Detallador para pinturas que incluye protección cerámica.            • El detallador más avanzado del mercado. Remueve polvo y • Se utiliza para remover polvo y contaminantes sueltos en la            contaminantes sueltos sin rayar. Además sus Polímeros Hidrofobicos • También se puede usar después de cada lavado para incrementar          peguen en las superficies. la protección de las ceras, selladores y tratamientos cerámicos.     • Pu",
     "specs": {
       "Presentación": "24oz",
@@ -11551,8 +11551,8 @@
     "sku": "DFC6-01",
     "name": "Meguiars DFC6 6 inch DA Foam Cutting Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Meguiars DFC6 6 inch DA Foam Cutting Disc",
     "specs": {
       "Nota": "No especificado"
@@ -11599,8 +11599,8 @@
     "sku": "DMF6-01",
     "name": "Da Microfiber Finnishing Pad 6 (1×1 und)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "Da Microfiber Finnishing Pad 6 (1×1 und)",
     "specs": {
       "Nota": "No especificado"
@@ -11647,8 +11647,8 @@
     "sku": "M20532-01",
     "name": "Ultra Finishing Polish ( 1×946 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El polaco Ultra Acabado de Meguiar está formulado con tecnología avanzada para proporcionar resultados ricos y brillantes. Este pulido de grado profesional trabaja para eliminar permanentemente los muslos y otros defectos de luz de todas las pinturas brillantes incluyendo los abrigos claros. Proporciona una sensación suave y limpia fácilmente para una limpieza rápida y fácil.",
     "specs": {
       "Presentación": "946 ml",
@@ -11732,8 +11732,8 @@
     "sku": "X3003-01",
     "name": "Grit Guard",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "• Accesorio para el fondo del           • Los aplicadores de microfibra even coat    • Las esponjas aplicadoras son súper balde.                                  son más suaves y absorbentes, ideales        suaves y su estructura densa las hace • Evita contacto entre el guante          para aplicar productos para el interior,     ideales para aplicar productos en • Reduce al mínimo el riesgo d",
     "specs": {
       "Tipo_oficial": "Buckets, Bottles & Sprayers"
@@ -11816,8 +11816,8 @@
     "sku": "G7624-01",
     "name": "Gold Class Detailer (1x 710ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Este detallador Gold Class está formulado para funcionar especialmente bien en colores oscuros, destacando en autos negros, y es perfecto para eliminar polvo y huellas dactilares de la superficie de los vehículos",
     "specs": {
       "Presentación": "710ml",
@@ -11902,8 +11902,8 @@
     "sku": "DBP6-01",
     "name": "Soft Buff DBP6 DA Polisher 6 inch Backing Plate",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Soft Buff DBP6 DA Polisher 6 inch Backing Plate",
     "specs": {
       "Nota": "No especificado"
@@ -11950,8 +11950,8 @@
     "sku": "G12310-01",
     "name": "Plast-X Clear Plastic Cleaner 1×296 ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "• La solución más profesional para la restauración de focos plásticos.                            • El PlastX restaura la claridad optica de los plásticos transparentes. • Este sistema de 4 pasos remueve toda la oxidación que hace perder la trasparencia               • Remueve de manera fácil y segura oxidación leve y degradación química. de los focos.                                                                                   • Si la oxid",
     "specs": {
       "Presentación": "296 ml",
@@ -12035,8 +12035,8 @@
     "sku": "D17005-01",
     "name": "Hyper Dressing 1x5gl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "ABRILLANTADORES • Fórmula de alto brillo.                         • Alto brillo uniforme.                       • Brillo superior para el interior y            • Limpiador y abrillantador para • Acabado como mojado de alta                     • Ideal para un ambiente susceptible            exterior.                                       viniles y plásticos.",
     "specs": {
       "Presentación": "5gl",
@@ -12120,8 +12120,8 @@
     "sku": "D20100-01",
     "name": "Generic Spray Bottle 1×0.945 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "• Ideal para remover contaminantes                    • Ideal para remover contaminantes adheridos.             • Limpiador descontaminante de particulas adheridos.                                          • Más agresiva que la C2000, más eficiente para             ferrosas • Restaura la suavidad de la pintura dándole            tratar brisados fuertes.                                • Remueve los residuos de polvo de freno un acabado tipo espejo.                             • Restaura la suavidad de la pintura dándole un             acumulados en aros y pintura • Producto 100% no abrasivo, seguro en todo",
     "specs": {
       "Tipo_oficial": "Professional Secondary Bottles & Sprayers"
@@ -12186,8 +12186,8 @@
     "sku": "C2100-01",
     "name": "Detailing Clay Agresive 1x200gr",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "• Ideal para remover contaminantes                    • Ideal para remover contaminantes adheridos.             • Limpiador descontaminante de particulas adheridos.                                          • Más agresiva que la C2000, más eficiente para             ferrosas • Restaura la suavidad de la pintura dándole            tratar brisados fuertes.                                • Remueve los residuos de polvo de freno un acabado tipo espejo.                             • Restaura la suavidad de la pintura dándole un             acumulados en aros y pintura • Producto 100% no abrasivo, seguro en todo",
     "specs": {
       "Tipo_oficial": "Surface Contaminant Removal"
@@ -12270,8 +12270,8 @@
     "sku": "C2000-01",
     "name": "Mirror Glaze Prof. Detailing Clay (1×1)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "• Ideal para remover contaminantes                    • Ideal para remover contaminantes adheridos.             • Limpiador descontaminante de particulas adheridos.                                          • Más agresiva que la C2000, más eficiente para             ferrosas • Restaura la suavidad de la pintura dándole            tratar brisados fuertes.                                • Remueve los residuos de polvo de freno un acabado tipo espejo.                             • Restaura la suavidad de la pintura dándole un             acumulados en aros y pintura • Producto 100% no abrasivo, seguro en todo",
     "specs": {
       "Tipo_oficial": "Surface Contaminant Removal"
@@ -12354,8 +12354,8 @@
     "sku": "DMCKIT5-01",
     "name": "DA Microfiber Correction System Kit 5",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "DA Microfiber Correction System Kit 5",
     "specs": {
       "Nota": "No especificado"
@@ -12402,8 +12402,8 @@
     "sku": "G210516-01",
     "name": "Ultimate Liquid Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• LamejorceradeMeguiarśahoraes mejor que          WAX™                                                      CARNAUBA PLUS                                                QUIK WAX™ antes.                                            • Fórmula mejorada. La Ultimate Quik Wax                WAX                                                            • Esta cera es especial para darle • Los polímeros fueron mejorados y ahora se",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -12486,8 +12486,8 @@
     "sku": "DFP6-01",
     "name": "Meguiars DFP6 inch DA Foam Polishing Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "Meguiars DFP6 inch DA Foam Polishing Disc",
     "specs": {
       "Nota": "No especificado"
@@ -12534,8 +12534,8 @@
     "sku": "G18715-01",
     "name": "Hot Shine Tire Reflect",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "COATING                                                               • El abrillantador de llantas de mas durabilidad del mercado.               • Este novedoso producto no solo protege y • Tecnología de polímeros sintéticos deja una brillo muy alto     • En presentación Gel y Aerosol.                                              abrillanta las llantas de los autos, también en las llantas.                                                 • Aseguran el brillo y colo",
     "specs": {
       "Tipo_oficial": "Wheel & Tire Care"
@@ -12591,8 +12591,8 @@
     "sku": "G180724-01",
     "name": "Carpet & Cloth Refresher (1 x 24oz)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Elimina los malos olores de una forma sencilla y segura en los textiles e interior de auto. Dejando una fragancia a auto nuevo que perdura",
     "specs": {
       "Presentación": "24oz",
@@ -12658,8 +12658,8 @@
     "sku": "M10032-01",
     "name": "Pro Speed Compound (1x 945 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M100 FAST CUT COMPOUND M101 FOAM CUT COMPOUND ALTO 12 ALTO 12 11 11 PODER DE ABRASIÓN PODER DE ABRASIÓN 10 10 9 9 8 8 7 ",
     "specs": {
       "Presentación": "945 ml",
@@ -12744,8 +12744,8 @@
     "sku": "G19216-01",
     "name": "Ultimate Polish",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Aumenta el brillo y reflejo antes de aplicar un encerado. Remueve defectos leves mientras enriquece los aceites de la pintura.",
     "specs": {
       "Tipo_oficial": "Polish"
@@ -12828,8 +12828,8 @@
     "sku": "G13600-01",
     "name": "Quik Interior Detailer Wipes",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "• El Quik Interior Detailer mantiene la apariencia de      • Ideal para los dash donde se desea reavivar el       • Abrillantador y protector para dash.            PROTECTANT",
     "specs": {
       "Tipo_oficial": "Interior Cleaners & Protectants"
@@ -12912,8 +12912,8 @@
     "sku": "M8401-01",
     "name": "Compound Power Cleaner (1×3.78 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M84 COMPOUND POWER CLEANER M85 DIAMOND CUT COMPOUND D300 CORRECTION COMPOUND ALTO ALTO 12 12 11 PODER DE ABRASIÓN 11 PODER DE ABRASIÓN 10 10 ",
     "specs": {
       "Nota": "No especificado"
@@ -12960,8 +12960,8 @@
     "sku": "DMF5-01",
     "name": "Da Microfiber Finnishing Pad 5",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "Da Microfiber Finnishing Pad 5",
     "specs": {
       "Nota": "No especificado"
@@ -13008,8 +13008,8 @@
     "sku": "D30001-01",
     "name": "DA Microfiber Correction Compound (1x 3.78L)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "COMPUESTOS PULIDORES M84 COMPOUND POWER CLEANER M85 DIAMOND CUT COMPOUND D300 CORRECTION COMPOUND ALTO ALTO 12 12 11 PODER DE ABRASIÓN 11 PODER DE ABRASIÓN 10 10 ",
     "specs": {
       "Presentación": "78L",
@@ -13094,8 +13094,8 @@
     "sku": "G220216-01",
     "name": "Ultimate Insane Shine Protectant- 16oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "RE-FRESHER • Este novedoso producto es la solución instantánea para • Solo se debe atomizar a las alfombras para eliminar",
     "specs": {
       "Presentación": "16oz",
@@ -13179,8 +13179,8 @@
     "sku": "G7016-01",
     "name": "Gold Class Clear Coat Liquid Car Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• LamejorceradeMeguiarśahoraes mejor que          WAX™                                                      CARNAUBA PLUS                                                QUIK WAX™ antes.                                            • Fórmula mejorada. La Ultimate Quik Wax                WAX                                                            • Esta cera es especial para darle • Los polímeros fueron mejorados y ahora se",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -13263,8 +13263,8 @@
     "sku": "M20501-01",
     "name": "Ultra Finishing Polish 3.78L",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "El polaco Ultra Acabado de Meguiar está formulado con tecnología avanzada para proporcionar resultados ricos y brillantes. Este pulido de grado profesional trabaja para eliminar permanentemente los muslos y otros defectos de luz de todas las pinturas brillantes incluyendo los abrigos claros. Proporciona una sensación suave y limpia fácilmente para una limpieza rápida y fácil.",
     "specs": {
       "Presentación": "78L",
@@ -13348,8 +13348,8 @@
     "sku": "DMX5-01",
     "name": "Xtra Cut Disk 5″",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "No especificado",
     "specs": {
       "Nota": "No especificado"
@@ -13396,8 +13396,8 @@
     "sku": "DRTU14332-01",
     "name": "RTU Wheel and Tire Cleaner 32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "El limpiador de neumáticos D143 de Meguiar es la opción del profesional para una limpieza rápida y efectiva sin ácido de las ruedas de cromo transparentes de la fábrica OEM. “La elección del profesional” Los productos de Meguiar Detailer son la solución perfecta para cualquier persona que detalla los coches en casa, en el lado o a tiempo completo – ahora disponible en un formato de fácil acceso List-to-Use.",
     "specs": {
       "Presentación": "32 OZ",
@@ -13481,8 +13481,8 @@
     "sku": "M11032-01",
     "name": "ULTRA PRO Speed Compound 1X32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "M105 ULTRA-CUT COMPOUND                                              M110 ULTRA PRO SPEED COMPOUND",
     "specs": {
       "Presentación": "32 OZ",
@@ -13566,8 +13566,8 @@
     "sku": "M11001-01",
     "name": "ULTRA Pro Speed Compound 1 GAL",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "M105 ULTRA-CUT COMPOUND                                              M110 ULTRA PRO SPEED COMPOUND",
     "specs": {
       "Presentación": "1 GAL",
@@ -13651,8 +13651,8 @@
     "sku": "M10532-01",
     "name": "Ultra Cut Compound (1×0.95 ml)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Pulimentos y Compuestos de Corte",
     "description": "M105 ULTRA-CUT COMPOUND                                              M110 ULTRA PRO SPEED COMPOUND",
     "specs": {
       "Presentación": "95 ml",
@@ -13736,8 +13736,8 @@
     "sku": "D10101-01",
     "name": "All Purpose Cleaner 1×3.785 ltl",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "LIMPIADORES & DESENGRASANTES • Formulado especialmente para uso • Limpia todo tipo de superficie interior          • Acción rápida y fuerte para los trabajos más difíciles. y exterior.                                      • Rendimiento sin residuo. • Resultados sin manchas. • Ideal para limpieza de al",
     "specs": {
       "Tipo_oficial": "Professional Cleaners & Degreasers"
@@ -13820,8 +13820,8 @@
     "sku": "D16101-01",
     "name": "Silicone Free Dressing (1×3.78 lt)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "ABRILLANTADORES • Fórmula de alto brillo.                         • Alto brillo uniforme.                       • Brillo superior para el interior y            • Limpiador y abrillantador para • Acabado como mojado de alta                     • Ideal para un ambiente susceptible            exterior.                                       viniles y plásticos.",
     "specs": {
       "Tipo_oficial": "Professional Dressings"
@@ -13904,8 +13904,8 @@
     "sku": "G14716-01",
     "name": "Ultimate Protectant 1x16oz",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "RE-FRESHER • Este novedoso producto es la solución instantánea para • Solo se debe atomizar a las alfombras para eliminar",
     "specs": {
       "Presentación": "16oz",
@@ -13989,8 +13989,8 @@
     "sku": "DRTU200232-01",
     "name": "RTU Iron Removing Clay 32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Cuidado y Mantenimiento Estético",
     "description": "Decontaminante químico, remueve partículas de hierro incrustadas en la pintura, así como contaminantes industriales. Línea semi profesional, lista para usar",
     "specs": {
       "Presentación": "32 OZ",
@@ -14074,8 +14074,8 @@
     "sku": "DRTU17032-01",
     "name": "RTU Hyper Dressing 32 OZ",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "D170 Hyper Dressing de Meguiar produce un alto brillo en caucho no pintado, plástico o vinilo en superficies interiores o exteriores. Es seguro y eficaz en componentes de plástico no pintados y motores de caucho, neumáticos, compartimiento de rueda, así como en interiores y exteriores. “La elección del profesional” Los productos de Meguiar Detailer son la solución perfecta para cualquier persona que detalla los coches en casa, en el lado o a tiempo completo – ahora disponible en un formato de fácil acceso List-to-Use.",
     "specs": {
       "Presentación": "32 OZ",
@@ -14159,8 +14159,8 @@
     "sku": "D180101-01",
     "name": "D1801 Wheel & Paint Iron DECON",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Abrillantadores y Cuidado de Llantas",
     "description": "• Ideal para remover contaminantes                    • Ideal para remover contaminantes adheridos.             • Limpiador descontaminante de particulas adheridos.                                          • Más agresiva que la C2000, más eficiente para             ferrosas • Restaura la suavidad de la pintura dándole            tratar brisados fuertes.                                • Remueve los residuos de polvo de freno un acabado tipo espejo.                             • Restaura la suavidad de la pintura dándole un             acumulados en aros y pintura • Producto 100% no abrasivo, seguro en todo",
     "specs": {
       "Tipo_oficial": "Professional Wheel Cleaners"
@@ -14243,8 +14243,8 @@
     "sku": "M12201-01",
     "name": "Surface Prep 1×3.78 lt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "M122 SURFACE PREP                            M788 DEEP CRYSTAL CERAMIC PAINT COATING                   M69916 DEEP CRYSTAL TOP COAT • Producto único y esencial en procesos de pulido y   • Tratamiento cerámico para protección de pintura.    • Revitaliza el efecto hidrofóbico del Deep tratamientos cerámicos.                             • Se puede usar en todo tipo y color de pinturas,       Crystal Coating. • Se debe usar antes, durante y después de              menos acabados mate.                                • Incrementa el brillo y profundidad de color corrección de pintura, para remover aceites e       • Provee desde 12 hasta 24 meses de protección.         en la pintura. inspeccionar la superficie.                         • Súper hidrofóbico y resist",
     "specs": {
       "Tipo_oficial": "Professional Surface Prep & Maintenance"
@@ -14318,8 +14318,8 @@
     "sku": "W0004-01",
     "name": "Hand Applicator Pads (1×4 unids)",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Las pastillas de aplicador de espuma de Meguiar Supremo Shine 4\" le permiten aplicar fácilmente compuestos leves, pulido de coche, cera de coche y otros productos de cuidado automático. Estas almohadillas de pulido están hechas de una espuma ultra suave de células estrechas que proporciona una aplicación suave e incluso en todas las superficies. Ideal para uso en acabados de pintura, ruedas y neumáticos, y en superficies incluyendo cuero, vinilo y caucho. Estas almohadillas de espuma versátiles son lavable y altamente durable, dándole múltiples usos de cada almohadilla. Usar a mano. El paquete incluye 4 almohadillas.",
     "specs": {
       "Tipo_oficial": "Towels, Mitts & Applicators"
@@ -14402,8 +14402,8 @@
     "sku": "G7716-01",
     "name": "Gold Class Quik Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "Cera en spray, ideal para proteger y darle brillo a las pinturas de tonos oscuros, aumentando el brillo y reflejo en un sencillo paso.",
     "specs": {
       "Tipo_oficial": "Wax & Protect"
@@ -14486,8 +14486,8 @@
     "sku": "D11301-01",
     "name": "Detailer Citrus Blast Wash and Wax",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Rica espuma que provee un excelente   • Único shampoo Detailer con cera.                    • Shampoo y acondicionador en un solo",
     "specs": {
       "Nota": "No especificado"
@@ -14534,8 +14534,8 @@
     "sku": "WRFC7-01",
     "name": "Soft Buff Rotary Foam Cutting Pad – 7″",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Soft Buff Rotary Foam Cutting Pad – 7″",
     "specs": {
       "Nota": "No especificado"
@@ -14582,8 +14582,8 @@
     "sku": "D20180-01",
     "name": "Leather Cleaner & Conditioner Bottle 355ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Leather Cleaner & Conditioner Bottle 355ml",
     "specs": {
       "Presentación": "355ml",
@@ -14640,8 +14640,8 @@
     "sku": "M1808-01",
     "name": "Plastic Detailer",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "• La solución más eficaz para                    • Restaure los focos en 2 sencillos       • Restaure los foco sin necesidad de      • Sistema de pulido profesional severa.                                        • Paso 1: Remueve oxidación e             • Sus 4 grados de lija permiten elegir    • Paso 1: limpiador, elimina • Este Kit cuenta con todo lo necesario            impurezas                                 la agresividad de",
     "specs": {
       "Nota": "No especificado"
@@ -14697,8 +14697,8 @@
     "sku": "G3507-01",
     "name": "D/A Power System Cutting Pad 2 Pack",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Toallas, Microfibras y Aplicadores",
     "description": "• El cuidado automotriz es un trabajo que consume mucho tiempo y esfuerzo; con el DA   PADS Power System este esfuerzo puede ser reducido a menos de la mitad.                     • Restaure fácilmente el color y la claridad de las pinturas opacas y • Básicamente, se obtiene mejor brillo en menos tiempo.                                    oxidadas. • El accesorio puede ser montado en cualquier taladro convencional.                      • Remueva oxidación, gota seca, rayones y otros defectos • El sistema doble acción provee resultados más rápidos de una manera segura.",
     "specs": {
       "Nota": "No especificado"
@@ -14745,8 +14745,8 @@
     "sku": "G10900-01",
     "name": "Gold Class Rich Leather Wipes",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "Consiente y protege tu cuero de forma rápida y sencilla con las Toallitas para Cuero 3 en 1 Gold Class™ de Meguiar's®. Su fórmula suave y eficaz limpia, restaura y enriquece el cuero para una apariencia lujosa y ayuda a prevenir el desgaste prematuro, como la sequedad y la decoloración.",
     "specs": {
       "Tipo_oficial": "Leather Care"
@@ -14829,8 +14829,8 @@
     "sku": "DFC5-01",
     "name": "Meguiars DFC5 5 inch DA Foam Cutting Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Meguiars DFC5 5 inch DA Foam Cutting Disc",
     "specs": {
       "Nota": "No especificado"
@@ -14877,8 +14877,8 @@
     "sku": "X210200-01",
     "name": "Hybrid Wash Mitt",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Ideado para trabajar en conjunto con el Hybrid Ceramic           • Este nuevo guante de microfibraayuda a lograr un lavado libre de    GLASS TOWEL Wash and Wax.                                                      rayones                                                               • El detallado de vidrios es la parte mas compleja al • Su lado de fibras largas está diseñado para el lavado de         • Su gruesa capa demicrofibra levanta y atrapa la suciedad.",
     "specs": {
       "Tipo_oficial": "Towels, Mitts & Applicators"
@@ -14961,8 +14961,8 @@
     "sku": "G17216-01",
     "name": "Ultimate Compound 1x450ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "CERAMIC QUIK CLAY KIT                                                           SURFACE™ CLAY KIT                                                   ULTIMATE • Descontamina y protege en un solo paso.                                       • El Sistema Smooth Surface esta hecho para descontaminar         COMPOUND • El pad remueve todos los contaminantes adheridos a la pintura mientras el       pintura, regresando la textura lisa y suave que originalmente     • El Ultimate Compund Restaura las pinturas",
     "specs": {
       "Presentación": "450ml",
@@ -15046,8 +15046,8 @@
     "sku": "A3316-01",
     "name": "Quik Detalier 1x473ml",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Limpieza y Restauración de Interiores",
     "description": "CLASS™ QUIK                                                      • El Quik Detailer tiene la fórmula original creada por Meguiars para mantener el auto • Este detallador rápido está diseñado especificamente         • Remueve los contaminantes sueltos dejando un brillo extra en la pintura. para colores oscuros, perfecto para remover polvo ligero     • Tambien puede ser usado para lubricar la arcilla y descontaminar pintura. • Deja la pintura ultra-resbalosa y ultra-oscura,",
     "specs": {
       "Presentación": "473ml",
@@ -15131,8 +15131,8 @@
     "sku": "DFF6-01",
     "name": "Meguiars DFF6 6 inch DA Foam Finishing Disc",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Shampoo y Lavado Exterior",
     "description": "Meguiars DFF6 6 inch DA Foam Finishing Disc",
     "specs": {
       "Nota": "No especificado"
@@ -15179,8 +15179,8 @@
     "sku": "MT300-01",
     "name": "Dual Action Polisher",
     "brand": "Meguiar's",
-    "category": "cuidado_automotriz",
-    "subcategory": "Detailing y Pulido",
+    "category": "detailing_cuidado",
+    "subcategory": "Ceras, Selladores y Cerámicos",
     "description": "• Movimiento oscilatorio que no quema la pintura.           • El cuidado automotriz es un trabajo que consume             • Lámpara profesional para la • Se puede usar para encerar, abrillantar, pulir y hasta      mucho tiempo y esfuerzo; con el DA Power System               inspección de defectos en la pintura. lijar.                                                      este esfuerzo puede ser reducido a menos de la mitad.       • Fabricada en conjunto con Scangrip. • Velocidades desde 3000 hasta 7500 opm´s                     Básicamente, se obtiene mejor brillo en menos tiempo.       • Lumens regulables de 50 hasta 500",
     "specs": {
       "Tipo_oficial": "Tool Replacement Parts"

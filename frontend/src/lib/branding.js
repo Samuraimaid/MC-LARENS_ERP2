@@ -50,3 +50,30 @@ export function getBrandingForBranch(branchId) {
   };
 }
 
+export const ERP_CATEGORY_LABELS = {
+  detailing_cuidado: "Detailing y Cuidado Automotriz",
+  cuidado_automotriz: "Detailing y Cuidado Automotriz",
+  lubricantes_fluidos: "Lubricantes, Grasas y Fluidos",
+  iluminacion: "Iluminación y Faros LED",
+  accesorios_iluminacion: "Iluminación y Faros LED",
+  audio_multimedia: "Car Audio y Multimedia",
+  car_audio: "Car Audio y Multimedia",
+  accesorios_4x4_exterior: "Accesorios 4x4 y Exterior",
+  seguridad_alarmas: "Seguridad y Alarmas",
+  polarizados: "Películas y Polarizados",
+  servicios: "Servicios de Taller",
+  servicios_taller: "Servicios e Instalaciones",
+  repuestos_mantenimiento: "Repuestos y Mantenimiento",
+  accesorios_electronicos: "Accesorios Electrónicos",
+  accesorios_no_electricos: "Accesorios Generales",
+};
+
+export function formatCategoryLabel(cat) {
+  if (!cat || cat === "all") return "Todas las categorías";
+  if (ERP_CATEGORY_LABELS[cat]) return ERP_CATEGORY_LABELS[cat];
+  return String(cat)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+
