@@ -1,0 +1,200 @@
+{
+  "generated_at_utc": "2026-09-11T22:25:12.710465+00:00",
+  "source": "https://www.ridefox.com/",
+  "api": {
+    "products_json": "https://www.ridefox.com/products.json?limit=250&page=N",
+    "products_fetched": 1243,
+    "products_kept": 632
+  },
+  "totals": {
+    "all_products": 632,
+    "matched": 571,
+    "universal": 52,
+    "unmatched": 9
+  },
+  "brand_usage": {
+    "FORD": 151,
+    "JEEP": 125,
+    "TOYOTA": 105,
+    "CHEVROLET": 83,
+    "GMC (fuera ERP)": 79,
+    "RAM": 65,
+    "DODGE (fuera ERP)": 25,
+    "LEXUS": 22,
+    "NISSAN": 20,
+    "HUMMER (fuera ERP)": 15,
+    "VOLKSWAGEN": 12,
+    "LAND ROVER": 12,
+    "MERCEDES BENZ": 8,
+    "ISUZU": 2
+  },
+  "model_usage": {
+    "wrangler": 95,
+    "silverado": 75,
+    "sierra": 75,
+    "super duty": 69,
+    "f-250": 69,
+    "f-350": 69,
+    "f-150": 44,
+    "gladiator": 41,
+    "ram 2500": 39,
+    "land cruiser": 31,
+    "tacoma": 31,
+    "4runner": 30,
+    "ram 1500": 30,
+    "ranger": 29,
+    "tundra": 25,
+    "cherokee": 23,
+    "ram 3500": 22,
+    "suburban": 20,
+    "yukon": 18,
+    "gx": 16,
+    "fj cruiser": 15,
+    "patrol": 14,
+    "amarok": 12,
+    "discovery": 12,
+    "grand cherokee": 12,
+    "defender": 10,
+    "range rover": 10,
+    "bronco": 9,
+    "hilux": 8,
+    "sprinter": 6,
+    "tahoe": 6,
+    "sequoia": 6,
+    "ranger raptor": 6,
+    "lx": 6,
+    "corvette": 4,
+    "colorado": 4,
+    "canyon": 4,
+    "g-class": 2,
+    "armada": 2,
+    "frontier": 2,
+    "titan": 2,
+    "charger": 2,
+    "challenger": 2,
+    "d-max": 2,
+    "hummer": 1,
+    "pathfinder": 1
+  },
+  "categories": {
+    "Amortiguadores — Performance": 311,
+    "Coil-overs": 119,
+    "Amortiguadores — Performance Elite": 65,
+    "Amortiguadores — Factory Race": 47,
+    "Estabilizador de dirección": 33,
+    "Amortiguadores con reservoir — Performance": 16,
+    "Amortiguadores": 15,
+    "Repuestos / herrajes": 5,
+    "Suspensión / shocks — Parts": 5,
+    "Amortiguadores IFP — Performance": 4,
+    "Amortiguadores con reservoir — Performance Elite": 4,
+    "Amortiguadores con reservoir — Parts": 2,
+    "Amortiguadores con reservoir — Factory Race": 2,
+    "Amortiguadores — Factory": 2,
+    "Suspensión / shocks": 1,
+    "Resortes helicoidales": 1
+  },
+  "unmatched_sample": [
+    {
+      "sku": "985-24-273",
+      "handle": "ineos-grenadier-2-0-ifp-stabilizer-a23962ca",
+      "title": "INEOS GRENADIER | 2.0 IFP STABILIZER",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    },
+    {
+      "sku": "985-24-048",
+      "handle": "hummer-h3-2-0-performance-series-12bc40bd",
+      "title": "HUMMER H3 | 2.0 PERFORMANCE SERIES",
+      "brands": [],
+      "models": [
+        "hummer"
+      ],
+      "non_erp_brands": [
+        "HUMMER"
+      ],
+      "compatibilidad": "HUMMER (fuera ERP) | Hummer | 2006-2010"
+    },
+    {
+      "sku": "983-02-243",
+      "handle": "ineos-grenadier-2-0-ats-stabilizer-e0eed6fd",
+      "title": "INEOS GRENADIER | 2.0 ATS STABILIZER",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    },
+    {
+      "sku": "883-30-000",
+      "handle": "dodge-charger-and-challenger-2-0-factory-race-series-3a7952fa",
+      "title": "DODGE CHARGER & CHALLENGER | 2.0 FACTORY RACE SERIES",
+      "brands": [],
+      "models": [
+        "charger",
+        "challenger"
+      ],
+      "non_erp_brands": [
+        "DODGE"
+      ],
+      "compatibilidad": "DODGE (fuera ERP) | Charger, Challenger | 2011-2023"
+    },
+    {
+      "sku": "883-26-273",
+      "handle": "ineos-grenadier-2-5-performance-elite-series-d4f085b7",
+      "title": "INEOS GRENADIER | 2.5 PERFORMANCE ELITE SERIES",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    },
+    {
+      "sku": "883-32-000",
+      "handle": "dodge-charger-and-challenger-2-0-performance-series-d4e74cf5",
+      "title": "DODGE CHARGER & CHALLENGER | 2.0 PERFORMANCE SERIES",
+      "brands": [],
+      "models": [
+        "charger",
+        "challenger"
+      ],
+      "non_erp_brands": [
+        "DODGE"
+      ],
+      "compatibilidad": "DODGE (fuera ERP) | Charger, Challenger | 2011-2023"
+    },
+    {
+      "sku": "885-24-271",
+      "handle": "ineos-grenadier-2-0-performance-series-fbb2a449",
+      "title": "INEOS GRENADIER | 2.0 PERFORMANCE SERIES",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    },
+    {
+      "sku": "885-24-270",
+      "handle": "ineos-grenadier-2-0-performance-series-d9b1e9f5",
+      "title": "INEOS GRENADIER | 2.0 PERFORMANCE SERIES",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    },
+    {
+      "sku": "883-26-166",
+      "handle": "ineos-grenadier-2-5-performance-elite-series-1f0aecf7",
+      "title": "INEOS GRENADIER | 2.5 PERFORMANCE ELITE SERIES",
+      "brands": [],
+      "models": [],
+      "non_erp_brands": [],
+      "compatibilidad": "2024-Actual"
+    }
+  ],
+  "unmatched_count": 9,
+  "notes": [
+    "Fitment extracted from Shopify tags/title/body only; never invented.",
+    "GMC/Dodge/Hummer are outside ERP brand list.",
+    "Universal reserved for hardware without vehicle fitment."
+  ]
+}
