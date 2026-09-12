@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (R-008)
+**Actualizado:** 2026-09-12 (R-009)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,25 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-009 — Drag-and-drop UX: progreso “honesto” en uploads
+- **Fecha evaluación:** 2026-09-12
+- **Fuente:** Facebook Reel — Design Motion  
+  https://www.facebook.com/share/r/1QN7kbvsNg/  
+  (reel `1029052806542981`)
+- **Idea (resumen):** “SIGNAL 02 — HONEST PROGRESS”: un spinner (“Uploading…”) **esconde la verdad**. Mostrar nombre/tamaño, **%**, barra, **tiempo restante** y **MB/s** para que el usuario decida esperar o cancelar (“wait or walk away”).
+- **Veredicto:** **APLICAR** (en los uploaders de medios; no es P0 global)
+- **Impacto en McLarens ERP:** **Alto** justo donde Xinon lo señaló:
+  1. **Endpoint / UI de videos de publicidad** (login splash / `BackgroundPromoVideo` y flujo admin de subir promo) — archivos grandes (decenas de MB); un misterio-spinner frustra en tienda con Wi‑Fi flojo.
+  2. **Imágenes de pruebas de taller** (evidencia QC / work orders / polarizados) — varias fotos; hace falta progreso por archivo + cola, no un único “subiendo…”.
+- **Requisitos concretos para Antigravity / FE cuando toquen esos flujos:**
+  - `XMLHttpRequest`/`fetch` + `upload.onprogress` (o equivalente) → `loaded/total` → % y ETA
+  - Mostrar: filename, size, %, barra, ETA, throughput; botón **Cancelar**
+  - Multi-file: lista con estado por ítem (pending / uploading / done / error)
+  - No sustituye validación de tipo/tamaño ni storage (GCS); es UX del progreso
+- **No hacer ahora:** no priorizar sobre issues #4–#7 / P0 seguridad. Cuando abran PR del uploader de publicidad o evidencias de taller, **incluir honest progress** (aceptación del PR).
+- **Relacionado:** `frontend/src/components/auth/BackgroundPromoVideo.jsx`; rol publicidad; flujos taller/QC.
 
 
 ### R-008 — “5 fixes to AI slop in dashboards” / UX Engine plugin
