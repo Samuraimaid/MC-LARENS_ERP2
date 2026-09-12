@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + perfil David Mráz / P-DMR)
+**Actualizado:** 2026-09-12 ( + Memorisely P-MEM / R-038)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,33 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-MEM — Perfil Memorisely (UX/UI bootcamps)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/19N6CTtqhw/ · https://www.facebook.com/p/Memorisely-100071990791186/ · memorisely.com
+- **Nicho:** Educación UX/UI — Figma, design systems, tokens, AI en diseño, principios UX.
+- **Muestra:** Dual-screen/fold · design tokens Polar · naming layers/components · Hick’s Law · AI tool stack · semantic tokens · brand ≠ primary color · design system MCP.
+
+| Tip | Veredicto | Nota ERP |
+|-----|-----------|----------|
+| Hick’s Law — menos opciones, priorizar acción principal | **APLICAR** (R-038) | Caja/workbench: menos botones a la vista; progressive disclosure (alineado hierarchy Design Motion). |
+| Semantic tokens / no adivinar tokens | **APARCAR** | Útil con DESIGN.md a futuro; no P0. |
+| Brand color ≠ primary UI color | **APARCAR** | Status/errores/alertas con color funcional (cerca R-031). |
+| Dual screen / fold / breakpoints | **APARCAR** | Tablet + segunda pantalla caja posible; no urgente. |
+| Naming layers/components (Figma/AI) | **OBVIAR** | Flujo diseño Figma, no runtime ERP. |
+| Daily AI tool stack / MCP design system | **OBVIAR** | Tooling de diseñadores; no ticket Antigravity. |
+| Bootcamps Memorisely | **OBVIAR** | No comprar curso para el repo. |
+
+- **Overlap:** mucho espíritu ya cubierto por Design Motion R-011…R-035 (hierarchy, color a11y, destructive). **Nuevo concreto:** R-038 Hick’s Law en pantallas de operación.
+- **Acción Antigravity:** al tocar caja/workbench/menús, aplicar R-038 (1 CTA primaria visible; resto en ⋯/sheet R-010).
+
+### R-038 — Hick’s Law en pantallas de operación (Memorisely)
+- **Veredicto:** **APLICAR**
+- **Idea:** demasiadas opciones ralentizan; una acción primaria clara; secundarias en overflow/sheet.
+- **ERP:** caja, workbench ventas, menús de fila (#10), coordinadores.
+- **Acción:** en PRs de esas UIs, maximizar 1 primary CTA; no barra de 8 botones iguales.
+- **Fuente:** https://www.facebook.com/share/19N6CTtqhw/
 
 
 ### P-DMR — Perfil David Mráz (Atheros)
