@@ -10,7 +10,7 @@
 > Those files may remain as **archives**. **Antigravity should read ONLY this master** for what to implement and in what order.
 >
 > **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2 · **Branch:** `master`  
-> **Updated:** 2026-09-12 · **Brief author:** Case (ops/QA) · **Owner:** Xinon  
+> **Updated:** 2026-09-12 (zonas virtuales) · **Brief author:** Case (ops/QA) · **Owner:** Xinon  
 > **For:** Antigravity — code PRs. Case does data/ops on live when Cloud Agents/Pro unavailable.
 
 ---
@@ -108,6 +108,46 @@ Default pickers / inventory / sales lines for a warehouse should respect `is_act
 - `POST /api/inventory/add-stock` only **adds** (`quantity > 0`); cannot set absolute 0 or negative delta.
 - `PATCH`/`PUT` on inventory ids → **405**.
 - Demo zero used official warranty approve `$inc` negative drain + product `GET`+`PUT stock:0` — do not redo.
+
+---
+
+## 1b. FEATURE P0 — Zonas virtuales dentro de cada bodega (NEW — Xinon 2026-09-12)
+
+**Xinon asked:** within **each physical warehouse**, a section / virtual sub-warehouse for non-sellable or special stock — not a separate warehouse entity the user manages as a full bodega, but a **zone inside the same bodega**.
+
+### Zones (minimum set)
+
+| Zone id (suggested) | Label ES | What lives there |
+|---------------------|----------|------------------|
+| `zone_damaged` | Dañado / Bodega dañado | Physical damage, unsellable as new |
+| `zone_incomplete` | Incompleto | Missing parts / incomplete kits |
+| `zone_warranty` | Garantía (devoluciones) | Unit the **customer returned** when a warranty replacement was issued (the old/defective unit taken in). The **new** unit given to the customer leaves sellable stock via normal warranty/sale flow; the returned unit enters this zone. |
+| `zone_zero` (optional alias) | Bodega cero | Optional umbrella UI tab grouping the above, or a catch-all for qty held at 0 in special state — Antigravity may merge with damaged/incomplete if cleaner |
+
+### Intent
+
+- Same `warehouse_id` (e.g. `wh_main`, TopCar Calvario, TopCar La Tigre).
+- Inventory rows (or movement metadata) carry a **`storage_zone`** (or equivalent) so pickers for normal sales **default to sellable / main floor only**.
+- Bodeguero + gerencia can **move** units between `zone_sellable` (default) ↔ damaged / incomplete / warranty **without deleting** product masters.
+- Warranty flow: when validating/activating garantía and swapping a new unit to the customer, the returned SKU/unit is recorded into `zone_warranty` with reason + reference to warranty request id (see existing `/inventory/warranty-requests*` routes).
+- Later: report/export “qué hay en dañado/garantía” per bodega; optional purge/write-off admin later (not in v1).
+
+### Do NOT
+
+- Do not invent separate Cloud Run deploys per zone.
+- Do not hard-delete products when moving to these zones.
+- Do not count zone_damaged / zone_warranty qty as available-to-sell in cotización/venta unless gerencia explicitly overrides.
+
+### Acceptance
+
+- Each warehouse UI shows tabs/sections: Venta / Dañado / Incompleto / Garantía.
+- Move unit → zone updates inventory + audit movement with reason.
+- Warranty approve/swap path can auto-place returned unit into Garantía zone.
+- Sellable availability queries exclude non-sellable zones by default.
+
+### Implementation note
+
+Needs **Antigravity / Cloud Agent code PR** (schema + API + InventoryPage/KDS). Case cannot ship this as data-only ops.
 
 ---
 
