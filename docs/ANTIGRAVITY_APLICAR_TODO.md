@@ -2,7 +2,7 @@
 
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
-**Actualizado:** 2026-09-12  
+**Actualizado:** 2026-09-12 ( + R-011…R-015 Design Motion)  
 **Autor del brief:** Case (evaluaciones + QA) · handoff seguridad original TARS  
 **Para:** Antigravity — **este archivo es la fuente de verdad de qué implementar**.  
 Ignorar reels/ideas marcados OBVIAR/APARCAR salvo que Xinon los promueva.
@@ -110,11 +110,31 @@ Ref: https://www.facebook.com/share/r/1QN7kbvsNg/
 - Medir y atacar lecturas lentas (caché segura solo donde handoff permite; **no** cachear stock/caja strong-consistency).
 - Bodegas `/inventory`: datos o mensaje claro de vacío/permiso.
 
+### I) R-011…R-015 — Design Motion patterns (barrido página)
+
+Fuente: https://www.designmotionhq.com/patterns · FB Design Motion.
+
+| ID | Pattern | Aplicar en |
+|----|---------|------------|
+| R-011 | Hover Trap | Menús/tablas touch; con #10 |
+| R-012 | Empty States | #9 inventario + listas vacías |
+| R-013 | Loading + Skeleton | #8 rutas lentas |
+| R-014 | Destructive language | #10 ContextActions + confirms |
+| R-015 | Error recovery | #4 y #7 (copy + next step) |
+
+**No comprar** UX Engine plugin (OBVIAR). Solo patrones gratis.
+
 ### H) Seguridad handoff P0 (si aún no cerrado)
 
 Ver secciones P0.1–P0.3 en `docs/MC-LARENS_ERP2_ANTIGRAVITY_HANDOFF.md`.
 
 ---
+
+## Nota barrido Design Motion (noche 2026-09-12)
+
+Página: https://www.facebook.com/share/199h2zo3HK/ → Design Motion.  
+Candidatos locales: `/workspace` docs `design_motion_overnight_candidates.md`.  
+Routine 7:00 GMT-6 entrega digest final a Xinon.
 
 ## NO aplicar (OBVIAR / APARCAR)
 
