@@ -2,7 +2,7 @@
 
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
-**Actualizado:** 2026-09-12 ( + P-CodeVerse OBVIAR)
+**Actualizado:** 2026-09-12 ( + R-042 rate limit)
 **Autor del brief:** Case (evaluaciones + QA) · handoff seguridad original TARS  
 **Para:** Antigravity — **este archivo es la fuente de verdad de qué implementar**.  
 Ignorar reels/ideas marcados OBVIAR/APARCAR salvo que Xinon los promueva.
@@ -206,3 +206,12 @@ Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo veri
 > Ignora ítems OBVIAR/APARCAR de la sección “NO aplicar”.
 
 **Fin del archivo único.**
+
+
+### Codez Up (2026-09-12)
+| Codez Up R-043 BFCache | **APARCAR** | SPA React; higiene pagehide post-bugs |
+| Codez Up R-044 HTTP/2 Rapid Reset | **OBVIAR** app | Cubierto por GFE/Cloud Run LB |
+| Codez Up R-045 script defer | **APARCAR** | Vite ya empaqueta; auditar 3ros |
+| Codez Up R-046 Claude vision tokens | **OBVIAR** | Solo si OCR/visión taller |
+
+**APLICAR:** R-042 sliding-window rate limit (PIN/APIs).
