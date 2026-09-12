@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (R-009)
+**Actualizado:** 2026-09-12 (R-010)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,25 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-010 — Context menu como sistema (PC + móvil)
+- **Fecha evaluación:** 2026-09-12
+- **Fuente:** Facebook Reel — Design Motion  
+  https://www.facebook.com/share/r/1BsSDS2xE6/  
+  (reel `1030653972707108`)
+- **Idea (resumen):** “Context menu is a system / Right-click is a system”: menú con iconos + labels, hover/selected, **separadores por grupos**, acción destructiva en rojo (Delete).
+- **Veredicto:** **APARCAR** (sí para ERP; no ahora; **móvil ≠ mismo chrome que PC**)
+- **Impacto en McLarens ERP:**
+  - **PC / caja-escritorio:** útil en filas de inventario, usuarios, ventas, órdenes, evidencias — clic derecho o ⋯ con Open / Rename / Duplicate / acciones de negocio / Delete agrupados.
+  - **Smartphones / tablet de piso:** el patrón de menú flotante tipo Windows **no** se copia 1:1. Mejor: **long-press → bottom sheet / action sheet**, o botón ⋯ grande; targets ≥44px; nada de hover-only.
+- **Reglas si se retoma (junto R-006/R-007, post P0):**
+  1. Un componente `ContextActions` con la misma *lista de acciones* en dos shells: `DesktopMenu` vs `MobileSheet`
+  2. Separadores por grupo (navegación / editar / peligro)
+  3. Delete/anular siempre al final y en color peligro + confirmación
+  4. No esconder acciones críticas solo en right-click (accesibilidad + touch)
+- **Acción Antigravity ahora:** ninguna. No PR de menús contextuales antes de #4–#7.
+- **Relacionado:** R-006 tablas, R-007 móvil; roles técnicos/entregador en touch.
 
 
 ### R-009 — Drag-and-drop UX: progreso “honesto” en uploads
