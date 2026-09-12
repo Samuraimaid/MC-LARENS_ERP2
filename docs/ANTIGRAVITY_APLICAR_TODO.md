@@ -2,7 +2,7 @@
 
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
-**Actualizado:** 2026-09-12 ( + R-011…R-015 Design Motion)  
+**Actualizado:** 2026-09-12 (Design Motion R-011…R-035 merged)
 **Autor del brief:** Case (evaluaciones + QA) · handoff seguridad original TARS  
 **Para:** Antigravity — **este archivo es la fuente de verdad de qué implementar**.  
 Ignorar reels/ideas marcados OBVIAR/APARCAR salvo que Xinon los promueva.
@@ -41,7 +41,8 @@ Detalle de reels: `docs/ANTIGRAVITY_REELS_EVAL.md`
 | 9 | UX-R009 | P2 | (R-009 / P2.media) | **Progreso honesto** en upload videos publicidad + fotos pruebas taller. | % / ETA / MB/s / cancelar; multi-file |
 | 10 | QA-P2a | P2 | [#8](https://github.com/Samuraimaid/MC-LARENS_ERP2/issues/8) | Cargas iniciales >15s (dashboard, inventory, users, catálogo…). | Mejora medida o skeleton + nota |
 | 11 | QA-P2b | P2 | [#9](https://github.com/Samuraimaid/MC-LARENS_ERP2/issues/9) | Bodegas main `/inventory` lento y vacío. | Inventario o mensaje explícito permisos/datos |
-| 12 | P1.x | P1 | (handoff) | Approvals/WS decisión vivo vs muerto; cookie contract; `test_pin_lockout` 401/403. | Docs + código alineados; tests verdes |
+| 12 | DM-UX | P2 | R-011…R-035 | Bloque Design Motion (ver §I): U1→U8 tras bugs. | Criterios por ID en candidates.md |
+| 13 | P1.x | P1 | (handoff) | Approvals/WS decisión vivo vs muerto; cookie contract; `test_pin_lockout` 401/403. | Docs + código alineados; tests verdes |
 
 ---
 
@@ -110,19 +111,28 @@ Ref: https://www.facebook.com/share/r/1QN7kbvsNg/
 - Medir y atacar lecturas lentas (caché segura solo donde handoff permite; **no** cachear stock/caja strong-consistency).
 - Bodegas `/inventory`: datos o mensaje claro de vacío/permiso.
 
-### I) R-011…R-015 — Design Motion patterns (barrido página)
+### I) Design Motion R-011…R-035 (barrido página — 2026-09-12)
 
-Fuente: https://www.designmotionhq.com/patterns · FB Design Motion.
+Fuente: https://www.facebook.com/share/199h2zo3HK/ → Design Motion · patrones: https://www.designmotionhq.com/patterns  
+Detalle: `docs/design_motion_overnight_candidates.md` · inbox reels R-011+.
 
-| ID | Pattern | Aplicar en |
-|----|---------|------------|
-| R-011 | Hover Trap | Menús/tablas touch; con #10 |
-| R-012 | Empty States | #9 inventario + listas vacías |
-| R-013 | Loading + Skeleton | #8 rutas lentas |
-| R-014 | Destructive language | #10 ContextActions + confirms |
-| R-015 | Error recovery | #4 y #7 (copy + next step) |
+**Prioridad dentro del bloque UX** (después de #4–#7 y #10/#R-009):
 
-**No comprar** UX Engine plugin (OBVIAR). Solo patrones gratis.
+| Prioridad | IDs | Tema | Ligado a |
+|-----------|-----|------|----------|
+| U1 | R-015, R-021 | Hover trap + bottom sheets (touch) | #10 / R-010 |
+| U2 | R-014, R-032 | Loading system + feedback ≤400ms | #8 |
+| U3 | R-011, R-012 | Empty + error recovery surfaces | #9, #4, #7 |
+| U4 | R-016, R-014(dest) | Destructive language + confirms | #10 |
+| U5 | R-028 | File upload beyond progress | R-009 |
+| U6 | R-019, R-029 | Server truth for money; no optimistic cobros | CRITICAL_ZONES |
+| U7 | R-013, R-017, R-018, R-025, R-026, R-031, R-034 | Toasts, forms, focus, disabled CTAs, colorblind status, dropdowns | FE shared |
+| U8 | R-020, R-022, R-024 | Autosave honesty, search system, modal hierarchy | drafts/POS search |
+
+**APARCAR (no implementar aún):** R-023 undo, R-027 bulk, R-030 notification taxonomy, R-033 filter chips, R-035 swipe.
+
+**OBVIAR:** compra UX Engine; motion/brand-only patterns (ver candidates.md).
+
 
 ### H) Seguridad handoff P0 (si aún no cerrado)
 
@@ -165,6 +175,10 @@ Routine 7:00 GMT-6 entrega digest final a Xinon.
 | PR-H | `feat: ContextActions DesktopMenu + MobileSheet` | #10 / R-010 |
 | PR-I | `feat: honest upload progress (promo + taller)` | R-009 |
 | PR-J | `perf: slow routes + bodegas inventory empty` | #8 #9 |
+| PR-K | `ux: loading/empty/error + hover/sheets` | R-011,012,014,015,021,032 |
+| PR-L | `ux: destructive + toast + form field states` | R-013,016,017,018,025,026 |
+| PR-M | `feat: upload dropzone/retry (with R-009)` | R-028 |
+| PR-N | `guardrail: no optimistic money/stock` | R-019, R-029 |
 
 Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo verificar**.
 
