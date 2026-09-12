@@ -862,6 +862,8 @@ export function CatalogPage() {
                           <ProductImageHoverZoom
                             src={image}
                             alt={product.name || "Producto"}
+                            brand={product.brand}
+                            category={product.category}
                             className="w-full h-full min-h-[190px] max-h-[230px]"
                             onOpenQuickView={() => setQuickViewProduct(product)}
                             showEyeButton={true}

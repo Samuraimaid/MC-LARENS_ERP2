@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, cn } from "@/lib/utils";
-import { formatCategoryLabel } from "@/lib/branding";
+import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
 import {
   Car,
   Wrench,
@@ -25,7 +25,23 @@ import {
   Boxes,
   CheckCircle2,
   XCircle,
+  Sparkles,
+  Volume2,
+  Lightbulb,
+  Shield,
+  Droplet,
 } from "lucide-react";
+
+function getCategoryIcon(category) {
+  const cat = String(category || "").toLowerCase();
+  if (cat.includes("audio") || cat.includes("multimedia")) return Volume2;
+  if (cat.includes("iluminacion") || cat.includes("faros") || cat.includes("led")) return Lightbulb;
+  if (cat.includes("detailing") || cat.includes("cuidado") || cat.includes("limpieza")) return Sparkles;
+  if (cat.includes("suspension") || cat.includes("alzas") || cat.includes("amortiguador")) return Wrench;
+  if (cat.includes("lubricante") || cat.includes("fluido") || cat.includes("aceite")) return Droplet;
+  if (cat.includes("4x4") || cat.includes("exterior") || cat.includes("defensa")) return Shield;
+  return Package;
+}
 
 export default function ProductQuickViewDialog({
   open,
@@ -44,13 +60,18 @@ export default function ProductQuickViewDialog({
 }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [failedImages, setFailedImages] = useState({});
 
   useEffect(() => {
     setSelectedImageIndex(0);
     setIsZoomed(false);
-  }, [product?.product_id, open]);
+    setFailedImages({});
+  }, [product]);
 
   if (!product) return null;
+
+  const brandLogo = getProductBrandLogo(product.brand);
+  const IconComponent = getCategoryIcon(product.category);
 
   const getConvertedPrice = (priceVal) => {
     const base = Number(priceVal) || 0;
@@ -149,11 +170,12 @@ export default function ProductQuickViewDialog({
             {/* Gallery Column */}
             <div className="space-y-3">
               {/* Main preview box */}
-              <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted/40 border flex items-center justify-center group select-none">
-                {currentImage ? (
+              <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none">
+                {currentImage && !failedImages[selectedImageIndex] ? (
                   <img
                     src={currentImage}
                     alt={product.name || "Producto"}
+                    onError={() => setFailedImages((prev) => ({ ...prev, [selectedImageIndex]: true }))}
                     className={cn(
                       "w-full h-full object-contain p-2 transition-transform duration-300",
                       isZoomed ? "scale-150 cursor-zoom-out" : "hover:scale-105 cursor-zoom-in"
@@ -161,9 +183,39 @@ export default function ProductQuickViewDialog({
                     onClick={() => setIsZoomed(!isZoomed)}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-muted-foreground text-xs gap-2">
-                    <Package className="h-10 w-10 stroke-[1.5] opacity-40" />
-                    <span>Sin imagen disponible</span>
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-linear-to-b from-muted/40 to-muted/10">
+                    {brandLogo ? (
+                      <div className="flex flex-col items-center justify-center gap-2 max-w-[85%]">
+                        <img
+                          src={brandLogo}
+                          alt={product.brand || "Marca"}
+                          className="max-h-16 max-w-[160px] object-contain opacity-90 drop-shadow-sm"
+                        />
+                        <span className="text-xs font-semibold text-foreground/80 font-mono">
+                          {product.brand}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <div className="h-12 w-12 rounded-2xl bg-background/80 border border-border/60 shadow-xs flex items-center justify-center text-primary/80">
+                          <IconComponent className="h-6 w-6" />
+                        </div>
+                        {product.brand ? (
+                          <span className="text-xs font-bold tracking-tight text-foreground/90 font-mono">
+                            {product.brand}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-muted-foreground">
+                            MCLARENS
+                          </span>
+                        )}
+                        {product.category && (
+                          <span className="text-[10px] text-muted-foreground/70">
+                            {formatCategoryLabel(product.category)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -212,13 +264,22 @@ export default function ProductQuickViewDialog({
                       type="button"
                       onClick={() => setSelectedImageIndex(idx)}
                       className={cn(
-                        "relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-muted/30 transition-all p-1",
+                        "relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-muted/30 transition-all p-1 flex items-center justify-center",
                         selectedImageIndex === idx
                           ? "border-primary shadow-sm scale-105"
                           : "border-border/60 hover:border-border opacity-70 hover:opacity-100"
                       )}
                     >
-                      <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-contain" />
+                      {!failedImages[idx] ? (
+                        <img
+                          src={img}
+                          alt={`Miniatura ${idx + 1}`}
+                          onError={() => setFailedImages((prev) => ({ ...prev, [idx]: true }))}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <Package className="h-5 w-5 text-muted-foreground/60" />
+                      )}
                     </button>
                   ))}
                 </div>

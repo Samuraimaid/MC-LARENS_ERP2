@@ -79,4 +79,26 @@ export function formatCategoryLabel(cat) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+export const BRAND_LOGOS = {
+  dlaa: "/brands/dlaa.png",
+  auxbeam: "/brands/auxbeam-brand-logo.png",
+  "fox shocks": "/brands/fox-brand-logo.png",
+  fox: "/brands/fox-brand-logo.png",
+  keko: "/brands/keko-brand-logo.png",
+  afn: "/brands/afn-brand-logo.png",
+  ds18: "/brands/ds18-brand-logo.png",
+  pioneer: "/brands/pioneer.jpg",
+  "3m": "/brands/3m.png",
+  "solar gard": "/brands/solargard-brand-logo.png",
+  solargard: "/brands/solargard-brand-logo.png",
+  autobull: "/brands/autobull-brand-logo.png",
+  rigid: "/brands/rigid-brand-logo.png",
+  "mundo de accesorios": "/brands/mundo-accesorios-brand-logo.png",
+  "mclarens": "/mclarens-logo-white-red.png",
+};
 
+export function getProductBrandLogo(brand) {
+  if (!brand) return null;
+  const key = String(brand).trim().toLowerCase();
+  return BRAND_LOGOS[key] || null;
+}

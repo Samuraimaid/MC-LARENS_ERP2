@@ -4905,6 +4905,8 @@ export default function SaleForm({
                     <ProductImageHoverZoom
                       src={p.images?.[0] || p.image}
                       alt={p.name}
+                      brand={p.brand}
+                      category={p.category}
                       className="h-full w-full"
                       onOpenQuickView={() => setQuickViewProduct(p)}
                       showEyeButton={false}
