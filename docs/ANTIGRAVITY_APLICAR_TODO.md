@@ -1,5 +1,8 @@
 # ANTIGRAVITY — Archivo único de cambios a aplicar
 
+> ⚠️ **REDIRECT (2026-09-12):** This file is an **archive**. Antigravity must implement from **`docs/ANTIGRAVITY_MASTER.md`** only (sole source of truth). Do not treat the tables below as current priority without cross-checking the master — especially **FEATURE P0 Alta inicial de bodega**.
+
+
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
 **Actualizado:** 2026-09-12 ( + R-053 stock + R-054 pagination)
