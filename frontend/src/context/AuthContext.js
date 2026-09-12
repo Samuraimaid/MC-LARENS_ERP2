@@ -285,12 +285,13 @@ export function AuthProvider({ children }) {
 
         const isLoginPage = typeof window !== "undefined" && window.location.pathname.startsWith("/login");
         if (isSessionTimeout) {
+          const hadPriorSession = Boolean(getStoredSessionToken() || getStoredUser());
           setUser(null);
           setStoredUser(null);
           setStoredSessionToken(null);
           setPermissions(null);
-          if (!invalidSessionNotifiedRef.current && !isLoginPage) {
-            let msg = "Se cerró la sesión. Vuelve a iniciar con tu PIN.";
+          if (!invalidSessionNotifiedRef.current && !isLoginPage && hadPriorSession) {
+            let msg = "Por favor ingresa tu PIN para continuar.";
             if (detailCode === "SESSION_IDLE_TIMEOUT") {
               msg =
                 (typeof detailMessage === "string" ? detailMessage : null) ||
@@ -298,15 +299,15 @@ export function AuthProvider({ children }) {
             } else if (detailCode === "SESSION_EXPIRED") {
               msg =
                 (typeof detailMessage === "string" ? detailMessage : null) ||
-                "La sesión ha expirado. Vuelve a iniciar sesión con tu PIN.";
+                "La sesión ha expirado. Vuelve a ingresar tu PIN.";
             } else if (
-              detailMessage === "Invalid session" ||
-              detailMessage === "Unauthorized"
+              detailCode === "SESSION_CONFLICT" ||
+              (typeof detailMessage === "string" && detailMessage.toLowerCase().includes("dispositivo"))
             ) {
               msg =
-                "Se cerró sesión en otro dispositivo que estaba logueado con tu cuenta";
+                "Tu sesión se inició en otro terminal. Ingresa tu PIN si deseas continuar en este equipo.";
             }
-            toast.error(typeof msg === "string" ? msg : "Sesión expirada");
+            toast.info(typeof msg === "string" ? msg : "Ingresa tu PIN para continuar");
             invalidSessionNotifiedRef.current = true;
           }
         }

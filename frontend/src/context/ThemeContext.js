@@ -8,9 +8,9 @@ const LEGACY_THEME_KEY = "theme";
 const WATERMARK_OPACITY_KEY = "watermark_opacity";
 const DEFAULT_SKIN = "atlas";
 const DEFAULT_MODE = "light";
-const DEFAULT_WATERMARK_OPACITY = 0.11;
+const DEFAULT_WATERMARK_OPACITY = 0.04;
 const MIN_WATERMARK_OPACITY = 0;
-const MAX_WATERMARK_OPACITY = 0.3;
+const MAX_WATERMARK_OPACITY = 0.15;
 
 const ThemeContext = createContext(null);
 

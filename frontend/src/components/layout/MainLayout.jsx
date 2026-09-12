@@ -740,7 +740,7 @@ export function MainLayout() {
           </div>
 
           <main className={cn("flex-1 overflow-auto relative p-2 sm:p-4 md:p-6", isPhone && isWorkbenchRoute ? "pb-24" : isPhone ? "pb-20" : "")}>
-            {/* Watermark: store logo fixed in the content area */}
+            {/* Watermark: store logo fixed in the content area with subtle non-intrusive scale & opacity */}
             <div className="pointer-events-none sticky top-0 z-0 w-full" style={{ height: 0 }}>
               <div className="flex items-center justify-center overflow-hidden p-4 sm:p-6" style={{ height: "100vh" }}>
                 <img
@@ -748,12 +748,17 @@ export function MainLayout() {
                   alt=""
                   aria-hidden="true"
                   draggable={false}
-                  className="w-full h-full select-none object-contain transition-all duration-700"
-                  style={{ mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply", opacity: watermarkOpacity }}
+                  className="w-full h-full select-none object-contain transition-all duration-700 max-w-xl max-h-[45vh]"
+                  style={{
+                    mixBlendMode: resolvedMode === "dark" ? "screen" : "multiply",
+                    opacity: Math.min(Number(watermarkOpacity) || 0.04, 0.045),
+                  }}
                 />
               </div>
             </div>
-            <Outlet />
+            <div className="relative z-10">
+              <Outlet />
+            </div>
           </main>
         </div>
 
