@@ -10,7 +10,7 @@
 > Those files may remain as **archives**. **Antigravity should read ONLY this master** for what to implement and in what order.
 >
 > **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2 · **Branch:** `master`  
-> **Updated:** 2026-09-12 (zonas virtuales) · **Brief author:** Case (ops/QA) · **Owner:** Xinon  
+> **Updated:** 2026-09-12 (post-c152d010 + oem2 batch) · **Brief author:** Case + TARS · **Owner:** Xinon  
 > **For:** Antigravity — code PRs. Case does data/ops on live when Cloud Agents/Pro unavailable.
 
 ---
@@ -33,6 +33,11 @@
 ---
 
 ## 1. FEATURE P0 — Alta inicial de bodega (NEW — Xinon 2026-09-12)
+
+### Status (2026-09-12 evening) — TARS / commit `c152d010`
+**DONE in code** (do **not** reimplement): inventory zone quantities, `POST /api/inventory/zone-transfer`, `POST /api/inventory/product-status`, InventoryPage UI, sale blocks non-available stock.
+**Next:** verify post-`./deploy.sh` on live against acceptance below (Alta inicial N/M progress, demo stock=0 banner, inactive-until-activated **per warehouse** — confirm gaps vs full §1 intent; fill only missing pieces).
+
 
 When the ERP is connected to a warehouse IGP / **bodeguero** endpoint for that warehouse:
 
@@ -112,6 +117,11 @@ Default pickers / inventory / sales lines for a warehouse should respect `is_act
 ---
 
 ## 1b. FEATURE P0 — Zonas virtuales dentro de cada bodega (NEW — Xinon 2026-09-12)
+
+### Status (2026-09-12 evening) — zonas
+**DONE in code** via commit `c152d010`: `quantity_available` / `damaged` / `incomplete` / `warranty`, zone-transfer + product-status APIs, InventoryPage sections.
+**Next:** live smoke after deploy — default pickers/POS exclude non-sellable zones; warranty approve auto-places returned unit into Garantía; audit/kardex on each move. Fix only gaps.
+
 
 **Xinon asked:** within **each physical warehouse**, a section / virtual sub-warehouse for non-sellable or special stock — not a separate warehouse entity the user manages as a full bodega, but a **zone inside the same bodega**.
 
@@ -199,6 +209,7 @@ Needs **Antigravity / Cloud Agent code PR** (schema + API + InventoryPage/KDS). 
 | DLAA Option C | Soft-delete **840** OEM; **130** fog left; GCS **129/130** (TY1071-LED-3 no image bytes) |
 | Corrupt text fixes | 35 products fixed (names/descriptions) |
 | Desc mismatch | Little Trees `prod_fs_no-especificado` ABRO wax blurb → correct ambientador copy |
+| **DLAA oem2 batch** | **98** products `prod_dlaa_oem2_*`, brand `DLAA`, subcategory Halógenos OEM, stock 0; live DLAA ≈228 (130 fog + 98 oem2). Do not delete/rename without Xinon. |
 | **Demo stock zero** | **29** products `stock→0`; **16** inventory rows drained to `quantity=0` via warranty approve; verify **0 / 0** nonzero. Report: `/workspace/erp_docs/img_sync/demo_stock_zero_report.json` |
 
 Hard DELETE products remains **405** (soft-delete only). OpenAPI `GET /openapi.json` still **500** (P2 hygiene).
@@ -222,15 +233,14 @@ Hard DELETE products remains **405** (soft-delete only). OpenAPI `GET /openapi.j
 
 ## Suggested Antigravity execution order
 
-1. **FEATURE P0 Alta inicial** (this master §1) — new; Xinon priority 2026-09-12.  
-2. P0 #4 my-completed-jobs crash.  
-3. P0 #11 / search pagination + `q` / `limit`.  
-4. P0 security cookies/secrets/AuthZ.  
-5. P1 #5 #6 #7.  
-6. P2 #8 #9 #10, R-009.  
-7. Optional: fix `POST /inventory` `inv_data` typing; product hard DELETE for gerencia admin (separate from alta inicial).
+1. **Deploy + smoke live:** zonas virtuales + #4 (commit `c152d010`) — verify acceptance; only patch gaps  
+2. **#11** — `GET /api/products` pagination / `q` / `limit`  
+3. **Security P0** — cookies out of git + rotate; PIN/secrets out of Docker bake; AuthZ on mutations  
+4. **P1** — #5 polarizados, #6 sucursal, #7 GPS copy  
+5. **P2** — #8/#9/#10, R-009, Design Motion after bugs  
 
----
+**Do not reimplement** Alta inicial / zonas / #4 from scratch if `c152d010` already covers them.
+
 
 ## Archive pointers (read only if needed)
 
