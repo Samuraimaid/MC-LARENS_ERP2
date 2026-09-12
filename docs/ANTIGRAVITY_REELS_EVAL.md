@@ -4,6 +4,8 @@
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
 **Actualizado:** 2026-09-12 (R-010 APLICAR)
 
+> **Antigravity:** para implementar, usa el consolidado `docs/ANTIGRAVITY_APLICAR_TODO.md` (este inbox es el detalle de reels).
+
 ## Cómo usar este archivo
 
 1. Xinon pega un link de reel (Facebook/IG/TikTok/YouTube) en el chat de Case.
