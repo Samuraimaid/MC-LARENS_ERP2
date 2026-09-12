@@ -804,34 +804,85 @@ def get_inventory_router(
 
         product_id = req.get("product_id")
         warehouse_id = req.get("warehouse_id")
+        affected_quantity = int(req.get("affected_quantity") or 1)
         replacement_quantity = int(req.get("replacement_quantity") or 0)
 
         inventory = await db.inventory.find_one({"product_id": product_id, "warehouse_id": warehouse_id})
-        if not inventory or int(inventory.get("quantity") or 0) < replacement_quantity:
-            raise HTTPException(status_code=400, detail="Stock insuficiente para reposición de garantía")
+        _normalize_inventory_zones(inventory) if inventory else None
+        current_available = int(inventory.get("quantity_available") or inventory.get("quantity") or 0) if inventory else 0
 
-        await db.inventory.update_one(
-            {"product_id": product_id, "warehouse_id": warehouse_id},
-            {
-                "$inc": {"quantity": -replacement_quantity},
-                "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
-            },
-        )
+        if replacement_quantity > 0 and current_available < replacement_quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock disponible insuficiente para reposición de garantía (Disponible: {current_available}, requerido: {replacement_quantity})",
+            )
 
-        await audit_service.log_inventory_movement(
-            product_id=str(product_id),
-            warehouse_id=str(warehouse_id),
-            quantity_change=-replacement_quantity,
-            reason="warranty_replacement_out",
-            actor=user,
-            branch_id=user.branch_id,
-            reference_id=request_id,
-            metadata={
-                "scope": req.get("scope"),
-                "affected_quantity": req.get("affected_quantity"),
-                "replacement_quantity": replacement_quantity,
-            },
-        )
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if not inventory:
+            inv_doc = {
+                "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
+                "warehouse_id": warehouse_id,
+                "product_id": product_id,
+                "quantity": affected_quantity - replacement_quantity,
+                "quantity_available": -replacement_quantity,
+                "quantity_damaged": 0,
+                "quantity_incomplete": 0,
+                "quantity_warranty": affected_quantity,
+                "min_stock": 0,
+                "is_active": True,
+                "created_at": now_iso,
+                "created_by": user.user_id,
+                "last_updated": now_iso,
+            }
+            await db.inventory.insert_one(inv_doc)
+        else:
+            await db.inventory.update_one(
+                {"product_id": product_id, "warehouse_id": warehouse_id},
+                {
+                    "$inc": {
+                        "quantity": affected_quantity - replacement_quantity,
+                        "quantity_available": -replacement_quantity,
+                        "quantity_warranty": affected_quantity,
+                    },
+                    "$set": {"last_updated": now_iso},
+                },
+            )
+
+        # Log replacement out if unit replaced
+        if replacement_quantity > 0:
+            await audit_service.log_inventory_movement(
+                product_id=str(product_id),
+                warehouse_id=str(warehouse_id),
+                quantity_change=-replacement_quantity,
+                reason="warranty_replacement_out",
+                actor=user,
+                branch_id=user.branch_id,
+                reference_id=request_id,
+                metadata={
+                    "scope": req.get("scope"),
+                    "affected_quantity": affected_quantity,
+                    "replacement_quantity": replacement_quantity,
+                    "zone": "disponible",
+                },
+            )
+
+        # Log intake of defective returned unit into Garantía zone
+        if affected_quantity > 0:
+            await audit_service.log_inventory_movement(
+                product_id=str(product_id),
+                warehouse_id=str(warehouse_id),
+                quantity_change=affected_quantity,
+                reason="warranty_intake_to_warranty_zone",
+                actor=user,
+                branch_id=user.branch_id,
+                reference_id=request_id,
+                metadata={
+                    "scope": req.get("scope"),
+                    "affected_quantity": affected_quantity,
+                    "replacement_quantity": replacement_quantity,
+                    "zone": "garantia",
+                },
+            )
 
         await db.inventory_warranty_requests.update_one(
             {"request_id": request_id},
@@ -840,12 +891,17 @@ def get_inventory_router(
                     "status": "approved",
                     "approved_by": user.user_id,
                     "approved_by_name": user.name,
-                    "approved_at": datetime.now(timezone.utc).isoformat(),
+                    "approved_at": now_iso,
                 }
             },
         )
 
-        return {"message": "Solicitud de garantía aprobada"}
+        return {
+            "message": "Solicitud de garantía aprobada y unidad defectuosa ingresada a zona Garantía",
+            "request_id": request_id,
+            "affected_quantity": affected_quantity,
+            "replacement_quantity": replacement_quantity,
+        }
 
     @router.put("/inventory/warranty-requests/{request_id}/reject")
     async def reject_warranty_request(request_id: str, request: Request, reason: str = ""):
@@ -1873,5 +1929,279 @@ def get_inventory_router(
                 "X-Label-Job-Id": job_id,
             },
         )
+
+    # =========================================================================
+    # FEATURE P0 — ALTA INICIAL DE BODEGA & PRODUCT STATES
+    # =========================================================================
+
+    @router.get("/warehouses/{warehouse_id}/product-states")
+    async def get_warehouse_product_states(
+        warehouse_id: str,
+        request: Request,
+        status: Optional[str] = None,  # "active" | "inactive" | "all"
+        q: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        """Retorna el catálogo con el estado de activación específico de esta bodega (Alta Inicial)."""
+        user = await require_auth(request)
+        if user.role == "bodegas" and user.warehouse_id and user.warehouse_id != warehouse_id:
+            raise HTTPException(status_code=403, detail="No tienes acceso a esta bodega")
+
+        # 1. Obtener todos los productos activos en el catálogo maestro
+        prod_query: Dict[str, Any] = {
+            "$or": [
+                {"is_active": True},
+                {"is_active": {"$exists": False}},
+            ]
+        }
+        if category and category != "all":
+            prod_query["category"] = category
+        if q and q.strip():
+            term = q.strip()
+            prod_query["$and"] = [
+                {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
+                {
+                    "$or": [
+                        {"name": {"$regex": term, "$options": "i"}},
+                        {"sku": {"$regex": term, "$options": "i"}},
+                        {"description": {"$regex": term, "$options": "i"}},
+                        {"brand": {"$regex": term, "$options": "i"}},
+                    ]
+                }
+            ]
+            del prod_query["$or"]
+
+        master_products = await db.products.find(prod_query, {"_id": 0}).to_list(10000)
+        total_master_count = len(master_products)
+
+        # 2. Obtener los registros de inventario de esta bodega
+        inv_docs = await db.inventory.find({"warehouse_id": warehouse_id}, {"_id": 0}).to_list(10000)
+        inv_map = {str(d.get("product_id")): d for d in inv_docs}
+
+        # 3. Combinar estado
+        combined = []
+        activated_count = 0
+
+        for p in master_products:
+            pid = str(p.get("product_id"))
+            inv = inv_map.get(pid)
+            if inv:
+                _normalize_inventory_zones(inv)
+                is_active_wh = inv.get("is_active") is not False
+                activated_at = inv.get("activated_at") or inv.get("created_at")
+                activated_by = inv.get("activated_by") or inv.get("created_by")
+                qty_avail = inv.get("quantity_available", 0)
+                qty_dmg = inv.get("quantity_damaged", 0)
+                qty_inc = inv.get("quantity_incomplete", 0)
+                qty_war = inv.get("quantity_warranty", 0)
+                qty_tot = inv.get("quantity", 0)
+            else:
+                # Si no tiene fila de inventario, por defecto en Alta Inicial es inactivo
+                is_active_wh = False
+                activated_at = None
+                activated_by = None
+                qty_avail = 0
+                qty_dmg = 0
+                qty_inc = 0
+                qty_war = 0
+                qty_tot = 0
+
+            if is_active_wh:
+                activated_count += 1
+
+            # Filtrar por status
+            if status == "active" and not is_active_wh:
+                continue
+            if status == "inactive" and is_active_wh:
+                continue
+
+            combined.append({
+                "product_id": pid,
+                "sku": p.get("sku") or "-",
+                "name": p.get("name") or "Desconocido",
+                "brand": p.get("brand") or "-",
+                "category": p.get("category") or "general",
+                "subcategory": p.get("subcategory"),
+                "price": p.get("price") or 0,
+                "cost": p.get("cost") or 0,
+                "images": p.get("images") or [],
+                "is_active_in_warehouse": is_active_wh,
+                "activated_at": activated_at,
+                "activated_by": activated_by,
+                "quantity_available": qty_avail,
+                "quantity_damaged": qty_dmg,
+                "quantity_incomplete": qty_inc,
+                "quantity_warranty": qty_war,
+                "quantity_total": qty_tot,
+            })
+
+        total_filtered = len(combined)
+        paginated_items = combined[offset: offset + limit] if limit else combined
+
+        # Demo mode detection (true if all quantities across active products are 0)
+        total_stock_sum = sum(item["quantity_total"] for item in combined)
+
+        return {
+            "warehouse_id": warehouse_id,
+            "total_catalog_products": total_master_count,
+            "activated_count": activated_count,
+            "total_filtered": total_filtered,
+            "demo_mode": total_stock_sum == 0,
+            "items": paginated_items,
+        }
+
+    @router.put("/warehouses/{warehouse_id}/product-states/{product_id}")
+    async def set_warehouse_product_state(
+        warehouse_id: str,
+        product_id: str,
+        payload: ProductStatusPayload,
+        request: Request,
+    ):
+        """Activa o desactiva un producto en una bodega específica (Alta Inicial)."""
+        user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
+        if user.role == "bodegas" and user.warehouse_id and user.warehouse_id != warehouse_id:
+            raise HTTPException(status_code=403, detail="No tienes acceso a modificar esta bodega")
+
+        product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado en catálogo maestro")
+
+        inv_filter = {"warehouse_id": warehouse_id, "product_id": product_id}
+        existing = await db.inventory.find_one(inv_filter)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        new_active = bool(payload.is_active)
+
+        if existing:
+            await db.inventory.update_one(
+                inv_filter,
+                {
+                    "$set": {
+                        "is_active": new_active,
+                        "activated_at": now_iso if new_active else existing.get("activated_at"),
+                        "activated_by": user.user_id if new_active else existing.get("activated_by"),
+                        "updated_at": now_iso,
+                        "updated_by": user.user_id,
+                    }
+                },
+            )
+        else:
+            inv_doc = {
+                "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
+                "warehouse_id": warehouse_id,
+                "product_id": product_id,
+                "quantity": 0,
+                "quantity_available": 0,
+                "quantity_damaged": 0,
+                "quantity_incomplete": 0,
+                "quantity_warranty": 0,
+                "min_stock": 0,
+                "is_active": new_active,
+                "activated_at": now_iso if new_active else None,
+                "activated_by": user.user_id if new_active else None,
+                "created_at": now_iso,
+                "created_by": user.user_id,
+                "last_updated": now_iso,
+            }
+            await db.inventory.insert_one(inv_doc)
+
+        await audit_service.log_inventory_movement(
+            product_id=product_id,
+            warehouse_id=warehouse_id,
+            quantity_change=0,
+            reason=f"alta_inicial_{'activado' if new_active else 'desactivado'}",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=f"alta_{warehouse_id}",
+            metadata={
+                "action": "toggle_product_warehouse_status",
+                "is_active": new_active,
+                "product_name": product.get("name"),
+                "sku": product.get("sku"),
+            },
+        )
+
+        return {
+            "message": f"Producto {'activado' if new_active else 'desactivado'} en bodega {warehouse_id}",
+            "warehouse_id": warehouse_id,
+            "product_id": product_id,
+            "is_active_in_warehouse": new_active,
+            "updated_at": now_iso,
+        }
+
+    @router.post("/warehouses/{warehouse_id}/product-states/bulk")
+    async def bulk_set_warehouse_product_states(
+        warehouse_id: str,
+        payload: BatchProductStatusPayload,
+        request: Request,
+    ):
+        """Activa o desactiva en lote productos en una bodega específica (Alta Inicial)."""
+        user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
+        if user.role == "bodegas" and user.warehouse_id and user.warehouse_id != warehouse_id:
+            raise HTTPException(status_code=403, detail="No tienes acceso a modificar esta bodega")
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        new_active = bool(payload.is_active)
+        updated_count = 0
+
+        for pid in payload.product_ids:
+            inv_filter = {"warehouse_id": warehouse_id, "product_id": pid}
+            existing = await db.inventory.find_one(inv_filter)
+            if existing:
+                await db.inventory.update_one(
+                    inv_filter,
+                    {
+                        "$set": {
+                            "is_active": new_active,
+                            "activated_at": now_iso if new_active else existing.get("activated_at"),
+                            "activated_by": user.user_id if new_active else existing.get("activated_by"),
+                            "updated_at": now_iso,
+                            "updated_by": user.user_id,
+                        }
+                    },
+                )
+            else:
+                inv_doc = {
+                    "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
+                    "warehouse_id": warehouse_id,
+                    "product_id": pid,
+                    "quantity": 0,
+                    "quantity_available": 0,
+                    "quantity_damaged": 0,
+                    "quantity_incomplete": 0,
+                    "quantity_warranty": 0,
+                    "min_stock": 0,
+                    "is_active": new_active,
+                    "activated_at": now_iso if new_active else None,
+                    "activated_by": user.user_id if new_active else None,
+                    "created_at": now_iso,
+                    "created_by": user.user_id,
+                    "last_updated": now_iso,
+                }
+                await db.inventory.insert_one(inv_doc)
+            updated_count += 1
+
+        await audit_service.log_inventory_movement(
+            product_id="bulk",
+            warehouse_id=warehouse_id,
+            quantity_change=0,
+            reason=f"alta_inicial_bulk_{'activado' if new_active else 'desactivado'}",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=f"alta_bulk_{warehouse_id}",
+            metadata={
+                "action": "bulk_toggle_product_warehouse_status",
+                "is_active": new_active,
+                "count": updated_count,
+            },
+        )
+
+        return {
+            "message": f"{updated_count} productos {'activados' if new_active else 'desactivados'} en bodega {warehouse_id}",
+            "warehouse_id": warehouse_id,
+            "count": updated_count,
+            "is_active_in_warehouse": new_active,
+        }
 
     return router

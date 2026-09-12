@@ -679,7 +679,21 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "cashier": ["gerencia", "supervisor", "programador", "cajero"],
     "approvals": ["gerencia", "supervisor"],
     "customers": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
-    "vehicles": ["gerencia", "supervisor", "ventas", "cajero", "instalaciones", "jefe_vendedores", "jefe_tienda"],
+    "vehicles": [
+        "gerencia",
+        "supervisor",
+        "ventas",
+        "cajero",
+        "instalaciones",
+        "electrico",
+        "polarizador",
+        "coordinador_instalaciones",
+        "coordinador_polarizados",
+        "jefe_vendedores",
+        "jefe_tienda",
+        "transporte",
+        "entregador",
+    ],
     "followups": ["gerencia", "supervisor", "ventas", "cajero", "jefe_vendedores", "jefe_tienda"],
     "catalog": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
     "samples": ["gerencia", "supervisor", "ventas", "jefe_vendedores", "jefe_tienda"],
@@ -1518,7 +1532,13 @@ async def enforce_runtime_permissions(request: Request, call_next):
     try:
         user = User(**user_doc)
         effective = await get_effective_permissions_for_user(user)
-        if not get_permission_value(effective, function_key, action):
+        has_perm = get_permission_value(effective, function_key, action)
+        if not has_perm and function_key == "coordinator_instalaciones":
+            has_perm = get_permission_value(effective, "coordinator_polarizados", action)
+        if not has_perm and function_key == "tint_orders":
+            has_perm = get_permission_value(effective, "coordinator_polarizados", action) or get_permission_value(effective, "work_orders", action)
+
+        if not has_perm:
             return JSONResponse(
                 {
                     "detail": "Permiso denegado",
@@ -6941,36 +6961,80 @@ async def get_products(
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
     product_type: Optional[str] = None,
+    brand: Optional[str] = None,
     search: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: Optional[int] = None,
+    skip: int = 0,
+    warehouse_id: Optional[str] = None,
+    include_inactive: bool = False,
 ):
     await require_auth(request)
-    query: dict[str, Any] = {
-        "$or": [
-            {"is_active": True},
-            {"is_active": {"$exists": False}},
-        ]
-    }
-    if category:
-        query["category"] = category
-    if subcategory:
-        query["subcategory"] = subcategory
-    if product_type:
-        query["product_type"] = product_type
-    if search:
-        query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"sku": {"$regex": search, "$options": "i"}},
-            {"description": {"$regex": search, "$options": "i"}},
-        ]
+    
+    conditions: List[Dict[str, Any]] = []
+    
+    if not include_inactive:
+        conditions.append({
+            "$or": [
+                {"is_active": True},
+                {"is_active": {"$exists": False}},
+            ]
+        })
+    if category and category != "all":
+        conditions.append({"category": category})
+    if subcategory and subcategory != "all":
+        conditions.append({"subcategory": subcategory})
+    if product_type and product_type != "all":
+        conditions.append({"product_type": product_type})
+    if brand and brand != "all":
+        conditions.append({"brand": brand})
+        
+    search_term = (q or search or "").strip()
+    if search_term:
+        conditions.append({
+            "$or": [
+                {"name": {"$regex": search_term, "$options": "i"}},
+                {"sku": {"$regex": search_term, "$options": "i"}},
+                {"description": {"$regex": search_term, "$options": "i"}},
+                {"brand": {"$regex": search_term, "$options": "i"}},
+                {"barcode": {"$regex": search_term, "$options": "i"}},
+            ]
+        })
+
+    if len(conditions) > 1:
+        query: Dict[str, Any] = {"$and": conditions}
+    elif len(conditions) == 1:
+        query = conditions[0]
+    else:
+        query = {}
+
     products_count = await db.products.count_documents({})
     if products_count < 100:
         await ensure_unified_catalog_products_seeded()
         await ensure_core_service_products()
 
-    products = await db.products.find(query, {"_id": 0}).to_list(10000)
+    fetch_limit = max(1, min(int(limit), 10000)) if limit and int(limit) > 0 else 10000
+    cursor = db.products.find(query, {"_id": 0})
+    if skip and int(skip) > 0:
+        cursor = cursor.skip(int(skip))
+    products = await cursor.to_list(fetch_limit)
+
     if not any(p.get("sku") == "POL-PCK-COM" for p in products) and (not category or category == "polarizados"):
         await ensure_core_service_products()
-        products = await db.products.find(query, {"_id": 0}).to_list(10000)
+        cursor = db.products.find(query, {"_id": 0})
+        if skip and int(skip) > 0:
+            cursor = cursor.skip(int(skip))
+        products = await cursor.to_list(fetch_limit)
+
+    # Warehouse scoping (if warehouse_id provided, exclude products inactive in that warehouse)
+    if warehouse_id and warehouse_id != "all":
+        inactive_inv = await db.inventory.find(
+            {"warehouse_id": warehouse_id, "is_active": False},
+            {"product_id": 1, "_id": 0},
+        ).to_list(10000)
+        inactive_pids = {str(d.get("product_id")) for d in inactive_inv if d.get("product_id")}
+        if inactive_pids and not include_inactive:
+            products = [p for p in products if str(p.get("product_id")) not in inactive_pids]
 
     # Ensure all products have installation_type (migration for legacy products)
     for product in products:
