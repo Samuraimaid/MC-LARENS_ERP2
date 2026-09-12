@@ -295,3 +295,6 @@ Cada PR: descripción con **Tema Torti → Evidencia → Riesgo ERP → Acción 
 > Trabaja sobre `Samuraimaid/MC-LARENS_ERP2` desde `master`. Ejecuta **P0 → P1 → P2 → P3** en PRs separados. Respeta `CRITICAL_ZONES.md` y `SAFE_FIRST_REFACTORS.md`. Prioriza seguridad (cookies, secretos, authz servidor) sobre cleanup de MB. Antes de cada merge: build Docker o al menos pytest del área tocada + smoke de login PIN. Si encuentras conflicto entre un test y la semántica 401/403, corrige hacia “401 no auth / 403 no authz” y documenta.
 
 **Fin del handoff.**
+
+
+- **R-042 (Codez Up):** sliding-window rate limit en PIN/APIs — ver `docs/ANTIGRAVITY_APLICAR_TODO.md`.
