@@ -2,7 +2,7 @@
 
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
-**Actualizado:** 2026-09-12 ( + P-AFZ Afzal barrido)
+**Actualizado:** 2026-09-12 ( + R-039 idempotency / Kelvorn)
 **Autor del brief:** Case (evaluaciones + QA) · handoff seguridad original TARS  
 **Para:** Antigravity — **este archivo es la fuente de verdad de qué implementar**.  
 Ignorar reels/ideas marcados OBVIAR/APARCAR salvo que Xinon los promueva.
