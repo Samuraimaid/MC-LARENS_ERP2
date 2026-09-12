@@ -63,7 +63,7 @@ async def get_or_initialize_active_rolls(
             key = f"{mat_id}__w{w}"
             if key not in existing_map:
                 new_doc = {
-                    "roll_id": f"ACT-{mat_id.upper()}-W{w}",
+                    "roll_id": f"ACT-{effective_branch.upper()}-{mat_id.upper()}-W{w}",
                     "material_id": mat_id,
                     "material_name": mat.get("name") or mat_id,
                     "gama": mat.get("gama") or "general",
@@ -92,7 +92,20 @@ async def get_or_initialize_active_rolls(
                 existing_map[key] = new_doc
 
     if new_rolls_to_insert:
-        await db.tint_active_rolls.insert_many(new_rolls_to_insert)
+        for doc in new_rolls_to_insert:
+            try:
+                await db.tint_active_rolls.update_one(
+                    {
+                        "branch_id": effective_branch,
+                        "material_id": doc["material_id"],
+                        "roll_width_inches": doc["roll_width_inches"],
+                        "status": "active",
+                    },
+                    {"$setOnInsert": doc},
+                    upsert=True,
+                )
+            except Exception:
+                pass
 
     # Devolver lista completa ordenada por gama y nombre
     results = await db.tint_active_rolls.find(

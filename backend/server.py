@@ -700,7 +700,7 @@ FUNCTION_ALLOWED_ROLES: Dict[str, List[str]] = {
     "inventory": ["gerencia", "supervisor", "bodegas", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
     "inventory_labels": ["gerencia", "supervisor", "jefe_tienda"],
     "dispatch": ["gerencia", "supervisor", "bodegas", "jefe_tienda"],
-    "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores"],
+    "warehouses": ["gerencia", "supervisor", "jefe_tienda", "ventas", "cajero", "jefe_vendedores", "bodegas"],
     "promotions": ["gerencia", "supervisor", "jefe_vendedores", "jefe_tienda"],
     "work_orders": [
         "gerencia",
@@ -764,7 +764,7 @@ ROLE_WRITE_ALLOWED_FUNCTIONS: Dict[str, set[str]] = {
         "work_orders",
         "quality_control",
     },
-    "bodegas": {"inventory", "dispatch"},
+    "bodegas": {"inventory", "dispatch", "warehouses"},
     # Ops chain: coordinators assign + QC; technicians progress their own jobs.
     "coordinador_instalaciones": {
         "work_orders",
@@ -818,6 +818,7 @@ ROLE_PERMISSION_FLOORS: Dict[str, Dict[str, Dict[str, bool]]] = {
     "bodegas": {
         "inventory": {"view": True, "create": True, "edit": True},
         "dispatch": {"view": True, "create": True, "edit": True},
+        "warehouses": {"view": True},
     },
     "ventas": {
         "approvals": {"create": True},
@@ -906,11 +907,16 @@ PERMISSION_ROUTE_MAP: List[tuple[str, str]] = [
     ("/api/warehouses", "warehouses"),
     ("/api/promotions", "promotions"),
     ("/api/work-orders", "work_orders"),
+    ("/api/coordinator/polarizados", "coordinator_polarizados"),
+    ("/api/coordinator/tint", "coordinator_polarizados"),
+    ("/api/coordinator/instalaciones", "coordinator_instalaciones"),
     ("/api/coordinator", "coordinator_instalaciones"),
     ("/api/quality-control", "quality_control"),
     ("/api/kds", "kds"),
     ("/api/deliveries", "deliveries"),
     ("/api/calendar", "calendar"),
+    ("/api/tint-cutting", "coordinator_polarizados"),
+    ("/api/tint-orders", "tint_orders"),
     ("/api/tint", "tint_orders"),
     ("/api/technician", "technician_completed_jobs"),
     ("/api/warranties", "warranties"),
@@ -1609,6 +1615,21 @@ async def hypervisor_runtime_audit(request: Request, call_next):
 
 class FlexibleModel(BaseModel):
     model_config = ConfigDict(extra="allow")
+
+    def get(self, key: str, default: Any = None) -> Any:
+        if hasattr(self, key):
+            val = getattr(self, key)
+            return val if val is not None else default
+        extra = getattr(self, "__pydantic_extra__", None) or {}
+        return extra.get(key, default)
+
+    def __getitem__(self, item: str) -> Any:
+        if hasattr(self, item):
+            return getattr(self, item)
+        extra = getattr(self, "__pydantic_extra__", None) or {}
+        if item in extra:
+            return extra[item]
+        raise KeyError(item)
 
 
 class User(FlexibleModel):

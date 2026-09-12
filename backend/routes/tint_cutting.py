@@ -271,7 +271,7 @@ def get_tint_cutting_router(
     ):
         """Consulta el estado en metros de los rollos activos en taller."""
         user = await require_auth(request)
-        effective_branch = branch_id or user.get("branch_id") or "principal"
+        effective_branch = branch_id or getattr(user, "branch_id", None) or (user.get("branch_id") if hasattr(user, "get") else None) or "principal"
         rolls = await get_or_initialize_active_rolls(db, effective_branch)
         return rolls
 
@@ -285,7 +285,7 @@ def get_tint_cutting_router(
         y recargando 30.00 metros al rollo activo.
         """
         user = await require_roles(request, ["gerencia", "supervisor", "coordinador_polarizados", "programador"])
-        branch = user.get("branch_id") or "principal"
+        branch = getattr(user, "branch_id", None) or (user.get("branch_id") if hasattr(user, "get") else None) or "principal"
 
         result = await open_new_roll_from_warehouse(
             db=db,
