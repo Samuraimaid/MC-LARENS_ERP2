@@ -289,6 +289,9 @@ Cada PR: descripción con **Tema Torti → Evidencia → Riesgo ERP → Acción 
 
 ## 7. Mensaje operativo para Antigravity
 
+**Archivo único consolidado (usar este primero):** `docs/ANTIGRAVITY_APLICAR_TODO.md` — une QA issues #4–#10, P0 seguridad, R-009/R-010 APLICAR y lista OBVIAR/APARCAR.
+
+
 > Trabaja sobre `Samuraimaid/MC-LARENS_ERP2` desde `master`. Ejecuta **P0 → P1 → P2 → P3** en PRs separados. Respeta `CRITICAL_ZONES.md` y `SAFE_FIRST_REFACTORS.md`. Prioriza seguridad (cookies, secretos, authz servidor) sobre cleanup de MB. Antes de cada merge: build Docker o al menos pytest del área tocada + smoke de login PIN. Si encuentras conflicto entre un test y la semántica 401/403, corrige hacia “401 no auth / 403 no authz” y documenta.
 
 **Fin del handoff.**
