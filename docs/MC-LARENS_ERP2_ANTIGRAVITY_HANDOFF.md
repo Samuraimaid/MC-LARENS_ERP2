@@ -301,3 +301,9 @@ Cada PR: descripción con **Tema Torti → Evidencia → Riesgo ERP → Acción 
 
 
 - **R-053/R-054 (PlayDev):** stock atómico concurrente + paginación/proyección listados — ver `docs/ANTIGRAVITY_APLICAR_TODO.md`.
+
+
+## Catálogo live (2026-09-12)
+- Daños imágenes/búsqueda: [`docs/REPORTE_DANOS_CATALOGO_IMAGENES.md`](./REPORTE_DANOS_CATALOGO_IMAGENES.md)
+- Guía search rápido: [`docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md`](./GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md)
+- P0: sync imágenes→GCS + URLs Mongo; API `q/limit` real; FE debounce (no hidratar 11 MB).
