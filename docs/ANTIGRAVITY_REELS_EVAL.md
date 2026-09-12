@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (R-010 APLICAR)
+**Actualizado:** 2026-09-12 (R-011…R-015 Design Motion overnight)
 
 > **Antigravity:** para implementar, usa el consolidado `docs/ANTIGRAVITY_APLICAR_TODO.md` (este inbox es el detalle de reels).
 
@@ -29,6 +29,47 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-015 — Error states (mejor recuperación)
+- **Fecha evaluación:** 2026-09-12 (barrido Design Motion /patterns)
+- **Fuente:** https://www.designmotionhq.com/patterns/error-states
+- **Idea:** Mismo error, mejor recovery (mensaje + siguiente paso).
+- **Veredicto:** **APLICAR**
+- **ERP:** #4 Incidencia Técnica, #7 GPS Not allowed → copy ES + acción (reintentar / volver / pedir permiso).
+- **Acción:** al fixear #4/#7 incluir estado de error recuperable, no solo crash/toast crudo.
+
+### R-014 — Destructive actions (lenguaje, no solo rojo)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.designmotionhq.com/patterns/destructive-actions
+- **Idea:** Peligro = separación + confirmación; no Edit/Delete al mismo peso.
+- **Veredicto:** **APLICAR** (con R-010)
+- **ERP:** anular venta/orden, borrar usuario, reset PIN — overflow + confirm.
+- **Acción:** en ContextActions, `variant: danger` al final + confirm dialog.
+
+### R-013 — Loading states system (+ skeleton)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.designmotionhq.com/patterns/loading-states-system · skeleton-loading
+- **Idea:** Loading es un sistema; skeleton del layout final > spinner genérico.
+- **Veredicto:** **APLICAR**
+- **ERP:** issue #8 rutas >15s; dashboard/inventory/users.
+- **Acción:** skeletons por pantalla caliente; no bloquear UI sin feedback.
+
+### R-012 — Empty states
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.designmotionhq.com/patterns/empty-states
+- **Idea:** Vacío = primera impresión + CTA, no tabla en blanco.
+- **Veredicto:** **APLICAR**
+- **ERP:** #9 bodegas inventory vacío; listas sin datos.
+- **Acción:** empty state con mensaje ES + CTA o explicación de permisos/datos.
+
+### R-011 — Hover Trap (hover muerto en móvil)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.designmotionhq.com/patterns/hover-trap
+- **Idea:** Hover funciona en laptop; en mobile está muerto.
+- **Veredicto:** **APLICAR**
+- **ERP:** técnicos/entregador/tablet; refuerza R-010 (sheet/⋯, no hover-only).
+- **Acción:** checklist en PR de menús/tablas: ninguna acción crítica solo-hover.
 
 
 ### R-010 — Context menu como sistema (PC + móvil)
