@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (R-007)
+**Actualizado:** 2026-09-12 (R-008)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,19 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-008 — “5 fixes to AI slop in dashboards” / UX Engine plugin
+- **Fecha evaluación:** 2026-09-12
+- **Fuente:** Facebook Reel — Design Motion  
+  https://www.facebook.com/share/r/1CQMxMiEYH/  
+  (reel `1562348875576398`)
+- **Idea (resumen):** Evitar “AI slop” en dashboards (tells genéricos de UI generada). Promo de plugin Claude Code **UX Engine** (`/ux-design`, `/ux-audit`, `/ux-review`, `/restyle`, ~$79).
+- **Veredicto:** **OBVIAR**
+- **Impacto en McLarens ERP:** Bajo. El ERP ya tiene UI propia (no un dashboard SaaS genérico de demo). Comprar/usar ese plugin no arregla P0/#4–#7 ni latencias. Un restyle masivo contradice handoff (no rediseño UX de golpe / no tocar CRITICAL por estética).
+- **Núcleo reusable (si algún día pulen FE):** evitar KPIs decorativos sin acción, charts de relleno, badges/gradientes “AI default”; priorizar densidad operable en tienda. Eso ya está cubierto en espíritu por R-006/R-007 aparcados — no hace falta este reel ni el plugin.
+- **Acción Antigravity ahora:** ninguna. No instalar plugins de terceros ni PR de “de-AI dashboard”.
+- **Relacionado:** R-006/R-007 APARCAR; handoff §6 rediseño UX fuera de alcance inmediato.
 
 
 ### R-007 — Tablas en móvil (no achicar: reestructurar)
