@@ -1093,9 +1093,13 @@ export function InventoryPage() {
       rows = rows.filter(item => (item.product?.category || "") === selectedCategory);
     }
 
-    // Filter by low stock
+    // Filter by low stock (only products with positive stock that are at or below min threshold)
     if (showLowStock) {
-      rows = rows.filter(item => item.quantity <= item.min_stock);
+      rows = rows.filter(item => {
+        const q = Number(item.quantity_available ?? item.quantity ?? 0);
+        const min = Number(item.min_stock || 5);
+        return q > 0 && q <= min;
+      });
     }
 
     return rows;
@@ -1234,7 +1238,36 @@ export function InventoryPage() {
         (product.sku || "").toLowerCase().includes(term)
       );
     })
-    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" }));
+  const inventoryMetrics = useMemo(() => {
+    const totalCatalogCount = products.length;
+    // Productos con existencia física > 0
+    const itemsWithPhysicalStock = (inventory || []).filter(
+      (i) => Number(i.quantity_available ?? i.quantity ?? 0) > 0
+    );
+    // Productos con stock bajo real (existencia > 0 pero <= umbral)
+    const itemsLowStock = (inventory || []).filter((i) => {
+      const q = Number(i.quantity_available ?? i.quantity ?? 0);
+      const min = Number(i.min_stock || 5);
+      return q > 0 && q <= min;
+    });
+    const itemsZeroStock = (inventory || []).filter(
+      (i) => Number(i.quantity_available ?? i.quantity ?? 0) === 0
+    );
+    const totalUnitsAvailable = (inventory || []).reduce(
+      (sum, i) => sum + Number(i.quantity_available ?? i.quantity ?? 0),
+      0
+    );
+    const isDemoPendingIntake = (inventory || []).length > 0 && totalUnitsAvailable === 0;
+
+    return {
+      totalCatalogCount,
+      withPhysicalStockCount: itemsWithPhysicalStock.length,
+      lowStockCount: itemsLowStock.length,
+      zeroStockCount: itemsZeroStock.length,
+      totalUnitsAvailable,
+      isDemoPendingIntake,
+    };
+  }, [inventory, products]);
 
   return (
     <div className="p-6 space-y-6" data-testid="inventory-page">
@@ -2087,39 +2120,70 @@ export function InventoryPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL PRODUCTOS</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL EN CATÁLOGO</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-heading text-3xl font-bold">{products.length}</div>
+            <div className="font-heading text-3xl font-bold">{inventoryMetrics.totalCatalogCount}</div>
+            <p className="text-[11px] text-muted-foreground mt-1">Productos maestros sincronizados</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">EN INVENTARIO</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">CON STOCK FÍSICO</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-heading text-3xl font-bold">{inventory.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">STOCK BAJO</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-red-500">
-              {inventory.filter(i => i.quantity <= i.min_stock).length}
+            <div className="font-heading text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+              {inventoryMetrics.withPhysicalStockCount}
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {inventoryMetrics.totalUnitsAvailable} unidades disponibles
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">BODEGAS</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">STOCK BAJO (REPOSICIÓN)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-heading text-3xl font-bold text-amber-500">
+              {inventoryMetrics.lowStockCount}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Existencia menor a umbral mínimo</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">BODEGAS REGISTRADAS</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="font-heading text-3xl font-bold">{warehouses.length}</div>
+            <p className="text-[11px] text-muted-foreground mt-1">Ubicaciones activas en ERP</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Demo Mode / Pending Intake Banner */}
+      {inventoryMetrics.isDemoPendingIntake && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-center justify-between gap-4 text-xs text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>
+              <strong>Catálogo Demo Sincronizado (Existencia 0 — Alta Inicial Pendiente):</strong> Los productos están cargados en catálogo sin inventario físico asignado. Para registrar existencias reales, utiliza <strong>"Ingreso de Productos"</strong> o <strong>"Agregar Inventario"</strong>.
+            </span>
+          </div>
+          {canOperateTransfers && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 shrink-0 text-xs border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20"
+              onClick={() => setShowAddStock(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Ingresar Stock
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap items-center">
