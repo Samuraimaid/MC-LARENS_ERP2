@@ -1,6 +1,6 @@
 # Reporte de daños — Catálogo, imágenes y búsqueda (ERP live)
 
-**Fecha:** 2026-09-12  
+**Fecha:** 2026-09-12 (API + UI gerencia)
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Live:** https://mclarens-erp-836176703716.us-central1.run.app  
 **QA API:** login gerencia vía `POST /api/auth/pin/login` + `GET /api/products`  
@@ -170,3 +170,36 @@ Reparar generación OpenAPI (rompe tooling QA).
 - `docs/PROCEDIMIENTO_CATALOGOS.md`
 - `docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md` (hermana de este reporte)
 - Issues relacionados perf: #8, #9; R-054 paginación/proyección en `ANTIGRAVITY_APLICAR_TODO.md`
+
+---
+
+## 7. Contraste QA UI (mismo día, gerencia)
+
+Login teclado PIN gerencia → `/catalog` (rol GERENCIA, sucursal Mundo de Accesorios).
+
+| Observación UI | Detalle |
+|----------------|---------|
+| Conteo | **3657** productos (Todos); **16** con stock; **3641** sin stock |
+| Paginación UI | “Mostrando 30 de …” (carga incremental) |
+| Búsqueda percibida | `meg`→213, `Meguiar`→210, `pioneer`→158, `auxbeam`→177, SKU `RAD-PIO-001`→1; &lt;1 s en esa sesión |
+| Imágenes en primeros ~55 cards | Agente UI: 0 rotas visibles (Unsplash + `dlaa_halogens` que sí responden) |
+
+**Importante — no contradice el P0 de imágenes:** muestreo API por marca (25 c/u, GET):
+
+| Marca | OK | 404 |
+|-------|----|-----|
+| Meguiar's | 0 | 25 |
+| Pioneer | 0 | 25 |
+| Auxbeam | 0 | 25 |
+| DS18 | 0 | 25 |
+| FOX SHOCKS | 0 | 25 |
+| KEKO | 0 | 25 |
+| AFN 4X4 | 0 | 25 |
+| DLAA (`dlaa_halogens/…`) | 25 | 0 |
+
+Al buscar **Meguiar** en UI: 210 resultados, **0 con stock**, todos “Sin stock”. Las thumbs de esas marcas nuevas fallan en red aunque el listado exista.
+
+**Inventario:** casi todo el catálogo Grok está en Mongo **sin stock en bodega** (16 SKUs con stock vs 3641 sin). Eso puede hacer que en piso “no se vean” si el vendedor filtra “Con stock”.
+
+**Búsqueda:** en UI se sintió rápida *con paginación de 30*; el riesgo de lag sigue siendo hidratar **11.4 MB** en dispositivos lentos / cold start — la guía de search sigue válida.
+
