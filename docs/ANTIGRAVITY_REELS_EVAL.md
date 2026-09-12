@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + R-040 Comp AI CRM OBVIAR)
+**Actualizado:** 2026-09-12 ( + R-041 OpenWA OBVIAR)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
