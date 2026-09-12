@@ -298,3 +298,6 @@ Cada PR: descripción con **Tema Torti → Evidencia → Riesgo ERP → Acción 
 
 
 - **R-042 (Codez Up):** sliding-window rate limit en PIN/APIs — ver `docs/ANTIGRAVITY_APLICAR_TODO.md`.
+
+
+- **R-053/R-054 (PlayDev):** stock atómico concurrente + paginación/proyección listados — ver `docs/ANTIGRAVITY_APLICAR_TODO.md`.
