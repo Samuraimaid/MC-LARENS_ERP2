@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + Kelvorn P-KEL / R-039)
+**Actualizado:** 2026-09-12 ( + K.W.dev P-KWD)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,23 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-KWD — Perfil K.W.dev (kwilanf)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/1EtftUj1yN/ · https://www.facebook.com/people/KWdev/61592060066133/
+- **Nicho:** Demos FE principiantes (HTML/CSS animaciones: cart, login, dark mode, admin panel). Mucho #aigenerated.
+
+| Tip | Veredicto | Nota ERP |
+|-----|-----------|----------|
+| Add-to-cart / payment UI anim | **APARCAR** | Feedback visual; no lógica de stock/SKU. Cubierto en espíritu por R-013/R-032. |
+| Login form / spinner button | **OBVIAR** | Login PIN+splash ya definido; no rediseñar. |
+| Dark/light toggle | **APARCAR** | Bodega/noche útil después; no P0. |
+| Admin panel layout | **OBVIAR** | Genérico; ya tienen hypervisor/dashboard. |
+| Snake game / live preview genérico | **OBVIAR** | Nada ERP. |
+
+- **Acción Antigravity:** ninguna. Sin APLICAR nuevo.
+- **Conclusión:** perfil de demos visuales; bajo valor vs Design Motion / R-039.
 
 
 ### P-KEL — Perfil Kelvorn (system design visualized)
