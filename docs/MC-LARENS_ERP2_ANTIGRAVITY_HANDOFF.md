@@ -127,7 +127,11 @@
 
 ---
 
-### P2 — Rendimiento y caché (sin tocar consistencia fuerte)
+### P2
+
+#### P2.media — Honest upload progress (R-009)
+Cuando se trabaje el uploader de **videos de publicidad** o **imágenes de pruebas de taller**: mostrar %, ETA, MB/s, nombre/tamaño y cancelar — no solo spinner. Ver `docs/ANTIGRAVITY_REELS_EVAL.md` R-009.
+ — Rendimiento y caché (sin tocar consistencia fuerte)
 
 #### P2.1 Caché de lecturas calientes
 
@@ -214,7 +218,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados:** … R-006/R-007 APARCAR · R-008 AI-slop dashboard / UX Engine plugin → **OBVIAR**. Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados:** … R-008 OBVIAR · R-009 upload progreso honesto → **APLICAR** (videos publicidad + fotos pruebas taller, al tocar esos UIs). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
