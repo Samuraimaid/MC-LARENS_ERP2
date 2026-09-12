@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (Design Motion R-011…R-035)
+**Actualizado:** 2026-09-12 ( + perfil Đức Minh / R-036)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,33 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-DMN — Perfil Đức Minh Nguyễn (duckminknguyen)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/19k4vdMqPt/ · https://www.facebook.com/duckminknguyen/
+- **Nicho:** Educación software VN — backend, escala, DB, DevOps, AI práctico (no UX de piso).
+- **Muestra de reels:** Rate Limit · SQL declarativo · WebSocket · DB Index · Docker · RAG · CDN · Message Queue
+
+| Tip | Veredicto | Nota ERP McLarens |
+|-----|-----------|-------------------|
+| Rate Limit | **APARCAR** | Útil en APIs públicas/abuso; Cloud Run ya mitiga algo. Tras P0. |
+| SQL “qué no cómo” | **OBVIAR** | ERP es **Mongo**, no SQL escolar. Espíritu OK en aggregations. |
+| WebSocket vs polling | **APARCAR** | Ya en handoff P1.1 (approvals/WS vivo vs muerto). No abrir WS nuevo ya. |
+| Database Indexing | **APLICAR** (R-036) | Índices Mongo en lecturas lentas (#8 inventory/users). |
+| Docker “works on my machine” | **OBVIAR** | Ya despliegan con Docker/Cloud Run. |
+| RAG | **OBVIAR** | No es el dolor del POS; catálogo/QA docs más adelante si acaso. |
+| CDN | **APARCAR** | Media/promo ya van a GCS/CDN potencial; no PR nuevo ahora. |
+| Message Queue | **APARCAR** | Como R-001 EDA: colas post-estabilidad, no microservicios. |
+
+- **Acción Antigravity ahora:** solo **R-036** (índices Mongo en rutas lentas) cuando toque #8. Resto no abrir PRs por este perfil.
+- **Vs Design Motion:** este perfil aporta infra/backend; DM aporta UX. Complementarios, no duplicados.
+
+### R-036 — Índices Mongo en lecturas calientes (de tip DB Indexing / Đức Minh)
+- **Veredicto:** **APLICAR**
+- **Qué:** Auditar queries lentas de inventory/users/dashboard; asegurar índices compuestos alineados a filtros reales (sucursal, status, created_at).
+- **No:** “índices en todo”; medir con explain / Atlas Performance Advisor.
+- **Ligado:** issue #8, handoff P2.2 paginación/Big O.
 
 ### R-011 — Empty states: four kinds + one CTA
 - **Source:** https://www.designmotionhq.com/patterns/empty-states
