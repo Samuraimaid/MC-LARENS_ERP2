@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + Memorisely P-MEM / R-038)
+**Actualizado:** 2026-09-12 ( + Afzal P-AFZ barrido)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,25 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-AFZ — Perfil Afzal Web Solutions (codingwithjutt) — barrido amplio
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/19ir8udn2q/ · https://www.facebook.com/codingwithjutt/
+- **Ya evaluado antes:** R-002 cron **OBVIAR**; R-004 failover **OBVIAR**.
+- **Nicho:** Full-stack/backend, system design, entrevistas, deploys, AI guardrails.
+
+| Tip (muestra nueva) | Veredicto | Nota ERP |
+|---------------------|-----------|----------|
+| Canary deployments | **APARCAR** | Útil en Cloud Run (revisions/% tráfico) post-estabilidad; no antes de #4–#7. |
+| Tree traversal / jerarquías | **APARCAR** | Permisos/roles/org; solo si modelan árbol de menús/permisos. |
+| Read receipts | **APARCAR** | Notificaciones/entregas; con R-030 taxonomy. |
+| AI Guardrails | **OBVIAR** | No hay copiloto ERP en scope ahora. |
+| FE→BE en 10s / DNS traceroute / interview algos / 13 DS | **OBVIAR** | Educación genérica; no ticket. |
+| System design (LB, cache, shard, rate limit) | **OBVIAR / APARCAR** | LB=R-005 OBVIAR; rate limit/colas ya APARCAR en P-DMN. |
+
+- **Acción Antigravity ahora:** ninguna nueva. Canary = nota ops para más adelante.
+- **Conclusión:** este perfil aporta poco nuevo vs Đức Minh + lo ya OBVIAR; no priorizar más reels de aquí salvo canary cuando madure el deploy.
 
 
 ### P-MEM — Perfil Memorisely (UX/UI bootcamps)
