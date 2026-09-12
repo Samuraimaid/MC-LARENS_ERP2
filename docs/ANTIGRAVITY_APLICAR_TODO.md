@@ -221,3 +221,9 @@ Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo veri
 | PlayDev R-055 CORS | **APARCAR** | Verificar allowlist por env; no `*` en prod |
 | PlayDev R-056 localhost | **OBVIAR** código | Solo onboarding |
 | PlayDev R-057/R-058 caché | **APARCAR** | No caché prematura; invalidate-on-write si llega |
+
+
+## Catálogo live (2026-09-12)
+- Daños imágenes/búsqueda: [`docs/REPORTE_DANOS_CATALOGO_IMAGENES.md`](./REPORTE_DANOS_CATALOGO_IMAGENES.md)
+- Guía search rápido: [`docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md`](./GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md)
+- P0: sync imágenes→GCS + URLs Mongo; API `q/limit` real; FE debounce (no hidratar 11 MB).
