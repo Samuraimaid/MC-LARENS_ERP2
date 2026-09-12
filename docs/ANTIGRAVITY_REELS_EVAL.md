@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + perfil Đức Minh / R-036)
+**Actualizado:** 2026-09-12 ( + perfil David Mráz / P-DMR)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,24 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-DMR — Perfil David Mráz (Atheros)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/1BUw5vJWWB/ · https://www.facebook.com/people/David-Mr%C3%A1z/61584464274271/ · learning.atheros.ai
+- **Nicho:** FE/UI con AI — HTML/CSS/JS, componentes responsive, demos (pago Atheros Pass en mucho del contenido largo).
+- **Muestra pública (pocos reels sin login):** Container Queries · estados MINI/STANDARD/EXPANDED · paginación en cards · frosted glass · checkboxes animados CSS.
+
+| Tip | Veredicto | Nota ERP |
+|-----|-----------|----------|
+| Container queries + estados adaptativos | **APARCAR** (R-037) | Útil para paneles POS/tablet; no urgente vs #4–#7. Encaja con R-006/R-007 más adelante. |
+| Paginación en listas/cards | **APLICAR** (refuerzo #8 / P2.2) | Ya en handoff paginación Mongo; FE también paginar inventory/ventas. No hace falta ID nuevo si #8+P2.2 cubren — marcar como **APLICAR junto #8**. |
+| Frosted glass | **OBVIAR** | Estética; riesgo contraste en tienda. |
+| Checkboxes animados CSS | **OBVIAR** | Nice-to-have; bulk actions ya APARCAR (R-027). |
+| Load balancers / system design genérico | **OBVIAR** | Igual R-005 (Cloud Run). |
+| Cursos/Pass Atheros | **OBVIAR** | No comprar para el repo. |
+
+- **Acción Antigravity:** al tocAR #8 / listas: paginación FE+BE. Container queries → backlog con tablas móvil (R-007). Nada más de este perfil ahora.
 
 
 ### P-DMN — Perfil Đức Minh Nguyễn (duckminknguyen)
