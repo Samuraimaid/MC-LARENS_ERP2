@@ -82,21 +82,32 @@ class WarehouseProductStatusPayload(BaseModel):
             return bool(self.is_active)
         if self.is_active_in_warehouse is not None:
             return bool(self.is_active_in_warehouse)
-        return True
+        raise HTTPException(
+            status_code=422,
+            detail="Campo requerido: se debe especificar 'is_active' o 'is_active_in_warehouse' como booleano (true/false)",
+        )
 
 
 class BatchWarehouseProductStatusPayload(BaseModel):
     warehouse_id: str
-    product_ids: List[str] = []
+    product_ids: List[str] = Field(default_factory=list)
     is_active: Optional[bool] = None
     is_active_in_warehouse: Optional[bool] = None
 
     def get_is_active(self) -> bool:
+        if not self.product_ids:
+            raise HTTPException(
+                status_code=422,
+                detail="Campo requerido: 'product_ids' debe contener al menos un ID de producto",
+            )
         if self.is_active is not None:
             return bool(self.is_active)
         if self.is_active_in_warehouse is not None:
             return bool(self.is_active_in_warehouse)
-        return True
+        raise HTTPException(
+            status_code=422,
+            detail="Campo requerido: se debe especificar 'is_active' o 'is_active_in_warehouse' como booleano (true/false)",
+        )
 
 
 class ProductStatusPayload(BaseModel):
@@ -109,20 +120,31 @@ class ProductStatusPayload(BaseModel):
             return bool(self.is_active)
         if self.is_active_in_warehouse is not None:
             return bool(self.is_active_in_warehouse)
-        return True
+        raise HTTPException(
+            status_code=422,
+            detail="Campo requerido: se debe especificar 'is_active' o 'is_active_in_warehouse' como booleano (true/false)",
+        )
 
 
 class BatchProductStatusPayload(BaseModel):
-    product_ids: List[str] = []
+    product_ids: List[str] = Field(default_factory=list)
     is_active: Optional[bool] = None
     is_active_in_warehouse: Optional[bool] = None
 
     def get_is_active(self) -> bool:
+        if not self.product_ids:
+            raise HTTPException(
+                status_code=422,
+                detail="Campo requerido: 'product_ids' debe contener al menos un ID de producto",
+            )
         if self.is_active is not None:
             return bool(self.is_active)
         if self.is_active_in_warehouse is not None:
             return bool(self.is_active_in_warehouse)
-        return True
+        raise HTTPException(
+            status_code=422,
+            detail="Campo requerido: se debe especificar 'is_active' o 'is_active_in_warehouse' como booleano (true/false)",
+        )
 
 
 def _normalize_inventory_zones(doc: Dict[str, Any]) -> Dict[str, Any]:
@@ -334,9 +356,11 @@ def get_inventory_router(
         existing = await db.inventory.find_one(inv_filter)
         now_iso = datetime.now(timezone.utc).isoformat()
 
+        new_active = payload.get_is_active()
+
         if existing:
             update_fields: Dict[str, Any] = {
-                "is_active": payload.is_active,
+                "is_active": new_active,
                 "updated_at": now_iso,
                 "updated_by": user.user_id,
             }
@@ -354,17 +378,18 @@ def get_inventory_router(
                 "quantity_incomplete": 0,
                 "quantity_warranty": 0,
                 "min_stock": max(0, int(payload.min_stock or 0)),
-                "is_active": payload.is_active,
+                "is_active": new_active,
                 "created_at": now_iso,
                 "created_by": user.user_id,
             }
             await db.inventory.insert_one(inv_doc)
 
         return {
-            "message": f"Producto {'activado' if payload.is_active else 'desactivado'} en bodega exitosamente",
+            "message": f"Producto {'activado' if new_active else 'desactivado'} en bodega exitosamente",
             "warehouse_id": payload.warehouse_id,
             "product_id": payload.product_id,
-            "is_active": payload.is_active,
+            "is_active": new_active,
+            "is_active_in_warehouse": new_active,
         }
 
     @router.post("/inventory/batch-status")
@@ -375,12 +400,13 @@ def get_inventory_router(
         """Alta masiva o desactivación masiva de productos en bodega."""
         user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
         now_iso = datetime.now(timezone.utc).isoformat()
+        new_active = payload.get_is_active()
         for pid in payload.product_ids:
             inv_filter = {"warehouse_id": payload.warehouse_id, "product_id": pid}
             existing = await db.inventory.find_one(inv_filter)
             if existing:
                 await db.inventory.update_one(inv_filter, {
-                    "$set": {"is_active": payload.is_active, "updated_at": now_iso, "updated_by": user.user_id}
+                    "$set": {"is_active": new_active, "updated_at": now_iso, "updated_by": user.user_id}
                 })
             else:
                 inv_doc = {
@@ -393,12 +419,16 @@ def get_inventory_router(
                     "quantity_incomplete": 0,
                     "quantity_warranty": 0,
                     "min_stock": 0,
-                    "is_active": payload.is_active,
+                    "is_active": new_active,
                     "created_at": now_iso,
                     "created_by": user.user_id,
                 }
                 await db.inventory.insert_one(inv_doc)
-        return {"message": f"{len(payload.product_ids)} productos actualizados", "count": len(payload.product_ids)}
+        return {
+            "message": f"{len(payload.product_ids)} productos actualizados",
+            "count": len(payload.product_ids),
+            "is_active": new_active,
+        }
 
     @router.post("/inventory/zone-transfer")
     async def transfer_virtual_zone(
