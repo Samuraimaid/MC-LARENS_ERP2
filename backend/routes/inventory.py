@@ -60,6 +60,51 @@ class TransferRequestPayload(BaseModel):
     sale_pending: Optional[bool] = None
 
 
+class ZoneTransferPayload(BaseModel):
+    warehouse_id: str
+    product_id: str
+    from_zone: str = "principal"  # "principal" / "disponible", "danado", "incompleto", "garantia"
+    to_zone: str
+    quantity: int = 1
+    reason: str = ""
+    notes: Optional[str] = None
+
+
+class WarehouseProductStatusPayload(BaseModel):
+    warehouse_id: str
+    product_id: str
+    is_active: bool
+    min_stock: Optional[int] = None
+
+
+class BatchWarehouseProductStatusPayload(BaseModel):
+    warehouse_id: str
+    product_ids: List[str]
+    is_active: bool
+
+
+def _normalize_inventory_zones(doc: Dict[str, Any]) -> Dict[str, Any]:
+    qty = int(doc.get("quantity") or 0)
+    qty_avail = doc.get("quantity_available")
+    qty_dmg = int(doc.get("quantity_damaged") or 0)
+    qty_inc = int(doc.get("quantity_incomplete") or 0)
+    qty_war = int(doc.get("quantity_warranty") or 0)
+
+    if qty_avail is None:
+        qty_avail = max(0, qty - (qty_dmg + qty_inc + qty_war))
+    else:
+        qty_avail = int(qty_avail)
+
+    doc["quantity_available"] = qty_avail
+    doc["quantity_damaged"] = qty_dmg
+    doc["quantity_incomplete"] = qty_inc
+    doc["quantity_warranty"] = qty_war
+    doc["quantity"] = qty_avail + qty_dmg + qty_inc + qty_war
+    if "is_active" not in doc:
+        doc["is_active"] = True
+    return doc
+
+
 def get_inventory_router(
     db,
     audit_service,
@@ -174,10 +219,17 @@ def get_inventory_router(
 
     @router.get("/inventory")
     async def get_inventory(
-        request: Request, warehouse_id: Optional[str] = None, low_stock: bool = False
+        request: Request,
+        warehouse_id: Optional[str] = None,
+        low_stock: bool = False,
+        zone: Optional[str] = None,
+        include_inactive: bool = False,
     ):
         user = await require_auth(request)
         query: dict[str, Any] = {}
+        if not include_inactive:
+            query["$or"] = [{"is_active": True}, {"is_active": {"$exists": False}}]
+
         if user.role == "bodegas" and user.warehouse_id:
             query["warehouse_id"] = user.warehouse_id
         elif warehouse_id and warehouse_id != "all":
@@ -193,8 +245,22 @@ def get_inventory_router(
 
         inventory = await db.inventory.find(query, {"_id": 0}).to_list(5000)
 
+        # Normalize virtual zones for all returned rows
+        inventory = [_normalize_inventory_zones(i) for i in inventory]
+
+        if zone:
+            normalized_zone = "principal" if zone == "disponible" else zone
+            if normalized_zone == "principal":
+                inventory = [i for i in inventory if i.get("quantity_available", 0) > 0]
+            elif normalized_zone == "danado":
+                inventory = [i for i in inventory if i.get("quantity_damaged", 0) > 0]
+            elif normalized_zone == "incompleto":
+                inventory = [i for i in inventory if i.get("quantity_incomplete", 0) > 0]
+            elif normalized_zone == "garantia":
+                inventory = [i for i in inventory if i.get("quantity_warranty", 0) > 0]
+
         if low_stock:
-            inventory = [i for i in inventory if i.get("quantity", 0) <= i.get("min_stock", 0)]
+            inventory = [i for i in inventory if i.get("quantity_available", 0) <= i.get("min_stock", 0)]
 
         # High-performance batch enrichment with product data
         product_ids = list({str(i.get("product_id")) for i in inventory if i.get("product_id")})
@@ -209,6 +275,227 @@ def get_inventory_router(
                     item["product"] = product_map[pid]
 
         return inventory
+
+    @router.post("/inventory/product-status")
+    @router.put("/inventory/product-status")
+    async def set_warehouse_product_status(
+        payload: WarehouseProductStatusPayload,
+        request: Request,
+    ):
+        """Alta / Desactivación de producto en una bodega específica (Soft Toggle)."""
+        user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
+        prod = await db.products.find_one({"product_id": payload.product_id}, {"_id": 0, "product_id": 1, "name": 1})
+        if not prod:
+            raise HTTPException(status_code=404, detail="Producto no encontrado en catálogo")
+
+        inv_filter = {"warehouse_id": payload.warehouse_id, "product_id": payload.product_id}
+        existing = await db.inventory.find_one(inv_filter)
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        if existing:
+            update_fields: Dict[str, Any] = {
+                "is_active": payload.is_active,
+                "updated_at": now_iso,
+                "updated_by": user.user_id,
+            }
+            if payload.min_stock is not None:
+                update_fields["min_stock"] = max(0, int(payload.min_stock))
+            await db.inventory.update_one(inv_filter, {"$set": update_fields})
+        else:
+            inv_doc = {
+                "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
+                "warehouse_id": payload.warehouse_id,
+                "product_id": payload.product_id,
+                "quantity": 0,
+                "quantity_available": 0,
+                "quantity_damaged": 0,
+                "quantity_incomplete": 0,
+                "quantity_warranty": 0,
+                "min_stock": max(0, int(payload.min_stock or 0)),
+                "is_active": payload.is_active,
+                "created_at": now_iso,
+                "created_by": user.user_id,
+            }
+            await db.inventory.insert_one(inv_doc)
+
+        return {
+            "message": f"Producto {'activado' if payload.is_active else 'desactivado'} en bodega exitosamente",
+            "warehouse_id": payload.warehouse_id,
+            "product_id": payload.product_id,
+            "is_active": payload.is_active,
+        }
+
+    @router.post("/inventory/batch-status")
+    async def set_batch_warehouse_product_status(
+        payload: BatchWarehouseProductStatusPayload,
+        request: Request,
+    ):
+        """Alta masiva o desactivación masiva de productos en bodega."""
+        user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for pid in payload.product_ids:
+            inv_filter = {"warehouse_id": payload.warehouse_id, "product_id": pid}
+            existing = await db.inventory.find_one(inv_filter)
+            if existing:
+                await db.inventory.update_one(inv_filter, {
+                    "$set": {"is_active": payload.is_active, "updated_at": now_iso, "updated_by": user.user_id}
+                })
+            else:
+                inv_doc = {
+                    "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
+                    "warehouse_id": payload.warehouse_id,
+                    "product_id": pid,
+                    "quantity": 0,
+                    "quantity_available": 0,
+                    "quantity_damaged": 0,
+                    "quantity_incomplete": 0,
+                    "quantity_warranty": 0,
+                    "min_stock": 0,
+                    "is_active": payload.is_active,
+                    "created_at": now_iso,
+                    "created_by": user.user_id,
+                }
+                await db.inventory.insert_one(inv_doc)
+        return {"message": f"{len(payload.product_ids)} productos actualizados", "count": len(payload.product_ids)}
+
+    @router.post("/inventory/zone-transfer")
+    async def transfer_virtual_zone(
+        payload: ZoneTransferPayload,
+        request: Request,
+    ):
+        """Transferencia interna entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)."""
+        user = await require_roles(request, ["bodegas", "supervisor", "gerencia", "programador", "admin"])
+        if payload.quantity <= 0:
+            raise HTTPException(status_code=400, detail="La cantidad a transferir debe ser mayor a 0")
+
+        valid_zones = {"principal", "disponible", "danado", "incompleto", "garantia"}
+        from_z = "principal" if payload.from_zone == "disponible" else payload.from_zone
+        to_z = "principal" if payload.to_zone == "disponible" else payload.to_zone
+
+        if from_z not in valid_zones or to_z not in valid_zones:
+            raise HTTPException(status_code=400, detail="Zona inválida. Permitidas: disponible, danado, incompleto, garantia")
+        if from_z == to_z:
+            raise HTTPException(status_code=400, detail="La zona origen y destino deben ser distintas")
+
+        zone_field_map = {
+            "principal": "quantity_available",
+            "danado": "quantity_damaged",
+            "incompleto": "quantity_incomplete",
+            "garantia": "quantity_warranty",
+        }
+        from_field = zone_field_map[from_z]
+        to_field = zone_field_map[to_z]
+
+        inv_filter = {"warehouse_id": payload.warehouse_id, "product_id": payload.product_id}
+        inv = await db.inventory.find_one(inv_filter)
+        if not inv:
+            raise HTTPException(status_code=404, detail="El producto no está registrado en el inventario de esta bodega")
+
+        _normalize_inventory_zones(inv)
+        current_from_qty = int(inv.get(from_field) or 0)
+        if current_from_qty < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock insuficiente en zona {from_z}. Disponible: {current_from_qty}, solicitado: {payload.quantity}",
+            )
+
+        new_from_qty = current_from_qty - payload.quantity
+        new_to_qty = int(inv.get(to_field) or 0) + payload.quantity
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        # Update inventory document
+        update_doc: Dict[str, Any] = {
+            from_field: new_from_qty,
+            to_field: new_to_qty,
+            "updated_at": now_iso,
+            "updated_by": user.user_id,
+        }
+
+        # Recalculate total quantity
+        avail = new_from_qty if from_field == "quantity_available" else (new_to_qty if to_field == "quantity_available" else inv.get("quantity_available", 0))
+        dmg = new_from_qty if from_field == "quantity_damaged" else (new_to_qty if to_field == "quantity_damaged" else inv.get("quantity_damaged", 0))
+        inc = new_from_qty if from_field == "quantity_incomplete" else (new_to_qty if to_field == "quantity_incomplete" else inv.get("quantity_incomplete", 0))
+        war = new_from_qty if from_field == "quantity_warranty" else (new_to_qty if to_field == "quantity_warranty" else inv.get("quantity_warranty", 0))
+        update_doc["quantity"] = int(avail) + int(dmg) + int(inc) + int(war)
+
+        await db.inventory.update_one(inv_filter, {"$set": update_doc})
+
+        # Insert audit movement
+        mov_doc = {
+            "movement_id": f"mov_{uuid.uuid4().hex[:12]}",
+            "movement_type": "zone_transfer",
+            "product_id": payload.product_id,
+            "warehouse_id": payload.warehouse_id,
+            "from_zone": from_z,
+            "to_zone": to_z,
+            "quantity": payload.quantity,
+            "reason": payload.reason or "Transferencia interna de zona virtual",
+            "notes": payload.notes,
+            "actor_id": user.user_id,
+            "actor_name": user.name,
+            "created_at": now_iso,
+        }
+        await db.inventory_movements.insert_one(mov_doc)
+
+        return {
+            "message": "Transferencia entre zonas virtuales completada exitosamente",
+            "product_id": payload.product_id,
+            "warehouse_id": payload.warehouse_id,
+            "from_zone": from_z,
+            "to_zone": to_z,
+            "quantity": payload.quantity,
+            "new_from_zone_quantity": new_from_qty,
+            "new_to_zone_quantity": new_to_qty,
+        }
+
+    @router.get("/inventory/zones-summary")
+    async def get_inventory_zones_summary(
+        request: Request,
+        warehouse_id: Optional[str] = None,
+    ):
+        """Resumen de existencias por zona virtual para una o todas las bodegas."""
+        user = await require_auth(request)
+        query: Dict[str, Any] = {}
+        if warehouse_id and warehouse_id != "all":
+            query["warehouse_id"] = warehouse_id
+        elif user.role == "bodegas" and user.warehouse_id:
+            query["warehouse_id"] = user.warehouse_id
+
+        rows = await db.inventory.find(query, {"_id": 0}).to_list(10000)
+        summary = {
+            "total_items": len(rows),
+            "total_quantity": 0,
+            "available_quantity": 0,
+            "damaged_quantity": 0,
+            "incomplete_quantity": 0,
+            "warranty_quantity": 0,
+            "by_warehouse": {},
+        }
+        for r in rows:
+            _normalize_inventory_zones(r)
+            wh = str(r.get("warehouse_id") or "unknown")
+            summary["total_quantity"] += r["quantity"]
+            summary["available_quantity"] += r["quantity_available"]
+            summary["damaged_quantity"] += r["quantity_damaged"]
+            summary["incomplete_quantity"] += r["quantity_incomplete"]
+            summary["warranty_quantity"] += r["quantity_warranty"]
+
+            if wh not in summary["by_warehouse"]:
+                summary["by_warehouse"][wh] = {
+                    "total_quantity": 0,
+                    "available_quantity": 0,
+                    "damaged_quantity": 0,
+                    "incomplete_quantity": 0,
+                    "warranty_quantity": 0,
+                }
+            summary["by_warehouse"][wh]["total_quantity"] += r["quantity"]
+            summary["by_warehouse"][wh]["available_quantity"] += r["quantity_available"]
+            summary["by_warehouse"][wh]["damaged_quantity"] += r["quantity_damaged"]
+            summary["by_warehouse"][wh]["incomplete_quantity"] += r["quantity_incomplete"]
+            summary["by_warehouse"][wh]["warranty_quantity"] += r["quantity_warranty"]
+
+        return summary
+
 
     @router.get("/inventory/other-branches")
     @router.get("/inventory/cross-branch")

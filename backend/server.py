@@ -11863,7 +11863,10 @@ async def create_sale(
                     "warehouse_id": warehouse_id,
                 },
                 {
-                    "$inc": {"quantity": -inv_item.get("quantity", 0)},
+                    "$inc": {
+                        "quantity": -inv_item.get("quantity", 0),
+                        "quantity_available": -inv_item.get("quantity", 0),
+                    },
                     "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
                 },
             )
@@ -15402,6 +15405,8 @@ async def get_work_order(work_order_id: str, request: Request):
 TECHNICIAN_SELF_JOB_ROLES = {"instalaciones", "instalador", "electrico", "polarizador"}
 TECHNICIAN_JOB_SUPERVISOR_ROLES = {
     "gerencia",
+    "programador",
+    "admin",
     "supervisor",
     "coordinador_instalaciones",
     "coordinador_polarizados",

@@ -89,6 +89,18 @@ export function InventoryPage() {
     quantity: 1,
   });
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [selectedZone, setSelectedZone] = useState("all");
+  const [includeInactive, setIncludeInactive] = useState(false);
+  const [showZoneTransferDialog, setShowZoneTransferDialog] = useState(false);
+  const [zoneTransferItem, setZoneTransferItem] = useState(null);
+  const [zoneTransferForm, setZoneTransferForm] = useState({
+    from_zone: "principal",
+    to_zone: "danado",
+    quantity: 1,
+    reason: "",
+    notes: "",
+  });
+  const [zoneTransferLoading, setZoneTransferLoading] = useState(false);
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -97,6 +109,7 @@ export function InventoryPage() {
     replacement_quantity: 1,
     notes: "",
   });
+
 
   // New product form with all fields
   const [newProduct, setNewProduct] = useState({
@@ -176,6 +189,8 @@ export function InventoryPage() {
       if (selectedWarehouse !== "all") params.append("warehouse_id", selectedWarehouse);
       if (showLowStock) params.append("low_stock", "true");
       if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedZone !== "all") params.append("zone", selectedZone);
+      if (includeInactive) params.append("include_inactive", "true");
 
       const [invRes, productsRes, warehousesRes, branchesRes, usersRes] = await Promise.all([
         axios.get(`${API}/inventory?${params}`, { withCredentials: true }),
@@ -194,7 +209,60 @@ export function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedWarehouse, showLowStock, selectedCategory, canViewInventory]);
+  }, [selectedWarehouse, showLowStock, selectedCategory, selectedZone, includeInactive, canViewInventory]);
+
+  const handleToggleProductStatus = async (item) => {
+    const currentActive = item.is_active !== false;
+    const newActive = !currentActive;
+    try {
+      await axios.post(`${API}/inventory/product-status`, {
+        warehouse_id: item.warehouse_id,
+        product_id: item.product_id,
+        is_active: newActive,
+      }, { withCredentials: true });
+      toast.success(`Producto ${newActive ? "activado" : "desactivado"} en bodega`);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al cambiar estado del producto");
+    }
+  };
+
+  const handleOpenZoneTransfer = (item) => {
+    setZoneTransferItem(item);
+    setZoneTransferForm({
+      from_zone: "principal",
+      to_zone: "danado",
+      quantity: 1,
+      reason: "Dañado durante manipulación o transporte",
+      notes: "",
+    });
+    setShowZoneTransferDialog(true);
+  };
+
+  const handleExecuteZoneTransfer = async () => {
+    if (!zoneTransferItem) return;
+    setZoneTransferLoading(true);
+    try {
+      await axios.post(`${API}/inventory/zone-transfer`, {
+        warehouse_id: zoneTransferItem.warehouse_id,
+        product_id: zoneTransferItem.product_id,
+        from_zone: zoneTransferForm.from_zone,
+        to_zone: zoneTransferForm.to_zone,
+        quantity: Number(zoneTransferForm.quantity) || 1,
+        reason: zoneTransferForm.reason,
+        notes: zoneTransferForm.notes,
+      }, { withCredentials: true });
+      toast.success("Transferencia entre zonas virtuales completada exitosamente");
+      setShowZoneTransferDialog(false);
+      setZoneTransferItem(null);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al transferir entre zonas");
+    } finally {
+      setZoneTransferLoading(false);
+    }
+  };
+
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -2047,14 +2115,13 @@ export function InventoryPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">BODEGAS</CardTitle>
           </CardHeader>
-          <CardContent>
             <div className="font-heading text-3xl font-bold">{warehouses.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -2087,6 +2154,18 @@ export function InventoryPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={selectedZone} onValueChange={setSelectedZone}>
+          <SelectTrigger className="w-44" data-testid="filter-zone">
+            <SelectValue placeholder="Zona Virtual" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las Zonas</SelectItem>
+            <SelectItem value="disponible">🟢 Disp. (Venta)</SelectItem>
+            <SelectItem value="danado">🔴 Dañado</SelectItem>
+            <SelectItem value="incompleto">🟠 Incompleto</SelectItem>
+            <SelectItem value="garantia">🟣 Garantía</SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           variant={showLowStock ? "default" : "outline"}
           onClick={() => setShowLowStock(!showLowStock)}
@@ -2095,6 +2174,13 @@ export function InventoryPage() {
           <AlertTriangle className="h-4 w-4 mr-2" />
           Stock Bajo
         </Button>
+        <Button
+          variant={includeInactive ? "secondary" : "outline"}
+          onClick={() => setIncludeInactive(!includeInactive)}
+          title="Mostrar u ocultar productos desactivados en bodega"
+        >
+          {includeInactive ? "Ocultar Desact." : "Ver Desact."}
+        </Button>
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -2102,46 +2188,56 @@ export function InventoryPage() {
 
       {/* Inventory Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>SKU</TableHead>
                 <TableHead>Producto</TableHead>
                 <TableHead>Categoría</TableHead>
-                <TableHead>Tipo</TableHead>
                 <TableHead>Bodega</TableHead>
-                <TableHead className="text-center">Stock</TableHead>
+                <TableHead className="text-center font-bold text-emerald-600 dark:text-emerald-400" title="Zona Disponible (Apta para venta)">Disp.</TableHead>
+                <TableHead className="text-center font-semibold text-rose-600 dark:text-rose-400" title="Zona Dañado / Averiado">Dañ.</TableHead>
+                <TableHead className="text-center font-semibold text-amber-600 dark:text-amber-400" title="Zona Incompleto / Piezas faltantes">Inc.</TableHead>
+                <TableHead className="text-center font-semibold text-purple-600 dark:text-purple-400" title="Zona Garantía">Gar.</TableHead>
+                <TableHead className="text-center font-bold">Total</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={12} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredInventory.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                     No hay inventario para mostrar
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
                   const product = item.product || {};
-                  const isZero = (item.quantity ?? 0) === 0;
-                  const isLow = !isZero && (item.quantity <= (item.min_stock || 5));
+                  const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
+                  const qtyDamaged = item.quantity_damaged ?? 0;
+                  const qtyIncomplete = item.quantity_incomplete ?? 0;
+                  const qtyWarranty = item.quantity_warranty ?? 0;
+                  const qtyTotal = item.quantity ?? 0;
+
+                  const isZero = qtyAvailable === 0;
+                  const isLow = !isZero && (qtyAvailable <= (item.min_stock || 5));
                   const warehouse = warehouses.find(w => w.warehouse_id === item.warehouse_id);
                   const warehouseLabel = item.warehouse_id === "none"
                     ? <span className="text-muted-foreground italic text-xs">Sin asignar (0 stock)</span>
                     : (warehouse?.name || item.warehouse_id);
-                  
+                  const isActiveInWarehouse = item.is_active !== false;
+
                   return (
-                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`}>
+                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : ""}>
                       <TableCell className="font-mono">{product.sku || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -2159,32 +2255,54 @@ export function InventoryPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={product.product_type === "service" || product.product_type === "service_hourly" ? "secondary" : "default"}>
-                          {product.product_type === "service" ? "Servicio" : 
-                           product.product_type === "service_hourly" ? "Por Hora" : "Producto"}
-                        </Badge>
-                      </TableCell>
                       <TableCell>{warehouseLabel}</TableCell>
+                      {/* Virtual Zones breakdown */}
                       <TableCell className="text-center">
-                        <span className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : ""}`}>
-                          {item.quantity ?? 0}
+                        <span className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}>
+                          {qtyAvailable}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-xs">
+                        {qtyDamaged > 0 ? (
+                          <Badge variant="destructive" className="px-1.5 py-0.5 text-[10px]">{qtyDamaged}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-xs">
+                        {qtyIncomplete > 0 ? (
+                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] border-amber-500 text-amber-600">{qtyIncomplete}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-xs">
+                        {qtyWarranty > 0 ? (
+                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] border-purple-500 text-purple-600">{qtyWarranty}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                        {qtyTotal}
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {formatCurrency(product.price || 0)}
                       </TableCell>
-                      <TableCell>
-                        {isZero ? (
-                          <Badge variant="secondary" className="text-muted-foreground">Sin stock</Badge>
-                        ) : isLow ? (
-                          <Badge variant="destructive" className="gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            Bajo
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600">OK</Badge>
-                        )}
+                      {/* Warehouse Activation Toggle */}
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={isActiveInWarehouse ? "outline" : "secondary"}
+                          className={`cursor-pointer transition select-none text-[11px] ${
+                            isActiveInWarehouse
+                              ? "border-emerald-500 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100"
+                              : "border-slate-300 text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 line-through"
+                          }`}
+                          onClick={() => canEditInventory && handleToggleProductStatus(item)}
+                          title={canEditInventory ? "Clic para activar o desactivar este producto en la bodega" : undefined}
+                        >
+                          {isActiveInWarehouse ? "Activo" : "Inactivo"}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -2192,6 +2310,7 @@ export function InventoryPage() {
                             variant="ghost" 
                             size="icon" 
                             onClick={() => setShowProductDetail(product)}
+                            title="Ver detalles"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -2200,6 +2319,7 @@ export function InventoryPage() {
                             size="icon" 
                             onClick={() => setEditingProduct(product)}
                             disabled={!canEditInventory}
+                            title="Editar producto"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -2215,7 +2335,7 @@ export function InventoryPage() {
                           ) : null}
                           <Button 
                             variant="ghost" 
-                            size="icon"
+                            size="icon" 
                             title="Ingresar stock"
                             onClick={() => {
                               setAddStock({
@@ -2229,12 +2349,22 @@ export function InventoryPage() {
                           >
                             <Plus className="h-4 w-4 text-primary" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
+                            onClick={() => handleOpenZoneTransfer(item)}
+                            disabled={!canEditInventory || qtyTotal <= 0}
+                          >
+                            <ArrowRightLeft className="h-4 w-4 text-amber-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            title="Enviar por WhatsApp"
                             onClick={() => { setWaProduct(product); setShowWhatsApp(true); setWaSearch(''); setWaResults([]); setWaSelectedCustomer(null); }}
                           >
-                            <ArrowRightLeft className="h-4 w-4" title="Enviar por WhatsApp" />
+                            <Truck className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -3189,6 +3319,137 @@ export function InventoryPage() {
                 </Button>
                 <Button onClick={updateProduct}>
                   Guardar Cambios
+                </Button>
+              </div>
+            </div>
+          )}
+      {/* Virtual Zone Transfer Dialog */}
+      <Dialog open={showZoneTransferDialog} onOpenChange={setShowZoneTransferDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ArrowRightLeft className="h-5 w-5 text-amber-500" />
+              Transferir entre Zonas Virtuales
+            </DialogTitle>
+            <DialogDescription>
+              {zoneTransferItem?.product?.name} ({zoneTransferItem?.product?.sku})
+            </DialogDescription>
+          </DialogHeader>
+
+          {zoneTransferItem && (
+            <div className="space-y-4">
+              {/* Current stock by zone preview */}
+              <div className="grid grid-cols-4 gap-2 p-3 bg-muted/40 rounded-lg text-center text-xs">
+                <div className="p-1 rounded bg-background border">
+                  <div className="text-emerald-600 font-bold text-sm">
+                    {zoneTransferItem.quantity_available ?? zoneTransferItem.quantity ?? 0}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Disponible</div>
+                </div>
+                <div className="p-1 rounded bg-background border">
+                  <div className="text-rose-600 font-bold text-sm">
+                    {zoneTransferItem.quantity_damaged ?? 0}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Dañado</div>
+                </div>
+                <div className="p-1 rounded bg-background border">
+                  <div className="text-amber-600 font-bold text-sm">
+                    {zoneTransferItem.quantity_incomplete ?? 0}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Incompleto</div>
+                </div>
+                <div className="p-1 rounded bg-background border">
+                  <div className="text-purple-600 font-bold text-sm">
+                    {zoneTransferItem.quantity_warranty ?? 0}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Garantía</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Zona Origen</Label>
+                  <Select
+                    value={zoneTransferForm.from_zone}
+                    onValueChange={(val) => setZoneTransferForm({ ...zoneTransferForm, from_zone: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="principal">🟢 Disponible</SelectItem>
+                      <SelectItem value="danado">🔴 Dañado</SelectItem>
+                      <SelectItem value="incompleto">🟠 Incompleto</SelectItem>
+                      <SelectItem value="garantia">🟣 Garantía</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Zona Destino</Label>
+                  <Select
+                    value={zoneTransferForm.to_zone}
+                    onValueChange={(val) => setZoneTransferForm({ ...zoneTransferForm, to_zone: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="principal">🟢 Disponible</SelectItem>
+                      <SelectItem value="danado">🔴 Dañado</SelectItem>
+                      <SelectItem value="incompleto">🟠 Incompleto</SelectItem>
+                      <SelectItem value="garantia">🟣 Garantía</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label>Cantidad a transferir</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={zoneTransferForm.quantity}
+                  onChange={(e) => setZoneTransferForm({ ...zoneTransferForm, quantity: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+
+              <div>
+                <Label>Motivo</Label>
+                <Input
+                  value={zoneTransferForm.reason}
+                  onChange={(e) => setZoneTransferForm({ ...zoneTransferForm, reason: e.target.value })}
+                  placeholder="Ej: Avería en transporte, Reingreso tras reparación..."
+                />
+              </div>
+
+              <div>
+                <Label>Notas u Observaciones (Opcional)</Label>
+                <Textarea
+                  value={zoneTransferForm.notes}
+                  onChange={(e) => setZoneTransferForm({ ...zoneTransferForm, notes: e.target.value })}
+                  placeholder="Detalles adicionales..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowZoneTransferDialog(false)}
+                  disabled={zoneTransferLoading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleExecuteZoneTransfer}
+                  disabled={zoneTransferLoading || zoneTransferForm.from_zone === zoneTransferForm.to_zone}
+                >
+                  {zoneTransferLoading ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Transfiriendo...</>
+                  ) : (
+                    "Confirmar Transferencia"
+                  )}
                 </Button>
               </div>
             </div>

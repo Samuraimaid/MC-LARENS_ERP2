@@ -257,7 +257,7 @@ async def revert_sale_effects(db: Any, sale_id: str, approver) -> Dict[str, Any]
         await db.inventory.update_one(
             {"product_id": product_id, "warehouse_id": warehouse_id},
             {
-                "$inc": {"quantity": qty},
+                "$inc": {"quantity": qty, "quantity_available": qty},
                 "$set": {"last_updated": now_iso},
             },
         )

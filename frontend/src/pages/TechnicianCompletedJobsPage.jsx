@@ -1,19 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { useAuth } from "../context/AuthContext";
-import { API_BASE as API } from "@/lib/api";
-import { cn, formatDate } from "@/lib/utils";
-import { formatQuincenaLabel, getQuincenaIsoRange } from "@/lib/payrollPeriods";
-import { TechnicianKioskNav } from "@/components/technician/TechnicianKioskNav";
-import { erpActionButtonClass } from "@/lib/erpDesignSystem";
-
-const ROLES_LABEL = {
-  instalaciones: "Instalador",
-  instalador: "Instalador",
-  electrico: "Eléctrico",
-  polarizador: "Polarizador",
-};
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -43,9 +30,30 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { API_BASE as API } from "@/lib/api";
+import { cn, formatDate } from "@/lib/utils";
+import { formatQuincenaLabel, getQuincenaIsoRange } from "@/lib/payrollPeriods";
+import { TechnicianKioskNav } from "@/components/technician/TechnicianKioskNav";
+import { erpActionButtonClass } from "@/lib/erpDesignSystem";
+
+const ROLES_LABEL = {
+  instalaciones: "Instalador",
+  instalador: "Instalador",
+  electrico: "Eléctrico",
+  polarizador: "Polarizador",
+  gerencia: "Gerencia",
+  supervisor: "Supervisor",
+  coordinador_instalaciones: "Coord. Instalaciones",
+  coordinador_polarizados: "Coord. Polarizados",
+  programador: "Programador",
+  admin: "Administrador",
+};
 
 const SUPERVISOR_ROLES = [
   "gerencia",
+  "programador",
+  "admin",
   "supervisor",
   "coordinador_instalaciones",
   "coordinador_polarizados",
@@ -71,6 +79,14 @@ const DEPARTMENT_META = {
   },
 };
 
+function parseDateSafe(val) {
+  if (!val) return null;
+  const str = String(val).trim();
+  const dateOnly = str.includes("T") ? str.split("T")[0] : str;
+  const parsed = new Date(`${dateOnly}T12:00:00`);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function todayIso() {
   const now = new Date();
   const y = now.getFullYear();
@@ -91,6 +107,7 @@ const PERIOD_PRESETS = {
   previous_quincena: () => getQuincenaIsoRange(new Date(), -1),
   this_month: () => ({ dateFrom: monthStartIso(), dateTo: todayIso() }),
 };
+
 
 export function TechnicianCompletedJobsPage() {
   const { user } = useAuth();
@@ -164,14 +181,20 @@ export function TechnicianCompletedJobsPage() {
     setDateTo(to);
   };
 
-  const quincenaLabel =
-    summary.quincena_label ||
-    (summary.quincena_start && summary.quincena_end
-      ? formatQuincenaLabel(
-          new Date(`${summary.quincena_start}T12:00:00`),
-          new Date(`${summary.quincena_end}T12:00:00`)
-        )
-      : null);
+  const quincenaLabel = useMemo(() => {
+    if (summary.quincena_label) return summary.quincena_label;
+    const start = parseDateSafe(summary.quincena_start);
+    const end = parseDateSafe(summary.quincena_end);
+    if (start && end) {
+      try {
+        return formatQuincenaLabel(start, end);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [summary.quincena_label, summary.quincena_start, summary.quincena_end]);
+
 
   const summaryCards = useMemo(() => {
     const cards = [
