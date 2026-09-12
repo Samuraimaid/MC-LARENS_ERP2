@@ -131,6 +131,9 @@
 
 #### P2.media — Honest upload progress (R-009)
 Cuando se trabaje el uploader de **videos de publicidad** o **imágenes de pruebas de taller**: mostrar %, ETA, MB/s, nombre/tamaño y cancelar — no solo spinner. Ver `docs/ANTIGRAVITY_REELS_EVAL.md` R-009.
+
+#### P2.context — Context menus PC + móvil (R-010)
+Implementar sistema compartido de acciones contextuales: DesktopMenu (right-click/⋯) + MobileSheet (long-press). Misma lista de acciones; grupos; delete en peligro. Ver R-010. Prioridad tras P0/#4–#7 salvo que Xinon pida adelantar (2026-09-12: adelantar implementación).
  — Rendimiento y caché (sin tocar consistencia fuerte)
 
 #### P2.1 Caché de lecturas calientes
@@ -218,7 +221,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados:** … R-009 APLICAR (uploads) · R-010 context menus → **APARCAR** (PC menú / móvil sheet). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados:** … R-009 APLICAR (uploads) · R-010 context menus → **APLICAR** (Xinon: implementar DesktopMenu + MobileSheet). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
