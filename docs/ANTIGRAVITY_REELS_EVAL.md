@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-11 (R-005)
+**Actualizado:** 2026-09-12 (R-006)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,21 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-006 — UX de data tables (“A table is six decisions”)
+- **Fecha evaluación:** 2026-09-12
+- **Fuente:** Facebook Reel — Design Motion (@designmotionhq)  
+  https://www.facebook.com/share/r/1C6RVzTzJd/  
+  (reel `1268917731967815`)
+- **Idea (resumen):** Una tabla de datos es un sistema; seis decisiones de UX: **Align**, **Density**, **Cells**, **Rows**, **Sticky**, **Actions** (más búsqueda/filtros/paginación en el ejemplo).
+- **Veredicto:** **APARCAR**
+- **Impacto en McLarens ERP:** Medio a futuro. El ERP está lleno de grillas (inventario, usuarios, ventas, reportes, vehículos, créditos…). Mejorar alineación numérica, densidad, badges de estado, sticky header y menú de acciones por fila mejoraría operación en tienda — pero **no** arregla P0/#4–#7 ni latencias de API.
+- **Si se retoma (post P1, FE polish / FRONTEND_MODERNIZATION):**
+  - Inventario, Users, Sales/Quotations lists, Cashier queues: sticky header, align montos a la derecha, densidad compacta para POS, acciones claras (no esconder en hover-only en touch).
+  - Un PR de diseño de tabla compartida > retocar pantalla por pantalla sin sistema.
+- **Acción Antigravity ahora:** ninguna. No abrir PR de rediseño de tablas.
+- **Relacionado:** handoff §6 “Rebrand / rediseño UX” fuera de alcance inmediato; R-003 (no reescritura grande).
 
 
 ### R-005 — 10 algoritmos de load balancing
