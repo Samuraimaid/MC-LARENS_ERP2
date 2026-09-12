@@ -214,7 +214,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados (2026-09-11):** R-001 APARCAR · R-002–R-005: R-002 cron OBVIAR, R-003 monolito APLICAR guardrail, R-004 failover OBVIAR, R-005 load balancing → **OBVIAR** (Cloud Run). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados:** R-001 APARCAR · R-002 OBVIAR · R-003 APLICAR guardrail · R-004/005 OBVIAR · R-006 data-table UX → **APARCAR**. Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
