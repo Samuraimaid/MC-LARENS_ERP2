@@ -73,14 +73,56 @@ class ZoneTransferPayload(BaseModel):
 class WarehouseProductStatusPayload(BaseModel):
     warehouse_id: str
     product_id: str
-    is_active: bool
+    is_active: Optional[bool] = None
+    is_active_in_warehouse: Optional[bool] = None
     min_stock: Optional[int] = None
+
+    def get_is_active(self) -> bool:
+        if self.is_active is not None:
+            return bool(self.is_active)
+        if self.is_active_in_warehouse is not None:
+            return bool(self.is_active_in_warehouse)
+        return True
 
 
 class BatchWarehouseProductStatusPayload(BaseModel):
     warehouse_id: str
-    product_ids: List[str]
-    is_active: bool
+    product_ids: List[str] = []
+    is_active: Optional[bool] = None
+    is_active_in_warehouse: Optional[bool] = None
+
+    def get_is_active(self) -> bool:
+        if self.is_active is not None:
+            return bool(self.is_active)
+        if self.is_active_in_warehouse is not None:
+            return bool(self.is_active_in_warehouse)
+        return True
+
+
+class ProductStatusPayload(BaseModel):
+    is_active: Optional[bool] = None
+    is_active_in_warehouse: Optional[bool] = None
+    min_stock: Optional[int] = None
+
+    def get_is_active(self) -> bool:
+        if self.is_active is not None:
+            return bool(self.is_active)
+        if self.is_active_in_warehouse is not None:
+            return bool(self.is_active_in_warehouse)
+        return True
+
+
+class BatchProductStatusPayload(BaseModel):
+    product_ids: List[str] = []
+    is_active: Optional[bool] = None
+    is_active_in_warehouse: Optional[bool] = None
+
+    def get_is_active(self) -> bool:
+        if self.is_active is not None:
+            return bool(self.is_active)
+        if self.is_active_in_warehouse is not None:
+            return bool(self.is_active_in_warehouse)
+        return True
 
 
 def _normalize_inventory_zones(doc: Dict[str, Any]) -> Dict[str, Any]:
@@ -2053,6 +2095,7 @@ def get_inventory_router(
         }
 
     @router.put("/warehouses/{warehouse_id}/product-states/{product_id}")
+    @router.post("/warehouses/{warehouse_id}/product-states/{product_id}")
     async def set_warehouse_product_state(
         warehouse_id: str,
         product_id: str,
@@ -2071,21 +2114,19 @@ def get_inventory_router(
         inv_filter = {"warehouse_id": warehouse_id, "product_id": product_id}
         existing = await db.inventory.find_one(inv_filter)
         now_iso = datetime.now(timezone.utc).isoformat()
-        new_active = bool(payload.is_active)
+        new_active = payload.get_is_active()
 
         if existing:
-            await db.inventory.update_one(
-                inv_filter,
-                {
-                    "$set": {
-                        "is_active": new_active,
-                        "activated_at": now_iso if new_active else existing.get("activated_at"),
-                        "activated_by": user.user_id if new_active else existing.get("activated_by"),
-                        "updated_at": now_iso,
-                        "updated_by": user.user_id,
-                    }
-                },
-            )
+            update_data: Dict[str, Any] = {
+                "is_active": new_active,
+                "activated_at": now_iso if new_active else existing.get("activated_at"),
+                "activated_by": user.user_id if new_active else existing.get("activated_by"),
+                "updated_at": now_iso,
+                "updated_by": user.user_id,
+            }
+            if payload.min_stock is not None:
+                update_data["min_stock"] = max(0, int(payload.min_stock))
+            await db.inventory.update_one(inv_filter, {"$set": update_data})
         else:
             inv_doc = {
                 "inventory_id": f"inv_{uuid.uuid4().hex[:12]}",
@@ -2096,7 +2137,7 @@ def get_inventory_router(
                 "quantity_damaged": 0,
                 "quantity_incomplete": 0,
                 "quantity_warranty": 0,
-                "min_stock": 0,
+                "min_stock": max(0, int(payload.min_stock or 0)),
                 "is_active": new_active,
                 "activated_at": now_iso if new_active else None,
                 "activated_by": user.user_id if new_active else None,
@@ -2127,10 +2168,13 @@ def get_inventory_router(
             "warehouse_id": warehouse_id,
             "product_id": product_id,
             "is_active_in_warehouse": new_active,
+            "is_active": new_active,
             "updated_at": now_iso,
         }
 
     @router.post("/warehouses/{warehouse_id}/product-states/bulk")
+    @router.put("/warehouses/{warehouse_id}/product-states/bulk")
+    @router.put("/warehouses/{warehouse_id}/product-states")
     async def bulk_set_warehouse_product_states(
         warehouse_id: str,
         payload: BatchProductStatusPayload,
@@ -2142,7 +2186,7 @@ def get_inventory_router(
             raise HTTPException(status_code=403, detail="No tienes acceso a modificar esta bodega")
 
         now_iso = datetime.now(timezone.utc).isoformat()
-        new_active = bool(payload.is_active)
+        new_active = payload.get_is_active()
         updated_count = 0
 
         for pid in payload.product_ids:
