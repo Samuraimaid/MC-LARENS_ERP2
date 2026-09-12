@@ -218,7 +218,7 @@ Archivo vivo (fuente de verdad del registro):
 - En repo: `docs/ANTIGRAVITY_REELS_EVAL.md`
 - Veredictos: `APLICAR` · `APARCAR` · `OBVIAR`
 
-**Últimos reels evaluados:** … R-008 OBVIAR · R-009 upload progreso honesto → **APLICAR** (videos publicidad + fotos pruebas taller, al tocar esos UIs). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
+**Últimos reels evaluados:** … R-009 APLICAR (uploads) · R-010 context menus → **APARCAR** (PC menú / móvil sheet). Ver `docs/ANTIGRAVITY_REELS_EVAL.md`.
 
 Prioridad operativa sigue siendo **P0 → P1** de este handoff + issues GitHub **#4–#7**.
 
