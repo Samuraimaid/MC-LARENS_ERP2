@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 ( + Afzal P-AFZ barrido)
+**Actualizado:** 2026-09-12 ( + Kelvorn P-KEL / R-039)
 
 > **Antigravity:** usa `docs/ANTIGRAVITY_APLICAR_TODO.md`. Barrido Design Motion: R-011…R-035 en este inbox + `docs/design_motion_overnight_candidates.md`.
 >
@@ -31,6 +31,29 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### P-KEL — Perfil Kelvorn (system design visualized)
+- **Fecha:** 2026-09-12
+- **Fuente:** https://www.facebook.com/share/19T6y5wze7/ · https://www.facebook.com/p/Kelvorn-61592553602750/
+- **Nicho:** Tech explainer / system design visualizado (overlap Afzal + Đức Minh).
+
+| Tip | Veredicto | Nota ERP |
+|-----|-----------|----------|
+| **Idempotency Keys** (reintentos ≠ compras duplicadas) | **APLICAR** (R-039) | Crítico en caja/pagos/finalizar venta + uploads. Con R-019. |
+| Rate limit / queues / CDN / Docker / JWT basics | **APARCAR / OBVIAR** | Ya cubierto P-DMN/P-AFZ/R-005; Cloud Run managed. |
+| Nginx vs HAProxy vs Envoy reload | **OBVIAR** | No opera ese stack; Cloud Run. |
+| RabbitMQ vs Kafka vs Redis Streams | **APARCAR** | Preferir Cloud Tasks/Pub/Sub si hay colas; no broker nuevo ya. |
+| Postgres vs Mongo vs Redis | **OBVIAR** | Ya Mongo+Atlas; no migrar. |
+| CAPTCHA / Firewall ports / sharding | **OBVIAR** | Fuera de scope o prematuro (R-003 monolito). |
+| Request journey login | **OBVIAR** | Educativo. |
+
+### R-039 — Idempotency keys en mutaciones de dinero / side-effects
+- **Veredicto:** **APLICAR**
+- **Idea:** Cliente manda key única; servidor deduplica retries (doble tap, red floja en tienda).
+- **ERP:** `finalizar venta`, cobros, transferencias stock, posiblemente uploads grandes.
+- **Acción:** al tocar esos endpoints, header/`Idempotency-Key` + store short TTL; no reaplicar side-effect.
+- **Fuente:** Kelvorn reel “Idempotency Keys”.
 
 
 ### P-AFZ — Perfil Afzal Web Solutions (codingwithjutt) — barrido amplio
