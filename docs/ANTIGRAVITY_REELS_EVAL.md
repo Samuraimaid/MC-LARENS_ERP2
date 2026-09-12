@@ -2,7 +2,7 @@
 
 **Repo:** Samuraimaid/MC-LARENS_ERP2  
 **Quién evalúa:** Case (Grok Bot) — Xinon comparte reels; Case clasifica impacto antes de que Antigravity implemente.  
-**Actualizado:** 2026-09-12 (R-006)
+**Actualizado:** 2026-09-12 (R-007)
 
 ## Cómo usar este archivo
 
@@ -27,6 +27,25 @@
 ---
 
 ## Registro (más reciente arriba)
+
+
+### R-007 — Tablas en móvil (no achicar: reestructurar)
+- **Fecha evaluación:** 2026-09-12
+- **Fuente:** Facebook Reel — Design Motion  
+  https://www.facebook.com/share/r/1LeJn6SrmQ/  
+  (reel `1074809841592221`)
+- **Idea (resumen):** “Your table doesn’t fit a phone. Shrinking it isn’t the fix.” Hay que **reestructurar** (p.ej. cards, columnas prioritarias, sticky + scroll, detalle al tap) — no comprimir la grilla de escritorio.
+- **Veredicto:** **APARCAR** (útil para móvil; no ahora)
+- **Impacto en McLarens ERP:** Medio-alto en roles de piso (técnicos, polarizados/KDS, entregador, a veces ventas/caja en tablet). Achicar `/inventory`, usuarios o listas de órdenes en un teléfono los vuelve inutilizables; el consejo es el correcto.
+- **Patrones a considerar cuando toque FE móvil (junto R-006):**
+  1. Filas → **cards** con 3–4 campos clave + tap para detalle
+  2. Ocultar columnas de baja prioridad (`md+` only)
+  3. Sticky de columna identidad + scroll horizontal (si hay que comparar)
+  4. Acciones grandes touch (no menús hover)
+  5. Filtros en sheet/bottom, no barra densa de escritorio
+  6. No `font-size: 8px` ni zoom forzado como “solución”
+- **Acción Antigravity ahora:** ninguna. No PR de responsive tables hasta después de P0/#4–#7 (y idealmente un criterio de qué pantallas se usan en teléfono).
+- **Relacionado:** R-006 APARCAR (sistema de tabla); entregador/GPS móvil; handoff fuera de alcance “rediseño UX” inmediato.
 
 
 ### R-006 — UX de data tables (“A table is six decisions”)
