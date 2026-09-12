@@ -2,7 +2,7 @@
 
 **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2  
 **Branch base:** `master`  
-**Actualizado:** 2026-09-12 ( + P-HackProduct APARCAR/OBVIAR)
+**Actualizado:** 2026-09-12 ( + R-053 stock + R-054 pagination)
 **Autor del brief:** Case (evaluaciones + QA) · handoff seguridad original TARS  
 **Para:** Antigravity — **este archivo es la fuente de verdad de qué implementar**.  
 Ignorar reels/ideas marcados OBVIAR/APARCAR salvo que Xinon los promueva.
@@ -215,3 +215,9 @@ Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo veri
 | Codez Up R-046 Claude vision tokens | **OBVIAR** | Solo si OCR/visión taller |
 
 **APLICAR:** R-042 sliding-window rate limit (PIN/APIs).
+
+
+### PlayDev (2026-09-12)
+| PlayDev R-055 CORS | **APARCAR** | Verificar allowlist por env; no `*` en prod |
+| PlayDev R-056 localhost | **OBVIAR** código | Solo onboarding |
+| PlayDev R-057/R-058 caché | **APARCAR** | No caché prematura; invalidate-on-write si llega |
