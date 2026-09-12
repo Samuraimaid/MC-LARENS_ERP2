@@ -4164,6 +4164,7 @@ async def sync_canonical_user_pins() -> None:
     Ensures all 63 team roles and credentials function seamlessly with O(1) SHA-256 index lookups.
     """
     core_seed_path = os.path.join(os.path.dirname(__file__), "data", "seeds", "core_seed.json")
+    pins_table_path = os.path.join(os.path.dirname(__file__), "data", "seeds", "pins_table.json")
     synced = 0
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -4200,6 +4201,43 @@ async def sync_canonical_user_pins() -> None:
                 synced += 1
         except Exception as exc:
             logger.warning("Error syncing users from core_seed.json: %s", exc)
+
+    if os.path.exists(pins_table_path):
+        try:
+            with open(pins_table_path, "r", encoding="utf-8") as f:
+                pins_list = json.load(f)
+            for p in pins_list:
+                email = (p.get("email") or "").strip().lower()
+                name = (p.get("name") or "").strip()
+                login_pin = str(p.get("login_pin") or "").strip()
+                att_pin = str(p.get("attendance_pin") or "").strip()
+                if not email and not name:
+                    continue
+
+                set_dict: Dict[str, Any] = {
+                    "is_active": True,
+                    "is_pin_user": True,
+                    "failed_pin_attempts": 0,
+                    "pin_lockout_until": None,
+                }
+                if login_pin:
+                    set_dict["login_pin_hash"] = hash_pin(login_pin)
+                    set_dict["login_pin_index"] = compute_pin_index(login_pin)
+                if att_pin:
+                    set_dict["attendance_pin_hash"] = hash_pin(att_pin)
+                    set_dict["attendance_pin_index"] = compute_pin_index(att_pin)
+                    set_dict["kiosk_pin_plain"] = att_pin
+                    set_dict["pin_index"] = compute_pin_index(att_pin)
+                    set_dict["pin_hash"] = hash_pin(att_pin)
+
+                await db.users.update_one(
+                    {"$or": [{"email": email}, {"name": name}]},
+                    {"$set": set_dict},
+                    upsert=False,
+                )
+                synced += 1
+        except Exception as exc:
+            logger.warning("Error syncing users from pins_table.json: %s", exc)
 
     logger.info("Synchronized %d canonical user PIN credentials on startup", synced)
 
