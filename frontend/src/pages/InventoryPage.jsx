@@ -2115,6 +2115,7 @@ export function InventoryPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">BODEGAS</CardTitle>
           </CardHeader>
+          <CardContent>
             <div className="font-heading text-3xl font-bold">{warehouses.length}</div>
           </CardContent>
         </Card>
@@ -3323,6 +3324,9 @@ export function InventoryPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
       {/* Virtual Zone Transfer Dialog */}
       <Dialog open={showZoneTransferDialog} onOpenChange={setShowZoneTransferDialog}>
         <DialogContent className="max-w-md">
