@@ -118,26 +118,29 @@ export function MainLayout() {
     }
     return userFirstName || branding.brandName;
   }, [userFirstName, userLastName, branding.brandName]);
-  const buildVersion = APP_ENV.buildVersion || "0.2.0-cloud";
+  const buildVersion = APP_ENV.buildVersion || "0.2.1";
+  const buildId = APP_ENV.buildId || "";
   const buildTime = APP_ENV.buildTime;
+  const buildPrimaryLabel = buildId || buildVersion;
   const buildTimeLabel = useMemo(() => {
-    if (!buildTime) return "Build Activo";
+    if (!buildTime) return buildId ? `id ${buildId}` : "Build Activo";
     try {
       const d = new Date(buildTime);
       return isNaN(d.getTime())
         ? String(buildTime)
-        : d.toLocaleString("es-NI", {
+        : d.toLocaleString("es-GT", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
+            timeZone: "America/Guatemala",
           });
     } catch {
       return "Build Activo";
     }
-  }, [buildTime]);
+  }, [buildTime, buildId]);
   const isMobile = viewportWidth < 1024;
   const isSellerRole = isSellerRoleHelper(user?.role);
   const isCashierKiosk = isCashierKioskRole(user?.role);
@@ -674,10 +677,10 @@ export function MainLayout() {
                 {!isPhone && (
                   <span
                     className="inline-flex min-w-[138px] flex-col rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold tracking-normal text-primary leading-tight"
-                    title={`Build ${buildVersion} ${buildTimeLabel}`}
+                    title={`Build ${buildPrimaryLabel} · ${buildVersion} · ${buildTimeLabel}`}
                   >
-                    <span className="truncate">BUILD {buildVersion}</span>
-                    <span className="font-normal tracking-normal text-[8px] text-primary/80 truncate">{buildTimeLabel}</span>
+                    <span className="truncate">BUILD {buildPrimaryLabel}</span>
+                    <span className="font-normal tracking-normal text-[8px] text-primary/80 truncate">{buildTimeLabel} · v{buildVersion}</span>
                   </span>
                 )}
                 {!isPhone && (
