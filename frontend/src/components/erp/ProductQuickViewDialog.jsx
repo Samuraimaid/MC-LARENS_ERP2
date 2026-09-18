@@ -73,18 +73,17 @@ export default function ProductQuickViewDialog({
   const brandLogo = getProductBrandLogo(product.brand);
   const IconComponent = getCategoryIcon(product.category);
 
-  const getConvertedPrice = (priceVal) => {
-    const base = Number(priceVal) || 0;
+  const getDualPrices = (priceVal) => {
+    const usd = Number(priceVal) || 0;
     const rate = Number(exchangeRate) || 36.5;
-    if (currency === "USD") {
-      return base;
-    }
-    return Number((base * rate).toFixed(2));
+    const nio = usd * rate;
+    return {
+      usdFormatted: formatCurrency(usd, "USD"),
+      nioFormatted: formatCurrency(nio, "NIO"),
+    };
   };
 
-  const formatProductPrice = (priceVal) => {
-    return formatCurrency(getConvertedPrice(priceVal), currency);
-  };
+  const dualPrice = getDualPrices(product.precio1 ?? product.price ?? 0);
 
   // Gather all valid images
   const rawImages = Array.isArray(product.images) && product.images.length > 0
@@ -155,10 +154,10 @@ export default function ProductQuickViewDialog({
 
             <div className="text-right">
               <div className="text-2xl font-black text-primary font-mono">
-                {formatProductPrice(product.precio1 ?? product.price ?? 0)}
+                {dualPrice.usdFormatted}
               </div>
-              <div className="text-[11px] text-muted-foreground">
-                Precio sugerido al cliente {currency === "NIO" ? `(US$ ${Number(product.precio1 ?? product.price ?? 0).toFixed(2)})` : ""}
+              <div className="text-xs font-mono text-muted-foreground font-medium">
+                ≈ {dualPrice.nioFormatted}
               </div>
             </div>
           </div>

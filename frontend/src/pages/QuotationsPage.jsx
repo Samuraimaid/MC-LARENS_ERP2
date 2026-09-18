@@ -1073,9 +1073,18 @@ export function QuotationsPage() {
         }, 0);
       } else {
         setActiveDraftId(null);
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+          window.localStorage.removeItem("catalog_open_draft");
+        }
         resetQuoteFormState();
         setQuoteFormRenderNonce((prev) => prev + 1);
       }
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
     }
 
     deleteServerDraft(DRAFT_FLOW, draftId).catch(() => {
@@ -1132,6 +1141,8 @@ export function QuotationsPage() {
   const clearEmbeddedQuoteForm = useCallback(() => {
     if (typeof window !== "undefined" && activeDraftId) {
       window.localStorage.removeItem(getDraftKey(activeDraftId));
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
     }
     if (activeDraftId) {
       syncDraftToServer(activeDraftId, {}, draftTabsRef.current.find((tab) => tab.id === activeDraftId)?.name).catch(() => {
@@ -1302,7 +1313,7 @@ export function QuotationsPage() {
     }
     window.localStorage.setItem(CATALOG_SOURCE_CONTEXT_KEY, JSON.stringify({
       source: "quote-form",
-      returnPath: window.location.pathname || "/quotations",
+      returnPath: "/workbench?tab=quotations",
       draftId,
       draftName: draftName || draftId,
       selectedCustomerId: safeSnapshot.selectedCustomerId,
@@ -1321,7 +1332,7 @@ export function QuotationsPage() {
       createdAtTs: Date.now(),
     }));
     window.localStorage.setItem("catalog_open_draft", "quote");
-    window.location.href = "/catalog";
+    navigate("/workbench?tab=catalog&mode=quote-pick");
   }, [
     DRAFT_ACTIVE_KEY,
     DRAFT_FLOW,
@@ -1331,6 +1342,7 @@ export function QuotationsPage() {
     draftTabs,
     effectiveIvaRate,
     effectiveUsdNioRate,
+    navigate,
     scheduleDraftSync,
     selectedWarehouse,
     user?.name,
@@ -1632,7 +1644,7 @@ export function QuotationsPage() {
       // sales page can still recover from local storage if remote sync fails
     });
     window.localStorage.setItem("catalog_open_draft", "sale");
-    window.location.href = "/sales";
+    navigate("/workbench?tab=sales");
   };
 
   const filteredQuotations = quotations.filter(q => {
@@ -1652,7 +1664,7 @@ export function QuotationsPage() {
   const totals = calculateTotals();
 
   return (
-    <div className="p-6 space-y-6" data-testid="quotations-page">
+    <div className="p-0 space-y-4" data-testid="quotations-page">
       {!showNewQuote ? (
         <Card className="border-dashed border-primary/40 bg-primary/5">
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">

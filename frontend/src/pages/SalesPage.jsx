@@ -1394,6 +1394,10 @@ export function SalesPage() {
     }
 
     createDraftTab();
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
+    }
     resetSaleForm({ keepVisible: true, skipAutoDraft: true });
     toast.success("Borrador guardado. Formulario listo para nueva venta.");
   }, [DRAFT_FLOW, activeDraftId, activeDraftTab, canCreateSales, createDraftTab, syncDraftToServer, user?.role, user?.user_id]);
@@ -1486,7 +1490,7 @@ export function SalesPage() {
     }
     window.localStorage.setItem(CATALOG_SOURCE_CONTEXT_KEY, JSON.stringify({
       source: "sale-form",
-      returnPath: window.location.pathname || "/sales",
+      returnPath: "/workbench?tab=sales",
       draftId,
       draftName: draftName || draftId,
       selectedCustomerId: safeSnapshot.selectedCustomerId,
@@ -1505,7 +1509,7 @@ export function SalesPage() {
       createdAtTs: Date.now(),
     }));
     window.localStorage.setItem("catalog_open_draft", "sale");
-    window.location.href = "/catalog";
+    navigate("/workbench?tab=catalog&mode=sale-pick");
   }, [
     DRAFT_ACTIVE_KEY,
     DRAFT_FLOW,
@@ -1514,8 +1518,9 @@ export function SalesPage() {
     canCreateSales,
     customers,
     draftTabs,
-    exchangeRate,
     effectiveIvaRate,
+    exchangeRate,
+    navigate,
     scheduleDraftSync,
     selectedWarehouse,
     vehicles,
@@ -1529,6 +1534,8 @@ export function SalesPage() {
     }
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(getDraftKey(draftId));
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
     }
     setDraftTabs((prev) => prev.filter((entry) => entry.id !== draftId));
     if (!skipServerDelete) {
@@ -1543,6 +1550,10 @@ export function SalesPage() {
   const beginFreshSaleForm = useCallback(() => {
     suppressAutoDraftRef.current = true;
     setActiveDraftId(null);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
+    }
     resetSaleForm({ keepVisible: true, skipAutoDraft: true });
     setSaleFormRenderNonce((prev) => prev + 1);
     setDraftContentRevision((prev) => prev + 1);
@@ -1559,6 +1570,10 @@ export function SalesPage() {
 
     suppressAutoDraftRef.current = true;
     setActiveDraftId(null);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_open_draft");
+    }
     resetSaleForm({ keepVisible: true, skipAutoDraft: true });
     setSaleFormRenderNonce((prev) => prev + 1);
     setDraftContentRevision((prev) => prev + 1);
@@ -2749,7 +2764,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
   };
 
   return (
-    <div className="p-6 space-y-6" data-testid="sales-page">
+    <div className="p-0 space-y-4" data-testid="sales-page">
       {!canViewSales ? (
         <Card>
           <CardContent className="py-6">

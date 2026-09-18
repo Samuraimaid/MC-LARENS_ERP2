@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -12,8 +13,26 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { Eye, CarFront, ListFilter, Pin, Search, Shapes, Tags, ShoppingCart, FileText, MessageSquare, Boxes } from "lucide-react";
+import {
+  Eye,
+  CarFront,
+  ListFilter,
+  Pin,
+  Search,
+  Shapes,
+  Tags,
+  ShoppingCart,
+  FileText,
+  MessageSquare,
+  Boxes,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  SlidersHorizontal,
+} from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
+import { usdAndNioFromUsdBase, formatDualCurrency } from "@/lib/documentCurrency";
+import { usesRestrictedNavigation } from "@/lib/roleHome";
 import { API_BASE as API } from "@/lib/api";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
@@ -127,6 +146,18 @@ const isProductCompatibleWithVehicle = (product, vehicle) => {
 
 export function CatalogPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Redirect restricted seller roles on standalone /catalog route to workbench catalog tab
+  useEffect(() => {
+    if (usesRestrictedNavigation(user?.role) && location.pathname === "/catalog") {
+      const qs = location.search ? `?${location.search.replace(/^\?/, "")}&tab=catalog` : "?tab=catalog";
+      navigate(`/workbench${qs}`, { replace: true });
+    }
+  }, [user?.role, location.pathname, location.search, navigate]);
+
   const userDraftScopeToken = useMemo(() => {
     const raw = user?.user_id || user?.pin_user_id || user?.username || "anon";
     return String(raw).replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -161,6 +192,10 @@ export function CatalogPage() {
     choices: [],
   });
 
+  const modeParam = searchParams.get("mode");
+  const compatParam = searchParams.get("compat");
+  const isSalePickMode = modeParam === "sale-pick" || modeParam === "quote-pick" || compatParam === "1";
+
   useEffect(() => {
     setVisibleCount(30);
   }, [search, category, subcategory, productType, vehicleType, boardTab]);
@@ -177,24 +212,17 @@ export function CatalogPage() {
   };
 
   const resolveDraftTargetPath = (type) => {
-    const config = getDraftConfig(type);
-    if (!config) return "/sales";
-
-    if (type === "sale" && sourceContext?.source === "sale-form") {
-      const returnPath = sourceContext?.returnPath;
-      if (typeof returnPath === "string" && returnPath.startsWith("/")) {
-        return returnPath;
-      }
+    if (type === "quote" || sourceContext?.source === "quote-form") {
+      return "/workbench?tab=quotations";
     }
-
-    return config.targetPath;
+    return "/workbench?tab=sales";
   };
 
   const fetchCatalog = async () => {
     setLoading(true);
     try {
       const [productsRes, categoriesRes, customersRes, inventoryRes, warehousesRes, vehiclesRes] = await Promise.all([
-        axios.get(`${API}/products`, { withCredentials: true }),
+        axios.get(`${API}/products?limit=10000`, { withCredentials: true }),
         axios.get(`${API}/categories`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
@@ -205,7 +233,7 @@ export function CatalogPage() {
       setCategories(categoriesRes?.data?.categories || {});
       setVehicleTypes(categoriesRes?.data?.vehicle_types || []);
       const customerMap = {};
-      const custList = (customersRes.data || [])
+      const custList = customersRes.data || [];
       custList.forEach((customer) => {
         if (customer?.customer_id) {
           customerMap[customer.customer_id] = customer.name || customer.customer_id;
@@ -257,9 +285,15 @@ export function CatalogPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!isSalePickMode) {
+      // In normal browse mode, do not enforce any active vehicle context
+      setSourceContext(null);
+      return;
+    }
+
     const raw = window.localStorage.getItem(CATALOG_SOURCE_CONTEXT_KEY);
     const parsed = parseJson(raw, null);
-    if (!parsed || parsed.source !== "sale-form") {
+    if (!parsed || (parsed.source !== "sale-form" && parsed.source !== "quote-form")) {
       setSourceContext(null);
       return;
     }
@@ -271,11 +305,21 @@ export function CatalogPage() {
       return;
     }
 
+    // Auto-clean if draftId no longer exists
+    const draftListKey = parsed.source === "quote-form" ? "draft_quote_tabs_v1" : "draft_sale_tabs_v1";
+    const draftTabsRaw = window.localStorage.getItem(`${draftListKey}_${userDraftScopeToken}`);
+    const draftTabsList = parseJson(draftTabsRaw, []);
+    if (parsed.draftId && Array.isArray(draftTabsList) && draftTabsList.length > 0 && !draftTabsList.some((t) => t.id === parsed.draftId)) {
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      setSourceContext(null);
+      return;
+    }
+
     setSourceContext(parsed);
-  }, []);
+  }, [isSalePickMode, userDraftScopeToken]);
 
   const selectedContextVehicle = useMemo(() => {
-    if (!sourceContext) return null;
+    if (!isSalePickMode || !sourceContext) return null;
     if (sourceContext.selectedVehicle && vehiclesById[sourceContext.selectedVehicle]) {
       return vehiclesById[sourceContext.selectedVehicle];
     }
@@ -283,14 +327,14 @@ export function CatalogPage() {
       return sourceContext.vehicle;
     }
     return null;
-  }, [sourceContext, vehiclesById]);
+  }, [isSalePickMode, sourceContext, vehiclesById]);
 
   const contextCustomerName = useMemo(() => {
     if (!sourceContext?.selectedCustomerId) return null;
     return sourceContext.customerName || customersById[sourceContext.selectedCustomerId] || null;
   }, [sourceContext, customersById]);
 
-  const enforceVehicleCompatibility = Boolean(sourceContext?.source === "sale-form" && selectedContextVehicle);
+  const enforceVehicleCompatibility = Boolean(isSalePickMode && sourceContext && selectedContextVehicle);
 
   useEffect(() => {
     let mounted = true;
@@ -599,26 +643,71 @@ export function CatalogPage() {
         </Button>
       </div>
 
-      {sourceContext?.source === "sale-form" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Contexto de venta activo</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Todo producto agregado a venta se enviará al borrador de origen sin volver a pedir selección.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">Borrador: {sourceContext.draftName || sourceContext.draftId}</Badge>
-              <Badge variant="outline">Cliente: {contextCustomerName || "Sin cliente"}</Badge>
-              <Badge variant="outline">
-                Vehículo: {selectedContextVehicle
-                  ? `${selectedContextVehicle.brand || ""} ${selectedContextVehicle.model || ""} ${selectedContextVehicle.year || ""}`.trim() || "Sin detalle"
-                  : "Sin vehículo"}
-              </Badge>
-              {enforceVehicleCompatibility && (
-                <Badge className="bg-emerald-600 text-white">Compatibilidad activa por vehículo</Badge>
-              )}
+      {isSalePickMode && sourceContext && (
+        <Card className="border-emerald-500/30 bg-emerald-500/10 shadow-sm animate-fade-up-soft">
+          <CardContent className="p-3.5 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-emerald-600 text-white font-semibold text-xs">
+                  Modo Selección: {sourceContext.source === "quote-form" ? "Cotización" : "Venta"}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  Al pulsar "Agregar", el producto se asigna de inmediato al borrador activo.
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="text-xs font-mono">
+                  Borrador: {sourceContext.draftName || sourceContext.draftId}
+                </Badge>
+                {contextCustomerName && (
+                  <Badge variant="outline" className="text-xs">
+                    Cliente: {contextCustomerName}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs">
+                  Vehículo: {selectedContextVehicle
+                    ? `${selectedContextVehicle.brand || ""} ${selectedContextVehicle.model || ""} ${selectedContextVehicle.year || ""}`.trim() || "Sin detalle"
+                    : "Sin vehículo"}
+                </Badge>
+                {enforceVehicleCompatibility ? (
+                  <Badge className="bg-emerald-700 text-white text-[11px] gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Filtrado por compatibilidad de vehículo
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-[11px]">
+                    Catálogo completo
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center pt-1 md:pt-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-8 bg-background/80 hover:bg-background"
+                onClick={() => {
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete("mode");
+                    next.delete("compat");
+                    return next;
+                  });
+                }}
+              >
+                Ver catálogo completo
+              </Button>
+              <Button
+                size="sm"
+                className="bg-primary text-primary-foreground text-xs h-8 gap-1.5 font-semibold shadow-sm"
+                onClick={() => {
+                  const target = sourceContext.source === "quote-form" ? "/workbench?tab=quotations" : "/workbench?tab=sales";
+                  navigate(target);
+                }}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                {sourceContext.source === "quote-form" ? "Volver a cotización" : "Volver a la venta"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -898,7 +987,10 @@ export function CatalogPage() {
                             </div>
                             <div className="text-right">
                               <div className="text-xl sm:text-2xl font-black text-primary font-mono">
-                                {formatCurrency(product.price || 0)}
+                                {formatCurrency(usdAndNioFromUsdBase(product.price || 0, effectiveUsdNioRate).usd, "USD")}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-mono font-medium">
+                                ≈ {formatCurrency(usdAndNioFromUsdBase(product.price || 0, effectiveUsdNioRate).nio, "NIO")}
                               </div>
                             </div>
                           </div>
@@ -919,7 +1011,7 @@ export function CatalogPage() {
                             {product.installation_type && product.installation_type !== "not_available" ? (
                               <Badge variant="outline" className="text-xs">
                                 Instalación: {product.installation_type === "required" ? "Requerida" : "Opcional"}
-                                {product.installation_price ? ` (${formatCurrency(product.installation_price)})` : ""}
+                                {product.installation_price ? ` (${formatCurrency(product.installation_price, "USD")})` : ""}
                               </Badge>
                             ) : null}
                           </div>
@@ -1179,6 +1271,8 @@ export function CatalogPage() {
         onSendWhatsApp={(p) => openWhatsAppDialog(p)}
         isWarehouseRole={isWarehouseRole}
         userRole={user?.role}
+        currency="USD"
+        exchangeRate={effectiveUsdNioRate}
       />
     </div>
   );
