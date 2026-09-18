@@ -230,3 +230,7 @@ Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo veri
 - Daños imágenes/búsqueda: [`docs/REPORTE_DANOS_CATALOGO_IMAGENES.md`](./REPORTE_DANOS_CATALOGO_IMAGENES.md)
 - Guía search rápido: [`docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md`](./GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md)
 - P0: sync imágenes→GCS + URLs Mongo; API `q/limit` real; FE debounce (no hidratar 11 MB).
+
+## PR-2 (2026-09-18)
+
+Prompt listo para pegar en Antigravity: [`docs/ANTIGRAVITY_PR2_PRODUCTTHUMB_20260918.md`](./ANTIGRAVITY_PR2_PRODUCTTHUMB_20260918.md) — ProductThumb + onError placeholder. Verify post-ops: [`docs/PR3_VERIFY_20260918.md`](./PR3_VERIFY_20260918.md).
