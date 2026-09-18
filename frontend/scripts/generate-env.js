@@ -22,7 +22,7 @@ const buildId = process.env.VITE_APP_BUILD_ID || process.env.REACT_APP_BUILD_ID 
   return `${YYYY}${MM}${DD}-${hh}${mm}`;
 })();
 // Try to include git short hash and branch for clearer build labeling when available
-let gitHash = process.env.VITE_APP_GIT_HASH || process.env.REACT_APP_GIT_HASH || '';
+let gitHash = process.env.VITE_APP_GIT_HASH || process.env.REACT_APP_GIT_HASH || process.env.COMMIT_SHA || process.env.SHORT_SHA || '';
 let gitBranch = process.env.VITE_APP_GIT_BRANCH || process.env.REACT_APP_GIT_BRANCH || '';
 try {
   const cp = require('child_process');
