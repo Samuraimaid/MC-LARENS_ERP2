@@ -39,6 +39,8 @@ import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
 import { formatCategoryLabel } from "@/lib/branding";
 import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
+import ProductThumb from "@/components/products/ProductThumb";
+import { getProductImageUrl } from "@/lib/productImage";
 
 const DRAFT_CONFIG = {
   sale: {
@@ -69,7 +71,7 @@ const parseJson = (value, fallback) => {
   }
 };
 
-const getProductImage = (product) => product?.images?.[0] || product?.image_url || null;
+const getProductImage = (product) => getProductImageUrl(product);
 const CATALOG_SOURCE_CONTEXT_KEY = "catalog_source_context_v1";
 const CONTEXT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
@@ -949,6 +951,7 @@ export function CatalogPage() {
                         {/* Image column */}
                         <div className="p-3.5 bg-muted/20 border-b md:border-b-0 md:border-r flex items-center justify-center min-h-[200px] max-h-[260px]">
                           <ProductImageHoverZoom
+                            product={product}
                             src={image}
                             alt={product.name || "Producto"}
                             brand={product.brand}

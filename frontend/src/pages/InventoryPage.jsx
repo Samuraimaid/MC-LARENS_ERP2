@@ -2306,8 +2306,8 @@ export function InventoryPage() {
                       <TableCell className="font-mono">{product.sku || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {product.images?.[0] && (
-                            <img src={product.images[0]} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                          {(product.image_url || product.image || product.images?.[0]) && (
+                            <img src={product.image_url || product.image || product.images?.[0]} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
                           )}
                           <span className="font-medium">{product.name || "Desconocido"}</span>
                         </div>

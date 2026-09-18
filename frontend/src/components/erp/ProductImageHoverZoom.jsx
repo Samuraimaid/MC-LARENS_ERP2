@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Eye, Package, Sparkles, Volume2, Lightbulb, Shield, Wrench, Droplet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getProductBrandLogo, formatCategoryLabel } from "@/lib/branding";
+import { getProductImageUrl, uploadsToGcsUrl, brandInitials } from "@/lib/productImage";
 
 function getCategoryIcon(category) {
   const cat = String(category || "").toLowerCase();
@@ -15,7 +16,8 @@ function getCategoryIcon(category) {
 }
 
 export default function ProductImageHoverZoom({
-  src,
+  product = null,
+  src = null,
   alt = "Producto",
   brand = "",
   category = "",
@@ -25,19 +27,48 @@ export default function ProductImageHoverZoom({
   badge = null,
   showEyeButton = false,
   enableHoverPreview = true,
+  retryGcs = true,
 }) {
+  const resolvedSrc = src || getProductImageUrl(product);
+  const resolvedBrand = brand || product?.brand || "";
+  const resolvedCategory = category || product?.category || "";
+  const resolvedAlt = alt || product?.name || "Producto";
+
+  const [currentSrc, setCurrentSrc] = useState(resolvedSrc);
+  const [hasError, setHasError] = useState(!resolvedSrc);
+  const [triedGcsFallback, setTriedGcsFallback] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [hasError, setHasError] = useState(false);
   const [previewPos, setPreviewPos] = useState({ top: 0, left: 0 });
   const containerRef = useRef(null);
 
   useEffect(() => {
-    setHasError(false);
-  }, [src]);
+    setCurrentSrc(resolvedSrc);
+    setHasError(!resolvedSrc);
+    setTriedGcsFallback(false);
+  }, [resolvedSrc]);
 
-  const brandLogo = getProductBrandLogo(brand);
-  const IconComponent = getCategoryIcon(category);
-  const isImageValid = Boolean(src && !hasError);
+  const handleError = () => {
+    if (
+      retryGcs &&
+      !triedGcsFallback &&
+      currentSrc &&
+      typeof currentSrc === "string" &&
+      currentSrc.startsWith("/uploads/")
+    ) {
+      const gcsFallback = uploadsToGcsUrl(currentSrc);
+      if (gcsFallback && gcsFallback !== currentSrc) {
+        setTriedGcsFallback(true);
+        setCurrentSrc(gcsFallback);
+        return;
+      }
+    }
+    setHasError(true);
+  };
+
+  const brandLogo = getProductBrandLogo(resolvedBrand);
+  const IconComponent = getCategoryIcon(resolvedCategory);
+  const initials = brandInitials(resolvedBrand);
+  const isImageValid = Boolean(currentSrc && !hasError);
 
   const handleMouseEnter = () => {
     if (!isImageValid) return;
@@ -87,10 +118,10 @@ export default function ProductImageHoverZoom({
       {/* Base Image or Styled Fallback */}
       {isImageValid ? (
         <img
-          src={src}
-          alt={alt}
+          src={currentSrc}
+          alt={resolvedAlt}
           loading="lazy"
-          onError={() => setHasError(true)}
+          onError={handleError}
           className={cn(
             "w-full h-full object-contain p-1 transition-transform duration-300 ease-out group-hover:scale-110",
             imageClassName
@@ -102,30 +133,45 @@ export default function ProductImageHoverZoom({
             <div className="flex flex-col items-center justify-center gap-1.5 max-w-[85%]">
               <img
                 src={brandLogo}
-                alt={brand || "Marca"}
+                alt={resolvedBrand || "Marca"}
                 className="max-h-12 max-w-[120px] object-contain opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all drop-shadow-xs"
               />
               <span className="text-[10px] font-medium text-muted-foreground/80 line-clamp-1">
-                {brand}
+                {resolvedBrand}
               </span>
             </div>
-          ) : (
+          ) : initials && initials !== "?" ? (
             <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
               <div className="h-10 w-10 rounded-xl bg-background/80 border border-border/60 shadow-xs flex items-center justify-center text-primary/80 group-hover:scale-110 transition-transform">
-                <IconComponent className="h-5 w-5" />
+                <span className="font-mono font-black text-sm text-foreground/80">{initials}</span>
               </div>
-              {brand ? (
+              {resolvedBrand ? (
                 <span className="text-[11px] font-bold tracking-tight text-foreground/90 font-mono mt-0.5">
-                  {brand}
+                  {resolvedBrand}
                 </span>
               ) : (
                 <span className="text-[10px] font-medium text-muted-foreground">
                   MCLARENS
                 </span>
               )}
-              {category && (
+              {resolvedCategory && (
                 <span className="text-[9px] text-muted-foreground/70 max-w-[140px] truncate">
-                  {formatCategoryLabel(category)}
+                  {formatCategoryLabel(resolvedCategory)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
+              <div className="h-10 w-10 rounded-xl bg-background/80 border border-border/60 shadow-xs flex items-center justify-center text-primary/80 group-hover:scale-110 transition-transform">
+                <IconComponent className="h-5 w-5" />
+              </div>
+              {resolvedBrand ? (
+                <span className="text-[11px] font-bold tracking-tight text-foreground/90 font-mono mt-0.5">
+                  {resolvedBrand}
+                </span>
+              ) : (
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  MCLARENS
                 </span>
               )}
             </div>
@@ -166,17 +212,18 @@ export default function ProductImageHoverZoom({
         >
           <div className="relative flex-1 w-full h-full rounded-xl overflow-hidden bg-slate-50 dark:bg-zinc-900/80 flex items-center justify-center p-2">
             <img
-              src={src}
-              alt={alt}
+              src={currentSrc}
+              alt={resolvedAlt}
               className="max-w-full max-h-full object-contain drop-shadow-md"
             />
           </div>
           <div className="mt-1.5 bg-slate-900/85 dark:bg-zinc-900/90 backdrop-blur text-white text-[11px] font-medium py-1 px-2.5 rounded-lg truncate text-center shadow-xs">
-            {alt}
+            {resolvedAlt}
           </div>
         </div>
       )}
     </div>
   );
 }
+
 

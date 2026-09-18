@@ -1894,7 +1894,7 @@ export function SalesPage() {
       setCartItems([...cartItems, {
         product_id: product.product_id,
         product_name: product.name,
-        image: product.images?.[0] || null,
+        image: product.image_url || product.image || product.images?.[0] || null,
         quantity: 1,
         unit_price: product.price,
         discount: 0,

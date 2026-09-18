@@ -71,6 +71,8 @@ import { Badge } from "@/components/ui/badge";
 import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
 import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
+import ProductThumb from "@/components/products/ProductThumb";
+import { getProductImageUrl } from "@/lib/productImage";
 import {
   formatVehicleIdentityHint,
   getVehicleSelectOptionsByBrandYear,
@@ -1441,7 +1443,7 @@ export default function SaleForm({
           product_id: product.product_id,
           product_name: product.name,
           sku: product.sku || "",
-          image: product.images?.[0] || null,
+          image: getProductImageUrl(product),
           quantity: 1,
           unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
           original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
@@ -3184,7 +3186,7 @@ export default function SaleForm({
           product_id: product.product_id,
           product_name: product.name,
           sku: product.sku || "",
-          image: product.images?.[0] || null,
+          image: getProductImageUrl(product),
           quantity: 1,
           unit_price: resolveDefaultUnitPrice(product, effectivePricingContext),
           original_unit_price: resolveProductTierPrice(product, TIER_PRECIO1),
@@ -4903,7 +4905,7 @@ export default function SaleForm({
                     }}
                   >
                     <ProductImageHoverZoom
-                      src={p.images?.[0] || p.image}
+                      src={getProductImageUrl(p)}
                       alt={p.name}
                       brand={p.brand}
                       category={p.category}
