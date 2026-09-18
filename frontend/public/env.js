@@ -1,12 +1,12 @@
-// This file is auto-generated at build time
+// This file is auto-generated at build time (stub; overwritten by prebuild)
 window.__API_BASE__ = '/api';
 window.__FAILOVER_TUNNEL_MAIN__ = 'https://mclarenerp.com';
 window.__FAILOVER_TUNNEL_NORTH__ = 'https://north.mclarenerp.com';
 window.__FAILOVER_TUNNEL_SOUTH__ = 'https://south.mclarenerp.com';
 window.__ATTENDANCE_KIOSK_SHORTCUT_PIN__ = '';
-window.__BUILD_TIME__ = '2026-07-14T14:43:42.364Z';
-window.__BUILD_ID__ = '20260714-0843';
-window.__BUILD_VERSION__ = '0.2.0-beta.0';
-window.__BUILD_GIT_HASH__ = '07d71ca';
-window.__BUILD_GIT_BRANCH__ = 'master';
-window.__BUILD_LABEL__ = '0.2.0-beta.0 | 20260714-0843 | 07d71ca @master';
+window.__BUILD_TIME__ = '';
+window.__BUILD_ID__ = 'dev';
+window.__BUILD_VERSION__ = '0.2.1';
+window.__BUILD_GIT_HASH__ = '';
+window.__BUILD_GIT_BRANCH__ = '';
+window.__BUILD_LABEL__ = '0.2.1 | dev';
