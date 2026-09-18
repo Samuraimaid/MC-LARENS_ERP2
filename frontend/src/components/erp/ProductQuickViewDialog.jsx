@@ -338,31 +338,43 @@ export default function ProductQuickViewDialog({
               <div className="space-y-2 bg-muted/20 p-3.5 rounded-xl border">
                 <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  Tabla de Precios ({currency})
+                  Tabla de Precios (USD / NIO)
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio 1 (Base)</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatProductPrice(product.precio1 ?? product.price ?? 0)}
+                      {getDualPrices(product.precio1 ?? product.price ?? 0).usdFormatted}
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      ≈ {getDualPrices(product.precio1 ?? product.price ?? 0).nioFormatted}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio 2 (Taller)</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatProductPrice(product.precio2 ?? product.price ?? 0)}
+                      {getDualPrices(product.precio2 ?? product.price ?? 0).usdFormatted}
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      ≈ {getDualPrices(product.precio2 ?? product.price ?? 0).nioFormatted}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Precio VIP</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatProductPrice(product.precio_vip ?? product.precio2 ?? product.price ?? 0)}
+                      {getDualPrices(product.precio_vip ?? product.precio2 ?? product.price ?? 0).usdFormatted}
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      ≈ {getDualPrices(product.precio_vip ?? product.precio2 ?? product.price ?? 0).nioFormatted}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <div className="text-[11px] text-muted-foreground">Casa Comercial</div>
                     <div className="font-mono font-bold text-foreground mt-0.5">
-                      {formatProductPrice(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0)}
+                      {getDualPrices(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0).usdFormatted}
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      ≈ {getDualPrices(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0).nioFormatted}
                     </div>
                   </div>
                 </div>
@@ -469,7 +481,10 @@ export default function ProductQuickViewDialog({
                     <div className="text-right">
                       <div className="text-[11px] text-muted-foreground">Mano de Obra</div>
                       <div className="font-mono font-bold text-foreground">
-                        +{formatProductPrice(product.installation_price)}
+                        +{getDualPrices(product.installation_price).usdFormatted}
+                      </div>
+                      <div className="text-[10px] font-mono text-muted-foreground">
+                        ≈ {getDualPrices(product.installation_price).nioFormatted}
                       </div>
                     </div>
                   ) : null}

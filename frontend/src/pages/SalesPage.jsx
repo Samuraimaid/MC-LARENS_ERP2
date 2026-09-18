@@ -1743,8 +1743,13 @@ export function SalesPage() {
       draftIdToClear = window.localStorage.getItem(DRAFT_ACTIVE_KEY) || null;
     }
 
-    if (typeof window !== "undefined" && draftIdToClear) {
-      window.localStorage.removeItem(getDraftKey(draftIdToClear));
+    if (typeof window !== "undefined") {
+      if (draftIdToClear) {
+        window.localStorage.removeItem(getDraftKey(draftIdToClear));
+      }
+      window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_source_context_v1");
+      window.localStorage.removeItem("catalog_open_draft");
     }
 
     if (draftIdToClear) {

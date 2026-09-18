@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Bell, BookOpen, Car, ClipboardList, FlaskConical, Search, ShoppingCart, Users } from "lucide-react";
 import UniversalSearchPanel from "@/components/search/UniversalSearchPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 function lazyNamedPage(loader, exportName) {
   return lazy(async () => {
@@ -140,7 +141,12 @@ export function WorkbenchPage() {
           const PageComponent = tab.component;
           return (
             <TabsContent key={tab.key} value={tab.key} className="mt-0">
-              <div className="rounded-xl border border-border/80 bg-card/40 dark:border-zinc-800 dark:bg-zinc-900/40 p-2 sm:p-3 ui-panel animate-fade-up-soft">
+              <div
+                className={cn(
+                  "rounded-xl border border-border/80 bg-card/40 dark:border-zinc-800 dark:bg-zinc-900/40 ui-panel animate-fade-up-soft",
+                  ["sales", "quotations"].includes(tab.key) ? "p-0" : "p-2 sm:p-3"
+                )}
+              >
                 <Suspense
                   fallback={
                     <div className="min-h-[30vh] flex items-center justify-center">

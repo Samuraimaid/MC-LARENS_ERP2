@@ -1075,6 +1075,7 @@ export function QuotationsPage() {
         setActiveDraftId(null);
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+          window.localStorage.removeItem("catalog_source_context_v1");
           window.localStorage.removeItem("catalog_open_draft");
         }
         resetQuoteFormState();
@@ -1084,6 +1085,7 @@ export function QuotationsPage() {
 
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_source_context_v1");
       window.localStorage.removeItem("catalog_open_draft");
     }
 
@@ -1139,9 +1141,12 @@ export function QuotationsPage() {
   }, [activeDraftId, createDraftTab, showNewQuote]);
 
   const clearEmbeddedQuoteForm = useCallback(() => {
-    if (typeof window !== "undefined" && activeDraftId) {
-      window.localStorage.removeItem(getDraftKey(activeDraftId));
+    if (typeof window !== "undefined") {
+      if (activeDraftId) {
+        window.localStorage.removeItem(getDraftKey(activeDraftId));
+      }
       window.localStorage.removeItem(CATALOG_SOURCE_CONTEXT_KEY);
+      window.localStorage.removeItem("catalog_source_context_v1");
       window.localStorage.removeItem("catalog_open_draft");
     }
     if (activeDraftId) {
