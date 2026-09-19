@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,8 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
 import { uploadsToGcsUrl, getProductImageUrl } from "@/lib/productImage";
 import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
+import { getRelatedProducts, getFrequentlyBoughtTogether } from "@/lib/productRecommendations";
+import ProductCarouselSection from "@/components/products/ProductCarouselSection";
 import {
   Car,
   Wrench,
@@ -29,6 +31,7 @@ import {
   Lightbulb,
   Shield,
   Droplet,
+  Layers,
   X,
 } from "lucide-react";
 
@@ -47,29 +50,107 @@ export default function ProductQuickViewDialog({
   open,
   onOpenChange,
   product,
+  allProducts = [],
   warehouses = [],
   inventoryByWarehouse = {},
   inventoryByProduct = {},
   onAddToCart,
   onAddToQuote,
+  onAddMultipleToCart,
+  onAddMultipleToQuote,
   onSendWhatsApp,
+  onOpenProduct,
   isWarehouseRole = false,
   userRole = "",
   currency = "NIO",
   exchangeRate = 36.5,
 }) {
+  const [activeProduct, setActiveProduct] = useState(product);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [failedImages, setFailedImages] = useState({});
   const [srcOverrides, setSrcOverrides] = useState({});
   const touchStartXRef = useRef(null);
 
+  // Sync active product with prop
   useEffect(() => {
+    setActiveProduct(product);
     setSelectedImageIndex(0);
     setIsFullscreen(false);
     setFailedImages({});
     setSrcOverrides({});
   }, [product]);
+
+  const displayProduct = activeProduct || product;
+
+  // Recommendations
+  const relatedProducts = useMemo(() => {
+    return getRelatedProducts(displayProduct, allProducts);
+  }, [displayProduct, allProducts]);
+
+  const fbtItems = useMemo(() => {
+    return getFrequentlyBoughtTogether(displayProduct, allProducts);
+  }, [displayProduct, allProducts]);
+
+  // FBT Multi-selection state
+  const [fbtSelectedIds, setFbtSelectedIds] = useState(new Set());
+
+  useEffect(() => {
+    const ids = new Set(
+      fbtItems.map((item) => String(item.product?.product_id || item.product?.id || item.product?._id || item.product?.sku || ""))
+    );
+    setFbtSelectedIds(ids);
+  }, [fbtItems]);
+
+  const handleToggleFbtSelect = (productId, p) => {
+    setFbtSelectedIds((prev) => {
+      const next = new Set(prev);
+      const id = String(productId || p?.product_id || p?.sku || "");
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllFbt = (selectAll) => {
+    if (selectAll) {
+      const ids = new Set(
+        fbtItems.map((item) => String(item.product?.product_id || item.product?.id || item.product?._id || item.product?.sku || ""))
+      );
+      setFbtSelectedIds(ids);
+    } else {
+      setFbtSelectedIds(new Set());
+    }
+  };
+
+  const handleOpenProductInQuickView = (targetProduct) => {
+    setActiveProduct(targetProduct);
+    setSelectedImageIndex(0);
+    setIsFullscreen(false);
+    setFailedImages({});
+    setSrcOverrides({});
+    onOpenProduct?.(targetProduct);
+  };
+
+  const handleAddSelection = (selectedProds, actionType) => {
+    if (!Array.isArray(selectedProds) || selectedProds.length === 0) return;
+    if (actionType === "sale") {
+      if (onAddMultipleToCart) {
+        onAddMultipleToCart(selectedProds);
+      } else if (onAddToCart) {
+        selectedProds.forEach((p) => onAddToCart(p));
+      }
+    } else if (actionType === "quote") {
+      if (onAddMultipleToQuote) {
+        onAddMultipleToQuote(selectedProds);
+      } else if (onAddToQuote) {
+        selectedProds.forEach((p) => onAddToQuote(p));
+      }
+    }
+  };
 
   const resolveDisplaySrc = (url, idx) => {
     if (srcOverrides[idx]) return srcOverrides[idx];
@@ -93,12 +174,12 @@ export default function ProductQuickViewDialog({
   };
 
   // Gather all valid images from product
-  const rawImages = Array.isArray(product?.images) && product.images.length > 0
-    ? product.images
-    : product?.image_url
-      ? [product.image_url]
-      : product?.image
-        ? [product.image]
+  const rawImages = Array.isArray(displayProduct?.images) && displayProduct.images.length > 0
+    ? displayProduct.images
+    : displayProduct?.image_url
+      ? [displayProduct.image_url]
+      : displayProduct?.image
+        ? [displayProduct.image]
         : [];
   
   const images = rawImages.filter(Boolean);
@@ -152,10 +233,10 @@ export default function ProductQuickViewDialog({
     }
   };
 
-  if (!product) return null;
+  if (!displayProduct) return null;
 
-  const brandLogo = getProductBrandLogo(product.brand);
-  const IconComponent = getCategoryIcon(product.category);
+  const brandLogo = getProductBrandLogo(displayProduct.brand);
+  const IconComponent = getCategoryIcon(displayProduct.category);
 
   const getDualPrices = (priceVal) => {
     const usd = Number(priceVal) || 0;
@@ -167,25 +248,25 @@ export default function ProductQuickViewDialog({
     };
   };
 
-  const dualPrice = getDualPrices(product.precio1 ?? product.price ?? 0);
+  const dualPrice = getDualPrices(displayProduct.precio1 ?? displayProduct.price ?? 0);
 
-  const compatibility = product.compatibility || {};
+  const compatibility = displayProduct.compatibility || {};
   const compatTypes = Array.isArray(compatibility.vehicle_types)
     ? compatibility.vehicle_types
-    : Array.isArray(product.vehicle_types)
-      ? product.vehicle_types
+    : Array.isArray(displayProduct.vehicle_types)
+      ? displayProduct.vehicle_types
       : [];
   const compatBrands = Array.isArray(compatibility.brands) ? compatibility.brands : [];
   const compatModels = Array.isArray(compatibility.models) ? compatibility.models : [];
-  const isUniversal = isUniversalProduct(product);
-  const compatTexto = product.compatibilidad_texto || compatibility.texto || null;
+  const isUniversal = isUniversalProduct(displayProduct);
+  const compatTexto = displayProduct.compatibilidad_texto || compatibility.texto || null;
 
   // Stock calculations
-  const rawStock = inventoryByProduct[product.product_id] ?? null;
-  const stockRows = inventoryByWarehouse[product.product_id] || [];
+  const rawStock = inventoryByProduct[displayProduct.product_id] ?? null;
+  const stockRows = inventoryByWarehouse[displayProduct.product_id] || [];
   const totalStock = rawStock !== null ? rawStock : stockRows.reduce((sum, row) => sum + (row.quantity || 0), 0);
 
-  const cleanDescription = sanitizeProductCopy(product.description || product.descripcion || "");
+  const cleanDescription = sanitizeProductCopy(displayProduct.description || displayProduct.descripcion || "");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -196,11 +277,11 @@ export default function ProductQuickViewDialog({
             <div className="space-y-1 min-w-0 flex-1 pr-6">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="font-mono text-[11px] font-semibold bg-background">
-                  {product.sku || "Sin SKU"}
+                  {displayProduct.sku || "Sin SKU"}
                 </Badge>
-                {product.brand && (
+                {displayProduct.brand && (
                   <Badge variant="secondary" className="text-[11px] font-bold">
-                    {product.brand}
+                    {displayProduct.brand}
                   </Badge>
                 )}
                 {isUniversal && (
@@ -221,282 +302,242 @@ export default function ProductQuickViewDialog({
                   </Badge>
                 )}
               </div>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground leading-snug">
-                {product.name || "Detalle del Producto"}
+              <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-snug">
+                {sanitizeProductCopy(displayProduct.name || "Detalle de Producto")}
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Código ID: <span className="font-mono">{product.product_id || product.id || "-"}</span>
-                {product.barcode ? ` • Código de barras: ${product.barcode}` : ""}
+              <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2">
+                <IconComponent className="h-3.5 w-3.5 text-primary" />
+                <span>{formatCategoryLabel(displayProduct.category)}</span>
+                {displayProduct.subcategory && (
+                  <>
+                    <span>•</span>
+                    <span>{displayProduct.subcategory}</span>
+                  </>
+                )}
               </DialogDescription>
             </div>
 
-            <div className="text-right">
-              <div className="text-2xl font-black text-primary font-mono">
-                {dualPrice.usdFormatted}
-              </div>
-              <div className="text-xs font-mono text-muted-foreground font-medium">
-                ≈ {dualPrice.nioFormatted}
-              </div>
-            </div>
+            {brandLogo && (
+              <img
+                src={brandLogo}
+                alt={displayProduct.brand}
+                className="h-8 max-w-[100px] object-contain opacity-90 hidden sm:block"
+              />
+            )}
           </div>
         </div>
 
-        {/* Body content */}
-        <ScrollArea className="flex-1 overflow-y-auto p-6">
-          <div className="grid gap-6 md:grid-cols-[340px_1fr]">
-            {/* Gallery Column */}
-            <div className="space-y-3">
-              {/* Main preview box */}
-              <div
-                className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none cursor-pointer"
-                onClick={() => {
-                  if (currentImage && !failedImages[selectedImageIndex]) {
-                    setIsFullscreen(true);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    if (currentImage && !failedImages[selectedImageIndex]) {
-                      setIsFullscreen(true);
-                    }
-                  }
-                }}
-                title="Toca para ver pantalla completa"
-              >
-                {currentImage && !failedImages[selectedImageIndex] ? (
-                  <>
-                    <img
-                      src={resolveDisplaySrc(currentImage, selectedImageIndex)}
-                      alt={product.name || "Producto"}
-                      onError={() => handleImageError(selectedImageIndex, currentImage)}
-                      className="max-w-full max-h-full w-auto h-auto object-contain object-center p-2 transition-opacity group-hover:opacity-90"
-                      style={{ aspectRatio: "auto" }}
-                    />
-                    {/* Hover indicator for desktop full-view */}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                      <div className="bg-black/75 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+        {/* Scrollable Body */}
+        <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
+          <div className="p-5 space-y-6">
+            {/* Gallery + Primary Highlights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+              {/* Image Gallery (Left Column) */}
+              <div className="md:col-span-6 space-y-3">
+                {/* Main Image Box */}
+                <div
+                  onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
+                  className={cn(
+                    "relative aspect-[4/3] w-full rounded-xl border bg-muted/20 overflow-hidden flex items-center justify-center p-3 select-none transition-all group",
+                    currentImage && !failedImages[selectedImageIndex]
+                      ? "cursor-zoom-in hover:border-primary/50 hover:shadow-lg"
+                      : "cursor-default"
+                  )}
+                  title={currentImage && !failedImages[selectedImageIndex] ? "Clic para ampliar carrusel en pantalla completa" : undefined}
+                >
+                  {currentImage && !failedImages[selectedImageIndex] ? (
+                    <>
+                      <img
+                        src={resolveDisplaySrc(currentImage, selectedImageIndex)}
+                        alt={displayProduct.name || "Foto del producto"}
+                        onError={() => handleImageError(selectedImageIndex, currentImage)}
+                        className="max-h-full max-w-full w-auto h-auto object-contain object-center transition-transform duration-200 group-hover:scale-[1.02]"
+                      />
+                      {/* Floating Lightbox Open Hint */}
+                      <div className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-md p-1.5 backdrop-blur-xs flex items-center gap-1 text-[11px] font-medium shadow-md transition-opacity opacity-80 group-hover:opacity-100">
                         <Maximize2 className="h-3.5 w-3.5" />
-                        Pantalla completa
+                        <span className="hidden sm:inline">Ampliar</span>
                       </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-muted-foreground gap-2 p-6 text-center">
+                      <Package className="h-12 w-12 stroke-[1.2]" />
+                      <span className="text-xs font-medium">Sin imagen disponible</span>
                     </div>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-linear-to-b from-muted/40 to-muted/10">
-                    {brandLogo ? (
-                      <div className="flex flex-col items-center justify-center gap-2 max-w-[85%]">
-                        <img
-                          src={brandLogo}
-                          alt={product.brand || "Marca"}
-                          className="max-h-16 max-w-[160px] object-contain opacity-90 drop-shadow-sm"
-                        />
-                        <span className="text-xs font-semibold text-foreground/80 font-mono">
-                          {product.brand}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                        <div className="h-12 w-12 rounded-2xl bg-background/80 border border-border/60 shadow-xs flex items-center justify-center text-primary/80">
-                          <IconComponent className="h-6 w-6" />
-                        </div>
-                        {product.brand ? (
-                          <span className="text-xs font-bold tracking-tight text-foreground/90 font-mono">
-                            {product.brand}
-                          </span>
+                  )}
+
+                  {/* Previous / Next Overlay Controls in Dialog */}
+                  {images.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          prevImage();
+                        }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-opacity opacity-70 hover:opacity-100 cursor-pointer"
+                        aria-label="Foto anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          nextImage();
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-opacity opacity-70 hover:opacity-100 cursor-pointer"
+                        aria-label="Siguiente foto"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Thumbnail Strip (Under Main Photo - DS18 Style) */}
+                {images.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
+                    {images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={cn(
+                          "relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-muted/30 transition-all p-1 flex items-center justify-center cursor-pointer",
+                          selectedImageIndex === idx
+                            ? "border-primary ring-2 ring-primary/30 scale-105 shadow-sm"
+                            : "border-border/60 hover:border-border opacity-70 hover:opacity-100"
+                        )}
+                        aria-label={`Ver foto ${idx + 1}`}
+                      >
+                        {!failedImages[idx] ? (
+                          <img
+                            src={resolveDisplaySrc(img, idx)}
+                            alt={`Miniatura ${idx + 1}`}
+                            onError={() => handleImageError(idx, img)}
+                            className="max-h-full max-w-full w-auto h-auto object-contain"
+                          />
                         ) : (
-                          <span className="text-xs font-medium text-muted-foreground">
-                            MCLARENS
-                          </span>
+                          <Package className="h-4 w-4 text-muted-foreground" />
                         )}
-                        {product.category && (
-                          <span className="text-[10px] text-muted-foreground/70">
-                            {formatCategoryLabel(product.category)}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                      </button>
+                    ))}
                   </div>
-                )}
-
-                {/* Floating image counter */}
-                {images.length > 1 && (
-                  <span className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
-                    {selectedImageIndex + 1} / {images.length}
-                  </span>
-                )}
-
-                {/* Left/Right controls on dialog preview */}
-                {images.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        prevImage();
-                      }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
-                      aria-label="Imagen anterior"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        nextImage();
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
-                      aria-label="Siguiente imagen"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </>
                 )}
               </div>
 
-              {/* Thumbnails strip */}
-              {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1 max-w-full">
-                  {images.map((img, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={cn(
-                        "relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-muted/30 transition-all p-1 flex items-center justify-center",
-                        selectedImageIndex === idx
-                          ? "border-primary shadow-sm ring-2 ring-primary/30"
-                          : "border-border/60 hover:border-border opacity-70 hover:opacity-100"
-                      )}
-                    >
-                      {!failedImages[idx] ? (
-                        <img
-                          src={resolveDisplaySrc(img, idx)}
-                          alt={`Miniatura ${idx + 1}`}
-                          onError={() => handleImageError(idx, img)}
-                          className="max-w-full max-h-full w-auto h-auto object-contain"
-                        />
-                      ) : (
-                        <Package className="h-5 w-5 text-muted-foreground/60" />
-                      )}
-                    </button>
-                  ))}
+              {/* Price, Stock & Highlights (Right Column) */}
+              <div className="md:col-span-6 space-y-4">
+                {/* Price Box */}
+                <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
+                  <div className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    Precio de Lista
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl sm:text-3xl font-black font-mono text-foreground tracking-tight">
+                      {dualPrice.usdFormatted}
+                    </span>
+                    <span className="text-sm sm:text-base font-bold font-mono text-muted-foreground">
+                      ≈ {dualPrice.nioFormatted}
+                    </span>
+                  </div>
+
+                  {/* Multi-tier Prices if Leadership/Sales */}
+                  {(displayProduct.precio2 || displayProduct.precio_vip || displayProduct.precio_casa_comercial) && (
+                    <div className="pt-2 border-t border-border/50 grid grid-cols-3 gap-2 text-[11px]">
+                      {displayProduct.precio2 ? (
+                        <div className="p-1.5 rounded bg-background/60 border">
+                          <div className="text-muted-foreground font-medium text-[10px]">Taller</div>
+                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio2).usdFormatted}</div>
+                        </div>
+                      ) : null}
+                      {displayProduct.precio_vip ? (
+                        <div className="p-1.5 rounded bg-background/60 border">
+                          <div className="text-muted-foreground font-medium text-[10px]">VIP</div>
+                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio_vip).usdFormatted}</div>
+                        </div>
+                      ) : null}
+                      {displayProduct.precio_casa_comercial ? (
+                        <div className="p-1.5 rounded bg-background/60 border">
+                          <div className="text-muted-foreground font-medium text-[10px]">Distribuidor</div>
+                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio_casa_comercial).usdFormatted}</div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                {/* Key Attributes Pills */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 space-y-0.5">
+                    <span className="text-muted-foreground font-medium text-[11px]">Categoría</span>
+                    <div className="font-semibold text-foreground truncate">
+                      {formatCategoryLabel(displayProduct.category)}
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 space-y-0.5">
+                    <span className="text-muted-foreground font-medium text-[11px]">Subcategoría</span>
+                    <div className="font-semibold text-foreground truncate">
+                      {displayProduct.subcategory || "General"}
+                    </div>
+                  </div>
+                  {displayProduct.garantia && (
+                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 space-y-0.5">
+                      <span className="text-muted-foreground font-medium text-[11px]">Garantía</span>
+                      <div className="font-semibold text-foreground">
+                        {displayProduct.garantia}
+                      </div>
+                    </div>
+                  )}
+                  {displayProduct.potencia && (
+                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 space-y-0.5">
+                      <span className="text-muted-foreground font-medium text-[11px]">Potencia</span>
+                      <div className="font-semibold text-foreground font-mono">
+                        {displayProduct.potencia}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Detailed Specs */}
+            <div className="space-y-4 pt-2 border-t border-border/60">
+              {cleanDescription && (
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Descripción del Producto
+                  </div>
+                  <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line bg-muted/20 p-3 rounded-xl border border-border/50 font-sans">
+                    {cleanDescription}
+                  </div>
                 </div>
               )}
 
-              {/* Stock by Warehouse Summary */}
-              {stockRows.length > 0 && (
-                <div className="p-3 bg-muted/20 rounded-xl border space-y-2">
-                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5" />
-                    Existencias en Bodegas
+              {/* Technical Specifications */}
+              {displayProduct.specs && typeof displayProduct.specs === "object" && Object.keys(displayProduct.specs).length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Especificaciones Técnicas
                   </div>
-                  <div className="space-y-1 text-xs">
-                    {stockRows.map((entry) => {
-                      const wh = warehouses.find((w) => w.warehouse_id === entry.warehouse_id);
-                      const name = wh?.name || entry.warehouse_id || "Bodega";
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {Object.entries(displayProduct.specs).map(([key, val]) => {
+                      if (!val || typeof val === "object") return null;
                       return (
-                        <div key={entry.warehouse_id} className="flex justify-between items-center py-0.5 border-b last:border-0 border-border/40">
-                          <span className="text-muted-foreground">{name}:</span>
-                          <span className="font-mono font-bold text-foreground">{entry.quantity || 0} unidades</span>
+                        <div key={key} className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border/40 gap-2">
+                          <span className="text-muted-foreground font-medium">{key}:</span>
+                          <span className="font-semibold text-foreground text-right">{String(val)}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Specifications & Details Column */}
-            <div className="space-y-5">
-              {/* Categorization & Badges */}
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5" />
-                  Clasificación y Tipo
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge variant="outline" className="text-xs font-medium">
-                    Categoría: <strong className="ml-1 text-foreground">{formatCategoryLabel(product.category) || "General"}</strong>
-                  </Badge>
-                  {product.subcategory && (
-                    <Badge variant="secondary" className="text-xs">
-                      Subcategoría: <strong className="ml-1 text-foreground">{product.subcategory}</strong>
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="text-xs">
-                    Tipo: {product.product_type === "service" ? "Servicio" : product.product_type === "service_hourly" ? "Servicio por Hora" : "Producto Físico"}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    Garantía: {product.warranty_months || 0} meses
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Tier Prices Grid */}
-              <div className="space-y-2 bg-muted/20 p-3.5 rounded-xl border">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  Tabla de Precios (USD / NIO)
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div className="p-2 rounded-lg bg-background border">
-                    <div className="text-[11px] text-muted-foreground">Precio 1 (Base)</div>
-                    <div className="font-mono font-bold text-foreground mt-0.5">
-                      {getDualPrices(product.precio1 ?? product.price ?? 0).usdFormatted}
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
-                      ≈ {getDualPrices(product.precio1 ?? product.price ?? 0).nioFormatted}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border">
-                    <div className="text-[11px] text-muted-foreground">Precio 2 (Taller)</div>
-                    <div className="font-mono font-bold text-foreground mt-0.5">
-                      {getDualPrices(product.precio2 ?? product.price ?? 0).usdFormatted}
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
-                      ≈ {getDualPrices(product.precio2 ?? product.price ?? 0).nioFormatted}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border">
-                    <div className="text-[11px] text-muted-foreground">Precio VIP</div>
-                    <div className="font-mono font-bold text-foreground mt-0.5">
-                      {getDualPrices(product.precio_vip ?? product.precio2 ?? product.price ?? 0).usdFormatted}
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
-                      ≈ {getDualPrices(product.precio_vip ?? product.precio2 ?? product.price ?? 0).nioFormatted}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border">
-                    <div className="text-[11px] text-muted-foreground">Casa Comercial</div>
-                    <div className="font-mono font-bold text-foreground mt-0.5">
-                      {getDualPrices(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0).usdFormatted}
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
-                      ≈ {getDualPrices(product.precio_casa_comercial ?? product.precio3 ?? product.price ?? 0).nioFormatted}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              {cleanDescription && (
-                <div className="space-y-1.5">
-                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Descripción del Producto
-                  </div>
-                  <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed bg-muted/10 p-3 rounded-lg border border-border/60 whitespace-pre-line">
-                    {cleanDescription}
-                  </p>
-                </div>
-              )}
-
-              {/* Vehicle Compatibility */}
-              <div className="space-y-2 bg-muted/20 p-3.5 rounded-xl border">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              {/* Vehicle Compatibility Section */}
+              <div className="p-3 bg-muted/20 rounded-xl border border-border/60 space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Car className="h-3.5 w-3.5" />
                   Compatibilidad Vehicular
                 </div>
@@ -574,19 +615,19 @@ export default function ProductQuickViewDialog({
               </div>
 
               {/* Installation Details */}
-              {product.installation_type && product.installation_type !== "not_available" && (
+              {displayProduct.installation_type && displayProduct.installation_type !== "not_available" && (
                 <div className="p-3 bg-muted/20 rounded-xl border flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div className="flex items-start gap-2.5">
                     <Wrench className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <div>
                       <div className="font-semibold text-foreground">
-                        Instalación {product.installation_type === "required" ? "Requerida" : "Opcional"}
+                        Instalación {displayProduct.installation_type === "required" ? "Requerida" : "Opcional"}
                       </div>
-                      {product.installation_time_minutes ? (
+                      {displayProduct.installation_time_minutes ? (
                         <div className="text-muted-foreground flex flex-col gap-0.5 mt-1">
                           <div className="flex items-center gap-1.5 font-medium text-foreground/90">
                             <Clock className="h-3.5 w-3.5 text-primary" />
-                            <span>Tiempo aproximado: ~{product.installation_time_minutes} min</span>
+                            <span>Tiempo aproximado: ~{displayProduct.installation_time_minutes} min</span>
                           </div>
                           <span className="text-[11px] text-amber-700 dark:text-amber-400">
                             * Los tiempos pueden variar dependiendo del estado del vehículo y si es necesario despolarizar.
@@ -595,18 +636,74 @@ export default function ProductQuickViewDialog({
                       ) : null}
                     </div>
                   </div>
-                  {product.installation_price ? (
+                  {displayProduct.installation_price ? (
                     <div className="text-right">
                       <div className="text-[11px] text-muted-foreground">Mano de Obra</div>
                       <div className="font-mono font-bold text-foreground">
-                        +{getDualPrices(product.installation_price).usdFormatted}
+                        +{getDualPrices(displayProduct.installation_price).usdFormatted}
                       </div>
                       <div className="text-[10px] font-mono text-muted-foreground">
-                        ≈ {getDualPrices(product.installation_price).nioFormatted}
+                        ≈ {getDualPrices(displayProduct.installation_price).nioFormatted}
                       </div>
                     </div>
                   ) : null}
                 </div>
+              )}
+
+              {/* Warehouse Breakdown */}
+              {stockRows.length > 0 && (
+                <div className="space-y-2 p-3 bg-muted/20 rounded-xl border border-border/50">
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5 text-primary" />
+                    Disponibilidad por Sucursal
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    {stockRows.map((wh) => (
+                      <div key={wh.warehouse_id} className="p-2 rounded-lg bg-background border flex justify-between items-center">
+                        <span className="font-medium text-muted-foreground">{wh.warehouse_name || wh.warehouse_id}</span>
+                        <span className={cn("font-mono font-bold", (wh.quantity || 0) > 0 ? "text-emerald-600" : "text-muted-foreground")}>
+                          {wh.quantity || 0} unid.
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Frequently Bought Together / Completá el sistema Carousel (DS18 Style) */}
+              {fbtItems.length > 0 && (
+                <ProductCarouselSection
+                  title="Se venden juntos"
+                  subtitle="Completá el sistema con estos accesorios y complementos recomendados"
+                  icon={Sparkles}
+                  items={fbtItems}
+                  enableMultiSelect={true}
+                  selectedIds={fbtSelectedIds}
+                  onToggleSelect={handleToggleFbtSelect}
+                  onSelectAll={handleSelectAllFbt}
+                  onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
+                  onAddSelection={handleAddSelection}
+                  onOpenProduct={handleOpenProductInQuickView}
+                  effectiveUsdNioRate={exchangeRate}
+                  isWarehouseRole={isWarehouseRole}
+                  currency={currency}
+                />
+              )}
+
+              {/* Related Products Carousel (DS18 Style) */}
+              {relatedProducts.length > 0 && (
+                <ProductCarouselSection
+                  title="Productos relacionados"
+                  subtitle="Opciones y variantes de la misma marca y categoría"
+                  icon={Layers}
+                  items={relatedProducts}
+                  enableMultiSelect={false}
+                  onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
+                  onOpenProduct={handleOpenProductInQuickView}
+                  effectiveUsdNioRate={exchangeRate}
+                  isWarehouseRole={isWarehouseRole}
+                  currency={currency}
+                />
               )}
             </div>
           </div>
@@ -624,7 +721,7 @@ export default function ProductQuickViewDialog({
                 variant="outline"
                 className="text-emerald-700 dark:text-emerald-400 border-emerald-600/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1.5"
                 onClick={() => {
-                  onSendWhatsApp(product);
+                  onSendWhatsApp(displayProduct);
                   onOpenChange(false);
                 }}
               >
@@ -636,7 +733,7 @@ export default function ProductQuickViewDialog({
               <Button
                 className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
                 onClick={() => {
-                  onAddToQuote(product);
+                  onAddToQuote(displayProduct);
                   onOpenChange(false);
                 }}
               >
@@ -648,7 +745,7 @@ export default function ProductQuickViewDialog({
               <Button
                 className="bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5 font-semibold"
                 onClick={() => {
-                  onAddToCart(product);
+                  onAddToCart(displayProduct);
                   onOpenChange(false);
                 }}
               >
@@ -678,16 +775,16 @@ export default function ProductQuickViewDialog({
               <div className="min-w-0 flex-1 pr-4">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white/10 text-white/90">
-                    {product.sku || "SKU"}
+                    {displayProduct.sku || "SKU"}
                   </span>
-                  {product.brand && (
+                  {displayProduct.brand && (
                     <span className="text-xs font-bold text-white/80">
-                      {product.brand}
+                      {displayProduct.brand}
                     </span>
                   )}
                 </div>
                 <h3 className="text-sm sm:text-base font-semibold text-white truncate mt-0.5">
-                  {product.name || "Producto"}
+                  {displayProduct.name || "Producto"}
                 </h3>
               </div>
 
@@ -732,7 +829,7 @@ export default function ProductQuickViewDialog({
               {/* Main Fullscreen Image */}
               <img
                 src={resolveDisplaySrc(currentImage, selectedImageIndex)}
-                alt={product.name || "Producto"}
+                alt={displayProduct.name || "Producto"}
                 className="max-w-[95vw] max-h-[75vh] w-auto h-auto object-contain object-center drop-shadow-2xl select-none"
                 style={{ aspectRatio: "auto" }}
                 onClick={(e) => e.stopPropagation()}

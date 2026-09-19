@@ -6814,10 +6814,13 @@ export default function SaleForm({
         open={Boolean(quickViewProduct)}
         onOpenChange={(open) => !open && setQuickViewProduct(null)}
         product={quickViewProduct}
+        allProducts={products}
         warehouses={warehouses}
         inventoryByWarehouse={inventoryByWarehouseQuickView}
         inventoryByProduct={inventoryByProductQuickView}
         onAddToCart={(product) => addToCart(product)}
+        onAddMultipleToCart={(items) => items.forEach((p) => addToCart(p))}
+        onOpenProduct={(p) => setQuickViewProduct(p)}
         isWarehouseRole={false}
         userRole={user?.role}
         currency={currency}

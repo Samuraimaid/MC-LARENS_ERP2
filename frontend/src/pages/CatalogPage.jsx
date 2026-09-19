@@ -600,6 +600,124 @@ export function CatalogPage() {
     addProductToDraft(type, product, { navigate: !stayInCatalog });
   };
 
+  const addMultipleProductsToDraft = async (type, productsToAdd, options = {}) => {
+    if (typeof window === "undefined" || !Array.isArray(productsToAdd) || productsToAdd.length === 0) return;
+    const config = getDraftConfig(type);
+    if (!config) return;
+
+    const { forcedDraftId = null, forceNew = false, navigate = true } = options;
+
+    const list = parseJson(window.localStorage.getItem(config.listKey), []);
+    let activeId = window.localStorage.getItem(config.activeKey);
+
+    const listIds = Array.isArray(list) ? list.map((tab) => tab.id) : [];
+    if (forcedDraftId && listIds.includes(forcedDraftId)) {
+      activeId = forcedDraftId;
+    } else if (forceNew) {
+      activeId = null;
+    } else if (!activeId || !listIds.includes(activeId)) {
+      activeId = listIds[0] || null;
+    }
+
+    let updatedList = Array.isArray(list) ? [...list] : [];
+    if (!activeId) {
+      const id = `${config.idPrefix}${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      const name = `${config.namePrefix} ${updatedList.length + 1}`;
+      const newTab = { id, name, updatedAt: new Date().toISOString() };
+      updatedList = [...updatedList, newTab];
+      activeId = id;
+    }
+
+    const draftKey = `${config.prefix}${activeId}`;
+    const existingDraft = parseJson(window.localStorage.getItem(draftKey), {});
+    const sourceCustomerId = sourceContext?.selectedCustomerId || null;
+    const sourceVehicleId = sourceContext?.selectedVehicle || "";
+    const cartItems = Array.isArray(existingDraft.cartItems) ? [...existingDraft.cartItems] : [];
+
+    productsToAdd.forEach((product) => {
+      const productId = product.product_id || product.sku || product.id;
+      const existingIndex = cartItems.findIndex((item) => item.product_id === productId);
+      const image = getProductImage(product);
+      const installationType = product.installation_type || "optional";
+      const installationPrice = product.installation_price || 0;
+      const withInstallation = installationType === "required";
+
+      if (existingIndex >= 0) {
+        cartItems[existingIndex] = {
+          ...cartItems[existingIndex],
+          quantity: (cartItems[existingIndex].quantity || 1) + 1,
+        };
+      } else {
+        cartItems.push({
+          product_id: productId,
+          product_name: product.name,
+          image,
+          quantity: 1,
+          unit_price: product.price || 0,
+          discount: 0,
+          installation_type: installationType,
+          installation_price: installationPrice,
+          with_installation: withInstallation,
+        });
+      }
+    });
+
+    const draftSnapshot = {
+      selectedCustomerId: existingDraft.selectedCustomerId || sourceCustomerId,
+      selectedVehicle: existingDraft.selectedVehicle || sourceVehicleId,
+      selectedWarehouse: existingDraft.selectedWarehouse || "",
+      cartItems,
+      globalDiscount: existingDraft.globalDiscount || 0,
+      notes: existingDraft.notes || "",
+      applyIVA: existingDraft.applyIVA ?? true,
+      ivaRate: existingDraft.ivaRate ?? 12,
+      currency: existingDraft.currency || "NIO",
+      exchangeRate: effectiveUsdNioRate,
+      appliedDiscounts: existingDraft.appliedDiscounts || [],
+      customerSearch: existingDraft.customerSearch || "",
+      productSearch: existingDraft.productSearch || "",
+      updatedAt: new Date().toISOString(),
+    };
+
+    updatedList = updatedList.map((tab) =>
+      tab.id === activeId ? { ...tab, updatedAt: draftSnapshot.updatedAt } : tab
+    );
+    const activeTab = updatedList.find((tab) => tab.id === activeId) || null;
+
+    window.localStorage.setItem(config.listKey, JSON.stringify(updatedList));
+    window.localStorage.setItem(config.activeKey, activeId);
+    window.localStorage.setItem(draftKey, JSON.stringify(draftSnapshot));
+    try {
+      await saveServerDraft(type === "quote" ? "quotation" : type, activeId, {
+        name: activeTab?.name || `${config.namePrefix} ${updatedList.length}`,
+        snapshot: draftSnapshot,
+      });
+      await setServerDraftActive(type === "quote" ? "quotation" : type, activeId);
+    } catch (error) {
+      // keep catalog workflow functional if remote draft sync fails
+    }
+    if (navigate) {
+      const targetPath = resolveDraftTargetPath(type);
+      window.localStorage.setItem("catalog_open_draft", config.flag);
+      window.location.href = targetPath;
+      return;
+    }
+    toast.success(`${productsToAdd.length} productos agregados al borrador`);
+  };
+
+  const handleAddMultipleClick = (type, productsToAdd) => {
+    if (!Array.isArray(productsToAdd) || productsToAdd.length === 0) return;
+    if (type === "sale" && sourceContext?.source === "sale-form" && sourceContext?.draftId) {
+      addMultipleProductsToDraft(type, productsToAdd, {
+        forcedDraftId: sourceContext.draftId,
+        navigate: !stayInCatalog,
+      });
+      return;
+    }
+
+    addMultipleProductsToDraft(type, productsToAdd, { navigate: !stayInCatalog });
+  };
+
   // WhatsApp send modal
   const [whatsappDialog, setWhatsappDialog] = useState({ open: false, product: null, batch: false, selectedClient: null, batchText: '' });
 
@@ -1280,12 +1398,16 @@ export function CatalogPage() {
         open={Boolean(quickViewProduct)}
         onOpenChange={(open) => !open && setQuickViewProduct(null)}
         product={quickViewProduct}
+        allProducts={products}
         warehouses={warehouses}
         inventoryByWarehouse={inventoryByWarehouse}
         inventoryByProduct={inventoryByProduct}
         onAddToCart={(p) => handleAddClick("sale", p)}
         onAddToQuote={(p) => handleAddClick("quote", p)}
+        onAddMultipleToCart={(items) => handleAddMultipleClick("sale", items)}
+        onAddMultipleToQuote={(items) => handleAddMultipleClick("quote", items)}
         onSendWhatsApp={(p) => openWhatsAppDialog(p)}
+        onOpenProduct={(p) => setQuickViewProduct(p)}
         isWarehouseRole={isWarehouseRole}
         userRole={user?.role}
         currency="USD"
