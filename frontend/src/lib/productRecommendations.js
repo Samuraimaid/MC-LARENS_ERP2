@@ -1,7 +1,7 @@
 /**
  * Product Recommendations Engine for MC-LARENS ERP
  * - Related products (same brand/category)
- * - Frequently bought together (FBT / Se venden juntos) with manual bundle priority + keyword heuristics
+ * - Frequently bought together (FBT / Se venden juntos) with manual bundle priority + DLAA→DS18 LED bombillo kits + keyword heuristics
  * 
  * Future extensions (documented as pending per prompt):
  * // P-5: Vehicle compatibility filter (Pending - future phase)
@@ -61,6 +61,141 @@ const normalize = (text) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+
+
+/** Xenon/HID codes - never suggest as LED conversion targets here. */
+const XENON_BOMBILLOS = new Set([
+  "D1S", "D1R", "D2S", "D2R", "D3S", "D3R", "D4S", "D4R",
+]);
+
+/**
+ * Alias families for halogen <-> LED size matching (Auxbeam plan + H11 LED family).
+ * H11 LED kits match H11/H8/H9/H16 sockets.
+ */
+const BOMBILLO_ALIAS_GROUPS = [
+  ["H11", "H8", "H9", "H16"],
+  ["H4", "9003"],
+  ["9005", "HB3"],
+  ["9006", "HB4"],
+  ["H13", "9008"],
+];
+
+const normalizeBombilloCode = (code) =>
+  (code || "")
+    .toString()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/JP$/i, "");
+
+export function expandBombilloAliases(code) {
+  const primary = normalizeBombilloCode(code);
+  if (!primary) return new Set();
+  for (const group of BOMBILLO_ALIAS_GROUPS) {
+    const upper = group.map((c) => c.toUpperCase());
+    if (upper.includes(primary)) return new Set(upper);
+  }
+  return new Set([primary]);
+}
+
+export function getProductBombillo(product) {
+  if (!product) return "";
+  const specs = product.specs || {};
+  const raw =
+    product.bombillo ||
+    product.socket ||
+    specs.Bombillo ||
+    specs.bombillo ||
+    specs.Socket ||
+    specs.socket ||
+    "";
+  return normalizeBombilloCode(raw);
+}
+
+/**
+ * DS18 VIXH* / VTLH* SKU to bombillo size (VTLH11->H11, VIXH4->H4, VIXH10->H10).
+ */
+export function inferDs18KitBombilloFromSku(sku) {
+  const m = String(sku || "")
+    .toUpperCase()
+    .match(/^(?:VIXH|VTLH)(.+)$/);
+  if (!m) return "";
+  const suffix = m[1];
+  if (!suffix) return "";
+  // Numeric / alnum suffix is the H* size token used in retail (11→H11, 9005→9005 if ever present)
+  if (/^H\d+/i.test(suffix) || /^(900\d|HB\d|880|881)/i.test(suffix)) {
+    return normalizeBombilloCode(suffix);
+  }
+  if (/^\d+$/.test(suffix)) {
+    return normalizeBombilloCode(`H${suffix}`);
+  }
+  return normalizeBombilloCode(suffix);
+}
+
+/**
+ * DLAA halogen housing eligible for LED bulb upsell (never reverse: LED->DLAA).
+ */
+export function isDlaaLedUpsellEligible(product) {
+  if (!product) return false;
+  if (normalize(product.brand) !== "dlaa") return false;
+  if (product.led_upsell_eligible === true) return true;
+  if (product.led_upsell_eligible === false) return false;
+
+  const bombillo = getProductBombillo(product);
+  if (!bombillo || XENON_BOMBILLOS.has(bombillo)) return false;
+
+  const text = normalize(
+    `${product.name || ""} ${product.description || ""} ${product.sku || ""} ${JSON.stringify(product.specs || {})}`
+  );
+  const skuU = String(product.sku || "").toUpperCase();
+  if (skuU.includes("-LED") || skuU.endsWith("LED") || skuU.includes("_LED")) return false;
+  if (/\bdrl\b/.test(text) || text.includes("luz diurna") || text.includes("daytime running")) return false;
+  if (text.includes("fuente de luz: led") || text.includes("fuente de luz = led") || text.includes("led integrado")) {
+    return false;
+  }
+  // Prefer known housing subcats; still allow if bombillo present on other DLAA rows
+  return true;
+}
+
+/**
+ * Find DS18 VIXH* / VTLH* kits whose size matches the halogen bombillo (alias-expanded).
+ * Direction: halogen housing -> LED kits only.
+ */
+export function findDs18LedKitsForBombillo(bombilloCode, allProducts = []) {
+  const expanded = expandBombilloAliases(bombilloCode);
+  if (!expanded.size) return [];
+  if ([...expanded].some((c) => XENON_BOMBILLOS.has(c))) return [];
+
+  const matches = [];
+  for (const p of allProducts) {
+    if (!p || p.is_active === false) continue;
+    if (normalize(p.brand) !== "ds18") continue;
+    const sku = String(p.sku || "");
+    const skuU = sku.toUpperCase();
+    if (!skuU.startsWith("VIXH") && !skuU.startsWith("VTLH")) continue;
+    const kitCode = inferDs18KitBombilloFromSku(sku);
+    if (!kitCode || XENON_BOMBILLOS.has(kitCode)) continue;
+    const kitExpanded = expandBombilloAliases(kitCode);
+    let hit = false;
+    for (const c of kitExpanded) {
+      if (expanded.has(c)) {
+        hit = true;
+        break;
+      }
+    }
+    if (hit) matches.push(p);
+  }
+  // Prefer VTLH (higher output) then VIXH; stable by sku
+  matches.sort((a, b) => {
+    const as = String(a.sku || "").toUpperCase();
+    const bs = String(b.sku || "").toUpperCase();
+    const at = as.startsWith("VTLH") ? 0 : 1;
+    const bt = bs.startsWith("VTLH") ? 0 : 1;
+    if (at !== bt) return at - bt;
+    return as.localeCompare(bs);
+  });
+  return matches;
+}
+
 
 /**
  * Get related products based on same brand and category / subcategory.
@@ -220,6 +355,32 @@ export function getFrequentlyBoughtTogether(currentProduct, allProducts = [], op
   });
 
   // If manual bundles satisfy the limit, return them immediately
+  if (results.length >= limit) {
+    return results.slice(0, limit);
+  }
+
+  // 1b. DLAA halogen -> DS18 LED bombillo kits (VIXH* / VTLH*), alias-expanded. Never reverse.
+  if (isDlaaLedUpsellEligible(currentProduct)) {
+    const bombillo = getProductBombillo(currentProduct);
+    if (bombillo) {
+      const ledKits = findDs18LedKitsForBombillo(bombillo, allProducts);
+      for (const prod of ledKits) {
+        if (results.length >= limit) break;
+        const pId = String(prod.product_id || prod.id || prod._id || prod.sku);
+        const pSku = normalize(prod.sku);
+        if (addedIds.has(pId) || (pSku && addedIds.has(pSku))) continue;
+        addedIds.add(pId);
+        if (pSku) addedIds.add(pSku);
+        results.push({
+          product: prod,
+          isBundleItem: false,
+          defaultQty: 1,
+          isLedBombilloCompat: true,
+        });
+      }
+    }
+  }
+
   if (results.length >= limit) {
     return results.slice(0, limit);
   }
