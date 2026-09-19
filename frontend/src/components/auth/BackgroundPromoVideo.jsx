@@ -49,16 +49,29 @@ export default function BackgroundPromoVideo({
 
   // 2. Playlist activa según orientación de pantalla y estado activo
   const activePlaylist = useMemo(() => {
-    if (allowWidescreenOnMobile) {
-      const active = videos.filter((v) => v.active !== false);
-      if (active.length > 0) return active;
+    const activeVideos = videos.filter((v) => v.active !== false);
+    if (activeVideos.length === 0) return DEFAULT_PROMOTIONAL_VIDEOS;
+
+    if (isPortrait) {
+      // Priorizar videos verticales / totem si existen
+      const verticalVideos = activeVideos.filter(
+        (v) => v.orientation === "vertical" || v.orientation === "totem" || v.orientation === "portrait"
+      );
+      if (verticalVideos.length > 0) {
+        return verticalVideos;
+      }
     }
+
+    if (allowWidescreenOnMobile) {
+      return activeVideos;
+    }
+
     const targetOrientation = isPortrait ? "vertical" : "horizontal";
-    const filtered = videos.filter(
+    const filtered = activeVideos.filter(
       (v) => (v.active !== false) && (v.orientation === targetOrientation || v.orientation === "universal" || v.orientation === "both" || !v.orientation)
     );
     if (filtered.length > 0) return filtered;
-    return videos.filter((v) => v.active !== false);
+    return activeVideos;
   }, [videos, isPortrait, allowWidescreenOnMobile]);
 
   // Inicializar índice
@@ -67,6 +80,7 @@ export default function BackgroundPromoVideo({
   }, [isPortrait]);
 
   const currentVideo = activePlaylist[currentIndex] || activePlaylist[0] || DEFAULT_PROMOTIONAL_VIDEOS[0];
+  const bgVideoRef = useRef(null);
 
   // 3. Notificar al componente padre para sincronizar marca y logotipo
   useEffect(() => {
@@ -82,6 +96,10 @@ export default function BackgroundPromoVideo({
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
+      }
+      if (bgVideoRef.current) {
+        bgVideoRef.current.currentTime = 0;
+        bgVideoRef.current.play().catch(() => {});
       }
       return;
     }
@@ -105,7 +123,7 @@ export default function BackgroundPromoVideo({
     };
   }, [currentVideo?.url, currentIndex]);
 
-  // 6. Carga y reproducción en elemento <video>
+  // 6. Carga y reproducción en elementos <video>
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !resolvedVideoSrc) return;
@@ -118,19 +136,34 @@ export default function BackgroundPromoVideo({
       video.src = resolvedVideoSrc;
       video.load();
 
+      if (bgVideoRef.current) {
+        bgVideoRef.current.muted = true;
+        bgVideoRef.current.src = resolvedVideoSrc;
+        bgVideoRef.current.load();
+        bgVideoRef.current.play().catch(() => {});
+      }
+
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsVideoPlaying(true);
             stallCountRef.current = 0;
+            if (bgVideoRef.current && bgVideoRef.current.paused) {
+              bgVideoRef.current.play().catch(() => {});
+            }
           })
           .catch((err) => {
             console.warn("[BackgroundPromoVideo] Autoplay con audio bloqueado, forzando muted...", err);
             if (videoRef.current) {
               videoRef.current.muted = true;
               videoRef.current.play()
-                .then(() => setIsVideoPlaying(true))
+                .then(() => {
+                  setIsVideoPlaying(true);
+                  if (bgVideoRef.current && bgVideoRef.current.paused) {
+                    bgVideoRef.current.play().catch(() => {});
+                  }
+                })
                 .catch(() => {});
             }
           });
@@ -188,6 +221,9 @@ export default function BackgroundPromoVideo({
             videoRef.current.play().catch(() => {});
           }
         });
+        if (bgVideoRef.current) {
+          bgVideoRef.current.play().catch(() => {});
+        }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -198,12 +234,28 @@ export default function BackgroundPromoVideo({
     };
   }, []);
 
+  const isCurrentVideoHorizontalInPortrait = isPortrait && currentVideo?.orientation !== "vertical" && currentVideo?.orientation !== "totem" && currentVideo?.orientation !== "portrait";
+
   return (
     <div 
       className="absolute inset-0 z-0 overflow-hidden bg-black select-none pointer-events-auto"
       onClick={onInteract}
     >
-      {/* Elemento de video único y persistente */}
+      {/* Fondo ambiental desenfocado del mismo video cuando se muestra video horizontal en pantalla vertical/totem (sin barras negras) */}
+      {isCurrentVideoHorizontalInPortrait && (
+        <video
+          ref={bgVideoRef}
+          autoPlay
+          playsInline
+          muted
+          loop
+          preload="auto"
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover blur-3xl scale-125 opacity-70 brightness-75 contrast-125 pointer-events-none transition-opacity duration-700"
+        />
+      )}
+
+      {/* Elemento de video principal con object-contain en modo totem para no recortar ni distorsionar */}
       <video
         ref={videoRef}
         autoPlay
@@ -211,6 +263,13 @@ export default function BackgroundPromoVideo({
         muted={isMuted}
         preload="auto"
         onEnded={handleVideoEnded}
+        onTimeUpdate={() => {
+          if (bgVideoRef.current && videoRef.current) {
+            if (Math.abs(bgVideoRef.current.currentTime - videoRef.current.currentTime) > 0.4) {
+              bgVideoRef.current.currentTime = videoRef.current.currentTime;
+            }
+          }
+        }}
         onError={(e) => {
           console.warn("[BackgroundPromoVideo] Error al cargar video en Smart TV, esperando antes de avanzar...", e);
           if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
@@ -224,15 +283,20 @@ export default function BackgroundPromoVideo({
         onPlaying={() => {
           setIsVideoPlaying(true);
           stallCountRef.current = 0;
+          if (bgVideoRef.current && bgVideoRef.current.paused) {
+            bgVideoRef.current.play().catch(() => {});
+          }
         }}
-        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
-          isVideoPlaying ? "opacity-100" : "opacity-90"
-        }`}
+        className={`relative z-10 h-full w-full transition-opacity duration-700 ${
+          isCurrentVideoHorizontalInPortrait
+            ? "object-contain shadow-2xl"
+            : "object-cover object-center"
+        } ${isVideoPlaying ? "opacity-100" : "opacity-90"}`}
       />
 
       {/* Capa de viñeta oscura translúcida que solo se activa al interactuar para contrastar el PIN pad */}
       <div 
-        className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/65 pointer-events-none transition-opacity duration-700 ease-in-out ${
+        className={`absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-black/65 pointer-events-none transition-opacity duration-700 ease-in-out ${
           showOverlay ? "opacity-100" : "opacity-0"
         }`} 
       />

@@ -3388,7 +3388,7 @@ async def apply_core_seed_data(
         report["reason"] = "seed_file_not_found"
         return report
 
-    payload = json.loads(CORE_SEED_FILE.read_text(encoding="utf-8"))
+    payload = json.loads(CORE_SEED_FILE.read_text(encoding="utf-8-sig"))
     collections = payload.get("collections") if isinstance(payload, dict) else None
     if not isinstance(collections, dict):
         report["reason"] = "invalid_seed_format"
@@ -23809,6 +23809,40 @@ def _normalize_promo_video_url(url: str, filename: str = "") -> str:
     if filename:
         return f"{GCS_PROMO_VIDEOS_CDN}/{filename}"
     return url
+
+
+def _optimize_video_with_ffmpeg(input_path: Path) -> Path:
+    """
+    Optimiza el video subido para streaming web / Smart TV / totems:
+    - Escala a un máximo de 1080p manteniendo la relación de aspecto (scale='min(1920,iw)':-2).
+    - Aplica -movflags +faststart para mover el atom moov al inicio (streaming instantáneo sin buffering inicial).
+    - Codec H.264 / AAC estándar compatible con todos los navegadores, móviles y Smart TVs.
+    """
+    try:
+        import subprocess
+        optimized_path = input_path.with_name(f"opt_{input_path.stem}.mp4")
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(input_path),
+            "-vf", "scale='min(1920,iw)':-2",
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "23",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-movflags", "+faststart",
+            str(optimized_path)
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180)
+        if result.returncode == 0 and optimized_path.exists() and optimized_path.stat().st_size > 0:
+            try:
+                input_path.unlink()
+            except Exception:
+                pass
+            return optimized_path
+    except Exception as e:
+        logger.warning(f"ffmpeg video optimization skipped/failed: {e}")
+    return input_path
 
 
 DEFAULT_PROMOTIONAL_VIDEOS = [
