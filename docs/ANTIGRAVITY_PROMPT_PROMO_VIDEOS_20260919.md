@@ -68,6 +68,27 @@ En `BackgroundPromoVideo` (y preview settings si existe):
 
 ---
 
+---
+
+## Bloque C — Lightbox de producto: fondo blanco (Xinon 2026-09-19)
+
+**Síntoma:** En catálogo, al ver la foto a full size (overlay fullscreen del Quick View), el fondo es **negro**. En productos oscuros (ej. FOX SHOCKS / Hilux, partes negras del amortiguador) se pierden bordes y detalle para el cliente.
+
+**Cambio (IN SCOPE en el próximo deploy de UI):**
+1. Archivo principal: `frontend/src/components/erp/ProductQuickViewDialog.jsx` (overlay fullscreen / lightbox).
+2. Fondo del stage: de `bg-black/...` a **blanco** (`bg-white` o `bg-zinc-50`), sin oscurecer la foto.
+3. Ajustar contraste de UI encima del fondo claro:
+   - Texto SKU/nombre, contador `n/total`, botón ×, flechas prev/next: usar **texto/iconos oscuros** o pills con fondo semitransparente claro + borde, no blanco puro sobre blanco.
+   - Thumbnails activos: borde primary visible sobre blanco.
+4. Mantener `object-contain` (no recortar).
+5. No volver al zoom `scale` dentro del frame.
+
+**QA:** Abrir FOX `987-02-089` (o similar oscuro) → tap foto → full size con fondo blanco; negros del producto distinguibles; controles legibles.
+
+Commit sugerido: `fix(ui): white background for product fullscreen lightbox`.
+
+---
+
 ## Fuera de alcance
 - No wipe catálogo productos.
 - No rehacer lightbox/Universal/China scrub.
@@ -77,6 +98,7 @@ En `BackgroundPromoVideo` (y preview settings si existe):
 1. Push carruseles verificado en GitHub + deploy BUILD_ID.
 2. PUT live bundles piloto.
 3. Commit videos (transcode + blur UI + diagnóstico).
+4. Lightbox producto fondo **blanco** (Bloque C) en el mismo o siguiente commit UI.
 4. `memory/chat-log.md` con BUILD_ID, lista de videos rotos arreglados, y si totems volvieron.
 
 Commits sugeridos:
