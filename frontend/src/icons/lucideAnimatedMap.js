@@ -1,4 +1,4 @@
-/* lucide name -> lucide-animated export name */
+/* lucide name -> lucide-animated public export name */
 export const LUCIDE_ANIMATED_MAP = {
   "AArrowDown": "AArrowDownIcon",
   "AArrowUp": "AArrowUpIcon",
@@ -165,6 +165,7 @@ export const LUCIDE_ANIMATED_MAP = {
   "FileCog": "FileCogIcon",
   "FilePenLine": "FilePenLineIcon",
   "FileStack": "FileStackIcon",
+  "FileText": "FileTextIcon",
   "Fingerprint": "FingerprintIcon",
   "FishSymbol": "FishSymbolIcon",
   "Flame": "FlameIcon",
@@ -321,11 +322,15 @@ export const LUCIDE_ANIMATED_MAP = {
   "ReceiptText": "ReceiptTextIcon",
   "Redo": "RedoIcon",
   "RedoDot": "RedoDotIcon",
-  "RefreshCcw": "RefreshCCWIcon",
-  "RefreshCw": "RefreshCWIcon",
+  "RefreshCcw": "RefreshCcwIcon",
+  "RefreshCcwDot": "RefreshCcwDotIcon",
+  "RefreshCw": "RefreshCwIcon",
+  "RefreshCwOff": "RefreshCwOffIcon",
   "Rocket": "RocketIcon",
   "RockingChair": "RockingChairIcon",
   "RollerCoaster": "RollerCoasterIcon",
+  "RotateCcw": "RotateCcwIcon",
+  "RotateCw": "RotateCwIcon",
   "Route": "RouteIcon",
   "Router": "RouterIcon",
   "RussianRuble": "RussianRubleIcon",
@@ -415,4 +420,3 @@ export const LUCIDE_ANIMATED_MAP = {
 export function animatedExportName(lucideName) {
   return LUCIDE_ANIMATED_MAP[lucideName] || null;
 }
-
