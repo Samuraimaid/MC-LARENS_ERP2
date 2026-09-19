@@ -1,0 +1,84 @@
+# Antigravity — Promo videos (carga, 1080p, blur/totem) + cierre carruseles · 2026-09-19
+
+Repo: `Samuraimaid/MC-LARENS_ERP2`  
+ERP: `https://mclarens-erp-836176703716.us-central1.run.app`  
+Windows: **no usar `py`** — `python` / ruta completa / `.ps1`.
+
+---
+
+## Bloque A — Carruseles (URGENTE: push + deploy)
+
+Case verificó GitHub: **`3e732cb5` NO está en `origin/master`**. Master remoto sigue en `5cfa75e9`. El push desde el workshop falló (red/GitHub).
+
+1. En el PC Antigravity: `git status` + `git log -1 --oneline`.
+2. Si el commit local existe: `git push origin master` hasta que GitHub muestre el commit.
+3. Confirmar: https://github.com/Samuraimaid/MC-LARENS_ERP2/commits/master
+4. Cloud Shell: `git pull origin master && ./deploy.sh`
+5. **Bundles piloto** (`EXL-SQ6-5C`, `GEN-X112LD`): además del seed, hacer **PUT live** de `bundle_skus` (seed solo no actualiza Mongo). Tag `bundle_pilot_20260919`.
+6. Nota de alcance: el commit mencionó **P-5 y P-7**; en el prompt Case estaban **pendientes**. No revertir si ya están; documentar en `memory/chat-log.md` que se adelantaron. No ampliar más P-5/P-7 en este lote.
+
+---
+
+## Bloque B — Videos de publicidad (problema reportado por Xinon)
+
+### Síntomas
+- Fallos / mala carga de videos de publicidad (login / fondo / totem / settings).
+- Quiere: al subir video muy alto → **transcodificar a máx. 1080p**.
+- Videos **horizontales** en pantallas altas/totem: en lugar de franjas negras, rellenar con **blur del mismo video** (estilo Apple/YouTube); si hay videos **totem/vertical** disponibles, preferirlos en orientación portrait.
+
+### Contexto técnico (Case)
+- Player: `frontend/src/components/auth/BackgroundPromoVideo.jsx` — hoy `object-cover` (recorta; no letterbox+blur).
+- Catálogo/URL: `frontend/src/lib/promoVideos.js` → GCS `mclarens-erp-vehicles/videos/promos/…` (varios archivos HEAD 200 OK).
+- API: `GET …/promos/videos` (fallback a lista estática si falla).
+- Settings upload: `PromotionalVideosSettingsPanel.jsx`.
+- Scripts históricos borraron `totem-1` / `totem-2` de Mongo (`clean_and_sync_promo_videos.py`). Revisar si siguen archivos en GCS o hay que re-subir verticales.
+- **Seguridad:** varios `scripts/*promo*` tienen **URI de Atlas hardcodeada**. No pegar secretos en chat-log; migrar a env `MONGO_URL` y rotar credencial si sigue en git history (tarea aparte mínima: dejar de hardcodear en código nuevo).
+
+### B1 — Diagnosticar carga (obligatorio)
+1. Listar videos activos (API + Mongo + GCS HEAD).
+2. Reportar: 404, CORS, MIME, tamaños >X MB, nombres YTDown enormes, orientation mismatch (solo horizontal en portrait).
+3. Mejorar player: onError skip más agresivo, no pantallas negras largas; log título/url; opcional poster.
+4. Asegurar `resolveDirectPromoVideoUrl` sin redirects 307 en TV.
+
+### B2 — Upload → máx 1080p (obligatorio)
+En el flujo de subida de promos (backend y/o script post-upload):
+- Si altura > 1080 (o width > 1920): `ffmpeg` scale `-2:1080` (o `1920:-2` manteniendo aspect), H.264 + AAC, `faststart`.
+- Guardar/serve la versión 1080p en GCS; no dejar solo el original 4K en el player.
+- Documentar dependencia ffmpeg en workshop/Cloud Run job si aplica.
+- Campo metadata: `width`, `height`, `transcoded_1080p: true`.
+
+### B3 — Letterbox blur / totem (obligatorio UX)
+En `BackgroundPromoVideo` (y preview settings si existe):
+
+**Portrait / totem viewport + video horizontal (o aspect más ancho que el contenedor):**
+1. Preferir playlist `orientation: vertical|totem|portrait` si hay activos.
+2. Si solo hay horizontal: layout de **dos capas**:
+   - Fondo: mismo `<video>` o canvas mirror con `object-cover` + **blur fuerte** (`filter: blur(…) scale(1.1)`).
+   - Frente: video nítido con `object-contain` centrado (se ven franjas, pero rellenas de blur, no negro).
+3. Si Xinon aún tiene archivos totem en disco/GCS, re-registrar en `promotional_videos` con `orientation: "vertical"`.
+
+**Landscape viewport:** mantener cover o contain según diseño actual; blur opcional solo si letterbox.
+
+### B4 — QA
+- Login / fondo promo en móvil portrait y desktop.
+- Subir un clip 4K de prueba → GCS sirve ≤1080p.
+- Horizontal en pantalla alta: blur visible, sin barras negras.
+- Si hay ≥1 vertical: en portrait se elige vertical primero.
+- Smart TV: no se queda en negro > unos segundos.
+
+---
+
+## Fuera de alcance
+- No wipe catálogo productos.
+- No rehacer lightbox/Universal/China scrub.
+- No implementar reviews DS18.
+
+## Entregable
+1. Push carruseles verificado en GitHub + deploy BUILD_ID.
+2. PUT live bundles piloto.
+3. Commit videos (transcode + blur UI + diagnóstico).
+4. `memory/chat-log.md` con BUILD_ID, lista de videos rotos arreglados, y si totems volvieron.
+
+Commits sugeridos:
+- `fix: push related/FBT carousels + live pilot bundles`
+- `feat(promos): 1080p transcode on upload + blur letterbox for horizontal on portrait`
