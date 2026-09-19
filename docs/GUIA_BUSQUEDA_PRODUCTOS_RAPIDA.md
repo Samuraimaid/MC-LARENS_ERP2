@@ -1,11 +1,8 @@
 # Guía — Búsquedas de productos más rápidas (McLarens ERP)
 
-**Fecha:** 2026-09-12  
-**Contexto:** Live carga **3657** productos ≈ **11.4 MB** en `GET /api/products`; el FE filtra en memoria sin debounce. Por eso el buscador se siente “lag”.
-
-Relacionado: `docs/REPORTE_DANOS_CATALOGO_IMAGENES.md`, R-054 (paginación/proyección), issue #8.
-
----
+> **Actualización 2026-09-19 (Case):** el **estándar UX de buscador FE** ya está implementado en Catálogo (PR [#25](https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/25), merge `831ef673`).  
+> Documento canónico del patrón + rollout a otras pantallas: **`docs/CATALOG_SEARCH_UX_STANDARD_20260919.md`**.  
+> Esta guía sigue siendo la referencia del plan **API / debounce / proyección / search server-side** (pasos 1–5 abajo). No reemplaza el estándar UX.
 
 ## Objetivo
 

@@ -19,6 +19,13 @@ El sistema se despliega como un contenedor unificado (FastAPI + React/Vite) en G
 
 ## Historial de Actualizaciones y Mejoras del Sistema
 
+Actualizacion 2026-09-19 - Buscador Catálogo (estándar UX ERP)
+--------------------------------------------------------------
+- Catálogo: barra sticky, pegar SKU fiable, filtros colapsables, Limpiar, escáner QR/barcode (`ProductBarcodeScannerDialog`), autocomplete con thumb, scroll infinito y FAB subir (PR #25 → `831ef673`).
+- Documentación del estándar y rollout a Inventario / Ventas / listados: `docs/CATALOG_SEARCH_UX_STANDARD_20260919.md`.
+- Guía API de búsqueda rápida actualizada con puntero al estándar: `docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md`.
+- `docs/ANTIGRAVITY_MASTER.md` actualizado (orden sugerido + feature buscador).
+
 Actualizacion 2026-08-24 - Mesa de Corte de Polarizados, Inventario Dual y App Móvil
 -----------------------------------------------------------------------------------
 - Estandarizado término **"Rollo"** (ancho 20", 36", 40").
