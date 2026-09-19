@@ -4,8 +4,8 @@ Repo: `Samuraimaid/MC-LARENS_ERP2`
 ERP live: `https://mclarens-erp-836176703716.us-central1.run.app`  
 Zona: America/Guatemala  
 
-**Modo:** un solo ciclo merge → build → `./deploy.sh` (o el deploy habitual a Cloud Run).  
-**No rehacer** trabajo de datos que Case ya aplicó en live (ver “Ya hecho por Case”).
+**Modo:** un solo ciclo merge → implementaciones nuevas → build → deploy Cloud Run.  
+**No rehacer** trabajo de datos que Case ya aplicó en live (ver “Ya hecho por Case”), salvo la limpieza de procedencia China (ítem nuevo abajo).
 
 ---
 
@@ -20,6 +20,7 @@ Zona: America/Guatemala
 | PR-2 ProductThumb + `productImage.js` | Ya en `master` (`f0b28cd1`) |
 | PR-3 rewrite extensiones (FOX/KEKO/…) | Datos live ya corregidos |
 | Compat `is_universal` en productos (LITTLE TREES, etc.) | **Datos** live; **UI** pendiente (abajo) |
+| Prompt acumulado docs | PR #15 / este archivo |
 
 ---
 
@@ -33,71 +34,126 @@ Mergear a `master` en este orden (resolver conflictos mínimos si aparecen):
    https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/13  
    Branch: `fix/build-badge-shows-deploy-id`
 
-2. **PR #14** — Quick View / ojito: imagen proporcional (no se deforma)  
+2. **PR #14** — Quick View / ojito: base de imagen proporcional + lightbox  
    https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/14  
    Branch: `fix/product-quickview-image-aspect-20260918`  
    Archivo: `frontend/src/components/erp/ProductQuickViewDialog.jsx`  
-   - Sintoma: listado OK; al abrir ojito la foto se agranda y se desproporciona.  
-   - Fix ya en la rama: `object-contain` intrínseco + lightbox fullscreen (sin `scale-150`) + fallback `/uploads/`→GCS.
 
 3. **PR #12** (docs, opcional) — prompt ProductThumb versionado  
    https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/12  
-   Solo docs; merge si no estorba.
 
-Tras merges: `git pull origin master` y **deploy** a Cloud Run.
+4. **PR #15** (docs) — este prompt acumulado  
+   https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/15  
 
-**QA post-deploy #13+#14**
-- Badge del ERP muestra `BUILD …` con id/fecha del deploy actual (no beta vieja).
-- Catálogo → Auxbeam u otro con foto → ojito: imagen centrada y proporcional.
-- Tap en la foto → lightbox a pantalla completa sin estirar.
-- Miniaturas / flechas de galería siguen OK.
+Tras merges de #13/#14: `git pull` y preparar deploy **después** de los ítems 2–4 de este prompt (o deploy intermedio + segundo deploy; preferible un solo deploy al final).
 
 ---
 
-### 2) UI: badge “Universal” (datos ya en live)
+### 2) Quick View: foto a tamaño completo + carrusel (REFORZAR / completar PR #14)
 
-**Problema:** productos con `compatibility.is_universal: true` (y a veces `compatibilidad_texto`) siguen mostrando **“Sin datos de compatibilidad”** en cards.
+**Contexto (Xinon, capturas 2026-09-19):**  
+En detalle de producto (ej. DLAA `NS2822-LED`), al tocar la foto hoy se hace un **zoom pequeño dentro del mismo cuadro** (`scale` / hover-zoom). Se pierden los bordes y no se ve el detalle. Quiere:
 
-**Causa:** `hasStructuredCompatibility` en `CatalogPage.jsx` solo mira brands/models/vehicle_types/años — ignora `is_universal` y `compatibilidad_texto`.
+1. Al **tocar/clic** la imagen principal del Quick View → abrir **vista a tamaño completo** (overlay/lightbox a pantalla completa o casi full viewport).
+2. En esa vista: **carrusel** con todas las `images[]` del producto.
+3. Botones **anterior / siguiente** visibles al **hover** (desktop) y usables en touch (siempre visibles o zona tappable en móvil).
+4. Contador tipo `n / total` en la vista ampliada.
+5. Cerrar con tap fuera, botón ×, o Escape.
+6. **Eliminar** el zoom-in interno dentro del frame (`scale-105` / `scale-150` / hover scale que recorta). La miniatura del detalle puede quedar con `object-contain` sin scale al hover, o hover solo de opacidad en controles.
+
+**Archivos:**  
+- `frontend/src/components/erp/ProductQuickViewDialog.jsx` (principal)  
+- Revisar que `ProductImageHoverZoom.jsx` no interfiera dentro del dialog (el hover preview flotante es OK en listado; en detalle manda el lightbox).
+
+**QA**
+- Abrir DLAA NS2822-LED → tocar foto → fullscreen, se ve el kit completo sin recorte de bordes.
+- Avanzar/retroceder por las 6 fotos; thumbnails del dialog pueden sincronizar índice.
+- Móvil + desktop.
+
+Commit sugerido: `fix(ui): fullscreen product image carousel in Quick View`.
+
+---
+
+### 3) UI: badge “Universal” (datos ya en live)
+
+**Problema:** productos con `compatibility.is_universal: true` (y a veces `compatibilidad_texto`) siguen mostrando **“Sin datos de compatibilidad”**.
 
 **Fix**
 1. Compat presente si `compatibility.is_universal === true` **o** hay `compatibilidad_texto`.
-2. Card: badge **Universal** (o el texto de `compatibilidad_texto`) en lugar de “Sin datos…”.
-3. Sale-pick / filtro vehículo: `is_universal` **debe pasar** el filtro (`isProductCompatibleWithVehicle` → true).
-4. Revisar Quick View si muestra el mismo bloque de compatibilidad.
+2. Card: badge **Universal** (o texto de `compatibilidad_texto`).
+3. Sale-pick: `is_universal` pasa filtro de vehículo.
+4. Quick View: mismo criterio si muestra el bloque de compatibilidad.
 
-**Archivos:** `frontend/src/pages/CatalogPage.jsx` (+ Quick View si aplica).  
-**Detalle:** `docs/` o handoff Case `ANTIGRAVITY_COMPAT_UNIVERSAL_UI_20260918.md`.
-
-**QA:** LITTLE TREES / ambientadores universales → badge Universal; en venta con vehículo seleccionado siguen apareciendo.
-
-Commit sugerido: `fix(ui): show Universal compatibility badge when is_universal`.
+**Archivos:** `frontend/src/pages/CatalogPage.jsx` (+ Quick View).  
+Commit: `fix(ui): show Universal compatibility badge when is_universal`.
 
 ---
 
-### 3) (Opcional / P1 si hay tiempo) Catálogo search & limit
+### 4) Quitar procedencia “China” de todo el catálogo (datos + defensa UI)
 
-Solo si el ciclo anterior ya está desplegado y estable:
+**Motivo comercial:** los clientes asocian “hecho en China” / “Lugar de origen: … China” con baja calidad. Hay que **eliminar esa información** de cualquier producto.
 
-- Revisar búsqueda/limit/paginación del catálogo (chips, lag con catálogos grandes).
-- No tocar backend de auth ni PINs en este prompt.
-- Referencia histórica: `docs/ANTIGRAVITY_MASTER.md` / `ANTIGRAVITY_APLICAR_TODO.md` secciones P0 search — **solo lo que aún falle en live**.
+**Ejemplo live:** DLAA `NS2822-LED` / `prod_dlaa_ns2822-led`  
+Descripción empieza con:  
+`Detalles rápidos Lugar de origen: Guangdong, China …`
+
+**Alcance de limpieza (case-insensitive), en campos de texto de producto:**
+- `description`, `descripcion`, `name` / `nombre` (solo si el origen está embebido; no borrar el nombre del producto)
+- `compatibilidad_texto`, `notes`, `specs`, `attributes` / fichas si existen como string
+- Frases / patrones típicos a eliminar o reescribir quitando el origen:
+  - `Lugar de origen: … China`
+  - `Origen: … China`
+  - `Made in China` / `Hecho en China` / `Fabricado en China`
+  - `Guangdong, China` / `…, China`
+  - Mencionar solo `China` como país de origen en bloques “Detalles rápidos”
+- No inventar otro país de origen. Si al quitar la frase queda basura (`Detalles rápidos` solo), limpiar puntuación/espacios dobles.
+
+**Implementación preferida (dos capas):**
+
+**A) Datos (obligatorio)**  
+Script o job one-shot autenticado (PIN gerencia / mismo patrón Case) que:
+1. `GET /api/products?limit=10000`
+2. Detecte matches de procedencia China
+3. `PUT /api/products/{id}` con el texto limpio (merge del producto completo)
+4. Tag: `scrub_china_origin_20260919`
+5. Reporte JSON: `docs/` o `scripts/reports/SCRUB_CHINA_ORIGIN_20260919.json` con `attempted/ok/fail` + sample before/after
+
+**B) UI (recomendado, defensa)**  
+Helper `sanitizeProductCopy(text)` usado al **mostrar** description en Catalog / Quick View / SaleForm, que strippea los mismos patrones por si queda algún registro viejo. No sustituye el scrub de datos.
+
+**QA**
+- Buscar en live “China” / “Guangdong” en descriptions de activos → 0 (o solo falsos positivos legítimos, documentarlos).
+- Abrir `NS2822-LED`: la descripción ya no menciona China ni lugar de origen chino.
+- Spot-check 10 SKUs DLAA / Auxbeam / imports.
+
+Commit sugerido: `chore(catalog): scrub China origin from product copy (+ display sanitize)`.
 
 ---
 
-## Fuera de alcance de este prompt
+### 5) (Opcional / P1) Catálogo search & limit
+
+Solo si 1–4 ya están desplegados y estables. Ver `docs/ANTIGRAVITY_MASTER.md` — solo lo que aún falle en live.
+
+---
+
+## Fuera de alcance
 
 - No wipe/rebuild de marcas.
-- No re-subir imágenes DS18/FOX (Case ya lo hizo).
-- No cambios de precios ni stock demo.
-- No P0 seguridad/AuthZ en este lote (otro prompt aparte si Xinon lo pide).
+- No re-subir imágenes DS18/FOX.
+- No cambios de precios ni stock.
+- No P0 seguridad/AuthZ en este lote.
 
 ---
 
 ## Entregable al cerrar
 
-1. PRs #13 y #14 mergeados + deploy live verificado (badge + ojito).  
-2. Commit/PR del badge Universal + smoke en catálogo/ventas.  
-3. Nota corta en `memory/chat-log.md` (Antigravity) con BUILD_ID desplegado y checklist PASS/FAIL.
+1. PRs #13 y #14 mergeados; ítems 2–4 en `master`.  
+2. Un deploy Cloud Run con BUILD_ID nuevo.  
+3. Checklist PASS/FAIL:
+   - Badge de build correcto  
+   - Quick View: tap foto → fullscreen + carrusel + flechas hover  
+   - Badge Universal en LITTLE TREES / universales  
+   - 0 procedencia China en descriptions (sample + búsqueda)  
+4. Nota en `memory/chat-log.md` con BUILD_ID y resultados.
 
-Cuando termines, avisa a Xinon con el BUILD_ID nuevo y los 3 checks de QA.
+Cuando termines, avisa a Xinon con el BUILD_ID y el checklist.
