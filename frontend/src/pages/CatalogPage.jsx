@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   XCircle,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { usdAndNioFromUsdBase, formatDualCurrency } from "@/lib/documentCurrency";
@@ -41,6 +42,7 @@ import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import ProductThumb from "@/components/products/ProductThumb";
 import { getProductImageUrl } from "@/lib/productImage";
+import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
 
 const DRAFT_CONFIG = {
   sale: {
@@ -103,6 +105,7 @@ const hasStructuredCompatibility = (product) => {
 
 const isProductCompatibleWithVehicle = (product, vehicle) => {
   if (!vehicle) return true;
+  if (isUniversalProduct(product)) return true;
   if (!hasStructuredCompatibility(product)) return true;
 
   const compatibility = product?.compatibility || {};
@@ -1022,7 +1025,7 @@ export function CatalogPage() {
                           {/* Description */}
                           {product.description && (
                             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                              {product.description}
+                              {sanitizeProductCopy(product.description)}
                             </p>
                           )}
 
@@ -1032,6 +1035,17 @@ export function CatalogPage() {
                               Compatibilidad
                             </div>
                             <div className="flex flex-wrap gap-1.5">
+                              {isUniversalProduct(product) && (
+                                <Badge variant="default" className="bg-emerald-600/90 hover:bg-emerald-600 text-white text-[11px] py-0 px-2 font-semibold gap-1">
+                                  <Sparkles className="h-3 w-3" />
+                                  Universal
+                                </Badge>
+                              )}
+                              {(product.compatibilidad_texto || compatibility?.texto) && (
+                                <Badge variant="secondary" className="text-[11px] py-0 px-2 font-medium">
+                                  {product.compatibilidad_texto || compatibility.texto}
+                                </Badge>
+                              )}
                               {(compatibility?.brands || []).map((brand) => (
                                 <Badge key={brand} variant="secondary" className="text-[11px] py-0 px-2 font-medium">
                                   {brand}
@@ -1052,7 +1066,7 @@ export function CatalogPage() {
                                   {compatibility.year_from || "-"} - {compatibility.year_to || "Actual"}
                                 </Badge>
                               )}
-                              {!compatibility?.brands?.length && !compatibility?.models?.length && !compatTypes?.length && !compatibility?.year_from && !compatibility?.year_to && (
+                              {!isUniversalProduct(product) && !(product.compatibilidad_texto || compatibility?.texto) && !compatibility?.brands?.length && !compatibility?.models?.length && !compatTypes?.length && !compatibility?.year_from && !compatibility?.year_to && (
                                 <span className="text-xs text-muted-foreground italic">Sin datos de compatibilidad</span>
                               )}
                             </div>

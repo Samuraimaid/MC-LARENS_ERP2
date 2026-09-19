@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, cn } from "@/lib/utils";
 import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
-import { uploadsToGcsUrl } from "@/lib/productImage";
+import { uploadsToGcsUrl, getProductImageUrl } from "@/lib/productImage";
+import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
 import {
   Car,
   Wrench,
@@ -15,15 +16,12 @@ import {
   MessageSquare,
   ShieldCheck,
   Tag,
-  Barcode,
-  Layers,
   ChevronLeft,
   ChevronRight,
   Maximize2,
   Building2,
   Clock,
   DollarSign,
-  Boxes,
   CheckCircle2,
   XCircle,
   Sparkles,
@@ -31,6 +29,7 @@ import {
   Lightbulb,
   Shield,
   Droplet,
+  X,
 } from "lucide-react";
 
 function getCategoryIcon(category) {
@@ -60,13 +59,14 @@ export default function ProductQuickViewDialog({
   exchangeRate = 36.5,
 }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [failedImages, setFailedImages] = useState({});
   const [srcOverrides, setSrcOverrides] = useState({});
+  const touchStartXRef = useRef(null);
 
   useEffect(() => {
     setSelectedImageIndex(0);
-    setIsZoomed(false);
+    setIsFullscreen(false);
     setFailedImages({});
     setSrcOverrides({});
   }, [product]);
@@ -92,6 +92,66 @@ export default function ProductQuickViewDialog({
     setFailedImages((prev) => ({ ...prev, [idx]: true }));
   };
 
+  // Gather all valid images from product
+  const rawImages = Array.isArray(product?.images) && product.images.length > 0
+    ? product.images
+    : product?.image_url
+      ? [product.image_url]
+      : product?.image
+        ? [product.image]
+        : [];
+  
+  const images = rawImages.filter(Boolean);
+  const currentImage = images[selectedImageIndex] || null;
+
+  const prevImage = useCallback(() => {
+    if (!images.length) return;
+    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+  }, [images.length]);
+
+  const nextImage = useCallback(() => {
+    if (!images.length) return;
+    setSelectedImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+  }, [images.length]);
+
+  // Keyboard navigation for fullscreen lightbox
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+      } else if (e.key === "ArrowLeft") {
+        prevImage();
+      } else if (e.key === "ArrowRight") {
+        nextImage();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen, prevImage, nextImage]);
+
+  // Touch swipe support for fullscreen lightbox
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartXRef.current - touchEndX;
+    touchStartXRef.current = null;
+
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        nextImage();
+      } else {
+        prevImage();
+      }
+    }
+  };
+
   if (!product) return null;
 
   const brandLogo = getProductBrandLogo(product.brand);
@@ -109,35 +169,23 @@ export default function ProductQuickViewDialog({
 
   const dualPrice = getDualPrices(product.precio1 ?? product.price ?? 0);
 
-  // Gather all valid images
-  const rawImages = Array.isArray(product.images) && product.images.length > 0
-    ? product.images
-    : product.image_url
-      ? [product.image_url]
-      : product.image
-        ? [product.image]
-        : [];
-  
-  const images = rawImages.filter(Boolean);
-  const currentImage = images[selectedImageIndex] || null;
-
   const compatibility = product.compatibility || {};
-  const compatTypes = Array.isArray(compatibility.vehicle_types) ? compatibility.vehicle_types : [];
+  const compatTypes = Array.isArray(compatibility.vehicle_types)
+    ? compatibility.vehicle_types
+    : Array.isArray(product.vehicle_types)
+      ? product.vehicle_types
+      : [];
   const compatBrands = Array.isArray(compatibility.brands) ? compatibility.brands : [];
   const compatModels = Array.isArray(compatibility.models) ? compatibility.models : [];
+  const isUniversal = isUniversalProduct(product);
+  const compatTexto = product.compatibilidad_texto || compatibility.texto || null;
 
   // Stock calculations
   const rawStock = inventoryByProduct[product.product_id] ?? null;
   const stockRows = inventoryByWarehouse[product.product_id] || [];
   const totalStock = rawStock !== null ? rawStock : stockRows.reduce((sum, row) => sum + (row.quantity || 0), 0);
 
-  const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-  };
-
-  const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-  };
+  const cleanDescription = sanitizeProductCopy(product.description || product.descripcion || "");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -153,6 +201,12 @@ export default function ProductQuickViewDialog({
                 {product.brand && (
                   <Badge variant="secondary" className="text-[11px] font-bold">
                     {product.brand}
+                  </Badge>
+                )}
+                {isUniversal && (
+                  <Badge className="bg-emerald-600/90 text-white text-[11px] font-semibold gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Universal
                   </Badge>
                 )}
                 {totalStock > 0 ? (
@@ -193,16 +247,42 @@ export default function ProductQuickViewDialog({
             {/* Gallery Column */}
             <div className="space-y-3">
               {/* Main preview box */}
-              <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none">
+              <div
+                className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none cursor-pointer"
+                onClick={() => {
+                  if (currentImage && !failedImages[selectedImageIndex]) {
+                    setIsFullscreen(true);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (currentImage && !failedImages[selectedImageIndex]) {
+                      setIsFullscreen(true);
+                    }
+                  }
+                }}
+                title="Toca para ver pantalla completa"
+              >
                 {currentImage && !failedImages[selectedImageIndex] ? (
-                  <img
-                    src={resolveDisplaySrc(currentImage, selectedImageIndex)}
-                    alt={product.name || "Producto"}
-                    onError={() => handleImageError(selectedImageIndex, currentImage)}
-                    className="max-w-full max-h-full w-auto h-auto object-contain object-center p-2 cursor-zoom-in"
-                    style={{ aspectRatio: "auto" }}
-                    onClick={() => setIsZoomed(true)}
-                  />
+                  <>
+                    <img
+                      src={resolveDisplaySrc(currentImage, selectedImageIndex)}
+                      alt={product.name || "Producto"}
+                      onError={() => handleImageError(selectedImageIndex, currentImage)}
+                      className="max-w-full max-h-full w-auto h-auto object-contain object-center p-2 transition-opacity group-hover:opacity-90"
+                      style={{ aspectRatio: "auto" }}
+                    />
+                    {/* Hover indicator for desktop full-view */}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                      <div className="bg-black/75 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                        <Maximize2 className="h-3.5 w-3.5" />
+                        Pantalla completa
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-linear-to-b from-muted/40 to-muted/10">
                     {brandLogo ? (
@@ -242,12 +322,12 @@ export default function ProductQuickViewDialog({
 
                 {/* Floating image counter */}
                 {images.length > 1 && (
-                  <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
+                  <span className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
                     {selectedImageIndex + 1} / {images.length}
                   </span>
                 )}
 
-                {/* Left/Right controls */}
+                {/* Left/Right controls on dialog preview */}
                 {images.length > 1 && (
                   <>
                     <button
@@ -256,7 +336,7 @@ export default function ProductQuickViewDialog({
                         e.stopPropagation();
                         prevImage();
                       }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
                       aria-label="Imagen anterior"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -267,7 +347,7 @@ export default function ProductQuickViewDialog({
                         e.stopPropagation();
                         nextImage();
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background border shadow-md flex items-center justify-center text-foreground transition-all opacity-0 group-hover:opacity-100"
                       aria-label="Siguiente imagen"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -287,7 +367,7 @@ export default function ProductQuickViewDialog({
                       className={cn(
                         "relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-muted/30 transition-all p-1 flex items-center justify-center",
                         selectedImageIndex === idx
-                          ? "border-primary shadow-sm scale-105"
+                          ? "border-primary shadow-sm ring-2 ring-primary/30"
                           : "border-border/60 hover:border-border opacity-70 hover:opacity-100"
                       )}
                     >
@@ -403,13 +483,13 @@ export default function ProductQuickViewDialog({
               </div>
 
               {/* Description */}
-              {product.description && (
+              {cleanDescription && (
                 <div className="space-y-1.5">
                   <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Descripción del Producto
                   </div>
-                  <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed bg-muted/10 p-3 rounded-lg border border-border/60">
-                    {product.description}
+                  <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed bg-muted/10 p-3 rounded-lg border border-border/60 whitespace-pre-line">
+                    {cleanDescription}
                   </p>
                 </div>
               )}
@@ -421,6 +501,22 @@ export default function ProductQuickViewDialog({
                   Compatibilidad Vehicular
                 </div>
                 <div className="space-y-2 text-xs">
+                  {isUniversal && (
+                    <div>
+                      <Badge className="bg-emerald-600/90 text-white text-[11px] py-0.5 px-2.5 font-semibold gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Universal (Compatible con todo vehículo)
+                      </Badge>
+                    </div>
+                  )}
+
+                  {compatTexto && (
+                    <div className="p-2 rounded bg-background border border-border/50 text-foreground/90">
+                      <span className="text-muted-foreground font-medium mr-1.5">Detalle de aplicación:</span>
+                      {compatTexto}
+                    </div>
+                  )}
+
                   {compatBrands.length > 0 && (
                     <div>
                       <span className="text-muted-foreground font-medium">Marcas:</span>
@@ -469,7 +565,7 @@ export default function ProductQuickViewDialog({
                     </div>
                   )}
 
-                  {!compatBrands.length && !compatModels.length && !compatTypes.length && !compatibility.year_from && (
+                  {!isUniversal && !compatTexto && !compatBrands.length && !compatModels.length && !compatTypes.length && !compatibility.year_from && !compatibility.year_to && (
                     <div className="text-xs text-muted-foreground italic">
                       Universal o sin restricciones específicas de modelo.
                     </div>
@@ -563,48 +659,136 @@ export default function ProductQuickViewDialog({
           </div>
         </div>
 
-        {/* Fullscreen lightbox — preserves aspect ratio (no scale stretch) */}
-        {isZoomed && currentImage && !failedImages[selectedImageIndex] && (
+        {/* Fullscreen Lightbox Carousel Overlay */}
+        {isFullscreen && currentImage && !failedImages[selectedImageIndex] && (
           <div
-            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
-            onClick={() => setIsZoomed(false)}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
+            onClick={() => setIsFullscreen(false)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             role="dialog"
             aria-modal="true"
-            aria-label="Vista ampliada de imagen"
+            aria-label="Vista de carrusel en pantalla completa"
           >
-            <img
-              src={resolveDisplaySrc(currentImage, selectedImageIndex)}
-              alt={product.name || "Producto"}
-              className="max-w-full max-h-full w-auto h-auto object-contain"
+            {/* Top Toolbar in Lightbox */}
+            <div
+              className="flex items-center justify-between w-full max-w-7xl mx-auto z-10 gap-3"
               onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              type="button"
-              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white text-xl"
-              onClick={() => setIsZoomed(false)}
-              aria-label="Cerrar zoom"
             >
-              ×
-            </button>
-            {images.length > 1 && (
-              <>
+              <div className="min-w-0 flex-1 pr-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white/10 text-white/90">
+                    {product.sku || "SKU"}
+                  </span>
+                  {product.brand && (
+                    <span className="text-xs font-bold text-white/80">
+                      {product.brand}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-white truncate mt-0.5">
+                  {product.name || "Producto"}
+                </h3>
+              </div>
+
+              {/* Counter and Close button */}
+              <div className="flex items-center gap-3 shrink-0">
+                {images.length > 1 && (
+                  <span className="bg-white/15 text-white text-xs font-mono font-semibold px-3 py-1 rounded-full shadow-sm">
+                    {selectedImageIndex + 1} / {images.length}
+                  </span>
+                )}
                 <button
                   type="button"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
-                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  onClick={() => setIsFullscreen(false)}
+                  className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white flex items-center justify-center transition-colors shadow-md cursor-pointer"
+                  aria-label="Cerrar pantalla completa"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Center Image Container with Carousel Controls */}
+            <div
+              className="relative flex-1 flex items-center justify-center w-full max-w-7xl mx-auto my-2 min-h-0 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Prev Button */}
+              {images.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xl backdrop-blur-xs cursor-pointer group"
                   aria-label="Imagen anterior"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-7 w-7 sm:h-8 sm:w-8 group-hover:-translate-x-0.5 transition-transform" />
                 </button>
+              )}
+
+              {/* Main Fullscreen Image */}
+              <img
+                src={resolveDisplaySrc(currentImage, selectedImageIndex)}
+                alt={product.name || "Producto"}
+                className="max-w-[95vw] max-h-[75vh] w-auto h-auto object-contain object-center drop-shadow-2xl select-none"
+                style={{ aspectRatio: "auto" }}
+                onClick={(e) => e.stopPropagation()}
+              />
+
+              {/* Next Button */}
+              {images.length > 1 && (
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
-                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xl backdrop-blur-xs cursor-pointer group"
                   aria-label="Siguiente imagen"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-7 w-7 sm:h-8 sm:w-8 group-hover:translate-x-0.5 transition-transform" />
                 </button>
-              </>
+              )}
+            </div>
+
+            {/* Bottom Thumbnail Strip in Lightbox */}
+            {images.length > 1 ? (
+              <div
+                className="flex items-center justify-center gap-2 overflow-x-auto py-2 px-4 max-w-full z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={cn(
+                      "relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-lg overflow-hidden border-2 bg-black/40 transition-all p-1 flex items-center justify-center cursor-pointer",
+                      selectedImageIndex === idx
+                        ? "border-primary ring-2 ring-primary/50 shadow-lg scale-105"
+                        : "border-white/20 hover:border-white/50 opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    {!failedImages[idx] ? (
+                      <img
+                        src={resolveDisplaySrc(img, idx)}
+                        alt={`Miniatura ${idx + 1}`}
+                        onError={() => handleImageError(idx, img)}
+                        className="max-w-full max-h-full w-auto h-auto object-contain"
+                      />
+                    ) : (
+                      <Package className="h-5 w-5 text-white/50" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-white/60 py-1">
+                Toca fuera o presiona Escape para salir
+              </div>
             )}
           </div>
         )}

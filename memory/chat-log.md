@@ -492,3 +492,26 @@ Other open documents:
        - Actualizada la etiqueta canónica en backend y frontend a **`Camioneta Station / SUV`** (`suv`).
   3. **Corrección en `clean_ocr_text` (Protección contra Líneas Mixtas de OCR Local):**
      - Se reemplazó el filtro que descartaba líneas completas por un limpiador regex de frases institucionales (`HEADER_PHRASES`), permitiendo que líneas combinadas de Windows OCR conserven placa, chasis y motor.
+
+---
+
+### Sesión 2026-09-19 (Lote Integración Master: Merges PR #12, #13, #14, #15, Quick View Fullscreen Carousel, Badge Universal, Scrub China Origin)
+- **Acciones y Mejoras Implementadas:**
+  1. **Consolidación de Ramas y PRs en Master:**
+     - Merge de PR #12 (`docs/antigravity-pr2-productthumb`), PR #13 (`fix/build-badge-shows-deploy-id`), PR #14 (`fix/product-quickview-image-aspect-20260918`) y PR #15 (`docs/antigravity-prompt-acumulado-20260919`).
+     - Badge de Header (`MainLayout.jsx`) ahora muestra dinámicamente `BUILD_ID` y hora exacta del despliegue en Google Cloud Run.
+  2. **Completar Quick View Modal (`ProductQuickViewDialog.jsx`):**
+     - Al tocar/hacer clic en la foto principal del modal de detalle, se abre un **Lightbox Pantalla Completa** con fondo backdrop difuminado oscuro.
+     - Carrusel completo con botones flotantes Anterior (`<`) y Siguiente (`>`) accesibles en hover para desktop y táctil en móviles.
+     - Navegación por teclado (`Escape` para cerrar, `ArrowLeft` / `ArrowRight` para cambiar imagen) y gestos táctiles de deslizamiento (swipe).
+     - Contador de imágenes `n / total` y tira inferior de miniaturas para salto directo a cualquiera de las fotos.
+     - Eliminado el zoom scale interno que recortaba los bordes de los productos en el diálogo regular, usando `object-contain` nítido.
+  3. **Badge "Universal" y Filtros de Compatibilidad (`CatalogPage.jsx` & `ProductQuickViewDialog.jsx`):**
+     - Si `compatibility.is_universal === true` o el producto contiene `compatibilidad_texto`, se despliega el badge verde **Universal** (con icono de destellos) o el detalle de aplicación.
+     - Se eliminó el texto engañoso "Sin datos de compatibilidad" para productos universales.
+     - En modo selección de venta (`sale-pick`), los productos con `is_universal` superan el filtro vehicular y están siempre disponibles para agregar.
+  4. **Scrubbing de Procedencia China en Todo el Catálogo:**
+     - Limpieza de 32 productos en semillas maestras (`backend/data/seeds/all_catalogs_unified_seed.json`) eliminando textos como `"Lugar de origen: Guangdong, China"`, `"Made in China"` y encabezados vacíos de `"Detalles rápidos"`.
+     - Script ejecutable `scripts/scrub_china_origin_live.py` y `scripts/scrub_china_origin.ps1`.
+     - Reporte JSON de auditoría generado en `docs/SCRUB_CHINA_ORIGIN_20260919.json` y `scripts/reports/SCRUB_CHINA_ORIGIN_20260919.json` con la etiqueta `scrub_china_origin_20260919`.
+     - Módulo de defensa en frontend `frontend/src/lib/sanitizeCopy.js` (`sanitizeProductCopy` y `isUniversalProduct`) aplicado en el Catálogo y en la Vista Rápida.
