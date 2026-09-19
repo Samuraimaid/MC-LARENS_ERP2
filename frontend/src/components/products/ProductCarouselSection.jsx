@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,12 +43,8 @@ export default function ProductCarouselSection({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return null; // Do not render section if no matches
-  }
-
   // Normalize items to { product, isBundleItem, defaultQty }
-  const normalizedItems = items.map((item) => {
+  const normalizedItems = (Array.isArray(items) ? items : []).map((item) => {
     if (item && item.product) {
       return item;
     }
@@ -89,14 +85,34 @@ export default function ProductCarouselSection({
 
   const scrollByAmount = (direction) => {
     if (!scrollContainerRef.current) return;
-    const scrollAmount = direction === "left" ? -320 : 320;
+    const scrollAmount = direction === "left" ? -280 : 280;
     scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    // Update affordances after smooth scroll starts
+    window.setTimeout(handleScroll, 280);
   };
+
+  useEffect(() => {
+    handleScroll();
+    const el = scrollContainerRef.current;
+    if (!el) return undefined;
+    const onResize = () => handleScroll();
+    window.addEventListener("resize", onResize);
+    // Recalculate once layout settles
+    const t = window.setTimeout(handleScroll, 50);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(t);
+    };
+  }, [normalizedItems.length]);
 
   const allSelected = normalizedItems.length > 0 && normalizedItems.every((item) => isSelected(item.product));
 
+  if (normalizedItems.length === 0) {
+    return null;
+  }
+
   return (
-    <div className={cn("space-y-3 pt-4 border-t border-border/60", className)}>
+    <div className={cn("space-y-3 pt-4 border-t border-border/60 w-full", className)}>
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
@@ -122,7 +138,7 @@ export default function ProductCarouselSection({
             type="button"
             variant="outline"
             size="icon"
-            className="h-7 w-7 rounded-full bg-background/80 hover:bg-muted"
+            className="h-8 w-8 rounded-full bg-background/80 hover:bg-muted"
             onClick={() => scrollByAmount("left")}
             disabled={!canScrollLeft}
             title="Desplazar a la izquierda"
@@ -133,7 +149,7 @@ export default function ProductCarouselSection({
             type="button"
             variant="outline"
             size="icon"
-            className="h-7 w-7 rounded-full bg-background/80 hover:bg-muted"
+            className="h-8 w-8 rounded-full bg-background/80 hover:bg-muted"
             onClick={() => scrollByAmount("right")}
             disabled={!canScrollRight}
             title="Desplazar a la derecha"
@@ -196,11 +212,36 @@ export default function ProductCarouselSection({
         </div>
       )}
 
-      {/* Horizontal Carousel Track */}
+      {/* Horizontal Carousel Track + side arrows */}
+      <div className="relative group/carousel">
+        <button
+          type="button"
+          onClick={() => scrollByAmount("left")}
+          disabled={!canScrollLeft}
+          aria-label="Desplazar carrusel a la izquierda"
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity",
+            canScrollLeft ? "opacity-100 hover:bg-muted cursor-pointer" : "opacity-30 cursor-not-allowed"
+          )}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollByAmount("right")}
+          disabled={!canScrollRight}
+          aria-label="Desplazar carrusel a la derecha"
+          className={cn(
+            "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity",
+            canScrollRight ? "opacity-100 hover:bg-muted cursor-pointer" : "opacity-30 cursor-not-allowed"
+          )}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none"
+        className="flex gap-3 overflow-x-auto pb-2 pt-1 px-8 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none"
         style={{ scrollbarWidth: "thin" }}
       >
         {normalizedItems.map(({ product, isBundleItem, defaultQty }) => {
@@ -215,7 +256,7 @@ export default function ProductCarouselSection({
               key={pId}
               onClick={() => onOpenProduct?.(product)}
               className={cn(
-                "relative shrink-0 w-[200px] sm:w-[220px] snap-start rounded-xl border bg-card p-2.5 transition-all flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-primary/50 group",
+                "relative shrink-0 w-[220px] sm:w-[240px] snap-start rounded-xl border bg-card p-2.5 transition-all flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-primary/50 group",
                 enableMultiSelect && checked ? "border-primary/60 ring-1 ring-primary/40 bg-primary/5" : "border-border/60"
               )}
             >
@@ -253,11 +294,13 @@ export default function ProductCarouselSection({
                 </span>
               </div>
 
-              {/* Product Thumbnail Container */}
-              <div className="relative aspect-[4/3] w-full rounded-lg bg-muted/20 overflow-hidden mb-2 border border-border/40 flex items-center justify-center p-1.5">
+              {/* Product Thumbnail Container — imagen llena el área */}
+              <div className="relative aspect-square w-full rounded-lg bg-muted/20 overflow-hidden mb-2 border border-border/40">
                 <ProductThumb
                   product={product}
-                  className="max-h-full max-w-full w-auto h-auto object-contain object-center transition-transform group-hover:scale-105"
+                  size="full"
+                  className="absolute inset-0 h-full w-full"
+                  imgClassName="h-full w-full object-contain object-center p-1 transition-transform group-hover:scale-105"
                 />
               </div>
 
@@ -314,6 +357,7 @@ export default function ProductCarouselSection({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
