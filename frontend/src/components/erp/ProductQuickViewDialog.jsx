@@ -320,9 +320,9 @@ export default function ProductQuickViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[min(100vw-0.5rem,1480px)] !max-w-[1480px] !h-[min(100dvh-0.5rem,980px)] !max-h-[min(100dvh-0.5rem,980px)] !rounded-xl sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden min-w-0 border bg-card shadow-2xl">
+      <DialogContent className="!w-[100dvw] !max-w-[100dvw] !h-[100dvh] !max-h-[100dvh] !rounded-none sm:!w-[min(100vw-1rem,1480px)] sm:!max-w-[1480px] sm:!h-[min(100dvh-1rem,980px)] sm:!max-h-[min(100dvh-1rem,980px)] sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden overflow-x-hidden min-w-0 border bg-card shadow-2xl">
         {/* Header */}
-        <div className="shrink-0 p-5 pb-3 pr-14 sm:pr-16 border-b bg-muted/20">
+        <div className="shrink-0 p-3 pb-2 sm:p-5 sm:pb-3 pr-12 sm:pr-16 border-b bg-muted/20">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -379,16 +379,16 @@ export default function ProductQuickViewDialog({
 
         {/* Scrollable Body — native overflow so content (incl. carousels) never clips against dialog edge */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain">
-          <div className="p-4 sm:p-5 md:p-6 space-y-6 w-full max-w-full min-w-0">
+          <div className="p-3 sm:p-5 md:p-6 space-y-5 sm:space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
             {/* Gallery + prices: 2 columnas (imagen | precios); stack en móvil con precios justo debajo */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 items-start w-full min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 sm:gap-6 items-start w-full min-w-0 max-w-full">
               {/* Image Gallery (Left / Top) */}
               <div className="space-y-3 w-full min-w-0">
                 {/* Main Image Box */}
                 <div
                   onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
                   className={cn(
-                    "relative aspect-[4/3] w-full rounded-xl border bg-muted/20 overflow-hidden select-none transition-all group",
+                    "relative aspect-[4/3] w-full max-h-[40vh] sm:max-h-none rounded-xl border bg-muted/20 overflow-hidden select-none transition-all group",
                     currentImage && !failedImages[selectedImageIndex]
                       ? "cursor-zoom-in hover:border-primary/50 hover:shadow-lg"
                       : "cursor-default"
@@ -402,7 +402,7 @@ export default function ProductQuickViewDialog({
                         src={resolveDisplaySrc(currentImage, selectedImageIndex)}
                         alt={displayProduct.name || "Foto del producto"}
                         onError={() => handleImageError(selectedImageIndex, currentImage)}
-                        className="max-h-full max-w-full h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-[1.02]"
+                        className="max-h-full max-w-full h-full w-full min-w-0 min-h-0 object-contain object-center transition-transform duration-200 group-hover:scale-[1.02]"
                       />
                       {/* Floating Lightbox Open Hint */}
                       <div className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-md p-1.5 backdrop-blur-xs flex items-center gap-1 text-[11px] font-medium shadow-md transition-opacity opacity-80 group-hover:opacity-100">
@@ -449,7 +449,7 @@ export default function ProductQuickViewDialog({
 
                 {/* Thumbnail Strip (Under Main Photo - DS18 Style) */}
                 {images.length > 1 && (
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
+                  <div className="flex items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 select-none w-full min-w-0 max-w-full">
                     {images.map((img, idx) => (
                       <button
                         key={idx}
@@ -790,50 +790,56 @@ export default function ProductQuickViewDialog({
           </div>
         </div>
 
-        {/* Footer Actions — always visible outside scroll */}
-        <div className="shrink-0 p-4 border-t bg-muted/30 flex flex-wrap items-center justify-between gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cerrar
-          </Button>
-
-          <div className="flex flex-wrap gap-2 items-center">
-            {!isWarehouseRole && onSendWhatsApp && (
-              <Button
-                variant="outline"
-                className="text-emerald-700 dark:text-emerald-400 border-emerald-600/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1.5"
-                onClick={() => {
-                  onSendWhatsApp(displayProduct);
-                  onOpenChange(false);
-                }}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Enviar por WhatsApp
-              </Button>
-            )}
+        {/* Footer Actions — mobile 2×2 grid (Cotización|Venta / WhatsApp|Cerrar); desktop row */}
+        <div className="shrink-0 p-3 sm:p-4 border-t bg-muted/30 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:pb-4">
+          <div className="grid grid-cols-2 gap-2 w-full min-w-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
             {onAddToQuote && (
               <Button
-                className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
+                className="min-h-11 bg-blue-600 text-white hover:bg-blue-700 gap-1.5 justify-center px-2 sm:px-4 sm:order-3"
                 onClick={() => {
                   onAddToQuote(displayProduct);
                   onOpenChange(false);
                 }}
               >
-                <FileText className="h-4 w-4" />
-                Agregar a Cotización
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">Cotización</span>
+                <span className="hidden sm:inline truncate">Agregar a Cotización</span>
               </Button>
             )}
             {onAddToCart && (
               <Button
-                className="bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5 font-semibold"
+                className="min-h-11 bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5 font-semibold justify-center px-2 sm:px-4 sm:order-4"
                 onClick={() => {
                   onAddToCart(displayProduct);
                   onOpenChange(false);
                 }}
               >
-                <ShoppingCart className="h-4 w-4" />
-                Agregar a Venta
+                <ShoppingCart className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">Venta</span>
+                <span className="hidden sm:inline truncate">Agregar a Venta</span>
               </Button>
             )}
+            {!isWarehouseRole && onSendWhatsApp && (
+              <Button
+                variant="outline"
+                className="min-h-11 text-emerald-700 dark:text-emerald-400 border-emerald-600/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1.5 justify-center px-2 sm:px-4 sm:order-2"
+                onClick={() => {
+                  onSendWhatsApp(displayProduct);
+                  onOpenChange(false);
+                }}
+              >
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">WhatsApp</span>
+                <span className="hidden sm:inline truncate">Enviar por WhatsApp</span>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="min-h-11 justify-center sm:order-1 sm:mr-auto"
+              onClick={() => onOpenChange(false)}
+            >
+              Cerrar
+            </Button>
           </div>
         </div>
 
