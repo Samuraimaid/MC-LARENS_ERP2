@@ -1,0 +1,65 @@
+{
+  "sku": "ZR1000.1D",
+  "product_id": "product_5ee83a00a2b8",
+  "official_url": "https://ds18.com/products/ds18-zr1000-1d-class-d-1-channel-monoblock-amplifier-1000-watts-rms-1-ohm",
+  "before": {
+    "description": "Amplificador DS18 ZR1000.1D (amplificación). Specs: 1-Channel · 1Ω. Respetar carga mínima y calibración de ganancia. PDF p.36.",
+    "specs": null,
+    "media_document": null
+  },
+  "after": {
+    "description": "DS18 ZR1000.1D — Amplificador monoblock Clase D 1000 W RMS @ 1 Ω\n\nLa serie ZR está pensada para sacar el máximo de tu sistema de sonido. El ZR1000.1D ofrece opciones de ajuste (pasa bajos, subsonic y bass boost) para afinar cada tema a tu gusto.\n\nEntrega 380 W RMS @ 4 Ω, 650 W RMS @ 2 Ω y 1000 W RMS @ 1 Ω, con respuesta de 10 Hz a 220 Hz y hasta 3000 W de pico. Indicadores LED de clipping, power y protect; bornes de poder/tierra para cable 4 GA; crossover seleccionable para integrar el bajo con el resto del sistema.\n\nIdeal para impulsar subwoofers con potencia limpia y control preciso.\n\nCaracterísticas principales:\n• Monoblock 1 canal para subwoofer\n• Clase D\n• Estable de 1 a 4 ohmios\n• 1 x 1000 W RMS @ 1 Ω\n• Indicador de clip / protección\n• Perilla de control de bajos (bass knob)",
+    "specs_count": 39,
+    "specs": {
+      "SKU": "ZR1000.1D",
+      "Potencia total (pico)": "3000 W",
+      "RMS @ 4 Ω": "380 W",
+      "RMS @ 2 Ω": "650 W",
+      "RMS @ 1 Ω": "1000 W",
+      "Respuesta en frecuencia": "10–220 Hz",
+      "Relación señal/ruido": ">95 dB",
+      "Eficiencia @ 4 Ω": "80%",
+      "Factor de amortiguamiento": "220",
+      "Impedancia de entrada": "20 kΩ",
+      "THD": "0.01%",
+      "Entrada nivel bajo": "0.2–6 V",
+      "Entrada alto nivel": "No",
+      "Crossover": "LPF fijo",
+      "Rango filtro X-Over": "40–180 Hz",
+      "Bass boost": "0–12 dB",
+      "Frecuencia bass boost": "30–80 Hz",
+      "Filtro infrasónico": "10–50 Hz",
+      "Selector de fase": "No",
+      "Clase": "Digital (Clase D)",
+      "Tipo": "Monoblock subwoofer",
+      "Canales": "1",
+      "Impedancia mínima": "1 Ω",
+      "LED": "Clip / Protect / Power",
+      "Terminal de poder": "4 GA",
+      "Fusible": "100 A",
+      "Control remoto de nivel": "Sí (dash mount)",
+      "Ventilador": "No",
+      "Protección térmica": "Sí",
+      "Protección sobrecarga": "Sí",
+      "Protección DC": "Sí",
+      "Protección cortocircuito": "Sí",
+      "Protección voltaje": "Sí (<9 / >16 V)",
+      "Acabado": "Aluminio negro cepillado",
+      "Largo": "11.8\" / 301 mm",
+      "Ancho": "7.24\" / 184 mm",
+      "Alto": "2\" / 53 mm",
+      "Largo disipador": "10.47\" / 266 mm",
+      "Peso bruto": "5.8 lb"
+    },
+    "media_document": {
+      "url": "https://ds18.com/cdn/shop/files/ZR_AMP_SPANGLISH_MANUAL_WEB_V1_2_1_fd85a0c9-f259-46ac-94b9-ef2f78b5200e.pdf?v=5196881650409041332",
+      "type": "document",
+      "title": "Manual del producto (PDF)",
+      "filename": "ZR1000.1D_manual.pdf"
+    },
+    "tags_added": [
+      "ds18_detail_blocks_es_20260919",
+      "ds18_manual_pdf"
+    ]
+  }
+}
