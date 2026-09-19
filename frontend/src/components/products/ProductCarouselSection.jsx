@@ -73,7 +73,7 @@ export default function ProductCarouselSection({
     .filter((item) => isSelected(item.product))
     .map((item) => item.product);
 
-  const totalBundlePriceUsd = selectedProducts.reduce((acc, p) => acc + (Number(p?.price) || 0), 0);
+  const totalBundlePriceUsd = selectedProducts.reduce((acc, p) => acc + (Number(p?.precio1 ?? p?.price) || 0), 0);
   const dualBundlePrices = usdAndNioFromUsdBase(totalBundlePriceUsd, effectiveUsdNioRate);
 
   const handleScroll = () => {
@@ -112,7 +112,7 @@ export default function ProductCarouselSection({
   }
 
   return (
-    <div className={cn("space-y-3 pt-4 border-t border-border/60 w-full", className)}>
+    <div className={cn("space-y-3 pt-4 border-t border-border/60 w-full min-w-0 max-w-full overflow-x-hidden", className)}>
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
@@ -212,15 +212,15 @@ export default function ProductCarouselSection({
         </div>
       )}
 
-      {/* Horizontal Carousel Track + side arrows */}
-      <div className="relative group/carousel">
+      {/* Horizontal Carousel Track + side arrows — clipped to section width */}
+      <div className="relative group/carousel w-full min-w-0 max-w-full">
         <button
           type="button"
           onClick={() => scrollByAmount("left")}
           disabled={!canScrollLeft}
           aria-label="Desplazar carrusel a la izquierda"
           className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity",
+            "absolute left-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity pointer-events-auto",
             canScrollLeft ? "opacity-100 hover:bg-muted cursor-pointer" : "opacity-30 cursor-not-allowed"
           )}
         >
@@ -232,7 +232,7 @@ export default function ProductCarouselSection({
           disabled={!canScrollRight}
           aria-label="Desplazar carrusel a la derecha"
           className={cn(
-            "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity",
+            "absolute right-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full border bg-background/95 shadow-lg flex items-center justify-center transition-opacity pointer-events-auto",
             canScrollRight ? "opacity-100 hover:bg-muted cursor-pointer" : "opacity-30 cursor-not-allowed"
           )}
         >
@@ -241,15 +241,15 @@ export default function ProductCarouselSection({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto pb-2 pt-1 px-8 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none"
+        className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 pt-1 px-11 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none w-full min-w-0"
         style={{ scrollbarWidth: "thin" }}
       >
         {normalizedItems.map(({ product, isBundleItem, defaultQty }) => {
           if (!product) return null;
           const pId = getProductId(product);
           const checked = isSelected(product);
-          const dualPrices = usdAndNioFromUsdBase(product.price || 0, effectiveUsdNioRate);
-          const cleanName = sanitizeProductCopy(product.name || "Producto");
+          const dualPrices = usdAndNioFromUsdBase(product.precio1 ?? product.price ?? 0, effectiveUsdNioRate);
+          const cleanName = sanitizeProductCopy(product.name || "Producto", { fallback: product.sku || "Producto" });
 
           return (
             <div
