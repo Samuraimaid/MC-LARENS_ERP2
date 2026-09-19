@@ -4287,7 +4287,12 @@ async def sync_canonical_user_pins() -> None:
 async def bootstrap_canonical_pin_users() -> None:
     await ensure_runtime_indexes()
     await seed_floor_and_vip_sellers()
-    await sync_canonical_user_pins()
+    enable_sync = str(os.getenv("ENABLE_CANONICAL_PIN_SYNC", "")).strip().lower() in ("1", "true", "yes", "on")
+    if enable_sync:
+        await sync_canonical_user_pins()
+    else:
+        logger.info("Canonical user PIN sync on startup skipped (ENABLE_CANONICAL_PIN_SYNC not enabled)")
+
 
 
 @app.on_event("startup")
