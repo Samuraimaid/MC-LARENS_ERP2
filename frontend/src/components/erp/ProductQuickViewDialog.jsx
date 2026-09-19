@@ -97,9 +97,11 @@ export default function ProductQuickViewDialog({
   // FBT Multi-selection state
   const [fbtSelectedIds, setFbtSelectedIds] = useState(new Set());
 
-  // Por defecto ningún producto seleccionado (evita errores en facturación)
   useEffect(() => {
-    setFbtSelectedIds(new Set());
+    const ids = new Set(
+      fbtItems.map((item) => String(item.product?.product_id || item.product?.id || item.product?._id || item.product?.sku || ""))
+    );
+    setFbtSelectedIds(ids);
   }, [fbtItems]);
 
   const handleToggleFbtSelect = (productId, p) => {
@@ -373,10 +375,10 @@ export default function ProductQuickViewDialog({
         {/* Scrollable Body */}
         <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-5 sm:p-6 space-y-6 w-full max-w-none">
-            {/* Gallery + Primary Highlights Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
-              {/* Image Gallery (Left Column) */}
-              <div className="lg:col-span-5 space-y-3 w-full min-w-0">
+            {/* Gallery + Primary Highlights — imagen arriba, precio abajo */}
+            <div className="flex flex-col gap-5 w-full">
+              {/* Image Gallery */}
+              <div className="w-full max-w-3xl mx-auto space-y-3 min-w-0">
                 {/* Main Image Box */}
                 <div
                   onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
@@ -472,8 +474,8 @@ export default function ProductQuickViewDialog({
                 )}
               </div>
 
-              {/* Price, Stock & Highlights (Right Column) */}
-              <div className="lg:col-span-7 space-y-4 w-full min-w-0">
+              {/* Price, Stock & Highlights — debajo de la imagen */}
+              <div className="w-full space-y-4 min-w-0">
                 {/* Price Box */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
                   <div className="text-xs font-semibold text-primary uppercase tracking-wider">
@@ -548,7 +550,7 @@ export default function ProductQuickViewDialog({
             </div>
 
             {/* DS18-style detail accordions + compatibility */}
-            <div className="space-y-4 pt-2 border-t border-border/60 w-full">
+            <div className="space-y-4 pt-2 border-t border-border/60">
               {(descParts.features.length > 0 || specsEntries.length > 0 || descParts.overview || cleanDescription) && (
                 <Accordion type="multiple" defaultValue={["features", "specs", "overview"]} className="w-full rounded-xl border border-border/60 bg-muted/10 px-3">
                   {descParts.features.length > 0 && (
