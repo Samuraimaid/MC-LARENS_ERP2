@@ -4871,12 +4871,6 @@ export default function SaleForm({
                 />
               </div>
             ) : null}
-            {selectedVehicleData && selectedVehicleBombillos && !selectedVehicleBombillos.hasData ? (
-              <p className="w-full text-[11px] text-amber-800/90 dark:text-amber-200/80 -mt-1">
-                Sin ficha de bombillos para este vehículo — no se resalta compatibilidad de LED.
-              </p>
-            ) : null}
-
             <Button
               type="button"
               variant="outline"
@@ -4888,6 +4882,11 @@ export default function SaleForm({
               Buscar desde Catálogo
             </Button>
           </div>
+          {selectedVehicleData && selectedVehicleBombillos && !selectedVehicleBombillos.hasData ? (
+            <p className="w-full text-[11px] text-amber-800/90 dark:text-amber-200/80 -mt-1">
+              Sin ficha de bombillos para este vehículo — no se resalta compatibilidad de LED.
+            </p>
+          ) : null}
           {productSearch.trim() ? (
             <div ref={productListRef} className="max-h-72 space-y-2 overflow-y-auto pr-1 animate-fade-up-soft">
               {visibleProducts.map((p, index) => (
