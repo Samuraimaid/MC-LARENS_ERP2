@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, cn } from "@/lib/utils";
 import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
+import { uploadsToGcsUrl } from "@/lib/productImage";
 import {
   Car,
   Wrench,
@@ -61,12 +62,35 @@ export default function ProductQuickViewDialog({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [failedImages, setFailedImages] = useState({});
+  const [srcOverrides, setSrcOverrides] = useState({});
 
   useEffect(() => {
     setSelectedImageIndex(0);
     setIsZoomed(false);
     setFailedImages({});
+    setSrcOverrides({});
   }, [product]);
+
+  const resolveDisplaySrc = (url, idx) => {
+    if (srcOverrides[idx]) return srcOverrides[idx];
+    return url;
+  };
+
+  const handleImageError = (idx, url) => {
+    if (
+      url &&
+      typeof url === "string" &&
+      url.startsWith("/uploads/") &&
+      !srcOverrides[idx]
+    ) {
+      const gcs = uploadsToGcsUrl(url);
+      if (gcs) {
+        setSrcOverrides((prev) => ({ ...prev, [idx]: gcs }));
+        return;
+      }
+    }
+    setFailedImages((prev) => ({ ...prev, [idx]: true }));
+  };
 
   if (!product) return null;
 
@@ -169,17 +193,15 @@ export default function ProductQuickViewDialog({
             {/* Gallery Column */}
             <div className="space-y-3">
               {/* Main preview box */}
-              <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none">
+              <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none">
                 {currentImage && !failedImages[selectedImageIndex] ? (
                   <img
-                    src={currentImage}
+                    src={resolveDisplaySrc(currentImage, selectedImageIndex)}
                     alt={product.name || "Producto"}
-                    onError={() => setFailedImages((prev) => ({ ...prev, [selectedImageIndex]: true }))}
-                    className={cn(
-                      "w-full h-full object-contain p-2 transition-transform duration-300",
-                      isZoomed ? "scale-150 cursor-zoom-out" : "hover:scale-105 cursor-zoom-in"
-                    )}
-                    onClick={() => setIsZoomed(!isZoomed)}
+                    onError={() => handleImageError(selectedImageIndex, currentImage)}
+                    className="max-w-full max-h-full w-auto h-auto object-contain object-center p-2 cursor-zoom-in"
+                    style={{ aspectRatio: "auto" }}
+                    onClick={() => setIsZoomed(true)}
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-linear-to-b from-muted/40 to-muted/10">
@@ -271,10 +293,10 @@ export default function ProductQuickViewDialog({
                     >
                       {!failedImages[idx] ? (
                         <img
-                          src={img}
+                          src={resolveDisplaySrc(img, idx)}
                           alt={`Miniatura ${idx + 1}`}
-                          onError={() => setFailedImages((prev) => ({ ...prev, [idx]: true }))}
-                          className="w-full h-full object-contain"
+                          onError={() => handleImageError(idx, img)}
+                          className="max-w-full max-h-full w-auto h-auto object-contain"
                         />
                       ) : (
                         <Package className="h-5 w-5 text-muted-foreground/60" />
@@ -540,6 +562,53 @@ export default function ProductQuickViewDialog({
             )}
           </div>
         </div>
+
+        {/* Fullscreen lightbox — preserves aspect ratio (no scale stretch) */}
+        {isZoomed && currentImage && !failedImages[selectedImageIndex] && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setIsZoomed(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vista ampliada de imagen"
+          >
+            <img
+              src={resolveDisplaySrc(currentImage, selectedImageIndex)}
+              alt={product.name || "Producto"}
+              className="max-w-full max-h-full w-auto h-auto object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white text-xl"
+              onClick={() => setIsZoomed(false)}
+              aria-label="Cerrar zoom"
+            >
+              ×
+            </button>
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  aria-label="Imagen anterior"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  aria-label="Siguiente imagen"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
       </DialogContent>
     </Dialog>
   );
