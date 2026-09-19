@@ -89,6 +89,40 @@ Commit sugerido: `fix(ui): white background for product fullscreen lightbox`.
 
 ---
 
+---
+
+## Bloque D — Imágenes faltantes + buscador inventario + Ctrl+K vendedores (Xinon 2026-09-19)
+
+### D1 — Productos sin imagen (ej. DLAA `TY1017-LED`)
+**Objetivo:** cuando un producto activo no tiene foto usable (placeholder / 404 / vacío), **buscar imagen en internet**, subir a GCS y PUT `images[]` en live.
+
+**Reglas**
+1. No buscar en cada page-load del browser (caro/lento). Pipeline/job (script o endpoint admin) + opcional botón “Reintentar imagen” en gerencia.
+2. Fuentes: sitio oficial de la marca si existe; distribuidores conocidos; Google/Bing image search solo con match fuerte de SKU+marca+nombre. Preferir PNG/JPG limpio de producto.
+3. Si la imagen trae **marca de agua**: intentar limpieza best-effort (crop de banner, inpaint simple, o preferir otra fuente sin watermark). **No** garantizar magia perfecta; documentar fallos. Preferir fuente limpia a “borrar” agresivo que deforme el producto.
+4. Guardar en `gs://mclarens-erp-products/products/{brand}/{sku}/…` y actualizar ERP.
+5. Reportar JSON: missing → found → uploaded → put OK/fail. Ejemplo prioritario: `TY1017-LED` (y hermanos TY1017 / TY1017E si aplica LED vs halogen).
+6. Tag: `img_web_fill_20260919`.
+
+### D2 — Buscador de productos del módulo Inventario no funciona
+**Repro:** rol con acceso a Inventario → buscar producto/stock en esa pantalla → no filtra / no encuentra / error.
+**Fix:** diagnosticar `InventoryPage.jsx` (+ API `/api/products` o `/api/inventory` que use). Causas típicas: query no cableado, debounce roto, filtro por bodega vacía, 403, case/SKU normalize. Dejar búsqueda usable por SKU, nombre y marca. QA con gerencia/bodegas.
+
+### D3 — “Buscar Producto / Stock” (Ctrl+K) no debe mandar vendedores a Inventario
+**Síntoma:** la acción/atajo **Buscar Producto / Stock** (UI muestra Ctrl+K) hace hipervínculo a **Inventario** (`/inventory` o tab inventario), página **prohibida** para vendedores normales (`ventas`). Xinon quiere que para esos roles vaya al **Catálogo** (`/workbench?tab=catalog` o ruta catálogo del workbench), que es lo que deben usar.
+
+**Fix**
+1. Localizar el command palette / menú rápido / deep link que etiqueta “Buscar Producto / Stock” (probables: `SaleForm.jsx`, `MainLayout.jsx`, `WorkbenchPage.jsx`, paneles de atajos).
+2. Resolver destino por rol:
+   - `ventas`, `jefe_vendedores` (y otros seller-restricted vía `isSellerRole` / `usesRestrictedNavigation` en `roleHome.js`): → **`/workbench?tab=catalog`** (o `tab=catalog&mode=sale-pick` si están en flujo de venta — preferir catalog accesible).
+   - Roles con inventario permitido (`gerencia`, `supervisor`, `bodegas`, `jefe_tienda`, etc.): pueden seguir a inventario/stock si aplica.
+3. Si el atajo abre un buscador modal: que para vendedores busque en catálogo/productos de venta, **no** navegue a `/inventory`.
+4. QA: login PIN ventas → Ctrl+K / esa opción → aterriza en catálogo, sin error de permiso ni pantalla en blanco de inventario.
+
+Commit sugerido: `fix(nav): seller product search goes to catalog not inventory`.
+
+---
+
 ## Fuera de alcance
 - No wipe catálogo productos.
 - No rehacer lightbox/Universal/China scrub.
