@@ -315,7 +315,7 @@ export default function ProductQuickViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none sm:w-[min(100vw-1rem,1400px)] sm:h-[min(100dvh-1rem,960px)] sm:max-w-[1400px] sm:rounded-2xl flex flex-col p-0 overflow-hidden border bg-card shadow-2xl">
+      <DialogContent className="!w-[min(100vw-0.5rem,1480px)] !max-w-[1480px] !h-[min(100dvh-0.5rem,980px)] !max-h-[min(100dvh-0.5rem,980px)] !rounded-xl sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden border bg-card shadow-2xl">
         {/* Header */}
         <div className="p-5 pb-3 border-b bg-muted/20">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -589,9 +589,9 @@ export default function ProductQuickViewDialog({
                         {specsEntries.length > 0 && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             {specsEntries.map(([key, val]) => (
-                              <div key={key} className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border/40 gap-2">
-                                <span className="text-muted-foreground font-medium">{key}:</span>
-                                <span className="font-semibold text-foreground text-right">{String(val)}</span>
+                              <div key={key} className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] p-2 rounded-lg bg-muted/20 border border-border/40 gap-2 items-start">
+                                <span className="text-muted-foreground font-medium break-words">{key}</span>
+                                <span className="font-semibold text-foreground text-right break-words">{String(val)}</span>
                               </div>
                             ))}
                           </div>
@@ -606,7 +606,7 @@ export default function ProductQuickViewDialog({
                         Descripción del producto
                       </AccordionTrigger>
                       <AccordionContent>
-                        <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line bg-muted/20 p-3 rounded-xl border border-border/50 font-sans">
+                        <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words bg-muted/20 p-3 rounded-xl border border-border/50 font-sans max-w-full overflow-x-hidden">
                           {descParts.overview || cleanDescription}
                         </div>
                       </AccordionContent>
