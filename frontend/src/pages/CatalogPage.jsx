@@ -930,12 +930,12 @@ export function CatalogPage() {
         </Card>
       )}
 
-      <div className="sticky top-0 z-20 -mx-1 px-1 pt-1 pb-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
-        <Card className="shadow-sm">
-          <CardContent className="p-3 sm:p-4 space-y-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative min-w-0 flex-1" ref={searchWrapRef}>
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+      <div className="sticky top-0 z-20 -mx-1 px-1 pt-2 sm:pt-3 pb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50 overflow-visible">
+        <Card className="shadow-sm overflow-visible">
+          <CardContent className="p-4 sm:p-5 space-y-3 overflow-visible">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative min-w-0 flex-1 py-0.5" ref={searchWrapRef}>
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
                 <Input
                   ref={searchInputRef}
                   placeholder="Buscar SKU, nombre, marca… (pegar funciona)"
@@ -958,7 +958,7 @@ export function CatalogPage() {
                       setShowAutocomplete(false);
                     }
                   }}
-                  className="pl-9 pr-24 text-sm h-11"
+                  className="pl-10 pr-24 text-sm h-12 py-2.5"
                   autoComplete="off"
                 />
                 <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -1005,7 +1005,7 @@ export function CatalogPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-xs font-mono text-muted-foreground">{product.sku || "Sin SKU"}</div>
-                          <div className="text-sm font-medium truncate">{sanitizeProductCopy(product.name || "Producto")}</div>
+                          <div className="text-sm font-medium truncate">{sanitizeProductCopy(product.name || "Producto", { fallback: product.sku || "Producto" })}</div>
                           {product.brand ? (
                             <div className="text-[11px] text-muted-foreground truncate">{product.brand}</div>
                           ) : null}
@@ -1335,11 +1335,11 @@ export function CatalogPage() {
                           </div>
 
                           {/* Description */}
-                          {product.description && (
+                          {sanitizeProductCopy(product.description || "") ? (
                             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
                               {sanitizeProductCopy(product.description)}
                             </p>
-                          )}
+                          ) : null}
 
                           {/* Compatibility */}
                           <div className="space-y-1.5 bg-muted/20 p-2.5 rounded-lg border border-border/50">

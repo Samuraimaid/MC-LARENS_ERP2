@@ -2532,3 +2532,10 @@ html[data-liquid-glass="true"] .erp-login-fab {
     display: none !important;
   }
 }
+
+
+/* Catálogo sticky search: liquid glass radius must not clip input / focus ring */
+html[data-liquid-glass="true"] .card-dark-contrast.overflow-visible,
+html[data-liquid-glass="true"] .card-dark-contrast:has(.overflow-visible) {
+  overflow: visible;
+}

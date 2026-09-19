@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatCurrency, cn } from "@/lib/utils";
 import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
 import { uploadsToGcsUrl, getProductImageUrl } from "@/lib/productImage";
-import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
+import { sanitizeProductCopy, sanitizeProductDescription, isUniversalProduct } from "@/lib/sanitizeCopy";
+import { normalizeProductTiers } from "@/lib/priceTiers";
 import { getRelatedProducts, getFrequentlyBoughtTogether } from "@/lib/productRecommendations";
 import ProductCarouselSection from "@/components/products/ProductCarouselSection";
 import {
@@ -97,11 +97,9 @@ export default function ProductQuickViewDialog({
   // FBT Multi-selection state
   const [fbtSelectedIds, setFbtSelectedIds] = useState(new Set());
 
+  // Por defecto ningún producto seleccionado (0/N) — sección sigue visible; evita errores de facturación (PR #22 intent).
   useEffect(() => {
-    const ids = new Set(
-      fbtItems.map((item) => String(item.product?.product_id || item.product?.id || item.product?._id || item.product?.sku || ""))
-    );
-    setFbtSelectedIds(ids);
+    setFbtSelectedIds(new Set());
   }, [fbtItems]);
 
   const handleToggleFbtSelect = (productId, p) => {
@@ -250,7 +248,8 @@ export default function ProductQuickViewDialog({
     };
   };
 
-  const dualPrice = getDualPrices(displayProduct.precio1 ?? displayProduct.price ?? 0);
+  const tierPrices = normalizeProductTiers(displayProduct);
+  const dualPrice = getDualPrices(tierPrices.precio1);
 
   const compatibility = displayProduct.compatibility || {};
   const compatTypes = Array.isArray(compatibility.vehicle_types)
@@ -268,7 +267,7 @@ export default function ProductQuickViewDialog({
   const stockRows = inventoryByWarehouse[displayProduct.product_id] || [];
   const totalStock = rawStock !== null ? rawStock : stockRows.reduce((sum, row) => sum + (row.quantity || 0), 0);
 
-  const cleanDescription = sanitizeProductCopy(displayProduct.description || displayProduct.descripcion || "");
+  const cleanDescription = sanitizeProductDescription(displayProduct.description || displayProduct.descripcion || "");
 
   // Split DS18-style description into overview + feature bullets (see ZR1000.1D pilot)
   const featureMarker = "Características principales:";
@@ -305,9 +304,15 @@ export default function ProductQuickViewDialog({
     return docs;
   })();
 
+  const INTERNAL_SPEC_KEYS = /^(catalog_batch|source_sites|isolation_product_id_prefix|price_note|do_not_mix_with)$/i;
   const specsEntries =
     displayProduct.specs && typeof displayProduct.specs === "object"
-      ? Object.entries(displayProduct.specs).filter(([, val]) => val != null && typeof val !== "object")
+      ? Object.entries(displayProduct.specs).filter(([key, val]) => {
+          if (val == null || typeof val === "object") return false;
+          if (INTERNAL_SPEC_KEYS.test(String(key))) return false;
+          const cleaned = sanitizeProductDescription(String(val));
+          return Boolean(cleaned);
+        }).map(([key, val]) => [key, sanitizeProductDescription(String(val))])
       : [];
 
   const validImageCount = images.filter((_, idx) => !failedImages[idx]).length;
@@ -315,9 +320,9 @@ export default function ProductQuickViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[min(100vw-0.5rem,1480px)] !max-w-[1480px] !h-[min(100dvh-0.5rem,980px)] !max-h-[min(100dvh-0.5rem,980px)] !rounded-xl sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden border bg-card shadow-2xl">
+      <DialogContent className="!w-[min(100vw-0.5rem,1480px)] !max-w-[1480px] !h-[min(100dvh-0.5rem,980px)] !max-h-[min(100dvh-0.5rem,980px)] !rounded-xl sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden min-w-0 border bg-card shadow-2xl">
         {/* Header */}
-        <div className="p-5 pb-3 pr-14 sm:pr-16 border-b bg-muted/20">
+        <div className="shrink-0 p-5 pb-3 pr-14 sm:pr-16 border-b bg-muted/20">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -348,7 +353,7 @@ export default function ProductQuickViewDialog({
                 )}
               </div>
               <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-snug">
-                {sanitizeProductCopy(displayProduct.name || "Detalle de Producto")}
+                {sanitizeProductCopy(displayProduct.name || "Detalle de Producto", { fallback: "Detalle de Producto" })}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2">
                 <IconComponent className="h-3.5 w-3.5 text-primary" />
@@ -372,13 +377,13 @@ export default function ProductQuickViewDialog({
           </div>
         </div>
 
-        {/* Scrollable Body */}
-        <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
-          <div className="p-5 space-y-6">
-            {/* Gallery + Primary Highlights Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-              {/* Image Gallery (Left Column) */}
-              <div className="md:col-span-6 space-y-3">
+        {/* Scrollable Body — native overflow so content (incl. carousels) never clips against dialog edge */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain">
+          <div className="p-4 sm:p-5 md:p-6 space-y-6 w-full max-w-full min-w-0">
+            {/* Gallery + prices: 2 columnas (imagen | precios); stack en móvil con precios justo debajo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 items-start w-full min-w-0">
+              {/* Image Gallery (Left / Top) */}
+              <div className="space-y-3 w-full min-w-0">
                 {/* Main Image Box */}
                 <div
                   onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
@@ -474,8 +479,8 @@ export default function ProductQuickViewDialog({
                 )}
               </div>
 
-              {/* Price, Stock & Highlights (Right Column) */}
-              <div className="md:col-span-6 space-y-4">
+              {/* Price, Stock & Highlights (Right / Below image on mobile) */}
+              <div className="space-y-4 w-full min-w-0">
                 {/* Price Box */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
                   <div className="text-xs font-semibold text-primary uppercase tracking-wider">
@@ -490,29 +495,21 @@ export default function ProductQuickViewDialog({
                     </span>
                   </div>
 
-                  {/* Multi-tier Prices if Leadership/Sales */}
-                  {(displayProduct.precio2 || displayProduct.precio_vip || displayProduct.precio_casa_comercial) && (
-                    <div className="pt-2 border-t border-border/50 grid grid-cols-3 gap-2 text-[11px]">
-                      {displayProduct.precio2 ? (
-                        <div className="p-1.5 rounded bg-background/60 border">
-                          <div className="text-muted-foreground font-medium text-[10px]">Taller</div>
-                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio2).usdFormatted}</div>
-                        </div>
-                      ) : null}
-                      {displayProduct.precio_vip ? (
-                        <div className="p-1.5 rounded bg-background/60 border">
-                          <div className="text-muted-foreground font-medium text-[10px]">VIP</div>
-                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio_vip).usdFormatted}</div>
-                        </div>
-                      ) : null}
-                      {displayProduct.precio_casa_comercial ? (
-                        <div className="p-1.5 rounded bg-background/60 border">
-                          <div className="text-muted-foreground font-medium text-[10px]">Distribuidor</div>
-                          <div className="font-mono font-bold">{getDualPrices(displayProduct.precio_casa_comercial).usdFormatted}</div>
-                        </div>
-                      ) : null}
+                  {/* Multi-tier prices (structured UI — never dump price_note raw) */}
+                  <div className="pt-2 border-t border-border/50 grid grid-cols-3 gap-2 text-[11px]">
+                    <div className="p-1.5 rounded bg-background/60 border">
+                      <div className="text-muted-foreground font-medium text-[10px]">Taller</div>
+                      <div className="font-mono font-bold">{getDualPrices(tierPrices.precio2).usdFormatted}</div>
                     </div>
-                  )}
+                    <div className="p-1.5 rounded bg-background/60 border">
+                      <div className="text-muted-foreground font-medium text-[10px]">VIP</div>
+                      <div className="font-mono font-bold">{getDualPrices(tierPrices.precio_vip).usdFormatted}</div>
+                    </div>
+                    <div className="p-1.5 rounded bg-background/60 border">
+                      <div className="text-muted-foreground font-medium text-[10px]">Distribuidor</div>
+                      <div className="font-mono font-bold">{getDualPrices(tierPrices.precio_casa_comercial).usdFormatted}</div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Key Attributes Pills */}
@@ -752,45 +749,49 @@ export default function ProductQuickViewDialog({
 
               {/* Frequently Bought Together / Completá el sistema Carousel (DS18 Style) */}
               {fbtItems.length > 0 && (
-                <ProductCarouselSection
-                  title="Se venden juntos"
-                  subtitle="Completá el sistema con estos accesorios y complementos recomendados"
-                  icon={Sparkles}
-                  items={fbtItems}
-                  enableMultiSelect={true}
-                  selectedIds={fbtSelectedIds}
-                  onToggleSelect={handleToggleFbtSelect}
-                  onSelectAll={handleSelectAllFbt}
-                  onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
-                  onAddSelection={handleAddSelection}
-                  onOpenProduct={handleOpenProductInQuickView}
-                  effectiveUsdNioRate={exchangeRate}
-                  isWarehouseRole={isWarehouseRole}
-                  currency={currency}
-                />
+                <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+                  <ProductCarouselSection
+                    title="Se venden juntos"
+                    subtitle="Completá el sistema con estos accesorios y complementos recomendados"
+                    icon={Sparkles}
+                    items={fbtItems}
+                    enableMultiSelect={true}
+                    selectedIds={fbtSelectedIds}
+                    onToggleSelect={handleToggleFbtSelect}
+                    onSelectAll={handleSelectAllFbt}
+                    onAddSelection={handleAddSelection}
+                    onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
+                    onOpenProduct={handleOpenProductInQuickView}
+                    effectiveUsdNioRate={exchangeRate}
+                    isWarehouseRole={isWarehouseRole}
+                    currency={currency}
+                  />
+                </div>
               )}
 
               {/* Related Products Carousel (DS18 Style) */}
               {relatedProducts.length > 0 && (
-                <ProductCarouselSection
-                  title="Productos relacionados"
-                  subtitle="Opciones y variantes de la misma marca y categoría"
-                  icon={Layers}
-                  items={relatedProducts}
-                  enableMultiSelect={false}
-                  onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
-                  onOpenProduct={handleOpenProductInQuickView}
-                  effectiveUsdNioRate={exchangeRate}
-                  isWarehouseRole={isWarehouseRole}
-                  currency={currency}
-                />
+                <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+                  <ProductCarouselSection
+                    title="Productos relacionados"
+                    subtitle="Opciones y variantes de la misma marca y categoría"
+                    icon={Layers}
+                    items={relatedProducts}
+                    enableMultiSelect={false}
+                    onAddOne={(p, action) => (action === "sale" ? onAddToCart?.(p) : onAddToQuote?.(p))}
+                    onOpenProduct={handleOpenProductInQuickView}
+                    effectiveUsdNioRate={exchangeRate}
+                    isWarehouseRole={isWarehouseRole}
+                    currency={currency}
+                  />
+                </div>
               )}
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t bg-muted/30 flex flex-wrap items-center justify-between gap-3">
+        {/* Footer Actions — always visible outside scroll */}
+        <div className="shrink-0 p-4 border-t bg-muted/30 flex flex-wrap items-center justify-between gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>
