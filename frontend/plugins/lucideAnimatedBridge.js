@@ -34,7 +34,7 @@ function lucideAnimatedBridgePlugin() {
       if (id.includes("node_modules")) return null;
       if (id.includes(`${path.sep}src${path.sep}icons${path.sep}`)) return null;
 
-      const importRe = /import\s*\{([^}]+)\}\s*from\s*["']lucide-react["']\s*;?/g;
+      const importRe = /import\s*\{([\s\S]*?)\}\s*from\s*["']lucide-react["']\s*;?/g;
       let matched = false;
 
       const out = code.replace(importRe, (full, spec) => {
