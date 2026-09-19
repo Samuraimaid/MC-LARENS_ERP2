@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatCurrency, cn } from "@/lib/utils";
 import { formatCategoryLabel, getProductBrandLogo } from "@/lib/branding";
 import { uploadsToGcsUrl, getProductImageUrl } from "@/lib/productImage";
@@ -33,6 +34,7 @@ import {
   Droplet,
   Layers,
   X,
+  Download,
 } from "lucide-react";
 
 function getCategoryIcon(category) {
@@ -268,9 +270,52 @@ export default function ProductQuickViewDialog({
 
   const cleanDescription = sanitizeProductCopy(displayProduct.description || displayProduct.descripcion || "");
 
+  // Split DS18-style description into overview + feature bullets (see ZR1000.1D pilot)
+  const featureMarker = "Características principales:";
+  const descParts = (() => {
+    const raw = cleanDescription || "";
+    const idx = raw.indexOf(featureMarker);
+    if (idx === -1) {
+      const fromArray = Array.isArray(displayProduct.features)
+        ? displayProduct.features.map((f) => String(f).trim()).filter(Boolean)
+        : [];
+      return { overview: raw, features: fromArray };
+    }
+    const overview = raw.slice(0, idx).trim();
+    const rest = raw.slice(idx + featureMarker.length);
+    const features = rest
+      .split("\n")
+      .map((l) => l.replace(/^[•\-\*\s]+/, "").trim())
+      .filter(Boolean);
+    return { overview, features };
+  })();
+
+  const manualDocs = (() => {
+    const media = Array.isArray(displayProduct.media) ? displayProduct.media : [];
+    const docs = [];
+    for (const m of media) {
+      if (!m || typeof m !== "object") continue;
+      const url = m.url || m.src || "";
+      const isDoc =
+        m.type === "document" ||
+        String(url).toLowerCase().includes(".pdf") ||
+        String(m.filename || "").toLowerCase().endsWith(".pdf");
+      if (isDoc && url) docs.push({ url, title: m.title || "Manual del producto (PDF)" });
+    }
+    return docs;
+  })();
+
+  const specsEntries =
+    displayProduct.specs && typeof displayProduct.specs === "object"
+      ? Object.entries(displayProduct.specs).filter(([, val]) => val != null && typeof val !== "object")
+      : [];
+
+  const validImageCount = images.filter((_, idx) => !failedImages[idx]).length;
+  const showGalleryNav = validImageCount >= 2;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-card shadow-2xl">
+      <DialogContent className="w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none sm:w-[min(100vw-1rem,1400px)] sm:h-[min(100dvh-1rem,960px)] sm:max-w-[1400px] sm:rounded-2xl flex flex-col p-0 overflow-hidden border bg-card shadow-2xl">
         {/* Header */}
         <div className="p-5 pb-3 border-b bg-muted/20">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -338,20 +383,21 @@ export default function ProductQuickViewDialog({
                 <div
                   onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
                   className={cn(
-                    "relative aspect-[4/3] w-full rounded-xl border bg-muted/20 overflow-hidden flex items-center justify-center p-3 select-none transition-all group",
+                    "relative aspect-[4/3] w-full rounded-xl border bg-muted/20 overflow-hidden select-none transition-all group",
                     currentImage && !failedImages[selectedImageIndex]
                       ? "cursor-zoom-in hover:border-primary/50 hover:shadow-lg"
                       : "cursor-default"
                   )}
                   title={currentImage && !failedImages[selectedImageIndex] ? "Clic para ampliar carrusel en pantalla completa" : undefined}
                 >
+                  <div className="absolute inset-0 flex items-center justify-center p-3 overflow-hidden">
                   {currentImage && !failedImages[selectedImageIndex] ? (
                     <>
                       <img
                         src={resolveDisplaySrc(currentImage, selectedImageIndex)}
                         alt={displayProduct.name || "Foto del producto"}
                         onError={() => handleImageError(selectedImageIndex, currentImage)}
-                        className="max-h-full max-w-full w-auto h-auto object-contain object-center transition-transform duration-200 group-hover:scale-[1.02]"
+                        className="max-h-full max-w-full h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-[1.02]"
                       />
                       {/* Floating Lightbox Open Hint */}
                       <div className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-md p-1.5 backdrop-blur-xs flex items-center gap-1 text-[11px] font-medium shadow-md transition-opacity opacity-80 group-hover:opacity-100">
@@ -365,9 +411,10 @@ export default function ProductQuickViewDialog({
                       <span className="text-xs font-medium">Sin imagen disponible</span>
                     </div>
                   )}
+                  </div>
 
                   {/* Previous / Next Overlay Controls in Dialog */}
-                  {images.length > 1 && (
+                  {showGalleryNav && (
                     <>
                       <button
                         type="button"
@@ -502,37 +549,70 @@ export default function ProductQuickViewDialog({
               </div>
             </div>
 
-            {/* Description & Detailed Specs */}
+            {/* DS18-style detail accordions + compatibility */}
             <div className="space-y-4 pt-2 border-t border-border/60">
-              {cleanDescription && (
-                <div className="space-y-1.5">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Descripción del Producto
-                  </div>
-                  <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line bg-muted/20 p-3 rounded-xl border border-border/50 font-sans">
-                    {cleanDescription}
-                  </div>
-                </div>
-              )}
+              {(descParts.features.length > 0 || specsEntries.length > 0 || descParts.overview || cleanDescription) && (
+                <Accordion type="multiple" defaultValue={["features", "specs", "overview"]} className="w-full rounded-xl border border-border/60 bg-muted/10 px-3">
+                  {descParts.features.length > 0 && (
+                    <AccordionItem value="features" className="border-border/50">
+                      <AccordionTrigger className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:no-underline py-3">
+                        Características principales
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="list-disc pl-5 space-y-1 text-xs sm:text-sm text-foreground/90">
+                          {descParts.features.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
-              {/* Technical Specifications */}
-              {displayProduct.specs && typeof displayProduct.specs === "object" && Object.keys(displayProduct.specs).length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Especificaciones Técnicas
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    {Object.entries(displayProduct.specs).map(([key, val]) => {
-                      if (!val || typeof val === "object") return null;
-                      return (
-                        <div key={key} className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border/40 gap-2">
-                          <span className="text-muted-foreground font-medium">{key}:</span>
-                          <span className="font-semibold text-foreground text-right">{String(val)}</span>
+                  {(specsEntries.length > 0 || manualDocs.length > 0) && (
+                    <AccordionItem value="specs" className="border-border/50">
+                      <AccordionTrigger className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:no-underline py-3">
+                        Ficha técnica y manual
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3">
+                        {manualDocs.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {manualDocs.map((doc, i) => (
+                              <Button key={i} variant="outline" size="sm" className="h-8 gap-1.5 text-xs" asChild>
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-3.5 w-3.5" />
+                                  {doc.title || "Descargar manual (PDF)"}
+                                </a>
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        {specsEntries.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            {specsEntries.map(([key, val]) => (
+                              <div key={key} className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border/40 gap-2">
+                                <span className="text-muted-foreground font-medium">{key}:</span>
+                                <span className="font-semibold text-foreground text-right">{String(val)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {(descParts.overview || (!descParts.features.length && cleanDescription)) && (
+                    <AccordionItem value="overview" className="border-border/50 border-b-0">
+                      <AccordionTrigger className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:no-underline py-3">
+                        Descripción del producto
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line bg-muted/20 p-3 rounded-xl border border-border/50 font-sans">
+                          {descParts.overview || cleanDescription}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                </Accordion>
               )}
 
               {/* Vehicle Compatibility Section */}
@@ -759,7 +839,7 @@ export default function ProductQuickViewDialog({
         {/* Fullscreen Lightbox Carousel Overlay */}
         {isFullscreen && currentImage && !failedImages[selectedImageIndex] && (
           <div
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
+            className="fixed inset-0 z-[100] bg-white backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
             onClick={() => setIsFullscreen(false)}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
@@ -774,31 +854,31 @@ export default function ProductQuickViewDialog({
             >
               <div className="min-w-0 flex-1 pr-4">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white/10 text-white/90">
+                  <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground">
                     {displayProduct.sku || "SKU"}
                   </span>
                   {displayProduct.brand && (
-                    <span className="text-xs font-bold text-white/80">
+                    <span className="text-xs font-bold text-muted-foreground">
                       {displayProduct.brand}
                     </span>
                   )}
                 </div>
-                <h3 className="text-sm sm:text-base font-semibold text-white truncate mt-0.5">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate mt-0.5">
                   {displayProduct.name || "Producto"}
                 </h3>
               </div>
 
               {/* Counter and Close button */}
               <div className="flex items-center gap-3 shrink-0">
-                {images.length > 1 && (
-                  <span className="bg-white/15 text-white text-xs font-mono font-semibold px-3 py-1 rounded-full shadow-sm">
+                {showGalleryNav && (
+                  <span className="bg-muted text-foreground text-xs font-mono font-semibold px-3 py-1 rounded-full shadow-sm border">
                     {selectedImageIndex + 1} / {images.length}
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(false)}
-                  className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white flex items-center justify-center transition-colors shadow-md cursor-pointer"
+                  className="h-11 w-11 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 text-foreground border flex items-center justify-center transition-colors shadow-md cursor-pointer"
                   aria-label="Cerrar pantalla completa"
                 >
                   <X className="h-6 w-6" />
@@ -812,14 +892,14 @@ export default function ProductQuickViewDialog({
               onClick={(e) => e.stopPropagation()}
             >
               {/* Prev Button */}
-              {images.length > 1 && (
+              {showGalleryNav && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     prevImage();
                   }}
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xl backdrop-blur-xs cursor-pointer group"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group"
                   aria-label="Imagen anterior"
                 >
                   <ChevronLeft className="h-7 w-7 sm:h-8 sm:w-8 group-hover:-translate-x-0.5 transition-transform" />
@@ -827,23 +907,25 @@ export default function ProductQuickViewDialog({
               )}
 
               {/* Main Fullscreen Image */}
+              <div className="absolute inset-0 flex items-center justify-center p-4 overflow-hidden pointer-events-none">
               <img
                 src={resolveDisplaySrc(currentImage, selectedImageIndex)}
                 alt={displayProduct.name || "Producto"}
-                className="max-w-[95vw] max-h-[75vh] w-auto h-auto object-contain object-center drop-shadow-2xl select-none"
+                className="max-w-[95vw] max-h-[75vh] w-auto h-auto object-contain object-center drop-shadow-md select-none pointer-events-auto"
                 style={{ aspectRatio: "auto" }}
                 onClick={(e) => e.stopPropagation()}
               />
+              </div>
 
               {/* Next Button */}
-              {images.length > 1 && (
+              {showGalleryNav && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     nextImage();
                   }}
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xl backdrop-blur-xs cursor-pointer group"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group"
                   aria-label="Siguiente imagen"
                 >
                   <ChevronRight className="h-7 w-7 sm:h-8 sm:w-8 group-hover:translate-x-0.5 transition-transform" />
