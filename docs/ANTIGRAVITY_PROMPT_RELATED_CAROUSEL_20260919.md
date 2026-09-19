@@ -21,85 +21,124 @@ En **ProductQuickViewDialog** (y, si es natural, en una vista detalle más larga
 - Tap → lightbox fullscreen con carrusel (ya en lote previo). No rehacer si ya está en live.
 
 ### B) Carrusel “Productos relacionados”
-- Título sugerido: **Productos relacionados** (rojo/acento del tema ERP, no necesariamente rojo DS18).
+- Título sugerido: **Productos relacionados** (acento del tema ERP).
 - Cards horizontales con flechas `<` `>` (hover desktop; touch swipe o botones siempre visibles en móvil).
-- Cada card: imagen (`ProductThumb` / `object-contain`), SKU, nombre corto, precio dual US$/C$ (mismo formatter actual), botón **Agregar a venta** / **Agregar a cotización** (respetar props del dialog: `onAddToCart` / `onAddToQuote`).
-- Click en la card (fuera del botón) → abrir ese producto en el mismo Quick View (cambiar `product`).
+- Cada card: imagen (`ProductThumb` / `object-contain`), SKU, nombre corto, precio dual US$/C$, botón **Agregar a venta** / **Agregar a cotización** (respetar `onAddToCart` / `onAddToQuote`).
+- Click en la card (fuera del botón) → abrir ese producto en el mismo Quick View.
 
 ### C) Carrusel “Se venden juntos” / Completá el sistema
 - Título sugerido: **Se venden juntos** o **Completá el sistema**.
-- Misma UI de cards.
-- Contenido orientado a **kits de instalación / complementos**, no solo “misma categoría”:
-  - Ej. parlante midbass / coax → amplificador 4 canales, kit cableado calibre 4, fusible, RCA, condensador si existan en catálogo.
-  - Ej. neblineras → switch, arnés, relay si hay SKUs.
-  - Ej. faros → kit de instalación / ballast solo si hay productos reales.
+- Misma UI de cards + selección múltiple (ver § E).
+- Contenido: kits de instalación / complementos (amp, cableado, etc.) — ver lógica abajo.
+- **No inventar productos.** Solo SKUs del catálogo.
 
-**No inventar productos.** Solo SKUs que existan en el catálogo live/API.
+### D) Bundles manuales (prioridad sobre heurística) — IN SCOPE
+Campo opcional en producto (JSON), cualquiera de estos nombres si ya existe convención; si no, usar:
+
+```json
+"bundle_skus": ["SKU-AMP-4CH", "SKU-KIT-AWG4"]
+```
+
+o, si prefieren objetos:
+
+```json
+"bundle_items": [
+  { "sku": "SKU-AMP-4CH", "qty": 1 },
+  { "sku": "SKU-KIT-AWG4", "qty": 1 }
+]
+```
+
+**Reglas**
+1. Si el producto actual tiene `bundle_skus` / `bundle_items` no vacíos → esos SKUs son la fuente **principal** del carrusel “Se venden juntos” (resolver contra catálogo live; omitir SKUs inexistentes/inactivos).
+2. La heurística por keywords solo **rellena** hasta el límite si el bundle manual trae pocos ítems (o si no hay bundle).
+3. Documentar en `docs/` o comentario del helper cómo cargar/editar bundles (PUT producto o seed). Gerencia debe poder fijar “con este midbass vendemos este kit” sin depender del algoritmo.
+4. Tag o nota en chat-log si se añade un ejemplo de bundle en 1–2 SKUs piloto (opcional).
+
+### E) “Agregar selección a la venta” — IN SCOPE
+En el carrusel **Se venden juntos**:
+- Checkbox por ítem (default: todos marcados, o solo los del bundle manual — documentar la elección; preferible **todos los visibles marcados**).
+- Botón destacado: **Agregar selección a la venta** (y equivalente cotización si `onAddToQuote` existe): agrega en un solo paso todos los SKUs checked (qty del bundle o 1).
+- No hace falta abrir ficha por ficha.
+- Respetar stock/permisos igual que un add individual; si uno falla, reportar cuáles sí entraron.
+- El add individual por card se mantiene.
 
 ---
 
-## Lógica de recomendación (MVP, sin ML)
+## Lógica de recomendación (MVP)
 
-Implementar helpers puros (ej. `frontend/src/lib/productRecommendations.js`):
+Helper: `frontend/src/lib/productRecommendations.js` (o similar).
 
-### Relacionados (prioridad)
-1. Misma `brand` + misma `category` o `subcategory`, excluir producto actual.
-2. Si pocos: misma brand.
-3. Si pocos: misma category.
-4. Límite 8–12; preferir `is_active` y con imagen.
+### Relacionados
+1. Misma `brand` + misma `category`/`subcategory`, excluir actual.
+2. Si pocos: misma brand → misma category.
+3. Límite 8–12; preferir `is_active` con imagen.
 
-### Se venden juntos (heurística por keywords / categoría)
-Mapa simple (español + inglés) configurable al tope del helper, ejemplos:
+### Se venden juntos — orden de fuentes
+1. **Bundle manual** (`bundle_skus` / `bundle_items`) — primero.
+2. **Heurística keywords** (español + inglés) para rellenar:
 
-| Producto actual (señales) | Buscar en catálogo |
-|---------------------------|--------------------|
-| midbass, midrange, woofer, coax, componente, parlante, speaker | amplificador / amp + `4 canal` / `4 channel`; kit cableado / wiring / calibre 4 / AWG 4; RCA |
+| Señales en producto actual | Buscar |
+|----------------------------|--------|
+| midbass, midrange, woofer, coax, componente, parlante, speaker | amp / amplificador + 4 canal / 4 channel; kit cableado / wiring / calibre 4 / AWG 4; RCA |
 | subwoofer, sub | amp monoblock / 1 canal; kit calibre 4 u 8; caja |
 | led, faro, fog, neblina, driving light | switch, arnés, relay, cableado |
 | pantalla, radio, headunit | arnés, antena, cámara, RCA |
 
-Matching: `name` + `description` + `category` + `sku` (case-insensitive). Excluir el SKU actual. Límite 6–8.
-
-Si no hay matches: **ocultar** la sección (no mostrar vacío).
-
-Opcional P1 (no bloqueante): campo futuro `related_skus[]` / `bundle_skus[]` en producto para overrides manuales; si existe, tiene prioridad sobre la heurística.
+Matching: `name` + `description` + `category` + `sku`. Excluir SKU actual. Si no hay matches ni bundle → **ocultar** sección.
 
 ---
 
 ## UI / componentes
 
-- Nuevo componente reutilizable, ej. `ProductCarouselSection.jsx` (título, items, onAdd, onOpenProduct).
-- Integrar **dentro del scroll** del Quick View, debajo de descripción/precios (no tapar footer de acciones).
-- Sticky bar tipo DS18 (“ADD TO CART” fijo abajo) = **opcional P2**; el ERP ya tiene footer Cerrar / WhatsApp / Cotización / Venta — no duplicar salvo que quepa sin pelear con el footer actual.
-- Reusar `formatCurrency` / precios duales y `sanitizeProductCopy` en nombres/desc mostrados.
-- Accesible: botones con `aria-label`, teclado en flechas del carrusel.
+- `ProductCarouselSection.jsx` (título, items, selection, onAddOne, onAddSelection, onOpenProduct).
+- Dentro del scroll del Quick View, debajo de descripción/precios; no tapar footer Cerrar / WhatsApp / Cotización / Venta.
+- Sticky bar tipo DS18 = fuera de alcance (el ERP ya tiene footer).
+- Reusar precios duales + `sanitizeProductCopy`.
+- Accesible: `aria-label`, teclado en flechas.
 
 ---
 
-## Fuera de alcance
+## Pendientes (NO implementar en este lote — solo dejar anotado)
 
-- No clonar ratings/estrellas/reviews de DS18 (no hay reviews en ERP).
-- No swatches de color/tamaño Shopify salvo que el ERP ya tenga variantes reales.
-- No scrape de ds18.com en runtime.
-- No cambiar precios ni stock.
+Xinon quiere estas ideas **registradas como pendientes** para un prompt futuro; **no** las codes en este ciclo:
+
+### P-5 · Filtro por compatibilidad de vehículo
+Si hay vehículo en contexto (sale-pick / `catalog_source_context`), filtrar relacionados y FBT por compatibilidad con ese vehículo **más** universales (`is_universal`). Objetivo: menos “no le sirve” en mostrador.
+
+### P-7 · Caps y orden de ranking
+Máx. ~8 cards; orden sugerido: bundle manual → con stock en bodega activa → misma subcategoría → resto. Evitar carruseles infinitos y priorizar lo vendible hoy.
+
+(Cuando Xinon pida el siguiente lote Case, subir P-5 y P-7 a IN SCOPE.)
+
+---
+
+## Fuera de alcance (este lote)
+
+- Ratings/estrellas/reviews DS18.
+- Swatches Shopify sin variantes reales en ERP.
+- Scrape ds18.com en runtime.
+- Cambiar precios/stock.
+- P-5 y P-7 (arriba).
+- Sticky ADD TO CART duplicando el footer.
 
 ---
 
 ## QA
 
-1. Abrir un DS18 midbass (ej. familia PRO-X) → ver **Productos relacionados** con otros midbass/PRO.
-2. Misma ficha → **Se venden juntos** con amp / kit cableado si existen en catálogo.
-3. Agregar desde el carrusel a venta/cotización sin cerrar bugs de estado.
-4. Producto sin matches → secciones ocultas.
-5. Móvil: swipe o botones usables; no romper lightbox.
+1. DS18 midbass → **Productos relacionados** con otros midbass/PRO.
+2. Misma ficha con `bundle_skus` → **Se venden juntos** muestra esos SKUs primero.
+3. Checkboxes + **Agregar selección a la venta** mete varios ítems de una vez.
+4. Sin bundle ni matches → sección FBT oculta.
+5. Móvil: swipe/botones OK; lightbox intacto.
+6. Confirmar que P-5/P-7 **no** se implementaron (solo docs/comentarios “pending”).
 
 ---
 
 ## Entregable
 
-1. Commit/PR en `master` (o rama + merge).
+1. Commit/PR + merge a `master`.
 2. Deploy Cloud Run.
-3. Nota en `memory/chat-log.md` + BUILD_ID.
-4. 2–3 capturas o SKUs de prueba usados.
+3. `memory/chat-log.md` + BUILD_ID.
+4. Mencionar 1–2 SKUs de prueba (con y sin bundle manual).
 
-Commit sugerido: `feat(ui): related + frequently-bought-together carousels in Quick View`.
+Commit sugerido: `feat(ui): related + FBT carousels with manual bundles and multi-add`.
