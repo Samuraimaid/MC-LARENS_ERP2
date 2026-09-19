@@ -10,7 +10,7 @@
 > Those files may remain as **archives**. **Antigravity should read ONLY this master** for what to implement and in what order.
 >
 > **Repo:** https://github.com/Samuraimaid/MC-LARENS_ERP2 · **Branch:** `master`  
-> **Updated:** 2026-09-12 (post-c152d010 + oem2 batch) · **Brief author:** Case + TARS · **Owner:** Xinon  
+> **Updated:** 2026-09-19 (catalog search UX PR #25 + standard doc) · **Brief author:** Case + TARS · **Owner:** Xinon  
 > **For:** Antigravity — code PRs. Case does data/ops on live when Cloud Agents/Pro unavailable.
 
 ---
@@ -231,13 +231,41 @@ Hard DELETE products remains **405** (soft-delete only). OpenAPI `GET /openapi.j
 
 ---
 
+
+
+---
+
+## FEATURE — Estándar UX buscador ERP (2026-09-19)
+
+**Status Catálogo:** DONE in code — PR [#25](https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/25) / merge `831ef673` (`CatalogPage.jsx`). Deploy + hard refresh required for live smoke.
+
+**Canonical doc:** `docs/CATALOG_SEARCH_UX_STANDARD_20260919.md`  
+**API search plan (still open):** `docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md` + item **#11** pagination/`q`/`limit`.
+
+**Xinon intent:** if Catálogo smoke is good, replicate the **same searcher style** on every ERP screen that needs it (product pickers first, then list filters).
+
+### Pattern (do not reinvent)
+
+Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `ProductBarcodeScannerDialog` · autocomplete (+ thumb for products) · infinite scroll sentinel · FAB back-to-top.
+
+### Next code (small PRs / small Antigravity lotes)
+
+1. Extract shared `ErpProductSearchBar` / `ErpListSearchBar` from CatalogPage pattern.  
+2. SaleForm Paso 3 product search (keep CRITICAL sale submit/drafts untouched).  
+3. InventoryPage toolbar + scanners in product dialogs.  
+4. Tier B list pages (Sales, Quotations, Customers, Vehicles, …) — see inventory table in the standard doc.
+
+**Do not:** one mega-PR for all screens; do not rebuild barcode scanner; do not skip paste/`onInput` when copying the pattern.
+
+
 ## Suggested Antigravity execution order
 
-1. **Deploy + smoke live:** zonas virtuales + #4 (commit `c152d010`) — verify acceptance; only patch gaps  
-2. **#11** — `GET /api/products` pagination / `q` / `limit`  
-3. **Security P0** — cookies out of git + rotate; PIN/secrets out of Docker bake; AuthZ on mutations  
-4. **P1** — #5 polarizados, #6 sucursal, #7 GPS copy  
-5. **P2** — #8/#9/#10, R-009, Design Motion after bugs  
+1. **Deploy + smoke live:** Catálogo buscador PR #25 (paste/sticky/filtros/QR/autocomplete/infinite/FAB)  
+2. **Search UX rollout** — shared bar → SaleForm → Inventory → Tier B (see `CATALOG_SEARCH_UX_STANDARD_20260919.md`)  
+3. **#11** — `GET /api/products` pagination / `q` / `limit`  
+4. **Security P0** — cookies out of git + rotate; PIN/secrets out of Docker bake; AuthZ on mutations  
+5. **P1** — #5 polarizados, #6 sucursal, #7 GPS copy  
+6. **P2** — #8/#9/#10, R-009, Design Motion after bugs  
 
 **Do not reimplement** Alta inicial / zonas / #4 from scratch if `c152d010` already covers them.
 
@@ -250,6 +278,7 @@ Hard DELETE products remains **405** (soft-delete only). OpenAPI `GET /openapi.j
 | `docs/MC-LARENS_ERP2_ANTIGRAVITY_HANDOFF.md` | Long security/Torti handoff |
 | `docs/ANTIGRAVITY_REELS_EVAL.md` | Reels eval (many OBVIAR/APARCAR) |
 | `docs/REPORTE_DANOS_CATALOGO_IMAGENES.md` | Catalog/image damage report (pre/post sync) |
-| `docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md` | Search UX notes |
+| `docs/GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md` | API/debounce search plan (archive + still open) |
+| `docs/CATALOG_SEARCH_UX_STANDARD_20260919.md` | **FE searcher standard** (PR #25) + ERP rollout |
 
 **End of ANTIGRAVITY_MASTER.** Antigravity: implement from this file only.
