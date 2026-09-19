@@ -4,7 +4,7 @@
  * - Frequently bought together (FBT / Se venden juntos) with manual bundle priority + DLAA→DS18 LED bombillo kits + keyword heuristics
  * 
  * Future extensions (documented as pending per prompt):
- * // P-5: Vehicle compatibility filter (Pending - future phase)
+ * // P-5: Vehicle bombillo search UX — see bombilloCompat.js (SaleForm / CatalogPage)
  * // P-7: Cap to ~8 cards and ranking by bundle->stock->subcat (Pending - future phase)
  */
 
@@ -201,7 +201,7 @@ export function findDs18LedKitsForBombillo(bombilloCode, allProducts = []) {
  * Get related products based on same brand and category / subcategory.
  * Excludes the current product.
  * 
- * // P-5: Vehicle compatibility filter (Pending - future phase)
+ * // P-5: Vehicle bombillo search UX — see bombilloCompat.js (SaleForm / CatalogPage)
  * // P-7: Cap to ~8 cards and ranking by bundle->stock->subcat (Pending - future phase)
  * 
  * @param {Object} currentProduct 
@@ -277,7 +277,7 @@ export function getRelatedProducts(currentProduct, allProducts = [], options = {
  * 
  * If no manual bundles and no heuristic matches exist, returns an empty array (causing section to hide).
  * 
- * // P-5: Vehicle compatibility filter (Pending - future phase)
+ * // P-5: Vehicle bombillo search UX — see bombilloCompat.js (SaleForm / CatalogPage)
  * // P-7: Cap to ~8 cards and ranking by bundle->stock->subcat (Pending - future phase)
  * 
  * @param {Object} currentProduct 

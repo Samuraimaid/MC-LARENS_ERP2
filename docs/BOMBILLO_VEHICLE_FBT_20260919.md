@@ -27,3 +27,31 @@ cd ~/MC-LARENS_ERP2 && git pull origin master && ./deploy.sh
 
 - No incluye import masivo Auxbeam
 - PRs #34–#36 (QV 2-col/scroll/FBT 0-N, mobile QV, sin flechas header carrusel) ya estaban en `master` al armar este lote
+
+## D) Búsqueda venta / catálogo — compatibilidad visual (2026-09-19)
+
+Helper: `frontend/src/lib/bombilloCompat.js` (reusa alias/SKU de `productRecommendations.js`).
+
+### Resolución vehículo → ficha
+
+- `findCatalogEntryForVehicle(brand, year, model)` sobre `vehicleCatalog.json`
+- Clave estilo reverse-index: `BRAND::label` (ej. `TOYOTA::Hilux [2016-2020]`) vía `vehicleCatalogErpKey`
+- Tamaños = unión de todos los códigos en `entry.bombillos.*` (hoy principalmente `luz_antiniebla`); xenón excluido
+
+### UX (SaleForm + CatalogPage modo sale-pick)
+
+Con vehículo seleccionado y resultados que incluyen bombillos / kits LED:
+
+1. Orden: compatibles primero → resto → incompatibles (no se ocultan; el vendedor puede forzar)
+2. Verde: borde/tinte + chip **Compatible**
+3. Gris atenuado: chip **Otro socket**
+4. Sin ficha `bombillos`: nota **Sin ficha de bombillos para este vehículo** — sin grisar todo
+5. Sin vehículo: sin coloreado especial
+6. Productos no-bombillo (amps, etc.) no se grisán en búsquedas generales
+7. Xenón/HID nunca cuenta como “compatible LED”
+
+### Deploy
+
+```bash
+cd ~/MC-LARENS_ERP2 && git pull origin master && ./deploy.sh
+```

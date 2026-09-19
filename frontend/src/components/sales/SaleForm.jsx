@@ -87,6 +87,12 @@ import {
 } from "@/lib/vehicleCatalog";
 import { getVehicleDisplayImage } from "@/lib/vehicleSilhouette";
 import {
+  getVehicleBombillos,
+  getBombilloCompatStatus,
+  sortProductsByBombilloCompat,
+  bombilloCompatRowClass,
+} from "@/lib/bombilloCompat";
+import {
   formatChasis,
   formatCedula,
   formatPhone,
@@ -931,6 +937,11 @@ export default function SaleForm({
     if (!normalizedSelectedVehicle) return null;
     return customerVehicles.find((v) => normalizeVehicleId(v.vehicle_id ?? v.id) === normalizedSelectedVehicle) || null;
   }, [customerVehicles, normalizeVehicleId, selectedVehicle]);
+
+  const selectedVehicleBombillos = useMemo(
+    () => (selectedVehicleData ? getVehicleBombillos(selectedVehicleData) : null),
+    [selectedVehicleData]
+  );
 
   const stepOneComplete = Boolean(selectedCustomer?.customer_id);
   /** Valid fulfillment choice that can unlock products */
@@ -3542,7 +3553,8 @@ export default function SaleForm({
       const compatList = Array.isArray(p?.compatibility?.vehicle_types)
         ? p.compatibility.vehicle_types.join(" ")
         : "";
-      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""} ${p?.description || ""} ${p?.polarizado_type || ""} ${compatList}`.toLowerCase();
+      const bombilloBits = [p?.bombillo, p?.specs?.Bombillo, p?.specs?.bombillo].filter(Boolean).join(" ");
+      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""} ${p?.description || ""} ${p?.polarizado_type || ""} ${compatList} ${bombilloBits}`.toLowerCase();
       return {
         product: p,
         codeValues,
@@ -3589,10 +3601,14 @@ export default function SaleForm({
         if (!a.compat.isCompatible && b.compat.isCompatible) return 1;
         return 0;
       });
-      return finalItems.map((s) => s.product);
+      return sortProductsByBombilloCompat(
+        finalItems.map((s) => s.product),
+        selectedVehicleData,
+        term
+      );
     }
 
-    return matched;
+    return sortProductsByBombilloCompat(matched, selectedVehicleData, term);
   }, [indexedProducts, products, deferredProductSearch, selectedVehicleData, logisticMode, onlyCompatibleProducts]);
 
   const MAX_SEARCH_DROPDOWN_ITEMS = 30;
@@ -4855,6 +4871,11 @@ export default function SaleForm({
                 />
               </div>
             ) : null}
+            {selectedVehicleData && selectedVehicleBombillos && !selectedVehicleBombillos.hasData ? (
+              <p className="w-full text-[11px] text-amber-800/90 dark:text-amber-200/80 -mt-1">
+                Sin ficha de bombillos para este vehículo — no se resalta compatibilidad de LED.
+              </p>
+            ) : null}
 
             <Button
               type="button"
@@ -4881,6 +4902,9 @@ export default function SaleForm({
                   const stockStatus = getProductStockStatus(p, isServiceProduct);
                   const tone = getProductTone(stockStatus, isServiceProduct);
                   const tierUnitPrice = resolveProductTierPrice(p, activePriceTier);
+                  const bombilloStatus = selectedVehicleData
+                    ? getBombilloCompatStatus(p, selectedVehicleData, { query: productSearch })
+                    : null;
 
                   return (
                 <button
@@ -4892,7 +4916,8 @@ export default function SaleForm({
                     ERP_SEARCH_ROW.product,
                     tone.base,
                     tone.hover,
-                    index === productHighlightIndex ? tone.selected : ""
+                    index === productHighlightIndex ? tone.selected : "",
+                    bombilloCompatRowClass(bombilloStatus)
                   )}
                   onClick={(event) => addToCart(p, { sourceElement: event.currentTarget })}
                   onMouseEnter={() => setProductHighlightIndex(index)}
@@ -4947,6 +4972,16 @@ export default function SaleForm({
                           </span>
                         );
                       })()}
+                      {bombilloStatus === "compatible" ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                          ✓ Compatible
+                        </span>
+                      ) : null}
+                      {bombilloStatus === "incompatible" ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-500/20">
+                          Otro socket
+                        </span>
+                      ) : null}
                     </div>
                     {p.installation_type === "not_available" && (
                       <Badge variant="secondary" className="mt-2 text-[10px]">Solo para llevar</Badge>

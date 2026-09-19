@@ -50,6 +50,12 @@ import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import ProductThumb from "@/components/products/ProductThumb";
 import { getProductImageUrl } from "@/lib/productImage";
 import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
+import {
+  getVehicleBombillos,
+  getBombilloCompatStatus,
+  sortProductsByBombilloCompat,
+  bombilloCompatRowClass,
+} from "@/lib/bombilloCompat";
 
 const DRAFT_CONFIG = {
   sale: {
@@ -389,6 +395,11 @@ export function CatalogPage() {
     return null;
   }, [isSalePickMode, sourceContext, vehiclesById]);
 
+  const selectedContextBombillos = useMemo(
+    () => (selectedContextVehicle ? getVehicleBombillos(selectedContextVehicle) : null),
+    [selectedContextVehicle]
+  );
+
   const contextCustomerName = useMemo(() => {
     if (!sourceContext?.selectedCustomerId) return null;
     return sourceContext.customerName || customersById[sourceContext.selectedCustomerId] || null;
@@ -427,14 +438,19 @@ export function CatalogPage() {
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return products.filter((product) => {
+    const matched = products.filter((product) => {
+      const bombilloBits = [product?.bombillo, product?.specs?.Bombillo, product?.specs?.bombillo]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       const matchesSearch =
         !query ||
         (product.name || "").toLowerCase().includes(query) ||
         (product.sku || "").toLowerCase().includes(query) ||
         (product.brand || "").toLowerCase().includes(query) ||
         (product.category || "").toLowerCase().includes(query) ||
-        (product.subcategory || "").toLowerCase().includes(query);
+        (product.subcategory || "").toLowerCase().includes(query) ||
+        bombilloBits.includes(query);
       const matchesCategory = category === "all" || product.category === category;
       const matchesSubcategory = subcategory === "all" || product.subcategory === subcategory;
       const matchesType = productType === "all" || product.product_type === productType;
@@ -443,6 +459,7 @@ export function CatalogPage() {
       const matchesSaleVehicle = !enforceVehicleCompatibility || isProductCompatibleWithVehicle(product, selectedContextVehicle);
       return matchesSearch && matchesCategory && matchesSubcategory && matchesType && matchesVehicleType && matchesSaleVehicle;
     });
+    return sortProductsByBombilloCompat(matched, selectedContextVehicle, query);
   }, [
     products,
     search,
@@ -896,6 +913,16 @@ export function CatalogPage() {
                     Catálogo completo
                   </Badge>
                 )}
+                {selectedContextVehicle && selectedContextBombillos && !selectedContextBombillos.hasData ? (
+                  <Badge variant="outline" className="text-[11px] text-amber-800 border-amber-300 bg-amber-50">
+                    Sin ficha de bombillos para este vehículo
+                  </Badge>
+                ) : null}
+                {selectedContextVehicle && selectedContextBombillos?.hasData ? (
+                  <Badge variant="outline" className="text-[11px] text-emerald-800 border-emerald-300 bg-emerald-50">
+                    Bombillos: {[...selectedContextBombillos.sizes].join(", ")}
+                  </Badge>
+                ) : null}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center pt-1 md:pt-0">
@@ -1258,9 +1285,18 @@ export function CatalogPage() {
                   : product?.promo_label
                     ? [product.promo_label]
                     : [];
+                const bombilloStatus = selectedContextVehicle
+                  ? getBombilloCompatStatus(product, selectedContextVehicle, { query: search })
+                  : null;
 
                 return (
-                  <Card key={product.product_id || product.sku} className="overflow-hidden hover:shadow-md transition-all duration-200 border-border/80">
+                  <Card
+                    key={product.product_id || product.sku}
+                    className={cn(
+                      "overflow-hidden hover:shadow-md transition-all duration-200 border-border/80",
+                      bombilloCompatRowClass(bombilloStatus)
+                    )}
+                  >
                     <CardContent className="p-0">
                       <div className="grid gap-5 md:grid-cols-[240px,1fr]">
                         {/* Image column */}
@@ -1326,6 +1362,16 @@ export function CatalogPage() {
                             <Badge variant="outline" className="text-xs">
                               {product.product_type === "service" ? "Servicio" : "Producto"}
                             </Badge>
+                            {bombilloStatus === "compatible" ? (
+                              <Badge className="bg-emerald-600 text-white text-xs font-semibold">
+                                Compatible
+                              </Badge>
+                            ) : null}
+                            {bombilloStatus === "incompatible" ? (
+                              <Badge variant="secondary" className="text-xs text-slate-600">
+                                Otro socket
+                              </Badge>
+                            ) : null}
                             {product.installation_type && product.installation_type !== "not_available" ? (
                               <Badge variant="outline" className="text-xs">
                                 Instalación: {product.installation_type === "required" ? "Requerida" : "Opcional"}
