@@ -2395,8 +2395,7 @@ html[data-liquid-glass="true"] body {
 }
 
 /* Manchón de color (no logo): blobs del primary/accent del skin */
-html[data-liquid-glass="true"] .erp-liquid-wash,
-html[data-liquid-glass="true"] .erp-login-root::before {
+html[data-liquid-glass="true"] .erp-liquid-wash {
   content: "";
   pointer-events: none;
   position: fixed;
@@ -2406,13 +2405,12 @@ html[data-liquid-glass="true"] .erp-login-root::before {
     radial-gradient(ellipse 55% 45% at 18% 22%, hsl(var(--primary) / 0.38), transparent 60%),
     radial-gradient(ellipse 50% 40% at 82% 18%, hsl(var(--accent) / 0.32), transparent 58%),
     radial-gradient(ellipse 60% 50% at 70% 78%, hsl(var(--primary) / 0.22), transparent 62%),
-    radial-gradient(ellipse 40% 35% at 28% 85%, hsl(var(--info, var(--primary)) / 0.18), transparent 55%);
+    radial-gradient(ellipse 40% 35% at 28% 85%, hsl(var(--accent) / 0.18), transparent 55%);
   filter: blur(8px) saturate(1.25);
   opacity: 0.95;
 }
 
-html[data-liquid-glass="true"].dark .erp-liquid-wash,
-html[data-liquid-glass="true"].dark .erp-login-root::before {
+html[data-liquid-glass="true"].dark .erp-liquid-wash {
   opacity: 0.85;
   filter: blur(10px) saturate(1.35);
 }
@@ -2479,6 +2477,16 @@ html[data-liquid-glass="true"] .erp-login-root {
   background:
     radial-gradient(ellipse 70% 50% at 50% 0%, hsl(var(--primary) / 0.25), transparent 55%),
     #050505 !important;
+}
+
+html[data-liquid-glass="true"] .erp-login-color-wash {
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 20%, hsl(var(--primary) / 0.45), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 85% 15%, hsl(var(--accent) / 0.35), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 70% 80%, hsl(var(--primary) / 0.28), transparent 60%);
+  filter: blur(14px) saturate(1.35);
+  opacity: 0.9;
+  mix-blend-mode: screen;
 }
 
 html[data-liquid-glass="true"] .erp-login-pin-panel {

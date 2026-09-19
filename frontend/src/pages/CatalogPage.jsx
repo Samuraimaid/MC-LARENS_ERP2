@@ -220,8 +220,9 @@ export function CatalogPage() {
   }, [search, category, subcategory, productType, vehicleType, boardTab]);
 
   const applySearchValue = useCallback((value) => {
-    setSearch(String(value ?? ""));
-    setShowAutocomplete(true);
+    const next = String(value ?? "");
+    setSearch(next);
+    setShowAutocomplete(Boolean(next.trim()));
   }, []);
 
   const clearAllFilters = useCallback(() => {
@@ -929,7 +930,7 @@ export function CatalogPage() {
         </Card>
       )}
 
-      <div className="sticky top-0 z-30 -mx-1 px-1 pt-1 pb-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
+      <div className="sticky top-0 z-20 -mx-1 px-1 pt-1 pb-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
         <Card className="shadow-sm">
           <CardContent className="p-3 sm:p-4 space-y-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -943,11 +944,10 @@ export function CatalogPage() {
                   onInput={(event) => applySearchValue(event.target.value)}
                   onPaste={(event) => {
                     const pasted = event.clipboardData?.getData("text") ?? "";
-                    // Sync immediately so paste always filters (some browsers delay onChange)
-                    window.setTimeout(() => {
-                      const next = event.target?.value || pasted;
-                      applySearchValue(next);
-                    }, 0);
+                    // Apply pasted text immediately (don't wait for delayed onChange)
+                    if (pasted) {
+                      applySearchValue(pasted);
+                    }
                   }}
                   onFocus={() => setShowAutocomplete(Boolean(search.trim()))}
                   onKeyDown={(event) => {
