@@ -39,6 +39,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        fonts-dejavu-core bash tar gzip libjpeg62-turbo zlib1g libgssapi-krb5-2 \
        tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng libtesseract-dev \
+       ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir --disable-pip-version-check --root-user-action=ignore -r requirements.txt
 
