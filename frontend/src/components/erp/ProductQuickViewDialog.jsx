@@ -317,9 +317,9 @@ export default function ProductQuickViewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[min(100vw-0.5rem,1480px)] !max-w-[1480px] !h-[min(100dvh-0.5rem,980px)] !max-h-[min(100dvh-0.5rem,980px)] !rounded-xl sm:!rounded-2xl flex flex-col !p-0 !gap-0 overflow-hidden border bg-card shadow-2xl">
         {/* Header */}
-        <div className="p-5 pb-3 border-b bg-muted/20">
+        <div className="p-5 pb-3 pr-14 sm:pr-16 border-b bg-muted/20">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0 flex-1 pr-6">
+            <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="font-mono text-[11px] font-semibold bg-background">
                   {displayProduct.sku || "Sin SKU"}
@@ -366,7 +366,7 @@ export default function ProductQuickViewDialog({
               <img
                 src={brandLogo}
                 alt={displayProduct.brand}
-                className="h-8 max-w-[100px] object-contain opacity-90 hidden sm:block"
+                className="h-11 sm:h-12 max-w-[140px] sm:max-w-[160px] object-contain opacity-95 shrink-0 mr-1 hidden sm:block"
               />
             )}
           </div>
@@ -374,11 +374,11 @@ export default function ProductQuickViewDialog({
 
         {/* Scrollable Body */}
         <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
-          <div className="p-5 sm:p-6 space-y-6 w-full max-w-none">
-            {/* Gallery + Primary Highlights — imagen arriba, precio abajo */}
-            <div className="flex flex-col gap-5 w-full">
-              {/* Image Gallery */}
-              <div className="w-full max-w-3xl mx-auto space-y-3 min-w-0">
+          <div className="p-5 space-y-6">
+            {/* Gallery + Primary Highlights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+              {/* Image Gallery (Left Column) */}
+              <div className="md:col-span-6 space-y-3">
                 {/* Main Image Box */}
                 <div
                   onClick={() => currentImage && !failedImages[selectedImageIndex] && setIsFullscreen(true)}
@@ -474,8 +474,8 @@ export default function ProductQuickViewDialog({
                 )}
               </div>
 
-              {/* Price, Stock & Highlights — debajo de la imagen */}
-              <div className="w-full space-y-4 min-w-0">
+              {/* Price, Stock & Highlights (Right Column) */}
+              <div className="md:col-span-6 space-y-4">
                 {/* Price Box */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
                   <div className="text-xs font-semibold text-primary uppercase tracking-wider">
