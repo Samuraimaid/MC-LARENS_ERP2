@@ -13,7 +13,6 @@ function parseNamedImports(spec) {
     .filter(Boolean)
     .map((part) => {
       if (part.startsWith("type ")) return null;
-      // strip line comments remnants / newlines
       const clean = part.replace(/\n/g, " ").trim();
       if (!clean) return null;
       const bits = clean.split(/\s+as\s+/);
@@ -27,12 +26,11 @@ function parseNamedImports(spec) {
 
 /**
  * Rewrites all `import { … } from "lucide-react"` in a file in one pass.
- * Uses [^}]+ so we never span other imports between brace groups.
- * Dedupes wrapper/animated imports when a file has multiple lucide import lines.
+ * Animated imports are always aliased as __la_<local> so names like
+ * `Link as LinkIcon` never collide with lucide-animated's `LinkIcon` export.
  */
 function lucideAnimatedBridgePlugin() {
   const wrapPath = "@/icons/createAnimatedLucideIcon";
-  // [^}]+ keeps each match to a single import {...} group (multiline names OK; nested braces are not used by lucide).
   const importRe = /import\s*\{([^}]+)\}\s*from\s*["']lucide-react["']\s*;?/g;
 
   return {
@@ -46,7 +44,9 @@ function lucideAnimatedBridgePlugin() {
       const matches = [...code.matchAll(importRe)];
       if (!matches.length) return null;
 
-      const animSet = new Set();
+      // animExport -> Set of __la_<local> aliases that need it
+      const animImportAliases = []; // { exportName, alias }
+      const seenAnimAlias = new Set();
       const staticParts = [];
       const bindings = [];
       const seenLocal = new Set();
@@ -58,10 +58,14 @@ function lucideAnimatedBridgePlugin() {
 
           const anim = animatedExportName(imported);
           if (anim) {
-            animSet.add(anim);
+            const laAlias = `__la_${local}`;
+            if (!seenAnimAlias.has(laAlias)) {
+              seenAnimAlias.add(laAlias);
+              animImportAliases.push({ exportName: anim, alias: laAlias });
+            }
             staticParts.push(`${imported} as __lr_${local}`);
             bindings.push(
-              `const ${local} = createAnimatedLucideIcon(${anim}, __lr_${local}, ${JSON.stringify(imported)});`
+              `const ${local} = createAnimatedLucideIcon(${laAlias}, __lr_${local}, ${JSON.stringify(imported)});`
             );
           } else {
             staticParts.push(imported === local ? imported : `${imported} as ${local}`);
@@ -71,8 +75,13 @@ function lucideAnimatedBridgePlugin() {
 
       let block = `import { createAnimatedLucideIcon } from "${wrapPath}";\n`;
       block += `import { ${staticParts.join(", ")} } from "lucide-react-raw";\n`;
-      if (animSet.size) {
-        block += `import { ${[...animSet].join(", ")} } from "lucide-animated";\n`;
+      if (animImportAliases.length) {
+        const animClause = animImportAliases
+          .map(({ exportName, alias }) =>
+            exportName === alias ? exportName : `${exportName} as ${alias}`
+          )
+          .join(", ");
+        block += `import { ${animClause} } from "lucide-animated";\n`;
       }
       if (bindings.length) {
         block += `${bindings.join("\n")}\n`;
