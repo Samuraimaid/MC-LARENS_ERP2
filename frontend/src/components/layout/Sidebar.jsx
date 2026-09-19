@@ -210,7 +210,7 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
 
   return (
     <TooltipProvider delayDuration={500}>
-    <div className={cn("flex h-full flex-col border-r border-border bg-card", isIconOnly ? "w-20" : "w-64")}>
+    <div className={cn("erp-shell-sidebar flex h-full flex-col border-r border-border bg-card", isIconOnly ? "w-20" : "w-64")}>
       {/* Logo */}
       <div className={cn("flex items-center justify-center overflow-hidden border-b border-border", isIconOnly ? "h-20 p-2" : "h-28 p-1.5")}>
         <img

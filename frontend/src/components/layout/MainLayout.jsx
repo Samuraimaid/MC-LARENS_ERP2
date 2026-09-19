@@ -63,7 +63,7 @@ function HeaderCloudCheckIcon({ className }) {
 
 export function MainLayout() {
   const { user, logout } = useAuth();
-  const { resolvedMode, toggleMode, watermarkOpacity, skin } = useTheme();
+  const { resolvedMode, toggleMode, watermarkOpacity, skin, liquidGlass } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState(null);
@@ -591,8 +591,9 @@ export function MainLayout() {
 
   return (
     <div className="relative h-screen overflow-hidden bg-background">
+      {liquidGlass ? <div className="erp-liquid-wash" aria-hidden="true" /> : null}
       <IdleSessionCountdown paused={isSessionLocked} />
-      <div className={cn("flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
+      <div className={cn("erp-liquid-shell flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
         {!isMobile && !hideNavigationChrome ? (
           <Sidebar
             mode={isSidebarCollapsed ? "icon" : "full"}
@@ -604,7 +605,7 @@ export function MainLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "sticky top-0 z-30 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 safe-area-top",
+              "erp-shell-header sticky top-0 z-30 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 safe-area-top",
               isPhone
                 ? "min-h-[52px] pt-[max(0.375rem,env(safe-area-inset-top,0px))] pb-1.5"
                 : !isMobile && isSidebarCollapsed
@@ -744,7 +745,7 @@ export function MainLayout() {
 
           <main
             className={cn(
-              "flex-1 overflow-auto relative",
+              "erp-shell-main flex-1 overflow-auto relative",
               isWorkbenchRoute || isSellerRole ? "p-0 sm:p-1" : "p-2 sm:p-4 md:p-6",
               isPhone && (isWorkbenchRoute || isSellerRole) ? "pb-24" : isPhone ? "pb-20" : ""
             )}
@@ -782,7 +783,7 @@ export function MainLayout() {
               aria-label="Cerrar menú"
             />
             <div
-              className={`absolute inset-y-0 left-0 h-full w-[min(86vw,340px)] border-r bg-card shadow-2xl transform transition-transform duration-300 ease-out ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"}`}
+              className={`erp-shell-sidebar absolute inset-y-0 left-0 h-full w-[min(86vw,340px)] border-r bg-card shadow-2xl transform transition-transform duration-300 ease-out ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
               <Sidebar
                 mode="full"

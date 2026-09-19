@@ -36,7 +36,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 grid gap-4 border-0 bg-white text-slate-800 shadow-2xl outline-none dark:bg-slate-950 dark:text-slate-100",
+        "fixed z-50 grid gap-4 border-0 bg-white text-slate-800 shadow-2xl outline-none dark:bg-slate-950 dark:text-slate-100 erp-liquid-panel",
         // Mobile gutters; callers may override max-w-* (tailwind-merge)
         "w-[calc(100vw-1.25rem)] max-w-lg",
         // Height: never exceed visible viewport (mobile chrome / notches)

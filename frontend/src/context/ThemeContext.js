@@ -6,6 +6,8 @@ const THEME_MODE_KEY = "theme_mode";
 const THEME_SKIN_KEY = "theme_skin";
 const LEGACY_THEME_KEY = "theme";
 const WATERMARK_OPACITY_KEY = "watermark_opacity";
+const LIQUID_GLASS_KEY = "liquid_glass";
+const DEFAULT_LIQUID_GLASS = true;
 const DEFAULT_SKIN = "atlas";
 const DEFAULT_MODE = "light";
 const DEFAULT_WATERMARK_OPACITY = 0.04;
@@ -28,6 +30,12 @@ export function ThemeProvider({ children }) {
     if (typeof window === "undefined") return DEFAULT_WATERMARK_OPACITY;
     return normalizeWatermarkOpacity(window.localStorage.getItem(WATERMARK_OPACITY_KEY));
   });
+  const [liquidGlass, setLiquidGlassState] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_LIQUID_GLASS;
+    const stored = window.localStorage.getItem(LIQUID_GLASS_KEY);
+    if (stored === null) return DEFAULT_LIQUID_GLASS;
+    return stored === "1" || stored === "true";
+  });
   const [systemMode, setSystemMode] = useState(() => {
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       return "dark";
@@ -44,16 +52,18 @@ export function ThemeProvider({ children }) {
     root.classList.add(resolvedMode);
     root.setAttribute("data-theme", resolvedMode);
     root.setAttribute("data-skin", skin);
+    root.setAttribute("data-liquid-glass", liquidGlass ? "true" : "false");
 
     localStorage.setItem(THEME_MODE_KEY, mode);
     localStorage.setItem(THEME_SKIN_KEY, skin);
+    localStorage.setItem(LIQUID_GLASS_KEY, liquidGlass ? "true" : "false");
     if (mode === "system") {
       localStorage.removeItem(LEGACY_THEME_KEY);
     } else {
       localStorage.setItem(LEGACY_THEME_KEY, resolvedMode);
     }
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
-  }, [mode, skin, resolvedMode]);
+  }, [mode, skin, resolvedMode, liquidGlass]);
 
   useEffect(() => {
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
@@ -76,6 +86,7 @@ export function ThemeProvider({ children }) {
       const storedMode = localStorage.getItem(THEME_MODE_KEY) || localStorage.getItem(LEGACY_THEME_KEY);
       const storedSkin = localStorage.getItem(THEME_SKIN_KEY);
       const storedWatermarkOpacity = localStorage.getItem(WATERMARK_OPACITY_KEY);
+      const storedLiquidGlass = localStorage.getItem(LIQUID_GLASS_KEY);
       if (storedMode && storedMode !== mode) {
         setMode(storedMode);
       }
@@ -88,6 +99,12 @@ export function ThemeProvider({ children }) {
           setWatermarkOpacityState(nextWatermarkOpacity);
         }
       }
+      if (storedLiquidGlass !== null) {
+        const nextLiquidGlass = storedLiquidGlass === "1" || storedLiquidGlass === "true";
+        if (nextLiquidGlass !== liquidGlass) {
+          setLiquidGlassState(nextLiquidGlass);
+        }
+      }
     };
     const handler = () => syncFromStorage();
     window.addEventListener("theme:sync", handler);
@@ -96,7 +113,7 @@ export function ThemeProvider({ children }) {
       window.removeEventListener("theme:sync", handler);
       window.removeEventListener("storage", handler);
     };
-  }, [mode, skin, watermarkOpacity]);
+  }, [mode, skin, watermarkOpacity, liquidGlass]);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,6 +150,13 @@ export function ThemeProvider({ children }) {
     window.dispatchEvent(new Event("theme:sync"));
   };
 
+  const setLiquidGlass = (value) => {
+    const next = Boolean(value);
+    setLiquidGlassState(next);
+    localStorage.setItem(LIQUID_GLASS_KEY, next ? "true" : "false");
+    window.dispatchEvent(new Event("theme:sync"));
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -140,9 +164,11 @@ export function ThemeProvider({ children }) {
         skin,
         resolvedMode,
         watermarkOpacity,
+        liquidGlass,
         setMode,
         setSkin,
         setWatermarkOpacity,
+        setLiquidGlass,
         toggleMode,
         setSystemTheme,
       }}
