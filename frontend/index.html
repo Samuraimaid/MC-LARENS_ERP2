@@ -1,6 +1,25 @@
 <!doctype html>
 <html lang="es">
   <head>
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement;
+          var mode = localStorage.getItem("theme_mode") || localStorage.getItem("theme") || "light";
+          var skin = localStorage.getItem("theme_skin") || "atlas";
+          var liquid = localStorage.getItem("liquid_glass");
+          var resolved = mode === "system"
+            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : mode;
+          if (resolved !== "dark") resolved = "light";
+          root.classList.remove("light", "dark");
+          root.classList.add(resolved);
+          root.setAttribute("data-theme", resolved);
+          root.setAttribute("data-skin", skin);
+          root.setAttribute("data-liquid-glass", liquid === null || liquid === "true" || liquid === "1" ? "true" : "false");
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta
       name="viewport"

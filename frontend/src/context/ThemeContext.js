@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect } from "react";
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
 
@@ -45,7 +45,7 @@ export function ThemeProvider({ children }) {
 
   const resolvedMode = mode === "system" ? systemMode : mode;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = window.document.documentElement;
 
     root.classList.remove("light", "dark");
@@ -63,7 +63,7 @@ export function ThemeProvider({ children }) {
       localStorage.setItem(LEGACY_THEME_KEY, resolvedMode);
     }
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
-  }, [mode, skin, resolvedMode, liquidGlass]);
+  }, [mode, skin, resolvedMode, liquidGlass, watermarkOpacity]);
 
   useEffect(() => {
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
