@@ -282,3 +282,12 @@ Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `Pro
 | `docs/CATALOG_SEARCH_UX_STANDARD_20260919.md` | **FE searcher standard** (PR #25) + ERP rollout |
 
 **End of ANTIGRAVITY_MASTER.** Antigravity: implement from this file only.
+
+---
+
+## Handoff Case 2026-09-19 (bombillos + QV)
+
+- Sesión: `docs/CASE_SESSION_HANDOFF_20260919.md`
+- Prompt pegable: `docs/ANTIGRAVITY_PROMPT_CONTINUAR_BOMBILLOS_20260919.md`
+- Brief técnico: `docs/BOMBILLO_VEHICLE_FBT_20260919.md`
+- Master incluye PR #37. Siguiente P0: buscador verde/gris por vehículo cliente.
