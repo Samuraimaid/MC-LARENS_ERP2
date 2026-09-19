@@ -94,6 +94,13 @@ export default function ProductQuickViewDialog({
     return getFrequentlyBoughtTogether(displayProduct, allProducts);
   }, [displayProduct, allProducts]);
 
+  const fbtSubtitle = useMemo(() => {
+    if (fbtItems.some((item) => item?.isLedBombilloCompat)) {
+      return "Incluye bombillos LED compatibles (DS18) según el bombillo de la carcasa";
+    }
+    return "Completá el sistema con estos accesorios y complementos recomendados";
+  }, [fbtItems]);
+
   // FBT Multi-selection state
   const [fbtSelectedIds, setFbtSelectedIds] = useState(new Set());
 
@@ -752,7 +759,7 @@ export default function ProductQuickViewDialog({
                 <div className="w-full min-w-0 max-w-full overflow-x-hidden">
                   <ProductCarouselSection
                     title="Se venden juntos"
-                    subtitle="Completá el sistema con estos accesorios y complementos recomendados"
+                    subtitle={fbtSubtitle}
                     icon={Sparkles}
                     items={fbtItems}
                     enableMultiSelect={true}

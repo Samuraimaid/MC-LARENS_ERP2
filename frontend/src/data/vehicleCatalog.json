@@ -1676,7 +1676,18 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_colorado_2015_present_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_colorado_2015_present_top.png",
       "year_start": 2015,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Colorado Zr2 [2017-2026]",
@@ -1692,7 +1703,18 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_colorado_zr2_2017_2026_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_colorado_zr2_2017_2026_top.png",
       "year_start": 2017,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Colorado Zr2 [2017-Presente]",
@@ -1708,7 +1730,18 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_colorado_zr2_2017_present_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_colorado_zr2_2017_present_top.png",
       "year_start": 2017,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Cruze [2016-2023]",
@@ -1836,7 +1869,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_silverado_2022_2026_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_silverado_2022_2026_top.png",
       "year_start": 2022,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Silverado Zr2 [2022-Presente]",
@@ -1852,7 +1895,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_silverado_zr2_2022_present_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_silverado_zr2_2022_present_top.png",
       "year_start": 2022,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Sonic [2012-2020]",
@@ -1932,7 +1985,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_tahoe_2020_2026_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_tahoe_2020_2026_top.png",
       "year_start": 2020,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Tahoe [2020-Presente]",
@@ -1948,7 +2011,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_tahoe_2020_present_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_tahoe_2020_present_top.png",
       "year_start": 2020,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Tracker [2020-2026]",
@@ -1996,7 +2069,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_tracker_2013_2020_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_tracker_2013_2020_top.png",
       "year_start": 2013,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Trax [2013-2020]",
@@ -2012,7 +2095,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_trax_2013_2020_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_trax_2013_2020_top.png",
       "year_start": 2013,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "DFSK::C31 [2015-2026]",
@@ -6444,7 +6537,17 @@
       "lateral_image": "/vehicles/models/jeep/jeep_wrangler_2018_present_lat.png",
       "top_image": "/vehicles/models/jeep/jeep_wrangler_2018_present_top.png",
       "year_start": 2018,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "JEEP::Wrangler Jl [2018-2026]",
@@ -6460,7 +6563,17 @@
       "lateral_image": "/vehicles/models/jeep/jeep_wrangler_jl_2018_2026_lat.png",
       "top_image": "/vehicles/models/jeep/jeep_wrangler_jl_2018_2026_top.png",
       "year_start": 2018,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "JEEP::Wrangler Jl [2018-Presente]",
@@ -6476,7 +6589,17 @@
       "lateral_image": "/vehicles/models/jeep/jeep_wrangler_jl_2018_present_lat.png",
       "top_image": "/vehicles/models/jeep/jeep_wrangler_jl_2018_present_top.png",
       "year_start": 2018,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "JEEP::Wrangler Unlimited [2018-Presente]",
@@ -6492,7 +6615,17 @@
       "lateral_image": "/vehicles/models/jeep/jeep_wrangler_unlimited_2018_present_lat.png",
       "top_image": "/vehicles/models/jeep/jeep_wrangler_unlimited_2018_present_top.png",
       "year_start": 2018,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Bongo [2004-Presente]",
@@ -6700,7 +6833,17 @@
       "lateral_image": "/vehicles/models/kia/kia_cerato_2008_2013_lat.png",
       "top_image": "/vehicles/models/kia/kia_cerato_2008_2013_top.png",
       "year_start": 2008,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Forte Cerato [2018-Presente]",
@@ -6908,7 +7051,17 @@
       "lateral_image": "/vehicles/models/kia/kia_picanto_2004_2011_lat.png",
       "top_image": "/vehicles/models/kia/kia_picanto_2004_2011_top.png",
       "year_start": 2004,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Pregio [1995-2015]",
@@ -7340,7 +7493,17 @@
       "lateral_image": "/vehicles/models/kia/kia_sportage_2015_2021_lat.png",
       "top_image": "/vehicles/models/kia/kia_sportage_2015_2021_top.png",
       "year_start": 2015,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage [2010-2015]",
@@ -7356,7 +7519,17 @@
       "lateral_image": "/vehicles/models/kia/kia_sportage_2010_2015_lat.png",
       "top_image": "/vehicles/models/kia/kia_sportage_2010_2015_top.png",
       "year_start": 2010,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage [2004-2010]",
@@ -7372,7 +7545,17 @@
       "lateral_image": "/vehicles/models/kia/kia_sportage_2004_2010_lat.png",
       "top_image": "/vehicles/models/kia/kia_sportage_2004_2010_top.png",
       "year_start": 2004,
-      "year_end": 2010
+      "year_end": 2010,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage [1993-2004]",
@@ -7676,7 +7859,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_asx_2010_2026_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_asx_2010_2026_top.png",
       "year_start": 2010,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Asx [2010-Presente]",
@@ -7692,7 +7885,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_asx_2010_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_asx_2010_present_top.png",
       "year_start": 2010,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::L200 [2024-2026]",
@@ -7788,7 +7991,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_2012_2026_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_2012_2026_top.png",
       "year_start": 2012,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage [2012-Presente]",
@@ -7804,7 +8017,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_2012_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_2012_present_top.png",
       "year_start": 2012,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage G4 [2013-2026]",
@@ -7820,7 +8043,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_g4_2013_2026_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_g4_2013_2026_top.png",
       "year_start": 2013,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage G4 [2013-Presente]",
@@ -7836,7 +8069,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_g4_2013_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_g4_2013_present_top.png",
       "year_start": 2013,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage Hatchback [2012-2026]",
@@ -7852,7 +8095,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_hatchback_2012_2026_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_hatchback_2012_2026_top.png",
       "year_start": 2012,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage Hatchback [2012-Presente]",
@@ -7868,7 +8121,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_hatchback_2012_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_mirage_hatchback_2012_present_top.png",
       "year_start": 2012,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Montero [2006-2021]",
@@ -7884,7 +8147,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_montero_2006_2021_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_montero_2006_2021_top.png",
       "year_start": 2006,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Montero Sport [2015-Presente]",
@@ -7900,7 +8174,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_montero_sport_2015_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_montero_sport_2015_present_top.png",
       "year_start": 2015,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Montero Sport [2008-2015]",
@@ -7916,7 +8200,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_montero_sport_2008_2015_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_montero_sport_2008_2015_top.png",
       "year_start": 2008,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Outlander [2021-2026]",
@@ -7932,7 +8226,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2021_2026_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Outlander [2021-Presente]",
@@ -7948,7 +8252,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2021_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2021_present_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Outlander [2012-2021]",
@@ -7964,7 +8278,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2012_2021_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_outlander_2012_2021_top.png",
       "year_start": 2012,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero [2006-2021]",
@@ -7980,7 +8304,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_2006_2021_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_2006_2021_top.png",
       "year_start": 2006,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Sport [2015-Presente]",
@@ -7996,7 +8331,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_sport_2015_present_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_sport_2015_present_top.png",
       "year_start": 2015,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Sport [2008-2015]",
@@ -8012,7 +8357,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_sport_2008_2015_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_pajero_sport_2008_2015_top.png",
       "year_start": 2008,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Sportero [2005-2015]",
@@ -8108,7 +8463,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_double_cab_2021_2026_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_double_cab_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Double Cab [2015-2020]",
@@ -8124,7 +8490,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_double_cab_2015_2020_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_double_cab_2015_2020_top.png",
       "year_start": 2015,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Double Cab [2005-2014]",
@@ -8172,7 +8548,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_king_cab_2021_2026_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_king_cab_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier King Cab [2015-2020]",
@@ -8188,7 +8575,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_king_cab_2015_2020_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_king_cab_2015_2020_top.png",
       "year_start": 2015,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier King Cab [2005-2014]",
@@ -8236,7 +8633,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_single_cab_2021_2026_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_single_cab_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Single Cab [2015-2020]",
@@ -8252,7 +8660,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_frontier_single_cab_2015_2020_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_frontier_single_cab_2015_2020_top.png",
       "year_start": 2015,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Single Cab [2000-2015]",
@@ -8812,7 +9230,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_xtrail_2022_2026_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_xtrail_2022_2026_top.png",
       "year_start": 2022,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Xtrail [2018-2022]",
@@ -8828,7 +9256,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_xtrail_2018_2022_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_xtrail_2018_2022_top.png",
       "year_start": 2018,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Xtrail [2014-2017]",
@@ -9420,7 +9858,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_4runner_2014_2024_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_4runner_2014_2024_top.png",
       "year_start": 2014,
-      "year_end": 2024
+      "year_end": 2024,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::4runner [2010-2013]",
@@ -9676,7 +10124,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_2021_2026_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux [2016-2020]",
@@ -9692,7 +10150,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_2016_2020_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_2016_2020_top.png",
       "year_start": 2016,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux [2012-2015]",
@@ -9756,7 +10225,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_extra_cab_2021_2026_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_extra_cab_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Extra Cab [2016-2020]",
@@ -9772,7 +10251,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_extra_cab_2016_2020_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_extra_cab_2016_2020_top.png",
       "year_start": 2016,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Extra Cab [2012-2015]",
@@ -9836,7 +10326,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_single_cab_2021_2026_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_single_cab_2021_2026_top.png",
       "year_start": 2021,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Single Cab [2016-2020]",
@@ -9852,7 +10352,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_single_cab_2016_2020_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_hilux_single_cab_2016_2020_top.png",
       "year_start": 2016,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Single Cab [2012-2015]",
@@ -9996,7 +10507,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_prado_2024_2026_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_prado_2024_2026_top.png",
       "year_start": 2024,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Prado [2018-2023]",
@@ -10012,7 +10533,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_prado_2018_2023_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_prado_2018_2023_top.png",
       "year_start": 2018,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Prado [2010-2017]",
@@ -10028,7 +10559,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_prado_2010_2017_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_prado_2010_2017_top.png",
       "year_start": 2010,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Prado [2003-2009]",
@@ -10172,7 +10713,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_yaris_hatchback_2020_2026_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_yaris_hatchback_2020_2026_top.png",
       "year_start": 2020,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Yaris Hatchback [2012-2019]",
@@ -10188,7 +10739,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_yaris_hatchback_2012_2019_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_yaris_hatchback_2012_2019_top.png",
       "year_start": 2012,
-      "year_end": 2019
+      "year_end": 2019,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Yaris Hatchback [2006-2011]",
@@ -10252,7 +10813,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_yaris_sedan_2018_2022_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_yaris_sedan_2018_2022_top.png",
       "year_start": 2018,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Yaris Sedan [2013-2017]",
@@ -10268,7 +10839,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_yaris_sedan_2013_2017_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_yaris_sedan_2013_2017_top.png",
       "year_start": 2013,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Yaris Sedan [2006-2012]",
@@ -10316,7 +10897,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_amarok_2010_2026_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_amarok_2010_2026_top.png",
       "year_start": 2010,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Amarok [2010-Presente]",
@@ -10332,7 +10923,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_amarok_2010_present_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_amarok_2010_present_top.png",
       "year_start": 2010,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol [2008-2023]",
@@ -10348,7 +10949,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_gol_2008_2023_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_gol_2008_2023_top.png",
       "year_start": 2008,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo [2008-2023]",
@@ -10364,7 +10976,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_polo_2008_2023_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_polo_2008_2023_top.png",
       "year_start": 2008,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::T-cross [2019-Presente]",
@@ -10428,7 +11050,17 @@
       "lateral_image": "/vehicles/models/volkswagen/vw_amarok_2010_present_lat.png",
       "top_image": "/vehicles/models/volkswagen/vw_amarok_2010_present_top.png",
       "year_start": 2010,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vw Gol [2008-2023]",
@@ -10444,7 +11076,18 @@
       "lateral_image": "/vehicles/models/volkswagen/vw_gol_2008_2023_lat.png",
       "top_image": "/vehicles/models/volkswagen/vw_gol_2008_2023_top.png",
       "year_start": 2008,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vw Tcross [2019-Presente]",
@@ -10508,7 +11151,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_hilux_2020_2024_lat.png",
       "top_image": null,
       "year_start": 2020,
-      "year_end": 2024
+      "year_end": 2024,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "AUDI:: [2025]",
@@ -11884,7 +12537,17 @@
       "lateral_image": "/vehicles/models/audi/audi_378_a6_201_lat.png",
       "top_image": "/vehicles/models/audi/audi_378_a6_201_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "AUDI::A6 [1994]",
@@ -25596,7 +26259,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_656_avalanche_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_656_avalanche_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Avalancm [2000-Presente]",
@@ -27740,7 +28413,18 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_467_che_vto_et_silverado_6_feet_6_ch_box_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_467_che_vto_et_silverado_6_feet_6_ch_box_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "880",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Cheaolet Express Van Cano Pesce [2000-Presente]",
@@ -28044,7 +28728,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_537_chevrcaet_tahoe_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_537_chevrcaet_tahoe_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Chevrdet [2000-Presente]",
@@ -28284,7 +28978,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_98_chevrokt_suburban_i_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_98_chevrokt_suburban_i_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Chevrokt Tahoe [2000-Presente]",
@@ -28300,7 +29004,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_433_chevrokt_tahoe_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_433_chevrokt_tahoe_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Chevrolet Model [2000-Presente]",
@@ -28860,7 +29574,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_64_colorado_chassis_cab_2009_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_64_colorado_chassis_cab_2009_top.png",
       "year_start": 2009,
-      "year_end": 2009
+      "year_end": 2009,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Colorado Creac Ab Box [2000-Presente]",
@@ -28876,7 +29600,18 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_518_colorado_creac_ab_box_271_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_518_colorado_creac_ab_box_271_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Colot Do Regular Cab [2000-Presente]",
@@ -33500,7 +34235,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_139_silverado_3500_ho_chassis_cab_2009_n_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_139_silverado_3500_ho_chassis_cab_2009_n_top.png",
       "year_start": 3500,
-      "year_end": 3500
+      "year_end": 3500,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Sio [2000-Presente]",
@@ -34060,7 +34805,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_523_suburban_2_0_20_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_523_suburban_2_0_20_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Suburban [1972]",
@@ -34076,7 +34831,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_538_suburban_1972_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_538_suburban_1972_top.png",
       "year_start": 1972,
-      "year_end": 1972
+      "year_end": 1972,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Suburban Gmy O [2000-Presente]",
@@ -34092,7 +34857,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_633_suburban_gmy_o_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_633_suburban_gmy_o_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Subvb Arreooce O [2000-Presente]",
@@ -34188,7 +34963,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_501_tahoe_2023_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_501_tahoe_2023_top.png",
       "year_start": 2023,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Tahoe 9c1 Polee Vehkle [2016]",
@@ -34204,7 +34989,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_493_tahoe_9c1_polee_vehkle_2016_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_493_tahoe_9c1_polee_vehkle_2016_top.png",
       "year_start": 2016,
-      "year_end": 2016
+      "year_end": 2016,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Tahoe Polk [2000-Presente]",
@@ -34220,7 +35015,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_375_tahoe_polk_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_375_tahoe_polk_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::To [2000-Presente]",
@@ -34252,7 +35057,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_123_tracker_2_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_123_tracker_2_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Tracker Cn Spec [2020]",
@@ -34476,7 +35291,17 @@
       "lateral_image": "/vehicles/models/chevrolet/chevrolet_116_trax_2017_lat.png",
       "top_image": "/vehicles/models/chevrolet/chevrolet_116_trax_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "CHEVROLET::Trax [2013]",
@@ -65740,7 +66565,17 @@
       "lateral_image": "/vehicles/models/jeep/jeep_10_wrangler_rubicon_2018_lat.png",
       "top_image": "/vehicles/models/jeep/jeep_10_wrangler_rubicon_2018_top.png",
       "year_start": 2018,
-      "year_end": 2018
+      "year_end": 2018,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "JEEP::Wtangier 000r [2006]",
@@ -66124,7 +66959,17 @@
       "lateral_image": "/vehicles/models/kia/kia_126_cerato_200_lat.png",
       "top_image": null,
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Cerato Coupe [2000-Presente]",
@@ -66140,7 +66985,17 @@
       "lateral_image": "/vehicles/models/kia/kia_125_cerato_coupe_200_lat.png",
       "top_image": null,
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Cerato Hatchback [2000-Presente]",
@@ -66156,7 +67011,17 @@
       "lateral_image": "/vehicles/models/kia/kia_124_cerato_hatchback_200_lat.png",
       "top_image": "/vehicles/models/kia/kia_124_cerato_hatchback_200_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Corrival [2000-Presente]",
@@ -66508,7 +67373,17 @@
       "lateral_image": "/vehicles/models/kia/kia_109_forte_koup_200_lat.png",
       "top_image": "/vehicles/models/kia/kia_109_forte_koup_200_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Gt Body Kit [2000-Presente]",
@@ -66780,7 +67655,17 @@
       "lateral_image": "/vehicles/models/kia/kia_103_k3_cerato_201_lat.png",
       "top_image": "/vehicles/models/kia/kia_103_k3_cerato_201_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::K3 Gt Line [2000-Presente]",
@@ -67292,7 +68177,17 @@
       "lateral_image": "/vehicles/models/kia/kia_80_picanto_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_80_picanto_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Picanto Door [2000-Presente]",
@@ -67308,7 +68203,17 @@
       "lateral_image": "/vehicles/models/kia/kia_81_picanto_5_door_201_lat.png",
       "top_image": "/vehicles/models/kia/kia_81_picanto_5_door_201_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Picanto X R Ne [2000-Presente]",
@@ -67324,7 +68229,17 @@
       "lateral_image": "/vehicles/models/kia/kia_79_picanto_x_r_ne_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_79_picanto_x_r_ne_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Pride [2000-Presente]",
@@ -67836,7 +68751,18 @@
       "lateral_image": "/vehicles/models/kia/kia_38_sportage_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_38_sportage_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881",
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage Ace Cn Spec [2000-Presente]",
@@ -67852,7 +68778,18 @@
       "lateral_image": "/vehicles/models/kia/kia_37_sportage_ace_cn_spec_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_37_sportage_ace_cn_spec_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881",
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage Gt Line [2000-Presente]",
@@ -67868,7 +68805,18 @@
       "lateral_image": "/vehicles/models/kia/kia_36_sportage_gt_line_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_36_sportage_gt_line_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881",
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Sportage Xue [2000-Presente]",
@@ -67884,7 +68832,18 @@
       "lateral_image": "/vehicles/models/kia/kia_6_sportage_xue_202_lat.png",
       "top_image": "/vehicles/models/kia/kia_6_sportage_xue_202_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "881",
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "KIA::Stanger Gt [2022]",
@@ -85468,7 +86427,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_212_asx_racing_2013_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_212_asx_racing_2013_top.png",
       "year_start": 2013,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Athlete [2000-Presente]",
@@ -86684,7 +87653,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_142_lancer_evolubon_ill_wrc_1_s_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_142_lancer_evolubon_ill_wrc_1_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon Ix [2006]",
@@ -86972,7 +87952,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_123_lancer_evolubon_vii_brian_fast_and_fu_2_2004_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_123_lancer_evolubon_vii_brian_fast_and_fu_2_2004_top.png",
       "year_start": 2004,
-      "year_end": 2004
+      "year_end": 2004,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon Vii Tarmac [2002]",
@@ -87020,7 +88010,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_120_lancer_evolubon_viii_mr_2004_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_120_lancer_evolubon_viii_mr_2004_top.png",
       "year_start": 2004,
-      "year_end": 2004
+      "year_end": 2004,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon X [2010]",
@@ -87068,7 +88068,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_117_lancer_evolubon_x_n_spec_201_s_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_117_lancer_evolubon_x_n_spec_201_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon X Ratty [2000-Presente]",
@@ -87084,7 +88095,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_116_1_lancer_evolubon_x_ratty_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_116_1_lancer_evolubon_x_ratty_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon X Sur Ne Racing Sport Aero Mde Body S [2000-Presente]",
@@ -87100,7 +88122,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_115_lancer_evolubon_x_sur_ne_racing_sport_aero_mde_body_201_s_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_115_lancer_evolubon_x_sur_ne_racing_sport_aero_mde_body_201_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Lancer Evolubon X Tnr [2015]",
@@ -87292,7 +88325,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_3_m_tsubishi_asx_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_3_m_tsubishi_asx_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::M Tsubrshi Outlander [2000-Presente]",
@@ -87308,7 +88351,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_69_m_tsubrshi_outlander_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_69_m_tsubrshi_outlander_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::M Tsubshi L200 Club Cab Awo [2000-Presente]",
@@ -87356,7 +88409,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_63_masubeshi_pajero_sport_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_63_masubeshi_pajero_sport_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi [2000-Presente]",
@@ -87468,7 +88533,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_156_masubishi_lancer_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_156_masubishi_lancer_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi Lancer [1]",
@@ -87500,7 +88576,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_109_masubishi_lancer_sportback_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_109_masubishi_lancer_sportback_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi Lancer Sportback T [2000-Presente]",
@@ -87516,7 +88603,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_108_masubishi_lancer_sportback_20_t_0_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_108_masubishi_lancer_sportback_20_t_0_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi Pajero [2000-Presente]",
@@ -87532,7 +88630,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_95_masubishi_pajero_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_95_masubishi_pajero_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi Pajero 000c [2000-Presente]",
@@ -87548,7 +88658,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_38_masubishi_pajero_3_000c_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_38_masubishi_pajero_3_000c_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Masubishi Space Star [2000-Presente]",
@@ -87596,7 +88718,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_31_masutxshi_pajero_sport_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_31_masutxshi_pajero_sport_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mdsubishi 120ss Mobd Box [2000-Presente]",
@@ -87676,7 +88810,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_37_mdsubrshi_pajero_gls_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_37_mdsubrshi_pajero_gls_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mine S Lancer Evolution Vil [2000-Presente]",
@@ -87692,7 +88838,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_229_mine_s_lancer_evolution_vil_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_229_mine_s_lancer_evolution_vil_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Minica [2010]",
@@ -87820,7 +88977,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_103_mirage_2012_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_103_mirage_2012_top.png",
       "year_start": 2012,
-      "year_end": 2012
+      "year_end": 2012,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mirage [2000-Presente]",
@@ -87836,7 +89003,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_230_mirage_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_230_mirage_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Misubeshi Lancer Evolution Ix Ratty [2000-Presente]",
@@ -87852,7 +89029,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_135_misubeshi_lancer_evolution_ix_ratty_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_135_misubeshi_lancer_evolution_ix_ratty_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Misubeshi Lancer Evolution X R [2000-Presente]",
@@ -87868,7 +89056,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_227_misubeshi_lancer_evolution_x_r_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_227_misubeshi_lancer_evolution_x_r_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mitstnshi L200 Single Cab 2w0 [2000-Presente]",
@@ -87948,7 +89147,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_236_mitsubshi_outlander_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_236_mitsubshi_outlander_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mitsubstv Ec Pse Cross [2000-Presente]",
@@ -88092,7 +89301,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_101_montero_1_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_101_montero_1_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Montero Sport Gls [2015]",
@@ -88108,7 +89328,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_60_montero_sport_gls_2015_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_60_montero_sport_gls_2015_top.png",
       "year_start": 2015,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mrtsubtshi L300 Swa [2000-Presente]",
@@ -88188,7 +89418,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_98_mtsubishi_outlander_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_98_mtsubishi_outlander_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mtsubishi Pajero Iv Dcoc [2000-Presente]",
@@ -88204,7 +89444,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_26_mtsubishi_pajero_iv_3_dcoc_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_26_mtsubishi_pajero_iv_3_dcoc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Mtsubishi Trgon Oase Cab [2000-Presente]",
@@ -88412,7 +89664,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_96_outlander_sjmt_2018_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_96_outlander_sjmt_2018_top.png",
       "year_start": 2018,
-      "year_end": 2018
+      "year_end": 2018,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Outlander Xl [2000-Presente]",
@@ -88428,7 +89690,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_255_outlander_xl_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_255_outlander_xl_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero [1998]",
@@ -88444,7 +89716,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_23_pajero_1998_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_23_pajero_1998_top.png",
       "year_start": 1998,
-      "year_end": 1998
+      "year_end": 1998,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Evo Shogun Montero Evo [2000-Presente]",
@@ -88460,7 +89742,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_21_pajero_evo_2_shogun_montero_evo_2_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_21_pajero_evo_2_shogun_montero_evo_2_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero L B [2002]",
@@ -88476,7 +89770,18 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_94_pajero_2_8_l_b_2002_lat.png",
       "top_image": null,
       "year_start": 2002,
-      "year_end": 2002
+      "year_end": 2002,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Oak [2014]",
@@ -88524,7 +89829,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_92_pajero_pinin_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_92_pajero_pinin_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Pinin Svo [2000-Presente]",
@@ -88540,7 +89857,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_91_pajero_pinin_svo_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_91_pajero_pinin_svo_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Spoct [2008]",
@@ -88556,7 +89885,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_19_pajero_spoct_2008_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_19_pajero_spoct_2008_top.png",
       "year_start": 2008,
-      "year_end": 2008
+      "year_end": 2008,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Spon [2000-Presente]",
@@ -88572,7 +89911,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_66_pajero_spon_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_66_pajero_spon_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Sport [2000-Presente]",
@@ -88588,7 +89939,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_90_pajero_sport_2_9_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_90_pajero_sport_2_9_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Spott [2021]",
@@ -88604,7 +89967,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_59_pajero_spott_2021_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_59_pajero_spott_2021_top.png",
       "year_start": 2021,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Spott [2016]",
@@ -88620,7 +89993,17 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_47_pajero_spott_2016_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_47_pajero_spott_2016_top.png",
       "year_start": 2016,
-      "year_end": 2016
+      "year_end": 2016,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Pajero Tr4 [2010-2013]",
@@ -88908,7 +90291,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_68_tansubi_hi_pajero_5_000r_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_68_tansubi_hi_pajero_5_000r_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::Town Box [2015]",
@@ -89164,7 +90559,19 @@
       "lateral_image": "/vehicles/models/mitsubishi/mitsubishi_93_utsubishi_pajero_5dooe_lat.png",
       "top_image": "/vehicles/models/mitsubishi/mitsubishi_93_utsubishi_pajero_5dooe_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "MITSUBISHI::V Tsubishi Dcor [2000-Presente]",
@@ -90364,7 +91771,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_452_frontier_2022_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_452_frontier_2022_top.png",
       "year_start": 2022,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Crew Cab 4x4 100k 4x2 [2009]",
@@ -90412,7 +91830,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_434_frontier_kingcab_pr04x_2022_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_434_frontier_kingcab_pr04x_2022_top.png",
       "year_start": 2022,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Frontier Regular Cab [2009]",
@@ -91516,7 +92945,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_283_maxima_2015_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_283_maxima_2015_top.png",
       "year_start": 2015,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Maxima [2009]",
@@ -91532,7 +92971,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_284_maxima_2009_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_284_maxima_2009_top.png",
       "year_start": 2009,
-      "year_end": 2009
+      "year_end": 2009,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Maxima Ptatinum [2022]",
@@ -91548,7 +92997,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_281_maxima_ptatinum_2022_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_281_maxima_ptatinum_2022_top.png",
       "year_start": 2022,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Maximo Stillen Fnf [1999]",
@@ -92604,7 +94063,18 @@
       "lateral_image": "/vehicles/models/nissan/nissan_258_np300_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_258_np300_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Np300 Fronter [2017]",
@@ -94316,7 +95786,17 @@
       "lateral_image": "/vehicles/models/nissan/nissan_227_rogue_2024_lat.png",
       "top_image": "/vehicles/models/nissan/nissan_227_rogue_2024_top.png",
       "year_start": 2024,
-      "year_end": 2024
+      "year_end": 2024,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "NISSAN::Rogue [2020]",
@@ -114828,7 +116308,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_121_gr_dkr_hilux_201_eprol_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_121_gr_dkr_hilux_201_eprol_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Gr Okr Hilux Eurol [2000-Presente]",
@@ -114844,7 +116335,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_120_gr_okr_hilux_217_eurol_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_120_gr_okr_hilux_217_eurol_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Gr Youx Ima T [2000-Presente]",
@@ -115372,7 +116874,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_579_hilux_2021_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_579_hilux_2021_top.png",
       "year_start": 2021,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux 4x4 Ura [2000-Presente]",
@@ -115388,7 +116900,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_43_hilux_4x4_ura_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_43_hilux_4x4_ura_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Cab [2021]",
@@ -115404,7 +116927,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_587_hilux_cab_2021_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_587_hilux_cab_2021_top.png",
       "year_start": 2021,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Cab [2016]",
@@ -115452,7 +116985,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_580_hilux_cab_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_580_hilux_cab_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Crew Cab T [2000-Presente]",
@@ -115468,7 +117012,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_659_hilux_crew_cab_201_t_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_659_hilux_crew_cab_201_t_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Doubk Cab [2000-Presente]",
@@ -115484,7 +117039,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_138_hilux_doubk_cab_43_4_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_138_hilux_doubk_cab_43_4_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Double Cab [2001]",
@@ -115532,7 +117098,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_617_hilux_ooub_k_cab_2021_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_617_hilux_ooub_k_cab_2021_top.png",
       "year_start": 2021,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Ox Long Bod Y [1983]",
@@ -115580,7 +117156,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_641_hilux_revo_2018_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_641_hilux_revo_2018_top.png",
       "year_start": 2018,
-      "year_end": 2018
+      "year_end": 2018,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hilux Sir Cab [2000-Presente]",
@@ -115596,7 +117182,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_618_hilux_sir_cab_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_618_hilux_sir_cab_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Hla Ce Panel Van Swa [1999]",
@@ -115756,7 +117353,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_164_htux_sud_4runner_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_164_htux_sud_4runner_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Iiost [2000-Presente]",
@@ -115788,7 +117395,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_692_iptv_hilux_v_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_692_iptv_hilux_v_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Joyota Avanza [2000-Presente]",
@@ -116556,7 +118174,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_159_land_cruser_250_prado_2023_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_159_land_cruser_250_prado_2023_top.png",
       "year_start": 2023,
-      "year_end": 2023
+      "year_end": 2023,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Land Cruset I Js Sgm J60 [1987]",
@@ -116652,7 +118280,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_155_land_prado_2020_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_155_land_prado_2020_top.png",
       "year_start": 2020,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Lanecruiset Gxl [2024]",
@@ -117532,7 +119170,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_570_royota_4runner_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_570_royota_4runner_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota A Hard [2000-Presente]",
@@ -117628,7 +119276,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_560_royota_aqua_gr_sport_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_560_royota_aqua_gr_sport_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Aqua Xp210 G [2000-Presente]",
@@ -117644,7 +119302,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_559_royota_aqua_xp210_g_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_559_royota_aqua_xp210_g_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Aqua Xp210 Z [2000-Presente]",
@@ -117660,7 +119328,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_558_royota_aqua_xp210_z_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_558_royota_aqua_xp210_z_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Aristo V300 [2000-Presente]",
@@ -119804,7 +121482,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_372_royota_gr_yaris_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_372_royota_gr_yaris_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Gr Yaris 1st Edition Rz [2000-Presente]",
@@ -119820,7 +121508,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_370_royota_gr_yaris_1st_edition_rz_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_370_royota_gr_yaris_1st_edition_rz_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Gr Yaris Fwcet Bunny Pandem [2000-Presente]",
@@ -119836,7 +121534,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_368_royota_gr_yaris_fwcet_bunny_pandem_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_368_royota_gr_yaris_fwcet_bunny_pandem_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Grb6 Pandem [2000-Presente]",
@@ -120540,7 +122248,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_292_royota_prius_alpha_gr_sport_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_292_royota_prius_alpha_gr_sport_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Prius Iconic [2000-Presente]",
@@ -120556,7 +122274,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_289_royota_prius_iconic_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_289_royota_prius_iconic_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Prius Phv Gr Spott [2000-Presente]",
@@ -120572,7 +122300,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_287_royota_prius_phv_gr_spott_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_287_royota_prius_phv_gr_spott_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Prius Prime Xle Plug In Hybod [2000-Presente]",
@@ -120588,7 +122326,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_286_royota_prius_prime_xle_plug_in_hybod_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_286_royota_prius_prime_xle_plug_in_hybod_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Privs [2000-Presente]",
@@ -120652,7 +122400,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_281_royota_probox_160_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_281_royota_probox_160_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Probox Custom Usmile [2000-Presente]",
@@ -120668,7 +122426,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_280_royota_probox_custom_usmile_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_280_royota_probox_custom_usmile_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Prodo [2000-Presente]",
@@ -120956,7 +122724,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_260_royota_sienna_lat.png",
       "top_image": null,
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Sienta [2000-Presente]",
@@ -121788,7 +123567,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_184_royota_yaris_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_184_royota_yaris_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Cross [2000-Presente]",
@@ -121804,7 +123593,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_179_royota_yaris_cross_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_179_royota_yaris_cross_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Door [2000-Presente]",
@@ -121820,7 +123619,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_182_royota_yaris_5_door_lat.png",
       "top_image": null,
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Gr Wrc [2000-Presente]",
@@ -121836,7 +123645,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_177_royota_yaris_gr_wrc_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_177_royota_yaris_gr_wrc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Hatchback [2000-Presente]",
@@ -121852,7 +123671,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_178_royota_yaris_hatchback_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_178_royota_yaris_hatchback_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Hatchback Us [2000-Presente]",
@@ -121868,7 +123697,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_176_royota_yaris_hatchback_us_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_176_royota_yaris_hatchback_us_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Sedan [2000-Presente]",
@@ -121884,7 +123723,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_172_royota_yaris_sedan_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_172_royota_yaris_sedan_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Yaris Wrc [2000-Presente]",
@@ -121900,7 +123749,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_167_royota_yaris_wrc_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_167_royota_yaris_wrc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Royota Zetas [2000-Presente]",
@@ -122028,7 +123887,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_696_sienna_2020_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_696_sienna_2020_top.png",
       "year_start": 2020,
-      "year_end": 2020
+      "year_end": 2020,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Suprasnake Drift Car [2000-Presente]",
@@ -122092,7 +123962,18 @@
       "lateral_image": "/vehicles/models/toyota/toyota_636_to_yo_hilux_arctic_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_636_to_yo_hilux_arctic_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16",
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::To Yota Land Cn Ser Grsport [2000-Presente]",
@@ -122572,7 +124453,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_661_try_oea_4runner_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_661_try_oea_4runner_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Tundra Cab [2013]",
@@ -122876,7 +124767,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_142_twota_land_cruiser_prado_150_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_142_twota_land_cruiser_prado_150_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H16"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Twota Matrix [2000-Presente]",
@@ -122924,7 +124825,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_187_twota_yaris_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_187_twota_yaris_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Urban Cruset [2011]",
@@ -123116,7 +125027,17 @@
       "lateral_image": "/vehicles/models/toyota/toyota_185_yaris_lat.png",
       "top_image": "/vehicles/models/toyota/toyota_185_yaris_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "TOYOTA::Yaris Ooor [2008]",
@@ -123388,7 +125309,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_583_amarok_cab_chasg_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_583_amarok_cab_chasg_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Amarok Thjble Cab [2000-Presente]",
@@ -123404,7 +125335,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_634_amarok_thjble_cab_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_634_amarok_thjble_cab_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::An Orok [2000-Presente]",
@@ -123932,7 +125873,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_463_bora_jetta_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_463_bora_jetta_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Bora Variant [2003]",
@@ -125516,7 +127468,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_440_fox_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_440_fox_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Fox T [2000-Presente]",
@@ -125532,7 +127495,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_439_fox_201_t_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_439_fox_201_t_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::God Gti [2020]",
@@ -125564,7 +127538,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_433_gol_2015_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_433_gol_2015_top.png",
       "year_start": 2015,
-      "year_end": 2015
+      "year_end": 2015,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol [2000]",
@@ -125596,7 +127580,19 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_436_gol_g2_gyi_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_436_gol_g2_gyi_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol G3 [2000-Presente]",
@@ -125612,7 +127608,19 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_435_gol_g3_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_435_gol_g3_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol G4 [2000-Presente]",
@@ -125628,7 +127636,19 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_434_gol_g4_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_434_gol_g4_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H3",
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol Gi [1980]",
@@ -125660,7 +127680,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_432_gol_gs_2010_lat.png",
       "top_image": null,
       "year_start": 2010,
-      "year_end": 2010
+      "year_end": 2010,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gol Gti [1993]",
@@ -125724,7 +127754,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_427_gol_voyage_gs_2009_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_427_gol_voyage_gs_2009_top.png",
       "year_start": 2009,
-      "year_end": 2009
+      "year_end": 2009,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf [2024]",
@@ -125756,7 +127796,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_424_golf_2011_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_424_golf_2011_top.png",
       "year_start": 2011,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf [2010]",
@@ -125804,7 +127854,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_419_golf_alttrack_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_419_golf_alttrack_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Alttrack S [2000-Presente]",
@@ -125820,7 +127880,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_422_golf_alttrack_201_s_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_422_golf_alttrack_201_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Caboo [1995]",
@@ -125884,7 +127954,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_349_golf_5_door_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_349_golf_5_door_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Door Ft Line [2019]",
@@ -125916,7 +127996,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_417_golf_e_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_417_golf_e_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gtd S Doot [2020]",
@@ -125948,7 +128038,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_412_golf_gtd_variant_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_412_golf_gtd_variant_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gte [2024]",
@@ -125980,7 +128080,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_410_golf_gte_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_410_golf_gte_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gte S Door [2019]",
@@ -126044,7 +128154,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_407_golf_gti_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_407_golf_gti_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti [2011]",
@@ -126060,7 +128180,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_408_golf_gti_2011_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_408_golf_gti_2011_top.png",
       "year_start": 2011,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti [2010]",
@@ -126108,7 +128238,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_405_golf_gti_cabriokt_2012_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_405_golf_gti_cabriokt_2012_top.png",
       "year_start": 2012,
-      "year_end": 2012
+      "year_end": 2012,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Clubsport [2025]",
@@ -126156,7 +128296,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_391_golf_gti_3_door_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_391_golf_gti_3_door_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Log Ii [1992]",
@@ -126220,7 +128370,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_399_golf_gti_no_ii_racing_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_399_golf_gti_no_ii_racing_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Rally Group [2000-Presente]",
@@ -126236,7 +128396,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_398_golf_gti_rally_group_2_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_398_golf_gti_rally_group_2_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Rocket Bunny [2014]",
@@ -126252,7 +128422,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_396_golf_gti_rocket_bunny_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_396_golf_gti_rocket_bunny_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Rubys [2014]",
@@ -126268,7 +128448,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_423_golf_gti_rubys_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_423_golf_gti_rubys_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Tcr [2000-Presente]",
@@ -126284,7 +128474,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_394_golf_gti_tcr_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_394_golf_gti_tcr_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti Variant [2024]",
@@ -126316,7 +128516,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_393_golf_gti_vii_2013_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_393_golf_gti_vii_2013_top.png",
       "year_start": 2013,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gti W12 [2007]",
@@ -126348,7 +128558,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_415_golf_gto_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_415_golf_gto_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Gyi Rm [2001]",
@@ -126460,7 +128680,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_387_golf_mk_2_198b_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_387_golf_mk_2_198b_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Mk Gi [2000-Presente]",
@@ -126476,7 +128706,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_385_golf_mk_3_gi_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_385_golf_mk_3_gi_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Mk Iv Door [2004]",
@@ -126508,7 +128748,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_379_golf_mk_l_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_379_golf_mk_l_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Mk L [1980]",
@@ -126604,7 +128854,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_375_golf_plus_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_375_golf_plus_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf R [2025]",
@@ -126652,7 +128912,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_369_golf_r_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_369_golf_r_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf R Estate [2021]",
@@ -126700,7 +128970,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_368_golf_r_variant_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_368_golf_r_variant_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf R Vii [2014]",
@@ -126716,7 +128996,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_366_golf_r_vii_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_366_golf_r_vii_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf R32 [2007]",
@@ -126748,7 +129038,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_364_golf_r32_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_364_golf_r32_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf S Ocor [2019]",
@@ -126828,7 +129128,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_363_golf_sportsvan_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_363_golf_sportsvan_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Sv [2018]",
@@ -126860,7 +129170,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_354_golf_vanant_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_354_golf_vanant_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Vanant [2013]",
@@ -126876,7 +129196,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_356_golf_vanant_2013_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_356_golf_vanant_2013_top.png",
       "year_start": 2013,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Vanant [2010]",
@@ -126940,7 +129270,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_352_golf_vi_2011_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_352_golf_vi_2011_top.png",
       "year_start": 2011,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Vi Doot [2011]",
@@ -126956,7 +129296,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_353_golf_vi_3_doot_2011_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_353_golf_vi_3_doot_2011_top.png",
       "year_start": 2011,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Vii [2013]",
@@ -126972,7 +129322,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_350_golf_vii_2013_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_350_golf_vii_2013_top.png",
       "year_start": 2013,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Golf Vii 000r [2013]",
@@ -126988,7 +129348,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_351_golf_vii_3_000r_2013_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_351_golf_vii_3_000r_2013_top.png",
       "year_start": 2013,
-      "year_end": 2013
+      "year_end": 2013,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Gt D [2000-Presente]",
@@ -127228,7 +129598,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_418_i_uswogcn_golf_cabriolet_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_418_i_uswogcn_golf_cabriolet_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::I Uswogcn Golf Variant [2000-Presente]",
@@ -127244,7 +129624,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_358_i_uswogcn_golf_variant_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_358_i_uswogcn_golf_variant_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Id Buzz [2023]",
@@ -127404,7 +129794,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_326_jetta_2025_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_326_jetta_2025_top.png",
       "year_start": 2025,
-      "year_end": 2025
+      "year_end": 2025,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta [2022]",
@@ -127420,7 +129820,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_327_jetta_2022_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_327_jetta_2022_top.png",
       "year_start": 2022,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta [2019]",
@@ -127436,7 +129846,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_329_jetta_2019_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_329_jetta_2019_top.png",
       "year_start": 2019,
-      "year_end": 2019
+      "year_end": 2019,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta [2017]",
@@ -127452,7 +129872,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_324_jetta_2017_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_324_jetta_2017_top.png",
       "year_start": 2017,
-      "year_end": 2017
+      "year_end": 2017,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta [2011]",
@@ -127468,7 +129898,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_328_jetta_2011_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_328_jetta_2011_top.png",
       "year_start": 2011,
-      "year_end": 2011
+      "year_end": 2011,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta [2005]",
@@ -127548,7 +129988,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_323_jetta_2_custom_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_323_jetta_2_custom_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Fast And Furious [1995]",
@@ -127580,7 +130031,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_318_jetta_gli_2021_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_318_jetta_gli_2021_top.png",
       "year_start": 2021,
-      "year_end": 2021
+      "year_end": 2021,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Gli [2019]",
@@ -127596,7 +130057,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_319_jetta_gli_2019_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_319_jetta_gli_2019_top.png",
       "year_start": 2019,
-      "year_end": 2019
+      "year_end": 2019,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Gli [2000-Presente]",
@@ -127612,7 +130083,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_320_jetta_gli_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_320_jetta_gli_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Gti [1979-1984]",
@@ -127644,7 +130126,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_317_jetta_gu_2025_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_317_jetta_gu_2025_top.png",
       "year_start": 2025,
-      "year_end": 2025
+      "year_end": 2025,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Mk [1986]",
@@ -127676,7 +130168,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_313_jetta_sel_2022_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_313_jetta_sel_2022_top.png",
       "year_start": 2022,
-      "year_end": 2022
+      "year_end": 2022,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Jetta Typ Ig [1984]",
@@ -128812,7 +131314,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_262_polo_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_262_polo_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo [1989]",
@@ -128844,7 +131356,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_252_polo_5_0mc_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_252_polo_5_0mc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo Dcor 6n [1994]",
@@ -128892,7 +131414,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_258_polo_3_doot_2008_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_258_polo_3_doot_2008_top.png",
       "year_start": 2008,
-      "year_end": 2008
+      "year_end": 2008,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo Doot [1995]",
@@ -129036,7 +131568,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_243_polo_red_butl_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_243_polo_red_butl_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo Rx Row Cross [2014]",
@@ -129132,7 +131674,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_239_polo_sedan_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_239_polo_sedan_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo Sedan [1995]",
@@ -129180,7 +131732,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_236_polo_v_typ_6r_wrc_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_236_polo_v_typ_6r_wrc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Polo Variant [1999]",
@@ -129228,7 +131790,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_233_polo_wrc_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_233_polo_wrc_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Pro S [2023]",
@@ -129420,7 +131992,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_503_s_swagen_ttmspotter_pck_up_sin_cab_201_s_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_503_s_swagen_ttmspotter_pck_up_sin_cab_201_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Sagitar Tsi [2022]",
@@ -129500,7 +132082,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_229_saveiro_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_229_saveiro_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Scirocco [2014]",
@@ -129788,7 +132381,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_214_space_up_blue_concept_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_214_space_up_blue_concept_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Ss Oropvoe Lwo [2000-Presente]",
@@ -129948,7 +132551,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_556_swpm_transporter_van_lwo_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_556_swpm_transporter_van_lwo_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::T [2000-Presente]",
@@ -130444,7 +133057,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_112_ti_transporter_pick_up_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_112_ti_transporter_pick_up_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Tippet [2000-Presente]",
@@ -130732,7 +133356,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_638_transmtter_1_po_up_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_638_transmtter_1_po_up_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transp Tet Panel Van Med Rn Rod [2000-Presente]",
@@ -130860,7 +133494,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_585_transporter_chases_cab_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_585_transporter_chases_cab_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Chassis Cab S [2000-Presente]",
@@ -130876,7 +133520,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_616_transporter_chassis_cab_20_s_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_616_transporter_chassis_cab_20_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Chassis Sin Cab [2012]",
@@ -130908,7 +133562,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_98_transporter_cocre_h_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_98_transporter_cocre_h_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Lw B Sir [2000-Presente]",
@@ -130924,7 +133588,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_591_transporter_lw_b_sir_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_591_transporter_lw_b_sir_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Lwb High Root [2000]",
@@ -130956,7 +133630,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_544_transporter_lwo_md_roof_coffoi_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_544_transporter_lwo_md_roof_coffoi_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Lwoer Cab [2000-Presente]",
@@ -130972,7 +133656,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_623_transporter_lwo_toper_cab_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_623_transporter_lwo_toper_cab_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Panel Van Lwb High Root [2000-Presente]",
@@ -130988,7 +133682,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_4_transporter_panel_van_lwb_high_root_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_4_transporter_panel_van_lwb_high_root_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Stun Lwb [2000-Presente]",
@@ -131004,7 +133708,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_134_transporter_stun_lwb_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_134_transporter_stun_lwb_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Syncro [2000-Presente]",
@@ -131020,7 +133734,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_68_transporter_13_syncro_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_68_transporter_13_syncro_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter T4 [2000-Presente]",
@@ -131036,7 +133760,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_11_transporter_t4_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_11_transporter_t4_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter T4 Sin Chasss [2000-Presente]",
@@ -131052,7 +133786,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_567_transporter_t4_sin_chasss_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_567_transporter_t4_sin_chasss_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transporter Tl Hippy Van [2000-Presente]",
@@ -131068,7 +133812,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_77_transporter_tl_hippy_van_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_77_transporter_tl_hippy_van_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Transpot It Coati [2000-Presente]",
@@ -131308,7 +134062,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_162_up_2014_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_162_up_2014_top.png",
       "year_start": 2014,
-      "year_end": 2014
+      "year_end": 2014,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Up [2013]",
@@ -131404,7 +134168,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_629_vc_swagen_transporter_pid_up_single_201_s_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_629_vc_swagen_transporter_pid_up_single_201_s_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vcasw Gen Transcoder Shuttle Sva [2000-Presente]",
@@ -131548,7 +134323,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_159_vento_2016_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_159_vento_2016_top.png",
       "year_start": 2016,
-      "year_end": 2016
+      "year_end": 2016,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vento Cl [1995]",
@@ -131564,7 +134349,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_158_vento_cl_1995_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_158_vento_cl_1995_top.png",
       "year_start": 1995,
-      "year_end": 1995
+      "year_end": 1995,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Violkswogen Passat Pro [2000-Presente]",
@@ -131900,7 +134695,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_549_vo_swagen_transporter_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_549_vo_swagen_transporter_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vo Swagen Transporter Midoe [2000-Presente]",
@@ -131916,7 +134721,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_519_vo_swagen_transporter_midoe_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_519_vo_swagen_transporter_midoe_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vo Swagen Transporter T [2000-Presente]",
@@ -131932,7 +134747,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_557_vo_swagen_transporter_16_t_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_557_vo_swagen_transporter_16_t_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vo Swnm Swo Chaws Dowe [2000-Presente]",
@@ -132332,7 +135157,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_21_voaswagen_transporter_72_passenger_van_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_21_voaswagen_transporter_72_passenger_van_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Voaswagen Transporter T3 [2000-Presente]",
@@ -132348,7 +135183,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_84_voaswagen_transporter_t3_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_84_voaswagen_transporter_t3_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Voaswaoe Crane So Super Root [2000-Presente]",
@@ -132476,7 +135321,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_118_volksw_n_transporter_panel_van_medium_roo_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_118_volksw_n_transporter_panel_van_medium_roo_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Volkswagen Model [2000-Presente]",
@@ -132620,7 +135475,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_58_votkswagen_transporter_13_passerw_van_hoh_roof_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_58_votkswagen_transporter_13_passerw_van_hoh_roof_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vou Swogen Tran Orter T Pickup Swo [2000-Presente]",
@@ -132700,7 +135565,17 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_568_vouswagen_transport_pick_up_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_568_vouswagen_transport_pick_up_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H11"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Voxswagen Transp Tct T3 Passenger Van [2000-Presente]",
@@ -132780,7 +135655,18 @@
       "lateral_image": "/vehicles/models/volkswagen/volkswagen_325_vuswagcn_jetta_lat.png",
       "top_image": "/vehicles/models/volkswagen/volkswagen_325_vuswagcn_jetta_top.png",
       "year_start": 2000,
-      "year_end": 2026
+      "year_end": 2026,
+      "bombillos": {
+        "luz_antiniebla": [
+          "H8",
+          "HB4"
+        ]
+      },
+      "bombillos_meta": {
+        "source": "erp_products_reverse_index",
+        "confidence": "high",
+        "updated_at": "2026-09-19T22:25:03+00:00"
+      }
     },
     {
       "id": "VOLKSWAGEN::Vuswagen Bs Varont [2000-Presente]",
@@ -133135,5 +136021,16 @@
       "year_end": 2014
     }
   ],
-  "vehicle_types_version": "2.5.0"
+  "vehicle_types_version": "2.5.0",
+  "bombillos_enrichment": {
+    "version": 1,
+    "updated_at": "2026-09-19T22:25:03+00:00",
+    "enriched_count": 280,
+    "vector_total": 8316,
+    "positions_present": [
+      "luz_antiniebla"
+    ],
+    "notes": "Partial fitment from ERP product reverse-index overlay (mostly luz_antiniebla). Nulls omitted; do not invent. Xenon excluded at source.",
+    "source": "vehicle_bulbs/enrichment/bombillos_overlay.json"
+  }
 }
