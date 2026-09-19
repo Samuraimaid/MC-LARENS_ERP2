@@ -142,3 +142,7 @@ Máx. ~8 cards; orden sugerido: bundle manual → con stock en bodega activa →
 4. Mencionar 1–2 SKUs de prueba (con y sin bundle manual).
 
 Commit sugerido: `feat(ui): related + FBT carousels with manual bundles and multi-add`.
+
+
+## Nota UI (2026-09-19)
+Lightbox fullscreen del Quick View: usar **fondo blanco** (no negro) para no perder detalle en productos oscuros (FOX, etc.). Controles en contraste oscuro.
