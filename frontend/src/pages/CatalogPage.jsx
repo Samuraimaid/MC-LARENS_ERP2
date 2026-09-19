@@ -1050,7 +1050,7 @@ export function CatalogPage() {
 
             {showFilters ? (
               <div className="flex flex-wrap gap-3 pt-1 border-t border-border/50">
-                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:min-w-[280px]">
                   <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
                     <Tags className="h-3.5 w-3.5" />
                     Categoría
@@ -1073,7 +1073,7 @@ export function CatalogPage() {
                   </Select>
                 </div>
 
-                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:min-w-[280px]">
                   <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
                     <Shapes className="h-3.5 w-3.5" />
                     Subcategoría
@@ -1096,7 +1096,7 @@ export function CatalogPage() {
                   </Select>
                 </div>
 
-                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:min-w-[280px]">
                   <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
                     <ListFilter className="h-3.5 w-3.5" />
                     Tipo
@@ -1118,7 +1118,7 @@ export function CatalogPage() {
                   </Select>
                 </div>
 
-                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:min-w-[280px]">
                   <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
                     <CarFront className="h-3.5 w-3.5" />
                     Vehículo

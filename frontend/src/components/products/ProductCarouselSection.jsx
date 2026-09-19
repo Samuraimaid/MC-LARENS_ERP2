@@ -241,7 +241,7 @@ export default function ProductCarouselSection({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 pt-1 px-11 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none w-full min-w-0"
+        className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 pt-1 px-3 sm:px-11 scroll-smooth snap-x snap-mandatory scrollbar-thin select-none w-full min-w-0 max-w-full"
         style={{ scrollbarWidth: "thin" }}
       >
         {normalizedItems.map(({ product, isBundleItem, defaultQty }) => {
@@ -256,7 +256,7 @@ export default function ProductCarouselSection({
               key={pId}
               onClick={() => onOpenProduct?.(product)}
               className={cn(
-                "relative shrink-0 w-[220px] sm:w-[240px] snap-start rounded-xl border bg-card p-2.5 transition-all flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-primary/50 group",
+                "relative shrink-0 w-[min(200px,72vw)] sm:w-[240px] snap-start rounded-xl border bg-card p-2.5 transition-all flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-primary/50 group",
                 enableMultiSelect && checked ? "border-primary/60 ring-1 ring-primary/40 bg-primary/5" : "border-border/60"
               )}
             >
