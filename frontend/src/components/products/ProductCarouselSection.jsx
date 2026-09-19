@@ -132,31 +132,6 @@ export default function ProductCarouselSection({
           </div>
         </div>
 
-        {/* Carousel Navigation Arrow Controls (Desktop) */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 hover:bg-muted"
-            onClick={() => scrollByAmount("left")}
-            disabled={!canScrollLeft}
-            title="Desplazar a la izquierda"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 hover:bg-muted"
-            onClick={() => scrollByAmount("right")}
-            disabled={!canScrollRight}
-            title="Desplazar a la derecha"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       {/* Multi-Select Action Banner (for FBT / Se venden juntos) */}
