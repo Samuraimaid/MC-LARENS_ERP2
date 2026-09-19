@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -30,6 +30,12 @@ import {
   XCircle,
   SlidersHorizontal,
   Sparkles,
+  ScanBarcode,
+  Eraser,
+  ArrowUp,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { usdAndNioFromUsdBase, formatDualCurrency } from "@/lib/documentCurrency";
@@ -39,6 +45,7 @@ import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRa
 import { saveServerDraft, setServerDraftActive } from "@/lib/serverDrafts";
 import { formatCategoryLabel } from "@/lib/branding";
 import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
+import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import ProductThumb from "@/components/products/ProductThumb";
 import { getProductImageUrl } from "@/lib/productImage";
@@ -190,6 +197,13 @@ export function CatalogPage() {
   const [vehiclesById, setVehiclesById] = useState({});
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
   const [visibleCount, setVisibleCount] = useState(30);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const searchWrapRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const searchInputRef = useRef(null);
   const [draftDialog, setDraftDialog] = useState({
     open: false,
     type: null,
@@ -204,6 +218,46 @@ export function CatalogPage() {
   useEffect(() => {
     setVisibleCount(30);
   }, [search, category, subcategory, productType, vehicleType, boardTab]);
+
+  const applySearchValue = useCallback((value) => {
+    setSearch(String(value ?? ""));
+    setShowAutocomplete(true);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSearch("");
+    setCategory("all");
+    setSubcategory("all");
+    setProductType("all");
+    setVehicleType("all");
+    setShowAutocomplete(false);
+    setVisibleCount(30);
+  }, []);
+
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    category !== "all" ||
+    subcategory !== "all" ||
+    productType !== "all" ||
+    vehicleType !== "all";
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onDocClick = (event) => {
+      if (!searchWrapRef.current) return;
+      if (!searchWrapRef.current.contains(event.target)) {
+        setShowAutocomplete(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   const getDraftConfig = (type) => {
     const base = DRAFT_CONFIG[type];
@@ -418,6 +472,45 @@ export function CatalogPage() {
     }
     return filteredProducts;
   }, [filteredProducts, boardTab, inventoryByProduct]);
+
+  const autocompleteSuggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length < 1) return [];
+    const scored = [];
+    for (const product of filteredProducts) {
+      const sku = String(product.sku || "").toLowerCase();
+      const name = String(product.name || "").toLowerCase();
+      const brand = String(product.brand || "").toLowerCase();
+      let score = 0;
+      if (sku === q) score = 100;
+      else if (sku.startsWith(q)) score = 80;
+      else if (sku.includes(q)) score = 60;
+      else if (name.startsWith(q)) score = 50;
+      else if (name.includes(q)) score = 40;
+      else if (brand.includes(q)) score = 30;
+      else continue;
+      scored.push({ product, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 10).map((row) => row.product);
+  }, [filteredProducts, search]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node) return undefined;
+    if (currentActiveList.length <= visibleCount) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((prev) => Math.min(prev + 30, currentActiveList.length));
+        }
+      },
+      { root: null, rootMargin: "240px", threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [currentActiveList.length, visibleCount, boardTab, search, category, subcategory, productType, vehicleType]);
+
 
   const getDraftTabs = (type) => {
     if (typeof window === "undefined") return [];
@@ -836,133 +929,234 @@ export function CatalogPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros rápidos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex w-full min-w-[300px] items-center gap-2">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <Search className="h-3.5 w-3.5" />
-                Buscar producto
-              </Label>
-              <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="sticky top-0 z-30 -mx-1 px-1 pt-1 pb-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
+        <Card className="shadow-sm">
+          <CardContent className="p-3 sm:p-4 space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative min-w-0 flex-1" ref={searchWrapRef}>
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
                 <Input
-                  placeholder="SKU, nombre, marca, categoría o subcategoría"
+                  ref={searchInputRef}
+                  placeholder="Buscar SKU, nombre, marca… (pegar funciona)"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="pl-9 text-sm"
+                  onChange={(event) => applySearchValue(event.target.value)}
+                  onInput={(event) => applySearchValue(event.target.value)}
+                  onPaste={(event) => {
+                    const pasted = event.clipboardData?.getData("text") ?? "";
+                    // Sync immediately so paste always filters (some browsers delay onChange)
+                    window.setTimeout(() => {
+                      const next = event.target?.value || pasted;
+                      applySearchValue(next);
+                    }, 0);
+                  }}
+                  onFocus={() => setShowAutocomplete(Boolean(search.trim()))}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setShowAutocomplete(false);
+                    if (event.key === "Enter" && autocompleteSuggestions.length === 1) {
+                      event.preventDefault();
+                      setQuickViewProduct(autocompleteSuggestions[0]);
+                      setShowAutocomplete(false);
+                    }
+                  }}
+                  className="pl-9 pr-24 text-sm h-11"
+                  autoComplete="off"
                 />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {search ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      title="Limpiar búsqueda"
+                      onClick={() => applySearchValue("")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    title="Escanear código de barras o QR"
+                    aria-label="Escanear código de barras o QR"
+                    onClick={() => setShowBarcodeScanner(true)}
+                  >
+                    <ScanBarcode className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {showAutocomplete && autocompleteSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 rounded-xl border bg-popover shadow-lg overflow-hidden max-h-80 overflow-y-auto">
+                    {autocompleteSuggestions.map((product) => (
+                      <button
+                        key={product.product_id || product.sku}
+                        type="button"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/70 transition-colors border-b border-border/40 last:border-0"
+                        onClick={() => {
+                          applySearchValue(product.sku || product.name || "");
+                          setQuickViewProduct(product);
+                          setShowAutocomplete(false);
+                        }}
+                      >
+                        <div className="h-10 w-10 shrink-0 rounded-md overflow-hidden border bg-muted/30">
+                          <ProductThumb product={product} size="full" className="h-full w-full" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-mono text-muted-foreground">{product.sku || "Sin SKU"}</div>
+                          <div className="text-sm font-medium truncate">{sanitizeProductCopy(product.name || "Producto")}</div>
+                          {product.brand ? (
+                            <div className="text-[11px] text-muted-foreground truncate">{product.brand}</div>
+                          ) : null}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant={showFilters ? "default" : "outline"}
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  onClick={() => setShowFilters((v) => !v)}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Filtros
+                  {showFilters ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  disabled={!hasActiveFilters}
+                  onClick={clearAllFilters}
+                  title="Limpiar búsqueda y filtros"
+                >
+                  <Eraser className="h-3.5 w-3.5" />
+                  Limpiar
+                </Button>
+                {hasActiveFilters ? (
+                  <Badge variant="secondary" className="text-[11px]">
+                    {filteredProducts.length} resultados
+                  </Badge>
+                ) : null}
               </div>
             </div>
 
-            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <Tags className="h-3.5 w-3.5" />
-                Categoría
-              </Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{formatCategoryLabel(category)}</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las categorías</SelectItem>
-                  {Object.keys(categories || {}).map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {formatCategoryLabel(cat)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {showFilters ? (
+              <div className="flex flex-wrap gap-3 pt-1 border-t border-border/50">
+                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                  <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                    <Tags className="h-3.5 w-3.5" />
+                    Categoría
+                  </Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{formatCategoryLabel(category)}</span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las categorías</SelectItem>
+                      {Object.keys(categories || {}).map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {formatCategoryLabel(cat)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <Shapes className="h-3.5 w-3.5" />
-                Subcategoría
-              </Label>
-              <Select value={subcategory} onValueChange={setSubcategory}>
-                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Shapes className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{subcategory === "all" ? "Todas las subcategorías" : subcategory}</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las subcategorías</SelectItem>
-                  {availableSubcategories.map((sub) => (
-                    <SelectItem key={sub} value={sub}>
-                      {sub}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                  <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                    <Shapes className="h-3.5 w-3.5" />
+                    Subcategoría
+                  </Label>
+                  <Select value={subcategory} onValueChange={setSubcategory}>
+                    <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Shapes className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{subcategory === "all" ? "Todas las subcategorías" : subcategory}</span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las subcategorías</SelectItem>
+                      {availableSubcategories.map((sub) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <ListFilter className="h-3.5 w-3.5" />
-                Tipo de producto
-              </Label>
-              <Select value={productType} onValueChange={setProductType}>
-                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <ListFilter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
-                      {productType === "all" ? "Todos los tipos" : productType === "product" ? "Producto" : "Servicio"}
-                    </span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value="product">Producto</SelectItem>
-                  <SelectItem value="service">Servicio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                  <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                    <ListFilter className="h-3.5 w-3.5" />
+                    Tipo
+                  </Label>
+                  <Select value={productType} onValueChange={setProductType}>
+                    <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <ListFilter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">
+                          {productType === "all" ? "Todos los tipos" : productType === "product" ? "Producto" : "Servicio"}
+                        </span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
+                      <SelectItem value="product">Producto</SelectItem>
+                      <SelectItem value="service">Servicio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <CarFront className="h-3.5 w-3.5" />
-                Tipo de vehículo
-              </Label>
-              <Select value={vehicleType} onValueChange={setVehicleType}>
-                <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <CarFront className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{vehicleType === "all" ? "Todos los vehículos" : vehicleType}</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los vehículos</SelectItem>
-                  {vehicleTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="flex w-full min-w-[260px] items-center gap-2 sm:w-auto sm:min-w-[280px]">
+                  <Label className="inline-flex w-28 shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                    <CarFront className="h-3.5 w-3.5" />
+                    Vehículo
+                  </Label>
+                  <Select value={vehicleType} onValueChange={setVehicleType}>
+                    <SelectTrigger className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <CarFront className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{vehicleType === "all" ? "Todos los vehículos" : vehicleType}</span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los vehículos</SelectItem>
+                      {vehicleTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Checkbox
-                id="stay-in-catalog"
-                checked={stayInCatalog}
-                onCheckedChange={(value) => setStayInCatalog(Boolean(value))}
-              />
-              <Label htmlFor="stay-in-catalog" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-                <Pin className="h-3.5 w-3.5" />
-                Permanecer en catálogo al agregar
-              </Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Checkbox
+                    id="stay-in-catalog"
+                    checked={stayInCatalog}
+                    onCheckedChange={(value) => setStayInCatalog(Boolean(value))}
+                  />
+                  <Label htmlFor="stay-in-catalog" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                    <Pin className="h-3.5 w-3.5" />
+                    Permanecer en catálogo al agregar
+                  </Label>
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
 
       {loading ? (
         <Card>
@@ -1259,18 +1453,15 @@ export function CatalogPage() {
                 );
               })}
 
-              {currentActiveList.length > visibleCount && (
-                <div className="text-center pt-3 pb-6">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setVisibleCount((prev) => prev + 30)}
-                    className="w-full sm:w-auto px-8 font-medium shadow-sm"
-                  >
-                    Cargar más productos ({visibleCount} de {currentActiveList.length})
-                  </Button>
+              {currentActiveList.length > visibleCount ? (
+                <div ref={loadMoreRef} className="text-center pt-3 pb-8 text-xs text-muted-foreground">
+                  Cargando más productos… ({visibleCount} de {currentActiveList.length})
                 </div>
-              )}
+              ) : currentActiveList.length > 0 ? (
+                <div className="text-center pt-2 pb-6 text-xs text-muted-foreground">
+                  Fin de resultados ({currentActiveList.length})
+                </div>
+              ) : null}
             </div>
           )}
         </>
@@ -1394,7 +1585,36 @@ export function CatalogPage() {
       </Dialog>
 
       {/* Product Quick View Dialog */}
-      <ProductQuickViewDialog
+            {showScrollTop ? (
+        <Button
+          type="button"
+          size="icon"
+          className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full shadow-lg"
+          title="Ir al buscador"
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            searchInputRef.current?.focus?.();
+          }}
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      ) : null}
+
+      <ProductBarcodeScannerDialog
+        open={showBarcodeScanner}
+        onOpenChange={setShowBarcodeScanner}
+        onScan={(code) => {
+          const value = String(code || "").trim();
+          if (!value) return;
+          applySearchValue(value);
+          setShowBarcodeScanner(false);
+          setShowAutocomplete(true);
+        }}
+        title="Escanear producto"
+        description="Apunta al código de barras o QR. El código se usa como búsqueda en el catálogo."
+      />
+
+<ProductQuickViewDialog
         open={Boolean(quickViewProduct)}
         onOpenChange={(open) => !open && setQuickViewProduct(null)}
         product={quickViewProduct}
