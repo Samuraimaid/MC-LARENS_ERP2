@@ -136,6 +136,21 @@ Solo si 1–4 ya están desplegados y estables. Ver `docs/ANTIGRAVITY_MASTER.md`
 
 ---
 
+---
+
+## Nota fija para Antigravity en Windows (workshop)
+
+**No usar el launcher `py`.** En PowerShell del PC de trabajo suele fallar con `CommandNotFoundException`.
+
+Usar en su lugar:
+- `python scripts\...` si está en PATH, o
+- ruta completa bajo `$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe`, o
+- un wrapper `.ps1` (`powershell -ExecutionPolicy Bypass -File scripts\....ps1`) como ya hizo el scrub China.
+
+Incluir esta nota en prompts futuros de Case → Antigravity.
+
+---
+
 ## Fuera de alcance
 
 - No wipe/rebuild de marcas.
