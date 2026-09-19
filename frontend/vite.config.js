@@ -2,6 +2,7 @@ const path = require("path");
 const os = require("os");
 const { defineConfig, loadEnv } = require("vite");
 const react = require("@vitejs/plugin-react");
+const { lucideAnimatedBridgePlugin } = require("./plugins/lucideAnimatedBridge");
 
 const SERVER_START_TIME = Date.now();
 
@@ -151,6 +152,7 @@ module.exports = defineConfig(({ mode, command }) => {
       },
     },
     plugins: [
+      lucideAnimatedBridgePlugin(),
       react({
         babel: isDevServer
           ? {
@@ -163,6 +165,8 @@ module.exports = defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),
+        // Raw lucide for the animated-icons Vite plugin (avoid circular resolve).
+        "lucide-react-raw": path.resolve(__dirname, "node_modules/lucide-react"),
       },
       extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
     },
