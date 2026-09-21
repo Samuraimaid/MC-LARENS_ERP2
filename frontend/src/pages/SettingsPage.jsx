@@ -255,7 +255,7 @@ export function SettingsPage() {
   const { user, hasPermission } = useAuth();
   const rolesMap = useRoles();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity, liquidGlass, setLiquidGlass } = useTheme();
+  const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity, liquidGlass, setLiquidGlass, liquidGlassOpacity, setLiquidGlassOpacity } = useTheme();
   const canManageVehicleSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageAppearanceSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageSystemSettings = hasPermission("system_settings", "view");
@@ -1608,19 +1608,52 @@ export function SettingsPage() {
               </div>
             </div>
             <Separator />
-            <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 px-3 py-3">
-              <div className="min-w-0 pr-3">
-                <Label htmlFor="liquid-glass-toggle">Liquid Glass</Label>
-                <p className="text-xs text-muted-foreground">
-                  Vidrio translúcido estilo Apple (blur + manchón de color del tema). Apagalo en caja/POS si preferís opaco.
-                </p>
+            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/20 px-3 py-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 pr-3">
+                  <Label htmlFor="liquid-glass-toggle">Liquid Glass</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Vidrio translúcido estilo Apple (blur + manchón de color del tema). Apagalo en caja/POS si preferís opaco.
+                  </p>
+                </div>
+                <Switch
+                  id="liquid-glass-toggle"
+                  checked={Boolean(liquidGlass)}
+                  onCheckedChange={(value) => setLiquidGlass(Boolean(value))}
+                  data-testid="settings-liquid-glass"
+                />
               </div>
-              <Switch
-                id="liquid-glass-toggle"
-                checked={Boolean(liquidGlass)}
-                onCheckedChange={(value) => setLiquidGlass(Boolean(value))}
-                data-testid="settings-liquid-glass"
-              />
+              <div className={`space-y-2 ${liquidGlass ? "" : "opacity-50 pointer-events-none"}`}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 pr-3">
+                    <Label htmlFor="liquid-glass-opacity">Transparencia del vidrio</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Menor % = más transparente. Se guarda en este dispositivo.
+                    </p>
+                  </div>
+                  <span className="min-w-14 text-right text-sm font-semibold" data-testid="settings-liquid-glass-opacity-value">
+                    {Math.round(Number(liquidGlassOpacity) * 100)}%
+                  </span>
+                </div>
+                <Input
+                  id="liquid-glass-opacity"
+                  type="range"
+                  min="25"
+                  max="70"
+                  step="1"
+                  disabled={!liquidGlass}
+                  value={Math.round(Number(liquidGlassOpacity) * 100)}
+                  onChange={(event) => setLiquidGlassOpacity(Number(event.target.value) / 100)}
+                  data-testid="settings-liquid-glass-opacity"
+                  aria-valuemin={25}
+                  aria-valuemax={70}
+                  aria-valuenow={Math.round(Number(liquidGlassOpacity) * 100)}
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Más transparente</span>
+                  <span>Más opaco</span>
+                </div>
+              </div>
             </div>
             {canManageAppearanceSettings ? (
               <>

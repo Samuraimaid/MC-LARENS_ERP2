@@ -8,6 +8,11 @@
           var mode = localStorage.getItem("theme_mode") || localStorage.getItem("theme") || "light";
           var skin = localStorage.getItem("theme_skin") || "atlas";
           var liquid = localStorage.getItem("liquid_glass");
+          var lgOpacityRaw = localStorage.getItem("mclarens-liquid-glass-opacity");
+          var lgOpacity = parseFloat(lgOpacityRaw);
+          if (!isFinite(lgOpacity)) lgOpacity = 0.40;
+          if (lgOpacity < 0.25) lgOpacity = 0.25;
+          if (lgOpacity > 0.70) lgOpacity = 0.70;
           var resolved = mode === "system"
             ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
             : mode;
@@ -17,6 +22,7 @@
           root.setAttribute("data-theme", resolved);
           root.setAttribute("data-skin", skin);
           root.setAttribute("data-liquid-glass", liquid === null || liquid === "true" || liquid === "1" ? "true" : "false");
+          root.style.setProperty("--liquid-glass-alpha", String(lgOpacity));
         } catch (e) {}
       })();
     </script>
