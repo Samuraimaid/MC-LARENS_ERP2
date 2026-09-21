@@ -19,11 +19,22 @@ Patrón de buscador en **Catálogo** (ya en master; requiere `./deploy.sh` + har
 | 3 | Filtros colapsables | Categoría / subcategoría / tipo / vehículo + “Permanecer en catálogo” detrás de toggle **Filtros** (cerrados por defecto) |
 | 4 | Limpiar | Botón **Limpiar** resetea búsqueda + todos los filtros |
 | 5 | QR / código de barras | Reutiliza `ProductBarcodeScannerDialog` (mismo que Ventas). El código escaneado va al campo de búsqueda |
-| 6 | Autocomplete | Dropdown ~10 sugerencias (SKU / nombre / marca) con `ProductThumb`; click → busca + Quick View; Enter con 1 match → Quick View |
+| 6 | Autocomplete | Dropdown ~10 sugerencias (SKU / nombre / marca) con `ProductThumb`; click → busca + Quick View; **Enter sin elegir** → cierra sugerencias y deja la grilla filtrada (no abre QV) |
 | 7 | Scroll infinito | `IntersectionObserver` sobre sentinel; chunks de +30 (`visibleCount`) |
 | 8 | FAB subir | Botón flotante tras scroll → `scrollTo(0)` + focus al input |
 
 **No reinventar el escáner:** siempre `frontend/src/components/erp/ProductBarcodeScannerDialog.jsx` (`open`, `onOpenChange`, `onScan`).
+
+
+### Búsqueda multi-término + focus (2026-09-20)
+
+| # | Capacidad | Comportamiento |
+|---|-----------|----------------|
+| 9 | Multi-término (AND) | `tokenizeSearchQuery` + `productMatchesSearch` en `@/lib/productLookup`: tokens por whitespace; **cada** token debe aparecer en sku/nombre/marca/descripción/compat (brands, models, `compatibilidad_texto`/texto) / bombillo. Ej.: `Dlaa Mitsubishi` |
+| 10 | Focus selecciona todo | Al enfocar el input (teclado o primer click), `select()` estilo barra de direcciones; patrón mouseup para no pelear con el caret |
+| 11 | Enter | Cierra dropdown + blur; el filtro de grilla ya aplica la query actual |
+
+**Helper compartido:** `frontend/src/lib/productLookup.js` (`productMatchesSearch`, `getProductSearchableText`). Catálogo lo usa en el filtro; Ventas (SaleForm) reutiliza el blob searchable en su índice.
 
 ---
 
@@ -108,6 +119,9 @@ Xinon (2026-09-19): *si da buenos resultados, el mismo estilo en todos los endpo
 - [ ] Limpiar resetea todo  
 - [ ] Escáner abre dialog existente; scan llena búsqueda  
 - [ ] Autocomplete click abre Quick View  
+- [ ] Enter sin elegir cierra sugerencias y deja la grilla filtrada  
+- [ ] `Dlaa Mitsubishi` (u otro marca+vehículo) devuelve AND-match, no 0  
+- [ ] Refocus del input selecciona todo el texto  
 - [ ] Infinite scroll carga +30  
 - [ ] FAB vuelve arriba y enfoca el input  
 
@@ -117,5 +131,6 @@ Xinon (2026-09-19): *si da buenos resultados, el mismo estilo en todos los endpo
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-09-20 | Enter cierra sugerencias (sin QV); multi-término AND vía `productLookup`; focus selecciona todo |
 | 2026-09-19 | PR #25 implementa el patrón en Catálogo; este doc fija el estándar y el rollout ERP-wide |
 | 2026-09-12 | `GUIA_BUSQUEDA_PRODUCTOS_RAPIDA.md` — diagnóstico payload 11 MB + plan API (sigue abierto) |
