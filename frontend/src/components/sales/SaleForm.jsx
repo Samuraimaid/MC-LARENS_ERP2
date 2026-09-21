@@ -145,7 +145,7 @@ import {
   isErpDraftSupervisor,
 } from "@/lib/erpDesignSystem";
 
-import { findProductsByScanCode, productMatchesSearch } from "@/lib/productLookup";
+import { findProductsByScanCode, getProductSearchableText } from "@/lib/productLookup";
 import {
   clampSellerGlobalDiscount,
   getSellerCartLineLockState,
@@ -659,6 +659,7 @@ export default function SaleForm({
   const draftSnapshotRef = useRef(null);
   const customerSearchRef = useRef(null);
   const productSearchRef = useRef(null);
+  const productSearchSelectAllOnMouseUpRef = useRef(false);
   const customerListRef = useRef(null);
   const productListRef = useRef(null);
   const leftPaneRef = useRef(null);
@@ -3550,11 +3551,7 @@ export default function SaleForm({
       const codeValues = [p?.sku, p?.barcode, p?.ean, p?.upc, p?.product_id]
         .filter(Boolean)
         .map((v) => String(v).toLowerCase().trim());
-      const compatList = Array.isArray(p?.compatibility?.vehicle_types)
-        ? p.compatibility.vehicle_types.join(" ")
-        : "";
-      const bombilloBits = [p?.bombillo, p?.specs?.Bombillo, p?.specs?.bombillo].filter(Boolean).join(" ");
-      const searchableText = `${p?.name || ""} ${p?.sku || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.brand || ""} ${p?.description || ""} ${p?.polarizado_type || ""} ${compatList} ${bombilloBits}`.toLowerCase();
+      const searchableText = `${getProductSearchableText(p)} ${String(p?.polarizado_type || "").toLowerCase()}`.trim();
       return {
         product: p,
         codeValues,
@@ -4824,6 +4821,19 @@ export default function SaleForm({
                   }}
                   onWheel={handleProductSearchWheel}
                   onKeyDown={handleProductSearchKeyDown}
+                  onMouseDown={(event) => {
+                    productSearchSelectAllOnMouseUpRef.current = document.activeElement !== event.currentTarget;
+                  }}
+                  onFocus={(event) => {
+                    if (!productSearchSelectAllOnMouseUpRef.current) {
+                      event.target.select();
+                    }
+                  }}
+                  onMouseUp={(event) => {
+                    if (!productSearchSelectAllOnMouseUpRef.current) return;
+                    productSearchSelectAllOnMouseUpRef.current = false;
+                    event.target.select();
+                  }}
                   ref={productSearchRef}
                   disabled={!stepTwoComplete}
                   className={cn("mb-0 pl-9", productSearch.trim() ? "pr-20" : "pr-12")}

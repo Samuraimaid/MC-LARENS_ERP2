@@ -49,6 +49,7 @@ import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerD
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import ProductThumb from "@/components/products/ProductThumb";
 import { getProductImageUrl } from "@/lib/productImage";
+import { productMatchesSearch } from "@/lib/productLookup";
 import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
 import {
   getVehicleBombillos,
@@ -210,6 +211,8 @@ export function CatalogPage() {
   const searchWrapRef = useRef(null);
   const loadMoreRef = useRef(null);
   const searchInputRef = useRef(null);
+  /** Select-all on focus: defer mouse focus to mouseup so caret isn't fought. */
+  const selectAllOnMouseUpRef = useRef(false);
   const [draftDialog, setDraftDialog] = useState({
     open: false,
     type: null,
@@ -439,18 +442,7 @@ export function CatalogPage() {
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
     const matched = products.filter((product) => {
-      const bombilloBits = [product?.bombillo, product?.specs?.Bombillo, product?.specs?.bombillo]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      const matchesSearch =
-        !query ||
-        (product.name || "").toLowerCase().includes(query) ||
-        (product.sku || "").toLowerCase().includes(query) ||
-        (product.brand || "").toLowerCase().includes(query) ||
-        (product.category || "").toLowerCase().includes(query) ||
-        (product.subcategory || "").toLowerCase().includes(query) ||
-        bombilloBits.includes(query);
+      const matchesSearch = productMatchesSearch(product, search);
       const matchesCategory = category === "all" || product.category === category;
       const matchesSubcategory = subcategory === "all" || product.subcategory === subcategory;
       const matchesType = productType === "all" || product.product_type === productType;
@@ -494,19 +486,21 @@ export function CatalogPage() {
   const autocompleteSuggestions = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (q.length < 1) return [];
+    const tokens = q.split(/\s+/).filter(Boolean);
+    const primary = tokens[0] || q;
     const scored = [];
     for (const product of filteredProducts) {
       const sku = String(product.sku || "").toLowerCase();
       const name = String(product.name || "").toLowerCase();
       const brand = String(product.brand || "").toLowerCase();
       let score = 0;
-      if (sku === q) score = 100;
-      else if (sku.startsWith(q)) score = 80;
-      else if (sku.includes(q)) score = 60;
-      else if (name.startsWith(q)) score = 50;
-      else if (name.includes(q)) score = 40;
-      else if (brand.includes(q)) score = 30;
-      else continue;
+      if (sku === q || sku === primary) score = 100;
+      else if (sku.startsWith(primary)) score = 80;
+      else if (sku.includes(primary)) score = 60;
+      else if (name.startsWith(primary)) score = 50;
+      else if (name.includes(primary)) score = 40;
+      else if (brand.includes(primary)) score = 30;
+      else score = 10; // already AND-matched in filteredProducts (e.g. multi-term)
       scored.push({ product, score });
     }
     scored.sort((a, b) => b.score - a.score);
@@ -976,13 +970,30 @@ export function CatalogPage() {
                       applySearchValue(pasted);
                     }
                   }}
-                  onFocus={() => setShowAutocomplete(Boolean(search.trim()))}
+                  onMouseDown={(event) => {
+                    selectAllOnMouseUpRef.current = document.activeElement !== event.currentTarget;
+                  }}
+                  onFocus={(event) => {
+                    setShowAutocomplete(Boolean(search.trim()));
+                    if (!selectAllOnMouseUpRef.current) {
+                      event.target.select();
+                    }
+                  }}
+                  onMouseUp={(event) => {
+                    if (!selectAllOnMouseUpRef.current) return;
+                    selectAllOnMouseUpRef.current = false;
+                    event.target.select();
+                  }}
                   onKeyDown={(event) => {
-                    if (event.key === "Escape") setShowAutocomplete(false);
-                    if (event.key === "Enter" && autocompleteSuggestions.length === 1) {
-                      event.preventDefault();
-                      setQuickViewProduct(autocompleteSuggestions[0]);
+                    if (event.key === "Escape") {
                       setShowAutocomplete(false);
+                      return;
+                    }
+                    if (event.key === "Enter") {
+                      // Close suggestions; keep grid filter for current query (no accidental QV/submit)
+                      event.preventDefault();
+                      setShowAutocomplete(false);
+                      event.currentTarget.blur();
                     }
                   }}
                   className="pl-10 pr-24 text-sm h-12 py-2.5"
