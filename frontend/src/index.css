@@ -2372,22 +2372,50 @@ html {
 
 
 
-/* === LIQUID GLASS FASE 1 (2026-09-19) === */
+/* === LIQUID GLASS FASE 1 (2026-09-19) + contraste/opacidad (2026-09-20) === */
 /* Aproximación CSS a Apple Liquid Glass: blur + translucidez + specular.
    Se activa con html[data-liquid-glass="true"]. Respeta --primary/--card de cada skin.
+   Opacidad: --liquid-glass-alpha (0.25–0.70; default 0.40 vía ThemeContext / localStorage).
    No clona Metal/SwiftUI; es shell (Card, Dialog, sidebar, header, login). */
 
 html[data-liquid-glass="true"] {
   --lg-blur: 22px;
   --lg-radius: 1.25rem;
-  --lg-fill-light: hsl(var(--card) / 0.48);
-  --lg-fill-dark: hsl(var(--card) / 0.42);
+  --lg-fill-light: hsl(var(--card) / var(--liquid-glass-alpha, 0.40));
+  --lg-fill-dark: hsl(var(--card) / var(--liquid-glass-alpha, 0.40));
   --lg-border: color-mix(in srgb, white 28%, transparent);
   --lg-border-dark: color-mix(in srgb, white 16%, transparent);
   --lg-specular: inset 0 1px 0 0 color-mix(in srgb, white 55%, transparent),
     inset 0 -1px 0 0 color-mix(in srgb, white 8%, transparent);
   --lg-shadow: 0 12px 40px hsl(var(--foreground) / 0.12),
     0 2px 8px hsl(var(--primary) / 0.14);
+}
+
+/* Light mode: near-black text on glass (not muted gray). Dark theme unchanged. */
+html[data-liquid-glass="true"]:not(.dark) {
+  --lg-text: #0a0a0a;
+  --lg-muted: #171717;
+}
+
+html[data-liquid-glass="true"]:not(.dark) .card-dark-contrast,
+html[data-liquid-glass="true"]:not(.dark) [role="dialog"].erp-liquid-panel,
+html[data-liquid-glass="true"]:not(.dark) .erp-liquid-panel,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-header,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-sidebar {
+  color: var(--lg-text);
+  --foreground: 0 0% 4%;
+  --card-foreground: 0 0% 4%;
+  --muted-foreground: 0 0% 9%;
+}
+
+html[data-liquid-glass="true"]:not(.dark) .card-dark-contrast .text-muted-foreground,
+html[data-liquid-glass="true"]:not(.dark) .erp-liquid-panel .text-muted-foreground,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-header .text-muted-foreground,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-sidebar .text-muted-foreground,
+html[data-liquid-glass="true"]:not(.dark) .card-dark-contrast [class*="text-muted"],
+html[data-liquid-glass="true"]:not(.dark) .erp-liquid-panel [class*="text-muted"],
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-sidebar [class*="text-muted"] {
+  color: var(--lg-muted) !important;
 }
 
 html[data-liquid-glass="true"] body {
@@ -2437,7 +2465,7 @@ html[data-liquid-glass="true"].dark .card-dark-contrast {
 /* Dialog / popover shells */
 html[data-liquid-glass="true"] [role="dialog"].erp-liquid-panel,
 html[data-liquid-glass="true"] .erp-liquid-panel {
-  background: hsl(var(--card) / 0.52) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   color: hsl(var(--card-foreground)) !important;
   backdrop-filter: blur(var(--lg-blur)) saturate(1.7) !important;
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(1.7) !important;
@@ -2448,12 +2476,12 @@ html[data-liquid-glass="true"] .erp-liquid-panel {
 
 html[data-liquid-glass="true"].dark [role="dialog"].erp-liquid-panel,
 html[data-liquid-glass="true"].dark .erp-liquid-panel {
-  background: hsl(var(--card) / 0.45) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   border-color: var(--lg-border-dark) !important;
 }
 
 html[data-liquid-glass="true"] .erp-shell-header {
-  background: hsl(var(--background) / 0.55) !important;
+  background: hsl(var(--background) / var(--liquid-glass-alpha, 0.40)) !important;
   backdrop-filter: blur(var(--lg-blur)) saturate(1.5) !important;
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(1.5) !important;
   border-bottom-color: color-mix(in srgb, white 18%, transparent) !important;
@@ -2461,7 +2489,7 @@ html[data-liquid-glass="true"] .erp-shell-header {
 }
 
 html[data-liquid-glass="true"] .erp-shell-sidebar {
-  background: hsl(var(--card) / 0.5) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   backdrop-filter: blur(var(--lg-blur)) saturate(1.55) !important;
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(1.55) !important;
   border-right-color: color-mix(in srgb, white 16%, transparent) !important;
@@ -2490,7 +2518,7 @@ html[data-liquid-glass="true"] .erp-login-color-wash {
 }
 
 html[data-liquid-glass="true"] .erp-login-pin-panel {
-  background: hsl(var(--card) / 0.38) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   backdrop-filter: blur(28px) saturate(1.8) !important;
   -webkit-backdrop-filter: blur(28px) saturate(1.8) !important;
   border: 1px solid color-mix(in srgb, white 32%, transparent) !important;
@@ -2501,7 +2529,7 @@ html[data-liquid-glass="true"] .erp-login-pin-panel {
 }
 
 html[data-liquid-glass="true"] .erp-login-tool-panel {
-  background: hsl(var(--card) / 0.42) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   backdrop-filter: blur(24px) saturate(1.7) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.7) !important;
   border-color: color-mix(in srgb, white 28%, transparent) !important;
@@ -2511,7 +2539,7 @@ html[data-liquid-glass="true"] .erp-login-tool-panel {
 }
 
 html[data-liquid-glass="true"] .erp-login-fab {
-  background: hsl(var(--card) / 0.4) !important;
+  background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;
   backdrop-filter: blur(20px) saturate(1.6) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.6) !important;
   border-color: color-mix(in srgb, white 30%, transparent) !important;

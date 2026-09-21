@@ -30,3 +30,10 @@ Desactivar el toggle en Apariencia (o `localStorage.liquid_glass=false`).
 - ThemeContext: `useLayoutEffect` para atributos DOM.
 - Catálogo: pegar SKU aplica el texto de inmediato; autocomplete no queda “abierto” al limpiar.
 - Wash de login como capa `erp-login-color-wash` sobre el video (z-index 1), sin `::before` conflictivo.
+
+## Mejora contraste + opacidad (2026-09-20)
+- **Texto (modo claro)**: en superficies glass (cards, sidebar, header, dialogs) el texto primario/body se fuerza hacia near-black (`#0a0a0a` / `neutral-950`); muted también más oscuro. El tema oscuro no se fuerza a negro.
+- **Slider Transparencia del vidrio** en Ajustes → Apariencia (junto al toggle Liquid Glass): rango **25%–70%** alpha (`0.25–0.70`).
+- Default: **40%** (`0.40`) — un poco más transparente que el fill Fase 1 (~48%).
+- Persistencia: `localStorage.mclarens-liquid-glass-opacity` + CSS var `--liquid-glass-alpha` en `html`.
+- Cards / sidebar / header / dialogs / login panels usan `hsl(... / var(--liquid-glass-alpha))`.

@@ -7,7 +7,12 @@ const THEME_SKIN_KEY = "theme_skin";
 const LEGACY_THEME_KEY = "theme";
 const WATERMARK_OPACITY_KEY = "watermark_opacity";
 const LIQUID_GLASS_KEY = "liquid_glass";
+const LIQUID_GLASS_OPACITY_KEY = "mclarens-liquid-glass-opacity";
 const DEFAULT_LIQUID_GLASS = true;
+/** Default slightly more transparent than Fase 1 card fill (~0.48). */
+const DEFAULT_LIQUID_GLASS_OPACITY = 0.40;
+const MIN_LIQUID_GLASS_OPACITY = 0.25;
+const MAX_LIQUID_GLASS_OPACITY = 0.70;
 const DEFAULT_SKIN = "atlas";
 const DEFAULT_MODE = "light";
 const DEFAULT_WATERMARK_OPACITY = 0.04;
@@ -20,6 +25,20 @@ const normalizeWatermarkOpacity = (value) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return DEFAULT_WATERMARK_OPACITY;
   return Math.min(MAX_WATERMARK_OPACITY, Math.max(MIN_WATERMARK_OPACITY, numeric));
+};
+
+const normalizeLiquidGlassOpacity = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return DEFAULT_LIQUID_GLASS_OPACITY;
+  return Math.min(MAX_LIQUID_GLASS_OPACITY, Math.max(MIN_LIQUID_GLASS_OPACITY, numeric));
+};
+
+const applyLiquidGlassOpacityVar = (opacity) => {
+  if (typeof window === "undefined") return;
+  window.document.documentElement.style.setProperty(
+    "--liquid-glass-alpha",
+    String(normalizeLiquidGlassOpacity(opacity))
+  );
 };
 
 export function ThemeProvider({ children }) {
@@ -35,6 +54,10 @@ export function ThemeProvider({ children }) {
     const stored = window.localStorage.getItem(LIQUID_GLASS_KEY);
     if (stored === null) return DEFAULT_LIQUID_GLASS;
     return stored === "1" || stored === "true";
+  });
+  const [liquidGlassOpacity, setLiquidGlassOpacityState] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_LIQUID_GLASS_OPACITY;
+    return normalizeLiquidGlassOpacity(window.localStorage.getItem(LIQUID_GLASS_OPACITY_KEY));
   });
   const [systemMode, setSystemMode] = useState(() => {
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -53,17 +76,19 @@ export function ThemeProvider({ children }) {
     root.setAttribute("data-theme", resolvedMode);
     root.setAttribute("data-skin", skin);
     root.setAttribute("data-liquid-glass", liquidGlass ? "true" : "false");
+    applyLiquidGlassOpacityVar(liquidGlassOpacity);
 
     localStorage.setItem(THEME_MODE_KEY, mode);
     localStorage.setItem(THEME_SKIN_KEY, skin);
     localStorage.setItem(LIQUID_GLASS_KEY, liquidGlass ? "true" : "false");
+    localStorage.setItem(LIQUID_GLASS_OPACITY_KEY, String(liquidGlassOpacity));
     if (mode === "system") {
       localStorage.removeItem(LEGACY_THEME_KEY);
     } else {
       localStorage.setItem(LEGACY_THEME_KEY, resolvedMode);
     }
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
-  }, [mode, skin, resolvedMode, liquidGlass, watermarkOpacity]);
+  }, [mode, skin, resolvedMode, liquidGlass, liquidGlassOpacity, watermarkOpacity]);
 
   useEffect(() => {
     localStorage.setItem(WATERMARK_OPACITY_KEY, String(watermarkOpacity));
@@ -87,6 +112,7 @@ export function ThemeProvider({ children }) {
       const storedSkin = localStorage.getItem(THEME_SKIN_KEY);
       const storedWatermarkOpacity = localStorage.getItem(WATERMARK_OPACITY_KEY);
       const storedLiquidGlass = localStorage.getItem(LIQUID_GLASS_KEY);
+      const storedLiquidGlassOpacity = localStorage.getItem(LIQUID_GLASS_OPACITY_KEY);
       if (storedMode && storedMode !== mode) {
         setMode(storedMode);
       }
@@ -105,6 +131,12 @@ export function ThemeProvider({ children }) {
           setLiquidGlassState(nextLiquidGlass);
         }
       }
+      if (storedLiquidGlassOpacity !== null) {
+        const nextOpacity = normalizeLiquidGlassOpacity(storedLiquidGlassOpacity);
+        if (nextOpacity !== liquidGlassOpacity) {
+          setLiquidGlassOpacityState(nextOpacity);
+        }
+      }
     };
     const handler = () => syncFromStorage();
     window.addEventListener("theme:sync", handler);
@@ -113,7 +145,7 @@ export function ThemeProvider({ children }) {
       window.removeEventListener("theme:sync", handler);
       window.removeEventListener("storage", handler);
     };
-  }, [mode, skin, watermarkOpacity, liquidGlass]);
+  }, [mode, skin, watermarkOpacity, liquidGlass, liquidGlassOpacity]);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +189,14 @@ export function ThemeProvider({ children }) {
     window.dispatchEvent(new Event("theme:sync"));
   };
 
+  const setLiquidGlassOpacity = (value) => {
+    const normalized = normalizeLiquidGlassOpacity(value);
+    setLiquidGlassOpacityState(normalized);
+    localStorage.setItem(LIQUID_GLASS_OPACITY_KEY, String(normalized));
+    applyLiquidGlassOpacityVar(normalized);
+    window.dispatchEvent(new Event("theme:sync"));
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -165,10 +205,12 @@ export function ThemeProvider({ children }) {
         resolvedMode,
         watermarkOpacity,
         liquidGlass,
+        liquidGlassOpacity,
         setMode,
         setSkin,
         setWatermarkOpacity,
         setLiquidGlass,
+        setLiquidGlassOpacity,
         toggleMode,
         setSystemTheme,
       }}
