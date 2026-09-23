@@ -291,3 +291,10 @@ Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `Pro
 - Prompt pegable: `docs/ANTIGRAVITY_PROMPT_CONTINUAR_BOMBILLOS_20260919.md`
 - Brief técnico: `docs/BOMBILLO_VEHICLE_FBT_20260919.md`
 - Master incluye PR #37. Siguiente P0: buscador verde/gris por vehículo cliente.
+
+---
+
+## Plan 2026-09-22 — PR #42 buscador + Top 12 API Security
+
+- Plan: `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md`
+- Prompt pegable: `docs/ANTIGRAVITY_PROMPT_PR42_API_SECURITY_12_20260922.md`
