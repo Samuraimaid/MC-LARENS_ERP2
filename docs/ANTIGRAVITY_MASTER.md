@@ -294,7 +294,8 @@ Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `Pro
 
 ---
 
-## Plan 2026-09-22 — PR #42 buscador + Top 12 API Security
+## Plan 2026-09-22 — PR #42 buscador + Top 12 API Security + Case (v2)
 
-- Plan: `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md`
+- Plan: `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md` (v2: reel + endurecimiento Case)
 - Prompt pegable: `docs/ANTIGRAVITY_PROMPT_PR42_API_SECURITY_12_20260922.md`
+- Extra Case: C1 money server-side, C2 session TTL, C3 read vs mutate, C4 abuse signals, C5 backup/restore
