@@ -7544,6 +7544,71 @@ async def sync_all_catalogs(request: Request, catalog: Optional[str] = None):
     }
 
 
+@api_router.get("/products/catalog")
+async def get_products_catalog(
+    request: Request,
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    product_type: Optional[str] = None,
+    brand: Optional[str] = None,
+    search: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: Optional[int] = None,
+    skip: int = 0,
+    warehouse_id: Optional[str] = None,
+    include_inactive: bool = False,
+):
+    """Alias of GET /products — registered before /products/{product_id} so
+    "catalog" is not swallowed as a product_id (live audit: 404 Product not found).
+    FE CatalogPage uses GET /products; this keeps smoke/docs clients working.
+    """
+    return await get_products(
+        request=request,
+        category=category,
+        subcategory=subcategory,
+        product_type=product_type,
+        brand=brand,
+        search=search,
+        q=q,
+        limit=limit,
+        skip=skip,
+        warehouse_id=warehouse_id,
+        include_inactive=include_inactive,
+    )
+
+
+@api_router.get("/products/search")
+async def get_products_search(
+    request: Request,
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    product_type: Optional[str] = None,
+    brand: Optional[str] = None,
+    search: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: Optional[int] = None,
+    skip: int = 0,
+    warehouse_id: Optional[str] = None,
+    include_inactive: bool = False,
+):
+    """Alias of GET /products for clients expecting /products/search?q=.
+    Same static-path-before-{product_id} ordering fix as /products/catalog.
+    """
+    return await get_products(
+        request=request,
+        category=category,
+        subcategory=subcategory,
+        product_type=product_type,
+        brand=brand,
+        search=search,
+        q=q,
+        limit=limit,
+        skip=skip,
+        warehouse_id=warehouse_id,
+        include_inactive=include_inactive,
+    )
+
+
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str, request: Request):
     await require_auth(request)
