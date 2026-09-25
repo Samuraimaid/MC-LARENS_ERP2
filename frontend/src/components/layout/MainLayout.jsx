@@ -4,6 +4,7 @@ import axios from "axios";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "../ui/sonner";
 import { FloatingTools } from "../FloatingTools";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
@@ -795,6 +796,7 @@ export function MainLayout() {
           </div>
         ) : null}
 
+        <BackToTopButton scrollRoot="main.erp-shell-main" />
         <FloatingTools
           activeTool={activeTool}
           onClose={() => setActiveTool(null)}

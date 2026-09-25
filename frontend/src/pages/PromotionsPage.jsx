@@ -23,8 +23,13 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function PromotionsPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [promotions, setPromotions] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState({});
@@ -168,6 +173,10 @@ export function PromotionsPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="promotions-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="promotions-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -473,7 +482,7 @@ export function PromotionsPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Descuento</TableHead>
                 <TableHead>Aplica a</TableHead>
@@ -485,13 +494,13 @@ export function PromotionsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={7} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredPromotions.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No hay promociones para mostrar
                   </TableCell>
@@ -503,7 +512,7 @@ export function PromotionsPage() {
                   const endDate = new Date(promo.end_date);
                   
                   return (
-                    <TableRow key={promo.promotion_id} data-testid={`promo-row-${promo.promotion_id}`}>
+                    <TableRow className={densityTok.tableRow} key={promo.promotion_id} data-testid={`promo-row-${promo.promotion_id}`}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{promo.name}</p>
@@ -589,6 +598,7 @@ export function PromotionsPage() {
           </Table>
         </CardContent>
       </Card>
+      <BackToTopButton />
     </div>
   );
 }

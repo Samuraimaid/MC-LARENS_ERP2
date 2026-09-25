@@ -22,6 +22,9 @@ import {
   Clock, Plus
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const RETURN_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -31,6 +34,8 @@ const RETURN_STATUSES = {
 };
 
 export function ReturnsPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [returns, setReturns] = useState([]);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +174,10 @@ export function ReturnsPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="returns-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="returns-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -393,7 +402,7 @@ export function ReturnsPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>ID</TableHead>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -406,13 +415,13 @@ export function ReturnsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredReturns.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay devoluciones
                   </TableCell>
@@ -423,7 +432,7 @@ export function ReturnsPage() {
                   const StatusIcon = status.icon;
                   
                   return (
-                    <TableRow key={ret.return_id}>
+                    <TableRow className={densityTok.tableRow} key={ret.return_id}>
                       <TableCell className="font-mono text-xs">{ret.return_id}</TableCell>
                       <TableCell className="font-mono">{ret.invoice_number}</TableCell>
                       <TableCell>{ret.customer_name}</TableCell>
@@ -523,6 +532,7 @@ export function ReturnsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

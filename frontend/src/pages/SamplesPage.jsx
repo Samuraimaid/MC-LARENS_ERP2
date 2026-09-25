@@ -8,6 +8,9 @@ import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const STATUS_LABELS = {
   requested: "Solicitada",
@@ -28,6 +31,8 @@ const STATUS_COLORS = {
 };
 
 export function SamplesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -73,6 +78,10 @@ export function SamplesPage() {
 
   return (
     <div className="space-y-6" data-testid="samples-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="samples-list-density" />
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Muestras</h1>
@@ -113,7 +122,7 @@ export function SamplesPage() {
 
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>ID</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Producto</TableHead>
@@ -124,20 +133,20 @@ export function SamplesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Cargando...
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Sin registros
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map((sample) => (
-                  <TableRow key={sample.sample_id}>
+                  <TableRow className={densityTok.tableRow} key={sample.sample_id}>
                     <TableCell className="font-mono text-xs">{sample.sample_id}</TableCell>
                     <TableCell>{sample.customer_name || "N/A"}</TableCell>
                     <TableCell>{sample.product_name || "N/A"}</TableCell>
@@ -164,6 +173,7 @@ export function SamplesPage() {
           </Table>
         </CardContent>
       </Card>
+      <BackToTopButton />
     </div>
   );
 }

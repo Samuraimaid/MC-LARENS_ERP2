@@ -14,10 +14,15 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Search, Wrench, Clock, Printer, RefreshCw } from "lucide-react";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"];
 
 export function WorkOrdersPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user } = useAuth();
   const canApproveCompleted = QC_APPROVER_ROLES.includes(
     String(user?.role || "").toLowerCase()
@@ -175,6 +180,10 @@ export function WorkOrdersPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="work-orders-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="workorders-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -361,7 +370,7 @@ export function WorkOrdersPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>Orden</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Vehículo</TableHead>
@@ -374,13 +383,13 @@ export function WorkOrdersPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredOrders.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay órdenes para mostrar
                   </TableCell>
@@ -390,7 +399,7 @@ export function WorkOrdersPage() {
                   const workOrderId = order.work_order_id || "";
                   const priorityLabel = order.priority ? order.priority.toUpperCase() : "N/A";
                   return (
-                    <TableRow key={workOrderId || order.customer_name || Math.random()} data-testid={`wo-row-${workOrderId || "unknown"}`}>
+                    <TableRow className={densityTok.tableRow} key={workOrderId || order.customer_name || Math.random()} data-testid={`wo-row-${workOrderId || "unknown"}`}>
                       <TableCell className="font-mono font-medium">
                         {workOrderId ? `#${workOrderId.slice(-6).toUpperCase()}` : "—"}
                       </TableCell>
@@ -517,6 +526,7 @@ export function WorkOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

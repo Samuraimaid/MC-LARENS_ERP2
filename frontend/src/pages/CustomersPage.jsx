@@ -40,6 +40,10 @@ import {
   formatRUC,
 } from "@/lib/formatters";
 import { PRICING_PROFILES } from "@/lib/priceTiers";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
@@ -49,6 +53,8 @@ const PLATE_PREFIXES = [
 ];
 
 export function CustomersPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user, hasPermission } = useAuth();
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageCreditLimit = ["gerencia", "recursos_humanos", "admin"].includes(normalizedUserRole);
@@ -1278,6 +1284,10 @@ export function CustomersPage() {
         </CardContent>
       </Card>
 
+      <div className="flex justify-end">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="customers-list-density" />
+      </div>
+
       {/* Board tabs selector (mobile/tablet) */}
       <div className="xl:hidden">
         <Tabs value={boardTab} onValueChange={setBoardTab}>
@@ -1312,13 +1322,10 @@ export function CustomersPage() {
               ) : list.length === 0 ? (
                 <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No se encontraron clientes.</div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger">
+                <DensityList density={listDensity} className="ui-fade-in-stagger" testId={`customers-density-list-${key}`}>
                   {list.map(customer => {
                     const isCompany = customer.customer_type === "empresa";
                     const customerVehiclesCount = (vehiclesByCustomer[customer.customer_id] || []).length;
-              const cardTone = isCompany
-                ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
-                : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
               const badgeTone = isCompany
                 ? "border-sky-200 bg-sky-100 text-sky-800"
                 : "border-emerald-200 bg-emerald-100 text-emerald-800";
@@ -1329,38 +1336,52 @@ export function CustomersPage() {
                   : "bg-emerald-100 text-emerald-800";
 
               return (
-              <Card key={customer.customer_id} className={`group h-full shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
-                <CardHeader className="gap-4 pb-4">
-                  <CardTitle className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="inline-flex items-center gap-2 text-lg font-semibold">
-                        {isCompany ? (
-                          <Building2 className="h-5 w-5 shrink-0 text-sky-700 icon-spring" />
-                        ) : (
-                          <User className="h-5 w-5 shrink-0 text-emerald-700 icon-spring" />
-                        )}
-                        <span className="truncate">{customer.name}</span>
-                      </div>
-                      <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-4 w-4 shrink-0 text-slate-500 icon-spring" />
-                        <span>{customer.phone || '-'}</span>
-                      </div>
-                      <div className="inline-flex items-start gap-2 text-sm text-muted-foreground">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 icon-spring" />
-                        <span className="break-words">{customer.address || '-'}</span>
-                      </div>
-                      <Badge variant="outline" className={`w-fit ${badgeTone}`}>
-                        {isCompany ? (
-                          <><Building2 className="mr-1 h-3 w-3 icon-spring" /> Empresa</>
-                        ) : (
-                          <><User className="mr-1 h-3 w-3 icon-spring" /> Persona natural</>
-                        )}
-                      </Badge>
-                    </div>
-                    <div className="pt-1 text-right text-xs text-muted-foreground">{customer.tax_id || '-'}</div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex h-full flex-col gap-3">
+              <DensityListItem
+                key={customer.customer_id}
+                density={listDensity}
+                testId={`customer-row-${customer.customer_id}`}
+                mediaFallback={
+                  isCompany ? (
+                    <Building2 className={`${densityTok.mediaIcon} text-sky-700 icon-spring`} />
+                  ) : (
+                    <User className={`${densityTok.mediaIcon} text-emerald-700 icon-spring`} />
+                  )
+                }
+                primary={customer.name}
+                secondary={`${customer.phone || "-"} · ${customer.address || "-"}`}
+                meta={
+                  <span className="inline-flex items-center gap-2">
+                    <Badge variant="outline" className={`w-fit ${badgeTone}`}>
+                      {isCompany ? "Empresa" : "Persona natural"}
+                    </Badge>
+                    <span>{customer.tax_id || "-"}</span>
+                  </span>
+                }
+                trailing={
+                  <div className="flex flex-wrap items-center gap-1">
+                    {user?.role !== "bodegas" && (
+                      <Button variant="outline" size="icon" title="Contactar por WhatsApp" className="ui-interactive h-8 w-8" onClick={() => sendWhatsAppWithTemplate(customer)}>
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" title="Editar cliente" className="ui-interactive h-8 w-8" onClick={() => openEditCustomer(customer)} disabled={!canEditCustomers}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="destructive" size="icon" title="Eliminar cliente" className="ui-interactive h-8 w-8" disabled={!canDeleteCustomers} onClick={async () => {
+                      const motivo = prompt('Motivo para eliminar el cliente (obligatorio):', 'Cliente inactivo');
+                      if (motivo === null) return;
+                      if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
+                      try {
+                        await axios.post(`${API}/approvals`, { type: 'delete_customer', payload: { customer_id: customer.customer_id }, reason: motivo.trim() }, { withCredentials: true });
+                        toast.success('Solicitud de eliminación enviada');
+                      } catch (e) { toast.error(e.response?.data?.detail || 'Error al solicitar eliminación'); }
+                    }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                }
+              >
+                <div className="flex flex-col gap-3">
                   <div className="inline-flex items-start gap-2 text-sm break-words">
                     <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 icon-spring" />
                     <span>{customer.email || '-'}</span>
@@ -1378,49 +1399,28 @@ export function CustomersPage() {
                       {customerVehiclesCount}
                     </div>
                   </div>
-                  <div className="mt-auto flex flex-col gap-3 pt-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex min-w-0 flex-1 items-center gap-1">
-                        <Select value={getTemplateForCustomer(customer.customer_id)} onValueChange={(v) => setTemplateForCustomer(customer.customer_id, v)}>
-                          <SelectTrigger className="h-8 min-w-[180px] flex-1 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {waTemplates.map(t => (
-                              <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="icon" title="Editar mensaje" className="ui-interactive" onClick={() => editCustomMessageForCustomer(customer.customer_id)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {user?.role !== "bodegas" && (
-                        <Button variant="outline" size="icon" title="Contactar por WhatsApp" className="ui-interactive" onClick={() => sendWhatsAppWithTemplate(customer)}>
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" title="Editar cliente" className="ui-interactive" onClick={() => openEditCustomer(customer)} disabled={!canEditCustomers}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-1">
+                      <Select value={getTemplateForCustomer(customer.customer_id)} onValueChange={(v) => setTemplateForCustomer(customer.customer_id, v)}>
+                        <SelectTrigger className="h-8 min-w-[180px] flex-1 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {waTemplates.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="icon" title="Editar mensaje" className="ui-interactive" onClick={() => editCustomMessageForCustomer(customer.customer_id)}>
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" title="Eliminar cliente" className="ui-interactive" disabled={!canDeleteCustomers} onClick={async () => {
-                        const motivo = prompt('Motivo para eliminar el cliente (obligatorio):', 'Cliente inactivo');
-                        if (motivo === null) return;
-                        if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
-                        try {
-                          await axios.post(`${API}/approvals`, { type: 'delete_customer', payload: { customer_id: customer.customer_id }, reason: motivo.trim() }, { withCredentials: true });
-                          toast.success('Solicitud de eliminación enviada');
-                        } catch (e) { toast.error(e.response?.data?.detail || 'Error al solicitar eliminación'); }
-                      }}>
-                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </DensityListItem>
               );
             })}
-          </div>
+          </DensityList>
         )}
       </CardContent>
     </Card>
@@ -1596,6 +1596,7 @@ export function CustomersPage() {
       </Dialog>
       </>
       )}
+      <BackToTopButton />
     </div>
   );
 }

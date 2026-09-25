@@ -58,6 +58,9 @@ import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { useAuth } from "@/context/AuthContext";
 import { User, CarFront } from "lucide-react";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const DRAFT_SUPERVISOR_ROLES_SET = new Set([
   "gerencia",
@@ -328,6 +331,8 @@ const getPaymentTone = (paymentType) => {
 };
 
 export function QuotationsPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const DRAFT_LIST_KEY = "draft_quote_tabs_v1";
@@ -1668,6 +1673,10 @@ export function QuotationsPage() {
 
   return (
     <div className="p-0 space-y-4" data-testid="quotations-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="quotations-list-density" />
+      </div>
+
       {!showNewQuote ? (
         <Card className="border-dashed border-primary/40 bg-primary/5">
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -2179,6 +2188,7 @@ export function QuotationsPage() {
           </CardContent>
       </Card>
       </div>
+      <BackToTopButton />
     </div>
   );
 }
