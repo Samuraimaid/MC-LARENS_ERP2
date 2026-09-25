@@ -1,5 +1,10 @@
 # ANTIGRAVITY_MASTER — Fuente canónica única (MC-LARENS ERP2)
 
+> **P0 HOY (2026-09-25):** crash Workbench ticket `B-28113-25/SEP/2026 16:10:13` — `visibleSaleIds is not defined` en `SalesPage.jsx`.
+> Leer e implementar **primero:** `docs/ANTIGRAVITY_PROMPT_BUG_B28113_VISIBLE_SALE_IDS_20260925.md`
+> Historial Case del día: `docs/CASE_CHAT_HISTORY_UX_STACK_20260925.md`
+> Telemetría: `docs/crash_reports/B-28113-25_SEP_2026_16-10-13.json`
+
 > **SUPERSEDES** fragmented briefs for implementation priority:
 > - `ANTIGRAVITY_APLICAR_TODO.md`
 > - `MC-LARENS_ERP2_ANTIGRAVITY_HANDOFF.md`

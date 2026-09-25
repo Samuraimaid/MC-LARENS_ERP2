@@ -135,3 +135,14 @@ Se añadió la etiqueta `</div>` correspondiente en `frontend/src/pages/LoginPag
 
 ---
 *Documento autogenerado para el repositorio MC-LARENS ERP 2.0.*
+
+## 2026-09-25 — Cloud Build omitted FileUploadQueue (U2)
+
+**Symptom:** Vite `ENOENT .../components/uploads` then Dockerfile `test -f FileUploadQueue.jsx` failed.
+
+**Root cause:** `.gcloudignore` line `uploads/` matched **any** directory named uploads, so `frontend/src/components/uploads` never uploaded to Cloud Build. `.dockerignore` bare `uploads` had the same class of bug.
+
+**Fix:** PRs #97–#99. Never re-add bare `uploads` / `uploads/` ignore rules.
+
+**Also:** Workbench crash B-28113 after successful deploy — see `docs/ANTIGRAVITY_PROMPT_BUG_B28113_VISIBLE_SALE_IDS_20260925.md`.
+
