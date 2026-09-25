@@ -541,4 +541,11 @@ Other open documents:
      - Validación de rechazo de montos manipulados y recálculo con 100% de éxito (`ALL S1 & C1 TESTS PASSED SUCCESSFULLY`).
   5. **Actualización de Documentación:**
      - Actualizada tabla de cierre en `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md` marcando PR #42, Idea #9 (Idempotency Key) y Regla Case C1 como **DONE**.
+  6. **Implementación de S2 (Rate Limiting en PIN y Mutaciones Sensibles - `backend/middlewares/rate_limit.py`):**
+     - Módulo de ventana deslizante en memoria `SlidingWindowRateLimiter` para discriminar tráfico por IP y señal de terminal/dispositivo (C6).
+     - Límite de ráfaga estricto en `/api/auth/pin/login` (máximo 5 peticiones cada 10 segundos, 20 por minuto). Al excederse, responde con `HTTP 429 Too Many Requests`, cabecera `Retry-After` y JSON estructurado.
+     - Límite de 60 mutaciones por minuto en endpoints sensibles de caja, ventas e inventario (`/api/sales`, `/caja/facturas/`, `/api/inventory`).
+     - Suite unitaria automatizada en `backend/tests/test_rate_limit.py` ejecutada con 100% PASS.
+     - Registrado `RateLimitMiddleware` en `backend/server.py`.
+
 

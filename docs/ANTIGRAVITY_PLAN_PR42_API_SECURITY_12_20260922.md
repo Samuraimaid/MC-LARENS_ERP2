@@ -165,7 +165,7 @@ Marcar cada fila DONE / PARCIAL / N/A:
 | Buscador | PR #42 UX Buscador (Enter, AND multi-término, Select-all) | **DONE** | PR #42 (`productLookup.js`, `CatalogPage.jsx`, `SaleForm.jsx`) |
 | 1 | Authentication (idle/TTL sesión) | PENDIENTE (Fase 2 / C2) | S5 / C2 |
 | 2 | Authorization (BOLA sample + require_roles) | PENDIENTE (Fase 2) | S5 |
-| 3 | Rate Limiting (PIN estricto + mutaciones 429) | PENDIENTE (Fase 1 / S2) | S2 |
+| 3 | Rate Limiting (PIN estricto + mutaciones 429) | **DONE** | PR S2 (`backend/middlewares/rate_limit.py`, `RateLimitMiddleware` con tope ráfaga 5/10s en PIN y 60/min en mutaciones, 429 + Retry-After) |
 | 4 | Input Validation (schemas en endpoints tocados) | PENDIENTE (Fase 2) | S6 |
 | 5 | Output Encoding (JSON Content-Type, sin HTML crudo) | PENDIENTE (Fase 2) | S6 |
 | 6 | HTTPS Everywhere (Cloud Run checklist) | PENDIENTE (Fase 3) | S9 |
