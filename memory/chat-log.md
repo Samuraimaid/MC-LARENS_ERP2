@@ -179,58 +179,108 @@ Other open documents:
 ---
 ...
 - **Usuario:** <USER_REQUEST>
-anteriorimente se ingresaron unos archivos que grok configuro para mejorar el ocr de tarjetas de circulacion con este prompt: Eres Antigravity trabajando en el repo MC-LARENS_ERP2 (ERP de Mundo de Accesorios / McLarens, Nicaragua).
-
-Tu misión: reescribir el escáner de Tarjeta de Circulación para que funcione como el escáner de tarjeta de Amazon/Stripe. La cámara queda abierta, hay un recuadro guía, la app captura SOLA cuando la tarjeta está nítida y alineada. NO hay que pulsar el obturador en el camino feliz. Quita Tesseract.js del navegador. Una sola llamada de visión al backend llena el formulario. El vendedor confirma antes de guardar.
-
-No refactorices ventas, PIN, RRHH ni Docker salvo lo mínimo para este módulo.
-
-CONTEXTO ACTUAL
-- Modal: frontend/src/components/vehicles/CirculationCardOcrScannerModal.jsx
-- Apply: frontend/src/components/customers/CustomerVehicleFormTabs.jsx (handleApplyOcr)
-- Prefijos placa: frontend/src/pages/CustomersPage.jsx
-- Cámara LAN HTTPS: frontend/src/lib/cameraAccess.js (:3443)
-- Catálogo: frontend/src/lib/vehicleCatalog.js
-- POST /api/vehicles/ocr-circulation-card  body { raw_text, image_base64 }
-- GET /api/vehicles/decode-vin?vin=
-Hoy el browser corre tesseract.js spa+eng y por eso es lento. Eso se elimina.
-
-FLUJO OBJETIVO
-1) Al abrir el modal arranca getUserMedia facingMode environment
-2) Preview + recuadro guía aspecto ~1.6
-3) Cada 180–250 ms puntuar EN EL CLIENTE nitidez, fill, glare
-4) 3 muestras OK → auto-captura
-5) JPEG ≤ 1600 px quality 0.72
-6) UNA llamada POST /api/vehicles/ocr-circulation-card-v2 { image_base64 }
-7) Form editable + confidence
-8) Aplicar al vehículo. El OCR nunca guarda cliente/vehículo solo.
-Fallback: subir archivo y captura manual si no hay lock en 8 s o si falla la cámara.
-
-CREAR frontend/src/lib/liveDocumentScan.js con startCamera, stopCamera, scoreFrame, grabJpeg, createAutoLock.
-Heurística sin OpenCV. glare < 8%, fill > 55%, streak de 3. Cámara ideal 1280x720, no 4K.
-
+anteriorimente se ingresaron unos archivos que grok configuro para mejorar el ocr de tarjetas de circulacion con este prompt: Eres Antigravity trabajando en el repo MC-LARENS_ERP2 (ERP de Mundo de Accesorios / McLarens, Nicaragua).
+
+
+
+Tu misión: reescribir el escáner de Tarjeta de Circulación para que funcione como el escáner de tarjeta de Amazon/Stripe. La cámara queda abierta, hay un recuadro guía, la app captura SOLA cuando la tarjeta está nítida y alineada. NO hay que pulsar el obturador en el camino feliz. Quita Tesseract.js del navegador. Una sola llamada de visión al backend llena el formulario. El vendedor confirma antes de guardar.
+
+
+
+No refactorices ventas, PIN, RRHH ni Docker salvo lo mínimo para este módulo.
+
+
+
+CONTEXTO ACTUAL
+
+- Modal: frontend/src/components/vehicles/CirculationCardOcrScannerModal.jsx
+
+- Apply: frontend/src/components/customers/CustomerVehicleFormTabs.jsx (handleApplyOcr)
+
+- Prefijos placa: frontend/src/pages/CustomersPage.jsx
+
+- Cámara LAN HTTPS: frontend/src/lib/cameraAccess.js (:3443)
+
+- Catálogo: frontend/src/lib/vehicleCatalog.js
+
+- POST /api/vehicles/ocr-circulation-card  body { raw_text, image_base64 }
+
+- GET /api/vehicles/decode-vin?vin=
+
+Hoy el browser corre tesseract.js spa+eng y por eso es lento. Eso se elimina.
+
+
+
+FLUJO OBJETIVO
+
+1) Al abrir el modal arranca getUserMedia facingMode environment
+
+2) Preview + recuadro guía aspecto ~1.6
+
+3) Cada 180–250 ms puntuar EN EL CLIENTE nitidez, fill, glare
+
+4) 3 muestras OK → auto-captura
+
+5) JPEG ≤ 1600 px quality 0.72
+
+6) UNA llamada POST /api/vehicles/ocr-circulation-card-v2 { image_base64 }
+
+7) Form editable + confidence
+
+8) Aplicar al vehículo. El OCR nunca guarda cliente/vehículo solo.
+
+Fallback: subir archivo y captura manual si no hay lock en 8 s o si falla la cámara.
+
+
+
+CREAR frontend/src/lib/liveDocumentScan.js con startCamera, stopCamera, scoreFrame, grabJpeg, createAutoLock.
+
+Heurística sin OpenCV. glare < 8%, fill > 55%, streak de 3. Cámara ideal 1280x720, no 4K.
+
+
+
 NO ROMPER onA
 <truncated 53 bytes>
-type, vehicle_type_slug, version_level, trim.
-También numero_motor, tipo_combustible, propietario_cedula si salen.
-
-Placas NI: M LE CH MY GR CZ MT BO CT RI NS ES MZ JI RS AN AS TM ZC PN EN CD MI OI
-VIN 17 chars A-HJ-NPR-Z0-9 (sin I O Q). Cédula 001-000000-0000A.
-
-BACKEND v2
-POST /api/vehicles/ocr-circulation-card-v2
-Mantén el endpoint viejo una release.
-Visión (usa el vendor que ya exista en el repo: Gemini/OpenAI/etc) + normalizer NI + fuzzy vehicleCatalog + vPIC si VIN válido.
-No inventar VIN ni cédula. Log latency, no loguear imagen ni PII.
-Respuesta con confidence y needs_review. Slugs: sedan hatchback pickup suv van truck moto.
-
-Prompt visión: extrae JSON de tarjeta de circulación de Nicaragua; null si no se lee; ignorar hologramas y sellos.
-
-UI en español, sin emojis. VIN y placa grandes mono. Campos con conf < 0.85 en ámbar.
-Presupuesto: foto → form < 5 s p95.
-
-Orden: liveDocumentScan.js → reescribir modal → endpoint v2 → quitar tesseract del cliente → QA cámara/archivo/glare/apply.
-
+type, vehicle_type_slug, version_level, trim.
+
+También numero_motor, tipo_combustible, propietario_cedula si salen.
+
+
+
+Placas NI: M LE CH MY GR CZ MT BO CT RI NS ES MZ JI RS AN AS TM ZC PN EN CD MI OI
+
+VIN 17 chars A-HJ-NPR-Z0-9 (sin I O Q). Cédula 001-000000-0000A.
+
+
+
+BACKEND v2
+
+POST /api/vehicles/ocr-circulation-card-v2
+
+Mantén el endpoint viejo una release.
+
+Visión (usa el vendor que ya exista en el repo: Gemini/OpenAI/etc) + normalizer NI + fuzzy vehicleCatalog + vPIC si VIN válido.
+
+No inventar VIN ni cédula. Log latency, no loguear imagen ni PII.
+
+Respuesta con confidence y needs_review. Slugs: sedan hatchback pickup suv van truck moto.
+
+
+
+Prompt visión: extrae JSON de tarjeta de circulación de Nicaragua; null si no se lee; ignorar hologramas y sellos.
+
+
+
+UI en español, sin emojis. VIN y placa grandes mono. Campos con conf < 0.85 en ámbar.
+
+Presupuesto: foto → form < 5 s p95.
+
+
+
+Orden: liveDocumentScan.js → reescribir modal → endpoint v2 → quitar tesseract del cliente → QA cámara/archivo/glare/apply.
+
+
+
 Inspecciona el repo, localiza el handler real de ocr-circulation-card e implementa de punta a punta. puedes encontrar ese archvo en la carpeta de descargas C:\Users\Xinon\Downloads necesito que lo analices primero antes de ejecuar los comandos para prevenir que suceda de nuevo el error de bucle
 </USER_REQUEST>
 <ADDITIONAL_METADATA>
@@ -290,58 +340,108 @@ Other open documents:
 ---
 ...
 - **Usuario:** <USER_REQUEST>
-anteriorimente se ingresaron unos archivos que grok configuro para mejorar el ocr de tarjetas de circulacion con este prompt: Eres Antigravity trabajando en el repo MC-LARENS_ERP2 (ERP de Mundo de Accesorios / McLarens, Nicaragua).
-
-Tu misión: reescribir el escáner de Tarjeta de Circulación para que funcione como el escáner de tarjeta de Amazon/Stripe. La cámara queda abierta, hay un recuadro guía, la app captura SOLA cuando la tarjeta está nítida y alineada. NO hay que pulsar el obturador en el camino feliz. Quita Tesseract.js del navegador. Una sola llamada de visión al backend llena el formulario. El vendedor confirma antes de guardar.
-
-No refactorices ventas, PIN, RRHH ni Docker salvo lo mínimo para este módulo.
-
-CONTEXTO ACTUAL
-- Modal: frontend/src/components/vehicles/CirculationCardOcrScannerModal.jsx
-- Apply: frontend/src/components/customers/CustomerVehicleFormTabs.jsx (handleApplyOcr)
-- Prefijos placa: frontend/src/pages/CustomersPage.jsx
-- Cámara LAN HTTPS: frontend/src/lib/cameraAccess.js (:3443)
-- Catálogo: frontend/src/lib/vehicleCatalog.js
-- POST /api/vehicles/ocr-circulation-card  body { raw_text, image_base64 }
-- GET /api/vehicles/decode-vin?vin=
-Hoy el browser corre tesseract.js spa+eng y por eso es lento. Eso se elimina.
-
-FLUJO OBJETIVO
-1) Al abrir el modal arranca getUserMedia facingMode environment
-2) Preview + recuadro guía aspecto ~1.6
-3) Cada 180–250 ms puntuar EN EL CLIENTE nitidez, fill, glare
-4) 3 muestras OK → auto-captura
-5) JPEG ≤ 1600 px quality 0.72
-6) UNA llamada POST /api/vehicles/ocr-circulation-card-v2 { image_base64 }
-7) Form editable + confidence
-8) Aplicar al vehículo. El OCR nunca guarda cliente/vehículo solo.
-Fallback: subir archivo y captura manual si no hay lock en 8 s o si falla la cámara.
-
-CREAR frontend/src/lib/liveDocumentScan.js con startCamera, stopCamera, scoreFrame, grabJpeg, createAutoLock.
-Heurística sin OpenCV. glare < 8%, fill > 55%, streak de 3. Cámara ideal 1280x720, no 4K.
-
+anteriorimente se ingresaron unos archivos que grok configuro para mejorar el ocr de tarjetas de circulacion con este prompt: Eres Antigravity trabajando en el repo MC-LARENS_ERP2 (ERP de Mundo de Accesorios / McLarens, Nicaragua).
+
+
+
+Tu misión: reescribir el escáner de Tarjeta de Circulación para que funcione como el escáner de tarjeta de Amazon/Stripe. La cámara queda abierta, hay un recuadro guía, la app captura SOLA cuando la tarjeta está nítida y alineada. NO hay que pulsar el obturador en el camino feliz. Quita Tesseract.js del navegador. Una sola llamada de visión al backend llena el formulario. El vendedor confirma antes de guardar.
+
+
+
+No refactorices ventas, PIN, RRHH ni Docker salvo lo mínimo para este módulo.
+
+
+
+CONTEXTO ACTUAL
+
+- Modal: frontend/src/components/vehicles/CirculationCardOcrScannerModal.jsx
+
+- Apply: frontend/src/components/customers/CustomerVehicleFormTabs.jsx (handleApplyOcr)
+
+- Prefijos placa: frontend/src/pages/CustomersPage.jsx
+
+- Cámara LAN HTTPS: frontend/src/lib/cameraAccess.js (:3443)
+
+- Catálogo: frontend/src/lib/vehicleCatalog.js
+
+- POST /api/vehicles/ocr-circulation-card  body { raw_text, image_base64 }
+
+- GET /api/vehicles/decode-vin?vin=
+
+Hoy el browser corre tesseract.js spa+eng y por eso es lento. Eso se elimina.
+
+
+
+FLUJO OBJETIVO
+
+1) Al abrir el modal arranca getUserMedia facingMode environment
+
+2) Preview + recuadro guía aspecto ~1.6
+
+3) Cada 180–250 ms puntuar EN EL CLIENTE nitidez, fill, glare
+
+4) 3 muestras OK → auto-captura
+
+5) JPEG ≤ 1600 px quality 0.72
+
+6) UNA llamada POST /api/vehicles/ocr-circulation-card-v2 { image_base64 }
+
+7) Form editable + confidence
+
+8) Aplicar al vehículo. El OCR nunca guarda cliente/vehículo solo.
+
+Fallback: subir archivo y captura manual si no hay lock en 8 s o si falla la cámara.
+
+
+
+CREAR frontend/src/lib/liveDocumentScan.js con startCamera, stopCamera, scoreFrame, grabJpeg, createAutoLock.
+
+Heurística sin OpenCV. glare < 8%, fill > 55%, streak de 3. Cámara ideal 1280x720, no 4K.
+
+
+
 NO ROMPER onA
 <truncated 53 bytes>
-type, vehicle_type_slug, version_level, trim.
-También numero_motor, tipo_combustible, propietario_cedula si salen.
-
-Placas NI: M LE CH MY GR CZ MT BO CT RI NS ES MZ JI RS AN AS TM ZC PN EN CD MI OI
-VIN 17 chars A-HJ-NPR-Z0-9 (sin I O Q). Cédula 001-000000-0000A.
-
-BACKEND v2
-POST /api/vehicles/ocr-circulation-card-v2
-Mantén el endpoint viejo una release.
-Visión (usa el vendor que ya exista en el repo: Gemini/OpenAI/etc) + normalizer NI + fuzzy vehicleCatalog + vPIC si VIN válido.
-No inventar VIN ni cédula. Log latency, no loguear imagen ni PII.
-Respuesta con confidence y needs_review. Slugs: sedan hatchback pickup suv van truck moto.
-
-Prompt visión: extrae JSON de tarjeta de circulación de Nicaragua; null si no se lee; ignorar hologramas y sellos.
-
-UI en español, sin emojis. VIN y placa grandes mono. Campos con conf < 0.85 en ámbar.
-Presupuesto: foto → form < 5 s p95.
-
-Orden: liveDocumentScan.js → reescribir modal → endpoint v2 → quitar tesseract del cliente → QA cámara/archivo/glare/apply.
-
+type, vehicle_type_slug, version_level, trim.
+
+También numero_motor, tipo_combustible, propietario_cedula si salen.
+
+
+
+Placas NI: M LE CH MY GR CZ MT BO CT RI NS ES MZ JI RS AN AS TM ZC PN EN CD MI OI
+
+VIN 17 chars A-HJ-NPR-Z0-9 (sin I O Q). Cédula 001-000000-0000A.
+
+
+
+BACKEND v2
+
+POST /api/vehicles/ocr-circulation-card-v2
+
+Mantén el endpoint viejo una release.
+
+Visión (usa el vendor que ya exista en el repo: Gemini/OpenAI/etc) + normalizer NI + fuzzy vehicleCatalog + vPIC si VIN válido.
+
+No inventar VIN ni cédula. Log latency, no loguear imagen ni PII.
+
+Respuesta con confidence y needs_review. Slugs: sedan hatchback pickup suv van truck moto.
+
+
+
+Prompt visión: extrae JSON de tarjeta de circulación de Nicaragua; null si no se lee; ignorar hologramas y sellos.
+
+
+
+UI en español, sin emojis. VIN y placa grandes mono. Campos con conf < 0.85 en ámbar.
+
+Presupuesto: foto → form < 5 s p95.
+
+
+
+Orden: liveDocumentScan.js → reescribir modal → endpoint v2 → quitar tesseract del cliente → QA cámara/archivo/glare/apply.
+
+
+
 Inspecciona el repo, localiza el handler real de ocr-circulation-card e implementa de punta a punta. puedes encontrar ese archvo en la carpeta de descargas C:\Users\Xinon\Downloads necesito que lo analices primero antes de ejecuar los comandos para prevenir que suceda de nuevo el error de bucle
 </USER_REQUEST>
 <ADDITIONAL_METADATA>
@@ -444,7 +544,7 @@ Other open documents:
      - Se implementó `getBackCameras()` en `liveDocumentScan.js` para descartar lentes `ultra`, `wide`, `0.5x` y forzar la lente 1x con `focusMode: "continuous"`.
      - Controles en pantalla: botones rápidos `[ 1x ]`, `[ 1.5x ]`, `[ 2x (Macro) ]` y `[ 🔄 Lente ]`.
   7. **Filtro de Calidad Previo (Client-side Anti-Quemado de Tokens):**
-     - Función `validateImageQuality()` analiza reflejos cegadores (`glareRatio > 0.07`), borrosidad (Laplaciano `< 13.5`) y baja iluminación antes de enviar a la IA.
+     - Función `vvalidateImageQuality()` analiza reflejos cegadores (`glareRatio > 0.07`), borrosidad (Laplaciano `< 13.5`) y baja iluminación antes de enviar a la IA.
   8. **Lista Negra Anti-Encabezados Institucionales y Eliminación de Cédula:**
      - `HEADER_BLACKLIST_WORDS` en `circulation_ocr.py` descarta textos como "República de Nicaragua" o "Policía Nacional" para evitar contaminar chasis y placa.
      - Eliminado el campo Cédula de Identidad de las respuestas y del modal por no ser relevante para recepción vehicular.
@@ -531,7 +631,7 @@ Other open documents:
      - Bloqueo y protección contra condiciones de carrera concurrentes (`in_progress`), retornando HTTP 409 si un reintento idéntico llega en el mismo milisegundo.
      - Integración en creación de ventas (`POST /api/sales`), cobros en caja (`POST /caja/facturas/{sale_id}/cobrar`, `POST /cashier/invoices/{sale_id}/collect`).
      - Al reintentar la misma petición con igual clave, el servidor responde con la venta/cobro original sin volver a descontar inventario ni duplicar registros.
-  3. **Implementación de C1 (Validación y Recálculo de Dinero en Servidor - `backend/core/money_validate.py`):**
+  3. **Implementación de C1 (Validación y Recálculo de Dinero en Servidor - `backend/core/money_vvalidate.py`):**
      - El cliente no es fuente de verdad del dinero; el backend calcula y valida montos estrictamente.
      - Saneamiento y validación de cantidades de ítems ($1 \le qty \le 10,000$), rechazo estricto de cantidades negativas, nulas o flotantes.
      - Validación de descuentos por línea ($0.0\% \le disc \le 100.0\%$), rechazando descuentos negativos o superiores al 100%.
@@ -571,12 +671,29 @@ Other open documents:
       - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #2 (Authorization), Idea #8 (Least Privilege) y Caso C3 como DONE.
 
    10. **Implementación de C2 (Session Idle TTL e Invalidación en Cierre de Turno / Cambio de Rol):**
-       - Módulo ackend/domains/auth/session_policy.py: configurado idle timeout de cajero en 10 horas (600 minutos, dentro de la ventana de 8-12 horas de jornada continua de caja), manteniendo 5 minutos en terminales de piso/ventas y 60 minutos en roles administrativos.
-       - Creado módulo ackend/core/session_security.py con helpers invalidate_user_sessions, invalidate_session_token y check_session_validity.
-       - Integrado en ackend/server.py:
-         - En POST /caja/cierre: invalidación automática de sesiones activas del cajero al cerrar el turno (
-eason='caja_cierre').
-         - En PUT /users/{user_id}/role: invalidación inmediata de todas las sesiones activas del usuario modificado (
-eason='role_change') para forzar re-autenticación con sus nuevos privilegios.
-       - Suites unitarias automatizadas en ackend/tests/test_session_policy.py y ackend/tests/test_session_ttl.py ejecutadas con 100% PASS.
+       - Módulo backend/domains/auth/session_policy.py: configurado idle timeout de cajero en 10 horas (600 minutos, dentro de la ventana de 8-12 horas de jornada continua de caja), manteniendo 5 minutos en terminales de piso/ventas y 60 minutos en roles administrativos.
+       - Creado módulo backend/core/session_security.py con helpers invvalidate_user_sessions, invvalidate_session_token y check_session_validity.
+       - Integrado en backend/server.py:
+         - En POST /caja/cierre: invalidación automática de sesiones activas del cajero al cerrar el turno (reason='caja_cierre').
+         - En PUT /users/{user_id}/role: invalidación inmediata de todas las sesiones activas del usuario modificado (reason='role_change') para forzar re-autenticación con sus nuevos privilegios.
+       - Suites unitarias automatizadas en backend/tests/test_session_policy.py y backend/tests/test_session_ttl.py ejecutadas con 100% PASS.
        - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #1 (Authentication) y Caso C2 como DONE.
+
+   11. **Implementación de S6 (Input Validation & Output Encoding - Top 12 #4 y #5):**
+       - Creado módulo dedicado backend/core/validation_encoding.py con validadores y filtros seguros:
+         - strip_html_tags y nencode_safe_html: neutraliza scripts (<script>...</script>), pseudo-protocolos javascript:, eventos maliciosos (onerror=...) y codifica entidades HTML.
+         - sanitize_text: elimina bytes nulos \x00 y caracteres de control no imprimibles, aplicando saneamiento de etiquetas y limitación de longitud.
+         - validate_identifier: valida formato alfanumérico estricto (^[a-zA-Z0-9_\-\.]+$) previniendo ataques de path traversal (../) e inyecciones en parámetros de ruta.
+         - validate_numeric_range: asegura números finitos válidos rechazando NaN, Inf y valores negativos fuera de rango.
+         - Validadores por endpoint: validate_sale_input (ventas), validate_cashier_collect_input (cobro), validate_cashier_cancel_input (anulación con justificación interna >= 20 caracteres) y validate_pin_login_input (4-12 dígitos numéricos estrictos).
+         - sanitize_output_for_json y build_secure_json_response: sanitización recursiva de respuestas JSON salientes y emisión de cabeceras de seguridad MIME (Content-Type: application/json; charset=utf-8, X-Content-Type-Options: nosniff).
+       - Integrado en backend/server.py protegiendo /api/sales, /cashier/invoices/{sale_id}/collect, /caja/facturas/{sale_id}/anular, /api/auth/pin/login, /sales/{sale_id}, /work-orders/{work_order_id} y /samples/{sample_id}/return.
+       - Suite unitaria automatizada en backend/tests/test_validation_encoding.py ejecutada con 100% PASS.
+       - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #4 (Input Validation) e Idea #5 (Output Encoding) como DONE.
+
+   12. **Implementación de F1 (Frontend Idempotency-Key Header en Finalizar Venta y Cobro de Factura):**
+       - frontend/src/pages/SalesPage.jsx: Inyección de cabecera HTTP 'Idempotency-Key': (window.crypto?.randomUUID ? window.crypto.randomUUID() : ...) en las llamadas POST /sales (tanto flujo estándar como venta rápida) sin tocar la lógica de borradores, totales ni estados de formulario.
+       - frontend/src/pages/QuotationsPage.jsx: Inyección de cabecera HTTP 'Idempotency-Key' en la conversión de cotización a venta POST /sales.
+       - frontend/src/pages/CashierPage.jsx: Inyección de cabecera HTTP 'Idempotency-Key' en el cobro de factura en caja POST /caja/facturas/{sale_id}/cobrar.
+       - Protección integral de extremo a extremo: si el usuario o cajero realiza un doble tap o experimenta reconexión de red, la clave de idempotencia enviada en los headers HTTP garantiza que el servidor procese la operación exactamente una vez.
+       - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #9 (Idempotency Key) con soporte completo frontend (F1) y backend (S1).
