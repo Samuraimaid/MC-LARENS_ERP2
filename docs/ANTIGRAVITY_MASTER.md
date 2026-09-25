@@ -299,3 +299,11 @@ Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `Pro
 - Plan: `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md` (v2: reel + endurecimiento Case)
 - Prompt pegable: `docs/ANTIGRAVITY_PROMPT_PR42_API_SECURITY_12_20260922.md`
 - Extra Case: C1 money server-side, C2 session TTL, C3 read vs mutate, C4 abuse signals, C5 backup/restore
+
+---
+
+## Prompt Fase 2 — 2026-09-24 (P1 seguridad)
+
+- Prompt pegable: `docs/ANTIGRAVITY_PROMPT_FASE2_SECURITY_P1_20260924.md`
+- Orden: S4+C4 → S5+C3 → C2 → S6 → (opcional F1 Idempotency-Key header front)
+- P0 ya live: PRs #45 #46 #47 · deploy tag 20260925_035047
