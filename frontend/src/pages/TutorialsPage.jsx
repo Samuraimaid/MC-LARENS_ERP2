@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Clock,
   GraduationCap,
-  ImagePlus,
   Loader2,
   Pencil,
   Plus,
@@ -27,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileUploadQueue } from "@/components/uploads";
 import {
   Select,
   SelectContent,
@@ -111,7 +111,6 @@ export function TutorialsPage() {
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [showOpinion, setShowOpinion] = useState(false);
 
   const canEdit = Boolean(catalog?.can_edit);
@@ -249,26 +248,20 @@ export function TutorialsPage() {
     }
   };
 
-  const uploadImage = async (file) => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await axios.post(`${API}/tutorials/assets?folder=uploads`, fd, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const url = res.data?.url;
-      if (url) {
-        setDraft((d) => ({ ...d, image: url, image_alt: d?.image_alt || file.name }));
-        toast.success("Imagen subida y adjuntada al modulo");
-      }
-    } catch (err) {
-      toast.error(err?.response?.data?.detail || "Error al subir imagen");
-    } finally {
-      setUploading(false);
-    }
+  const uploadImageFile = async (file, { onProgress } = {}) => {
+    if (!file) throw new Error("Archivo vacío");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await axios.post(`${API}/tutorials/assets?folder=uploads`, fd, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (evt) => {
+        if (typeof onProgress === "function" && evt.total) {
+          onProgress({ loaded: evt.loaded, total: evt.total });
+        }
+      },
+    });
+    return res.data;
   };
 
   if (loading && !catalog) {
@@ -573,18 +566,31 @@ export function TutorialsPage() {
                         onChange={(e) => setDraft((d) => ({ ...d, image: e.target.value }))}
                         placeholder="/api/tutorials/assets/real/login.png"
                       />
-                      <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => uploadImage(e.target.files?.[0])}
-                          disabled={uploading}
-                        />
-                        <ImagePlus className="h-4 w-4" />
-                        {uploading ? "Subiendo…" : "Subir captura"}
-                      </label>
                     </div>
+                    <FileUploadQueue
+                      key={`tutorial-upload-${draft?.id || "new"}`}
+                      accept="image/*"
+                      multiple={false}
+                      maxFiles={1}
+                      compact
+                      concurrency={1}
+                      testId="tutorials-image-upload"
+                      idleLabel="Suelta las imágenes aquí"
+                      idleHint="o haz clic para subir captura"
+                      onUploadFile={uploadImageFile}
+                      onFileDone={(result, file) => {
+                        const url = result?.url;
+                        if (!url) return;
+                        setDraft((d) => ({
+                          ...d,
+                          image: url,
+                          image_alt: d?.image_alt || file?.name || "",
+                        }));
+                      }}
+                      onItemRemove={() => {
+                        setDraft((d) => ({ ...d, image: "" }));
+                      }}
+                    />
                     {draft.image ? (
                       <img
                         src={assetUrl(draft.image)}
