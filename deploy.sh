@@ -77,6 +77,7 @@ fi
 # PASO 3: Despliegue de Nueva Revisión en Google Cloud Run
 # ------------------------------------------------------------------------------
 echo -e "${CLR_MAGENTA}┌─[3/5] 🚀 Desplegando nueva revisión en Google Cloud Run (${REGION})...${RESET}"
+# NOTA: Usar --update-env-vars (NO --set-env-vars) para actualizar BUILD_* sin borrar MONGO_URL ni variables de entorno previas
 if gcloud run deploy "$SERVICE_NAME" \
     --project "$PROJECT_ID" \
     --image "$IMAGE_TAG" \
@@ -85,7 +86,7 @@ if gcloud run deploy "$SERVICE_NAME" \
     --memory 2Gi \
     --cpu 2 \
     --concurrency 80 \
-    --set-env-vars "BUILD_VERSION=0.2.0-${BUILD_STAMP},BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --update-env-vars "BUILD_VERSION=0.2.0-${BUILD_STAMP},BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --allow-unauthenticated; then
     echo -e "${CLR_NEON_GREEN}└─ ✔ Servicio desplegado y asignado al 100% del tráfico inmediatamente.${RESET}\n"
 else
