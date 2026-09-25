@@ -3,7 +3,7 @@ Test CSV Import and Installation Type Features
 Tests for:
 - GET /api/products/import/template - Download CSV template (public)
 - POST /api/products/import/csv - Import products from CSV (requires auth)
-- POST /api/products/seed-demo - Create demo products (requires gerencia role)
+- POST /api/products/seed-demo - Retired Pack 4c (410 Gone)
 - POST /api/auth/manager/generate-code - Generate manager authorization code
 - Verify installation_type field in products
 """
@@ -91,27 +91,8 @@ class TestCSVImportAndInstallation:
     # ============ PRODUCTS WITH INSTALLATION_TYPE TESTS ============
 
     def test_demo_products_have_installation_type(self):
-        """Verify demo products have installation_type field"""
-        # First seed demo products to ensure they exist
-        warehouses_response = self.session.get(f"{BASE_URL}/api/warehouses", timeout=10)
-
-        if warehouses_response.status_code == 401:
-            pytest.skip("Authentication required - skipping")
-
-        warehouse_id = "wh_main"
-        if warehouses_response.status_code == 200:
-            warehouses = warehouses_response.json()
-            if len(warehouses) > 0:
-                warehouse_id = warehouses[0].get("warehouse_id", "wh_main")
-
-        # Seed demo products
-        self.session.post(
-            f"{BASE_URL}/api/products/seed-demo",
-            params={"warehouse_id": warehouse_id},
-            timeout=30,
-        )
-
-        # Get products
+        """Verify products have installation_type field (Pack 4c: no HTTP seed-demo)."""
+        # Pack 4c: POST /api/products/seed-demo is 410 Gone — rely on existing catalog/startup seed
         response = self.session.get(f"{BASE_URL}/api/products", timeout=10)
 
         if response.status_code == 401:
@@ -206,8 +187,7 @@ class TestCSVImportAndInstallation:
     # ============ SEED DEMO PRODUCTS TESTS ============
 
     def test_seed_demo_products(self):
-        """Test POST /api/products/seed-demo - requires gerencia role"""
-        # First get a warehouse
+        """Pack 4c: POST /api/products/seed-demo returns 410 Gone."""
         warehouses_response = self.session.get(f"{BASE_URL}/api/warehouses", timeout=10)
 
         if warehouses_response.status_code == 401:
@@ -228,43 +208,20 @@ class TestCSVImportAndInstallation:
         if response.status_code == 401:
             pytest.skip("Authentication required - skipping")
 
-        if response.status_code == 403:
-            print("⚠ User does not have gerencia role - expected for non-manager users")
-            return
-
         assert (
-            response.status_code == 200
-        ), f"Expected 200, got {response.status_code}: {response.text}"
+            response.status_code == 410
+        ), f"Expected 410 Gone, got {response.status_code}: {response.text}"
 
-        data = response.json()
-        # Response can have 'created' or 'imported' depending on implementation
-        assert "imported" in data or "created" in data, "Response should contain count"
-
-        count = data.get("imported", data.get("created", 0))
-        print(f"✓ Demo products seeded: {count} products")
-        print(f"  Message: {data.get('message', 'N/A')}")
+        data = response.json().get("detail", response.json())
+        if isinstance(data, dict):
+            assert data.get("error") == "GONE"
+            assert "410" in str(data.get("message", ""))
+            assert data.get("canonical_path")
+        print("✓ seed-demo retired with 410 Gone (Pack 4c)")
 
     def test_demo_products_include_not_available_type(self):
-        """Verify demo products include 'not_available' (solo para llevar) type"""
-        # Seed demo products
-        warehouses_response = self.session.get(f"{BASE_URL}/api/warehouses", timeout=10)
-
-        if warehouses_response.status_code == 401:
-            pytest.skip("Authentication required - skipping")
-
-        warehouse_id = "wh_main"
-        if warehouses_response.status_code == 200:
-            warehouses = warehouses_response.json()
-            if len(warehouses) > 0:
-                warehouse_id = warehouses[0].get("warehouse_id", "wh_main")
-
-        self.session.post(
-            f"{BASE_URL}/api/products/seed-demo",
-            params={"warehouse_id": warehouse_id},
-            timeout=30,
-        )
-
-        # Get products
+        """Verify products include 'not_available' (solo para llevar) type (Pack 4c: no HTTP seed-demo)."""
+        # Pack 4c: seed-demo is 410 — rely on existing catalog/startup seed
         response = self.session.get(f"{BASE_URL}/api/products", timeout=10)
 
         if response.status_code != 200:

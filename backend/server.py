@@ -7180,19 +7180,19 @@ async def get_products(
 
 @api_router.post("/products/seed-catalogs")
 async def seed_catalogs_endpoint(request: Request):
-    """Admin endpoint to force sync and upsert all Grok catalog seeds into db.products."""
-    user = await require_auth(request)
-    if user.role not in {"gerencia", "supervisor", "programador", "jefe_tienda", "bodegas"}:
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    result = await ensure_unified_catalog_products_seeded()
-    total = await db.products.count_documents({})
-    return {
-        "status": "success",
-        "result": result,
-        "total_products_in_db": total,
-        "message": f"Catálogos sincronizados con éxito. Total productos en base de datos: {total}",
-    }
+    """Catalog seed HTTP — retired (Pack 4c). Use admin CLI / backend scripts / seed JSON offline."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed/sync de catálogos por HTTP "
+                "ya no está disponible en producción. Use admin CLI, backend scripts o "
+                "archivos seed JSON offline."
+            ),
+            "canonical_path": "n/a — backend scripts / seed JSON offline",
+        },
+    )
 
 
 @api_router.get("/pricing/sale-context")
@@ -7429,119 +7429,38 @@ async def upload_product_images(
 
 @api_router.post("/products/seed-dlaa")
 async def seed_dlaa_catalog(request: Request):
-    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
-    seed_file = ROOT_DIR / "data" / "seeds" / "dlaa_halogens_seed.json"
-    if not seed_file.exists():
-        raise HTTPException(status_code=404, detail="Archivo semilla de halógenos DLAA no encontrado")
+    """DLAA catalog seed HTTP — retired (Pack 4c). Use admin CLI / backend scripts / seed JSON offline."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed/sync de catálogos por HTTP "
+                "ya no está disponible en producción. Use admin CLI, backend scripts o "
+                "archivos seed JSON offline."
+            ),
+            "canonical_path": "n/a — backend scripts / seed JSON offline",
+        },
+    )
 
-    try:
-        products = json.loads(seed_file.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error leyendo archivo semilla: {e}")
-
-    # Remove any old dummy/obsolete DLAA products
-    await db.products.delete_many({"brand": "DLAA", "source_catalog": {"$ne": "dlaa"}})
-
-    inserted = 0
-    updated = 0
-    now_iso = datetime.now(timezone.utc).isoformat()
-
-    for p in products:
-        sku = p.get("sku")
-        if not sku:
-            continue
-        p["updated_at"] = now_iso
-        if not p.get("created_at"):
-            p["created_at"] = now_iso
-        res = await db.products.update_one(
-            {"sku": sku},
-            {"$set": p},
-            upsert=True
-        )
-        if res.upserted_id:
-            inserted += 1
-        else:
-            updated += 1
-
-    return {
-        "status": "ok",
-        "message": "Catálogo DLAA actualizado y sincronizado con éxito",
-        "total_processed": len(products),
-        "inserted": inserted,
-        "updated": updated
-    }
 
 
 @api_router.post("/products/sync-all-catalogs")
 async def sync_all_catalogs(request: Request, catalog: Optional[str] = None):
-    """Sync all 6 Grok catalogs or a specific catalog (dlaa, fernandez_sera, meguiars, pioneer, ds18, auxbeam)."""
-    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
-    seeds_dir = ROOT_DIR / "data" / "seeds"
-    
-    catalog_files = {
-        "dlaa": "dlaa_halogens_seed.json",
-        "fernandez_sera": "fernandez_sera_seed.json",
-        "meguiars": "meguiars_seed.json",
-        "pioneer": "pioneer_seed.json",
-        "ds18": "ds18_seed.json",
-        "auxbeam": "auxbeam_seed.json",
-    }
-    
-    selected = [catalog.lower()] if (catalog and catalog.lower() in catalog_files) else list(catalog_files.keys())
-    
-    results = {}
-    now_iso = datetime.now(timezone.utc).isoformat()
-    total_inserted = 0
-    total_updated = 0
-    
-    for cat_key in selected:
-        fname = catalog_files[cat_key]
-        fpath = seeds_dir / fname
-        if not fpath.exists():
-            results[cat_key] = {"error": f"Seed file {fname} not found"}
-            continue
-            
-        try:
-            prods = json.loads(fpath.read_text(encoding="utf-8"))
-        except Exception as ex:
-            results[cat_key] = {"error": str(ex)}
-            continue
-            
-        inserted = 0
-        updated = 0
-        for p in prods:
-            sku = p.get("sku")
-            if not sku:
-                continue
-            p["updated_at"] = now_iso
-            if not p.get("created_at"):
-                p["created_at"] = now_iso
-            res = await db.products.update_one(
-                {"sku": sku},
-                {"$set": p},
-                upsert=True
-            )
-            if res.upserted_id:
-                inserted += 1
-            else:
-                updated += 1
-                
-        results[cat_key] = {
-            "total": len(prods),
-            "inserted": inserted,
-            "updated": updated
-        }
-        total_inserted += inserted
-        total_updated += updated
-        
-    return {
-        "status": "ok",
-        "message": "Sincronización de catálogos completada exitosamente",
-        "catalogs_processed": selected,
-        "total_inserted": total_inserted,
-        "total_updated": total_updated,
-        "details": results
-    }
+    """Catalog sync-all HTTP — retired (Pack 4c). Use admin CLI / backend scripts / seed JSON offline."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed/sync de catálogos por HTTP "
+                "ya no está disponible en producción. Use admin CLI, backend scripts o "
+                "archivos seed JSON offline."
+            ),
+            "canonical_path": "n/a — backend scripts / seed JSON offline",
+        },
+    )
+
 
 
 @api_router.get("/products/catalog")
@@ -19498,17 +19417,17 @@ async def get_dashboard_stats(request: Request):
 
 @api_router.post("/seed")
 async def seed_data(request: Request):
-    """Legacy vague seed — retired (Pack 4a). Use named seed endpoints or startup core seed."""
+    """Legacy vague seed — retired (Pack 4a; canonical updated Pack 4c). Use CSV import / startup / scripts."""
     raise HTTPException(
         status_code=410,
         detail={
             "error": "GONE",
             "message": (
                 "Endpoint deprecado y retirado (410 Gone). El seed genérico POST /api/seed "
-                "ya no está disponible en producción. Use endpoints nombrados "
-                "(p.ej. /api/products/seed-demo) o el seed de arranque del servidor."
+                "ya no está disponible en producción. Use importación CSV en Inventario, "
+                "el seed de arranque del servidor, o scripts de backend."
             ),
-            "canonical_path": "/api/products/seed-demo",
+            "canonical_path": "n/a — CSV import / startup seed / backend scripts",
         },
     )
 
@@ -24732,104 +24651,20 @@ async def get_import_template():
 
 @api_router.post("/products/seed-demo")
 async def seed_demo_products(request: Request, warehouse_id: str = "wh_main"):
-    """Seed demo products similar to car audio store"""
-    user = await require_roles(request, ["gerencia"])
+    """Demo products seed HTTP — retired (Pack 4c). Use CSV import / startup seed / backend scripts."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed demo de productos por HTTP "
+                "ya no está disponible en producción. Use importación CSV en Inventario, "
+                "el seed de arranque del servidor, o scripts de backend."
+            ),
+            "canonical_path": "n/a — CSV import / startup seed / backend scripts",
+        },
+    )
 
-    # Load demo products from external file to avoid extremely long inline data structures
-    demo_products = []
-    demo_file = ROOT_DIR / "data" / "demo_products.py"
-    if demo_file.exists():
-        ns: dict = {}
-        try:
-            exec(demo_file.read_text(encoding="utf-8"), ns)
-            demo_products = ns.get("demo_products", [])
-        except Exception:
-            demo_products = []
-    else:
-        demo_products = []
-
-    imported = 0
-    for p in demo_products:
-        # Check if SKU exists
-        existing = await db.products.find_one({"sku": p["sku"]})
-        if existing:
-            continue
-
-        # compute price tiers for seeded demo products
-        try:
-            base_price_seed = float(p.get("price", 0) or 0)
-        except Exception:
-            base_price_seed = 0.0
-        from backend.domains.pricing.price_tiers import default_tier_values
-
-        precio1 = round(base_price_seed, 2)
-        tier_defaults = default_tier_values(precio1)
-        precio2 = tier_defaults["precio2"]
-        precio_vip = tier_defaults["precio_vip"]
-        precio_casa = tier_defaults["precio_casa_comercial"]
-
-        product_doc = {
-            "product_id": f"prod_{uuid.uuid4().hex[:8]}",
-            "sku": p["sku"],
-            "name": p["name"],
-            "description": p["description"],
-            "category": p["category"],
-            "subcategory": p["subcategory"],
-            "brand": p["brand"],
-            # store precio tiers and keep `price` pointing to precio1 for UI
-            "precio1": precio1,
-            "precio2": precio2,
-            "precio_vip": precio_vip,
-            "precio_casa_comercial": precio_casa,
-            "precio3": precio_casa,
-            "price": precio1,
-            "cost": p["cost"],
-            "product_type": "service" if p["category"] == "servicios" else "product",
-            "images": [p["image_url"]] if p["image_url"] else [],
-            "compatibility": None,
-            "installation_required": p["installation_type"] == "required",
-            "installation_type": p["installation_type"],
-            "installation_price": p["installation_price"],
-            "installation_time_minutes": p["installation_time_minutes"],
-            "requires_manager_auth_for_install": p["installation_type"]
-            == "not_available",
-            "warranty_months": p["warranty_months"],
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-
-        await db.products.insert_one(product_doc)
-
-        # Create inventory for physical products
-        if p["category"] != "servicios":
-            inventory_doc = {
-                "inventory_id": f"inv_{uuid.uuid4().hex[:8]}",
-                "product_id": product_doc["product_id"],
-                "warehouse_id": warehouse_id,
-                "quantity": 20,
-                "min_stock": 5,
-                "last_updated": datetime.now(timezone.utc).isoformat(),
-            }
-            await db.inventory.insert_one(inventory_doc)
-            await audit_service.log_inventory_movement(
-                product_id=product_doc["product_id"],
-                warehouse_id=warehouse_id,
-                quantity_change=20,
-                reason="initial_stock_seed",
-                actor=user,
-                branch_id=user.branch_id,
-                reference_id=inventory_doc["inventory_id"],
-                metadata={"sku": p.get("sku")},
-            )
-
-        imported += 1
-
-    return {
-        "message": "Demo products created",
-        "imported": imported,
-        "total_available": len(demo_products),
-        "categories": ["electronicos", "no_electricos", "polarizados", "servicios"],
-    }
 
 
 # ============ DISPATCH ORDERS (DESPACHOS) ============

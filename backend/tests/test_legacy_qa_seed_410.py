@@ -1,4 +1,6 @@
-"""Pack 4a: QA suites + vague /seed return 410 Gone (shape matches cobrar/pagar)."""
+"""Pack 4a: QA suites + vague /seed return 410 Gone (shape matches cobrar/pagar).
+Pack 4c: /api/seed canonical no longer points at /api/products/seed-demo.
+"""
 import unittest
 
 
@@ -29,7 +31,7 @@ GONE_PATHS = [
     ),
     (
         "POST /api/seed",
-        "/api/products/seed-demo",
+        "n/a — CSV import / startup seed / backend scripts",
     ),
 ]
 
@@ -39,8 +41,8 @@ def mock_legacy_gone(path: str, canonical_path: str):
     if path == "POST /api/seed":
         message = (
             "Endpoint deprecado y retirado (410 Gone). El seed genérico POST /api/seed "
-            "ya no está disponible en producción. Use endpoints nombrados "
-            "(p.ej. /api/products/seed-demo) o el seed de arranque del servidor."
+            "ya no está disponible en producción. Use importación CSV en Inventario, "
+            "el seed de arranque del servidor, o scripts de backend."
         )
     elif path == "POST /api/qa/debug/upsert-document":
         message = (
@@ -80,9 +82,17 @@ class TestLegacyQaSeed410(unittest.TestCase):
                 self.assertEqual(detail["canonical_path"], canonical)
                 self.assertIn("deprecado", detail["message"].lower())
 
-    def test_seed_points_to_named_product_seed(self):
-        res = mock_legacy_gone("POST /api/seed", "/api/products/seed-demo")
-        self.assertEqual(res["detail"]["canonical_path"], "/api/products/seed-demo")
+    def test_seed_points_to_csv_startup_scripts_not_seed_demo(self):
+        res = mock_legacy_gone(
+            "POST /api/seed",
+            "n/a — CSV import / startup seed / backend scripts",
+        )
+        self.assertEqual(
+            res["detail"]["canonical_path"],
+            "n/a — CSV import / startup seed / backend scripts",
+        )
+        self.assertNotIn("/api/products/seed-demo", res["detail"]["canonical_path"])
+        self.assertNotIn("/api/products/seed-demo", res["detail"]["message"])
         self.assertIn("/api/seed", res["detail"]["message"])
 
 
