@@ -13,6 +13,7 @@ import {
   SettingsAdvancedGroup,
   normalizeSettingsQuery,
 } from "@/components/settings/settingsChrome";
+import { DestructiveConfirmDialog } from "@/components/destructive";
 import { THEME_SKINS } from "../lib/themeSkins";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -337,6 +338,7 @@ export function SettingsPage() {
   const embeddedPdfPreviewUrlRef = useRef("");
   const [loadingBillingSettings, setLoadingBillingSettings] = useState(false);
   const [savingBillingSettings, setSavingBillingSettings] = useState(false);
+  const [pendingDeleteExchangeRule, setPendingDeleteExchangeRule] = useState(null);
   const [newOfficialRate, setNewOfficialRate] = useState("36.5");
   const [newIvaRate, setNewIvaRate] = useState("15");
   const [newRule, setNewRule] = useState({ name: "", cadence: "daily", rate: "36.5", start_at: "", end_at: "", active: true });
@@ -1286,15 +1288,23 @@ export function SettingsPage() {
     }
   };
 
-  const deleteExchangeRule = async (ruleId) => {
-    if (!window.confirm("¿Eliminar esta regla de tasa?")) return;
+  /** U8: typed confirm (exact rule name) — irreversible hard DELETE, no soft API. */
+  const deleteExchangeRule = (rule) => {
+    if (!rule?.id) return;
+    setPendingDeleteExchangeRule(rule);
+  };
+
+  const confirmDeleteExchangeRule = async () => {
+    const rule = pendingDeleteExchangeRule;
+    if (!rule?.id) return;
     setSavingBillingSettings(true);
     try {
-      await axios.delete(`${API}/settings/billing/exchange/rules/${ruleId}`, {
+      await axios.delete(`${API}/settings/billing/exchange/rules/${rule.id}`, {
         withCredentials: true,
         params: billingBranchQuery(),
       });
       toast.success("Regla eliminada");
+      setPendingDeleteExchangeRule(null);
       await fetchBillingSettings();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo eliminar la regla");
@@ -2173,7 +2183,7 @@ export function SettingsPage() {
                               <Button variant="outline" size="sm" onClick={() => toggleExchangeRule(rule)}>
                                 {rule.active ? "Desactivar" : "Activar"}
                               </Button>
-                              <Button variant="destructive" size="sm" onClick={() => deleteExchangeRule(rule.id)}>Eliminar</Button>
+                              <Button variant="destructive" size="sm" onClick={() => deleteExchangeRule(rule)}>Eliminar</Button>
                             </div>
                           </div>
                         ))
@@ -3100,6 +3110,24 @@ export function SettingsPage() {
           <HotspotManagementPanel />
         </TabsContent>
       </Tabs>
+
+      <DestructiveConfirmDialog
+        open={!!pendingDeleteExchangeRule}
+        onOpenChange={(open) => { if (!open) setPendingDeleteExchangeRule(null); }}
+        title="Eliminar regla de tasa"
+        description={
+          pendingDeleteExchangeRule
+            ? `Vas a eliminar permanentemente la regla «${pendingDeleteExchangeRule.name}». Esta acción no se puede deshacer.`
+            : undefined
+        }
+        confirmVerb="Eliminar regla"
+        cancelVerb="Conservar regla"
+        requireTypedPhrase={String(pendingDeleteExchangeRule?.name || "").trim()}
+        footnote="No hay papelera ni restore multi-día para reglas de tasa: el borrado es permanente."
+        loading={savingBillingSettings}
+        onConfirm={confirmDeleteExchangeRule}
+        testId="settings-delete-exchange-rule"
+      />
 
       <SettingsSaveBar
         dirty={identityDirty}

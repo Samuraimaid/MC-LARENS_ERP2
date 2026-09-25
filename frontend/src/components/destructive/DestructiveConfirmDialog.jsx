@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -10,14 +10,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { HoldToConfirmButton } from "./HoldToConfirmButton";
 import { cn } from "@/lib/utils";
 
 /**
- * Destructive confirm dialog (U6 / video 06).
+ * Destructive confirm dialog (U6 / video 06 + U8 typed confirm).
  * Verb labels only — never Sí/No. Hold-to-confirm on the destroy action.
+ * U8: optional requireTypedPhrase (exact name/ID) for irreversible high-stakes.
  * Cancel uses neutral outline (red budget: red only for permanent destroy).
  */
 export function DestructiveConfirmDialog({
@@ -36,24 +38,52 @@ export function DestructiveConfirmDialog({
   reasonLabel = "Motivo (obligatorio)",
   reasonPlaceholder = "Explicá el motivo…",
   defaultReason = "",
+  /**
+   * U8 typed confirm: exact phrase (name/ID) the user must type.
+   * Empty / null = no typed gate (U6 hold-only still applies).
+   */
+  requireTypedPhrase = "",
+  typedPhraseLabel,
+  typedPhrasePlaceholder,
   /** Optional note under actions (e.g. cooldown gap) */
   footnote,
   testId = "destructive-confirm",
   className,
 }) {
   const [reason, setReason] = useState(defaultReason || "");
+  const [typed, setTyped] = useState("");
+  const expected = String(requireTypedPhrase || "").trim();
+  const typedOk = useMemo(
+    () => !expected || typed.trim() === expected,
+    [expected, typed]
+  );
   const reasonOk = !requireReason || String(reason || "").trim().length > 0;
+  const canHold = reasonOk && typedOk;
+
+  useEffect(() => {
+    if (!open) {
+      setReason(defaultReason || "");
+      setTyped("");
+    }
+  }, [open, defaultReason]);
 
   const handleOpenChange = (next) => {
-    if (!next) setReason(defaultReason || "");
+    if (!next) {
+      setReason(defaultReason || "");
+      setTyped("");
+    }
     onOpenChange?.(next);
   };
 
   const handleConfirm = async () => {
-    if (!reasonOk || loading) return;
-    const payload = requireReason ? { reason: String(reason).trim() } : undefined;
-    await onConfirm?.(payload);
+    if (!canHold || loading) return;
+    const payload = {
+      ...(requireReason ? { reason: String(reason).trim() } : {}),
+      ...(expected ? { typedPhrase: typed.trim() } : {}),
+    };
+    await onConfirm?.(Object.keys(payload).length ? payload : undefined);
     setReason(defaultReason || "");
+    setTyped("");
     onOpenChange?.(false);
   };
 
@@ -89,6 +119,31 @@ export function DestructiveConfirmDialog({
           </div>
         ) : null}
 
+        {expected ? (
+          <div className="space-y-1.5">
+            <Label htmlFor={`${testId}-typed`}>
+              {typedPhraseLabel || (
+                <>
+                  Escribí{" "}
+                  <span className="font-mono font-semibold text-destructive">{expected}</span> para
+                  confirmar
+                </>
+              )}
+            </Label>
+            <Input
+              id={`${testId}-typed`}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={typedPhrasePlaceholder || expected}
+              className="font-mono"
+              disabled={loading}
+              data-testid={`${testId}-typed`}
+            />
+          </div>
+        ) : null}
+
         {footnote ? (
           <p className="text-xs text-muted-foreground" data-testid={`${testId}-footnote`}>
             {footnote}
@@ -96,7 +151,6 @@ export function DestructiveConfirmDialog({
         ) : null}
 
         <AlertDialogFooter className="gap-2 sm:gap-3">
-          {/* Neutral cancel — red budget: not destructive */}
           <AlertDialogCancel
             disabled={loading}
             className="mt-0"
@@ -106,7 +160,7 @@ export function DestructiveConfirmDialog({
           </AlertDialogCancel>
           <HoldToConfirmButton
             variant="destructive"
-            disabled={!reasonOk || loading}
+            disabled={!canHold || loading}
             loading={loading}
             onConfirm={handleConfirm}
             testId={`${testId}-hold`}
@@ -133,6 +187,9 @@ DestructiveConfirmDialog.propTypes = {
   reasonLabel: PropTypes.string,
   reasonPlaceholder: PropTypes.string,
   defaultReason: PropTypes.string,
+  requireTypedPhrase: PropTypes.string,
+  typedPhraseLabel: PropTypes.node,
+  typedPhrasePlaceholder: PropTypes.string,
   footnote: PropTypes.node,
   testId: PropTypes.string,
   className: PropTypes.string,

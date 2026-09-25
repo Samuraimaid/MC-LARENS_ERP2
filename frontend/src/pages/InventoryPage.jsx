@@ -26,6 +26,7 @@ import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { showUndoToast } from "@/components/lists/undoToast";
+import { scheduleDelayedSend, DELAYED_SEND_MS } from "@/components/lists/delayedSend";
 import { DestructiveConfirmDialog } from "@/components/destructive";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
@@ -3865,8 +3866,16 @@ export function InventoryPage() {
                   : '';
                 const msg = `Hola ${nombre}, le comparto: ${waProduct?.name || ''} (SKU: ${waProduct?.sku || ''}).${stockLine} Precio: ${formatCurrency(waProduct?.price || 0)}.`;
                 const url = `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
-                window.open(url, '_blank');
+                // U8: 10s delayed send — Deshacer before wa.me opens
                 setShowWhatsApp(false);
+                scheduleDelayedSend({
+                  url,
+                  delayMs: DELAYED_SEND_MS,
+                  description: waProduct?.name
+                    ? `WhatsApp · ${waProduct.name}`
+                    : "WhatsApp · producto",
+                  toastId: "inv-wa-product",
+                });
               }}>
                 <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />
                 Enviar por WhatsApp
@@ -3944,9 +3953,18 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                       "Estado: Transferido",
                       s.notes ? `Notas: ${s.notes}` : null,
                     ].filter(Boolean).join("\n");
-                    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+                    const url = `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
+                    // U8: 10s delayed send for transfer notice
                     setShowTransferWhatsApp(false);
                     setTransferWaSummary(null);
+                    scheduleDelayedSend({
+                      url,
+                      delayMs: DELAYED_SEND_MS,
+                      description: s?.productName
+                        ? `WhatsApp · traslado ${s.productName}`
+                        : "WhatsApp · traslado",
+                      toastId: "inv-wa-transfer",
+                    });
                   }}
                 >
                   <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />

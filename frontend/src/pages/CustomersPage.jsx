@@ -596,30 +596,36 @@ export function CustomersPage() {
     }
   };
 
-  const deleteVehicle = async () => {
+  /** U8: typed confirm (exact plate) + motivo — approval request, no prompt(). */
+  const deleteVehicle = async ({ reason } = {}) => {
     if (!canDeleteCustomers) {
       toast.error("No tienes permiso para eliminar vehículos");
       return;
     }
     if (!selectedVehicleId) return;
+    const motivoDel = String(reason || "").trim();
+    if (!motivoDel) {
+      toast.error("El motivo es obligatorio");
+      return;
+    }
     try {
-      // pedir motivo obligatorio para la eliminación
-      const motivoDel = prompt('Ingrese el motivo para eliminar el vehículo (obligatorio):', 'Vehículo duplicado');
-      if (motivoDel === null) return;
-      if (!motivoDel.trim()) { toast.error('El motivo es obligatorio'); return; }
-      // Create an approval request to delete the vehicle
       await axios.post(`${API}/approvals`, {
         type: 'delete_vehicle',
         payload: { vehicle_id: selectedVehicleId },
-        reason: motivoDel.trim()
+        reason: motivoDel,
       }, { withCredentials: true });
 
       toast.success("Solicitud de eliminación enviada para aprobación");
-      // keep local state; refresh after approval
+      setShowDeleteVehicle(false);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error al solicitar eliminación");
     }
   };
+
+  const pendingDeleteVehiclePlate = (() => {
+    const v = customerVehicles.find((x) => x.vehicle_id === selectedVehicleId);
+    return String(v?.plate || "").trim();
+  })();
 
   const requestCreditAuthorization = async () => {
     try {
@@ -1275,35 +1281,28 @@ export function CustomersPage() {
                 </div>
               )}
 
-              <Dialog open={showDeleteVehicle} onOpenChange={setShowDeleteVehicle}>
-                <DialogContent className="max-w-sm">
-                  <ContextualDialogHeader
-                    variant="error"
-                    size="hero"
-                    title="Eliminar vehículo"
-                    description="Esta acción no se puede deshacer. ¿Deseas eliminar el vehículo seleccionado?"
-                  />
-                  <ContextualDialogFooter variant="error">
-                    <Button
-                      variant="ghost"
-                      className={getStatusSecondaryButtonClass("error")}
-                      onClick={() => setShowDeleteVehicle(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      className={getStatusPrimaryButtonClass("error")}
-                      disabled={!canDeleteCustomers}
-                      onClick={async () => {
-                        await deleteVehicle();
-                        setShowDeleteVehicle(false);
-                      }}
-                    >
-                      Eliminar
-                    </Button>
-                  </ContextualDialogFooter>
-                </DialogContent>
-              </Dialog>
+              <DestructiveConfirmDialog
+                open={showDeleteVehicle}
+                onOpenChange={setShowDeleteVehicle}
+                title="Eliminar vehículo"
+                description={
+                  pendingDeleteVehiclePlate
+                    ? `Se enviará una solicitud de aprobación para eliminar el vehículo «${pendingDeleteVehiclePlate}». Escribí la placa exacta para confirmar.`
+                    : "Se enviará una solicitud de aprobación para eliminar el vehículo seleccionado."
+                }
+                confirmVerb="Eliminar vehículo"
+                cancelVerb="Conservar vehículo"
+                requireReason
+                reasonLabel="Motivo (obligatorio)"
+                reasonPlaceholder="Ej. Vehículo duplicado"
+                defaultReason="Vehículo duplicado"
+                requireTypedPhrase={pendingDeleteVehiclePlate || selectedVehicleId || "ELIMINAR"}
+                footnote="No hay soft-delete de vehículo en UI: va por aprobación. Sin papelera multi-día."
+                onConfirm={async ({ reason } = {}) => {
+                  await deleteVehicle({ reason });
+                }}
+                testId="customers-delete-vehicle"
+              />
 
               <Button onClick={saveCustomer} className="w-full mt-4" data-testid="save-customer-btn" disabled={isEditing ? !canEditCustomers : !canCreateCustomers}>
                 {isEditing ? "Guardar Cambios" : (formData.add_vehicle ? "Crear Cliente y Vehículo" : "Crear Cliente")}
