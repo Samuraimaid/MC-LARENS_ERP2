@@ -19433,8 +19433,20 @@ async def get_dashboard_stats(request: Request):
 
 @api_router.post("/seed")
 async def seed_data(request: Request):
-    """Seed initial data with automotive accessories"""
-
+    """Legacy vague seed — retired (Pack 4a). Use named seed endpoints or startup core seed."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed genérico POST /api/seed "
+                "ya no está disponible en producción. Use endpoints nombrados "
+                "(p.ej. /api/products/seed-demo) o el seed de arranque del servidor."
+            ),
+            "canonical_path": "/api/products/seed-demo",
+        },
+    )
+    # Dead code below retained temporarily for reviewability (Pack 4a early-return).
     core_seed_report: Dict[str, Any]
     try:
         # This powers the Dashboard "Cargar datos de pruebas" button as a recovery action
@@ -21454,50 +21466,53 @@ async def create_warranty_claim(
 
 @api_router.post("/qa/run-full-simulation-suite")
 async def run_full_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación E2E: 5 naturales + 5 empresas con pagos mixtos y tasas duales."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.full_simulation_suite import run_full_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_full_simulation_suite, base_url)
-    return report
+    """QA full simulation suite — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las suites QA de simulación "
+                "ya no están expuestas por HTTP en producción. Ejecute "
+                "backend/scripts localmente si necesita la suite."
+            ),
+            "canonical_path": "n/a — backend/scripts (local only)",
+        },
+    )
 
 
 @api_router.post("/qa/run-logistic-simulation-suite")
 async def run_logistic_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación logística: ingreso ciego + traslado en 3 pasos."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.logistic_simulation_suite import run_logistic_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_logistic_simulation_suite, base_url)
-    return report
+    """QA logistic simulation suite — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las suites QA de simulación "
+                "ya no están expuestas por HTTP en producción. Ejecute "
+                "backend/scripts/verify_blind_intake.py localmente si necesita la suite."
+            ),
+            "canonical_path": "n/a — backend/scripts (local only)",
+        },
+    )
 
 
 @api_router.post("/qa/run-full-workshop-simulation-suite")
 async def run_full_workshop_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación E2E taller: OT, QC, despacho multi-sucursal, logística y garantías."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.workshop_simulation_suite import run_workshop_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_workshop_simulation_suite, base_url)
-    return report
+    """QA workshop simulation suite — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las suites QA de simulación "
+                "ya no están expuestas por HTTP en producción. Ejecute "
+                "backend/scripts/run_workshop_suite_live.py localmente si necesita la suite."
+            ),
+            "canonical_path": "n/a — backend/scripts (local only)",
+        },
+    )
 
 
 QA_DEBUG_COLLECTIONS = frozenset({
@@ -21511,55 +21526,52 @@ QA_DEBUG_COLLECTIONS = frozenset({
 
 @api_router.post("/qa/debug/upsert-document")
 async def qa_debug_upsert_document(payload: Dict[str, Any], request: Request):
-    """Inyecta documentos controlados para suites QA (solo gerencia/programador)."""
-    await require_roles(request, ["gerencia", "programador"])
-    data = payload or {}
-    collection = str(data.get("collection") or "").strip()
-    document = data.get("document")
-    upsert_key = str(data.get("upsert_key") or "").strip()
-    if collection not in QA_DEBUG_COLLECTIONS:
-        raise HTTPException(status_code=400, detail="Colección no permitida para QA debug")
-    if not isinstance(document, dict) or not document:
-        raise HTTPException(status_code=400, detail="document es requerido")
-    if not upsert_key or upsert_key not in document:
-        raise HTTPException(status_code=400, detail="upsert_key inválido")
-    target = getattr(db, collection, None)
-    if target is None:
-        raise HTTPException(status_code=400, detail="Colección no disponible")
-    await target.update_one({upsert_key: document[upsert_key]}, {"$set": document}, upsert=True)
-    return {"message": "Documento upserted", "collection": collection, "key": document[upsert_key]}
+    """QA debug document upsert — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El upsert de debug QA "
+                "ya no está expuesto por HTTP en producción."
+            ),
+            "canonical_path": "n/a — QA debug upsert retired",
+        },
+    )
 
 
 @api_router.post("/qa/run-full-hr-simulation-suite")
 async def run_full_hr_simulation_suite_endpoint(request: Request):
-    """Ejecuta simulación E2E RRHH: nómina multi-sucursal, INSS, comprobantes y aislamiento supervisor."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.hr_simulation_suite import run_hr_simulation_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_hr_simulation_suite, base_url)
-    return report
+    """QA HR simulation suite — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las suites QA de simulación "
+                "ya no están expuestas por HTTP en producción. Ejecute "
+                "backend/scripts/run_hr_suite_live.py localmente si necesita la suite."
+            ),
+            "canonical_path": "n/a — backend/scripts (local only)",
+        },
+    )
 
 
 @api_router.post("/qa/run-global-chaos-stress-suite")
 async def run_global_chaos_stress_suite_endpoint(request: Request):
-    """Plan de Caos Operativo: barrido de rutas, seeding realista, estrés cruzado y mensajeros."""
-    import asyncio
-
-    await require_roles(request, ["gerencia", "programador"])
-    from backend.domains.qa.global_chaos_stress_suite import run_global_chaos_stress_suite
-
-    base_url = str(request.base_url).rstrip("/")
-    if not base_url.endswith("/api"):
-        base_url = f"{base_url}/api"
-
-    report = await asyncio.to_thread(run_global_chaos_stress_suite, base_url)
-    return report
+    """QA global chaos stress suite — retired from HTTP (Pack 4a)."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las suites QA de caos/estrés "
+                "ya no están expuestas por HTTP en producción. Ejecute "
+                "backend/scripts/run_chaos_suite_live.py localmente si necesita la suite."
+            ),
+            "canonical_path": "n/a — backend/scripts (local only)",
+        },
+    )
 
 
 @api_router.get("/warranties/claims")
