@@ -166,8 +166,8 @@ Marcar cada fila DONE / PARCIAL / N/A:
 | 1 | Authentication (idle/TTL sesión) | **DONE** | PR C2 (`backend/domains/auth/session_policy.py`, `backend/core/session_security.py`, cajero idle 10h/600m para turno continuo, ventas 5m, invalidación en cierre de caja y cambio de rol) |
 | 2 | Authorization (BOLA sample + require_roles) | **DONE** | PR S5 (`backend/core/authz_bola.py`, mitigación BOLA en /sales/{id}, /work-orders/{id}, /samples/{id}, require_roles en dinero y stock) |
 | 3 | Rate Limiting (PIN estricto + mutaciones 429) | **DONE** | PR S2 (`backend/middlewares/rate_limit.py`, `RateLimitMiddleware` con tope ráfaga 5/10s en PIN y 60/min en mutaciones, 429 + Retry-After) |
-| 4 | Input Validation (schemas en endpoints tocados) | PENDIENTE (Fase 2) | S6 |
-| 5 | Output Encoding (JSON Content-Type, sin HTML crudo) | PENDIENTE (Fase 2) | S6 |
+| 4 | Input Validation (schemas en endpoints tocados) | **DONE** | PR S6 (`backend/core/validation_encoding.py`, validación de tipos, rangos finitos, longitudes y saneamiento en /sales, /cashier/collect, /caja/anular, /auth/pin/login, URLs seguras sin path traversal) |
+| 5 | Output Encoding (JSON Content-Type, sin HTML crudo) | **DONE** | PR S6 (`backend/core/validation_encoding.py`, neutralización de scripts/etiquetas HTML en cadenas salientes, cabeceras MIME estrictas application/json y X-Content-Type-Options: nosniff) |
 | 6 | HTTPS Everywhere (Cloud Run checklist) | PENDIENTE (Fase 3) | S9 |
 | 7 | Secret Rotation (runbook + no bake PIN en imagen) | PENDIENTE (Fase 3) | S8 |
 | 8 | Least Privilege (roles en mutaciones dinero/stock) | **DONE** | PR S5 + C3 (`backend/core/authz_bola.py`, roles restringidos en creación de ventas, cobro/anulación de facturas, inventario/productos) |
