@@ -26,6 +26,7 @@ import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { showUndoToast } from "@/components/lists/undoToast";
+import { DestructiveConfirmDialog } from "@/components/destructive";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
@@ -75,6 +76,8 @@ export function InventoryPage() {
   const [waResults, setWaResults] = useState([]);
   const [waSelectedCustomer, setWaSelectedCustomer] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [pendingDeactivateItem, setPendingDeactivateItem] = useState(null);
+  const [deactivateBusy, setDeactivateBusy] = useState(false);
   const [showImportCSV, setShowImportCSV] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -243,19 +246,58 @@ export function InventoryPage() {
 
   const softRefresh = useCallback(() => fetchData({ silent: true }), [fetchData]);
 
+  const applySingleProductStatus = async (item, makeActive) => {
+    await axios.post(`${API}/inventory/product-status`, {
+      warehouse_id: item.warehouse_id,
+      product_id: item.product_id,
+      is_active: makeActive,
+    }, { withCredentials: true });
+  };
+
+  /** Soft activate: one click. Soft deactivate: U6 hold + verbs (irreversible-feel), then U3-style undo toast. */
   const handleToggleProductStatus = async (item) => {
+    if (!canEditInventory) return;
     const currentActive = item.is_active !== false;
-    const newActive = !currentActive;
+    if (currentActive) {
+      // Deactivate → confirm dialog (never Sí/No)
+      setPendingDeactivateItem(item);
+      return;
+    }
     try {
-      await axios.post(`${API}/inventory/product-status`, {
-        warehouse_id: item.warehouse_id,
-        product_id: item.product_id,
-        is_active: newActive,
-      }, { withCredentials: true });
-      toast.success(`Producto ${newActive ? "activado" : "desactivado"} en bodega`);
+      await applySingleProductStatus(item, true);
+      toast.success("Producto activado en bodega");
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Error al cambiar estado del producto");
+    }
+  };
+
+  const confirmDeactivateProduct = async () => {
+    const item = pendingDeactivateItem;
+    if (!item) return;
+    setDeactivateBusy(true);
+    try {
+      await applySingleProductStatus(item, false);
+      setPendingDeactivateItem(null);
+      await fetchData();
+      showUndoToast({
+        message: "Desactivado 1 producto",
+        description: "Puedes deshacer durante unos segundos",
+        durationMs: 10000,
+        onUndo: async () => {
+          try {
+            await applySingleProductStatus(item, true);
+            await fetchData();
+            toast.success("Producto reactivado");
+          } catch {
+            toast.error("No se pudo deshacer");
+          }
+        },
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
+    } finally {
+      setDeactivateBusy(false);
     }
   };
 
@@ -2449,7 +2491,7 @@ export function InventoryPage() {
                                 )}
                                 <Button
                                   type="button"
-                                  variant="destructive"
+                                  variant="secondary"
                                   size="icon"
                                   className="h-7 w-7 shadow"
                                   title="Eliminar imagen"
@@ -4017,7 +4059,7 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                           )}
                           <Button
                             type="button"
-                            variant="destructive"
+                            variant="secondary"
                             size="icon"
                             className="h-6 w-6 shadow"
                             title="Eliminar imagen"
@@ -4035,7 +4077,7 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="mt-4 flex justify-end gap-2 border-t border-border/60 pt-4">
                 <Button variant="outline" onClick={() => setEditingProduct(null)}>
                   Cancelar
                 </Button>
@@ -4047,6 +4089,24 @@ Notas: ${transferWaSummary.notes}` : ''}`}
           )}
         </DialogContent>
       </Dialog>
+
+      
+      <DestructiveConfirmDialog
+        open={!!pendingDeactivateItem}
+        onOpenChange={(open) => { if (!open) setPendingDeactivateItem(null); }}
+        title="Desactivar producto"
+        description={
+          pendingDeactivateItem
+            ? `Vas a desactivar «${pendingDeactivateItem.product?.name || pendingDeactivateItem.product_id}» en esta bodega. No aparecerá para venta hasta que lo reactives.`
+            : undefined
+        }
+        confirmVerb="Desactivar producto"
+        cancelVerb="Conservar producto"
+        onConfirm={confirmDeactivateProduct}
+        loading={deactivateBusy}
+        footnote="Desactivar es reversible desde aquí (toast Deshacer) o reactivando el estado. No hay eliminación permanente multi-día en el API."
+        testId="inventory-deactivate-confirm"
+      />
 
       {/* Virtual Zone Transfer Dialog */}
       <Dialog open={showZoneTransferDialog} onOpenChange={setShowZoneTransferDialog}>
