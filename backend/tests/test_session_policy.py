@@ -1,5 +1,10 @@
 """Unit tests for session idle/TTL and reauth policy helpers."""
+import os
+import sys
 from datetime import datetime, timedelta, timezone
+
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from backend.domains.auth.session_policy import (
     DEFAULT_IDLE_MINUTES,
@@ -16,7 +21,7 @@ from backend.domains.auth.session_policy import (
 def test_defaults_ventas_5_others_60():
     policy = default_session_policy()
     assert idle_minutes_for_role(policy, "ventas") == 5
-    assert idle_minutes_for_role(policy, "cajero") == 60
+    assert idle_minutes_for_role(policy, "cajero") == 600
     assert idle_minutes_for_role(policy, "gerencia") == 60
     assert idle_minutes_for_role(policy, "bodegas") == 60
     assert idle_minutes_for_role(policy, "instalaciones") == 60
@@ -111,9 +116,50 @@ def test_session_expiry_iso():
     assert exp.startswith("2026-01-01T16:00:00")
 
 
+def test_validate_session_idle_cajero_600_min():
+    policy = default_session_policy()
+    now = datetime.now(timezone.utc)
+    # 4 hours (240 min) idle is perfectly fine for cashier during continuous shift
+    sess = {
+        "expires_at": (now + timedelta(hours=10)).isoformat(),
+        "last_seen_at": (now - timedelta(minutes=240)).isoformat(),
+    }
+    ok, code, _ = validate_session_freshness(sess, role="cajero", policy=policy, now=now)
+    assert ok is True
+    assert code is None
+
+    # Over 10 hours (601 min) idle should timeout
+    sess2 = {
+        "expires_at": (now + timedelta(hours=12)).isoformat(),
+        "last_seen_at": (now - timedelta(minutes=601)).isoformat(),
+    }
+    ok2, code2, _ = validate_session_freshness(sess2, role="cajero", policy=policy, now=now)
+    assert ok2 is False
+    assert code2 == "SESSION_IDLE_TIMEOUT"
+
+
 def test_reauth_actions_defaults():
     policy = default_session_policy()
     assert action_requires_reauth(policy, "users.create") is True
     assert action_requires_reauth(policy, "settings.session_policy") is True
     assert action_requires_reauth(policy, "sales.request_cancel") is False
     assert action_requires_reauth(policy, "unknown.thing") is False
+
+
+if __name__ == "__main__":
+    tests = [
+        test_defaults_ventas_5_others_60,
+        test_ttl_by_role,
+        test_normalize_merges_overrides,
+        test_idle_clamp,
+        test_validate_session_expired,
+        test_validate_session_idle_ventas_5_min,
+        test_validate_session_idle_others_60_min,
+        test_validate_session_idle_cajero_600_min,
+        test_session_expiry_iso,
+        test_reauth_actions_defaults,
+    ]
+    for t in tests:
+        t()
+        print(f"[OK] {t.__name__}")
+    print("\nALL SESSION POLICY TESTS PASSED!")

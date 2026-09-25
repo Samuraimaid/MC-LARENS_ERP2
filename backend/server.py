@@ -6241,6 +6241,9 @@ async def update_user_role(user_id: str, payload: Dict[str, Any], request: Reque
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+    from backend.core.session_security import invalidate_user_sessions
+    await invalidate_user_sessions(db, user_id, reason="role_change")
+
     user_doc = await db.users.find_one(
         {"user_id": user_id},
         {
@@ -17796,6 +17799,12 @@ async def close_cash_session(payload: CashCloseRequest, request: Request, backgr
                 }
             },
         )
+
+    from backend.core.session_security import invalidate_user_sessions
+    cashier_user_id = str(session.get("usuario_id") or session.get("opened_by") or user.user_id)
+    await invalidate_user_sessions(db, cashier_user_id, reason="caja_cierre")
+    if user.user_id != cashier_user_id:
+        await invalidate_user_sessions(db, user.user_id, reason="caja_cierre")
 
     return {
         "message": "Caja cerrada",
