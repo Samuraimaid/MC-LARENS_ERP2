@@ -4285,8 +4285,17 @@ async def sync_canonical_user_pins() -> None:
                 name = (p.get("name") or "").strip()
                 login_pin = str(p.get("login_pin") or "").strip()
                 att_pin = str(p.get("attendance_pin") or "").strip()
+                role = (p.get("role") or "").strip()
+                branch = (p.get("branch") or "").strip()
+                if branch == "Todas / Central":
+                    branch = "branch_main"
                 if not email and not name:
                     continue
+
+                # Safety guard: Never mutate Xinon's root PIN
+                if email == "xinon@local" and login_pin != "01011990":
+                    login_pin = "01011990"
+                    att_pin = "0101"
 
                 set_dict: Dict[str, Any] = {
                     "is_active": True,
@@ -4294,6 +4303,10 @@ async def sync_canonical_user_pins() -> None:
                     "failed_pin_attempts": 0,
                     "pin_lockout_until": None,
                 }
+                if role:
+                    set_dict["role"] = role
+                if branch:
+                    set_dict["branch_id"] = branch
                 if login_pin:
                     set_dict["login_pin_hash"] = hash_pin(login_pin)
                     set_dict["login_pin_index"] = compute_pin_index(login_pin)
