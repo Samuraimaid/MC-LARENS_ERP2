@@ -34,7 +34,10 @@ export function DensityListItem({
   const isCozy = mode === "cozy";
   const hasBody = children != null && children !== false;
 
+  const shiftRef = React.useRef(false);
+
   const handleSelectClick = (e) => {
+    shiftRef.current = !!(e && e.shiftKey);
     if (selectStopPropagation) e.stopPropagation();
   };
 
@@ -46,7 +49,9 @@ export function DensityListItem({
     >
       <Checkbox
         checked={!!selected}
-        onCheckedChange={(v) => onSelectChange?.(v === true)}
+        onCheckedChange={(v) =>
+          onSelectChange?.(v === true, { shiftKey: shiftRef.current })
+        }
         aria-label={selected ? "Deseleccionar fila" : "Seleccionar fila"}
         className="h-4 w-4"
         data-testid={testId ? `${testId}-select` : undefined}

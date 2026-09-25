@@ -25,6 +25,7 @@ import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
+import { showUndoToast } from "@/components/lists/undoToast";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
@@ -41,6 +42,7 @@ import { densityTokens } from "@/components/lists/listDensity";
 
 export function InventoryPage() {
   const selection = useListSelection();
+  const invShiftKeyRef = React.useRef(false);
   const scrollRestore = useListScrollRestore({ pageKey: "inventory" });
   const { hasPermission, user } = useAuth();
   const canViewInventory = hasPermission("inventory", "view");
@@ -1245,14 +1247,20 @@ export function InventoryPage() {
     return rows;
   }, [inventory, products, search, selectedCategory, selectedWarehouse, showLowStock]);
 
+  const matchingInventoryIds = useMemo(
+    () => filteredInventory.map((item) => item.inventory_id),
+    [filteredInventory]
+  );
   const visibleInventoryIds = useMemo(
     () => filteredInventory.slice(0, inventoryVisibleLimit).map((item) => item.inventory_id),
     [filteredInventory, inventoryVisibleLimit]
   );
+  // Selection Set persists across filters/pages; bulk acts on selected ∩ current matching list.
   const selectedInventoryItems = useMemo(
     () => filteredInventory.filter((item) => selection.isSelected(item.inventory_id)),
     [filteredInventory, selection.selected]
   );
+  const orderedInventoryIds = matchingInventoryIds;
 
   const exportSelectedInventoryCsv = () => {
     const rowsSrc = selectedInventoryItems.length ? selectedInventoryItems : filteredInventory.slice(0, inventoryVisibleLimit);
@@ -1303,6 +1311,26 @@ export function InventoryPage() {
     }
   };
 
+  const applyProductStatusBatch = async (targets, makeActive) => {
+    let ok = 0;
+    let fail = 0;
+    const done = [];
+    for (const item of targets) {
+      try {
+        await axios.post(`${API}/inventory/product-status`, {
+          warehouse_id: item.warehouse_id,
+          product_id: item.product_id,
+          is_active: makeActive,
+        }, { withCredentials: true });
+        ok += 1;
+        done.push(item);
+      } catch {
+        fail += 1;
+      }
+    }
+    return { ok, fail, done };
+  };
+
   const bulkToggleActive = async (makeActive) => {
     if (!canEditInventory) {
       toast.error("No tienes permiso para cambiar estado");
@@ -1317,25 +1345,24 @@ export function InventoryPage() {
       toast.message(makeActive ? "Todos ya están activos" : "Todos ya están inactivos");
       return;
     }
-    if (!confirm(`${makeActive ? "Activar" : "Desactivar"} ${targets.length} producto(s) en su bodega?`)) return;
-    let ok = 0;
-    let fail = 0;
-    for (const item of targets) {
-      try {
-        await axios.post(`${API}/inventory/product-status`, {
-          warehouse_id: item.warehouse_id,
-          product_id: item.product_id,
-          is_active: makeActive,
-        }, { withCredentials: true });
-        ok += 1;
-      } catch {
-        fail += 1;
-      }
-    }
-    if (ok) toast.success(`${ok} actualizado(s)`);
+    // U3: sin modal de confirmación; acción inmediata + toast Deshacer ~10s
+    const { ok, fail, done } = await applyProductStatusBatch(targets, makeActive);
     if (fail) toast.error(`${fail} con error`);
-    selection.clear();
-    fetchData();
+    if (!ok) return;
+    await fetchData();
+    const verb = makeActive ? "Activado" : "Desactivado";
+    const verbPlural = makeActive ? "Activados" : "Desactivados";
+    showUndoToast({
+      message: ok === 1 ? `${verb} 1 producto` : `${verbPlural} ${ok} productos`,
+      description: "Puedes deshacer durante unos segundos",
+      durationMs: 10000,
+      onUndo: async () => {
+        const { ok: undone, fail: undoFail } = await applyProductStatusBatch(done, !makeActive);
+        if (undone) toast.success(undone === 1 ? "Cambio deshecho" : `${undone} cambios deshechos`);
+        if (undoFail) toast.error(`${undoFail} no se pudieron deshacer`);
+        await fetchData();
+      },
+    });
   };
 
   const bulkOpenWhatsAppFirst = () => {
@@ -2547,9 +2574,12 @@ export function InventoryPage() {
         searchTestId="search-inventory"
         selectedCount={selection.count}
         visibleCount={visibleInventoryIds.length}
+        matchingCount={matchingInventoryIds.length}
         allVisibleSelected={selection.allVisibleSelected(visibleInventoryIds)}
         someVisibleSelected={selection.someVisibleSelected(visibleInventoryIds)}
+        allMatchingSelected={selection.allVisibleSelected(matchingInventoryIds)}
         onSelectAll={() => selection.toggleAllVisible(visibleInventoryIds)}
+        onSelectMatching={() => selection.selectMatching(matchingInventoryIds)}
         onDeselectAll={selection.clear}
         testId="inventory-selection-bar"
       >
@@ -2567,10 +2597,10 @@ export function InventoryPage() {
           <>
             <Button type="button" variant="secondary" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(false)}>
               <Power className="h-4 w-4 mr-1" />
-              Desactivar
+              {selection.count > 0 ? `Desactivar ${selection.count}` : "Desactivar"}
             </Button>
             <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(true)}>
-              Activar
+              {selection.count > 0 ? `Activar ${selection.count}` : "Activar"}
             </Button>
           </>
         )}
@@ -2710,7 +2740,14 @@ export function InventoryPage() {
                       <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selection.isSelected(item.inventory_id)}
-                          onCheckedChange={() => selection.toggle(item.inventory_id)}
+                          onPointerDown={(e) => { invShiftKeyRef.current = !!e.shiftKey; }}
+                          onCheckedChange={() => {
+                            selection.toggleWithRange(item.inventory_id, {
+                              shiftKey: invShiftKeyRef.current,
+                              orderedIds: orderedInventoryIds,
+                            });
+                            invShiftKeyRef.current = false;
+                          }}
                           aria-label="Seleccionar fila"
                         />
                       </TableCell>
@@ -2847,7 +2884,14 @@ export function InventoryPage() {
                   >
                     <Checkbox
                       checked={selection.isSelected(item.inventory_id)}
-                      onCheckedChange={() => selection.toggle(item.inventory_id)}
+                      onPointerDown={(e) => { invShiftKeyRef.current = !!e.shiftKey; }}
+                      onCheckedChange={() => {
+                        selection.toggleWithRange(item.inventory_id, {
+                          shiftKey: invShiftKeyRef.current,
+                          orderedIds: orderedInventoryIds,
+                        });
+                        invShiftKeyRef.current = false;
+                      }}
                       aria-label="Seleccionar ítem"
                       className="bg-card/90 border-border shadow"
                     />

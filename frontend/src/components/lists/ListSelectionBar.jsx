@@ -7,7 +7,8 @@ import { Search } from "lucide-react";
 
 /**
  * Barra sticky/flotante (Liquid Glass) sobre el área de búsqueda de listas.
- * Incluye búsqueda opcional, seleccionar/deseleccionar, conteo y slot de acciones bulk.
+ * U3: tri-state checkbox; parcial → solo selecciona visibles;
+ * tras seleccionar la página visible, CTA “Seleccionar los N que coinciden”.
  */
 export function ListSelectionBar({
   // Search (controlled) — omit searchValue to hide search slot and use `searchSlot` / children layout
@@ -21,11 +22,18 @@ export function ListSelectionBar({
   // Selection
   selectedCount = 0,
   visibleCount = 0,
+  /** Full filtered / matching dataset size (live with filters). */
+  matchingCount,
   allVisibleSelected = false,
   someVisibleSelected = false,
+  /** True when every matching id is in the selection Set. */
+  allMatchingSelected = false,
   onSelectAll,
   onDeselectAll,
-  selectAllLabel = "Seleccionar todos",
+  /** Select full filtered set (Gmail-style second step). */
+  onSelectMatching,
+  selectAllLabel,
+  matchingSelectLabel,
   deselectLabel = "Deseleccionar",
   countLabel,
 
@@ -38,6 +46,34 @@ export function ListSelectionBar({
   leading,
   trailing,
 }) {
+  const resolvedMatching =
+    matchingCount != null && Number.isFinite(Number(matchingCount))
+      ? Number(matchingCount)
+      : visibleCount;
+
+  const isPaginatedMatching = resolvedMatching > visibleCount && visibleCount > 0;
+
+  // Si hay más coincidencias que la página: el checkbox actúa sobre visibles;
+  // el CTA “Seleccionar los N que coinciden” va en el prompt secundario (estilo Gmail).
+  const defaultSelectLabel = isPaginatedMatching
+    ? "Seleccionar página"
+    : resolvedMatching > 0
+      ? `Seleccionar los ${resolvedMatching} que coinciden`
+      : "Seleccionar todos";
+
+  const resolvedSelectAllLabel = selectAllLabel ?? defaultSelectLabel;
+
+  const showMatchingPrompt =
+    typeof onSelectMatching === "function" &&
+    allVisibleSelected &&
+    !allMatchingSelected &&
+    resolvedMatching > visibleCount &&
+    visibleCount > 0;
+
+  const resolvedMatchingLabel =
+    matchingSelectLabel ??
+    `Seleccionar los ${resolvedMatching} que coinciden`;
+
   const countText =
     countLabel != null
       ? countLabel
@@ -46,6 +82,12 @@ export function ListSelectionBar({
         : `${selectedCount} seleccionados`;
 
   const showSearch = !hideSearch && (searchSlot != null || typeof onSearchChange === "function");
+
+  const handleHeaderCheck = () => {
+    // Partial / empty → select visibles only (never clear).
+    // All visibles selected → clear visibles (deselect button clears all).
+    onSelectAll?.();
+  };
 
   return (
     <div
@@ -83,13 +125,13 @@ export function ListSelectionBar({
           <label className="inline-flex items-center gap-2 text-sm text-foreground/90 cursor-pointer select-none">
             <Checkbox
               checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
-              onCheckedChange={() => onSelectAll?.()}
-              aria-label={selectAllLabel}
+              onCheckedChange={handleHeaderCheck}
+              aria-label={resolvedSelectAllLabel}
               data-testid={`${testId}-select-all-check`}
             />
             <span className="whitespace-nowrap">
-              {selectAllLabel}
-              {visibleCount > 0 ? (
+              {resolvedSelectAllLabel}
+              {isPaginatedMatching ? (
                 <span className="text-muted-foreground"> ({visibleCount})</span>
               ) : null}
             </span>
@@ -130,6 +172,27 @@ export function ListSelectionBar({
           </div>
         )}
       </div>
+
+      {showMatchingPrompt ? (
+        <div
+          className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm"
+          data-testid={`${testId}-matching-prompt`}
+        >
+          <span className="text-foreground/90">
+            Los {visibleCount} de esta página están seleccionados.
+          </span>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-primary font-semibold"
+            onClick={() => onSelectMatching?.()}
+            data-testid={`${testId}-select-matching`}
+          >
+            {resolvedMatchingLabel}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
