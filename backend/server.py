@@ -13456,77 +13456,15 @@ async def list_cashier_invoices(
 
 
 @api_router.post("/caja/facturas/{sale_id}/cobrar")
-async def collect_cashier_invoice(sale_id: str, payload: CashierInvoiceCollectRequest, request: Request):
-    user = await require_cashier_roles(request)
-
-    session = await db.caja_sesiones.find_one({"session_id": payload.sesion_id}, {"_id": 0})
-    if not session:
-        raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
-    _validate_session_access(user, cast(Dict[str, Any], session))
-    if session.get("estado") != "abierta":
-        raise HTTPException(status_code=400, detail="La sesión de caja no está abierta")
-
-    sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
-    if not sale:
-        raise HTTPException(status_code=404, detail="Sale not found")
-    if str(sale.get("branch_id") or "") != str(session.get("branch_id") or ""):
-        raise HTTPException(status_code=400, detail="La factura no pertenece a la misma sucursal de la sesión")
-    if str(sale.get("invoice_state") or "").lower() == "cancelled":
-        raise HTTPException(status_code=400, detail="La factura está anulada")
-
-    has_card = any(_is_card_method(p.metodo) for p in payload.pagos) or _is_card_method(payload.payment_method)
-    discount_amount = _round2(float(sale.get("discounts_applied_amount") or sale.get("discount") or 0.0))
-    if has_card and discount_amount > 0 and not payload.force_remove_discount:
-        if not bool(sale.get("pos_discount_authorized")):
-            auth_status = await _get_pos_discount_card_request_status(sale_id)
-            if auth_status.get("status") == "pending":
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "code": "POS_DISCOUNT_PENDING",
-                        "message": "Solicitud de autorización pendiente. Espera aprobación de gerencia o supervisor.",
-                        "request_id": auth_status.get("request_id"),
-                    },
-                )
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "POS_DISCOUNT_CONFLICT",
-                    "message": "Con tarjeta y descuento activo debes enviar solicitud a gerencia/supervisor o remover descuento.",
-                },
-            )
-
-    await db.sales.update_one(
-        {"sale_id": sale_id},
-        {"$set": {"cash_session_id": payload.sesion_id, "updated_at": datetime.now(timezone.utc).isoformat()}},
+async def collect_cashier_invoice(sale_id: str):
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": f"Endpoint deprecado y retirado (410 Gone). Utilice la ruta canónica transaccional POST /api/cashier/invoices/{sale_id}/collect",
+            "canonical_path": f"/api/cashier/invoices/{sale_id}/collect",
+        },
     )
-
-    if has_card and not payload.pagos:
-        _validate_card_payment_metadata(
-            method=str(payload.payment_method or "card"),
-            card_type=payload.card_type,
-            bank_name=payload.bank_name,
-            transaction_number=payload.transaction_number,
-            reference=payload.reference,
-            line_label="cobro con tarjeta",
-        )
-
-    collect_payload = CashierCollectRequest(
-        amount=payload.amount,
-        payment_method=payload.payment_method,
-        reference=payload.reference,
-        notes=payload.notes,
-        idempotency_key=payload.idempotency_key,
-        received_amount=payload.received_amount,
-        force_remove_discount=payload.force_remove_discount,
-        pagos=payload.pagos,
-        autorizacion_descuento_pos=payload.autorizacion_descuento_pos,
-        card_type=payload.card_type,
-        bank_name=payload.bank_name,
-        transaction_number=payload.transaction_number,
-    )
-    result = await collect_sale_invoice(sale_id, collect_payload, request)
-    return result
 
 
 def _cashier_invoice_is_purgeable(sale: Dict[str, Any], *, bulk: bool = False) -> bool:
