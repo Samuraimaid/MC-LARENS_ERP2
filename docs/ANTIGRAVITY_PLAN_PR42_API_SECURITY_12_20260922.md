@@ -164,20 +164,20 @@ Marcar cada fila DONE / PARCIAL / N/A:
 |---|------|--------|---------------------|
 | Buscador | PR #42 UX Buscador (Enter, AND multi-término, Select-all) | **DONE** | PR #42 (`productLookup.js`, `CatalogPage.jsx`, `SaleForm.jsx`) |
 | 1 | Authentication (idle/TTL sesión) | PENDIENTE (Fase 2 / C2) | S5 / C2 |
-| 2 | Authorization (BOLA sample + require_roles) | PENDIENTE (Fase 2) | S5 |
+| 2 | Authorization (BOLA sample + require_roles) | **DONE** | PR S5 (`backend/core/authz_bola.py`, mitigación BOLA en /sales/{id}, /work-orders/{id}, /samples/{id}, require_roles en dinero y stock) |
 | 3 | Rate Limiting (PIN estricto + mutaciones 429) | **DONE** | PR S2 (`backend/middlewares/rate_limit.py`, `RateLimitMiddleware` con tope ráfaga 5/10s en PIN y 60/min en mutaciones, 429 + Retry-After) |
 | 4 | Input Validation (schemas en endpoints tocados) | PENDIENTE (Fase 2) | S6 |
 | 5 | Output Encoding (JSON Content-Type, sin HTML crudo) | PENDIENTE (Fase 2) | S6 |
 | 6 | HTTPS Everywhere (Cloud Run checklist) | PENDIENTE (Fase 3) | S9 |
 | 7 | Secret Rotation (runbook + no bake PIN en imagen) | PENDIENTE (Fase 3) | S8 |
-| 8 | Least Privilege (roles en mutaciones dinero/stock) | PENDIENTE (Fase 2) | S5 |
+| 8 | Least Privilege (roles en mutaciones dinero/stock) | **DONE** | PR S5 + C3 (`backend/core/authz_bola.py`, roles restringidos en creación de ventas, cobro/anulación de facturas, inventario/productos) |
 | 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect`) |
 | 10 | Audit Logging (mutaciones críticas sin secretos) | **DONE** | PR S4 (`backend/core/audit_log.py`, redacción estricta de PINs/tokens/Bearer, trazabilidad en /sales, /caja/facturas, /auth/pin/login, status ok/fail) |
 | 11 | Dependency Scans (Dependabot o audit CI) | PENDIENTE (Fase 3) | S7 |
 | 12 | Error Hygiene (handler prod sin traceback) | **DONE** | PR S3 (`backend/core/error_handler.py`, manejador global de excepciones sin exposición de stack trace en prod, JSON sanitizado) |
 | **C1** | Validación/recalc de montos en servidor (servidor gana, 409 TOTAL_MISMATCH) | **DONE** | PR S1 + C1 (`backend/core/money_validate.py`, saneamiento de ítems, totales garantizados en servidor) |
 | **C2** | Sesión: TTL o idle timeout (invalidar al cierre de turno) | PENDIENTE (Fase 2) | C2 |
-| **C3** | Separar lecturas de mutaciones privilegiadas | PENDIENTE (Fase 2) | S5 |
+| **C3** | Separar lecturas de mutaciones privilegiadas | **DONE** | PR S5 + C3 (catálogos y productos legibles abiertamente por usuarios autenticados; mutaciones blindadas bajo roles estrictos y 403 Forbidden) |
 | **C4** | Observabilidad de abuso (métricas/logs 401/429/finalize) | **DONE** | PR S4 + C4 (`backend/core/audit_log.py`, `AbuseSignalTracker` con detección en tiempo real de ráfagas 401_BURST, 429_SPIKE y FINALIZE_FAIL, persistencia en `security_abuse_events`) |
 | **C5** | Ops: backup Mongo + restore de prueba documentado | PENDIENTE (Fase 3) | S10 / C5 |
 

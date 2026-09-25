@@ -87,6 +87,12 @@ from backend.core.audit_log import (
     record_critical_mutation,
     sanitize_for_audit,
 )
+from backend.core.authz_bola import (
+    SALES_MUTATION_ROLES,
+    can_access_resource,
+    enforce_resource_ownership,
+    enforce_role,
+)
 from backend.domains.operations.work_order_split import ensure_single_item_work_orders
 from backend.domains.sales.delivery import (
     activate_delivery_after_payment,
@@ -11214,6 +11220,7 @@ async def create_sale(
     background_tasks: BackgroundTasks,
 ):
     user = await require_auth(request)
+    enforce_role(user, SALES_MUTATION_ROLES, "creación de venta")
     user_branch_id = str(user.branch_id or "branch_main")
 
     selected_cash_session_id: Optional[str] = None
@@ -12134,11 +12141,18 @@ async def create_sale(
 
 @api_router.get("/sales/{sale_id}")
 async def get_sale(sale_id: str, request: Request):
-    await require_auth(request)
+    user = await require_auth(request)
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
     sale = cast(Dict[str, Any], sale)
+    enforce_resource_ownership(
+        user,
+        sale,
+        resource_name="venta",
+        owner_field="salesperson_id",
+        branch_field="branch_id",
+    )
     sale["operational_audit"] = await build_operational_audit(db, sale)
     return sale
 
@@ -15635,11 +15649,19 @@ async def update_work_order(
 
 @api_router.get("/work-orders/{work_order_id}")
 async def get_work_order(work_order_id: str, request: Request):
-    await require_auth(request)
+    user = await require_auth(request)
     wo = await db.work_orders.find_one({"work_order_id": work_order_id}, {"_id": 0})
     if not wo:
         raise HTTPException(status_code=404, detail="Work order not found")
     wo = cast(Dict[str, Any], wo)
+    enforce_resource_ownership(
+        user,
+        wo,
+        resource_name="orden de trabajo",
+        owner_field="technician_id",
+        branch_field="branch_id",
+        extra_owner_fields=["created_by", "salesperson_id"],
+    )
     return wo
 
 
@@ -26058,6 +26080,13 @@ async def return_sample(sample_id: str, request: Request):
     sample = await db.sample_requests.find_one({"sample_id": sample_id})
     if not sample:
         raise HTTPException(status_code=404, detail="Sample not found")
+    enforce_resource_ownership(
+        user,
+        sample,
+        resource_name="muestra",
+        owner_field="requested_by",
+        branch_field="branch_id",
+    )
 
     if sample.get("status") != "delivered":
         raise HTTPException(status_code=400, detail="Solo se pueden devolver muestras entregadas")
