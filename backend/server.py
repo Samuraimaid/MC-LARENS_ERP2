@@ -93,6 +93,13 @@ from backend.core.authz_bola import (
     enforce_resource_ownership,
     enforce_role,
 )
+from backend.core.validation_encoding import (
+    validate_cashier_cancel_input,
+    validate_cashier_collect_input,
+    validate_identifier,
+    validate_pin_login_input,
+    validate_sale_input,
+)
 from backend.domains.operations.work_order_split import ensure_single_item_work_orders
 from backend.domains.sales.delivery import (
     activate_delivery_after_payment,
@@ -5810,6 +5817,7 @@ async def get_pin_users(request: Request):
 
 @api_router.post("/auth/pin/login")
 async def login_with_pin(payload: PinLoginRequest, request: Request):
+    validate_pin_login_input(payload)
     client_ip = request.client.host if request.client else "unknown"
     pin = payload.pin.strip()
     if not is_valid_login_pin(pin):
@@ -11224,6 +11232,7 @@ async def create_sale(
 ):
     user = await require_auth(request)
     enforce_role(user, SALES_MUTATION_ROLES, "creación de venta")
+    validate_sale_input(sale_data)
     user_branch_id = str(user.branch_id or "branch_main")
 
     selected_cash_session_id: Optional[str] = None
@@ -12144,6 +12153,7 @@ async def create_sale(
 
 @api_router.get("/sales/{sale_id}")
 async def get_sale(sale_id: str, request: Request):
+    validate_identifier(sale_id, "sale_id")
     user = await require_auth(request)
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
     if not sale:
@@ -13607,6 +13617,8 @@ async def _cancel_cashier_invoice_record(
 
 @api_router.post("/caja/facturas/{sale_id}/anular")
 async def cancel_cashier_invoice(sale_id: str, payload: CashierInvoiceCancelRequest, request: Request):
+    validate_identifier(sale_id, "sale_id")
+    validate_cashier_cancel_input(payload)
     user = await require_roles(request, ["gerencia", "recursos_humanos"])
     await require_reauth_pin(request, "caja.anular")
 
@@ -14119,6 +14131,8 @@ async def approve_sale_cancel_request(request_id: str, request: Request):
 
 @api_router.post("/cashier/invoices/{sale_id}/collect")
 async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, request: Request):
+    validate_identifier(sale_id, "sale_id")
+    validate_cashier_collect_input(payload)
     user = await require_cashier_roles(request)
 
     sale = await db.sales.find_one({"sale_id": sale_id}, {"_id": 0})
@@ -15652,6 +15666,7 @@ async def update_work_order(
 
 @api_router.get("/work-orders/{work_order_id}")
 async def get_work_order(work_order_id: str, request: Request):
+    validate_identifier(work_order_id, "work_order_id")
     user = await require_auth(request)
     wo = await db.work_orders.find_one({"work_order_id": work_order_id}, {"_id": 0})
     if not wo:
@@ -26084,6 +26099,7 @@ async def get_samples(
 
 @api_router.post("/samples/{sample_id}/return")
 async def return_sample(sample_id: str, request: Request):
+    validate_identifier(sample_id, "sample_id")
     user = await require_roles(request, ["gerencia", "supervisor", "ventas"])
 
     sample = await db.sample_requests.find_one({"sample_id": sample_id})
