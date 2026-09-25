@@ -31,8 +31,7 @@ frontend/public/vehicles/models
 frontend/public/vehicles/blueprints
 frontend/public/videos
 frontend/public/uploads
-/uploads
-!frontend/src/components/uploads
+# Do NOT add a bare "uploads" rule — it also drops src/components/uploads (U2).
 temporary_cleanup_validation
 backups
 scripts/incoming_grok

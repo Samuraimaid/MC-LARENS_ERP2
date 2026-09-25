@@ -42,7 +42,7 @@ import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { SwipeableRow } from "@/components/lists/SwipeableRow";
 import { useDevice } from "@/hooks/useDevice";
-import { FileUploadQueue } from "@/components/uploads";
+import { FileUploadQueue } from "@/components/uploads/FileUploadQueue";
 import { densityTokens } from "@/components/lists/listDensity";
 import EmptyState from "@/components/common/EmptyState";
 import { humanApiError } from "@/lib/humanApiError";
