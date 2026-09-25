@@ -7318,8 +7318,13 @@ async def upload_product_images(
     files: List[UploadFile] = File(...),
     sku: Optional[str] = Form(None),
     product_id: Optional[str] = Form(None),
+    start_index: Optional[int] = Form(0),
 ):
-    """Upload multiple product images with standardized {SKU}_main / {SKU}_add_XX naming."""
+    """Upload multiple product images with standardized {SKU}_main / {SKU}_add_XX naming.
+
+    Optional start_index lets single-file / parallel uploads keep add_XX numbering
+    without inventing a new endpoint (U2 honest uploads).
+    """
     user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda", "programador"])
     raw_sku = str(sku or "").strip()
     if not raw_sku and product_id:
@@ -7337,6 +7342,7 @@ async def upload_product_images(
     upload_dir.mkdir(parents=True, exist_ok=True)
     
     saved_images = []
+    base_idx = max(0, int(start_index or 0))
     
     for idx, f in enumerate(files):
         ext = Path(f.filename or "image.jpg").suffix.lower()
@@ -7344,8 +7350,9 @@ async def upload_product_images(
             ext = ".jpg"
         if ext == ".jpeg":
             ext = ".jpg"
-            
-        suffix = "main" if idx == 0 else f"add_{idx:02d}"
+
+        abs_idx = base_idx + idx
+        suffix = "main" if abs_idx == 0 else f"add_{abs_idx:02d}"
         filename = f"{clean_sku}_{suffix}{ext}"
         target_path = upload_dir / filename
         
@@ -7358,8 +7365,8 @@ async def upload_product_images(
         saved_images.append({
             "url": media_url,
             "gcs_url": gcs_url,
-            "type": "main" if idx == 0 else "additional",
-            "is_primary": idx == 0,
+            "type": "main" if abs_idx == 0 else "additional",
+            "is_primary": abs_idx == 0,
             "filename": filename,
             "size_bytes": len(content)
         })
@@ -7367,17 +7374,28 @@ async def upload_product_images(
     image_urls = [img["url"] for img in saved_images]
     
     if product_id:
-        await db.products.update_one(
-            {"product_id": product_id},
-            {
-                "$set": {
-                    "image_url": image_urls[0],
-                    "images": image_urls,
-                    "media": saved_images,
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+        # Legacy batch (start_index==0): replace images list.
+        # Partial / parallel uploads (start_index>0): append so we do not wipe gallery.
+        if base_idx > 0:
+            await db.products.update_one(
+                {"product_id": product_id},
+                {
+                    "$push": {"images": {"$each": image_urls}, "media": {"$each": saved_images}},
+                    "$set": {"updated_at": datetime.now(timezone.utc).isoformat()},
+                },
+            )
+        else:
+            await db.products.update_one(
+                {"product_id": product_id},
+                {
+                    "$set": {
+                        "image_url": image_urls[0],
+                        "images": image_urls,
+                        "media": saved_images,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
                 }
-            }
-        )
+            )
         
     return {
         "status": "ok",
