@@ -290,6 +290,7 @@ function QueueItem({ item, compact, onRetry, onRemove, onReplace }) {
   const isError = item.status === "error";
   const isDone = item.status === "done";
   const isUploading = item.status === "uploading";
+  const isQueued = item.status === "queued";
   const speed = formatSpeed(item.speedBps);
   const eta = formatEta(item.etaSeconds);
   const dims =
