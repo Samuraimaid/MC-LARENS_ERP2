@@ -67,6 +67,20 @@ from backend.domains.hr.payroll_periods import (
     get_quincena_bounds,
 )
 from backend.domains.hr.attendance_status import build_technician_attendance_snapshot
+from backend.core.idempotency import (
+    build_idempotency_scope,
+    check_idempotency,
+    clear_idempotency_on_failure,
+    complete_idempotency_operation,
+    ensure_idempotency_indexes,
+    extract_idempotency_key,
+    start_idempotency_operation,
+)
+from backend.core.money_validate import (
+    enforce_server_settlement_total,
+    recalculate_item_subtotal,
+    validate_sale_item_money,
+)
 from backend.domains.operations.work_order_split import ensure_single_item_work_orders
 from backend.domains.sales.delivery import (
     activate_delivery_after_payment,
@@ -2866,24 +2880,11 @@ async def _finalize_create_sale_settlement(
         settlement["net_to_collect"] = expected_total
         settlement["delivery_cost_nio"] = _round2(float(delivery_topup_nio))
     submitted_total = getattr(sale_data, "total_amount", None)
-    if submitted_total is not None:
-        try:
-            submitted_value = float(submitted_total)
-            if abs(submitted_value - expected_total) > 0.05:
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "error": "TOTAL_MISMATCH",
-                        "message": "El total enviado no coincide con el cálculo del servidor",
-                        "expected_total": expected_total,
-                        "submitted_total": submitted_value,
-                        "settlement": settlement,
-                    },
-                )
-        except HTTPException:
-            raise
-        except (TypeError, ValueError):
-            pass
+    expected_total = enforce_server_settlement_total(
+        expected_total=expected_total,
+        submitted_total=submitted_total,
+        settlement_data=settlement,
+    )
 
     settlement["currency"] = prep["currency"]
     settlement["exchange_rate"] = prep["exchange_rate"]
@@ -3264,6 +3265,11 @@ async def touch_kiosk_pin_sync_marker(actor_user_id: Optional[str] = None) -> st
 
 async def ensure_runtime_indexes() -> None:
     """Create indexes that keep critical workflows idempotent and fast."""
+    try:
+        await ensure_idempotency_indexes(db)
+    except Exception as exc:
+        logger.warning("Could not ensure_idempotency_indexes: %s", exc)
+
     try:
         await db.dispatch_orders.create_index("sale_id", unique=True, sparse=True)
     except Exception as exc:
@@ -11183,10 +11189,12 @@ async def create_sale(
             selected_cash_session_id = str(active_session.get("session_id"))
 
     draft_id = str(getattr(sale_data, "draft_id", "") or "").strip()
-    idempotency_key = str(sale_data.idempotency_key or "").strip()
-    if not idempotency_key and draft_id:
-        idempotency_key = f"draft:{draft_id}"
+    idempotency_key = extract_idempotency_key(request, getattr(sale_data, "idempotency_key", None), draft_id)
+    idempotency_scope = build_idempotency_scope("/api/sales", user.user_id)
     if idempotency_key:
+        is_dup, cached_sale = await check_idempotency(db, idempotency_scope, idempotency_key)
+        if is_dup and cached_sale:
+            return cached_sale
         existing_sale = await db.sales.find_one(
             {
                 "salesperson_id": user.user_id,
@@ -11195,13 +11203,21 @@ async def create_sale(
             {"_id": 0},
         )
         if existing_sale:
-            return {
+            res_payload = {
                 **existing_sale,
                 "work_order_created": bool(existing_sale.get("work_order_id")),
                 "work_order_id": existing_sale.get("work_order_id"),
                 "dispatch_created": bool(existing_sale.get("dispatch_id")),
                 "dispatch_id": existing_sale.get("dispatch_id"),
             }
+            await complete_idempotency_operation(db, idempotency_scope, idempotency_key, res_payload, user_id=user.user_id)
+            return res_payload
+        acquired = await start_idempotency_operation(db, idempotency_scope, idempotency_key, user_id=user.user_id)
+        if not acquired:
+            raise HTTPException(
+                status_code=409,
+                detail="Operación de venta en proceso con la misma clave de idempotencia.",
+            )
 
     branch_default_warehouse = await get_default_warehouse_for_branch(user_branch_id)
     branch_default_warehouse_id = (
@@ -11329,24 +11345,9 @@ async def create_sale(
                 status_code=404, detail=f"Product {item['product_id']} not found"
             )
 
-        try:
-            qty = int(item.get("quantity") or 0)
-        except (TypeError, ValueError):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Cantidad inválida para {product.get('name') or item.get('product_id')}",
-            )
-        if qty <= 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"La cantidad debe ser mayor que cero ({product.get('name') or item.get('product_id')})",
-            )
-        if qty > 10000:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Cantidad excesiva ({qty}) para {product.get('name') or item.get('product_id')}",
-            )
+        qty, item_disc, _ = validate_sale_item_money(item, product.get("name"))
         item["quantity"] = qty
+        item["discount"] = item_disc
 
         requested_warehouse_id = item.get("warehouse_id")
         warehouse_id = str(requested_warehouse_id or branch_default_warehouse_id or "")
@@ -12021,7 +12022,7 @@ async def create_sale(
         sale_id=doc.get("sale_id"),
     )
 
-    return {
+    final_sale_response = {
         **doc,
         "work_order_created": False,
         "work_order_id": None,
@@ -12030,6 +12031,15 @@ async def create_sale(
         "awaiting_cashier_payment": True,
         "draft_consumed": bool(draft_id),
     }
+    if idempotency_key:
+        await complete_idempotency_operation(
+            db,
+            scope=idempotency_scope,
+            key=idempotency_key,
+            response_data=final_sale_response,
+            user_id=user.user_id,
+        )
+    return final_sale_response
 
 
 @api_router.get("/sales/{sale_id}")
@@ -14011,14 +14021,25 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     ):
         raise HTTPException(status_code=400, detail="El cajero no puede cambiar el método de pago de la factura")
 
-    idempotency_key = str(payload.idempotency_key or "").strip()
+    idempotency_key = extract_idempotency_key(request, getattr(payload, "idempotency_key", None))
+    idempotency_scope = build_idempotency_scope("/cashier/collect", user.user_id, sale_id)
     if idempotency_key:
+        is_dup, cached_payment = await check_idempotency(db, idempotency_scope, idempotency_key)
+        if is_dup and cached_payment:
+            return cached_payment
         existing = await db.invoice_payments.find_one(
             {"sale_id": sale_id, "idempotency_key": idempotency_key},
             {"_id": 0},
         )
         if existing:
+            await complete_idempotency_operation(db, idempotency_scope, idempotency_key, existing, user_id=user.user_id)
             return existing
+        acquired = await start_idempotency_operation(db, idempotency_scope, idempotency_key, user_id=user.user_id)
+        if not acquired:
+            raise HTTPException(
+                status_code=409,
+                detail="Operación de cobro en proceso con la misma clave de idempotencia.",
+            )
 
     net_to_collect = sale.get("net_to_collect")
     due = _round2(
@@ -14275,7 +14296,7 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
     safe_payment_doc.pop("_id", None)
     safe_payment_doc.pop("notes_auditoria", None)
 
-    return {
+    final_collect_response = {
         **safe_payment_doc,
         "sale_payment_status": new_status,
         "amount_paid_total": new_paid,
@@ -14295,6 +14316,15 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
         "warnings": [w for w in [mixed_warning] if w],
         "fulfillment": fulfillment_result,
     }
+    if idempotency_key:
+        await complete_idempotency_operation(
+            db,
+            scope=idempotency_scope,
+            key=idempotency_key,
+            response_data=final_collect_response,
+            user_id=user.user_id,
+        )
+    return final_collect_response
 
 
 @api_router.post("/facturacion/pagar")
