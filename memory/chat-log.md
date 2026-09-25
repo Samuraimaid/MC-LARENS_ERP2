@@ -562,3 +562,21 @@ Other open documents:
       - Integración activa en backend/server.py (create_sale, collect_sale_invoice, cancel_cashier_invoice, login_with_pin, ensure_runtime_indexes) y en backend/middlewares/rate_limit.py (bloqueos 429 disparan señal de abuso).
       - Suite unitaria automatizada en backend/tests/test_audit_abuse.py ejecutada con 100% PASS.
       - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #10 (Audit Logging) y Caso C4 como DONE.
+   9. **Implementación de S5 (Authz / BOLA Protection) y C3 (Least Privilege / Separación Lecturas vs Mutaciones):**
+      - Creado módulo dedicado backend/core/authz_bola.py con guardas can_access_resource y enforce_resource_ownership para mitigar ataques BOLA (Broken Object Level Authorization).
+      - Los vendedores y técnicos quedan restringidos a acceder únicamente a recursos de su propia sucursal o de su autoría (salesperson_id, technician_id, branch_id), mientras que roles administrativos globales (gerencia, supervisor, recursos_humanos, programador) mantienen visibilidad global.
+      - Validación de BOLA integrada en GET /sales/{sale_id}, GET /work-orders/{work_order_id} y POST /samples/{sample_id}/return, rechazando accesos no autorizados con HTTP 403 FORBIDDEN_OBJECT_ACCESS.
+      - Principio de Menor Privilegio (Least Privilege / C3): Separadas lecturas públicas/abiertas de catálogos y productos contra mutaciones privilegiadas de stock e inventario (POST /products, PUT /products/{id}) y dinero/caja (POST /sales, /caja/facturas/{id}/cobrar, anular), blindadas con roles específicos.
+      - Suite unitaria automatizada en backend/tests/test_authz_bola.py ejecutada con 100% PASS.
+      - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #2 (Authorization), Idea #8 (Least Privilege) y Caso C3 como DONE.
+
+   10. **Implementación de C2 (Session Idle TTL e Invalidación en Cierre de Turno / Cambio de Rol):**
+       - Módulo ackend/domains/auth/session_policy.py: configurado idle timeout de cajero en 10 horas (600 minutos, dentro de la ventana de 8-12 horas de jornada continua de caja), manteniendo 5 minutos en terminales de piso/ventas y 60 minutos en roles administrativos.
+       - Creado módulo ackend/core/session_security.py con helpers invalidate_user_sessions, invalidate_session_token y check_session_validity.
+       - Integrado en ackend/server.py:
+         - En POST /caja/cierre: invalidación automática de sesiones activas del cajero al cerrar el turno (
+eason='caja_cierre').
+         - En PUT /users/{user_id}/role: invalidación inmediata de todas las sesiones activas del usuario modificado (
+eason='role_change') para forzar re-autenticación con sus nuevos privilegios.
+       - Suites unitarias automatizadas en ackend/tests/test_session_policy.py y ackend/tests/test_session_ttl.py ejecutadas con 100% PASS.
+       - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #1 (Authentication) y Caso C2 como DONE.

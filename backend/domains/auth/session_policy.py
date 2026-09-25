@@ -14,9 +14,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 POLICY_DOC_TYPE = "session_security_policy"
 
-# Idle: ventas (incl. VIP sellers share role=ventas) = 5 min; others = 60 min
+# Idle: ventas = 5 min; cajero = 600 min (10h, rango 8-12h turno); others = 60 min
 DEFAULT_IDLE_MINUTES: Dict[str, int] = {
     "ventas": 5,
+    "cajero": 600,
     "default": 60,
 }
 
@@ -122,9 +123,11 @@ def normalize_session_policy(raw: Optional[Dict[str, Any]] = None) -> Dict[str, 
         minimum=1,
         maximum=24 * 60,
     )
-    # Force ventas key present
+    # Force ventas and cajero keys present
     if "ventas" not in idle:
         idle["ventas"] = DEFAULT_IDLE_MINUTES["ventas"]
+    if "cajero" not in idle:
+        idle["cajero"] = DEFAULT_IDLE_MINUTES["cajero"]
     if "default" not in idle:
         idle["default"] = DEFAULT_IDLE_MINUTES["default"]
 
