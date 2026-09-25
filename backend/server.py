@@ -10177,20 +10177,31 @@ async def build_work_order_visibility_query(user: User) -> Dict[str, Any]:
 
     if effective_role in {"instalaciones", "electrico", "polarizador", "coordinador_instalaciones", "coordinador_polarizados"}:
         query: Dict[str, Any] = {}
-        if user.branch_id:
+        if user.branch_id and user.branch_id not in ("Todas / Central", "all"):
             query["branch_id"] = user.branch_id
+
+        unassigned_or_self = [
+            {"technician_id": user.user_id},
+            {"technician_id": None},
+            {"technician_id": ""},
+            {"technician_id": "unassigned"},
+            {"technician_id": {"$exists": False}},
+        ]
+
         if effective_role == "electrico":
             query["department"] = "electrico"
-            query["technician_id"] = user.user_id
+            query["$or"] = unassigned_or_self
         elif effective_role == "instalaciones":
-            query["$or"] = [{"department": "instalaciones"}, {"department": {"$exists": False}}]
-            query["technician_id"] = user.user_id
+            query["$and"] = [
+                {"$or": [{"department": "instalaciones"}, {"department": {"$exists": False}}]},
+                {"$or": unassigned_or_self},
+            ]
         elif effective_role == "coordinador_instalaciones":
             query["$or"] = [{"department": "instalaciones"}, {"department": "electrico"}, {"department": {"$exists": False}}]
         elif effective_role in {"polarizador", "coordinador_polarizados"}:
-            query["department"] = "polarizados"
+            query["department"] = {"$in": ["polarizados", "polarizado"]}
             if effective_role == "polarizador":
-                query["technician_id"] = user.user_id
+                query["$or"] = unassigned_or_self
         return query
 
     if user.branch_id:

@@ -32,7 +32,7 @@ export function KDSInstallationsPage() {
   const userRole = String(user?.role || "").toLowerCase();
   const canClear = canPurgeOperationalQueue(userRole);
 
-  const [department, setDepartment] = useState("instalaciones");
+  const [department, setDepartment] = useState(() => (userRole === "electrico" ? "electrico" : "instalaciones"));
   const [orders, setOrders] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
