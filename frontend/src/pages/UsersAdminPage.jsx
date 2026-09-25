@@ -96,7 +96,6 @@ export function UsersAdminPage() {
   const [editingKioskPinUser, setEditingKioskPinUser] = useState(null);
   const [newKioskPin, setNewKioskPin] = useState("");
   const [kioskPinsTable, setKioskPinsTable] = useState([]);
-  const [loadingKioskPins, setLoadingKioskPins] = useState(false);
   const [syncingKioskPins, setSyncingKioskPins] = useState(false);
   const [isViewOnly, setIsViewOnly] = useState(false);
   const [showLoginPins, setShowLoginPins] = useState(false);
@@ -656,25 +655,6 @@ export function UsersAdminPage() {
     }
   };
 
-  const seedKioskPinsForTesting = async () => {
-    setLoadingKioskPins(true);
-    try {
-      const res = await axios.post(
-        `${API}/users/pin/kiosk/seed`,
-        { reset_all: true },
-        { withCredentials: true }
-      );
-      const rows = res?.data?.rows || [];
-      setKioskPinsTable(rows);
-      toast.success(`PIN Kiosko generados para ${rows.length} usuarios`);
-      await fetchData();
-    } catch (error) {
-      toast.error(getErrorMessage(error, "No se pudieron generar los PIN Kiosko"));
-    } finally {
-      setLoadingKioskPins(false);
-    }
-  };
-
   const deletePinUser = async (userId, userName) => {
     if (!canDeleteUsers) {
       toast.error("No tienes permiso para eliminar usuarios");
@@ -869,14 +849,6 @@ export function UsersAdminPage() {
                 <CardDescription>Usuarios operativos con PIN de marcación (4) y PIN de inicio de sesión (8)</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={seedKioskPinsForTesting}
-                  disabled={!canEditUsers || loadingKioskPins}
-                  data-testid="seed-kiosk-pins-btn"
-                >
-                  {loadingKioskPins ? "Generando..." : "Generar PINs Kiosko"}
-                </Button>
                 <Button
                   variant="outline"
                   onClick={() => syncKioskPins()}
