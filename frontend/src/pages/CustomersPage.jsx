@@ -47,6 +47,7 @@ import { PRICING_PROFILES } from "@/lib/priceTiers";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
+import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 // Prefijos de placa Nicaragua
@@ -164,17 +165,20 @@ export function CustomersPage() {
     }
   };
 
-  const fetchCustomers = async () => {
-    setLoading(true);
+  const fetchCustomers = async (opts) => {
+    const silent = Boolean(opts && typeof opts === "object" && opts.silent);
+    if (!silent) setLoading(true);
     try {
       const response = await axios.get(`${API}/customers`, { withCredentials: true });
       setCustomers(response.data);
     } catch (error) {
       toast.error("Error al cargar clientes");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  const softRefresh = () => fetchCustomers({ silent: true });
 
   const decodeVin = async (vinInput) => {
     const vin = formatChasis(vinInput || "");
@@ -957,6 +961,7 @@ export function CustomersPage() {
   };
 
   return (
+    <PullToRefresh onRefresh={softRefresh} testId="customers-pull-to-refresh">
     <div className="p-6 space-y-6" data-testid="customers-page">
       {!canViewCustomers ? (
         <Card>
@@ -1699,5 +1704,6 @@ export function CustomersPage() {
       )}
       <BackToTopButton />
     </div>
+    </PullToRefresh>
   );
 }

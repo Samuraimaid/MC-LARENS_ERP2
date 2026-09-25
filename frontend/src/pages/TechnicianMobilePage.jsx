@@ -46,6 +46,7 @@ import {
   Zap,
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { PullToRefresh } from "@/components/lists/PullToRefresh";
 
 export function TechnicianMobilePage() {
   const { user, logout } = useAuth();
@@ -125,8 +126,10 @@ export function TechnicianMobilePage() {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadAll();
+    return loadAll();
   };
+
+  const softRefresh = () => handleRefresh();
 
   const claimOrder = async (orderId) => {
     try {
@@ -231,6 +234,11 @@ export function TechnicianMobilePage() {
   }
 
   return (
+    <PullToRefresh
+      onRefresh={softRefresh}
+      scrollRoot="window"
+      testId="technician-pull-to-refresh"
+    >
     <div className="min-h-screen bg-background pb-24" data-testid="technician-mobile-page">
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground p-4 safe-area-top">
         <div className="flex items-center justify-between">
@@ -553,6 +561,7 @@ export function TechnicianMobilePage() {
 
       <TechnicianKioskNav />
     </div>
+    </PullToRefresh>
   );
 }
 
