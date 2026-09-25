@@ -18,6 +18,7 @@ import { useDialogMessages } from "@/context/DialogMessagesContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { cn, formatCurrency } from "@/lib/utils";
+import { humanApiError } from "@/lib/humanApiError";
 import { CUSTOMER_VEHICLE_CARD_PATTERNS } from "@/lib/cardPatterns";
 import { API_BASE as API } from "@/lib/api";
 import {
@@ -529,7 +530,7 @@ export default function SaleForm({
   vehicles = [],
   initialData = {},
   onSubmit,
-  submitLabel = "Crear",
+  submitLabel = "Crear venta",
   /** Sellers (and sales desk): confirm checklist before locking invoice in caja */
   confirmSendToCashier = false,
   exchangeRate = 36.5,
@@ -1505,7 +1506,7 @@ export default function SaleForm({
       toast.success("Muestra solicitada a bodega");
       updateCartItem(item.product_id, "sample_status", "requested", { persist: true });
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo solicitar la muestra");
+      toast.error(humanApiError(error, "No se pudo solicitar la muestra"));
     }
   };
 
@@ -1679,7 +1680,7 @@ export default function SaleForm({
       }));
       toast.success("VIN decodificado");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo decodificar el VIN");
+      toast.error(humanApiError(error, "No se pudo decodificar el VIN"));
     } finally {
       setIsDecodingVin(false);
     }
@@ -1837,7 +1838,7 @@ export default function SaleForm({
         useVinDecoder: false,
       });
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear cliente");
+      toast.error(humanApiError(error, "No se pudo crear el cliente — revisa los datos e inténtalo de nuevo"));
     } finally {
       setIsSubmittingCustomer(false);
     }
@@ -1866,7 +1867,7 @@ export default function SaleForm({
       }));
       toast.success("VIN decodificado");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo decodificar el VIN");
+      toast.error(humanApiError(error, "No se pudo decodificar el VIN"));
     } finally {
       setIsDecodingVehicleVin(false);
     }
@@ -1954,8 +1955,7 @@ export default function SaleForm({
         setVehicleConflictData(errDetail);
         setShowVehicleConflictDialog(true);
       } else {
-        const msg = typeof errDetail === "string" ? errDetail : (errDetail?.message || "No se pudo registrar el vehículo");
-        toast.error(msg);
+        toast.error(humanApiError(errDetail ?? error, "No se pudo registrar el vehículo — revisa placa y datos e inténtalo de nuevo"));
       }
     } finally {
       setIsSubmittingVehicle(false);
@@ -2328,7 +2328,7 @@ export default function SaleForm({
       setPrecio2ApprovedSignature("");
       toast.success("Solicitud de Precio 2 enviada. Espera aprobación de supervisión o gerencia.");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo solicitar aprobación de Precio 2");
+      toast.error(humanApiError(error, "No se pudo solicitar aprobación de Precio 2"));
     } finally {
       setRequestingPrecio2Approval(false);
     }
@@ -4074,17 +4074,23 @@ export default function SaleForm({
             <span>Paso 1: Agregar Cliente/Empresa o buscar en la lista</span>
           </Label>
           {!selectedCustomer ? (
-            <div className="flex items-center gap-2 mb-2 mt-2">
+            <div className="mb-2 mt-2 space-y-1.5">
+              <Label htmlFor="saleform-customer-search" className="text-xs font-semibold text-muted-foreground">
+                Cliente
+              </Label>
+              <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <UserSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nombre, teléfono o cédula..."
+                  id="saleform-customer-search"
+                  placeholder="Nombre, teléfono o cédula…"
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   onKeyDown={handleCustomerSearchKeyDown}
                   ref={customerSearchRef}
                   disabled={sellerFlowLocked}
                   className="mb-0 pl-9"
+                  aria-label="Buscar cliente"
                 />
               </div>
               <Button
@@ -4106,6 +4112,7 @@ export default function SaleForm({
                 <Building2 className={cn("h-4 w-4 text-emerald-700 dark:text-emerald-300", isPortraitOrientation ? "" : "mr-2")} />
                 {!isPortraitOrientation ? "Nuevo Registro" : <span className="sr-only">Nuevo Registro</span>}
               </Button>
+              </div>
             </div>
           ) : null}
           {selectedCustomer ? (
@@ -4807,11 +4814,17 @@ export default function SaleForm({
           {!stepTwoComplete ? (
             <p className="text-xs text-muted-foreground">Selecciona cliente y forma de entrega para habilitar productos</p>
           ) : null}
-          <div className="flex flex-col gap-2 mb-2 md:flex-row ui-fade-in-stagger">
+          <div className="mb-2 space-y-1.5">
+            <Label htmlFor="saleform-product-search" className="text-xs font-semibold text-muted-foreground">
+              Producto
+            </Label>
+          <div className="flex flex-col gap-2 md:flex-row ui-fade-in-stagger">
               <div className="relative flex-1">
                 <PackageSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nombre, SKU o código escaneado..."
+                  id="saleform-product-search"
+                  placeholder="Nombre, SKU o código escaneado…"
+                  aria-label="Buscar producto"
                   value={productSearch}
                   onChange={(e) => {
                     setProductSearch(e.target.value);
@@ -4891,6 +4904,7 @@ export default function SaleForm({
               <BookOpen className="h-4 w-4 mr-2" />
               Buscar desde Catálogo
             </Button>
+          </div>
           </div>
           {selectedVehicleData && selectedVehicleBombillos && !selectedVehicleBombillos.hasData ? (
             <p className="w-full text-[11px] text-amber-800/90 dark:text-amber-200/80 -mt-1">
@@ -5855,18 +5869,15 @@ export default function SaleForm({
                         try {
                           await executeSubmitToCashier(pendingCashierPayload);
                         } catch (error) {
-                          const detail = error?.response?.data?.detail;
                           toast.error(
-                            typeof detail === "string"
-                              ? detail
-                              : detail?.message || error?.message || "No se pudo enviar la factura a caja",
+                            humanApiError(error, "No se pudo crear la venta — inténtalo de nuevo"),
                           );
                         }
                       }}
                     >
                       {submittingToCashier
-                        ? (msg.submitting_label || "Enviando…")
-                        : (msg.primary_label || "Sí, enviar a caja")}
+                        ? (msg.submitting_label || "Creando venta…")
+                        : (msg.primary_label || "Crear venta")}
                     </Button>
                   </ContextualDialogFooter>
                 </>
@@ -6349,11 +6360,13 @@ export default function SaleForm({
         </div>
 
         <div>
-          <Label>Notas</Label>
+          <Label htmlFor="saleform-notes">Notas</Label>
           <Input
+            id="saleform-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             onBlur={(e) => persistDraftSnapshot({ notes: e.target.value })}
+            placeholder="Opcional — no reemplaza la etiqueta"
           />
         </div>
 
@@ -6371,7 +6384,7 @@ export default function SaleForm({
             )}
           >
             <ShieldCheck className="h-4 w-4 mr-2" />
-            {submittingToCashier ? "Enviando…" : submitLabel}
+            {submittingToCashier ? "Creando venta…" : submitLabel}
           </Button>
         </div>
       </div>

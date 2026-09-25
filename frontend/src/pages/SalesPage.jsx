@@ -3125,7 +3125,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               currencyValue={currency}
               onCurrencyChange={setCurrency}
               hideCurrencyField={true}
-              submitLabel="Enviar Factura a Caja"
+              submitLabel="Crear venta"
               confirmSendToCashier={isSellerOnly || String(user?.role || "").toLowerCase() === "ventas"}
               onSubmit={async (payload) => {
                 const submittedDraftId = activeDraftIdRef.current;

@@ -49,6 +49,8 @@ import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import EmptyState from "@/components/common/EmptyState";
+import { humanApiError } from "@/lib/humanApiError";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 // Prefijos de placa Nicaragua
@@ -510,7 +512,7 @@ export function CustomersPage() {
 
       toast.success("Solicitud enviada para aprobación");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al solicitar aprobación");
+      toast.error(humanApiError(error, "No se pudo enviar la solicitud — inténtalo de nuevo"));
     }
   };
 
@@ -554,7 +556,7 @@ export function CustomersPage() {
         setIsAddingVehicle(false);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al agregar vehículo");
+      toast.error(humanApiError(error, "No se pudo agregar el vehículo — revisa placa y datos e inténtalo de nuevo"));
     }
   };
 
@@ -618,7 +620,7 @@ export function CustomersPage() {
       toast.success("Solicitud de eliminación enviada para aprobación");
       setShowDeleteVehicle(false);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al solicitar eliminación");
+      toast.error(humanApiError(error, "No se pudo solicitar la eliminación — inténtalo de nuevo"));
     }
   };
 
@@ -744,7 +746,7 @@ export function CustomersPage() {
       setCreditAuthCode("");
       fetchCustomers();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear cliente");
+      toast.error(humanApiError(error, "No se pudo crear el cliente — revisa los datos e inténtalo de nuevo"));
     }
   };
 
@@ -783,7 +785,7 @@ export function CustomersPage() {
       setCreditAuthCode("");
       fetchCustomers();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al solicitar actualización");
+      toast.error(humanApiError(error, "No se pudo enviar la solicitud de actualización — inténtalo de nuevo"));
     }
   };
 
@@ -989,7 +991,7 @@ export function CustomersPage() {
       toast.success("Solicitud de eliminación enviada");
       setPendingDeleteCustomer(null);
     } catch (e) {
-      toast.error(e.response?.data?.detail || "Error al solicitar eliminación");
+      toast.error(humanApiError(e, "No se pudo solicitar la eliminación — inténtalo de nuevo"));
     } finally {
       setDeleteCustomerBusy(false);
     }
@@ -1024,7 +1026,7 @@ export function CustomersPage() {
             <DialogTrigger asChild>
               <Button data-testid="new-customer-btn" disabled={!canCreateCustomers} className="h-9 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo Cliente
+                Crear cliente
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1451,7 +1453,20 @@ export function CustomersPage() {
               {loading ? (
                 <div className="text-center py-8"><RefreshCw className="h-6 w-6 animate-spin mx-auto" /></div>
               ) : list.length === 0 ? (
-                <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No se encontraron clientes.</div>
+                <EmptyState
+                  icon={User}
+                  title={search.trim() ? "Ningún cliente coincide con la búsqueda" : "Aún no hay clientes"}
+                  description={
+                    search.trim()
+                      ? "Prueba otro nombre, teléfono o cédula. Si es un cliente nuevo, regístralo para venderle."
+                      : "El primer paso es registrar un cliente con nombre y teléfono. Luego podrás asociar vehículos y crear ventas."
+                  }
+                  actionLabel={canCreateCustomers ? "Crear cliente" : undefined}
+                  onAction={canCreateCustomers ? () => setShowNewCustomer(true) : undefined}
+                  testId={`customers-empty-${key}`}
+                  actionTestId="customers-empty-create"
+                  className="py-8"
+                />
               ) : (
                 <DensityList density={listDensity} className="ui-fade-in-stagger" testId={`customers-density-list-${key}`}>
                   {list.map(customer => {
@@ -1701,7 +1716,7 @@ export function CustomersPage() {
                 const custWithMsg = { ...waPreviewCustomer, _wa_message: waPreviewMessage };
                 contactWhatsApp(custWithMsg);
                 setShowWaPreview(false);
-              }}>Enviar</Button>
+              }}>Abrir WhatsApp</Button>
             </div>
           </div>
         </DialogContent>
@@ -1736,7 +1751,7 @@ export function CustomersPage() {
                 disabled={!creditAuthCode}
                 className="flex-1"
               >
-                Confirmar
+                Asignar límite de crédito
               </Button>
             </div>
             <Button 
