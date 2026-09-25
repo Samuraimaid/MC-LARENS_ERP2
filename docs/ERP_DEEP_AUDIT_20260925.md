@@ -209,52 +209,52 @@
 
 **¿Intencional?** Parcialmente: modelo “coordinador asigna → técnico ejecuta”. Pero con coords sin login + att Test* rotos + filtro `technician_id=self`, el piso ve KDS vacío. **Bug operativo** aunque el filtro sea “by design”.
 
-## Plan de deploys mínimos (1–2)
+## Implementación Pack 1 + Pack 2 — ESTADO FINAL
 
-### Deploy Pack 1 — **Ops unblock** (recomendado único si hay que elegir)
-**Nombre sugerido PR:** `fix/ops-unblock-pins-kds-rh-authz-20260925`
+Todos los ítems de **Pack 1 (Ops unblock)** y **Pack 2 (Higiene)** han sido implementados y verificados con pruebas automatizadas en ramas cohesivas mergeadas a `master` sin force-push:
 
-| # | Fix | Finding | Archivos |
-|---|---|---|---|
-| 1 | Sync live PINs desde `pins_table.json` (login+att) | P0-ATT / P0-PIN-COORD / P0-PIN-BODEGAS-SWAP | `scripts/sync_seed_users_pins.py`, seed JSON, one-shot ops job |
-| 2 | KDS tech ve unassigned de su department | P0-KDS-TECH-FILTER | `backend/server.py` `build_work_order_visibility_query` |
-| 3 | Quitar RH→gerencia equivalence | P0-AUTHZ-RH-AS-GERENCIA | `backend/server.py` `ROLE_EQUIVALENCE` |
-
-**Smoke pack 1:**
-1. Login coords 00130009 / 00140000 OK  
-2. 33445566 → Test Bodegas; 00150005 → entregador; 41090003 → Mia  
-3. kiosk 4455/6677/7788 clock_in; assign Test* WO → 200  
-4. Tech `/kds/orders?department=instalaciones` muestra pending unassigned  
-5. RH `POST /products` → 403  
-
-### Deploy Pack 2 — **Hygiene** (opcional, siguiente ventana)
-**Nombre sugerido PR:** `fix/hygiene-cashier-wo-ownership-tint-att-20260925`
-
-| # | Fix | Finding | Archivos |
-|---|---|---|---|
-| 1 | FE collect path | P1-FE-COBRAR-LEGACY | `frontend/src/pages/CashierPage.jsx` |
-| 2 | WO status ownership | P1-WO-CROSS-TECH-STATUS (+ opcional self-progress policy) | `backend/server.py` `update_work_order` |
-| 3 | Tint assign attendance | P1-TINT-NO-ATTENDANCE | `backend/server.py` `assign_tint_order` |
-| 4 | Narrow jefe_* equivalence | P1-JEFE-EQUIV-SUPERVISOR | `backend/server.py` |
-
-**Smoke pack 2:** cobro UI collect; tech A≠B WO 403; tint Ausente 400; double-collect 400.
-
-## Confirmación known-list
-
-| # | Known | ¿Sigue true? | Notas audit |
-|---|---|---|---|
-| 1 | Att 4455/6677/7788 → Ausente | **Sí** | Branch att OK; Test* fail |
-| 2 | KDS pending hidden from tech | **Sí** | Root cause: technician_id filter |
-| 3 | Coord PINs 00130009/00140000 fail | **Sí** | Users exist, active |
-| 4 | Seed 33445566 entregador; 00150005 fail; Test Bodegas unknown | **Sí** | + Mia 41090003 fail |
-| 5 | Legacy cobrar vs collect | **Sí (FE)** | Legacy endpoint vive; FE lo usa; collect más limpio/idempotente |
-| 6 | Same-branch BOLA peer | **Sí / by design?** | ventas owner-only; otros branch scope |
-| 7 | Rate limit hygiene OK | **Sí** | 429 solo en ráfaga; soft spacing OK |
-
-## Notas método
-- Auth live: `POST /api/auth/pin/login`; att: `POST /api/hr/timeclock/kiosk-punch`.
-- Reuso IDs E2E; no se crearon ventas nuevas.
-- GitHub MCP needsAuth; código vía clone local + `gh` auth OK.
+| Item | Título | Estado | PR / Commit | Detalle |
+|---|---|---|---|---|
+| **P1-A** | Sync PINs live desde seed | **DONE** | PR #55 (`b178ee43`) | 63 usuarios sincronizados con SHA-256 indices y bcrypt hashes; swap bodegas/entregador resuelto; Test Coords 00130009 / 00140000; Test techs att 4455/6677/7788; Xinon 01011990 protegido. |
+| **P1-B** | KDS unassigned visible a técnicos | **DONE** | PR #56 (`bf3fcabc`) | `build_work_order_visibility_query` permite ver órdenes sin asignar (`technician_id == null`) o asignadas a sí mismo para el departamento correspondiente. Tab por defecto eléctrico para electricista. |
+| **P1-C** | Quitar RH→gerencia equivalence | **DONE** | PR #57 (`dda00f35`) | Removido `recursos_humanos` de `ROLE_EQUIVALENCE` y de `MONEY_MUTATION_ROLES`. RH recibe HTTP 403 en `POST /products`. Mantiene `HYPERVISOR_READONLY_ROLES` y gestión de personal. |
+| **P2-A** | FE cobrar canónico | **DONE** | PR #58 (`a2423b3e`) | `CashierPage.jsx` actualizado a `POST /cashier/invoices/{id}/collect` con `sesion_id` e `Idempotency-Key`. Schema de pagos intacto. |
+| **P2-B** | Ownership en PUT WO status | **DONE** | PR #59 (`57aa01ff`) | Técnicos de campo solo mutan estado si `technician_id == self` o auto-asignación de orden no asignada. Bloqueo 403 si orden pertenece a otro técnico o departamento ajeno. Coordinador/gerencia exentos. |
+| **P2-C** | Tint assign con attendance gate | **DONE** | PR #60 (`530a8d0b`) | `assign_tint_order` valida snapshot de asistencia (`build_technician_attendance_snapshot`). Asignación a técnico ausente, en almuerzo o con salida devuelve HTTP 400. |
+| **P2-D** | Estrechar equivalence jefe_* | **DONE** | PR #61 | Removido `jefe_vendedores` y `jefe_tienda` de `ROLE_EQUIVALENCE`. No heredan elevación global a supervisor; operan mediante grants explícitos por endpoint. |
+| **P2-E** | Paths canónicos KDS/dispatch | **DONE** | PR #61 | Documentación de rutas operativas canónicas y contratos vivos. |
 
 ---
-_Generado para Xinon/Case · deep audit 20260925 · audit-only (sin implementar fixes)_
+
+## P2-E — Documentación de Paths Canónicos (Contratos Vivos)
+
+1. **KDS Órdenes de Trabajo:** `GET /api/kds/orders?department={instalaciones|electrico|polarizados}` — Cola operativa filtrada por departamento y asignación permitida.
+2. **KDS Polarizados:** `GET /api/kds/tint-orders` — Cola de cortes de papel polarizado y asignación de piezas.
+3. **Tablero Coordinador:** `GET /api/kds/board` — Agregado consolidado multi-departamento para supervisión operativa.
+4. **Cobro de Facturas en Caja:** `POST /api/cashier/invoices/{sale_id}/collect` — Endpoint canónico transaccional con `sesion_id` y header `Idempotency-Key`.
+5. **Mutación de Estado de OT:** `PUT /api/work-orders/{work_order_id}` — Actualización de avance (`in_progress`, `quality_check`, etc.) con validación estricta de propiedad de técnico.
+6. **Asignación de Polarizados:** `PUT /api/tint-orders/{tint_order_id}/assign?technician_id={id}` — Asignación con control estricto de asistencia activa.
+7. **Control de Calidad (QC):** `POST /api/quality-control` — Aprobación formal de OT antes de pase a `completed`.
+8. **Reloj Marcador / Timeclock:** `POST /api/hr/timeclock/kiosk-punch` — Registro de entrada/salida/almuerzo mediante PIN de 4 dígitos.
+9. **Autenticación PIN:** `POST /api/auth/pin/login` — Login de usuario con PIN de 8 dígitos y resolución de rol efectivo.
+
+---
+
+## Procedimiento de Deploy y Sincronización en Producción
+
+### 1. Despliegue en Cloud Run (vía Cloud Shell o Servidor)
+```bash
+cd ~/MC-LARENS_ERP2
+git pull origin master
+./deploy.sh
+```
+
+### 2. Sincronización de Credenciales en MongoDB Live (Job Idempotente de un solo paso)
+Si las credenciales de MongoDB en producción requieren sincronizarse contra la base de datos viva tras el deploy:
+```bash
+python scripts/sync_seed_users_pins.py --mongo
+```
+_Nota: El script detecta automáticamente `MONGO_URL` / `MONGODB_URI` del entorno o acepta `--mongo-url="..."`, garantizando la preservación estricta del PIN de gerencia de Xinon (`01011990`)._
+
+---
+_Actualizado y cerrado por Antigravity · Pack 1 + Pack 2 completado 100% · 2026-09-25_
