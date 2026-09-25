@@ -267,8 +267,9 @@ class TestSalesCreation:
         self.session_token = data.get("session_token")
         self.cookies = {"session_token": self.session_token}
 
-        # Seed demo products if needed
-        requests.post(f"{BASE_URL}/api/products/seed-demo", cookies=self.cookies)
+        # Pack 4c: POST /api/products/seed-demo is 410 Gone — rely on existing catalog/startup seed
+        # (legacy call kept documented; do not expect 200)
+        # requests.post(f"{BASE_URL}/api/products/seed-demo", cookies=self.cookies)
         yield
 
     def test_create_sale_with_nio_currency(self):

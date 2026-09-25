@@ -180,9 +180,15 @@ def ensure_product_stock(api: Api, report: Dict[str, Any]) -> None:
     products = api.get("/products").json()
     inventory = api.get("/inventory").json()
     if not products:
+        # Pack 4c: HTTP POST /products/seed-demo is 410 Gone — e2e should use CSV import / startup seed / backend scripts
         r = api.post("/products/seed-demo")
         if r.status_code == 200:
             products = api.get("/products").json()
+        elif r.status_code == 410:
+            report["errors"].append(
+                "No hay productos y seed-demo HTTP está retirado (410); use CSV/startup/scripts"
+            )
+            return
     stock_by_product = {}
     for row in inventory:
         pid = row.get("product_id")

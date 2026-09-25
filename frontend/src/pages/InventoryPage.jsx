@@ -1014,23 +1014,6 @@ export function InventoryPage() {
     }
   };
 
-  const seedDemoProducts = async () => {
-    if (!canCreateInventory) {
-      toast.error("No tienes permiso para crear productos demo");
-      return;
-    }
-    try {
-      const warehouseId = warehouses[0]?.warehouse_id || "wh_main";
-      const response = await axios.post(`${API}/products/seed-demo?warehouse_id=${warehouseId}`, null, {
-        withCredentials: true
-      });
-      toast.success(`Creados ${response.data.created} productos de demostración`);
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear productos demo");
-    }
-  };
-
   const filteredInventory = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
     
@@ -1307,10 +1290,6 @@ export function InventoryPage() {
                   <Button variant="outline" onClick={downloadTemplate} className="flex-1" data-testid="download-template-btn">
                     <Download className="h-4 w-4 mr-2" />
                     Descargar Plantilla
-                  </Button>
-                  <Button variant="secondary" onClick={seedDemoProducts} className="flex-1" data-testid="seed-demo-btn" disabled={!canCreateInventory}>
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Cargar Demo
                   </Button>
                 </div>
                 
