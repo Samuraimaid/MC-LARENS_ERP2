@@ -19,6 +19,7 @@ COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 COPY frontend/ ./
+RUN test -f src/components/uploads/FileUploadQueue.jsx && test -f src/components/uploads/index.js
 RUN rm -rf public/uploads public/vehicles/models public/vehicles/blueprints public/videos/promos
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV VITE_BACKEND_URL=""
