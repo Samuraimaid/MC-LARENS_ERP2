@@ -234,3 +234,9 @@ Cada PR: **Tema → Evidencia (issue/reel) → Riesgo → Acción → Cómo veri
 ## PR-2 (2026-09-18)
 
 Prompt listo para pegar en Antigravity: [`docs/ANTIGRAVITY_PR2_PRODUCTTHUMB_20260918.md`](./ANTIGRAVITY_PR2_PRODUCTTHUMB_20260918.md) — ProductThumb + onError placeholder. Verify post-ops: [`docs/PR3_VERIFY_20260918.md`](./PR3_VERIFY_20260918.md).
+
+---
+
+## UPDATE 2026-09-25 — P0 bug B-28113
+
+Antes de cualquier otro lote: `docs/ANTIGRAVITY_PROMPT_BUG_B28113_VISIBLE_SALE_IDS_20260925.md` (crash `/workbench`, `visibleSaleIds`). Historial: `docs/CASE_CHAT_HISTORY_UX_STACK_20260925.md`.
