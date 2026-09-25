@@ -284,13 +284,8 @@ export function AntiTamperGuard({ children }) {
         return false;
       }
 
-      // Atajo global Ctrl+K para buscador
-      if (e.ctrlKey && (e.key === "k" || e.key === "K") && !e.shiftKey) {
-        e.preventDefault();
-        if (user) {
-          navigate("/workbench?tab=search");
-        }
-      }
+      // U14: Ctrl/Cmd+K is owned by CommandPalette (capture listener).
+      // Do not steal it for workbench search; DevTools block stays on Ctrl+Shift+K.
 
       if (e.key === "Escape") {
         setContextMenu((prev) => ({ ...prev, visible: false }));

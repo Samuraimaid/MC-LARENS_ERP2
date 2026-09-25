@@ -31,6 +31,7 @@ import {
 import { formatRoleBadgeLabel } from "../../lib/priceTiers";
 import { IdleSessionCountdown } from "../auth/IdleSessionCountdown";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
+import { CommandPalette } from "../common/CommandPalette";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -930,6 +931,8 @@ export function MainLayout() {
           </div>
         </div>
       ) : null}
+
+      <CommandPalette onLockSession={handleLockSession} />
 
       <Toaster position="top-right" richColors />
     </div>
