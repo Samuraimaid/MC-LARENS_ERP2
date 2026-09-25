@@ -14458,39 +14458,20 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
 
 @api_router.post("/facturacion/pagar")
 async def pay_invoice_facturacion(payload: FacturacionPagarRequest, request: Request):
-    sale = await db.sales.find_one(
-        {
-            "$or": [
-                {"sale_id": payload.factura_id},
-                {"invoice_number": payload.factura_id},
-            ]
+    """Legacy Spanish collect twin — retired. Use cashier collect."""
+    factura_id = getattr(payload, "factura_id", None) or "unknown"
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Utilice la ruta canónica "
+                f"transaccional POST /api/cashier/invoices/{{sale_id}}/collect "
+                f"(factura_id recibido: {factura_id})."
+            ),
+            "canonical_path": "/api/cashier/invoices/{sale_id}/collect",
         },
-        {"_id": 0, "sale_id": 1},
     )
-    if not sale or not sale.get("sale_id"):
-        raise HTTPException(status_code=404, detail="Factura no encontrada")
-
-    auth = payload.autorizacion_descuento_pos
-    has_card = any(_is_card_method(p.metodo) for p in payload.pagos)
-    if has_card and payload.descuento_aplicado and payload.descuento_aplicado > 0 and auth is None and not payload.force_remove_discount:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "POS_DISCOUNT_CONFLICT",
-                "message": "El pago con tarjeta anula el descuento. ¿Desea proceder o requiere autorización de gerencia?",
-            },
-        )
-
-    collect_payload = CashierCollectRequest(
-        amount=0.0,
-        payment_method=payload.pagos[0].metodo if payload.pagos else None,
-        notes=payload.notas,
-        idempotency_key=payload.idempotency_key,
-        force_remove_discount=payload.force_remove_discount,
-        pagos=payload.pagos,
-        autorizacion_descuento_pos=payload.autorizacion_descuento_pos,
-    )
-    return await collect_sale_invoice(str(sale.get("sale_id")), collect_payload, request)
 
 
 def _build_retention_receipt_pdf_bytes(receipt: Dict[str, Any], sale: Dict[str, Any]) -> bytes:
