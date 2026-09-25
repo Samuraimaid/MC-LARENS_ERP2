@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Building2, Car, User, Camera, Sparkles } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Building2, Car, User, Camera, Sparkles, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,18 @@ import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelec
 import { isPickupCatalogModel, normalizeVehicleBrand, findCatalogEntryForVehicle } from "@/lib/vehicleCatalog";
 import { PRICING_PROFILES } from "@/lib/priceTiers";
 import CirculationCardOcrScannerModal from "@/components/vehicles/CirculationCardOcrScannerModal";
+import {
+  FieldValidationFeedback,
+  VALIDATION_SUCCESS_SHORT,
+  fieldValidationInputClass,
+} from "@/components/common/ValidatedInput";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import {
+  requiredPersonName,
+  requiredPhone,
+  optionalEmail,
+} from "@/lib/fieldValidators";
+import { cn } from "@/lib/utils";
 
 export default function CustomerVehicleFormTabs({
   formData,
@@ -52,6 +64,10 @@ export default function CustomerVehicleFormTabs({
   useVinCheckboxId = "use-vin-decoder-new-vehicle",
   persistOnChange = false,
   onFormDataBlur,
+  /** U12: bump to reset blur/live timing (dialog close / form reset) */
+  validationResetKey = 0,
+  /** U12: bump when parent attempts submit to escalate invalid fields */
+  validationSubmitSignal = 0,
 }) {
   const [showOcrModal, setShowOcrModal] = useState(false);
 
@@ -139,6 +155,43 @@ export default function CustomerVehicleFormTabs({
   const isCompany = formData.customer_type === "empresa";
   const showCabVariant = isPickupCatalogModel(formData.brand, formData.model);
 
+  const validateFirstName = useMemo(
+    () => requiredPersonName(isCompany ? "El nombre de la empresa" : "El nombre"),
+    [isCompany]
+  );
+  const validateLastName = useMemo(() => requiredPersonName("Los apellidos"), []);
+
+  const firstNameField = useFieldValidation({
+    value: formData.first_name,
+    validate: validateFirstName,
+    resetKey: validationResetKey,
+  });
+  const lastNameField = useFieldValidation({
+    value: formData.last_name,
+    validate: validateLastName,
+    enabled: !isCompany,
+    resetKey: validationResetKey,
+  });
+  const phoneField = useFieldValidation({
+    value: formData.phone,
+    validate: requiredPhone,
+    resetKey: validationResetKey,
+  });
+  const emailField = useFieldValidation({
+    value: formData.email,
+    validate: optionalEmail,
+    resetKey: validationResetKey,
+  });
+
+  useEffect(() => {
+    if (!validationSubmitSignal) return;
+    firstNameField.markSubmitAttempted();
+    if (!isCompany) lastNameField.markSubmitAttempted();
+    phoneField.markSubmitAttempted();
+    emailField.markSubmitAttempted();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- escalate once per signal
+  }, [validationSubmitSignal]);
+
 
   return (
     <Tabs
@@ -215,13 +268,26 @@ export default function CustomerVehicleFormTabs({
               <div className="flex items-center justify-between min-h-[18px]">
                 <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombre de la Empresa *</Label>
               </div>
-              <Input
-                value={formData.first_name}
-                onChange={(e) => updateForm({ first_name: e.target.value, last_name: "" })}
-                onBlur={commitForm}
-                placeholder="Empresa S.A."
-                className="h-9 text-xs"
-                data-testid={firstNameTestId}
+              <div className="relative">
+                <Input
+                  value={formData.first_name}
+                  onChange={(e) => updateForm({ first_name: e.target.value, last_name: "" })}
+                  onBlur={() => { firstNameField.onBlur(); commitForm(); }}
+                  placeholder="Empresa S.A."
+                  aria-invalid={firstNameField.showError || undefined}
+                  className={cn("h-9 text-xs", fieldValidationInputClass(firstNameField), firstNameField.showSuccess && "pr-8")}
+                  data-testid={firstNameTestId}
+                />
+                {firstNameField.showSuccess ? (
+                  <Check className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-600" aria-hidden />
+                ) : null}
+              </div>
+              <FieldValidationFeedback
+                showError={firstNameField.showError}
+                showSuccess={firstNameField.showSuccess}
+                errorMessage={firstNameField.errorMessage}
+                successLabel="Se ve bien"
+                testId={firstNameTestId}
               />
             </div>
           ) : (
@@ -230,26 +296,52 @@ export default function CustomerVehicleFormTabs({
                 <div className="flex items-center justify-between min-h-[18px]">
                   <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Nombres *</Label>
                 </div>
-                <Input
-                  value={formData.first_name}
-                  onChange={(e) => updateForm({ first_name: e.target.value })}
-                  onBlur={commitForm}
-                  placeholder="Juan Carlos"
-                  className="h-9 text-xs"
-                  data-testid={firstNameTestId}
+                <div className="relative">
+                  <Input
+                    value={formData.first_name}
+                    onChange={(e) => updateForm({ first_name: e.target.value })}
+                    onBlur={() => { firstNameField.onBlur(); commitForm(); }}
+                    placeholder="Juan Carlos"
+                    aria-invalid={firstNameField.showError || undefined}
+                    className={cn("h-9 text-xs", fieldValidationInputClass(firstNameField), firstNameField.showSuccess && "pr-8")}
+                    data-testid={firstNameTestId}
+                  />
+                  {firstNameField.showSuccess ? (
+                    <Check className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-600" aria-hidden />
+                  ) : null}
+                </div>
+                <FieldValidationFeedback
+                  showError={firstNameField.showError}
+                  showSuccess={firstNameField.showSuccess}
+                  errorMessage={firstNameField.errorMessage}
+                  successLabel="Se ve bien"
+                  testId={firstNameTestId}
                 />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between min-h-[18px]">
                   <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Apellidos *</Label>
                 </div>
-                <Input
-                  value={formData.last_name}
-                  onChange={(e) => updateForm({ last_name: e.target.value })}
-                  onBlur={commitForm}
-                  placeholder="Pérez López"
-                  className="h-9 text-xs"
-                  data-testid={lastNameTestId}
+                <div className="relative">
+                  <Input
+                    value={formData.last_name}
+                    onChange={(e) => updateForm({ last_name: e.target.value })}
+                    onBlur={() => { lastNameField.onBlur(); commitForm(); }}
+                    placeholder="Pérez López"
+                    aria-invalid={lastNameField.showError || undefined}
+                    className={cn("h-9 text-xs", fieldValidationInputClass(lastNameField), lastNameField.showSuccess && "pr-8")}
+                    data-testid={lastNameTestId}
+                  />
+                  {lastNameField.showSuccess ? (
+                    <Check className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-600" aria-hidden />
+                  ) : null}
+                </div>
+                <FieldValidationFeedback
+                  showError={lastNameField.showError}
+                  showSuccess={lastNameField.showSuccess}
+                  errorMessage={lastNameField.errorMessage}
+                  successLabel="Se ve bien"
+                  testId={lastNameTestId}
                 />
               </div>
             </>
@@ -276,15 +368,28 @@ export default function CustomerVehicleFormTabs({
                   <SelectItem value="+57">+57</SelectItem>
                 </SelectContent>
               </Select>
-              <Input
-                value={formData.phone}
-                onChange={(e) => updateForm({ phone: formatPhone(e.target.value) })}
-                onBlur={commitForm}
-                placeholder="0000-0000"
-                className="flex-1 h-9 font-mono text-xs"
-                data-testid={phoneTestId}
-              />
+              <div className="relative flex-1">
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => updateForm({ phone: formatPhone(e.target.value) })}
+                  onBlur={() => { phoneField.onBlur(); commitForm(); }}
+                  placeholder="0000-0000"
+                  aria-invalid={phoneField.showError || undefined}
+                  className={cn("h-9 font-mono text-xs w-full", fieldValidationInputClass(phoneField), phoneField.showSuccess && "pr-8")}
+                  data-testid={phoneTestId}
+                />
+                {phoneField.showSuccess ? (
+                  <Check className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-600" aria-hidden />
+                ) : null}
+              </div>
             </div>
+            <FieldValidationFeedback
+              showError={phoneField.showError}
+              showSuccess={phoneField.showSuccess}
+              errorMessage={phoneField.errorMessage}
+              successLabel={VALIDATION_SUCCESS_SHORT}
+              testId={phoneTestId}
+            />
           </div>
 
           {/* Email */}
@@ -294,13 +399,27 @@ export default function CustomerVehicleFormTabs({
                 Email <span className="text-muted-foreground text-[10px] font-normal">(opcional)</span>
               </Label>
             </div>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => updateForm({ email: e.target.value })}
-              onBlur={commitForm}
-              placeholder="cliente@email.com"
-              className="h-9 text-xs"
+            <div className="relative">
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => updateForm({ email: e.target.value })}
+                onBlur={() => { emailField.onBlur(); commitForm(); }}
+                placeholder="cliente@email.com"
+                aria-invalid={emailField.showError || undefined}
+                className={cn("h-9 text-xs", fieldValidationInputClass(emailField), emailField.showSuccess && "pr-8")}
+                data-testid="customer-email"
+              />
+              {emailField.showSuccess ? (
+                <Check className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-600" aria-hidden />
+              ) : null}
+            </div>
+            <FieldValidationFeedback
+              showError={emailField.showError}
+              showSuccess={emailField.showSuccess}
+              errorMessage={emailField.errorMessage}
+              successLabel="Se ve bien"
+              testId="customer-email"
             />
           </div>
 

@@ -129,6 +129,12 @@ import {
   playSelectionFeedbackSound,
 } from "@/lib/uiSounds";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
+import {
+  FieldValidationFeedback,
+  fieldValidationInputClass,
+} from "@/components/common/ValidatedInput";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { requiredSelection } from "@/lib/fieldValidators";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
 import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
 import { getCameraContextError } from "@/lib/cameraAccess";
@@ -628,6 +634,8 @@ export default function SaleForm({
   const [localCustomers, setLocalCustomers] = useState(customers);
   const [localVehicles, setLocalVehicles] = useState(vehicles);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [saleCustomerValidationResetKey, setSaleCustomerValidationResetKey] = useState(0);
+  const [saleCustomerValidationSubmitSignal, setSaleCustomerValidationSubmitSignal] = useState(0);
   const [showNewVehicleDialog, setShowNewVehicleDialog] = useState(false);
   const [newCustomerTab, setNewCustomerTab] = useState("customer");
   const [useVinDecoder, setUseVinDecoder] = useState(false);
@@ -946,6 +954,15 @@ export default function SaleForm({
   );
 
   const stepOneComplete = Boolean(selectedCustomer?.customer_id);
+  const customerRequiredValidate = React.useCallback(
+    (v) => requiredSelection("un cliente para continuar")(v),
+    []
+  );
+  const customerRequiredField = useFieldValidation({
+    value: selectedCustomer?.customer_id || "",
+    validate: customerRequiredValidate,
+    resetKey: `${saleCustomerValidationResetKey}:${selectedCustomer?.customer_id || ""}`,
+  });
   /** Valid fulfillment choice that can unlock products */
   const hasValidFulfillmentSelection = useMemo(() => {
     if (!logisticMode) return false;
@@ -1687,6 +1704,7 @@ export default function SaleForm({
   };
 
   const createNewCustomer = async () => {
+    setSaleCustomerValidationSubmitSignal((n) => n + 1);
     if (!newCustomer.phone) {
       toast.error("El teléfono es requerido");
       return;
@@ -1701,7 +1719,7 @@ export default function SaleForm({
         toast.error("El RUC es requerido para registrar una empresa");
         return;
       }
-    } else if (!newCustomer.first_name) {
+    } else if (!newCustomer.first_name || !newCustomer.last_name) {
       toast.error("Nombre y teléfono son requeridos");
       return;
     }
@@ -2288,6 +2306,7 @@ export default function SaleForm({
 
   const requestPrecio2Approval = async () => {
     if (!selectedCustomer?.customer_id) {
+      customerRequiredField.markSubmitAttempted();
       toast.error("Selecciona un cliente primero");
       return;
     }
@@ -2335,6 +2354,11 @@ export default function SaleForm({
   };
 
   const handleSubmit = async () => {
+    if (!selectedCustomer?.customer_id) {
+      customerRequiredField.markSubmitAttempted();
+      toast.error("Selecciona un cliente para continuar");
+      return;
+    }
     if (!logisticMode) {
       toast.error("Selecciona cómo se entrega la venta: Para llevar, Con envío o Instalado");
       return;
@@ -4076,7 +4100,7 @@ export default function SaleForm({
           {!selectedCustomer ? (
             <div className="mb-2 mt-2 space-y-1.5">
               <Label htmlFor="saleform-customer-search" className="text-xs font-semibold text-muted-foreground">
-                Cliente
+                Cliente <span className="text-destructive">*</span>
               </Label>
               <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -4087,9 +4111,14 @@ export default function SaleForm({
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   onKeyDown={handleCustomerSearchKeyDown}
+                  onBlur={() => customerRequiredField.onBlur()}
                   ref={customerSearchRef}
                   disabled={sellerFlowLocked}
-                  className="mb-0 pl-9"
+                  aria-invalid={customerRequiredField.showError || undefined}
+                  className={cn(
+                    "mb-0 pl-9",
+                    fieldValidationInputClass(customerRequiredField)
+                  )}
                   aria-label="Buscar cliente"
                 />
               </div>
@@ -4113,6 +4142,12 @@ export default function SaleForm({
                 {!isPortraitOrientation ? "Nuevo Registro" : <span className="sr-only">Nuevo Registro</span>}
               </Button>
               </div>
+              <FieldValidationFeedback
+                showError={customerRequiredField.showError}
+                showSuccess={false}
+                errorMessage={customerRequiredField.errorMessage}
+                testId="saleform-customer"
+              />
             </div>
           ) : null}
           {selectedCustomer ? (
@@ -4122,6 +4157,10 @@ export default function SaleForm({
                   <p className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.title}>
                     {isCompanyCustomer(selectedCustomer) ? <Building2 className="h-4 w-4 text-blue-700" /> : <User className="h-4 w-4 text-emerald-700" />}
                     <span className="min-w-0 whitespace-normal break-words leading-tight">{selectedCustomer.name}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:text-emerald-200" data-testid="saleform-customer-ok">
+                      <Check className="h-3 w-3" aria-hidden />
+                      Listo
+                    </span>
                   </p>
 
                   <div className={CUSTOMER_VEHICLE_CARD_PATTERNS.customer.metaGrid}>
@@ -6748,6 +6787,7 @@ export default function SaleForm({
           setShowNewCustomer(open);
           if (!open) {
             resetNewCustomerForm();
+            setSaleCustomerValidationResetKey((k) => k + 1);
           }
           persistDraftSnapshot({
             showNewCustomer: open,
@@ -6790,6 +6830,8 @@ export default function SaleForm({
 
           <CustomerVehicleFormTabs
             formData={newCustomer}
+            validationResetKey={saleCustomerValidationResetKey}
+            validationSubmitSignal={saleCustomerValidationSubmitSignal}
             onFormDataChange={(nextCustomer) => {
               setNewCustomer(nextCustomer);
               persistDraftSnapshot({ newCustomer: nextCustomer });

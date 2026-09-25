@@ -83,6 +83,8 @@ export function CustomersPage() {
   const [customerTypeFilter, setCustomerTypeFilter] = useState("all");
   const [boardTab, setBoardTab] = useState("todos");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [customerValidationResetKey, setCustomerValidationResetKey] = useState(0);
+  const [customerValidationSubmitSignal, setCustomerValidationSubmitSignal] = useState(0);
   const [activeTab, setActiveTab] = useState("customer");
   const [isEditing, setIsEditing] = useState(false);
   const [editingCustomerId, setEditingCustomerId] = useState(null);
@@ -198,6 +200,7 @@ export function CustomersPage() {
   };
 
   const resetForm = () => {
+    setCustomerValidationResetKey((k) => k + 1);
     setFormData({
       first_name: "",
       last_name: "",
@@ -651,8 +654,15 @@ export function CustomersPage() {
       toast.error("No tienes permiso para crear clientes");
       return;
     }
-    if (!formData.first_name || !formData.last_name || !formData.phone) {
-      toast.error("Nombres, apellidos y teléfono son requeridos");
+    setCustomerValidationSubmitSignal((n) => n + 1);
+    const isCompany = formData.customer_type === "empresa";
+    const nameMissing = !String(formData.first_name || "").trim();
+    const lastMissing = !isCompany && !String(formData.last_name || "").trim();
+    const phoneMissing = !String(formData.phone || "").trim();
+    if (nameMissing || lastMissing || phoneMissing) {
+      toast.error(isCompany
+        ? "Nombre de empresa y teléfono son requeridos"
+        : "Nombres, apellidos y teléfono son requeridos");
       return;
     }
 
@@ -1044,6 +1054,8 @@ export function CustomersPage() {
               <CustomerVehicleFormTabs
                 formData={formData}
                 onFormDataChange={setFormData}
+                validationResetKey={customerValidationResetKey}
+                validationSubmitSignal={customerValidationSubmitSignal}
                 activeTab={activeTab}
                 onActiveTabChange={setActiveTab}
                 canManageCreditLimit={canManageCreditLimit}
