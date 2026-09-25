@@ -35,6 +35,8 @@ import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import EmptyState from "@/components/common/EmptyState";
+import { humanApiError } from "@/lib/humanApiError";
 
 export function VehiclesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
@@ -132,7 +134,7 @@ export function VehiclesPage() {
       setFormData({ customer_id: "", plate: "", vin: "", brand: "", model: "", year: "", color: "", vehicle_cab_variant: "" });
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al registrar");
+      toast.error(humanApiError(error, "No se pudo registrar el vehículo — revisa placa y datos e inténtalo de nuevo"));
     }
   };
 
@@ -274,12 +276,12 @@ export function VehiclesPage() {
           <DialogTrigger asChild>
             <Button data-testid="new-vehicle-btn">
               <Plus className="h-4 w-4 mr-2" />
-              Nuevo Vehículo
+              Crear vehículo
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Registrar Vehículo</DialogTitle>
+              <DialogTitle>Crear vehículo</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -372,7 +374,7 @@ export function VehiclesPage() {
                 </div>
               </div>
               <Button onClick={createVehicle} className="w-full" data-testid="save-vehicle-btn">
-                Registrar Vehículo
+                Crear vehículo
               </Button>
             </div>
           </DialogContent>
@@ -481,7 +483,20 @@ export function VehiclesPage() {
               {loading ? (
                 <div className="text-center py-8"><RefreshCw className="h-6 w-6 animate-spin mx-auto" /></div>
               ) : list.length === 0 ? (
-                <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No hay vehículos registrados.</div>
+                <EmptyState
+                  icon={CarFront}
+                  title={search.trim() ? "Ningún vehículo coincide con la búsqueda" : "Aún no hay vehículos"}
+                  description={
+                    search.trim()
+                      ? "Prueba otra placa, VIN o cliente. Si el vehículo no está, regístralo para garantías y ventas."
+                      : "El primer paso es registrar un vehículo con placa, marca y modelo vinculado a un cliente."
+                  }
+                  actionLabel="Crear vehículo"
+                  onAction={() => setShowNewVehicle(true)}
+                  testId={`vehicles-empty-${key}`}
+                  actionTestId="vehicles-empty-create"
+                  className="py-8"
+                />
               ) : (
                 <DensityList density={listDensity} className="ui-fade-in-stagger" testId={`vehicles-density-list-${key}`}>
                   {list.map(vehicle => {
@@ -545,7 +560,7 @@ export function VehiclesPage() {
                         try {
                           await axios.post(`${API}/approvals`, { type: 'edit_vehicle', payload: { vehicle_id: vehicle.vehicle_id, changes }, reason: motivo.trim() }, { withCredentials: true });
                           toast.success('Solicitud de edición enviada');
-                        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+                        } catch (e) { toast.error(humanApiError(e, "Eso no se pudo completar — inténtalo de nuevo")); }
                       }}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Editar
@@ -559,7 +574,7 @@ export function VehiclesPage() {
                         try {
                           await axios.post(`${API}/approvals`, { type: 'delete_vehicle', payload: { vehicle_id: vehicle.vehicle_id }, reason: motivo.trim() }, { withCredentials: true });
                           toast.success('Solicitud de eliminación enviada');
-                        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+                        } catch (e) { toast.error(humanApiError(e, "Eso no se pudo completar — inténtalo de nuevo")); }
                       }}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Eliminar

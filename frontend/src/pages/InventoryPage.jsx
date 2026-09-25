@@ -44,6 +44,8 @@ import { SwipeableRow } from "@/components/lists/SwipeableRow";
 import { useDevice } from "@/hooks/useDevice";
 import { FileUploadQueue } from "@/components/uploads";
 import { densityTokens } from "@/components/lists/listDensity";
+import EmptyState from "@/components/common/EmptyState";
+import { humanApiError } from "@/lib/humanApiError";
 
 export function InventoryPage() {
   const selection = useListSelection();
@@ -400,7 +402,7 @@ export function InventoryPage() {
       setZoneTransferItem(null);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al transferir entre zonas");
+      toast.error(humanApiError(err, "No se pudo transferir entre zonas — verifica cantidades"));
     } finally {
       setZoneTransferLoading(false);
     }
@@ -834,7 +836,7 @@ export function InventoryPage() {
       resetProductForm();
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear producto");
+      toast.error(humanApiError(error, "No se pudo crear el producto — revisa SKU y datos e inténtalo de nuevo"));
     }
   };
 
@@ -872,7 +874,7 @@ export function InventoryPage() {
       setEditingProduct(null);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al actualizar producto");
+      toast.error(humanApiError(error, "No se pudo actualizar el producto — inténtalo de nuevo"));
     }
   };
 
@@ -981,7 +983,7 @@ export function InventoryPage() {
       setShowTransferWhatsApp(true);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error en transferencia");
+      toast.error(humanApiError(error, "No se pudo completar el traslado — verifica bodegas y cantidad"));
     } finally {
       setTransferBusy(false);
     }
@@ -1042,7 +1044,7 @@ export function InventoryPage() {
         });
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al agregar inventario");
+      toast.error(humanApiError(error, "No se pudo agregar inventario — verifica producto y bodega"));
     }
   };
 
@@ -2050,12 +2052,12 @@ export function InventoryPage() {
             <DialogTrigger asChild>
               <Button data-testid="new-product-btn" disabled={!canCreateInventory}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo Producto
+                Crear producto
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
               <DialogHeader>
-                <DialogTitle>Nuevo Producto</DialogTitle>
+                <DialogTitle>Crear producto</DialogTitle>
                 <DialogDescription>Completa la información del producto o servicio</DialogDescription>
               </DialogHeader>
               <ScrollArea className="h-[70vh] pr-4">
@@ -2626,7 +2628,7 @@ export function InventoryPage() {
                     Cancelar
                   </Button>
                   <Button onClick={createProduct} data-testid="save-product-btn" disabled={!canCreateInventory}>
-                    Crear Producto
+                    Crear producto
                   </Button>
                 </div>
               </ScrollArea>
@@ -2836,11 +2838,20 @@ export function InventoryPage() {
           </CardContent>
         </Card>
       ) : filteredInventory.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No hay inventario para mostrar
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Package}
+          title={search.trim() ? "Ningún producto coincide con la búsqueda" : "Aún no hay productos en inventario"}
+          description={
+            search.trim()
+              ? "Prueba otro término o limpia el filtro. Si el producto no existe, créalo para empezar a venderlo."
+              : "El primer paso es crear un producto con SKU, nombre y precio. Después podrás ingresar stock por bodega."
+          }
+          actionLabel={canCreateInventory ? "Crear producto" : undefined}
+          onAction={canCreateInventory ? () => setShowNewProduct(true) : undefined}
+          actionDisabled={!canCreateInventory}
+          testId="inventory-empty-state"
+          actionTestId="inventory-empty-create-product"
+        />
       ) : listDensity === "compact" ? (
       <Card>
         <CardContent className="p-0 overflow-x-auto">

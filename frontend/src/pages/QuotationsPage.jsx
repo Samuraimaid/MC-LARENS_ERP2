@@ -12,6 +12,7 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
+import { humanApiError } from "@/lib/humanApiError";
 import { HoldToConfirmButton } from "@/components/destructive";
 import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock, Download, Copy } from "lucide-react";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
@@ -858,7 +859,7 @@ export function QuotationsPage() {
       supervisorWatchingDraftRef.current = null;
       toast.success("Borrador liberado para el vendedor.");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo liberar el borrador");
+      toast.error(humanApiError(error, "No se pudo liberar el borrador — inténtalo de nuevo"));
     }
   }, [DRAFT_FLOW, activeDraftId]);
 
@@ -1508,7 +1509,7 @@ export function QuotationsPage() {
       resetQuoteFormState();
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error al crear cotización");
+      toast.error(humanApiError(error, "No se pudo crear la cotización — revisa cliente y productos e inténtalo de nuevo"));
     }
   };
 
@@ -1674,9 +1675,9 @@ export function QuotationsPage() {
     } catch (error) {
       const detail = error?.response?.data?.detail;
       if (detail?.error === "REQUIRES_MANAGER_AUTH") {
-        toast.error(detail.message || "Requiere autorización de gerente");
+        toast.error(detail.message || "Requiere autorización de gerente — pide el código e inténtalo de nuevo");
       } else {
-        toast.error(detail || "Error al convertir a venta");
+        toast.error(humanApiError(error, "No se pudo convertir a venta — inténtalo de nuevo"));
       }
     }
   };
@@ -1992,7 +1993,7 @@ export function QuotationsPage() {
                   ) : null}
                 </div>
               }
-              submitLabel="Crear Cotización"
+              submitLabel="Crear cotización"
               onSubmit={async (payload) => {
                 const submittedDraftId = activeDraftIdRef.current;
                 try {
@@ -2005,11 +2006,7 @@ export function QuotationsPage() {
                     createDraftTab();
                   }
                 } catch (err) {
-                  const detail = err?.response?.data?.detail;
-                  const message = typeof detail === "string"
-                    ? detail
-                    : (detail?.message || err?.message || "Error al crear cotización");
-                  toast.error(message);
+                  toast.error(humanApiError(err, "No se pudo crear la cotización — inténtalo de nuevo"));
                 }
               }}
             />
