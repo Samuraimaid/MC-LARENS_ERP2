@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { formatCurrency } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -46,6 +46,8 @@ import { FileUploadQueue } from "@/components/uploads";
 import { densityTokens } from "@/components/lists/listDensity";
 import EmptyState from "@/components/common/EmptyState";
 import { humanApiError } from "@/lib/humanApiError";
+import ValidatedInput, { VALIDATION_SUCCESS_SHORT } from "@/components/common/ValidatedInput";
+import { requiredSku, requiredProductName, requiredPrice } from "@/lib/fieldValidators";
 
 export function InventoryPage() {
   const selection = useListSelection();
@@ -130,6 +132,13 @@ export function InventoryPage() {
   const [zoneTransferLoading, setZoneTransferLoading] = useState(false);
   /** U10: warehouse truck transfer waits for server — never optimistic. */
   const [transferBusy, setTransferBusy] = useState(false);
+  /** U12: remount/reset validation timing when create dialog closes */
+  const [productValidationKey, setProductValidationKey] = useState(0);
+  const createSkuRef = useRef(null);
+  const createNameRef = useRef(null);
+  const createPriceRef = useRef(null);
+  const editNameRef = useRef(null);
+  const editPriceRef = useRef(null);
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -752,6 +761,7 @@ export function InventoryPage() {
   };
 
   const resetProductForm = () => {
+    setProductValidationKey((k) => k + 1);
     setNewProduct({
       sku: "",
       barcode: "",
@@ -798,6 +808,9 @@ export function InventoryPage() {
       toast.error("No tienes permiso para crear productos");
       return;
     }
+    createSkuRef.current?.markSubmitAttempted?.();
+    createNameRef.current?.markSubmitAttempted?.();
+    createPriceRef.current?.markSubmitAttempted?.();
     if (!newProduct.sku || !newProduct.name || !newProduct.category || !newProduct.price) {
       toast.error("Completa los campos obligatorios: SKU, Nombre, Categoría, Precio");
       return;
@@ -846,6 +859,15 @@ export function InventoryPage() {
       return;
     }
     if (!editingProduct) return;
+    editNameRef.current?.markSubmitAttempted?.();
+    editPriceRef.current?.markSubmitAttempted?.();
+    const nameOk = Boolean(String(editingProduct.name || "").trim());
+    const priceRaw = editingProduct.precio1 || editingProduct.price;
+    const priceOk = String(priceRaw ?? "").trim() !== "" && Number.isFinite(Number(priceRaw)) && Number(priceRaw) >= 0;
+    if (!nameOk || !priceOk) {
+      toast.error("Completa nombre y precio válidos antes de guardar");
+      return;
+    }
     try {
       const tier1 = parseFloat(editingProduct.precio1 || editingProduct.price) || 0;
       const tierPayload = buildProductPricePayload(editingProduct, { precio1: tier1 });
@@ -2072,15 +2094,18 @@ export function InventoryPage() {
                   {/* Basic Info Tab */}
                   <TabsContent value="basic" className="space-y-4 mt-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>SKU *</Label>
-                        <Input
-                          value={newProduct.sku}
-                          onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                          placeholder="PRD-001"
-                          data-testid="product-sku"
-                        />
-                      </div>
+                      <ValidatedInput
+                        ref={createSkuRef}
+                        label="SKU"
+                        requiredMark
+                        value={newProduct.sku}
+                        onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                        validate={requiredSku}
+                        resetKey={productValidationKey}
+                        successLabel={VALIDATION_SUCCESS_SHORT}
+                        placeholder="PRD-001"
+                        data-testid="product-sku"
+                      />
                       <div>
                         <Label>Código de barras</Label>
                         <Input
@@ -2092,15 +2117,18 @@ export function InventoryPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <Label>Nombre *</Label>
-                      <Input
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                        placeholder="Nombre del producto"
-                        data-testid="product-name"
-                      />
-                    </div>
+                    <ValidatedInput
+                      ref={createNameRef}
+                      label="Nombre"
+                      requiredMark
+                      value={newProduct.name}
+                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                      validate={requiredProductName}
+                      resetKey={productValidationKey}
+                      successLabel="Se ve bien"
+                      placeholder="Nombre del producto"
+                      data-testid="product-name"
+                    />
                     
                     <div>
                       <Label>Descripción</Label>
@@ -2243,20 +2271,23 @@ export function InventoryPage() {
                   {/* Pricing Tab */}
                   <TabsContent value="pricing" className="space-y-4 mt-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Precio Base *</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.price}
-                            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value, precio1: e.target.value || newProduct.precio1 })}
-                            placeholder="0.00"
-                            className="pl-9"
-                            data-testid="product-price"
-                          />
-                        </div>
+                      <div className="relative space-y-1">
+                        <ValidatedInput
+                          ref={createPriceRef}
+                          label="Precio Base"
+                          requiredMark
+                          type="number"
+                          step="0.01"
+                          value={newProduct.price}
+                          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value, precio1: e.target.value || newProduct.precio1 })}
+                          validate={requiredPrice}
+                          resetKey={productValidationKey}
+                          successLabel={VALIDATION_SUCCESS_SHORT}
+                          placeholder="0.00"
+                          inputClassName="pl-9"
+                          data-testid="product-price"
+                        />
+                        <DollarSign className="pointer-events-none absolute left-3 top-[2.05rem] h-4 w-4 text-muted-foreground" aria-hidden />
                       </div>
                       <div>
                         <Label>Costo</Label>
@@ -4068,13 +4099,17 @@ Notas: ${transferWaSummary.notes}` : ''}`}
           {editingProduct && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Nombre</Label>
-                  <Input
-                    value={editingProduct.name}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  />
-                </div>
+                <ValidatedInput
+                  ref={editNameRef}
+                  label="Nombre"
+                  requiredMark
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  validate={requiredProductName}
+                  resetKey={editingProduct.product_id || editingProduct.inventory_id || "edit"}
+                  successLabel="Se ve bien"
+                  data-testid="edit-product-name"
+                />
                 <div>
                   <Label>Marca</Label>
                   <Input
@@ -4092,19 +4127,23 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Precio 1</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={editingProduct.precio1 || editingProduct.price}
-                    onChange={(e) => setEditingProduct({
-                      ...editingProduct,
-                      price: e.target.value,
-                      precio1: e.target.value,
-                    })}
-                  />
-                </div>
+                <ValidatedInput
+                  ref={editPriceRef}
+                  label="Precio 1"
+                  requiredMark
+                  type="number"
+                  step="0.01"
+                  value={editingProduct.precio1 || editingProduct.price}
+                  onChange={(e) => setEditingProduct({
+                    ...editingProduct,
+                    price: e.target.value,
+                    precio1: e.target.value,
+                  })}
+                  validate={requiredPrice}
+                  resetKey={editingProduct.product_id || editingProduct.inventory_id || "edit"}
+                  successLabel={VALIDATION_SUCCESS_SHORT}
+                  data-testid="edit-product-price"
+                />
                 <div>
                   <Label>Precio 2</Label>
                   <Input
