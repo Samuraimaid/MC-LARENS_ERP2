@@ -638,7 +638,75 @@ const OFFICIAL_GAMAS = [
     description: "Quantum Original (14%, 19%, 28%), Endeavor",
     tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
   },
+
 ];
+
+// Body × gama surcharge matrix (sedán = 1.0 reference).
+// total ≈ POL body base + Σ zone extras × BODY_SURCHARGE_MULTIPLIERS[bodyClass]
+// Offline extra_price values below are full-car sedán surcharges (Tinmax 55 / Nano 125 / Premium 180).
+export const BODY_SURCHARGE_MULTIPLIERS = {
+  partial: 0.45,
+  hatch: 0.9,
+  sedan: 1.0,
+  pickup: 1.2,
+  suv: 1.35,
+  van: 1.65,
+  camion: 1.85,
+};
+
+export const BODY_CLASS_BY_CATEGORY = {
+  hatchback: "hatch",
+  sedan: "sedan",
+  camioneta_doble_cabina: "pickup",
+  camioneta_cabina_media: "pickup",
+  camioneta_1_cabina: "pickup",
+  suv: "suv",
+  station_wagon: "suv",
+  microbus_pasajeros: "van",
+  microbus_techo_alto: "van",
+  microbus_carga: "van",
+  bus_mediano_coaster: "van",
+  bus_grande_marcopolo: "van",
+  camion_1_cabina: "camion",
+  camion_2_cabinas: "camion",
+  camion_carga_furgon: "camion",
+  moto: "partial",
+};
+
+export function resolveBodyClass(categoryId) {
+  if (!categoryId) return "sedan";
+  const key = String(categoryId).trim().toLowerCase();
+  if (BODY_CLASS_BY_CATEGORY[key]) return BODY_CLASS_BY_CATEGORY[key];
+  if (key.includes("microbus") || key.includes("bus") || key.includes("van")) return "van";
+  if (key.includes("camioneta") || key.includes("pickup") || key.includes("pick-up")) return "pickup";
+  if (key.includes("camion") || key.includes("cabezal") || key.includes("truck")) return "camion";
+  if (key.includes("hatch")) return "hatch";
+  if (key.includes("suv") || key.includes("station")) return "suv";
+  if (key.includes("moto") || key.includes("franja") || key.includes("ventana")) return "partial";
+  return "sedan";
+}
+
+export function bodySurchargeMultiplier(categoryId) {
+  const body = resolveBodyClass(categoryId);
+  return BODY_SURCHARGE_MULTIPLIERS[body] ?? 1.0;
+}
+
+// Sedán-reference zone extras by gama (mirrors backend price_by_zone_group ladder)
+const GAMA_ZONE_EXTRAS_SEDAN = {
+  gama_economica: { windshield: 0, sides: 0, rear: 0 },
+  tinmax: { windshield: 15, sides: 25, rear: 15 },
+  nano_ceramico: { windshield: 35, sides: 55, rear: 35 },
+  gama_premium: { windshield: 50, sides: 80, rear: 50 },
+};
+
+const ZONE_TO_GROUP_FE = {
+  windshield: "windshield",
+  front_sides: "sides",
+  rear_sides: "sides",
+  rear: "rear",
+};
+
+
 
 // Configuración por defecto de zonas y políticas
 export const DEFAULT_TINT_CONFIG = {
@@ -1041,6 +1109,7 @@ export default function TintWindowMaterialDialog({
     const computeQuote = async () => {
       const planPayload = {
         vehicle_id: vehicle?.vehicle_id || vehicle?.id || null,
+        vehicle_category: selectedVehicleType || null,
         link_sides: linkSides,
         windows: {
           windshield: {
@@ -1079,7 +1148,7 @@ export default function TintWindowMaterialDialog({
     };
 
     computeQuote();
-  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle?.vehicle_id || vehicle?.id, isUnlocked, allowedZones]);
+  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle?.vehicle_id || vehicle?.id, isUnlocked, allowedZones, selectedVehicleType]);
 
   const handleSelectMaterial = (zone, materialId) => {
     if (isSunstripOnly) {
@@ -1214,37 +1283,79 @@ export default function TintWindowMaterialDialog({
     });
   }, [allowedZones, isSunstripOnly, selectedMaterials, sunstrips]);
 
+  const bodyMultiplier = useMemo(
+    () => bodySurchargeMultiplier(selectedVehicleType),
+    [selectedVehicleType]
+  );
+
   const localMaterialsExtraTotal = useMemo(() => {
-    let total = 0;
+    // Offline / pre-quote fallback mirroring backend quote_tint_window_plan:
+    // charge windshield + sides (once if linked same mat) + rear using gama zone ladder,
+    // then scale by body multiplier. Prefer price_by_zone_group / price_extra_usd when present.
     const matsMap = {};
     activeMaterials.forEach((m) => {
       if (m.id) matsMap[m.id] = m;
       if (m.material_id) matsMap[m.material_id] = m;
     });
 
-    allowedZones.forEach((z) => {
-      const matId = selectedMaterials[z];
-      if (matId && matId !== "none") {
-        const matObj = matsMap[matId];
-        if (matObj?.price_extra_usd) {
-          total += Number(matObj.price_extra_usd);
-        } else if (matObj?.extra_price) {
-          total += Number(matObj.extra_price);
+    const zoneExtra = (zone, matObj) => {
+      if (!matObj) return 0;
+      const group = ZONE_TO_GROUP_FE[zone] || "sides";
+      const byZone = matObj.price_by_zone_group;
+      if (byZone && typeof byZone[group] === "number") return Number(byZone[group]);
+      if (typeof matObj.price_extra_usd === "number") return Number(matObj.price_extra_usd);
+      const gama = matObj.gama || matObj.gama_id || "tinmax";
+      const ladder = GAMA_ZONE_EXTRAS_SEDAN[gama] || GAMA_ZONE_EXTRAS_SEDAN.tinmax;
+      if (typeof matObj.extra_price === "number" && matObj.extra_price > 0) {
+        // extra_price is full-car sedán surcharge — allocate by zone share of ladder
+        const full = (ladder.windshield || 0) + (ladder.sides || 0) + (ladder.rear || 0);
+        if (full > 0) return (Number(matObj.extra_price) * (ladder[group] || 0)) / full;
+      }
+      return ladder[group] || 0;
+    };
+
+    let total = 0;
+    const ws = selectedMaterials.windshield;
+    const fs = selectedMaterials.front_sides;
+    const rs = selectedMaterials.rear_sides;
+    const rr = selectedMaterials.rear;
+
+    if (allowedZones.includes("windshield") && ws && ws !== "none") {
+      total += zoneExtra("windshield", matsMap[ws]);
+    }
+
+    const sidesAllowed =
+      (allowedZones.includes("front_sides") && fs && fs !== "none") ||
+      (allowedZones.includes("rear_sides") && rs && rs !== "none");
+    if (sidesAllowed) {
+      if (fs && rs && fs === rs && fs !== "none") {
+        total += zoneExtra("front_sides", matsMap[fs]);
+      } else {
+        if (allowedZones.includes("front_sides") && fs && fs !== "none") {
+          total += zoneExtra("front_sides", matsMap[fs]) * 0.5;
+        }
+        if (allowedZones.includes("rear_sides") && rs && rs !== "none") {
+          total += zoneExtra("rear_sides", matsMap[rs]) * 0.5;
         }
       }
+    }
+
+    if (allowedZones.includes("rear") && rr && rr !== "none") {
+      total += zoneExtra("rear", matsMap[rr]);
+    }
+
+    allowedZones.forEach((z) => {
       if (secondLayers[z]?.enabled) {
-        const secId = secondLayers[z]?.material_id;
-        const secObj = matsMap[secId];
-        if (secObj?.price_extra_usd) {
-          total += Number(secObj.price_extra_usd);
-        } else if (secObj?.extra_price) {
-          total += Number(secObj.extra_price);
-        }
+        const secObj = matsMap[secondLayers[z]?.material_id];
+        const group = ZONE_TO_GROUP_FE[z] || "sides";
+        let sec = zoneExtra(z, secObj);
+        if (z === "front_sides" || z === "rear_sides") sec *= 0.5;
+        total += sec;
       }
     });
 
-    return total;
-  }, [allowedZones, selectedMaterials, secondLayers, activeMaterials]);
+    return Math.round(total * bodyMultiplier * 100) / 100;
+  }, [allowedZones, selectedMaterials, secondLayers, activeMaterials, bodyMultiplier]);
 
   const effectiveMaterialsExtra = useMemo(() => {
     if (typeof quoteData?.materials_extra_total === "number" && quoteData.valid !== false) {

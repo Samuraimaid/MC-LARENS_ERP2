@@ -23,6 +23,10 @@ from backend.domains.tint.window_materials import (
 
 class WindowPlanPayload(BaseModel):
     vehicle_id: Optional[str] = None
+    vehicle_category: Optional[str] = Field(
+        None,
+        description="UI body category (sedan, suv, microbus_pasajeros, …) for gama×body surcharge matrix",
+    )
     windows: Dict[str, Any] = Field(..., description="Plan per window zone")
     sunstrips: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Sunstrips configuration")
     link_sides: Optional[bool] = True
@@ -152,6 +156,14 @@ def get_tint_materials_router(
                 "default_link_sides": policy.get("default_link_sides", True),
                 "sunstrip_pricing": policy.get("sunstrip_pricing", DEFAULT_TINT_WINDOW_MATERIALS_POLICY["sunstrip_pricing"]),
                 "second_layer_policy": policy.get("second_layer_policy", {"allow_second_layer": True}),
+                "body_surcharge_multipliers": policy.get(
+                    "body_surcharge_multipliers",
+                    DEFAULT_TINT_WINDOW_MATERIALS_POLICY.get("body_surcharge_multipliers"),
+                ),
+                "body_class_by_category": policy.get(
+                    "body_class_by_category",
+                    DEFAULT_TINT_WINDOW_MATERIALS_POLICY.get("body_class_by_category"),
+                ),
             },
         }
 

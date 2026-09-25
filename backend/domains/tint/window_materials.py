@@ -67,6 +67,66 @@ TINT_GAMAS = [
     },
 ]
 
+# ------------------------------------------------------------------------------
+# Body × gama pricing matrix (Lot B clarification 2026-09-25)
+#
+# Architecture:
+#   total ≈ POL-* body base (Económica unit_price) + Σ zone extras × body_multiplier
+# Zone extras in materials.price_by_zone_group are the **sedán / reference** ladder:
+#   Económica 0 / Tinmax 15+25+15=55 / Nano 35+55+35=125 / Premium 50+80+50=180
+# Body multipliers scale ONLY the gama zone surcharge (not the POL base, not sunstrips).
+# More windows / larger glass → higher multiplier. Gama names unchanged.
+# ------------------------------------------------------------------------------
+BODY_SURCHARGE_MULTIPLIERS = {
+    "partial": 0.45,  # ventana individual / franja / few panes
+    "hatch": 0.90,
+    "sedan": 1.00,  # reference
+    "pickup": 1.20,
+    "suv": 1.35,
+    "van": 1.65,
+    "camion": 1.85,
+}
+
+BODY_CLASS_BY_CATEGORY = {
+    "hatchback": "hatch",
+    "sedan": "sedan",
+    "camioneta_doble_cabina": "pickup",
+    "camioneta_cabina_media": "pickup",
+    "camioneta_1_cabina": "pickup",
+    "suv": "suv",
+    "station_wagon": "suv",
+    "microbus_pasajeros": "van",
+    "microbus_techo_alto": "van",
+    "microbus_carga": "van",
+    "bus_mediano_coaster": "van",
+    "bus_grande_marcopolo": "van",
+    "camion_1_cabina": "camion",
+    "camion_2_cabinas": "camion",
+    "camion_carga_furgon": "camion",
+    "moto": "partial",
+    # loose aliases
+    "hatch": "hatch",
+    "compacto": "hatch",
+    "pickup": "pickup",
+    "pick-up": "pickup",
+    "camioneta": "pickup",
+    "van": "van",
+    "microbus": "van",
+    "autobus": "van",
+    "bus": "van",
+    "camion": "camion",
+    "camión": "camion",
+    "cabezal": "camion",
+    "truck": "camion",
+    "partial": "partial",
+    "franja": "partial",
+    "delanteros": "partial",
+    "ventana": "partial",
+}
+
+# Target full-job examples (USD) = POL base + sedán_extra × multiplier
+#   sedán económica 55+0=55 | sedán nano 55+125=180 | SUV tinmax 75+55*1.35≈149 | van premium 95+180*1.65≈392
+
 DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
     "require_plan_on_installed_sale": False,
     "max_materials_per_vehicle": 4,
@@ -80,6 +140,8 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
     "second_layer_policy": {
         "allow_second_layer": True,
     },
+    "body_surcharge_multipliers": dict(BODY_SURCHARGE_MULTIPLIERS),
+    "body_class_by_category": dict(BODY_CLASS_BY_CATEGORY),
     "glass_templates": {
         "toyota_hilux": {"windshield": "windshield_over_40", "sides": "side_over_20", "rear": "side_over_20"},
         "toyota_land_cruiser": {"windshield": "windshield_over_40", "sides": "side_over_20", "rear": "side_over_20"},
@@ -1080,6 +1142,91 @@ def validate_tint_window_plan(
     return True, None
 
 
+
+def normalize_vehicle_category_key(raw: Optional[str]) -> str:
+    """Normalize UI / vehicle type strings to a lookup key."""
+    if not raw:
+        return ""
+    s = str(raw).strip().lower()
+    for ch in ("/", "-", " "):
+        s = s.replace(ch, "_")
+    while "__" in s:
+        s = s.replace("__", "_")
+    return s.strip("_")
+
+
+def resolve_body_class(
+    plan: Optional[Dict[str, Any]] = None,
+    vehicle_doc: Optional[Dict[str, Any]] = None,
+    policy: Optional[Dict[str, Any]] = None,
+) -> str:
+    """
+    Map plan.vehicle_category / vehicle fields → body class used for surcharge scaling.
+    Default: sedan (multiplier 1.0).
+    """
+    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
+    class_map = pol.get("body_class_by_category") or BODY_CLASS_BY_CATEGORY
+
+    candidates: List[str] = []
+    if isinstance(plan, dict):
+        for k in ("vehicle_category", "body_class", "vehicle_type", "category"):
+            v = plan.get(k)
+            if v:
+                candidates.append(str(v))
+    if isinstance(vehicle_doc, dict):
+        for k in ("category", "vehicle_category", "type", "vehicle_type", "body_type"):
+            v = vehicle_doc.get(k)
+            if v:
+                candidates.append(str(v))
+
+    for raw in candidates:
+        key = normalize_vehicle_category_key(raw)
+        if key in class_map:
+            return class_map[key]
+        # try first token
+        token = key.split("_")[0] if key else ""
+        if token in class_map:
+            return class_map[token]
+        # substring heuristics
+        for needle, body in (
+            ("microbus", "van"),
+            ("autobus", "van"),
+            ("bus", "van"),
+            ("van", "van"),
+            ("camioneta", "pickup"),
+            ("pickup", "pickup"),
+            ("pick_up", "pickup"),
+            ("camion", "camion"),
+            ("cabezal", "camion"),
+            ("hatch", "hatch"),
+            ("sedan", "sedan"),
+            ("suv", "suv"),
+            ("station", "suv"),
+            ("moto", "partial"),
+        ):
+            if needle in key:
+                return body
+    return "sedan"
+
+
+def resolve_body_surcharge_multiplier(
+    plan: Optional[Dict[str, Any]] = None,
+    vehicle_doc: Optional[Dict[str, Any]] = None,
+    policy: Optional[Dict[str, Any]] = None,
+) -> Tuple[str, float]:
+    """Return (body_class, multiplier). Sedán reference = 1.0."""
+    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
+    multipliers = pol.get("body_surcharge_multipliers") or BODY_SURCHARGE_MULTIPLIERS
+    body_class = resolve_body_class(plan, vehicle_doc, pol)
+    try:
+        mult = float(multipliers.get(body_class, 1.0))
+    except (TypeError, ValueError):
+        mult = 1.0
+    if mult <= 0:
+        mult = 1.0
+    return body_class, mult
+
+
 def quote_tint_window_plan(
     plan: Optional[Dict[str, Any]],
     vehicle_doc: Optional[Dict[str, Any]] = None,
@@ -1346,6 +1493,20 @@ def quote_tint_window_plan(
 
     has_empalme = any(r.get("is_empalme") for r in rolls_consumed)
 
+    # Scale gama zone surcharges by body class (sedán = 1.0). Sunstrips stay flat.
+    body_class, body_mult = resolve_body_surcharge_multiplier(plan, vehicle_doc, pol)
+    if abs(body_mult - 1.0) > 1e-9:
+        scaled_total = 0.0
+        for item in breakdown:
+            group = str(item.get("group") or "")
+            label = str(item.get("group_label") or "")
+            is_sunstrip = group.startswith("sunstrip") or "Banda" in label
+            if not is_sunstrip:
+                item["price_extra_usd"] = round(float(item.get("price_extra_usd") or 0.0) * body_mult, 2)
+                item["body_surcharge_multiplier"] = body_mult
+            scaled_total += float(item.get("price_extra_usd") or 0.0)
+        total_extra_usd = scaled_total
+
     return {
         "valid": True,
         "error": None,
@@ -1353,6 +1514,8 @@ def quote_tint_window_plan(
         "price_breakdown": breakdown,
         "rolls_consumed": rolls_consumed,
         "vehicle_size_bands": bands,
+        "body_class": body_class,
+        "body_surcharge_multiplier": body_mult,
         "has_empalme": has_empalme,
         "empalme_warning": "⚠️ AVISO DE CALIDAD: Instalación con empalme horizontal en 2 pliegos de 20\" autorizada." if has_empalme else None,
         "plan": plan,
