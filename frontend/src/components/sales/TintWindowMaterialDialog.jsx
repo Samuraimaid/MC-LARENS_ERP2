@@ -116,7 +116,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Máximo control térmico (99% IR) y total privacidad en rollo de 20 pulgadas.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -133,7 +133,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Tono Intermedio",
     "description": "Tonalidad intermedia más popular y versátil en rollo de 20 pulgadas.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": true
   },
   {
@@ -150,7 +150,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "NR (Non-Reflective)",
     "description": "Claridad óptica superior (100% visibilidad nocturna) en 20\" y 40\".",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -167,7 +167,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Estándar Claro",
     "description": "Transparencia total para parabrisas delantero y visión nocturna.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": true
   },
   {
@@ -184,7 +184,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 98,
     "tech_type": "Estándar 40\"",
     "description": "Película Tinmax Raybar de 40 pulgadas tono oscuro 5%.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -201,7 +201,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Sin tintes: tono que jamás se degrada ni se torna morado con los años.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -218,7 +218,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -235,7 +235,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "3M Series",
     "description": "Look uniforme, deportivo y elegante: balance perfecto entre privacidad y seguridad.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -252,7 +252,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Negro profundo resistente a rayaduras en rollo de 40 pulgadas.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -269,7 +269,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Tono intermedio 22% en rollo de 20 pulgadas para ventanas laterales.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -286,7 +286,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP Carbón",
     "description": "Ultra oscura: máxima privacidad, estética agresiva y cero interferencia electrónica.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -303,7 +303,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -320,7 +320,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Estándar Deportivo",
     "description": "Punto dulce deportivo: auto oscuro y deportivo a precio accesible.",
-    "extra_price": 55,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -337,7 +337,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Privacidad extrema y 90% rechazo infrarrojo. Tecnología multicapa en 20 pulgadas.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -354,7 +354,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Elegancia y confort con 90% IR. Control solar superior en rollo de 20 pulgadas.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -371,7 +371,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico 30\"",
     "description": "Rollo especial de 30 pulgadas Supreme 15% con alto rechazo infrarrojo.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -388,7 +388,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Claridad superior y estilo elegante en rollos versátiles de 20 y 40 pulgadas.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -405,7 +405,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Gama media clara en 20 pulgadas: visibilidad, confort y look ejecutivo.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -422,7 +422,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico 40\"",
     "description": "Tono 30% en rollo de 40 pulgadas con rechazo térmico superior.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -439,7 +439,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Acabado ultra claro con protección solar y visión transparente en 20\" y 40\".",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -456,7 +456,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Híbrida Metalizada",
     "description": "Arquitectura híbrida metalizada para climas hostiles y sol directo en 20\" y 40\".",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -473,7 +473,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Multicapa Tornasol",
     "description": "Efecto tornasol dinámico de alta gama que cambia de color según la luz solar.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -490,7 +490,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Barrera Titanio",
     "description": "Blindaje térmico profesional basado en partículas de titanio al vacío.",
-    "extra_price": 125,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -507,7 +507,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Película 100% metalizada por pulverización catódica en 20\" y 40\".",
-    "extra_price": 180,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -524,7 +524,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Punto medio perfecto (80% IR): excelente privacidad sin perder visión nocturna.",
-    "extra_price": 180,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -541,7 +541,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Tono claro y sutil: 72% IR sin oscurecer el auto en 20\" y 40\".",
-    "extra_price": 180,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -558,7 +558,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Gama Intermedia-Alta",
     "description": "Privacidad absoluta, oscuridad profunda y rendimiento térmico en 20\".",
-    "extra_price": 180,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -575,7 +575,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Gama Intermedia-Alta",
     "description": "Tono claro, sutil y elegante con visibilidad nocturna impecable en 40\".",
-    "extra_price": 180,
+    "extra_price": 120,
     "is_default": false
   }
 ];
@@ -643,15 +643,15 @@ const OFFICIAL_GAMAS = [
 
 // Body × gama surcharge matrix (sedán = 1.0 reference).
 // total ≈ POL body base + Σ zone extras × BODY_SURCHARGE_MULTIPLIERS[bodyClass]
-// Offline extra_price values below are full-car sedán surcharges (Tinmax 55 / Nano 125 / Premium 180).
+// Offline extra_price values below are full-car sedán surcharges (Tinmax 40 / Nano 95 / Premium 120).
 export const BODY_SURCHARGE_MULTIPLIERS = {
   partial: 0.45,
   hatch: 0.9,
   sedan: 1.0,
-  pickup: 1.2,
-  suv: 1.35,
-  van: 1.65,
-  camion: 1.85,
+  pickup: 1.15,
+  suv: 1.25,
+  van: 1.35,
+  camion: 1.4,
 };
 
 export const BODY_CLASS_BY_CATEGORY = {
@@ -694,9 +694,9 @@ export function bodySurchargeMultiplier(categoryId) {
 // Sedán-reference zone extras by gama (mirrors backend price_by_zone_group ladder)
 const GAMA_ZONE_EXTRAS_SEDAN = {
   gama_economica: { windshield: 0, sides: 0, rear: 0 },
-  tinmax: { windshield: 15, sides: 25, rear: 15 },
-  nano_ceramico: { windshield: 35, sides: 55, rear: 35 },
-  gama_premium: { windshield: 50, sides: 80, rear: 50 },
+  tinmax: { windshield: 10, sides: 20, rear: 10 },
+  nano_ceramico: { windshield: 25, sides: 45, rear: 25 },
+  gama_premium: { windshield: 35, sides: 50, rear: 35 },
 };
 
 const ZONE_TO_GROUP_FE = {

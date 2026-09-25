@@ -1,3 +1,5 @@
+> **Superseded for ticket band:** see `docs/polarizado_matrix_80_300_20260925.md` (recal to ~$80–$300). Architecture unchanged.
+
 # Polarizado price matrix fix — 2026-09-25 (America/Managua)
 
 **PR:** https://github.com/Samuraimaid/MC-LARENS_ERP2/pull/77  

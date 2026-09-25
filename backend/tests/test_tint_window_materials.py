@@ -43,7 +43,7 @@ def test_resolve_vehicle_glass_bands_with_explicit_measurements():
 
 
 def test_quote_tinmax_sedan_reference_extra():
-    """Tinmax full-car sedán reference: 15+25+15 = 55."""
+    """Tinmax full-car sedán reference: 10+20+10 = 40."""
     plan = {
         "vehicle_category": "sedan",
         "windows": {
@@ -55,13 +55,13 @@ def test_quote_tinmax_sedan_reference_extra():
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 55.0
+    assert quote["materials_extra_total"] == 40.0
     assert quote["body_class"] == "sedan"
     assert quote["body_surcharge_multiplier"] == 1.0
 
 
 def test_quote_premium_sedan_extra():
-    """Premium full-car sedán: 50+80+50 = 180."""
+    """Premium full-car sedán: 35+50+35 = 120."""
     plan = {
         "vehicle_category": "sedan",
         "windows": {
@@ -73,11 +73,11 @@ def test_quote_premium_sedan_extra():
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 180.0
+    assert quote["materials_extra_total"] == 120.0
 
 
 def test_quote_tinmax_suv_scales_by_body_multiplier():
-    """SUV multiplier 1.35 → Tinmax 55 * 1.35 = 74.25."""
+    """SUV multiplier 1.25 → Tinmax 40 * 1.25 = 50.0."""
     plan = {
         "vehicle_category": "suv",
         "windows": {
@@ -90,12 +90,12 @@ def test_quote_tinmax_suv_scales_by_body_multiplier():
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
     assert quote["body_class"] == "suv"
-    assert quote["body_surcharge_multiplier"] == 1.35
-    assert quote["materials_extra_total"] == 74.25
+    assert quote["body_surcharge_multiplier"] == 1.25
+    assert quote["materials_extra_total"] == 50.0
 
 
 def test_quote_premium_van_highest_ladder():
-    """Van multiplier 1.65 → Premium 180 * 1.65 = 297.0."""
+    """Van multiplier 1.35 → Premium 120 * 1.35 = 162.0."""
     plan = {
         "vehicle_category": "microbus_pasajeros",
         "windows": {
@@ -108,7 +108,7 @@ def test_quote_premium_van_highest_ladder():
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
     assert quote["body_class"] == "van"
-    assert quote["materials_extra_total"] == 297.0
+    assert quote["materials_extra_total"] == 162.0
 
 
 def test_quote_with_independent_sides_materials():
@@ -116,15 +116,15 @@ def test_quote_with_independent_sides_materials():
         "vehicle_category": "sedan",
         "windows": {
             "windshield": {"material_id": "std_20"},
-            "front_sides": {"material_id": "std_20"},  # sides 25 * 0.5 = 12.5
-            "rear_sides": {"material_id": "sg_quantum_orig_19"},  # sides 80 * 0.5 = 40
+            "front_sides": {"material_id": "std_20"},  # sides 20 * 0.5 = 10
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},  # sides 50 * 0.5 = 25
             "rear": {"material_id": "std_20"},
         },
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    # windshield 15 + front 12.5 + rear_sides 40 + rear 15 = 82.5
-    assert quote["materials_extra_total"] == 82.5
+    # windshield 10 + front 10 + rear_sides 25 + rear 10 = 55
+    assert quote["materials_extra_total"] == 55.0
 
 
 def test_quote_with_second_layer():
@@ -132,8 +132,8 @@ def test_quote_with_second_layer():
         "vehicle_category": "sedan",
         "windows": {
             "windshield": {
-                "material_id": "std_70",  # tinmax windshield 15
-                "second_layer": {"enabled": True, "material_id": "sg_quantum_orig_19"},  # +50
+                "material_id": "std_70",  # tinmax windshield 10
+                "second_layer": {"enabled": True, "material_id": "sg_quantum_orig_19"},  # +35
             },
             "front_sides": {"material_id": "std_20"},
             "rear_sides": {"material_id": "std_20"},
@@ -142,16 +142,16 @@ def test_quote_with_second_layer():
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    # full tinmax 55 + second layer premium windshield 50 = 105
-    assert quote["materials_extra_total"] == 105.0
+    # full tinmax 40 + second layer premium windshield 35 = 75
+    assert quote["materials_extra_total"] == 75.0
     sec_layer_breakdown = [b for b in quote["price_breakdown"] if "2da Capa" in b["group_label"]]
     assert len(sec_layer_breakdown) == 1
-    assert sec_layer_breakdown[0]["price_extra_usd"] == 50.0
+    assert sec_layer_breakdown[0]["price_extra_usd"] == 35.0
 
 
 def test_quote_with_sunstrips_not_scaled_by_body():
     plan = {
-        "vehicle_category": "suv",  # mult 1.35 — sunstrips stay flat
+        "vehicle_category": "suv",  # mult 1.25 — sunstrips stay flat
         "windows": {
             "windshield": {"material_id": "q1_05_40"},
             "front_sides": {"material_id": "q1_05_40"},

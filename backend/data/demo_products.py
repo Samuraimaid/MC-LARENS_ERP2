@@ -248,7 +248,7 @@ demo_products = [
         "category": "polarizados",
         "subcategory": "Polarizado Completo",
         "brand": "SunBlock",
-        "price": 55.0,
+        "price": 90.0,
         "cost": 100.00,
         "installation_type": "required",
         "installation_price": 0,
