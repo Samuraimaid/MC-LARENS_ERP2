@@ -2381,6 +2381,14 @@ export function SalesPage() {
 
   const filteredSales = (Array.isArray(sales) ? sales : []).filter(sale => {
     if (!sale) return false;
+    const matchesSearch = (sale.invoice_number || "")?.toLowerCase().includes(search.toLowerCase()) ||
+                         (sale.customer_name || "")?.toLowerCase().includes(search.toLowerCase());
+    const matchesPayment = filterPayment === "all" || sale.payment_type === filterPayment;
+    const matchesStatus = filterStatus === "all" || sale.status === filterStatus;
+    const matchesSeller = filterSeller === "all" || sale.seller_id === filterSeller || sale.created_by === filterSeller;
+    const matchesBranch = filterBranch === "all" || sale.branch_id === filterBranch;
+    return matchesSearch && matchesPayment && matchesStatus && matchesSeller && matchesBranch;
+  });
 
   const visibleSaleIds = (Array.isArray(filteredSales) ? filteredSales : []).map((s) => s.sale_id).filter(Boolean);
   const selectedSales = (Array.isArray(filteredSales) ? filteredSales : []).filter((s) => selection.isSelected(s.sale_id));
@@ -2401,15 +2409,6 @@ export function SalesPage() {
       toast.success("IDs copiados");
     } catch { toast.error("No se pudo copiar"); }
   };
-
-    const matchesSearch = (sale.invoice_number || "")?.toLowerCase().includes(search.toLowerCase()) ||
-                         (sale.customer_name || "")?.toLowerCase().includes(search.toLowerCase());
-    const matchesPayment = filterPayment === "all" || sale.payment_type === filterPayment;
-    const matchesStatus = filterStatus === "all" || sale.status === filterStatus;
-    const matchesSeller = filterSeller === "all" || sale.seller_id === filterSeller || sale.created_by === filterSeller;
-    const matchesBranch = filterBranch === "all" || sale.branch_id === filterBranch;
-    return matchesSearch && matchesPayment && matchesStatus && matchesSeller && matchesBranch;
-  });
 
   const openInvoicesInCash = useMemo(() => {
     const salesById = new Map(
