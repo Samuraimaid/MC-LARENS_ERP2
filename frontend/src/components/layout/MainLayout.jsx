@@ -14,6 +14,7 @@ import { API_BASE as API } from "@/lib/api";
 import { AUTOSAVE_STATUS, AUTOSAVE_STATUS_EVENT } from "../../lib/autosaveStatus";
 import { useAutosaveLifecycle } from "../../hooks/useAutosaveLifecycle";
 import AutosavePill from "../common/AutosavePill";
+import { PasswordField } from "@/components/common/PasswordField";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -904,17 +905,19 @@ export function MainLayout() {
               </p>
             ) : null}
             <div className="mt-3 space-y-2">
-              <Label htmlFor="main-unlock-pin">PIN de usuario para desbloquear</Label>
-              <Input
+              <PasswordField
                 ref={unlockPinInputRef}
                 id="main-unlock-pin"
-                type="password"
-                inputMode="numeric"
-                maxLength={8}
+                label="PIN de usuario para desbloquear"
+                mode="pin"
+                pinLength={8}
                 value={unlockPin}
-                onChange={(e) => setUnlockPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                onChange={(next) => setUnlockPin(next)}
                 placeholder="PIN de 8 dígitos"
                 disabled={unlockBusy || isUnlockCoolingDown}
+                coaching={false}
+                autoComplete="current-password"
+                data-testid="main-unlock-pin"
                 autoFocus
               />
             </div>

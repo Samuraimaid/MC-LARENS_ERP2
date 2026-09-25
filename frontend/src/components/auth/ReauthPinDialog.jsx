@@ -8,8 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/common/PasswordField";
 import { ShieldCheck } from "lucide-react";
 
 /**
@@ -70,20 +69,20 @@ export function ReauthPinDialog({
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="reauth-pin">PIN de inicio de sesión</Label>
-            <Input
+            <PasswordField
               id="reauth-pin"
               ref={inputRef}
-              type="password"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={8}
-              pattern="[0-9]{8}"
-              placeholder="••••••••"
+              label="PIN de inicio de sesión"
+              mode="pin"
+              pinLength={8}
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+              onChange={(next) => setPin(next)}
+              placeholder="••••••••"
               disabled={loading}
-              className="tracking-[0.35em] text-center text-lg font-mono"
+              coaching={false}
+              autoComplete="current-password"
+              inputClassName="tracking-[0.35em] text-center"
+              data-testid="reauth-pin"
             />
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>

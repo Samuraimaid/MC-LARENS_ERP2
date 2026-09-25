@@ -21,6 +21,7 @@ import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { MorphToggle, MORPH_TOGGLE_ERROR_ES } from "../components/common/MorphToggle";
+import { PasswordField } from "@/components/common/PasswordField";
 import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
@@ -1979,18 +1980,17 @@ export function SettingsPage() {
                 onReset={() => setProfilePin("")}
                 resetLabel="Descartar"
               >
-                <input
-                  type="password"
+                <PasswordField
+                  mode="pin"
+                  pinLength={4}
+                  pinLabel="PIN de marcación"
                   value={profilePin}
-                  onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  maxLength={4}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  onChange={(next) => setProfilePin(next)}
                   placeholder="••••"
+                  autoComplete="new-password"
                   data-testid="settings-profile-pin"
+                  description="Usá la barra inferior Guardar / Cancelar para confirmar el nuevo PIN."
                 />
-                <p className="text-xs text-muted-foreground">
-                  Usá la barra inferior Guardar / Cancelar para confirmar el nuevo PIN.
-                </p>
               </SettingsRow>
             </SettingsSection>
 

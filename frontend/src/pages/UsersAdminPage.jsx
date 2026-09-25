@@ -30,6 +30,7 @@ import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
+import { PasswordField } from "@/components/common/PasswordField";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -101,7 +102,6 @@ export function UsersAdminPage() {
     has_social_security: false,
     eligible_for_attendance_bonus: false,
   });
-  const [showPin, setShowPin] = useState(false);
   const [editingPinUser, setEditingPinUser] = useState(null);
   const [newPin, setNewPin] = useState("");
   const [editingKioskPinUser, setEditingKioskPinUser] = useState(null);
@@ -1007,51 +1007,30 @@ export function UsersAdminPage() {
                       </div>
                     ) : null}
                     
-                    <div>
-                      <Label>PIN de Marcación (4 dígitos, opcional)</Label>
-                      <div className="relative mt-1">
-                        <Input
-                          type={showPin ? "text" : "password"}
-                          value={pinForm.pin}
-                          onChange={(e) => setPinForm({...pinForm, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
-                          placeholder="••••"
-                          className="font-mono text-lg tracking-widest"
-                          maxLength={4}
-                          data-testid="pin-user-pin"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                          onClick={() => setShowPin(!showPin)}
-                          aria-label={showPin ? "Ocultar PIN" : "Mostrar PIN"}
-                        >
-                          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {pinForm.pin.length}/4 dígitos
-                      </p>
-                    </div>
+                    <PasswordField
+                      label="PIN de Marcación (4 dígitos, opcional)"
+                      mode="pin"
+                      pinLength={4}
+                      pinLabel="PIN de marcación"
+                      value={pinForm.pin}
+                      onChange={(next) => setPinForm({ ...pinForm, pin: next })}
+                      placeholder="••••"
+                      autoComplete="new-password"
+                      data-testid="pin-user-pin"
+                    />
 
-                    <div>
-                      <Label>PIN de Inicio de Sesión (8 dígitos)</Label>
-                      <div className="relative mt-1">
-                        <Input
-                          type={showPin ? "text" : "password"}
-                          value={pinForm.login_pin}
-                          onChange={(e) => setPinForm({...pinForm, login_pin: e.target.value.replace(/\D/g, '').slice(0, 8)})}
-                          placeholder="••••••••"
-                          className="font-mono text-lg tracking-widest"
-                          maxLength={8}
-                          data-testid="pin-user-login-pin"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {pinForm.login_pin.length}/8 dígitos
-                      </p>
-                    </div>
+                    <PasswordField
+                      label="PIN de Inicio de Sesión (8 dígitos)"
+                      mode="pin"
+                      pinLength={8}
+                      pinLabel="PIN de inicio"
+                      value={pinForm.login_pin}
+                      onChange={(next) => setPinForm({ ...pinForm, login_pin: next })}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="new-password"
+                      data-testid="pin-user-login-pin"
+                    />
                     
                     <div>
                       <Label>Sucursal</Label>
@@ -1854,30 +1833,18 @@ export function UsersAdminPage() {
             <DialogTitle>Cambiar PIN de inicio de {getUserDisplayLabel(editingPinUser)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Nuevo PIN de inicio (8 dígitos)</Label>
-              <div className="relative mt-1">
-                <Input
-                  type={showPin ? "text" : "password"}
-                  value={newPin}
-                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                  placeholder="••••••••"
-                  className="font-mono text-lg tracking-widest"
-                  maxLength={8}
-                  data-testid="new-pin-input"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                  onClick={() => setShowPin(!showPin)}
-                >
-                  {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{newPin.length}/8 dígitos</p>
-            </div>
+            <PasswordField
+              label="Nuevo PIN de inicio (8 dígitos)"
+              mode="pin"
+              pinLength={8}
+              pinLabel="PIN de inicio"
+              value={newPin}
+              onChange={(next) => setNewPin(next)}
+              placeholder="••••••••"
+              required
+              autoComplete="new-password"
+              data-testid="new-pin-input"
+            />
             
             <Button 
               onClick={updatePinUserPin} 
@@ -1897,30 +1864,18 @@ export function UsersAdminPage() {
             <DialogTitle>PIN Kiosko de {getUserDisplayLabel(editingKioskPinUser)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Nuevo PIN Kiosko (4 dígitos)</Label>
-              <div className="relative mt-1">
-                <Input
-                  type={showPin ? "text" : "password"}
-                  value={newKioskPin}
-                  onChange={(e) => setNewKioskPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="••••"
-                  className="font-mono text-lg tracking-widest"
-                  maxLength={4}
-                  data-testid="new-kiosk-pin-input"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                  onClick={() => setShowPin(!showPin)}
-                >
-                  {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{newKioskPin.length}/4 dígitos</p>
-            </div>
+            <PasswordField
+              label="Nuevo PIN Kiosko (4 dígitos)"
+              mode="pin"
+              pinLength={4}
+              pinLabel="PIN kiosko"
+              value={newKioskPin}
+              onChange={(next) => setNewKioskPin(next)}
+              placeholder="••••"
+              required
+              autoComplete="new-password"
+              data-testid="new-kiosk-pin-input"
+            />
 
             <Button
               onClick={updateKioskPin}

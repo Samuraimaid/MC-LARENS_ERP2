@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "sonner";
+import { PasswordField } from "@/components/common/PasswordField";
 
 export default function SessionGuardian({ onUnlock, cajeroId }) {
   const [locked, setLocked] = useState(false);
@@ -49,13 +50,17 @@ export default function SessionGuardian({ onUnlock, cajeroId }) {
       <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80" />
       <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex w-80 -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-bold">Sesión Bloqueada</h2>
-        <input
-          type="password"
-          maxLength={4}
-          className="mb-4 w-24 border-b-2 border-gray-400 text-center text-2xl"
+        <PasswordField
+          mode="pin"
+          pinLength={4}
           value={pin}
-          onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))}
+          onChange={(next) => setPin(next)}
           disabled={loading}
+          coaching={false}
+          autoComplete="current-password"
+          className="mb-4 w-40"
+          inputClassName="border-0 border-b-2 border-gray-400 rounded-none text-center text-2xl tracking-widest shadow-none focus-visible:ring-0"
+          data-testid="session-guardian-pin"
         />
         <button
           className="rounded bg-blue-600 px-4 py-2 text-white"
