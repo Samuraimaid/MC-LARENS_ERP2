@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  pushUndo,
+  dropUndo,
+  undoById,
+  undoLatest,
+  getUndoStack,
+  ensureUndoHotkey,
+  UNDO_STACK_TTL_MS,
+} from "./undoStack";
 
-const DEFAULT_MS = 10000;
+const DEFAULT_MS = UNDO_STACK_TTL_MS;
 
 /**
- * Toast destructivo reversible (~10s) con anillo de cuenta regresiva + Deshacer.
+ * Toast destructivo reversible (~9s) con anillo + Deshacer.
+ * U8: pushes onto shared undo stack (time machine); Cmd/Ctrl+Z undoes latest.
  * Preferir APIs soft (activar/desactivar). No inventar undo si no hay revert API.
  */
 export function showUndoToast({
@@ -15,17 +25,30 @@ export function showUndoToast({
   onUndo,
   toastId,
 } = {}) {
+  ensureUndoHotkey();
   const id = toastId ?? `undo-${Date.now()}`;
-  let undone = false;
+
+  pushUndo({
+    id,
+    label: message || "Acción",
+    description,
+    ttlMs: durationMs,
+    onUndo: async () => {
+      toast.dismiss(id);
+      try {
+        await onUndo?.();
+      } catch {
+        toast.error("No se pudo deshacer");
+        throw new Error("undo_failed");
+      }
+    },
+  });
 
   const handleUndo = async () => {
-    if (undone) return;
-    undone = true;
-    toast.dismiss(id);
-    try {
-      await onUndo?.();
-    } catch {
-      toast.error("No se pudo deshacer");
+    const ok = await undoById(id);
+    if (!ok) {
+      // Already undone via hotkey or expired
+      toast.dismiss(id);
     }
   };
 
@@ -35,27 +58,49 @@ export function showUndoToast({
         message={message}
         description={description}
         durationMs={durationMs}
+        stackDepth={Math.max(1, getUndoStack().length)}
         onUndo={handleUndo}
-        onDismiss={() => toast.dismiss(t)}
+        onDismiss={() => {
+          dropUndo(id);
+          toast.dismiss(t);
+        }}
       />
     ),
-    { id, duration: durationMs }
+    {
+      id,
+      duration: durationMs,
+      onAutoClose: () => dropUndo(id),
+      onDismiss: () => dropUndo(id),
+    }
   );
 
   return id;
 }
 
-function UndoToastCard({ message, description, durationMs, onUndo, onDismiss }) {
+/** Undo the latest stacked action (same as Cmd/Ctrl+Z). */
+export async function undoLastAction() {
+  try {
+    const ok = await undoLatest();
+    if (ok) toast.success("Cambio deshecho");
+    return ok;
+  } catch {
+    toast.error("No se pudo deshacer");
+    return false;
+  }
+}
+
+function UndoToastCard({ message, description, durationMs, stackDepth, onUndo, onDismiss }) {
   const [remaining, setRemaining] = useState(durationMs);
 
   useEffect(() => {
     const start = Date.now();
+    let raf;
     const tick = () => {
       const left = Math.max(0, durationMs - (Date.now() - start));
       setRemaining(left);
       if (left > 0) raf = requestAnimationFrame(tick);
     };
-    let raf = requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [durationMs]);
 
@@ -102,10 +147,25 @@ function UndoToastCard({ message, description, durationMs, onUndo, onDismiss }) 
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground leading-snug">{message}</p>
+        <p className="text-sm font-medium text-foreground leading-snug">
+          {message}
+          {stackDepth > 1 ? (
+            <span
+              className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-muted-foreground"
+              title={`${stackDepth} acciones en la pila · Ctrl/⌘+Z`}
+              data-testid="undo-stack-depth"
+            >
+              {stackDepth}
+            </span>
+          ) : null}
+        </p>
         {description ? (
           <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
-        ) : null}
+        ) : (
+          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+            Ctrl/⌘+Z deshace la última
+          </p>
+        )}
       </div>
 
       <button
