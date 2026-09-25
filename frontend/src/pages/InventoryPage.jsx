@@ -2582,7 +2582,7 @@ export function InventoryPage() {
           <div
             className={
               listDensity === "cozy"
-                ? "flex flex-col gap-3"
+                ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch"
                 : "flex flex-col gap-2"
             }
             data-list-density={listDensity}
@@ -2612,12 +2612,12 @@ export function InventoryPage() {
                   data-testid={`inv-row-${item.inventory_id}`}
                   className={`rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
                     !isActiveInWarehouse ? "opacity-60" : ""
-                  } "flex flex-col sm:flex-row gap-0 sm:gap-4"`}
+                  } ${isRoomy ? "flex h-full flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
                 >
                   <div
                     className={`relative shrink-0 bg-muted/30 ${
                       isRoomy
-                        ? "w-full sm:w-36 h-40 sm:h-auto sm:self-stretch"
+                        ? "w-full h-52 sm:h-56"
                         : "w-full sm:w-24 h-28 sm:h-auto sm:self-stretch"
                     }`}
                   >

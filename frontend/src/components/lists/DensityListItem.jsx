@@ -25,6 +25,7 @@ export function DensityListItem({
 }) {
   const mode = normalizeListDensity(density);
   const t = densityTokens(mode);
+  const isCozy = mode === "cozy";
   const hasBody = children != null && children !== false;
 
   return (
@@ -34,8 +35,7 @@ export function DensityListItem({
       onClick={disabled ? undefined : onClick}
       className={cn(
         "group w-full text-left transition-colors",
-        hasBody ? "flex flex-col" : "flex items-center",
-        !hasBody && t.row,
+        hasBody || isCozy ? "flex h-full flex-col" : "flex items-center",
         glass
           ? "rounded-xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.04)] hover:border-primary/25 hover:bg-card/80"
           : "rounded-lg hover:bg-muted/50",
@@ -45,25 +45,27 @@ export function DensityListItem({
         className
       )}
     >
-      <div className={cn("flex w-full items-center", t.row)}>
+      <div className={cn("flex w-full", isCozy ? "flex-1 flex-col items-stretch" : "items-center", !isCozy && t.row)}>
         {(media || mediaFallback) && (
           <div
             className={cn(
               "relative shrink-0 overflow-hidden bg-muted/40 flex items-center justify-center text-muted-foreground",
-              t.media
+              isCozy
+                ? "h-40 w-full rounded-none [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>svg]:h-12 [&>svg]:w-12"
+                : t.media
             )}
           >
             {media || mediaFallback}
           </div>
         )}
-        <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+        <div className={cn("min-w-0 flex-1 flex flex-col gap-0.5", isCozy && "px-4 pt-4 pb-3")}>
           {primary ? <div className={cn("truncate", t.primary)}>{primary}</div> : null}
           {secondary ? <div className={cn("truncate", t.secondary)}>{secondary}</div> : null}
           {meta ? <div className={cn("truncate", t.secondary)}>{meta}</div> : null}
         </div>
         {trailing ? (
           <div
-            className={cn("shrink-0 flex items-center justify-end", t.trailing)}
+            className={cn("shrink-0 flex items-center justify-end", isCozy ? "w-full px-4 pb-4" : t.trailing)}
             onClick={(e) => e.stopPropagation()}
           >
             {trailing}
@@ -89,7 +91,7 @@ export function DensityList({ density = "comfortable", className, children, test
     <div
       data-testid={testId}
       data-list-density={mode}
-      className={cn("flex flex-col", t.listGap, className)}
+      className={cn(mode === "cozy" ? "grid grid-cols-1 sm:grid-cols-2 items-stretch" : "flex flex-col", t.listGap, className)}
     >
       {children}
     </div>

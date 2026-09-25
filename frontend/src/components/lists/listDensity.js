@@ -31,8 +31,8 @@ export const LIST_DENSITY_META = {
     id: "cozy",
     label: "Amplia",
     shortLabel: "Amplia",
-    title: "Amplia — filas holgadas con miniatura grande",
-    googleHint: "roomy",
+    title: "Amplia — cuadrícula de 2 columnas con miniaturas grandes",
+    googleHint: "grid",
   },
 };
 
@@ -110,14 +110,14 @@ export const DENSITY_TOKENS = {
   },
   cozy: {
     row: "gap-4 px-4 py-3.5 min-h-[72px]",
-    media: "h-14 w-14 rounded-xl",
+    media: "h-40 w-full rounded-t-xl",
     mediaIcon: "h-6 w-6",
     primary: "text-base font-semibold leading-snug",
     secondary: "text-sm text-muted-foreground leading-snug",
     trailing: "gap-1.5",
     tableRow: "h-16 [&_td]:py-3 [&_td]:px-4 [&_th]:py-3 [&_th]:px-4 text-base",
     tableThumb: "h-12 w-12",
-    listGap: "gap-2.5",
+    listGap: "gap-4",
     cardPad: "p-4",
   },
 };
