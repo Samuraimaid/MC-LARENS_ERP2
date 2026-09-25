@@ -576,7 +576,6 @@ BRANCH_SERVICE_POLICY_DEFAULTS: Dict[str, Dict[str, Any]] = {
 }
 
 ROLE_EQUIVALENCE: Dict[str, str] = {
-    "recursos_humanos": "gerencia",
     "jefe_vendedores": "supervisor",
     "jefe_tienda": "supervisor",
 }

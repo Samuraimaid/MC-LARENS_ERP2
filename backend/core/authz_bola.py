@@ -44,7 +44,6 @@ MONEY_MUTATION_ROLES: Set[str] = {
     "gerencia",
     "supervisor",
     "cajero",
-    "recursos_humanos",
 }
 
 # Roles permitidos para mutaciones de stock / inventario
