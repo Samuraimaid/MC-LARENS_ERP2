@@ -15478,7 +15478,48 @@ async def update_work_order(
         raise HTTPException(status_code=404, detail="Work order not found")
     wo = cast(Dict[str, Any], wo)
 
+    # P2-B Ownership gate for field technicians
+    if raw_role in WORK_ORDER_FIELD_TECHNICIAN_ROLES:
+        assigned_tech = wo.get("technician_id")
+        # 1. Block cross-technician mutation
+        if assigned_tech and str(assigned_tech).strip() not in (user.user_id, "unassigned"):
+            raise HTTPException(
+                status_code=403,
+                detail="No está autorizado para modificar una orden asignada a otro técnico",
+            )
+        # 2. Block department cross-contamination
+        wo_dept = str(wo.get("department") or "instalaciones").strip().lower()
+        if raw_role == "electrico" and wo_dept != "electrico":
+            raise HTTPException(
+                status_code=403,
+                detail="No autorizado para modificar órdenes de otro departamento",
+            )
+        elif raw_role == "polarizador" and wo_dept not in ("polarizados", "polarizado"):
+            raise HTTPException(
+                status_code=403,
+                detail="No autorizado para modificar órdenes de otro departamento",
+            )
+        elif raw_role in ("instalaciones", "instalador") and wo_dept not in ("instalaciones", ""):
+            raise HTTPException(
+                status_code=403,
+                detail="No autorizado para modificar órdenes de otro departamento",
+            )
+        # 3. Block reassigning to others
+        if update.technician_id and str(update.technician_id).strip() != user.user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="No está autorizado para reasignar técnicos",
+            )
+
     updates = {}
+
+    # If field tech self-claims an unassigned order
+    if raw_role in WORK_ORDER_FIELD_TECHNICIAN_ROLES:
+        assigned_tech = wo.get("technician_id")
+        if not assigned_tech or str(assigned_tech).strip() == "unassigned":
+            updates["technician_id"] = user.user_id
+            updates["technician_name"] = user.name
+            updates["assignment_status"] = "assigned"
 
     if update.status:
         new_status = str(update.status or "").strip().lower()
