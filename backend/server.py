@@ -575,10 +575,7 @@ BRANCH_SERVICE_POLICY_DEFAULTS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-ROLE_EQUIVALENCE: Dict[str, str] = {
-    "jefe_vendedores": "supervisor",
-    "jefe_tienda": "supervisor",
-}
+ROLE_EQUIVALENCE: Dict[str, str] = {}
 
 ROLE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{2,39}$")
 
