@@ -307,3 +307,12 @@ Paste-safe input · sticky toolbar · collapsible filters · Clear · reuse `Pro
 - Prompt pegable: `docs/ANTIGRAVITY_PROMPT_FASE2_SECURITY_P1_20260924.md`
 - Orden: S4+C4 → S5+C3 → C2 → S6 → (opcional F1 Idempotency-Key header front)
 - P0 ya live: PRs #45 #46 #47 · deploy tag 20260925_035047
+
+---
+
+## 2026-09-25 — Ops Unblock Pack 1+2 (post deep audit)
+
+- Auditoría: `docs/ERP_DEEP_AUDIT_20260925.md`
+- Prompt pegable: `docs/ANTIGRAVITY_PROMPT_OPS_UNBLOCK_P1P2_20260925.md`
+- Pack1: PIN sync + KDS unassigned + RH≢gerencia
+- Pack2: cashier collect FE + WO ownership + tint attendance + jefe equiv narrow
