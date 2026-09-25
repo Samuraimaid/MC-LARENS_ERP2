@@ -27133,6 +27133,33 @@ async def assign_tint_order(
     if str(technician.get("role") or "") not in {"polarizador", "instalaciones", "gerencia"}:
         raise HTTPException(status_code=400, detail="El usuario seleccionado no es polarizador")
 
+    # Attendance Gate (consistent with work order assignment)
+    active_pipeline = [
+        {
+            "$match": {
+                "assigned_technician_id": technician_id,
+                "status": {"$in": ["pending_assignment", "pending", "in_progress", "quality_check"]},
+                "tint_order_id": {"$ne": tint_order_id},
+            }
+        },
+        {"$count": "count"},
+    ]
+    active_rows = await db.tint_orders.aggregate(active_pipeline).to_list(1)
+    active_jobs = int((active_rows[0] or {}).get("count") or 0) if active_rows else 0
+    attendance = await build_technician_attendance_snapshot(
+        db,
+        str(technician_id),
+        active_jobs=active_jobs,
+    )
+    if not attendance.get("availability_assignable"):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"{technician.get('name', 'Técnico')} no está disponible: "
+                f"{attendance.get('attendance_label', 'ausente')}"
+            ),
+        )
+
     now_iso = datetime.now(timezone.utc).isoformat()
     windows = cast(List[Dict[str, Any]], order.get("windows") or [])
     for window in windows:
