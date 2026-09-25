@@ -24,7 +24,9 @@ frontend/public/vehicles/models/
 frontend/public/vehicles/blueprints/
 frontend/public/videos/
 frontend/public/uploads/
-uploads/
+# NEVER use bare uploads/ — excludes frontend/src/components/uploads (U2)
+!frontend/src/components/uploads/
+!frontend/src/components/uploads/**
 temporary_cleanup_validation/
 backups/
 
