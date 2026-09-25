@@ -20,6 +20,8 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
+import { MorphToggle, MORPH_TOGGLE_ERROR_ES } from "../components/common/MorphToggle";
+import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
@@ -266,7 +268,7 @@ export function SettingsPage() {
   const { user, hasPermission } = useAuth();
   const rolesMap = useRoles();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity, liquidGlass, setLiquidGlass, liquidGlassOpacity, setLiquidGlassOpacity } = useTheme();
+  const { mode, skin, setMode, setSkin, setSystemTheme, watermarkOpacity, setWatermarkOpacity, liquidGlass, setLiquidGlass, liquidGlassOpacity, setLiquidGlassOpacity, persistThemeNow } = useTheme();
   const canManageVehicleSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageAppearanceSettings = (user?.role || "").toLowerCase() === "gerencia";
   const canManageSystemSettings = hasPermission("system_settings", "view");
@@ -276,6 +278,11 @@ export function SettingsPage() {
   const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
   const [appearanceSavedBadge, setAppearanceSavedBadge] = useState(false);
   const appearanceSavedTimerRef = useRef(null);
+  const [liquidGlassPending, setLiquidGlassPending] = useState(false);
+  // U4 local notification stubs (no API yet) — MorphToggle morph still applies (U13).
+  const [notifyStock, setNotifyStock] = useState(true);
+  const [notifyOrders, setNotifyOrders] = useState(true);
+  const [notifyCredits, setNotifyCredits] = useState(true);
   const settingsGeneralRef = useRef(null);
   const [backingUp, setBackingUp] = useState(false);
   const rawTab = searchParams.get("tab") || "";
@@ -492,9 +499,26 @@ export function SettingsPage() {
     flashAppearanceSaved();
   };
 
-  const handleLiquidGlassChange = (value) => {
-    setLiquidGlass(Boolean(value));
-    flashAppearanceSaved();
+  /** U13: optimistic Liquid Glass — flip now, spinner in knob, rollback + ES toast on API fail. */
+  const handleLiquidGlassChange = async (value) => {
+    const prev = Boolean(liquidGlass);
+    const next = Boolean(value);
+    if (prev === next || liquidGlassPending) return;
+    setLiquidGlassPending(true);
+    await optimisticUpdate({
+      apply: () => {
+        setLiquidGlass(next, { persist: false });
+        flashAppearanceSaved();
+      },
+      request: async () => {
+        await persistThemeNow(true);
+      },
+      rollback: () => {
+        setLiquidGlass(prev, { persist: false });
+      },
+      errorMessage: MORPH_TOGGLE_ERROR_ES,
+    });
+    setLiquidGlassPending(false);
   };
 
   const handleLiquidGlassOpacityChange = (value) => {
@@ -1755,10 +1779,12 @@ export function SettingsPage() {
                 onReset={resetLiquidGlass}
               >
                 <div className="flex items-center justify-end">
-                  <Switch
+                  <MorphToggle
                     id="liquid-glass-toggle"
                     checked={Boolean(liquidGlass)}
                     onCheckedChange={handleLiquidGlassChange}
+                    pending={liquidGlassPending}
+                    aria-label="Liquid Glass"
                     data-testid="settings-liquid-glass"
                   />
                 </div>
@@ -1867,7 +1893,12 @@ export function SettingsPage() {
                 searchQuery={settingsSearchQuery}
               >
                 <div className="flex justify-end">
-                  <Switch defaultChecked data-testid="notify-stock" />
+                  <MorphToggle
+                    checked={notifyStock}
+                    onCheckedChange={setNotifyStock}
+                    aria-label="Stock Bajo"
+                    data-testid="notify-stock"
+                  />
                 </div>
               </SettingsRow>
               <SettingsRow
@@ -1879,7 +1910,12 @@ export function SettingsPage() {
                 searchQuery={settingsSearchQuery}
               >
                 <div className="flex justify-end">
-                  <Switch defaultChecked data-testid="notify-orders" />
+                  <MorphToggle
+                    checked={notifyOrders}
+                    onCheckedChange={setNotifyOrders}
+                    aria-label="Órdenes Pendientes"
+                    data-testid="notify-orders"
+                  />
                 </div>
               </SettingsRow>
               <SettingsRow
@@ -1891,7 +1927,12 @@ export function SettingsPage() {
                 searchQuery={settingsSearchQuery}
               >
                 <div className="flex justify-end">
-                  <Switch defaultChecked data-testid="notify-credits" />
+                  <MorphToggle
+                    checked={notifyCredits}
+                    onCheckedChange={setNotifyCredits}
+                    aria-label="Créditos Vencidos"
+                    data-testid="notify-credits"
+                  />
                 </div>
               </SettingsRow>
             </SettingsSection>
