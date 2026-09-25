@@ -555,3 +555,10 @@ Other open documents:
 
 
 
+   8. **Implementación de S4 (Audit Logging de Mutaciones Críticas) y C4 (Observabilidad de Abuso):**
+      - Creado módulo dedicado backend/core/audit_log.py con motor recursivo de sanitización sanitize_for_audit que redacta incondicionalmente claves y subcadenas sensibles (pin, session_token, password, secret, authorization, auth, cvv, card_number, pan, Bearer tokens).
+      - Función record_critical_mutation que registra trazabilidad de mutaciones críticas (CREATE_SALE, COLLECT_INVOICE, VOID_INVOICE, PIN_LOGIN) tanto en éxito (status='ok') como en fallo (status='fail'), con user_id, path, action, resource_id, ip, details saneados y persistencia en MongoDB (db.critical_audit_logs).
+      - Clase AbuseSignalTracker y helper record_abuse_signal (C4) que detecta en tiempo real mediante ventanas deslizantes patrones sospechosos: ráfagas de 401 (401_BURST, 5 en 60s), picos de 429 (429_SPIKE, 5 en 60s) y fallos repetidos de finalización/settlement (FINALIZE_FAIL, 3 en 60s). Emite logs estructurados [ABUSE_SIGNAL] y persiste alertas en db.security_abuse_events.
+      - Integración activa en backend/server.py (create_sale, collect_sale_invoice, cancel_cashier_invoice, login_with_pin, ensure_runtime_indexes) y en backend/middlewares/rate_limit.py (bloqueos 429 disparan señal de abuso).
+      - Suite unitaria automatizada en backend/tests/test_audit_abuse.py ejecutada con 100% PASS.
+      - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #10 (Audit Logging) y Caso C4 como DONE.

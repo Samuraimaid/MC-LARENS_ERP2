@@ -172,13 +172,13 @@ Marcar cada fila DONE / PARCIAL / N/A:
 | 7 | Secret Rotation (runbook + no bake PIN en imagen) | PENDIENTE (Fase 3) | S8 |
 | 8 | Least Privilege (roles en mutaciones dinero/stock) | PENDIENTE (Fase 2) | S5 |
 | 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect`) |
-| 10 | Audit Logging (mutaciones críticas sin secretos) | PENDIENTE (Fase 2) | S4 |
+| 10 | Audit Logging (mutaciones críticas sin secretos) | **DONE** | PR S4 (`backend/core/audit_log.py`, redacción estricta de PINs/tokens/Bearer, trazabilidad en /sales, /caja/facturas, /auth/pin/login, status ok/fail) |
 | 11 | Dependency Scans (Dependabot o audit CI) | PENDIENTE (Fase 3) | S7 |
 | 12 | Error Hygiene (handler prod sin traceback) | **DONE** | PR S3 (`backend/core/error_handler.py`, manejador global de excepciones sin exposición de stack trace en prod, JSON sanitizado) |
 | **C1** | Validación/recalc de montos en servidor (servidor gana, 409 TOTAL_MISMATCH) | **DONE** | PR S1 + C1 (`backend/core/money_validate.py`, saneamiento de ítems, totales garantizados en servidor) |
 | **C2** | Sesión: TTL o idle timeout (invalidar al cierre de turno) | PENDIENTE (Fase 2) | C2 |
 | **C3** | Separar lecturas de mutaciones privilegiadas | PENDIENTE (Fase 2) | S5 |
-| **C4** | Observabilidad de abuso (métricas/logs 401/429/finalize) | PENDIENTE (Fase 2) | S4 |
+| **C4** | Observabilidad de abuso (métricas/logs 401/429/finalize) | **DONE** | PR S4 + C4 (`backend/core/audit_log.py`, `AbuseSignalTracker` con detección en tiempo real de ráfagas 401_BURST, 429_SPIKE y FINALIZE_FAIL, persistencia en `security_abuse_events`) |
 | **C5** | Ops: backup Mongo + restore de prueba documentado | PENDIENTE (Fase 3) | S10 / C5 |
 
 ---

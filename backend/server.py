@@ -81,6 +81,12 @@ from backend.core.money_validate import (
     recalculate_item_subtotal,
     validate_sale_item_money,
 )
+from backend.core.audit_log import (
+    ensure_audit_indexes,
+    record_abuse_signal,
+    record_critical_mutation,
+    sanitize_for_audit,
+)
 from backend.domains.operations.work_order_split import ensure_single_item_work_orders
 from backend.domains.sales.delivery import (
     activate_delivery_after_payment,
@@ -3274,6 +3280,11 @@ async def ensure_runtime_indexes() -> None:
         logger.warning("Could not ensure_idempotency_indexes: %s", exc)
 
     try:
+        await ensure_audit_indexes(db)
+    except Exception as exc:
+        logger.warning("Could not ensure_audit_indexes: %s", exc)
+
+    try:
         await db.dispatch_orders.create_index("sale_id", unique=True, sparse=True)
     except Exception as exc:
         logger.warning("Could not create dispatch_orders.sale_id unique index: %s", exc)
@@ -5793,8 +5804,18 @@ async def get_pin_users(request: Request):
 
 @api_router.post("/auth/pin/login")
 async def login_with_pin(payload: PinLoginRequest, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
     pin = payload.pin.strip()
     if not is_valid_login_pin(pin):
+        await record_critical_mutation(
+            db,
+            user_id=payload.user_id,
+            action="PIN_LOGIN",
+            path="/api/auth/pin/login",
+            status="fail",
+            ip=client_ip,
+            reason="PIN inválido",
+        )
         raise HTTPException(status_code=400, detail="PIN inválido")
 
     pin_policy = await pin_policy_service.load()
@@ -5803,77 +5824,107 @@ async def login_with_pin(payload: PinLoginRequest, request: Request):
     user_doc: Optional[Dict[str, Any]] = None
     login_index = compute_pin_index(pin)
 
-    # Si se provee user_id, se valida contra ese usuario y aplica pin_policy (max_attempts / lockout).
-    if payload.user_id:
-        user_doc = await db.users.find_one({
-            "user_id": payload.user_id,
-            "is_active": {"$ne": False}
-        }, {
-            "_id": 0
-        })
-        if user_doc:
-            await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
-    else:
-        # Búsqueda directa por índice SHA-256 (O(1))
-        user_doc = await db.users.find_one(
-            {
-                "is_active": {"$ne": False},
-                "login_pin_index": login_index,
-            },
-            {"_id": 0},
-        )
-        if user_doc:
-            await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
-        else:
-            # Fallback a búsqueda bcrypt sobre usuarios activos
-            legacy_user = await _find_pin_user_by_legacy_scan(pin)
-            if legacy_user:
-                user_doc = legacy_user
-                await _validate_login_pin_for_user(legacy_user, pin, request, pin_policy=pin_policy)
-
-    if not user_doc:
+    try:
+        # Si se provee user_id, se valida contra ese usuario y aplica pin_policy (max_attempts / lockout).
         if payload.user_id:
-            await pin_login_guard.record_ip_failure(request)
+            user_doc = await db.users.find_one({
+                "user_id": payload.user_id,
+                "is_active": {"$ne": False}
+            }, {
+                "_id": 0
+            })
+            if user_doc:
+                await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
+        else:
+            # Búsqueda directa por índice SHA-256 (O(1))
+            user_doc = await db.users.find_one(
+                {
+                    "is_active": {"$ne": False},
+                    "login_pin_index": login_index,
+                },
+                {"_id": 0},
+            )
+            if user_doc:
+                await _validate_login_pin_for_user(user_doc, pin, request, pin_policy=pin_policy)
+            else:
+                # Fallback a búsqueda bcrypt sobre usuarios activos
+                legacy_user = await _find_pin_user_by_legacy_scan(pin)
+                if legacy_user:
+                    user_doc = legacy_user
+                    await _validate_login_pin_for_user(legacy_user, pin, request, pin_policy=pin_policy)
+
+        if not user_doc:
+            if payload.user_id:
+                await pin_login_guard.record_ip_failure(request)
+                await audit_service.log_pin_auth_attempt(
+                    payload.user_id,
+                    client_ip,
+                    False,
+                )
+                raise HTTPException(status_code=401, detail="PIN incorrecto")
+            # Si no hubo coincidencia de usuario, aplicar protección anónima
+            await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
+            await pin_login_guard.record_anonymous_failure(request, pin_policy)
             await audit_service.log_pin_auth_attempt(
-                payload.user_id,
-                request.client.host if request.client else "unknown",
+                None,
+                client_ip,
                 False,
             )
             raise HTTPException(status_code=401, detail="PIN incorrecto")
-        # Si no hubo coincidencia de usuario, aplicar protección anónima
-        await pin_login_guard.enforce_anonymous_lockout(request, pin_policy)
-        await pin_login_guard.record_anonymous_failure(request, pin_policy)
-        await audit_service.log_pin_auth_attempt(
-            None,
-            request.client.host if request.client else "unknown",
-            False,
-        )
-        raise HTTPException(status_code=401, detail="PIN incorrecto")
 
-    # Si el login fue exitoso, limpiar cualquier bloqueo anónimo previo de la IP
-    if not payload.user_id:
-        await pin_login_guard.clear_anonymous_lockout(request)
+        # Si el login fue exitoso, limpiar cualquier bloqueo anónimo previo de la IP
+        if not payload.user_id:
+            await pin_login_guard.clear_anonymous_lockout(request)
 
-    # Auto-curación del documento de usuario (garantiza login instantáneo en el futuro)
-    if user_doc and (not user_doc.get("login_pin_index") or not user_doc.get("login_pin_hash") or not user_doc.get("is_pin_user")):
-        try:
-            now_iso = datetime.now(timezone.utc).isoformat()
-            await db.users.update_one(
-                {"user_id": user_doc.get("user_id")},
-                {
-                    "$set": {
-                        "login_pin_index": login_index,
-                        "login_pin_hash": hash_pin(pin),
-                        "login_pin_last_set_at": now_iso,
-                        "is_pin_user": True,
-                        "is_active": True,
+        # Auto-curación del documento de usuario (garantiza login instantáneo en el futuro)
+        if user_doc and (not user_doc.get("login_pin_index") or not user_doc.get("login_pin_hash") or not user_doc.get("is_pin_user")):
+            try:
+                now_iso = datetime.now(timezone.utc).isoformat()
+                await db.users.update_one(
+                    {"user_id": user_doc.get("user_id")},
+                    {
+                        "$set": {
+                            "login_pin_index": login_index,
+                            "login_pin_hash": hash_pin(pin),
+                            "login_pin_last_set_at": now_iso,
+                            "is_pin_user": True,
+                            "is_active": True,
+                        }
                     }
-                }
-            )
-        except Exception:
-            pass
+                )
+            except Exception:
+                pass
 
-    return await _create_session_response(user_doc, request)
+        await record_critical_mutation(
+            db,
+            user_id=user_doc.get("user_id"),
+            action="PIN_LOGIN",
+            path="/api/auth/pin/login",
+            status="ok",
+            ip=client_ip,
+            details={"name": user_doc.get("name"), "role": user_doc.get("role")},
+        )
+        return await _create_session_response(user_doc, request)
+
+    except HTTPException as exc:
+        if exc.status_code == 401:
+            await record_critical_mutation(
+                db,
+                user_id=payload.user_id,
+                action="PIN_LOGIN",
+                path="/api/auth/pin/login",
+                status="fail",
+                ip=client_ip,
+                reason=str(exc.detail),
+            )
+            await record_abuse_signal(
+                "401_BURST",
+                identifier=f"pin:{client_ip}",
+                ip=client_ip,
+                details={"path": "/api/auth/pin/login", "user_id": payload.user_id},
+                db=db,
+            )
+        raise
 
 
 @api_router.get("/auth/pin/terminal-status")
@@ -11578,6 +11629,24 @@ async def create_sale(
                 if abs(token_total - float(net_to_collect)) <= 0.05:
                     use_server_settlement = True
                 else:
+                    sale_client_ip = request.client.host if request.client else "unknown"
+                    await record_critical_mutation(
+                        db,
+                        user_id=user.user_id,
+                        action="CREATE_SALE",
+                        path="/api/sales",
+                        status="fail",
+                        ip=sale_client_ip,
+                        reason="SETTLEMENT_TOKEN_MISMATCH",
+                        details={"expected_total": net_to_collect, "token_total": token_total},
+                    )
+                    await record_abuse_signal(
+                        "FINALIZE_FAIL",
+                        identifier=f"sale:{sale_client_ip}",
+                        ip=sale_client_ip,
+                        details={"reason": "SETTLEMENT_TOKEN_MISMATCH", "expected": net_to_collect, "token": token_total},
+                        db=db,
+                    )
                     raise HTTPException(
                         status_code=409,
                         detail={
@@ -11938,6 +12007,24 @@ async def create_sale(
             "total": doc.get("total"),
             "payment_type": doc.get("payment_type"),
             "items_count": len(doc.get("items") or []),
+        },
+    )
+
+    sale_client_ip = request.client.host if request.client else "unknown"
+    await record_critical_mutation(
+        db,
+        user_id=user.user_id,
+        action="CREATE_SALE",
+        resource_id=doc.get("sale_id"),
+        path="/api/sales",
+        status="ok",
+        ip=sale_client_ip,
+        details={
+            "customer_id": sale_data.customer_id,
+            "total": float(net_to_collect),
+            "payment_type": doc.get("payment_type"),
+            "items_count": len(doc.get("items") or []),
+            "branch_id": user_branch_id,
         },
     )
 
@@ -13477,6 +13564,21 @@ async def _cancel_cashier_invoice_record(
         },
     )
 
+    await record_critical_mutation(
+        db,
+        user_id=user.user_id,
+        action="VOID_INVOICE",
+        resource_id=sale_id,
+        path="/caja/facturas/anular",
+        status="ok",
+        details={
+            "invoice_number": sale.get("invoice_number"),
+            "reason": reason_value,
+            "justification": justification_value,
+            "authorized_by": authorized_value,
+        },
+    )
+
     return {
         "message": "Factura anulada",
         "sale_id": sale_id,
@@ -14327,6 +14429,22 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
             response_data=final_collect_response,
             user_id=user.user_id,
         )
+    collect_client_ip = request.client.host if request.client else "unknown"
+    await record_critical_mutation(
+        db,
+        user_id=user.user_id,
+        action="COLLECT_INVOICE",
+        resource_id=sale_id,
+        path="/cashier/invoices/collect",
+        status="ok",
+        ip=collect_client_ip,
+        details={
+            "amount_paid_total": new_paid,
+            "sale_payment_status": new_status,
+            "amount_pending": max(new_pending, 0.0),
+            "method": method_to_use,
+        },
+    )
     return final_collect_response
 
 

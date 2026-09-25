@@ -129,7 +129,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 window_seconds=PIN_BURST_WINDOW_SECONDS,
             )
             if not allowed_burst:
+                client_ip = client_id.split(":")[0]
                 logger.warning("Rate limit 429 (burst) en /api/auth/pin/login para %s", client_id)
+                try:
+                    from backend.core.audit_log import record_abuse_signal
+                    await record_abuse_signal("429_SPIKE", identifier=client_id, ip=client_ip, details={"path": path, "type": "pin_burst"})
+                except Exception:
+                    pass
                 return JSONResponse(
                     status_code=429,
                     content={
@@ -147,7 +153,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 window_seconds=PIN_SUSTAINED_WINDOW_SECONDS,
             )
             if not allowed_sustained:
+                client_ip = client_id.split(":")[0]
                 logger.warning("Rate limit 429 (sustained) en /api/auth/pin/login para %s", client_id)
+                try:
+                    from backend.core.audit_log import record_abuse_signal
+                    await record_abuse_signal("429_SPIKE", identifier=client_id, ip=client_ip, details={"path": path, "type": "pin_sustained"})
+                except Exception:
+                    pass
                 return JSONResponse(
                     status_code=429,
                     content={
@@ -172,7 +184,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 window_seconds=MUTATIONS_WINDOW_SECONDS,
             )
             if not allowed:
+                client_ip = client_id.split(":")[0]
                 logger.warning("Rate limit 429 en mutación sensible %s para %s", path, client_id)
+                try:
+                    from backend.core.audit_log import record_abuse_signal
+                    await record_abuse_signal("429_SPIKE", identifier=client_id, ip=client_ip, details={"path": path, "type": "mutation_limit"})
+                except Exception:
+                    pass
                 return JSONResponse(
                     status_code=429,
                     content={
