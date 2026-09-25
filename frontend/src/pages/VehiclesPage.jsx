@@ -160,7 +160,8 @@ export function VehiclesPage() {
     );
   });
 
-  const visibleVehicleIds = filteredVehicles.map((v) => v.vehicle_id);
+  const matchingVehicleIds = filteredVehicles.map((v) => v.vehicle_id);
+  const visibleVehicleIds = matchingVehicleIds; // sin paginación: visible = matching
   const selectedVehicles = filteredVehicles.filter((v) => selection.isSelected(v.vehicle_id));
 
   const exportSelectedVehiclesCsv = () => {
@@ -385,9 +386,12 @@ export function VehiclesPage() {
         searchTestId="search-vehicles"
         selectedCount={selection.count}
         visibleCount={visibleVehicleIds.length}
+        matchingCount={matchingVehicleIds.length}
         allVisibleSelected={selection.allVisibleSelected(visibleVehicleIds)}
         someVisibleSelected={selection.someVisibleSelected(visibleVehicleIds)}
+        allMatchingSelected={selection.allVisibleSelected(matchingVehicleIds)}
         onSelectAll={() => selection.toggleAllVisible(visibleVehicleIds)}
+        onSelectMatching={() => selection.selectMatching(matchingVehicleIds)}
         onDeselectAll={selection.clear}
         testId="vehicles-selection-bar"
         trailing={
@@ -494,7 +498,12 @@ export function VehiclesPage() {
                 testId={`vehicle-row-${vehicle.vehicle_id}`}
                 selectable
                 selected={selection.isSelected(vehicle.vehicle_id)}
-                onSelectChange={() => selection.toggle(vehicle.vehicle_id)}
+                onSelectChange={(_checked, meta) =>
+                  selection.toggleWithRange(vehicle.vehicle_id, {
+                    shiftKey: !!meta?.shiftKey,
+                    orderedIds: matchingVehicleIds,
+                  })
+                }
                 mediaFallback={<CarFront className={`${densityTok.mediaIcon} ${isCompany ? 'text-sky-700' : 'text-emerald-700'} icon-spring`} />}
                 primary={
                   <span className="inline-flex items-center gap-2 min-w-0">

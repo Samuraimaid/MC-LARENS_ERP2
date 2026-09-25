@@ -795,7 +795,8 @@ export function CustomersPage() {
     );
   });
 
-  const visibleCustomerIds = filteredCustomers.map((c) => c.customer_id);
+  const matchingCustomerIds = filteredCustomers.map((c) => c.customer_id);
+  const visibleCustomerIds = matchingCustomerIds; // sin paginación: visible = matching
   const selectedCustomers = filteredCustomers.filter((c) => selection.isSelected(c.customer_id));
 
   const exportSelectedCustomersCsv = () => {
@@ -1323,9 +1324,12 @@ export function CustomersPage() {
         searchTestId="search-customers"
         selectedCount={selection.count}
         visibleCount={visibleCustomerIds.length}
+        matchingCount={matchingCustomerIds.length}
         allVisibleSelected={selection.allVisibleSelected(visibleCustomerIds)}
         someVisibleSelected={selection.someVisibleSelected(visibleCustomerIds)}
+        allMatchingSelected={selection.allVisibleSelected(matchingCustomerIds)}
         onSelectAll={() => selection.toggleAllVisible(visibleCustomerIds)}
+        onSelectMatching={() => selection.selectMatching(matchingCustomerIds)}
         onDeselectAll={selection.clear}
         testId="customers-selection-bar"
       >
@@ -1442,7 +1446,12 @@ export function CustomersPage() {
                 testId={`customer-row-${customer.customer_id}`}
                 selectable
                 selected={selection.isSelected(customer.customer_id)}
-                onSelectChange={() => selection.toggle(customer.customer_id)}
+                onSelectChange={(_checked, meta) =>
+                  selection.toggleWithRange(customer.customer_id, {
+                    shiftKey: !!meta?.shiftKey,
+                    orderedIds: matchingCustomerIds,
+                  })
+                }
                 mediaFallback={
                   isCompany ? (
                     <Building2 className={`${densityTok.mediaIcon} text-sky-700 icon-spring`} />
