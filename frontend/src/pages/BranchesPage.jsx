@@ -8,14 +8,21 @@ import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Building2, MapPin, Phone, RefreshCw, Edit, Trash2 } from "lucide-react";
+import { Plus, Building2, MapPin, Phone, RefreshCw, Edit, Trash2, Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 export function BranchesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "branches" });
 
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,10 +156,47 @@ export function BranchesPage() {
     });
   };
 
+  const visibleIds = (branches || []).map((b) => b.branch_id);
+  const selectedRows = (branches || []).filter((b) => selection.isSelected(b.branch_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : (branches || []);
+    if (!rowsSrc.length) { toast.error("No hay sucursales"); return; }
+    downloadCsv(
+      `sucursales_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["branch_id", "nombre", "direccion", "telefono", "gerente", "activo"],
+      rowsSrc.map((b) => [b.branch_id, b.name, b.address, b.phone, b.manager_name || b.manager, b.is_active !== false ? "sí" : "no"])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona sucursales"); return; }
+    try { await copyTextToClipboard(selectedRows.map((b) => b.branch_id).join(", ")); toast.success("IDs copiados"); }
+    catch { toast.error("No se pudo copiar"); }
+  };
+
+
   return (
     <div className="p-6 space-y-6" data-testid="branches-page">
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="branches-list-density" />
+
+      <ListSelectionBar
+        hideSearch
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="branches-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
       </div>
 
       {/* Header */}
@@ -358,6 +402,12 @@ export function BranchesPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>Sucursal</TableHead>
                 <TableHead>Dirección</TableHead>
                 <TableHead>Teléfono</TableHead>
@@ -369,13 +419,13 @@ export function BranchesPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : branches.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No hay sucursales registradas</p>
                   </TableCell>
@@ -383,7 +433,10 @@ export function BranchesPage() {
               ) : (
                 branches.map(branch => (
                   <TableRow className={densityTok.tableRow} key={branch.branch_id} data-testid={`branch-${branch.branch_id}`}>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox checked={selection.isSelected(branch.branch_id)} onCheckedChange={() => selection.toggle(branch.branch_id)} />
+                  </TableCell>
+                  <TableCell>
                       <div className="flex items-center gap-2">
                         {branch.logo_url ? (
                           <img src={branch.logo_url} alt="logo" className="h-6 w-6 object-contain" />

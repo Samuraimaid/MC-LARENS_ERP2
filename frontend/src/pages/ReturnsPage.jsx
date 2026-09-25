@@ -19,12 +19,16 @@ import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 import { 
   Search, RefreshCw, RotateCcw, CheckCircle2, XCircle, 
-  Clock, Plus
-} from "lucide-react";
+  Clock, Plus, Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const RETURN_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -35,6 +39,8 @@ const RETURN_STATUSES = {
 
 export function ReturnsPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "returns" });
 
   const [returns, setReturns] = useState([]);
   const [sales, setSales] = useState([]);
@@ -162,6 +168,29 @@ export function ReturnsPage() {
     r.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
     r.invoice_number?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const visibleIds = filteredReturns.map((item) => item.return_id);
+  const selectedRows = filteredReturns.filter((item) => selection.isSelected(item.return_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredReturns;
+    if (!rowsSrc.length) { toast.error("No hay filas para exportar"); return; }
+    downloadCsv(
+      `devoluciones_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["return_id","factura","cliente","tipo","estado","reembolso"],
+      rowsSrc.map((r) => [r.return_id, r.invoice_number || r.sale_id, r.customer_name, r.return_type, r.status, r.refund_amount])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona al menos una fila"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((item) => item.return_id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
 
   const getStats = () => ({
     pending: returns.filter(r => r.status === "pending").length,
@@ -372,16 +401,27 @@ export function ReturnsPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar..."
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="returns-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
+      <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
@@ -403,6 +443,12 @@ export function ReturnsPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -416,13 +462,13 @@ export function ReturnsPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredReturns.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No hay devoluciones
                   </TableCell>
                 </TableRow>
@@ -433,6 +479,9 @@ export function ReturnsPage() {
                   
                   return (
                     <TableRow className={densityTok.tableRow} key={ret.return_id}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(ret.return_id)} onCheckedChange={() => selection.toggle(ret.return_id)} />
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{ret.return_id}</TableCell>
                       <TableCell className="font-mono">{ret.invoice_number}</TableCell>
                       <TableCell>{ret.customer_name}</TableCell>

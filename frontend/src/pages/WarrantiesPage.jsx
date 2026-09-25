@@ -15,12 +15,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner";
 import { 
   Search, RefreshCw, Shield, Car, Package, 
-  CheckCircle2, Clock, Plus, XCircle, Barcode, FileText
-} from "lucide-react";
+  CheckCircle2, Clock, Plus, XCircle, Barcode, FileText, Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const CLAIM_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -32,6 +36,8 @@ const CLAIM_STATUSES = {
 
 export function WarrantiesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "warranties" });
 
   const [claims, setClaims] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -196,6 +202,29 @@ export function WarrantiesPage() {
     c.product_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.vehicle_info?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const visibleIds = filteredClaims.map((item) => item.claim_id);
+  const selectedRows = filteredClaims.filter((item) => selection.isSelected(item.claim_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredClaims;
+    if (!rowsSrc.length) { toast.error("No hay filas para exportar"); return; }
+    downloadCsv(
+      `garantias_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["claim_id","cliente","vehiculo","producto","estado"],
+      rowsSrc.map((c) => [c.claim_id, c.customer_name, c.vehicle_plate || c.vehicle_id, c.product_name, c.status])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona al menos una fila"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((item) => item.claim_id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
 
   const getStats = () => ({
     pending: claims.filter(c => c.status === "pending").length,
@@ -485,16 +514,27 @@ export function WarrantiesPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar..."
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="warranties-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
+      <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
@@ -516,6 +556,12 @@ export function WarrantiesPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Vehículo</TableHead>
@@ -529,13 +575,13 @@ export function WarrantiesPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredClaims.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No hay reclamos de garantía
                   </TableCell>
                 </TableRow>
@@ -548,6 +594,9 @@ export function WarrantiesPage() {
                   
                   return (
                     <TableRow className={densityTok.tableRow} key={claim.claim_id}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(claim.claim_id)} onCheckedChange={() => selection.toggle(claim.claim_id)} />
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{claim.claim_id}</TableCell>
                       <TableCell>{claim.customer_name}</TableCell>
                       <TableCell>

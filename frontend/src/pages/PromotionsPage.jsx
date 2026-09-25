@@ -18,17 +18,23 @@ import { toast } from "sonner";
 import { 
   Plus, Search, RefreshCw, Tag, Percent, DollarSign, 
   Calendar as CalendarIcon, Trash2, CheckCircle2, XCircle,
-  Gift, Clock, Package
-} from "lucide-react";
+  Gift, Clock, Package, Download, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 export function PromotionsPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "promotions" });
 
   const [promotions, setPromotions] = useState([]);
   const [products, setProducts] = useState([]);
@@ -147,6 +153,29 @@ export function PromotionsPage() {
     p.name?.toLowerCase().includes(search.toLowerCase()) ||
     p.description?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const visibleIds = filteredPromotions.map((item) => item.promotion_id);
+  const selectedRows = filteredPromotions.filter((item) => selection.isSelected(item.promotion_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredPromotions;
+    if (!rowsSrc.length) { toast.error("No hay filas para exportar"); return; }
+    downloadCsv(
+      `promociones_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["promotion_id","nombre","descuento","inicio","fin","activo"],
+      rowsSrc.map((p) => [p.promotion_id, p.name, p.discount_value ?? p.discount_percent, p.start_date, p.end_date, p.is_active])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona al menos una fila"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((item) => item.promotion_id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
 
   const isPromoActive = (promo) => {
     if (!promo.is_active) return false;
@@ -454,17 +483,28 @@ export function PromotionsPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar promoción..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-promotions"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar promoción..."
+        searchTestId="search-promotions"
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="promotions-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
+      <div className="flex items-center space-x-2">
           <Switch
             id="activeOnly"
             checked={showActiveOnly}
@@ -483,6 +523,12 @@ export function PromotionsPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Descuento</TableHead>
                 <TableHead>Aplica a</TableHead>
@@ -495,13 +541,13 @@ export function PromotionsPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredPromotions.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay promociones para mostrar
                   </TableCell>
                 </TableRow>
@@ -513,6 +559,9 @@ export function PromotionsPage() {
                   
                   return (
                     <TableRow className={densityTok.tableRow} key={promo.promotion_id} data-testid={`promo-row-${promo.promotion_id}`}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(promo.promotion_id)} onCheckedChange={() => selection.toggle(promo.promotion_id)} />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{promo.name}</p>
