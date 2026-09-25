@@ -137,31 +137,34 @@ register_error_handlers(app)
 
 api_router = APIRouter(prefix="/api")
 
+def get_build_health_metadata() -> Dict[str, Any]:
+    version = os.environ.get("BUILD_VERSION") or os.environ.get("APP_VERSION", "dev")
+    build_time = os.environ.get("BUILD_TIMESTAMP") or os.environ.get("BUILD_TIME", "")
+    build_id = os.environ.get("BUILD_ID") or (f"build_{version}" if version != "dev" else "")
+    return {
+        "status": "ok",
+        "healthy": True,
+        "message": "MUNDO DE ACCESORIOS ERP API",
+        "version": version,
+        "build_version": version,
+        "build_time": build_time,
+        "build_timestamp": build_time,
+        "build_id": build_id,
+    }
+
+
 # Basic API root & health checks
 @api_router.get("/")
 @api_router.get("/health")
 @api_router.get("/ping")
 async def api_root():
-    return JSONResponse({
-        "status": "ok",
-        "healthy": True,
-        "message": "MUNDO DE ACCESORIOS ERP API",
-        "version": os.environ.get("APP_VERSION", "dev"),
-        "build_time": os.environ.get("BUILD_TIME", ""),
-        "build_id": os.environ.get("BUILD_ID", ""),
-    })
+    return JSONResponse(get_build_health_metadata())
+
 
 @app.get("/health")
 @app.get("/ping")
 async def app_health_root():
-    return JSONResponse({
-        "status": "ok",
-        "healthy": True,
-        "message": "MUNDO DE ACCESORIOS ERP API",
-        "version": os.environ.get("APP_VERSION", "dev"),
-        "build_time": os.environ.get("BUILD_TIME", ""),
-        "build_id": os.environ.get("BUILD_ID", ""),
-    })
+    return JSONResponse(get_build_health_metadata())
 
 
 # Drafts backup endpoints - scoped by authenticated user.

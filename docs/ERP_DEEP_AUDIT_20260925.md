@@ -240,21 +240,67 @@ Todos los ítems de **Pack 1 (Ops unblock)** y **Pack 2 (Higiene)** han sido imp
 
 ---
 
-## Procedimiento de Deploy y Sincronización en Producción
+## Implementación Pack 3 — Smoke Gaps & Ops Hygiene — ESTADO FINAL
 
-### 1. Despliegue en Cloud Run (vía Cloud Shell o Servidor)
+Todos los ítems de **Pack 3 (Smoke Gaps & Ops Hygiene)** han sido implementados y verificados con pruebas automatizadas en ramas cohesivas mergeadas a `master` sin force-push:
+
+| Item | Título | Estado | PR / Commit | Detalle |
+|---|---|---|---|---|
+| **P0-A** | Collect: no underpay silencioso | **DONE** | PR #63 (`e62b582b`) | `CashierCollectRequest` incluye `allow_partial: bool = False`. En `collect_sale_invoice`, si `amount < pending - 0.009` sin `allow_partial=True`, rechaza con HTTP 400 `AMOUNT_MISMATCH`. En `CashierPage.jsx` se envía `allow_partial` si el cobro es un abono explícito. |
+| **P0-B** | `work_order_id` nunca null | **DONE** | PR #64 (`0dd66fd3`) | Modelo `WorkOrder` genera `work_order_id` con `default_factory`. `create_work_order` genera el id antes del insert. Módulo `work_order_maintenance.py` y script one-shot `scripts/cancel_null_id_work_orders.py` para cancelar OTs huérfanas sin id válido. |
+| **P0-C** | Mongo env-only en Cloud Run | **DONE** | PR #65 (`0b059263`) | Eliminada `DEFAULT_PROD_ATLAS_URI` con credenciales de `distributed.py`. En Cloud Run (`K_SERVICE`), si falta `MONGO_URL`/`MONGODB_URI` en variables de entorno, falla rápido (`RuntimeError`). Documentado con placeholders en `deploy/cloud.env.example`. |
+| **P0-D** | Auth en `/auth/pin/sync-all` | **DONE** | PR #66 (`c7a2c56d`) | `POST /api/auth/pin/sync-all` ahora exige rol `gerencia` o `programador` con Bearer token. Solicitudes sin sesión devuelven 401 Unauthorized; roles no autorizados devuelven 403 Forbidden. |
+| **P1-A** | `deploy.sh` `--update-env-vars` | **DONE** | PR #67 (`f394d3cb`) | `deploy.sh` reemplaza `--set-env-vars` por `--update-env-vars`, previniendo que los despliegues borren `MONGO_URL` u otras variables de entorno preconfiguradas en Cloud Run. |
+| **P1-B** | Legacy cobrar → 410 Gone | **DONE** | PR #68 (`ce4c80f8`) | `POST /api/caja/facturas/{sale_id}/cobrar` responde con HTTP 410 Gone indicando la ruta canónica `POST /api/cashier/invoices/{sale_id}/collect`. |
+| **P1-C** | Health con build metadata | **DONE** | PR #69 | Endpoints `/health` y `/api/health` leen `BUILD_VERSION` y `BUILD_TIMESTAMP` inyectados en Cloud Run por `deploy.sh` en lugar de reportar `"dev"`. |
+| **P1-D** | Runbook post-deploy | **DONE** | PR #69 | Procedimiento documentado para configuración de `MONGO_URL`, despliegue en Cloud Run, cancelación one-shot de OTs null y sincronización de PINs autenticada. |
+
+---
+
+## Procedimiento de Despliegue y Release Seguro (P0-C / Pack 3)
+
+### Paso 1: Configurar `MONGO_URL` en Cloud Run (Antes de desplegar P0-C)
+En Cloud Shell o consola gcloud (sustituyendo con las credenciales reales de Atlas, **sin comitearlas a Git ni pegarlas en chats públicos**):
+```bash
+gcloud run services update mclarens-erp --region=us-central1 --project=gen-lang-client-0971793042 \
+  --update-env-vars "MONGO_URL=mongodb+srv://<USER>:<PASSWORD>@<CLUSTER>.mongodb.net/mc-larens2_mundo_accesorios_erp?retryWrites=true&w=majority,DB_NAME=mc-larens2_mundo_accesorios_erp"
+```
+
+### Paso 2: Despliegue en Cloud Run
 ```bash
 cd ~/MC-LARENS_ERP2
 git pull origin master
 ./deploy.sh
 ```
 
-### 2. Sincronización de Credenciales en MongoDB Live (Job Idempotente de un solo paso)
-Si las credenciales de MongoDB en producción requieren sincronizarse contra la base de datos viva tras el deploy:
+### Paso 3: Saneamiento One-shot de Órdenes Huérfanas (KDS sin nulls)
+```bash
+python scripts/cancel_null_id_work_orders.py
+```
+
+### Paso 4: Sincronización de PINs Autenticada (si hace falta re-sync)
+Opción A — Vía API REST con token de gerencia (PIN `01011990`):
+```bash
+curl -X POST "https://mclarens-erp-836176703716.us-central1.run.app/api/auth/pin/sync-all" \
+  -H "Authorization: Bearer <TOKEN_DE_GERENCIA>"
+```
+Opción B — Vía script idempotente directo en base de datos:
 ```bash
 python scripts/sync_seed_users_pins.py --mongo
 ```
-_Nota: El script detecta automáticamente `MONGO_URL` / `MONGODB_URI` del entorno o acepta `--mongo-url="..."`, garantizando la preservación estricta del PIN de gerencia de Xinon (`01011990`)._
 
 ---
-_Actualizado y cerrado por Antigravity · Pack 1 + Pack 2 completado 100% · 2026-09-25_
+
+## Smoke Checklist Post-Despliegue
+
+- [ ] **Login Xinon:** PIN `01011990` inicia sesión correctamente como `gerencia`.
+- [ ] **Underpay en Collect:** `POST /api/cashier/invoices/{id}/collect` con `$0.01` sin flag `allow_partial` devuelve HTTP 400 `AMOUNT_MISMATCH`. Cobro completo devuelve 200 OK.
+- [ ] **Creación de OT:** `POST /api/work-orders` genera `work_order_id` no-nulo (`wo_...`). KDS no muestra filas con ID nulo.
+- [ ] **Protección sync-all:** `POST /api/auth/pin/sync-all` sin token devuelve 401/403. Con token de gerencia devuelve 200 OK (`users_count: 76`).
+- [ ] **Variables de entorno Cloud Run:** `gcloud run services describe mclarens-erp` muestra `MONGO_URL` preservada junto con `BUILD_VERSION` y `BUILD_TIMESTAMP`.
+- [ ] **Legacy cobrar:** `POST /api/caja/facturas/{id}/cobrar` devuelve HTTP 410 Gone.
+- [ ] **Endpoint de Salud:** `GET /api/health` muestra `version` y `build_timestamp` reales del build en vez de `"dev"`.
+- [ ] **No regresiones:** Validar que RH sigue sin crear productos (403), KDS unassigned visible a técnicos, ownership en cambio de estado de OT (403 para ajenas), y tint assign bloqueado para ausentes (400).
+
+---
+_Actualizado y cerrado por Antigravity · Pack 1 + Pack 2 + Pack 3 completados 100% · 2026-09-25_
