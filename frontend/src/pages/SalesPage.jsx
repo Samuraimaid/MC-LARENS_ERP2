@@ -2175,6 +2175,7 @@ export function SalesPage() {
       
       toast.success(`Factura ${response.data.invoice_number} enviada a caja para cobro`);
       
+      // U10 HARD GUARD — Pay/payments checkout: NEVER optimistic; redirect only after server URL.
       if (paymentType === "stripe") {
         const checkoutRes = await axios.post(`${API}/payments/checkout`, {
           sale_id: response.data.sale_id,

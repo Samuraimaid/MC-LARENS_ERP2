@@ -545,6 +545,10 @@ export function MainLayout() {
     execute();
   };
 
+  /**
+   * U10 HARD GUARD — session PIN unlock: NEVER optimistic.
+   * Overlay stays locked until /api/auth/session/unlock succeeds; unlockBusy shows Procesando….
+   */
   const handleUnlockSession = async () => {
     const isUnlockCoolingDown = unlockCooldownUntil > Date.now();
     if (isUnlockCoolingDown) {
@@ -916,7 +920,11 @@ export function MainLayout() {
             <div className="mt-3 flex justify-end">
               <Button onClick={handleUnlockSession} disabled={unlockBusy || isUnlockCoolingDown}>
                 {unlockBusy ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Unlock className="h-4 w-4 mr-2" />}
-                {isUnlockCoolingDown ? `Espera ${unlockCountdownSec}s` : "Desbloquear"}
+                {unlockBusy
+                  ? "Procesando…"
+                  : isUnlockCoolingDown
+                    ? `Espera ${unlockCountdownSec}s`
+                    : "Desbloquear"}
               </Button>
             </div>
           </div>

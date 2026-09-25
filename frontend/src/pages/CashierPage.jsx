@@ -1154,6 +1154,10 @@ export function CashierPage() {
     toast.success("Sesión bloqueada");
   };
 
+  /**
+   * U10 HARD GUARD — PIN unlock: NEVER optimistic.
+   * Keep overlay locked until server validates PIN; show spinner via busy.lock.
+   */
   const unlockCashierSession = async () => {
     if (!openedSessionId) {
       toast.error("No hay sesión activa");
@@ -1300,6 +1304,7 @@ export function CashierPage() {
     return true;
   };
 
+  /** U10 HARD GUARD — Pay/collect: NEVER optimistic; await server before clearing invoice UI. */
   const submitCollect = async (options = {}) => {
     const { saleOverride = null, quick = false } = options;
     if (!requireOpenedAndUnlockedSession()) return;
@@ -1450,6 +1455,7 @@ export function CashierPage() {
       return;
     }
 
+    // U10 HARD GUARD — payments/collect: NEVER optimistic. Wait for server; UI shows «Procesando…».
     if (quick) setQuickCollectSaleId(sale.sale_id);
     setBusy((prev) => ({ ...prev, collect: true }));
     try {
@@ -1518,6 +1524,7 @@ export function CashierPage() {
     return status === "pending" && paid <= 0.009;
   };
 
+  /** U10 HARD GUARD — hard Delete invoice: NEVER optimistic. */
   const handleDeleteCashierInvoice = async (sale) => {
     if (!canPurgeCashierInvoices) {
       toast.error("Solo gerencia, supervisores o programadores pueden eliminar facturas en caja");
@@ -2221,7 +2228,7 @@ export function CashierPage() {
             <div className="mt-3 flex justify-end">
               <Button onClick={unlockCashierSession} disabled={busy.lock}>
                 {busy.lock ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Unlock className="h-4 w-4 mr-2" />}
-                Desbloquear
+                {busy.lock ? "Procesando…" : "Desbloquear"}
               </Button>
             </div>
           </div>
@@ -2830,7 +2837,7 @@ function CollectActionCard({
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="lg" className="min-w-[180px] text-base" onClick={onSubmitCollect} disabled={busyCollect || !canOperate || !canCollectPayment}>
             {busyCollect ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-            {submitLabel}
+            {busyCollect ? "Procesando…" : submitLabel}
           </Button>
           <Button variant="outline" onClick={onReload} disabled={invoicesLoading}>
             Recargar pendientes

@@ -130,6 +130,7 @@ export function ProductTransfersPage() {
   const movementSource = (movement) => movement?.metadata?.from_warehouse || movement?.from_warehouse || "-";
   const movementTarget = (movement) => movement?.metadata?.to_warehouse || movement?.to_warehouse || "-";
 
+  /** U10 HARD GUARD — create/submit transfer: NEVER optimistic; wait for server + Procesando…. */
   const onTransfer = async () => {
     const quantityNum = Number(form.quantity || 0);
     if (!form.product_id || !form.from_warehouse || !form.to_warehouse || quantityNum <= 0) {
@@ -184,6 +185,7 @@ export function ProductTransfersPage() {
     }
   };
 
+  /** U10 HARD GUARD — approve transfer: NEVER optimistic; wait for server + Procesando…. */
   const handleApprove = async (requestId) => {
     setActionLoading(true);
     try {
@@ -197,6 +199,7 @@ export function ProductTransfersPage() {
     }
   };
 
+  /** U10 HARD GUARD — ship transfer: NEVER optimistic; wait for server + Procesando…. */
   const handleShip = async (requestId) => {
     setActionLoading(true);
     try {
@@ -210,6 +213,7 @@ export function ProductTransfersPage() {
     }
   };
 
+  /** U10 HARD GUARD — receive transfer: NEVER optimistic; wait for server + Procesando…. */
   const handleReceive = async (requestId) => {
     setActionLoading(true);
     try {

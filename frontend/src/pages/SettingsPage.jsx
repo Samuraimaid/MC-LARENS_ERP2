@@ -849,6 +849,7 @@ export function SettingsPage() {
     fetchBillingSettings();
   }, [canManageBillingSettings, selectedBillingBranchId]);
 
+  /** U10 HARD GUARD — billing exchange rate save: NEVER optimistic; wait for server. */
   const saveOfficialRate = async () => {
     const numeric = Number(newOfficialRate || 0);
     if (!Number.isFinite(numeric) || numeric <= 0) {
@@ -1220,6 +1221,7 @@ export function SettingsPage() {
     }
   };
 
+  /** U10 HARD GUARD — billing taxes toggle: NEVER optimistic; wait for server. */
   const toggleTaxesEnabled = async (enabled) => {
     setSavingBillingSettings(true);
     try {
@@ -1237,6 +1239,7 @@ export function SettingsPage() {
     }
   };
 
+  /** U10 HARD GUARD — billing exchange add: NEVER optimistic; wait for server. */
   const addExchangeRule = async () => {
     const rate = Number(newRule.rate || 0);
     if (!newRule.name.trim()) return toast.error("Escribe un nombre para la regla");
@@ -1265,6 +1268,7 @@ export function SettingsPage() {
     }
   };
 
+  /** U10 HARD GUARD — billing exchange rule: NEVER optimistic; wait for server. */
   const toggleExchangeRule = async (rule) => {
     setSavingBillingSettings(true);
     try {
@@ -1294,6 +1298,7 @@ export function SettingsPage() {
     setPendingDeleteExchangeRule(rule);
   };
 
+  /** U10 HARD GUARD — billing exchange hard delete: NEVER optimistic; wait for server. */
   const confirmDeleteExchangeRule = async () => {
     const rule = pendingDeleteExchangeRule;
     if (!rule?.id) return;
