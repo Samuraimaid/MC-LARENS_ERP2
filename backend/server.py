@@ -21321,6 +21321,7 @@ ALLOWED_THEME_SKINS = {
     "spectrum-13",
     "spectrum-14",
     "github",
+    "wachin",
 }
 DEFAULT_WATERMARK_OPACITY = 0.11
 MIN_WATERMARK_OPACITY = 0.0
@@ -22161,9 +22162,9 @@ async def test_pos_voucher_printer_print(request: Request, payload: Optional[Dic
 @api_router.get("/settings/theme")
 async def get_theme_settings(request: Request):
     user = await require_auth(request)
-    mode = getattr(user, "theme_mode", None) or "system"
-    skin = getattr(user, "theme_skin", None) or "atlas"
-    custom = getattr(user, "theme_custom", None) or {}
+    mode = user.get("theme_mode") or "system"
+    skin = user.get("theme_skin") or "atlas"
+    custom = user.get("theme_custom") or {}
     return {"mode": mode, "skin": skin, "custom": custom}
 
 
@@ -22172,16 +22173,21 @@ async def update_theme_settings(payload: ThemeSettings, request: Request):
     user = await require_auth(request)
     mode = payload.mode or "system"
     skin = payload.skin or "atlas"
-    current_custom = getattr(user, "theme_custom", None) or {}
-    custom = payload.custom if payload.custom is not None else current_custom
+    current_custom = user.get("theme_custom") or {}
+    if not isinstance(current_custom, dict):
+        current_custom = {}
+    # Merge partial custom patches so sound prefs / liquid glass don't wipe each other.
+    if payload.custom is not None:
+        if not isinstance(payload.custom, dict):
+            raise HTTPException(status_code=400, detail="Invalid theme custom")
+        custom = {**current_custom, **payload.custom}
+    else:
+        custom = current_custom
 
     if mode not in ALLOWED_THEME_MODES:
         raise HTTPException(status_code=400, detail="Invalid theme mode")
     if skin not in ALLOWED_THEME_SKINS:
         raise HTTPException(status_code=400, detail="Invalid theme skin")
-
-    if not isinstance(custom, dict):
-        raise HTTPException(status_code=400, detail="Invalid theme custom")
 
     await db.users.update_one(
         {"user_id": user.user_id},

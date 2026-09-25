@@ -455,26 +455,14 @@ export function SettingsPage() {
     }
   };
 
-  const persistTheme = async (nextMode, nextSkin) => {
-    try {
-      await axios.put(
-        `${API}/settings/theme`,
-        { mode: nextMode, skin: nextSkin },
-        { withCredentials: true }
-      );
-    } catch (error) {
-      toast.error("No se pudo guardar el tema");
-    }
-  };
-
+  // Theme mode/skin persist in ThemeContext (PUT /settings/theme) so sidebar toggle
+  // and Settings share one path and sync across devices after login.
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
-    persistTheme(nextMode, skin);
   };
 
   const handleSkinChange = (nextSkin) => {
     setSkin(nextSkin);
-    persistTheme(mode, nextSkin);
   };
 
   useEffect(() => {
@@ -1557,7 +1545,7 @@ export function SettingsPage() {
                 className="flex flex-col h-auto py-4"
                 onClick={() => {
                   setSystemTheme();
-                  persistTheme("system", skin);
+                  setMode("system");
                 }}
                 data-testid="theme-system"
               >

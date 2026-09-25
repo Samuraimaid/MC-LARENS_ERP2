@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useLayoutEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { API_BASE as API } from "@/lib/api";
 
@@ -43,8 +51,8 @@ const applyLiquidGlassOpacityVar = (opacity) => {
 
 export function ThemeProvider({ children }) {
   // Do not pre-read persisted theme before auth to avoid visual bleed between users on login.
-  const [mode, setMode] = useState(DEFAULT_MODE);
-  const [skin, setSkin] = useState(DEFAULT_SKIN);
+  const [mode, setModeState] = useState(DEFAULT_MODE);
+  const [skin, setSkinState] = useState(DEFAULT_SKIN);
   const [watermarkOpacity, setWatermarkOpacityState] = useState(() => {
     if (typeof window === "undefined") return DEFAULT_WATERMARK_OPACITY;
     return normalizeWatermarkOpacity(window.localStorage.getItem(WATERMARK_OPACITY_KEY));
@@ -66,7 +74,70 @@ export function ThemeProvider({ children }) {
     return "light";
   });
 
+  const skipPersistRef = useRef(true);
+  const canPersistRef = useRef(false);
+  const persistTimerRef = useRef(null);
+  const modeRef = useRef(mode);
+  const skinRef = useRef(skin);
+  const liquidGlassRef = useRef(liquidGlass);
+  const liquidGlassOpacityRef = useRef(liquidGlassOpacity);
+
+  modeRef.current = mode;
+  skinRef.current = skin;
+  liquidGlassRef.current = liquidGlass;
+  liquidGlassOpacityRef.current = liquidGlassOpacity;
+
   const resolvedMode = mode === "system" ? systemMode : mode;
+
+  const buildThemeCustom = useCallback(() => {
+    // Merge with existing theme_custom keys when we know them from last GET.
+    // For now only sync liquid glass prefs; Auth sound prefs live under the same blob
+    // and are preserved by the backend when we omit `custom` — so only send custom
+    // when changing liquid-glass fields explicitly.
+    return {
+      liquid_glass: liquidGlassRef.current,
+      liquid_glass_opacity: liquidGlassOpacityRef.current,
+    };
+  }, []);
+
+  const persistToBackend = useCallback((nextMode, nextSkin, includeCustom = false) => {
+    if (skipPersistRef.current || !canPersistRef.current) return;
+    if (typeof window === "undefined") return;
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+    }
+    persistTimerRef.current = setTimeout(async () => {
+      try {
+        const body = { mode: nextMode, skin: nextSkin };
+        if (includeCustom) {
+          body.custom = buildThemeCustom();
+        }
+        await axios.put(`${API}/settings/theme`, body, { withCredentials: true });
+      } catch (_) {
+        // 401 while logged out, or offline — localStorage still holds the choice.
+      }
+    }, 350);
+  }, [buildThemeCustom]);
+
+  const applyFromServerOrStorage = useCallback((opts = {}) => {
+    const { mode: nextMode, skin: nextSkin, custom } = opts;
+    skipPersistRef.current = true;
+    if (nextMode) setModeState(nextMode);
+    if (nextSkin) setSkinState(nextSkin);
+    if (custom && typeof custom === "object") {
+      if (typeof custom.liquid_glass === "boolean") {
+        setLiquidGlassState(custom.liquid_glass);
+      }
+      if (custom.liquid_glass_opacity != null) {
+        setLiquidGlassOpacityState(normalizeLiquidGlassOpacity(custom.liquid_glass_opacity));
+      }
+    }
+    // Allow user-driven persists after this apply settles.
+    queueMicrotask(() => {
+      skipPersistRef.current = false;
+      canPersistRef.current = true;
+    });
+  }, []);
 
   useLayoutEffect(() => {
     const root = window.document.documentElement;
@@ -113,30 +184,31 @@ export function ThemeProvider({ children }) {
       const storedWatermarkOpacity = localStorage.getItem(WATERMARK_OPACITY_KEY);
       const storedLiquidGlass = localStorage.getItem(LIQUID_GLASS_KEY);
       const storedLiquidGlassOpacity = localStorage.getItem(LIQUID_GLASS_OPACITY_KEY);
-      if (storedMode && storedMode !== mode) {
-        setMode(storedMode);
+      skipPersistRef.current = true;
+      if (storedMode && storedMode !== modeRef.current) {
+        setModeState(storedMode);
       }
-      if (storedSkin && storedSkin !== skin) {
-        setSkin(storedSkin);
+      if (storedSkin && storedSkin !== skinRef.current) {
+        setSkinState(storedSkin);
       }
       if (storedWatermarkOpacity !== null) {
         const nextWatermarkOpacity = normalizeWatermarkOpacity(storedWatermarkOpacity);
-        if (nextWatermarkOpacity !== watermarkOpacity) {
-          setWatermarkOpacityState(nextWatermarkOpacity);
-        }
+        setWatermarkOpacityState((prev) =>
+          nextWatermarkOpacity !== prev ? nextWatermarkOpacity : prev
+        );
       }
       if (storedLiquidGlass !== null) {
         const nextLiquidGlass = storedLiquidGlass === "1" || storedLiquidGlass === "true";
-        if (nextLiquidGlass !== liquidGlass) {
-          setLiquidGlassState(nextLiquidGlass);
-        }
+        setLiquidGlassState((prev) => (nextLiquidGlass !== prev ? nextLiquidGlass : prev));
       }
       if (storedLiquidGlassOpacity !== null) {
         const nextOpacity = normalizeLiquidGlassOpacity(storedLiquidGlassOpacity);
-        if (nextOpacity !== liquidGlassOpacity) {
-          setLiquidGlassOpacityState(nextOpacity);
-        }
+        setLiquidGlassOpacityState((prev) => (nextOpacity !== prev ? nextOpacity : prev));
       }
+      queueMicrotask(() => {
+        skipPersistRef.current = false;
+        canPersistRef.current = true;
+      });
     };
     const handler = () => syncFromStorage();
     window.addEventListener("theme:sync", handler);
@@ -145,8 +217,9 @@ export function ThemeProvider({ children }) {
       window.removeEventListener("theme:sync", handler);
       window.removeEventListener("storage", handler);
     };
-  }, [mode, skin, watermarkOpacity, liquidGlass, liquidGlassOpacity]);
+  }, []);
 
+  // Load saved theme from backend once a session cookie exists (cross-device restore).
   useEffect(() => {
     let cancelled = false;
 
@@ -161,18 +234,52 @@ export function ThemeProvider({ children }) {
       }
     };
 
+    const loadUserTheme = async () => {
+      try {
+        const response = await axios.get(`${API}/settings/theme`, { withCredentials: true });
+        if (cancelled) return;
+        const data = response?.data || {};
+        applyFromServerOrStorage({
+          mode: data.mode,
+          skin: data.skin,
+          custom: data.custom,
+        });
+      } catch (_) {
+        // Not logged in yet — Auth / PIN login will fire theme:sync after session starts.
+        skipPersistRef.current = true;
+        canPersistRef.current = false;
+      }
+    };
+
     loadAppearanceSettings();
+    loadUserTheme();
     return () => {
       cancelled = true;
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
     };
-  }, []);
+  }, [applyFromServerOrStorage]);
+
+  // Persist mode/skin whenever the user changes them (sidebar toggle, settings, etc.).
+  useEffect(() => {
+    persistToBackend(mode, skin, false);
+  }, [mode, skin, persistToBackend]);
+
+  const setMode = (next) => {
+    const value = typeof next === "function" ? next(modeRef.current) : next;
+    setModeState(value);
+  };
+
+  const setSkin = (next) => {
+    const value = typeof next === "function" ? next(skinRef.current) : next;
+    setSkinState(value);
+  };
 
   const toggleMode = () => {
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
+    setModeState((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   const setSystemTheme = () => {
-    setMode("system");
+    setModeState("system");
   };
 
   const setWatermarkOpacity = (value) => {
@@ -187,6 +294,8 @@ export function ThemeProvider({ children }) {
     setLiquidGlassState(next);
     localStorage.setItem(LIQUID_GLASS_KEY, next ? "true" : "false");
     window.dispatchEvent(new Event("theme:sync"));
+    // Persist glass into theme_custom when logged in.
+    persistToBackend(modeRef.current, skinRef.current, true);
   };
 
   const setLiquidGlassOpacity = (value) => {
@@ -195,6 +304,7 @@ export function ThemeProvider({ children }) {
     localStorage.setItem(LIQUID_GLASS_OPACITY_KEY, String(normalized));
     applyLiquidGlassOpacityVar(normalized);
     window.dispatchEvent(new Event("theme:sync"));
+    persistToBackend(modeRef.current, skinRef.current, true);
   };
 
   return (
