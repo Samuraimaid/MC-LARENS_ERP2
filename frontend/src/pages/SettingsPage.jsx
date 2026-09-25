@@ -2,7 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, THEME_DEFAULTS } from "../context/ThemeContext";
+import {
+  SettingsSearch,
+  SettingsSaveBar,
+  SettingsSavedBadge,
+  SettingsDangerZone,
+  SettingsSection,
+  SettingsRow,
+  SettingsAdvancedGroup,
+  normalizeSettingsQuery,
+} from "@/components/settings/settingsChrome";
 import { THEME_SKINS } from "../lib/themeSkins";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -14,7 +24,7 @@ import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import {
-  Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Trash2, Sparkles, Car, ReceiptText,
+  Sun, Moon, Monitor, Settings2, Bell, Shield, Database, Car, ReceiptText,
   Plus, Save, FileText, Eye, ExternalLink, X, DollarSign, Printer, Download, RefreshCw, Wallet,
   MessageSquareText, Layers, Wifi, Percent, Video,
 } from "lucide-react";
@@ -262,6 +272,10 @@ export function SettingsPage() {
   const isPublicidad = (user?.role || "").toLowerCase() === "publicidad";
   const [profilePin, setProfilePin] = useState("");
   const [savingProfilePin, setSavingProfilePin] = useState(false);
+  const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
+  const [appearanceSavedBadge, setAppearanceSavedBadge] = useState(false);
+  const appearanceSavedTimerRef = useRef(null);
+  const settingsGeneralRef = useRef(null);
   const [backingUp, setBackingUp] = useState(false);
   const rawTab = searchParams.get("tab") || "";
   const activeTab = isPublicidad
@@ -437,8 +451,6 @@ export function SettingsPage() {
   const [clearing, setClearing] = useState(false);
 
   const handleClearDrafts = async () => {
-    const confirmClear = window.confirm("¿Deseas borrar todos los borradores guardados?");
-    if (!confirmClear) return;
     setClearing(true);
     try {
       await axios.delete(`${API}/drafts/backup`, { withCredentials: true });
@@ -457,17 +469,112 @@ export function SettingsPage() {
 
   // Theme mode/skin persist in ThemeContext (PUT /settings/theme) so sidebar toggle
   // and Settings share one path and sync across devices after login.
+  const flashAppearanceSaved = () => {
+    if (appearanceSavedTimerRef.current) {
+      window.clearTimeout(appearanceSavedTimerRef.current);
+    }
+    setAppearanceSavedBadge(true);
+    appearanceSavedTimerRef.current = window.setTimeout(() => {
+      setAppearanceSavedBadge(false);
+      appearanceSavedTimerRef.current = null;
+    }, 1600);
+  };
+
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
+    flashAppearanceSaved();
   };
 
   const handleSkinChange = (nextSkin) => {
     setSkin(nextSkin);
+    flashAppearanceSaved();
+  };
+
+  const handleLiquidGlassChange = (value) => {
+    setLiquidGlass(Boolean(value));
+    flashAppearanceSaved();
+  };
+
+  const handleLiquidGlassOpacityChange = (value) => {
+    setLiquidGlassOpacity(value);
+    flashAppearanceSaved();
+  };
+
+  const resetLiquidGlassOpacity = () => {
+    setLiquidGlassOpacity(THEME_DEFAULTS.liquidGlassOpacity);
+    flashAppearanceSaved();
+  };
+
+  const resetLiquidGlass = () => {
+    setLiquidGlass(THEME_DEFAULTS.liquidGlass);
+    flashAppearanceSaved();
   };
 
   useEffect(() => {
     setWatermarkOpacityPercent(String(Math.round(watermarkOpacity * 100)));
   }, [watermarkOpacity]);
+
+  useEffect(() => () => {
+    if (appearanceSavedTimerRef.current) {
+      window.clearTimeout(appearanceSavedTimerRef.current);
+    }
+  }, []);
+
+  const watermarkDraftDirty = useMemo(() => {
+    const next = Number(watermarkOpacityPercent);
+    if (!Number.isFinite(next)) return true;
+    return Math.round(next) !== Math.round(Number(watermarkOpacity) * 100);
+  }, [watermarkOpacityPercent, watermarkOpacity]);
+
+  const profilePinDirty = profilePin.length > 0;
+  const identityDirty = watermarkDraftDirty || profilePinDirty;
+
+  const appearanceModifiedCount = useMemo(() => {
+    let n = 0;
+    if (Boolean(liquidGlass) !== Boolean(THEME_DEFAULTS.liquidGlass)) n += 1;
+    if (Math.round(Number(liquidGlassOpacity) * 100) !== Math.round(THEME_DEFAULTS.liquidGlassOpacity * 100)) n += 1;
+    if (mode !== THEME_DEFAULTS.mode) n += 1;
+    if (skin !== THEME_DEFAULTS.skin) n += 1;
+    return n;
+  }, [liquidGlass, liquidGlassOpacity, mode, skin]);
+
+  const liquidGlassDirty = Boolean(liquidGlass) !== Boolean(THEME_DEFAULTS.liquidGlass);
+  const liquidGlassOpacityDirty =
+    Math.round(Number(liquidGlassOpacity) * 100) !== Math.round(THEME_DEFAULTS.liquidGlassOpacity * 100);
+
+  const cancelIdentityDrafts = () => {
+    setProfilePin("");
+    setWatermarkOpacityPercent(String(Math.round(watermarkOpacity * 100)));
+  };
+
+  const saveIdentityDrafts = async () => {
+    if (profilePinDirty && profilePin.length !== 4) {
+      toast.error("El PIN debe ser numérico de 4 dígitos");
+      return;
+    }
+    if (watermarkDraftDirty && canManageAppearanceSettings) {
+      await saveWatermarkOpacity();
+    }
+    if (profilePinDirty) {
+      await updateProfilePin();
+    }
+  };
+
+  const jumpToFirstSettingsMatch = () => {
+    const root = settingsGeneralRef.current || document;
+    const el =
+      root.querySelector?.('[data-settings-match="1"]') ||
+      root.querySelector?.("[data-settings-row]") ||
+      root.querySelector?.("[data-settings-section]");
+    if (el && typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof el.focus === "function") {
+        try { el.focus({ preventScroll: true }); } catch (_) { /* ignore */ }
+      }
+    }
+  };
+
+  const settingsSearchActive = Boolean(normalizeSettingsQuery(settingsSearchQuery));
 
   const saveWatermarkOpacity = async () => {
     if (!canManageAppearanceSettings) {
@@ -1465,7 +1572,7 @@ export function SettingsPage() {
 
 
   return (
-    <div className="p-6 space-y-6" data-testid="settings-page">
+    <div className={`p-6 space-y-6 ${identityDirty ? "pb-28" : ""}`} data-testid="settings-page">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -1510,187 +1617,312 @@ export function SettingsPage() {
         ) : null}
 
         <TabsContent value="general" className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Theme Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5" />
-              Apariencia
-            </CardTitle>
-            <CardDescription>Personaliza el tema de la aplicación</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant={mode === "light" ? "default" : "outline"}
-                className="flex flex-col h-auto py-4"
-                onClick={() => handleModeChange("light")}
-                data-testid="theme-light"
+          <div ref={settingsGeneralRef} className="space-y-6">
+          <SettingsSearch
+            value={settingsSearchQuery}
+            onChange={setSettingsSearchQuery}
+            onJump={jumpToFirstSettingsMatch}
+            placeholder="Buscar en Apariencia, Cuenta, Notificaciones…"
+          />
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <SettingsSection
+              id="apariencia"
+              title="Apariencia"
+              description="Preferencias visuales de bajo impacto — se aplican al instante"
+              path={["Configuración", "Apariencia"]}
+              keywords={[
+                "apariencia", "tema", "claro", "oscuro", "sistema", "skin", "liquid glass",
+                "vidrio", "transparencia", "opacidad", "marca de agua", "watermark",
+              ]}
+              searchQuery={settingsSearchQuery}
+              modifiedCount={appearanceModifiedCount}
+              icon={Settings2}
+              headerExtra={<SettingsSavedBadge visible={appearanceSavedBadge} />}
+            >
+              <SettingsRow
+                id="theme-mode"
+                label="Tema"
+                description="Claro, oscuro o seguir el sistema"
+                path={["Configuración", "Apariencia", "Tema"]}
+                keywords={["tema", "claro", "oscuro", "sistema", "mode"]}
+                searchQuery={settingsSearchQuery}
+                dirty={mode !== THEME_DEFAULTS.mode}
+                onReset={() => { setSystemTheme(); setMode(THEME_DEFAULTS.mode); flashAppearanceSaved(); }}
               >
-                <Sun className="h-6 w-6 mb-2" />
-                <span className="text-xs">Claro</span>
-              </Button>
-              <Button
-                variant={mode === "dark" ? "default" : "outline"}
-                className="flex flex-col h-auto py-4"
-                onClick={() => handleModeChange("dark")}
-                data-testid="theme-dark"
-              >
-                <Moon className="h-6 w-6 mb-2" />
-                <span className="text-xs">Oscuro</span>
-              </Button>
-              <Button
-                variant={mode === "system" ? "default" : "outline"}
-                className="flex flex-col h-auto py-4"
-                onClick={() => {
-                  setSystemTheme();
-                  setMode("system");
-                }}
-                data-testid="theme-system"
-              >
-                <Monitor className="h-6 w-6 mb-2" />
-                <span className="text-xs">Sistema</span>
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              El tema del sistema detecta automáticamente la preferencia de tu navegador.
-            </p>
-            <Separator />
-            <div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Skins</Label>
-                  <p className="text-xs text-muted-foreground">Elige un estilo visual</p>
-                </div>
-                <Sparkles className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="mt-3 grid gap-2">
-                {THEME_SKINS.map((themeSkin) => (
-                  <button
-                    key={themeSkin.id}
-                    type="button"
-                    onClick={() => handleSkinChange(themeSkin.id)}
-                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition ${
-                      skin === themeSkin.id ? "border-primary bg-primary/10" : "hover:bg-accent"
-                    }`}
-                    aria-pressed={skin === themeSkin.id}
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    variant={mode === "light" ? "default" : "outline"}
+                    className="flex flex-col h-auto py-4"
+                    onClick={() => handleModeChange("light")}
+                    data-testid="theme-light"
                   >
-                    <div>
-                      <p className="text-sm font-medium">{themeSkin.label}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {themeSkin.group} · {themeSkin.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {themeSkin.swatches.map((color) => (
-                        <span
-                          key={color}
-                          className="h-4 w-4 rounded-full border"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/20 px-3 py-3">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0 pr-3">
-                  <Label htmlFor="liquid-glass-toggle">Liquid Glass</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Vidrio translúcido estilo Apple (blur + manchón de color del tema). Apagalo en caja/POS si preferís opaco.
-                  </p>
+                    <Sun className="h-6 w-6 mb-2" />
+                    <span className="text-xs">Claro</span>
+                  </Button>
+                  <Button
+                    variant={mode === "dark" ? "default" : "outline"}
+                    className="flex flex-col h-auto py-4"
+                    onClick={() => handleModeChange("dark")}
+                    data-testid="theme-dark"
+                  >
+                    <Moon className="h-6 w-6 mb-2" />
+                    <span className="text-xs">Oscuro</span>
+                  </Button>
+                  <Button
+                    variant={mode === "system" ? "default" : "outline"}
+                    className="flex flex-col h-auto py-4"
+                    onClick={() => {
+                      setSystemTheme();
+                      setMode("system");
+                      flashAppearanceSaved();
+                    }}
+                    data-testid="theme-system"
+                  >
+                    <Monitor className="h-6 w-6 mb-2" />
+                    <span className="text-xs">Sistema</span>
+                  </Button>
                 </div>
-                <Switch
-                  id="liquid-glass-toggle"
-                  checked={Boolean(liquidGlass)}
-                  onCheckedChange={(value) => setLiquidGlass(Boolean(value))}
-                  data-testid="settings-liquid-glass"
-                />
-              </div>
-              <div className={`space-y-2 ${liquidGlass ? "" : "opacity-50 pointer-events-none"}`}>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 pr-3">
-                    <Label htmlFor="liquid-glass-opacity">Transparencia del vidrio</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Menor % = más transparente. Se guarda en este dispositivo.
-                    </p>
-                  </div>
-                  <span className="min-w-14 text-right text-sm font-semibold" data-testid="settings-liquid-glass-opacity-value">
-                    {Math.round(Number(liquidGlassOpacity) * 100)}%
-                  </span>
+                <p className="text-xs text-muted-foreground">
+                  El tema del sistema detecta automáticamente la preferencia de tu navegador.
+                </p>
+              </SettingsRow>
+
+              <SettingsRow
+                id="theme-skin"
+                label="Skins"
+                description="Estilo visual de la interfaz"
+                path={["Configuración", "Apariencia", "Skins"]}
+                keywords={["skin", "skins", "estilo", "color"]}
+                searchQuery={settingsSearchQuery}
+                dirty={skin !== THEME_DEFAULTS.skin}
+                onReset={() => { handleSkinChange(THEME_DEFAULTS.skin); }}
+              >
+                <div className="mt-1 grid gap-2">
+                  {THEME_SKINS.map((themeSkin) => (
+                    <button
+                      key={themeSkin.id}
+                      type="button"
+                      onClick={() => handleSkinChange(themeSkin.id)}
+                      className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition ${
+                        skin === themeSkin.id ? "border-primary bg-primary/10" : "hover:bg-accent"
+                      }`}
+                      aria-pressed={skin === themeSkin.id}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{themeSkin.label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {themeSkin.group} · {themeSkin.description}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {themeSkin.swatches.map((color) => (
+                          <span
+                            key={color}
+                            className="h-4 w-4 rounded-full border"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <Input
-                  id="liquid-glass-opacity"
-                  type="range"
-                  min="25"
-                  max="70"
-                  step="1"
-                  disabled={!liquidGlass}
-                  value={Math.round(Number(liquidGlassOpacity) * 100)}
-                  onChange={(event) => setLiquidGlassOpacity(Number(event.target.value) / 100)}
-                  data-testid="settings-liquid-glass-opacity"
-                  aria-valuemin={25}
-                  aria-valuemax={70}
-                  aria-valuenow={Math.round(Number(liquidGlassOpacity) * 100)}
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>Más transparente</span>
-                  <span>Más opaco</span>
+              </SettingsRow>
+
+              <SettingsRow
+                id="liquid-glass"
+                label="Liquid Glass"
+                description="Vidrio translúcido estilo Apple (blur + manchón de color del tema)"
+                path={["Configuración", "Apariencia", "Liquid Glass"]}
+                keywords={["liquid glass", "vidrio", "blur", "translúcido"]}
+                searchQuery={settingsSearchQuery}
+                dirty={liquidGlassDirty}
+                onReset={resetLiquidGlass}
+              >
+                <div className="flex items-center justify-end">
+                  <Switch
+                    id="liquid-glass-toggle"
+                    checked={Boolean(liquidGlass)}
+                    onCheckedChange={handleLiquidGlassChange}
+                    data-testid="settings-liquid-glass"
+                  />
                 </div>
-              </div>
-            </div>
-            {canManageAppearanceSettings ? (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <Label>Transparencia de marca de agua</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Ajuste global para login, reloj de asistencia y fondo principal.
-                      </p>
-                    </div>
-                    <span className="min-w-14 text-right text-sm font-semibold">{watermarkOpacityPercent}%</span>
+              </SettingsRow>
+
+              <SettingsRow
+                id="liquid-glass-opacity"
+                label="Transparencia del vidrio"
+                description="Menor % = más transparente. Se guarda al instante en este dispositivo."
+                path={["Configuración", "Apariencia", "Transparencia del vidrio"]}
+                keywords={["opacidad", "transparencia", "vidrio", "liquid"]}
+                searchQuery={settingsSearchQuery}
+                dirty={liquidGlassOpacityDirty}
+                onReset={resetLiquidGlassOpacity}
+              >
+                <div className={`space-y-2 ${liquidGlass ? "" : "opacity-50 pointer-events-none"}`}>
+                  <div className="flex justify-end">
+                    <span className="min-w-14 text-right text-sm font-semibold" data-testid="settings-liquid-glass-opacity-value">
+                      {Math.round(Number(liquidGlassOpacity) * 100)}%
+                    </span>
                   </div>
                   <Input
+                    id="liquid-glass-opacity"
                     type="range"
-                    min="0"
-                    max="30"
+                    min="25"
+                    max="70"
                     step="1"
-                    value={watermarkOpacityPercent}
-                    onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
-                    data-testid="settings-watermark-opacity"
+                    disabled={!liquidGlass}
+                    value={Math.round(Number(liquidGlassOpacity) * 100)}
+                    onChange={(event) => handleLiquidGlassOpacityChange(Number(event.target.value) / 100)}
+                    data-testid="settings-liquid-glass-opacity"
+                    aria-valuemin={25}
+                    aria-valuemax={70}
+                    aria-valuenow={Math.round(Number(liquidGlassOpacity) * 100)}
                   />
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="30"
-                      step="1"
-                      value={watermarkOpacityPercent}
-                      onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
-                      className="w-24"
-                    />
-                    <Button
-                      onClick={saveWatermarkOpacity}
-                      disabled={savingAppearanceSettings}
-                      data-testid="settings-watermark-opacity-save"
-                    >
-                      {savingAppearanceSettings ? "Guardando..." : "Guardar"}
-                    </Button>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Más transparente</span>
+                    <span>Más opaco</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Disponible solo para gerencia. Rango permitido: 0% a 30%.</p>
                 </div>
-              </>
-            ) : null}
-            <Separator />
-            <div className="space-y-2">
-              <Label>PIN de marcación personal (4 dígitos)</Label>
-              <div className="flex items-center gap-2">
+              </SettingsRow>
+
+              {canManageAppearanceSettings ? (
+                <SettingsAdvancedGroup
+                  title="Avanzado"
+                  description="Marca de agua global — requiere Guardar"
+                  searchQuery={settingsSearchQuery}
+                  keywords={["avanzado", "marca de agua", "watermark", "transparencia"]}
+                >
+                  <SettingsRow
+                    id="watermark-opacity"
+                    label="Transparencia de marca de agua"
+                    description="Ajuste global para login, reloj de asistencia y fondo principal (0–30%)."
+                    path={["Configuración", "Apariencia", "Avanzado", "Marca de agua"]}
+                    keywords={["marca de agua", "watermark", "transparencia", "avanzado"]}
+                    searchQuery={settingsSearchQuery}
+                    dirty={watermarkDraftDirty}
+                    onReset={() => setWatermarkOpacityPercent(String(Math.round(THEME_DEFAULTS.watermarkOpacity * 100)))}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-end">
+                        <span className="min-w-14 text-right text-sm font-semibold">{watermarkOpacityPercent}%</span>
+                      </div>
+                      <Input
+                        type="range"
+                        min="0"
+                        max="30"
+                        step="1"
+                        value={watermarkOpacityPercent}
+                        onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
+                        data-testid="settings-watermark-opacity"
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="30"
+                        step="1"
+                        value={watermarkOpacityPercent}
+                        onChange={(event) => setWatermarkOpacityPercent(event.target.value)}
+                        className="w-24"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Solo gerencia. Los cambios se confirman con la barra Guardar / Cancelar.
+                      </p>
+                    </div>
+                  </SettingsRow>
+                </SettingsAdvancedGroup>
+              ) : null}
+            </SettingsSection>
+
+            <SettingsSection
+              id="notificaciones"
+              title="Notificaciones"
+              description="Alertas del sistema en este dispositivo"
+              path={["Configuración", "Notificaciones"]}
+              keywords={["notificaciones", "stock", "órdenes", "creditos", "alertas"]}
+              searchQuery={settingsSearchQuery}
+              icon={Bell}
+            >
+              <SettingsRow
+                id="notify-stock"
+                label="Stock Bajo"
+                description="Alertas cuando el inventario esté bajo"
+                path={["Configuración", "Notificaciones", "Stock Bajo"]}
+                keywords={["stock", "inventario"]}
+                searchQuery={settingsSearchQuery}
+              >
+                <div className="flex justify-end">
+                  <Switch defaultChecked data-testid="notify-stock" />
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                id="notify-orders"
+                label="Órdenes Pendientes"
+                description="Notificar órdenes sin asignar"
+                path={["Configuración", "Notificaciones", "Órdenes"]}
+                keywords={["órdenes", "ordenes", "pendientes"]}
+                searchQuery={settingsSearchQuery}
+              >
+                <div className="flex justify-end">
+                  <Switch defaultChecked data-testid="notify-orders" />
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                id="notify-credits"
+                label="Créditos Vencidos"
+                description="Alertas de pagos pendientes"
+                path={["Configuración", "Notificaciones", "Créditos"]}
+                keywords={["créditos", "creditos", "vencidos"]}
+                searchQuery={settingsSearchQuery}
+              >
+                <div className="flex justify-end">
+                  <Switch defaultChecked data-testid="notify-credits" />
+                </div>
+              </SettingsRow>
+            </SettingsSection>
+
+            <SettingsSection
+              id="cuenta"
+              title="Cuenta"
+              description="Identidad de tu perfil — cambios con Guardar"
+              path={["Configuración", "Cuenta"]}
+              keywords={["cuenta", "perfil", "pin", "nombre", "email", "rol", "sucursal"]}
+              searchQuery={settingsSearchQuery}
+              icon={Shield}
+              modifiedCount={profilePinDirty ? 1 : 0}
+            >
+              <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                <div>
+                  <Label className="text-muted-foreground">Nombre</Label>
+                  <p className="font-medium">{user?.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Email</Label>
+                  <p className="font-medium">{user?.email}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Rol</Label>
+                  <p className="font-medium capitalize">{(rolesMap && rolesMap[user?.role]?.label) || user?.role}</p>
+                </div>
+                {user?.branch_id ? (
+                  <div>
+                    <Label className="text-muted-foreground">Sucursal</Label>
+                    <p className="font-medium">{user?.branch_id}</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <SettingsRow
+                id="profile-pin"
+                label="PIN de marcación"
+                description="4 dígitos para marcar entrada y salida desde tu perfil"
+                path={["Configuración", "Cuenta", "PIN"]}
+                keywords={["pin", "marcación", "asistencia"]}
+                searchQuery={settingsSearchQuery}
+                dirty={profilePinDirty}
+                onReset={() => setProfilePin("")}
+                resetLabel="Descartar"
+              >
                 <input
                   type="password"
                   value={profilePin}
@@ -1700,135 +1932,62 @@ export function SettingsPage() {
                   placeholder="••••"
                   data-testid="settings-profile-pin"
                 />
-                <Button
-                  onClick={updateProfilePin}
-                  disabled={savingProfilePin || profilePin.length !== 4}
-                  data-testid="settings-profile-pin-save"
-                >
-                  {savingProfilePin ? "Guardando..." : "Actualizar"}
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Usá la barra inferior Guardar / Cancelar para confirmar el nuevo PIN.
+                </p>
+              </SettingsRow>
+            </SettingsSection>
+
+            <SettingsSection
+              id="sistema"
+              title="Sistema"
+              description="Información del entorno"
+              path={["Configuración", "Sistema"]}
+              keywords={["sistema", "versión", "ambiente", "sucursales", "bodegas"]}
+              searchQuery={settingsSearchQuery}
+              icon={Database}
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="text-muted-foreground">Versión</Label>
+                  <p className="font-mono">1.0.0</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Ambiente</Label>
+                  <p className="font-mono">Producción</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Sucursales</Label>
+                  <p className="font-mono">3 activas</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Bodegas</Label>
+                  <p className="font-mono">8 activas</p>
+                </div>
               </div>
+            </SettingsSection>
+          </div>
+
+          <SettingsDangerZone
+            className="md:col-span-2"
+            title="Zona de peligro"
+            description="Acciones irreversibles sobre datos locales y respaldos de borradores."
+            confirmPhrase="BORRADORES"
+            actionLabel="Eliminar para siempre"
+            onConfirm={handleClearDrafts}
+            loading={clearing}
+            testId="settings-danger-zone-drafts"
+          >
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Borrar borradores guardados</p>
               <p className="text-xs text-muted-foreground">
-                Este PIN es para marcar entrada y salida desde tu perfil, junto con la configuración de tema.
+                Elimina ventas y cotizaciones almacenadas en este dispositivo y en el servidor de respaldo.
+                Escribí <span className="font-mono font-semibold text-destructive">BORRADORES</span> para
+                desbloquear.
               </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Notifications Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notificaciones
-            </CardTitle>
-            <CardDescription>Configura las alertas del sistema</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Stock Bajo</Label>
-                <p className="text-xs text-muted-foreground">Alertas cuando el inventario esté bajo</p>
-              </div>
-              <Switch defaultChecked data-testid="notify-stock" />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Órdenes Pendientes</Label>
-                <p className="text-xs text-muted-foreground">Notificar órdenes sin asignar</p>
-              </div>
-              <Switch defaultChecked data-testid="notify-orders" />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Créditos Vencidos</Label>
-                <p className="text-xs text-muted-foreground">Alertas de pagos pendientes</p>
-              </div>
-              <Switch defaultChecked data-testid="notify-credits" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* User Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Mi Cuenta
-            </CardTitle>
-            <CardDescription>Información de tu perfil</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">Nombre</Label>
-              <p className="font-medium">{user?.name}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Email</Label>
-              <p className="font-medium">{user?.email}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Rol</Label>
-                <p className="font-medium capitalize">{(rolesMap && rolesMap[user?.role]?.label) || user?.role}</p>
-            </div>
-            {user?.branch_id && (
-              <div>
-                <Label className="text-muted-foreground">Sucursal</Label>
-                <p className="font-medium">{user?.branch_id}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* System Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Sistema
-            </CardTitle>
-            <CardDescription>Información del sistema</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">Versión</Label>
-              <p className="font-mono">1.0.0</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Ambiente</Label>
-              <p className="font-mono">Producción</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Sucursales</Label>
-              <p className="font-mono">3 activas</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Bodegas</Label>
-              <p className="font-mono">8 activas</p>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <Label>Borradores guardados</Label>
-                <p className="text-xs text-muted-foreground">Borra ventas y cotizaciones almacenadas</p>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleClearDrafts}
-                disabled={clearing}
-                aria-busy={clearing}
-                data-testid="clear-drafts"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                {clearing ? "Limpiando..." : "Limpiar"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </SettingsDangerZone>
+          </div>
         </TabsContent>
 
         <TabsContent value="videos" className="space-y-6">
@@ -2941,6 +3100,24 @@ export function SettingsPage() {
           <HotspotManagementPanel />
         </TabsContent>
       </Tabs>
+
+      <SettingsSaveBar
+        dirty={identityDirty}
+        saving={savingProfilePin || savingAppearanceSettings}
+        saveDisabled={profilePinDirty && profilePin.length !== 4}
+        onSave={saveIdentityDrafts}
+        onCancel={cancelIdentityDrafts}
+        message={
+          profilePinDirty && profilePin.length !== 4
+            ? "El PIN debe tener 4 dígitos"
+            : profilePinDirty && watermarkDraftDirty
+              ? "PIN y marca de agua sin guardar"
+              : profilePinDirty
+                ? "PIN de marcación sin guardar"
+                : "Marca de agua sin guardar"
+        }
+      />
+
     </div>
   );
 }

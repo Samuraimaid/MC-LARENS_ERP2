@@ -27,6 +27,15 @@ const DEFAULT_WATERMARK_OPACITY = 0.04;
 const MIN_WATERMARK_OPACITY = 0;
 const MAX_WATERMARK_OPACITY = 0.15;
 
+/** Shared defaults for Settings “Volver al valor predeterminado” (U4). */
+export const THEME_DEFAULTS = {
+  mode: DEFAULT_MODE,
+  skin: DEFAULT_SKIN,
+  liquidGlass: DEFAULT_LIQUID_GLASS,
+  liquidGlassOpacity: DEFAULT_LIQUID_GLASS_OPACITY,
+  watermarkOpacity: DEFAULT_WATERMARK_OPACITY,
+};
+
 const ThemeContext = createContext(null);
 
 const normalizeWatermarkOpacity = (value) => {
