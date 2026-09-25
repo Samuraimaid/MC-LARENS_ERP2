@@ -515,3 +515,30 @@ Other open documents:
      - Script ejecutable `scripts/scrub_china_origin_live.py` y `scripts/scrub_china_origin.ps1`.
      - Reporte JSON de auditoría generado en `docs/SCRUB_CHINA_ORIGIN_20260919.json` y `scripts/reports/SCRUB_CHINA_ORIGIN_20260919.json` con la etiqueta `scrub_china_origin_20260919`.
      - Módulo de defensa en frontend `frontend/src/lib/sanitizeCopy.js` (`sanitizeProductCopy` y `isUniversalProduct`) aplicado en el Catálogo y en la Vista Rápida.
+
+---
+
+### Sesión 2026-09-24 (Validación Buscador PR #42 y Despliegue P0 de Seguridad S1 Idempotencia + C1 Validación de Dinero en Servidor)
+- **Acciones y Mejoras Implementadas:**
+  1. **Smoke y Verificación de Buscador PR #42:**
+     - Verificado en código y ejecutada suite unitaria en Node.js de `frontend/src/lib/productLookup.test.js`: 12/12 tests PASS.
+     - Presionar `Enter` cierra el autocompletado y desenfoca sin disparar la Vista Rápida accidentalmente ni recargar.
+     - Búsqueda multi-término AND funciona a través de SKU, nombre, marca, categoría, descripción, compatibilidad vehicular y bombillo.
+     - Selección automática del texto (`select-all`) al enfocar con protección mouseup en `CatalogPage.jsx` y `SaleForm.jsx`.
+  2. **Implementación de S1 (Idempotency-Key en Mutaciones Críticas - `backend/core/idempotency.py`):**
+     - Módulo dedicado para extracción de clave desde cabeceras HTTP (`Idempotency-Key`, `X-Idempotency-Key`), payload JSON o `draft_id`.
+     - Almacenamiento en colección `idempotency_records` con índice TTL automático de 24 horas y caché en memoria para baja latencia.
+     - Bloqueo y protección contra condiciones de carrera concurrentes (`in_progress`), retornando HTTP 409 si un reintento idéntico llega en el mismo milisegundo.
+     - Integración en creación de ventas (`POST /api/sales`), cobros en caja (`POST /caja/facturas/{sale_id}/cobrar`, `POST /cashier/invoices/{sale_id}/collect`).
+     - Al reintentar la misma petición con igual clave, el servidor responde con la venta/cobro original sin volver a descontar inventario ni duplicar registros.
+  3. **Implementación de C1 (Validación y Recálculo de Dinero en Servidor - `backend/core/money_validate.py`):**
+     - El cliente no es fuente de verdad del dinero; el backend calcula y valida montos estrictamente.
+     - Saneamiento y validación de cantidades de ítems ($1 \le qty \le 10,000$), rechazo estricto de cantidades negativas, nulas o flotantes.
+     - Validación de descuentos por línea ($0.0\% \le disc \le 100.0\%$), rechazando descuentos negativos o superiores al 100%.
+     - `enforce_server_settlement_total`: Si el cliente envía un `total_amount` manipulado con una discrepancia $> \$0.05$ respecto al cálculo del servidor, se rechaza con `HTTP 409 TOTAL_MISMATCH` retornando el desglose exacto esperado por el backend.
+  4. **Pruebas y Verificación Automatizada (`backend/tests/test_idempotency_and_money.py`):**
+     - Pruebas unitarias completas de extracción de headers, ciclo de vida de idempotencia (inicio, concurrencia 409, finalización y cache hit).
+     - Validación de rechazo de montos manipulados y recálculo con 100% de éxito (`ALL S1 & C1 TESTS PASSED SUCCESSFULLY`).
+  5. **Actualización de Documentación:**
+     - Actualizada tabla de cierre en `docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md` marcando PR #42, Idea #9 (Idempotency Key) y Regla Case C1 como **DONE**.
+

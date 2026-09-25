@@ -160,10 +160,26 @@
 
 Marcar cada fila DONE / PARCIAL / N/A:
 
-| # | Idea | Estado | PR |
-|---|------|--------|-----|
-| 1–12 | (rellenar) | | |
-| C1–C5 | (rellenar) | | |
+| # | Idea | Estado | PR / Implementación |
+|---|------|--------|---------------------|
+| Buscador | PR #42 UX Buscador (Enter, AND multi-término, Select-all) | **DONE** | PR #42 (`productLookup.js`, `CatalogPage.jsx`, `SaleForm.jsx`) |
+| 1 | Authentication (idle/TTL sesión) | PENDIENTE (Fase 2 / C2) | S5 / C2 |
+| 2 | Authorization (BOLA sample + require_roles) | PENDIENTE (Fase 2) | S5 |
+| 3 | Rate Limiting (PIN estricto + mutaciones 429) | PENDIENTE (Fase 1 / S2) | S2 |
+| 4 | Input Validation (schemas en endpoints tocados) | PENDIENTE (Fase 2) | S6 |
+| 5 | Output Encoding (JSON Content-Type, sin HTML crudo) | PENDIENTE (Fase 2) | S6 |
+| 6 | HTTPS Everywhere (Cloud Run checklist) | PENDIENTE (Fase 3) | S9 |
+| 7 | Secret Rotation (runbook + no bake PIN en imagen) | PENDIENTE (Fase 3) | S8 |
+| 8 | Least Privilege (roles en mutaciones dinero/stock) | PENDIENTE (Fase 2) | S5 |
+| 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect`) |
+| 10 | Audit Logging (mutaciones críticas sin secretos) | PENDIENTE (Fase 2) | S4 |
+| 11 | Dependency Scans (Dependabot o audit CI) | PENDIENTE (Fase 3) | S7 |
+| 12 | Error Hygiene (handler prod sin traceback) | PENDIENTE (Fase 1 / S3) | S3 |
+| **C1** | Validación/recalc de montos en servidor (servidor gana, 409 TOTAL_MISMATCH) | **DONE** | PR S1 + C1 (`backend/core/money_validate.py`, saneamiento de ítems, totales garantizados en servidor) |
+| **C2** | Sesión: TTL o idle timeout (invalidar al cierre de turno) | PENDIENTE (Fase 2) | C2 |
+| **C3** | Separar lecturas de mutaciones privilegiadas | PENDIENTE (Fase 2) | S5 |
+| **C4** | Observabilidad de abuso (métricas/logs 401/429/finalize) | PENDIENTE (Fase 2) | S4 |
+| **C5** | Ops: backup Mongo + restore de prueba documentado | PENDIENTE (Fase 3) | S10 / C5 |
 
 ---
 
