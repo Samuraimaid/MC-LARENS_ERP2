@@ -1573,7 +1573,13 @@ export function QuotationsPage() {
         notes: quotation.notes || null,
       };
 
-      const response = await axios.post(`${API}/sales`, saleBody, { withCredentials: true });
+      const idempotencyKey = window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const response = await axios.post(`${API}/sales`, saleBody, {
+        withCredentials: true,
+        headers: { "Idempotency-Key": idempotencyKey },
+      });
       const invoiceNumber = response?.data?.invoice_number;
       toast.success(invoiceNumber ? `Venta ${invoiceNumber} creada` : "Venta creada exitosamente");
       fetchData();

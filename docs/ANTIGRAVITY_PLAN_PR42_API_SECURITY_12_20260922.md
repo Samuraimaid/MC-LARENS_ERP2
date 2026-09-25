@@ -171,7 +171,7 @@ Marcar cada fila DONE / PARCIAL / N/A:
 | 6 | HTTPS Everywhere (Cloud Run checklist) | PENDIENTE (Fase 3) | S9 |
 | 7 | Secret Rotation (runbook + no bake PIN en imagen) | PENDIENTE (Fase 3) | S8 |
 | 8 | Least Privilege (roles en mutaciones dinero/stock) | **DONE** | PR S5 + C3 (`backend/core/authz_bola.py`, roles restringidos en creación de ventas, cobro/anulación de facturas, inventario/productos) |
-| 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect`) |
+| 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 + F1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect` + Header `Idempotency-Key` en `SalesPage.jsx`, `QuotationsPage.jsx`, `CashierPage.jsx`) |
 | 10 | Audit Logging (mutaciones críticas sin secretos) | **DONE** | PR S4 (`backend/core/audit_log.py`, redacción estricta de PINs/tokens/Bearer, trazabilidad en /sales, /caja/facturas, /auth/pin/login, status ok/fail) |
 | 11 | Dependency Scans (Dependabot o audit CI) | PENDIENTE (Fase 3) | S7 |
 | 12 | Error Hygiene (handler prod sin traceback) | **DONE** | PR S3 (`backend/core/error_handler.py`, manejador global de excepciones sin exposición de stack trace en prod, JSON sanitizado) |

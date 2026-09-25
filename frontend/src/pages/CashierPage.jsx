@@ -1452,7 +1452,13 @@ export function CashierPage() {
     if (quick) setQuickCollectSaleId(sale.sale_id);
     setBusy((prev) => ({ ...prev, collect: true }));
     try {
-      const response = await axios.post(`${API}/caja/facturas/${sale.sale_id}/cobrar`, payload, { withCredentials: true });
+      const idempotencyKey = payload?.idempotency_key || (window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
+      const response = await axios.post(`${API}/caja/facturas/${sale.sale_id}/cobrar`, payload, {
+        withCredentials: true,
+        headers: { "Idempotency-Key": idempotencyKey },
+      });
       const isPartial = amount < Number(sale.amount_pending || 0) - 0.009;
       const changeAmount = Number(response.data?.change_amount || 0);
       const successMessage = quick

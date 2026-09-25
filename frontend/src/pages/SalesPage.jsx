@@ -2075,7 +2075,13 @@ export function SalesPage() {
         total_amount: totals.total,
       };
 
-      const response = await axios.post(`${API}/sales`, saleData, { withCredentials: true });
+      const idempotencyKey = window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const response = await axios.post(`${API}/sales`, saleData, {
+        withCredentials: true,
+        headers: { "Idempotency-Key": idempotencyKey },
+      });
       
       if (response.data.requires_manager_auth) {
         setAuthProducts(response.data.products || []);
@@ -2181,7 +2187,15 @@ export function SalesPage() {
         idempotency_key: draftId ? `draft:${draftId}` : null,
       };
 
-      const response = await axios.post(`${API}/sales`, saleData, { withCredentials: true });
+      const idempotencyHeader = draftId
+        ? `draft:${draftId}`
+        : (window.crypto?.randomUUID
+          ? window.crypto.randomUUID()
+          : `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
+      const response = await axios.post(`${API}/sales`, saleData, {
+        withCredentials: true,
+        headers: { "Idempotency-Key": idempotencyHeader },
+      });
 
       if (response.data.requires_manager_auth) {
         setAuthProducts(response.data.products || []);
