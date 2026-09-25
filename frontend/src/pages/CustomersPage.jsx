@@ -23,8 +23,12 @@ import SearchableSelect from "@/components/ui/searchable-select";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
 import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSounds";
-import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter } from "lucide-react";
+import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter, Download, Copy, MessageCircle } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { downloadCsv, copyTextToClipboard, openWhatsAppLinks } from "@/components/lists/listBulkUtils";
 import {
   getVehicleSelectOptionsByBrandYear,
   getVehicleYearsByBrand,
@@ -54,6 +58,8 @@ const PLATE_PREFIXES = [
 
 export function CustomersPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "customers" });
 
   const { user, hasPermission } = useAuth();
   const normalizedUserRole = String(user?.role || "").toLowerCase();
@@ -409,6 +415,7 @@ export function CustomersPage() {
     setEditingCustomerId(customer.customer_id);
     setCreditAuthCode("");
     setPendingCreditLimit(0);
+    scrollRestore.save();
     setShowNewCustomer(true);
     setIsAddingVehicle(false);
 
@@ -784,6 +791,77 @@ export function CustomersPage() {
     );
   });
 
+  const visibleCustomerIds = filteredCustomers.map((c) => c.customer_id);
+  const selectedCustomers = filteredCustomers.filter((c) => selection.isSelected(c.customer_id));
+
+  const exportSelectedCustomersCsv = () => {
+    const rowsSrc = selectedCustomers.length ? selectedCustomers : filteredCustomers;
+    if (!rowsSrc.length) {
+      toast.error("No hay clientes para exportar");
+      return;
+    }
+    downloadCsv(
+      `clientes_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["customer_id", "nombre", "tipo", "telefono", "email", "cedula_ruc", "direccion"],
+      rowsSrc.map((c) => [
+        c.customer_id,
+        c.name,
+        c.customer_type === "empresa" ? "empresa" : "natural",
+        c.phone,
+        c.email,
+        c.tax_id,
+        c.address,
+      ])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+
+  const copySelectedPhones = async () => {
+    if (!selectedCustomers.length) {
+      toast.error("Selecciona al menos un cliente");
+      return;
+    }
+    const phones = selectedCustomers.map((c) => c.phone).filter(Boolean);
+    if (!phones.length) {
+      toast.error("Los seleccionados no tienen teléfono");
+      return;
+    }
+    try {
+      await copyTextToClipboard(phones.join(", "));
+      toast.success("Teléfonos copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
+  const bulkWhatsAppSelected = () => {
+    if (!selectedCustomers.length) {
+      toast.error("Selecciona al menos un cliente");
+      return;
+    }
+    const withPhone = selectedCustomers.filter((c) => c.phone);
+    if (!withPhone.length) {
+      toast.error("Ningún seleccionado tiene teléfono");
+      return;
+    }
+    const entries = withPhone.map((customer) => {
+      const tplId = getTemplateForCustomer(customer.customer_id);
+      const tpl = waTemplates.find((t) => t.id === tplId) || waTemplates[0];
+      let text = "";
+      if (tpl.id === "custom") {
+        text = waCustomByCustomer[customer.customer_id] || `Hola ${customer.name || ""}, le escribo desde McLarenS Autoparts.`;
+      } else {
+        text = tpl.text.replace("{name}", customer.name || "").replace("{items}", "");
+      }
+      return { phone: customer.phone, text };
+    });
+    const n = openWhatsAppLinks(entries, { maxOpen: 5 });
+    toast.success(`Abriendo WhatsApp (${n}${withPhone.length > 5 ? ` de ${withPhone.length}` : ""})`);
+    if (withPhone.length > 5) {
+      toast.message("Se abrieron máximo 5 chats; el resto queda seleccionado.");
+    }
+  };
+
   // map vehicles by customer
   const vehiclesByCustomer = allVehicles.reduce((acc, v) => {
     const cid = v.customer_id || 'unknown';
@@ -805,6 +883,7 @@ export function CustomersPage() {
   };
 
   const openCustomerVehiclesModal = (customer) => {
+    scrollRestore.save();
     const list = vehiclesByCustomer[customer.customer_id] || [];
     setModalCustomer(customer);
     setModalVehicles(list);
@@ -897,7 +976,11 @@ export function CustomersPage() {
           <Button variant="outline" onClick={fetchCustomers} className="col-span-2 h-9 px-3 sm:col-auto sm:px-4">
             <RefreshCw className="h-4 w-4" />
           </Button>
-            <Dialog open={showNewCustomer} onOpenChange={(open) => { setShowNewCustomer(open); if (!open) resetForm(); }}>
+            <Dialog open={showNewCustomer} onOpenChange={(open) => {
+              if (open) scrollRestore.save();
+              setShowNewCustomer(open);
+              if (!open) { resetForm(); scrollRestore.restore(); }
+            }}>
             <DialogTrigger asChild>
               <Button data-testid="new-customer-btn" disabled={!canCreateCustomers} className="h-9 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
@@ -1228,29 +1311,41 @@ export function CustomersPage() {
         </div>
       </div>
 
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Nombre, teléfono, email o cédula"
+        searchTestId="search-customers"
+        selectedCount={selection.count}
+        visibleCount={visibleCustomerIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleCustomerIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleCustomerIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleCustomerIds)}
+        onDeselectAll={selection.clear}
+        testId="customers-selection-bar"
+      >
+        {user?.role !== "bodegas" && (
+          <Button type="button" size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" disabled={selection.count === 0} onClick={bulkWhatsAppSelected}>
+            <MessageCircle className="h-4 w-4 mr-1" />
+            WhatsApp lote
+          </Button>
+        )}
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCustomersCsv}>
+          <Download className="h-4 w-4 mr-1" />
+          CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedPhones}>
+          <Copy className="h-4 w-4 mr-1" />
+          Copiar teléfonos
+        </Button>
+      </ListSelectionBar>
+
       <Card>
         <CardHeader>
           <CardTitle>Filtros rápidos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <div className="flex w-full min-w-[300px] items-center gap-2">
-              <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                <Search className="h-3.5 w-3.5" />
-                Buscar cliente
-              </Label>
-              <div className="relative min-w-0 flex-1 max-w-xl">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Nombre, teléfono, email o cédula"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 text-sm"
-                  data-testid="search-customers"
-                />
-              </div>
-            </div>
-
             <div className="flex w-full min-w-[300px] items-center gap-2 sm:w-auto sm:min-w-[320px]">
               <Label className="inline-flex w-32 shrink-0 items-center gap-1 text-sm text-muted-foreground">
                 <ListFilter className="h-3.5 w-3.5" />
@@ -1340,6 +1435,9 @@ export function CustomersPage() {
                 key={customer.customer_id}
                 density={listDensity}
                 testId={`customer-row-${customer.customer_id}`}
+                selectable
+                selected={selection.isSelected(customer.customer_id)}
+                onSelectChange={() => selection.toggle(customer.customer_id)}
                 mediaFallback={
                   isCompany ? (
                     <Building2 className={`${densityTok.mediaIcon} text-sky-700 icon-spring`} />
@@ -1428,7 +1526,10 @@ export function CustomersPage() {
 </div>
 
       {/* Vehicles Modal */}
-      <Dialog open={showVehiclesModal} onOpenChange={setShowVehiclesModal}>
+      <Dialog open={showVehiclesModal} onOpenChange={(open) => {
+        setShowVehiclesModal(open);
+        if (!open) scrollRestore.restore();
+      }}>
         <DialogContent className="max-w-xl">
           <ContextualDialogHeader
             variant="information"

@@ -31,8 +31,7 @@ import { toast } from "sonner";
 import { 
   Search, CreditCard, Printer, Download, RefreshCw,
   Wrench, Package, ShieldCheck, Car, XCircle,
-  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock
-} from "lucide-react";
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
 import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
@@ -99,6 +98,10 @@ import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 
 // Divisas disponibles
@@ -384,6 +387,8 @@ function DraftBoardCard({
 
 export function SalesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "sales" });
 
   const navigate = useNavigate();
   const { hasPermission, user } = useAuth();
@@ -2294,6 +2299,27 @@ export function SalesPage() {
 
   const filteredSales = (Array.isArray(sales) ? sales : []).filter(sale => {
     if (!sale) return false;
+
+  const visibleSaleIds = (Array.isArray(filteredSales) ? filteredSales : []).map((s) => s.sale_id).filter(Boolean);
+  const selectedSales = (Array.isArray(filteredSales) ? filteredSales : []).filter((s) => selection.isSelected(s.sale_id));
+  const exportSelectedSalesCsv = () => {
+    const rowsSrc = selectedSales.length ? selectedSales : (Array.isArray(filteredSales) ? filteredSales : []);
+    if (!rowsSrc.length) { toast.error("No hay ventas"); return; }
+    downloadCsv(
+      `ventas_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["sale_id", "factura", "cliente", "total", "estado", "fecha"],
+      rowsSrc.map((s) => [s.sale_id, s.invoice_number, s.customer_name, s.total, s.status, s.created_at || s.date])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedSaleIds = async () => {
+    if (!selectedSales.length) { toast.error("Selecciona ventas"); return; }
+    try {
+      await copyTextToClipboard(selectedSales.map((s) => s.sale_id).join(", "));
+      toast.success("IDs copiados");
+    } catch { toast.error("No se pudo copiar"); }
+  };
+
     const matchesSearch = (sale.invoice_number || "")?.toLowerCase().includes(search.toLowerCase()) ||
                          (sale.customer_name || "")?.toLowerCase().includes(search.toLowerCase());
     const matchesPayment = filterPayment === "all" || sale.payment_type === filterPayment;
@@ -2784,6 +2810,27 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
     <div className="p-0 space-y-4" data-testid="sales-page">
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="sales-list-density" />
+
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar venta..."
+        selectedCount={selection.count}
+        visibleCount={visibleSaleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleSaleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleSaleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleSaleIds)}
+        onDeselectAll={selection.clear}
+        testId="sales-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedSalesCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedSaleIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
       </div>
 
       {!canViewSales ? (

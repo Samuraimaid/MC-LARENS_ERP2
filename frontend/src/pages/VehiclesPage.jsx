@@ -13,8 +13,12 @@ import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import SearchableSelect from "@/components/ui/searchable-select";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
-import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2 } from "lucide-react";
+import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2, Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import {
   getVehicleSelectOptionsByBrandYear,
   getVehicleYearsByBrand,
@@ -33,6 +37,8 @@ import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function VehiclesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "vehicles", searchQuery: undefined });
 
   const [vehicles, setVehicles] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -150,6 +156,46 @@ export function VehiclesPage() {
     );
   });
 
+  const visibleVehicleIds = filteredVehicles.map((v) => v.vehicle_id);
+  const selectedVehicles = filteredVehicles.filter((v) => selection.isSelected(v.vehicle_id));
+
+  const exportSelectedVehiclesCsv = () => {
+    const rowsSrc = selectedVehicles.length ? selectedVehicles : filteredVehicles;
+    if (!rowsSrc.length) {
+      toast.error("No hay vehículos para exportar");
+      return;
+    }
+    downloadCsv(
+      `vehiculos_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["vehicle_id", "placa", "marca", "modelo", "año", "color", "vin", "cliente"],
+      rowsSrc.map((v) => [
+        v.vehicle_id,
+        v.plate,
+        v.brand,
+        v.model,
+        v.year,
+        v.color,
+        v.vin,
+        getCustomerName(v.customer_id),
+      ])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+
+  const copySelectedPlates = async () => {
+    const rowsSrc = selectedVehicles.length ? selectedVehicles : [];
+    if (!rowsSrc.length) {
+      toast.error("Selecciona al menos un vehículo");
+      return;
+    }
+    try {
+      await copyTextToClipboard(rowsSrc.map((v) => v.plate).filter(Boolean).join(", "));
+      toast.success("Placas copiadas");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
   const createSaleFromVehicle = (customer, vehicle) => {
     if (typeof window === 'undefined') return;
     try {
@@ -214,7 +260,11 @@ export function VehiclesPage() {
           <h1 className="font-heading text-3xl font-bold tracking-tight">Vehículos</h1>
           <p className="text-muted-foreground">Registro de vehículos para garantías</p>
         </div>
-        <Dialog open={showNewVehicle} onOpenChange={setShowNewVehicle}>
+        <Dialog open={showNewVehicle} onOpenChange={(open) => {
+          if (open) scrollRestore.save();
+          setShowNewVehicle(open);
+          if (!open) scrollRestore.restore();
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="new-vehicle-btn">
               <Plus className="h-4 w-4 mr-2" />
@@ -323,30 +373,55 @@ export function VehiclesPage() {
         </Dialog>
       </div>
 
-      {/* Search */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por placa, marca o VIN..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-vehicles"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(s => !s)}>
-            Filtros
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setShowFilters(false); }}>
-            Limpiar
-          </Button>
-        </div>
-        <Button variant="outline" onClick={fetchData}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por placa, marca o VIN..."
+        searchTestId="search-vehicles"
+        selectedCount={selection.count}
+        visibleCount={visibleVehicleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleVehicleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleVehicleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleVehicleIds)}
+        onDeselectAll={selection.clear}
+        testId="vehicles-selection-bar"
+        trailing={
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button variant="outline" size="sm" className="h-8" onClick={() => setShowFilters((s) => !s)}>
+              Filtros
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => { setSearch(""); setShowFilters(false); }}>
+              Limpiar
+            </Button>
+            <Button variant="outline" size="sm" className="h-8" onClick={fetchData} title="Actualizar">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-8"
+              disabled={selection.count === 0 && filteredVehicles.length === 0}
+              onClick={exportSelectedVehiclesCsv}
+              title={selection.count ? "Exportar seleccionados CSV" : "Exportar resultados filtrados CSV"}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              CSV
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8"
+              disabled={selection.count === 0}
+              onClick={copySelectedPlates}
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Copiar placas
+            </Button>
+          </div>
+        }
+      />
 
       {showFilters && (
         <div className="p-3 border rounded bg-muted space-y-2 max-w-md">
@@ -412,6 +487,9 @@ export function VehiclesPage() {
                 key={vehicle.vehicle_id}
                 density={listDensity}
                 testId={`vehicle-row-${vehicle.vehicle_id}`}
+                selectable
+                selected={selection.isSelected(vehicle.vehicle_id)}
+                onSelectChange={() => selection.toggle(vehicle.vehicle_id)}
                 mediaFallback={<CarFront className={`${densityTok.mediaIcon} ${isCompany ? 'text-sky-700' : 'text-emerald-700'} icon-spring`} />}
                 primary={
                   <span className="inline-flex items-center gap-2 min-w-0">

@@ -13,11 +13,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Copy } from "lucide-react";
 import { DriversManagementTab } from "../components/hr/DriversManagementTab";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const ROLE_LABELS = {
   gerencia: "Gerencia",
@@ -34,6 +39,8 @@ const ROLE_LABELS = {
 
 export function HumanResourcesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "hr" });
 
   const { user, hasPermission } = useAuth();
   const canView = hasPermission("human_resources", "view");
@@ -485,6 +492,22 @@ export function HumanResourcesPage() {
     <div className="p-6 space-y-6" data-testid="human-resources-page">
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="hr-list-density" />
+
+      <ListSelectionBar
+        hideSearch
+        selectedCount={selection.count}
+        visibleCount={0}
+        allVisibleSelected={false}
+        someVisibleSelected={false}
+        onSelectAll={() => {}}
+        onDeselectAll={selection.clear}
+        testId="hr-selection-bar"
+      >
+        <span className="text-xs text-muted-foreground">
+          Selección por tabla RH: exportar desde vistas específicas en follow-up
+        </span>
+      </ListSelectionBar>
+
       </div>
 
       <div className="flex items-center justify-between">

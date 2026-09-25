@@ -1,10 +1,12 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import { densityTokens, normalizeListDensity } from "@/components/lists/listDensity";
 
 /**
  * Fila de lista estilo Google: media izquierda + primary/secondary + trailing.
  * Liquid Glass compatible (borde suave / backdrop) sin “card chaos”.
+ * Opcional: checkbox multi-select a la izquierda del media.
  */
 export function DensityListItem({
   density = "comfortable",
@@ -22,30 +24,57 @@ export function DensityListItem({
   as: Comp = "div",
   testId,
   glass = true,
+  selectable = false,
+  selected = false,
+  onSelectChange,
+  selectStopPropagation = true,
 }) {
   const mode = normalizeListDensity(density);
   const t = densityTokens(mode);
   const isCozy = mode === "cozy";
   const hasBody = children != null && children !== false;
 
+  const handleSelectClick = (e) => {
+    if (selectStopPropagation) e.stopPropagation();
+  };
+
+  const checkbox = selectable ? (
+    <div
+      className={cn("shrink-0 flex items-center justify-center", isCozy ? "absolute left-2 top-2 z-10" : "pl-1")}
+      onClick={handleSelectClick}
+      onPointerDown={handleSelectClick}
+    >
+      <Checkbox
+        checked={!!selected}
+        onCheckedChange={(v) => onSelectChange?.(v === true)}
+        aria-label={selected ? "Deseleccionar fila" : "Seleccionar fila"}
+        className="h-4 w-4"
+        data-testid={testId ? `${testId}-select` : undefined}
+      />
+    </div>
+  ) : null;
+
   return (
     <Comp
       data-testid={testId}
       data-list-density={mode}
+      data-selected={selected ? "true" : "false"}
       onClick={disabled ? undefined : onClick}
       className={cn(
-        "group w-full text-left transition-colors",
+        "group w-full text-left transition-colors relative",
         hasBody || isCozy ? "flex h-full flex-col" : "flex items-center",
         glass
           ? "rounded-xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.04)] hover:border-primary/25 hover:bg-card/80"
           : "rounded-lg hover:bg-muted/50",
         active && "ring-2 ring-primary/40 border-primary/30",
+        selected && "ring-2 ring-primary/50 border-primary/40 bg-primary/5",
         disabled && "opacity-60 pointer-events-none",
         onClick && !disabled && "cursor-pointer ui-interactive",
         className
       )}
     >
       <div className={cn("flex w-full", isCozy ? "flex-1 flex-col items-stretch" : "items-center", !isCozy && t.row)}>
+        {!isCozy && checkbox}
         {(media || mediaFallback) && (
           <div
             className={cn(
@@ -55,9 +84,11 @@ export function DensityListItem({
                 : t.media
             )}
           >
+            {isCozy && checkbox}
             {media || mediaFallback}
           </div>
         )}
+        {isCozy && !(media || mediaFallback) && checkbox}
         <div className={cn("min-w-0 flex-1 flex flex-col gap-0.5", isCozy && "px-4 pt-4 pb-3")}>
           {primary ? <div className={cn("truncate", t.primary)}>{primary}</div> : null}
           {secondary ? <div className={cn("truncate", t.secondary)}>{secondary}</div> : null}

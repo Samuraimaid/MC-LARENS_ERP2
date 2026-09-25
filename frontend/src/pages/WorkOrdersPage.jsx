@@ -13,15 +13,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Wrench, Clock, Printer, RefreshCw } from "lucide-react";
+import { Plus, Search, Wrench, Clock, Printer, RefreshCw, Download, Copy } from "lucide-react";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const QC_APPROVER_ROLES = ["gerencia", "coordinador_instalaciones"];
 
 export function WorkOrdersPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "workorders" });
 
   const { user } = useAuth();
   const canApproveCompleted = QC_APPROVER_ROLES.includes(
@@ -171,6 +178,29 @@ export function WorkOrdersPage() {
 
   const filteredOrders = workOrders.filter(order => {
     const query = search.toLowerCase();
+
+  const visibleIds = filteredOrders.map((item) => item.work_order_id);
+  const selectedRows = filteredOrders.filter((item) => selection.isSelected(item.work_order_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredOrders;
+    if (!rowsSrc.length) { toast.error("No hay filas para exportar"); return; }
+    downloadCsv(
+      `ordenes_trabajo_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["work_order_id","cliente","vehiculo","prioridad","estado","tecnico"],
+      rowsSrc.map((o) => [o.work_order_id, o.customer_name, o.vehicle_plate || o.vehicle_id, o.priority, o.status, o.technician_name])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona al menos una fila"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((item) => item.work_order_id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
     return (
       (order.work_order_id || "").toLowerCase().includes(query) ||
       (order.customer_name || "").toLowerCase().includes(query) ||
@@ -337,17 +367,28 @@ export function WorkOrdersPage() {
 
       {/* Filters */}
       <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar orden..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-work-orders"
-          />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar orden..."
+        searchTestId="search-work-orders"
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="workorders-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
+      <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48" data-testid="filter-wo-status">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
@@ -371,6 +412,12 @@ export function WorkOrdersPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>Orden</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Vehículo</TableHead>
@@ -384,13 +431,13 @@ export function WorkOrdersPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredOrders.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No hay órdenes para mostrar
                   </TableCell>
                 </TableRow>
@@ -400,6 +447,9 @@ export function WorkOrdersPage() {
                   const priorityLabel = order.priority ? order.priority.toUpperCase() : "N/A";
                   return (
                     <TableRow className={densityTok.tableRow} key={workOrderId || order.customer_name || Math.random()} data-testid={`wo-row-${workOrderId || "unknown"}`}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(order.work_order_id)} onCheckedChange={() => selection.toggle(order.work_order_id)} />
+                      </TableCell>
                       <TableCell className="font-mono font-medium">
                         {workOrderId ? `#${workOrderId.slice(-6).toUpperCase()}` : "—"}
                       </TableCell>

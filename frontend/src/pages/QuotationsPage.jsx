@@ -12,7 +12,7 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock } from "lucide-react";
+import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock, Download, Copy } from "lucide-react";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
 import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/roleHome";
 import { useDraftReviewPolling } from "@/hooks/useDraftReviewPolling";
@@ -61,6 +61,11 @@ import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const DRAFT_SUPERVISOR_ROLES_SET = new Set([
   "gerencia",
@@ -332,6 +337,8 @@ const getPaymentTone = (paymentType) => {
 
 export function QuotationsPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "quotations" });
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -1657,6 +1664,27 @@ export function QuotationsPage() {
 
   const filteredQuotations = quotations.filter(q => {
     const query = search.toLowerCase();
+
+  const visibleIds = filteredQuotations.map((q) => q.quotation_id || q.id).filter(Boolean);
+  const selectedRows = filteredQuotations.filter((q) => selection.isSelected(q.quotation_id || q.id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredQuotations;
+    if (!rowsSrc.length) { toast.error("No hay cotizaciones"); return; }
+    downloadCsv(
+      `cotizaciones_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["quotation_id", "cliente", "estado", "total", "fecha"],
+      rowsSrc.map((q) => [q.quotation_id || q.id, q.customer_name, q.status, q.total, q.created_at || q.date])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona cotizaciones"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((q) => q.quotation_id || q.id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch { toast.error("No se pudo copiar"); }
+  };
+
     const validity = getValidityInfo(q);
     const validityMatch = filterValidity === "all"
       ? true
@@ -1907,17 +1935,27 @@ export function QuotationsPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar cotización..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-quotations"
-          />
-        </div>
-        <Button
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar cotización..."
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="quotations-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
+      <Button
           type="button"
           variant={showNewQuote ? "outline" : "default"}
           onClick={() => {

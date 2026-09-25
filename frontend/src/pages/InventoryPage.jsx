@@ -11,16 +11,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
-// Checkbox imported previously but not used; removed to reduce lint warnings
+import { Checkbox } from "../components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2, Star, Check, Loader2
+  Truck, Trash2, Star, Check, Loader2, Copy, Power
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
@@ -34,6 +38,8 @@ import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { densityTokens } from "@/components/lists/listDensity";
 
 export function InventoryPage() {
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "inventory" });
   const { hasPermission, user } = useAuth();
   const canViewInventory = hasPermission("inventory", "view");
   const canCreateInventory = hasPermission("inventory", "create");
@@ -1184,6 +1190,133 @@ export function InventoryPage() {
     return rows;
   }, [inventory, products, search, selectedCategory, selectedWarehouse, showLowStock]);
 
+  const visibleInventoryIds = useMemo(
+    () => filteredInventory.slice(0, inventoryVisibleLimit).map((item) => item.inventory_id),
+    [filteredInventory, inventoryVisibleLimit]
+  );
+  const selectedInventoryItems = useMemo(
+    () => filteredInventory.filter((item) => selection.isSelected(item.inventory_id)),
+    [filteredInventory, selection.selected]
+  );
+
+  const exportSelectedInventoryCsv = () => {
+    const rowsSrc = selectedInventoryItems.length ? selectedInventoryItems : filteredInventory.slice(0, inventoryVisibleLimit);
+    if (!rowsSrc.length) {
+      toast.error("No hay ítems para exportar");
+      return;
+    }
+    downloadCsv(
+      `inventario_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["inventory_id", "sku", "nombre", "categoria", "bodega", "disponible", "total", "precio", "activo"],
+      rowsSrc.map((item) => {
+        const product = item.product || products.find((p) => p.product_id === item.product_id) || {};
+        const warehouse = warehouses.find((w) => w.warehouse_id === item.warehouse_id);
+        return [
+          item.inventory_id,
+          product.sku,
+          product.name,
+          product.category,
+          warehouse?.name || item.warehouse_id,
+          item.quantity_available ?? item.quantity ?? 0,
+          item.quantity ?? 0,
+          product.price,
+          item.is_active === false ? "no" : "sí",
+        ];
+      })
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+
+  const copySelectedSkus = async () => {
+    if (!selectedInventoryItems.length) {
+      toast.error("Selecciona al menos un ítem");
+      return;
+    }
+    const skus = selectedInventoryItems.map((item) => {
+      const product = item.product || products.find((p) => p.product_id === item.product_id) || {};
+      return product.sku;
+    }).filter(Boolean);
+    if (!skus.length) {
+      toast.error("Sin SKUs en la selección");
+      return;
+    }
+    try {
+      await copyTextToClipboard(skus.join(", "));
+      toast.success("SKUs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
+  const bulkToggleActive = async (makeActive) => {
+    if (!canEditInventory) {
+      toast.error("No tienes permiso para cambiar estado");
+      return;
+    }
+    if (!selectedInventoryItems.length) {
+      toast.error("Selecciona al menos un ítem");
+      return;
+    }
+    const targets = selectedInventoryItems.filter((item) => (item.is_active !== false) !== makeActive);
+    if (!targets.length) {
+      toast.message(makeActive ? "Todos ya están activos" : "Todos ya están inactivos");
+      return;
+    }
+    if (!confirm(`${makeActive ? "Activar" : "Desactivar"} ${targets.length} producto(s) en su bodega?`)) return;
+    let ok = 0;
+    let fail = 0;
+    for (const item of targets) {
+      try {
+        await axios.post(`${API}/inventory/product-status`, {
+          warehouse_id: item.warehouse_id,
+          product_id: item.product_id,
+          is_active: makeActive,
+        }, { withCredentials: true });
+        ok += 1;
+      } catch {
+        fail += 1;
+      }
+    }
+    if (ok) toast.success(`${ok} actualizado(s)`);
+    if (fail) toast.error(`${fail} con error`);
+    selection.clear();
+    fetchData();
+  };
+
+  const bulkOpenWhatsAppFirst = () => {
+    if (!selectedInventoryItems.length) {
+      toast.error("Selecciona al menos un ítem");
+      return;
+    }
+    const item = selectedInventoryItems[0];
+    const product = item.product || products.find((p) => p.product_id === item.product_id) || {};
+    openProductWhatsApp(item, product);
+    if (selectedInventoryItems.length > 1) {
+      toast.message("WhatsApp abierto para el primero; el resto permanece seleccionado.");
+    }
+  };
+
+  const bulkPrintLabels = () => {
+    if (!selectedInventoryItems.length) {
+      toast.error("Selecciona al menos un ítem");
+      return;
+    }
+    if (!canViewInventoryLabels) {
+      toast.error("Sin permiso de etiquetas");
+      return;
+    }
+    const item = selectedInventoryItems[0];
+    const product = item.product || products.find((p) => p.product_id === item.product_id) || {};
+    openLabelPrintDialog(
+      product,
+      item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
+      1
+    );
+    if (selectedInventoryItems.length > 1) {
+      toast.message("Diálogo de etiqueta para el primero; imprime en serie o selecciona de a uno.");
+    }
+  };
+
   const getCategoryName = (key) => categories[key]?.name || formatCategoryLabel(key);
   const getSubcategories = (catKey) => categories[catKey]?.subcategories || [];
   const getReasonLabel = (reason) => {
@@ -1354,7 +1487,7 @@ export function InventoryPage() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setShowProductDetail(product)}
+        onClick={() => { scrollRestore.save(); setShowProductDetail(product); }}
         title="Ver detalles"
       >
         <Eye className="h-4 w-4" />
@@ -1362,7 +1495,7 @@ export function InventoryPage() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setEditingProduct(product)}
+        onClick={() => { scrollRestore.save(); setEditingProduct(product); }}
         disabled={!canEditInventory}
         title="Editar producto"
       >
@@ -2363,18 +2496,52 @@ export function InventoryPage() {
         </div>
       )}
 
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar producto..."
+        searchTestId="search-inventory"
+        selectedCount={selection.count}
+        visibleCount={visibleInventoryIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleInventoryIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleInventoryIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleInventoryIds)}
+        onDeselectAll={selection.clear}
+        testId="inventory-selection-bar"
+      >
+        <Button type="button" size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" disabled={selection.count === 0} onClick={bulkOpenWhatsAppFirst}>
+          <WhatsAppIcon className="h-4 w-4 mr-1" />
+          WhatsApp
+        </Button>
+        {canViewInventoryLabels && (
+          <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={bulkPrintLabels}>
+            <Barcode className="h-4 w-4 mr-1" />
+            Etiqueta
+          </Button>
+        )}
+        {canEditInventory && (
+          <>
+            <Button type="button" variant="secondary" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(false)}>
+              <Power className="h-4 w-4 mr-1" />
+              Desactivar
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(true)}>
+              Activar
+            </Button>
+          </>
+        )}
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedInventoryCsv}>
+          <Download className="h-4 w-4 mr-1" />
+          CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedSkus}>
+          <Copy className="h-4 w-4 mr-1" />
+          Copiar SKUs
+        </Button>
+      </ListSelectionBar>
+
       {/* Filters */}
       <div className="flex gap-4 flex-wrap items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar producto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-inventory"
-          />
-        </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-52" data-testid="filter-category">
             <SelectValue placeholder="Categoría" />
@@ -2455,6 +2622,14 @@ export function InventoryPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleInventoryIds) ? true : selection.someVisibleSelected(visibleInventoryIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleInventoryIds)}
+                    aria-label="Seleccionar todos"
+                    data-testid="inventory-table-select-all"
+                  />
+                </TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Producto</TableHead>
                 <TableHead>Categoría</TableHead>
@@ -2487,7 +2662,14 @@ export function InventoryPage() {
                   const thumb = product.image_url || product.image || product.images?.[0];
 
                   return (
-                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : ""}>
+                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : (selection.isSelected(item.inventory_id) ? "bg-primary/5" : "")}>
+                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selection.isSelected(item.inventory_id)}
+                          onCheckedChange={() => selection.toggle(item.inventory_id)}
+                          aria-label="Seleccionar fila"
+                        />
+                      </TableCell>
                       <TableCell className="font-mono">{product.sku || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -2610,10 +2792,22 @@ export function InventoryPage() {
                 <div
                   key={item.inventory_id}
                   data-testid={`inv-row-${item.inventory_id}`}
-                  className={`rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
+                  data-selected={selection.isSelected(item.inventory_id) ? "true" : "false"}
+                  className={`relative rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
                     !isActiveInWarehouse ? "opacity-60" : ""
-                  } ${isRoomy ? "flex h-full flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
+                  } ${selection.isSelected(item.inventory_id) ? "ring-2 ring-primary/50 border-primary/40" : ""} ${isRoomy ? "flex h-full flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
                 >
+                  <div
+                    className="absolute left-2 top-2 z-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={selection.isSelected(item.inventory_id)}
+                      onCheckedChange={() => selection.toggle(item.inventory_id)}
+                      aria-label="Seleccionar ítem"
+                      className="bg-card/90 border-border shadow"
+                    />
+                  </div>
                   <div
                     className={`relative shrink-0 bg-muted/30 ${
                       isRoomy
@@ -3291,7 +3485,12 @@ export function InventoryPage() {
       </Tabs>
 
       {/* Product Detail Dialog */}
-      <Dialog open={!!showProductDetail} onOpenChange={() => setShowProductDetail(null)}>
+      <Dialog open={!!showProductDetail} onOpenChange={(open) => {
+        if (!open) {
+          setShowProductDetail(null);
+          scrollRestore.restore();
+        }
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{showProductDetail?.name}</DialogTitle>
@@ -3566,7 +3765,12 @@ Notas: ${transferWaSummary.notes}` : ''}`}
       </Dialog>
 
       {/* Edit Product Dialog */}
-      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+      <Dialog open={!!editingProduct} onOpenChange={(open) => {
+        if (!open) {
+          setEditingProduct(null);
+          scrollRestore.restore();
+        }
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>

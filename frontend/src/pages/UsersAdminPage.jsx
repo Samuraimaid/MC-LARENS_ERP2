@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Checkbox } from "../components/ui/checkbox";
 import { toast } from "sonner";
-import { RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff, Shield, Copy, Check, Unlock } from "lucide-react";
+import { RefreshCw, Building2, Warehouse, KeyRound, Trash2, Eye, EyeOff, Shield, Copy, Check, Unlock, Download } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { formatPhone } from "@/lib/formatters";
 import { UserDirectoryPicker } from "@/components/users/UserDirectoryPicker";
@@ -26,6 +26,10 @@ import { SELLER_TYPES } from "@/lib/priceTiers";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -47,6 +51,8 @@ const getErrorMessage = (error, fallback = "Ocurrió un error inesperado") => {
 
 export function UsersAdminPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "users" });
 
   const { user, loading: authLoading, hasPermission, hasRole } = useAuth();
   const [users, setUsers] = useState([]);
@@ -778,10 +784,59 @@ export function UsersAdminPage() {
     return colors[role] || "bg-gray-500";
   };
 
+  const usersForSelection = Array.isArray(users) ? users : [];
+  const visibleIds = usersForSelection.map((u) => u.user_id || u.id).filter(Boolean);
+  const selectedRows = usersForSelection.filter((u) => selection.isSelected(u.user_id || u.id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : usersForSelection;
+    if (!rowsSrc.length) { toast.error("No hay usuarios"); return; }
+    downloadCsv(
+      `usuarios_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["user_id", "nombre", "apellidos", "email", "rol", "sucursal", "activo"],
+      rowsSrc.map((u) => [
+        u.user_id || u.id,
+        u.first_name || u.name,
+        u.last_name,
+        u.email,
+        u.role,
+        u.branch_id || u.branch_name,
+        u.is_active !== false ? "sí" : "no",
+      ])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona usuarios"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((u) => u.user_id || u.id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch { toast.error("No se pudo copiar"); }
+  };
+
+
   return (
     <div className="p-6 space-y-6" data-testid="users-admin-page">
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="users-list-density" />
+
+      <ListSelectionBar
+        hideSearch
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="users-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
       </div>
 
       {/* Header */}

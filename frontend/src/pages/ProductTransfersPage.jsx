@@ -10,17 +10,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowRightLeft, Download, RefreshCw, Truck, CheckCircle2, AlertCircle, Clock, ShieldCheck } from "lucide-react";
+import { ArrowRightLeft, Download, RefreshCw, Truck, CheckCircle2, AlertCircle, Clock, ShieldCheck, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const TRANSFER_IN_REASONS = new Set(["transfer_in", "transfer_request_in", "transfer_received"]);
 const TRANSFER_OUT_REASONS = new Set(["transfer_out", "transfer_request_out", "transfer_shipped"]);
 
 export function ProductTransfersPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "transfers" });
 
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -216,10 +223,58 @@ export function ProductTransfersPage() {
     }
   };
 
+  // Selección sobre solicitudes/historial visible en la primera tabla de listado si existe
+  const transferListForSelection = Array.isArray(transferRequests) ? transferRequests : [];
+  const visibleIds = transferListForSelection.map((t) => t.request_id || t.transfer_id || t.id).filter(Boolean);
+  const selectedRows = transferListForSelection.filter((t) => selection.isSelected(t.request_id || t.transfer_id || t.id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : transferListForSelection;
+    if (!rowsSrc.length) { toast.error("No hay traslados para exportar"); return; }
+    downloadCsv(
+      `traslados_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["id", "producto", "origen", "destino", "cantidad", "estado"],
+      rowsSrc.map((t) => [
+        t.request_id || t.transfer_id || t.id,
+        t.product_name || t.product?.name || t.product_id,
+        t.from_warehouse_name || t.from_warehouse || t.origin,
+        t.to_warehouse_name || t.to_warehouse || t.destination,
+        t.quantity,
+        t.status,
+      ])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona filas"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((t) => t.request_id || t.transfer_id || t.id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch { toast.error("No se pudo copiar"); }
+  };
+
+
   return (
     <div className="space-y-6" data-testid="product-transfers-page">
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="transfers-list-density" />
+
+      <ListSelectionBar
+        hideSearch
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="transfers-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
       </div>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

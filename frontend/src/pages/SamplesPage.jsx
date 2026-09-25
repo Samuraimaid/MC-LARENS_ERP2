@@ -5,12 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
+import { Checkbox } from "../components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
+import { Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const STATUS_LABELS = {
   requested: "Solicitada",
@@ -32,6 +38,8 @@ const STATUS_COLORS = {
 
 export function SamplesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  useListScrollRestore({ pageKey: "samples" });
 
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +84,57 @@ export function SamplesPage() {
     });
   }, [samples, search, statusFilter]);
 
+  const visibleIds = filtered.map((s) => s.sample_id);
+  const selectedRows = filtered.filter((s) => selection.isSelected(s.sample_id));
+
+  const exportCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filtered;
+    if (!rowsSrc.length) {
+      toast.error("No hay muestras para exportar");
+      return;
+    }
+    downloadCsv(
+      `muestras_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["sample_id", "cliente", "producto", "bodega", "estado"],
+      rowsSrc.map((s) => [s.sample_id, s.customer_name, s.product_name, s.warehouse_id, s.status])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+
+  const copyIds = async () => {
+    if (!selectedRows.length) {
+      toast.error("Selecciona al menos una muestra");
+      return;
+    }
+    try {
+      await copyTextToClipboard(selectedRows.map((s) => s.sample_id).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
+  const bulkRequestReturn = async () => {
+    const targets = selectedRows.filter((s) => s.status === "delivered");
+    if (!targets.length) {
+      toast.error("Ninguna seleccionada está en estado Entregada");
+      return;
+    }
+    if (!confirm(`Solicitar devolución de ${targets.length} muestra(s)?`)) return;
+    let ok = 0;
+    for (const s of targets) {
+      try {
+        await axios.post(`${API}/samples/${s.sample_id}/return`, {}, { withCredentials: true });
+        ok += 1;
+      } catch {
+        /* continue */
+      }
+    }
+    toast.success(`${ok} devolución(es) solicitada(s)`);
+    selection.clear();
+    fetchSamples();
+  };
+
   return (
     <div className="space-y-6" data-testid="samples-page">
       <div className="flex justify-end mb-2">
@@ -92,18 +151,37 @@ export function SamplesPage() {
         </Button>
       </div>
 
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por cliente, producto o ID..."
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="samples-selection-bar"
+      >
+        <Button type="button" size="sm" className="h-8" disabled={!selectedRows.some((s) => s.status === "delivered")} onClick={bulkRequestReturn}>
+          Devolver lote
+        </Button>
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportCsv}>
+          <Download className="h-4 w-4 mr-1" />
+          CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copyIds}>
+          <Copy className="h-4 w-4 mr-1" />
+          Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
       <Card>
         <CardHeader>
           <CardTitle>Listado de muestras</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4">
-            <Input
-              placeholder="Buscar por cliente, producto o ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
-            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Filtrar por estado" />
@@ -123,6 +201,13 @@ export function SamplesPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                    aria-label="Seleccionar todos"
+                  />
+                </TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Producto</TableHead>
@@ -134,19 +219,25 @@ export function SamplesPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Cargando...
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Sin registros
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map((sample) => (
-                  <TableRow className={densityTok.tableRow} key={sample.sample_id}>
+                  <TableRow className={densityTok.tableRow} key={sample.sample_id} data-selected={selection.isSelected(sample.sample_id) ? "true" : "false"}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selection.isSelected(sample.sample_id)}
+                        onCheckedChange={() => selection.toggle(sample.sample_id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{sample.sample_id}</TableCell>
                     <TableCell>{sample.customer_name || "N/A"}</TableCell>
                     <TableCell>{sample.product_name || "N/A"}</TableCell>

@@ -15,14 +15,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { toast } from "sonner";
 import { 
   Truck, Search, RefreshCw, MapPin, Phone, User,
-  Clock, CheckCircle2, XCircle, AlertCircle, Play, Navigation, Activity
-} from "lucide-react";
+  Clock, CheckCircle2, XCircle, AlertCircle, Play, Navigation, Activity, Download, Copy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveFleetTrackingRadar } from "@/components/delivery/LiveFleetTrackingRadar";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 const DELIVERY_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -34,6 +38,9 @@ const DELIVERY_STATUSES = {
 
 export function DeliveriesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "deliveries" });
+
 
   const [deliveries, setDeliveries] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -156,6 +163,25 @@ export function DeliveriesPage() {
 
   const stats = getStats();
 
+  const visibleIds = filteredDeliveries.map((item) => item.sale_id);
+  const selectedRows = filteredDeliveries.filter((item) => selection.isSelected(item.sale_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredDeliveries;
+    if (!rowsSrc.length) { toast.error("No hay entregas"); return; }
+    downloadCsv(
+      `entregas_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["sale_id", "factura", "cliente", "direccion", "estado", "total"],
+      rowsSrc.map((d) => [d.sale_id, d.invoice_number, d.customer_name, d.delivery_address, d.delivery_status, d.total])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona entregas"); return; }
+    try { await copyTextToClipboard(selectedRows.map((d) => d.sale_id).join(", ")); toast.success("IDs copiados"); }
+    catch { toast.error("No se pudo copiar"); }
+  };
+
+
   return (
     <div className="p-6 space-y-6" data-testid="deliveries-page">
       <div className="flex justify-end mb-2">
@@ -239,18 +265,29 @@ export function DeliveriesPage() {
         </Card>
       </div>
 
+      <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por cliente, factura o dirección..."
+        searchTestId="search-deliveries"
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="deliveries-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por cliente, factura o dirección..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-deliveries"
-          />
-        </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48" data-testid="filter-status">
             <SelectValue placeholder="Estado" />
@@ -270,6 +307,12 @@ export function DeliveriesPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Dirección</TableHead>
@@ -282,13 +325,13 @@ export function DeliveriesPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredDeliveries.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay entregas para mostrar
                   </TableCell>
                 </TableRow>
@@ -299,6 +342,9 @@ export function DeliveriesPage() {
                   
                   return (
                     <TableRow className={densityTok.tableRow} key={delivery.sale_id} data-testid={`delivery-row-${delivery.sale_id}`}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(delivery.sale_id)} onCheckedChange={() => selection.toggle(delivery.sale_id)} />
+                      </TableCell>
                       <TableCell className="font-mono">{delivery.invoice_number}</TableCell>
                       <TableCell>
                         <div>

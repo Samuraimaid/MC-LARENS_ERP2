@@ -15,15 +15,21 @@ import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { 
   Search, RefreshCw, DollarSign, AlertTriangle,
-  CheckCircle2, FileText, Receipt
-} from "lucide-react";
+  CheckCircle2, FileText, Receipt, Download, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import { useListSelection } from "@/hooks/useListSelection";
+import { useListScrollRestore } from "@/hooks/useListScrollRestore";
+import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 
 export function CreditsPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const selection = useListSelection();
+  const scrollRestore = useListScrollRestore({ pageKey: "credits" });
 
   const [credits, setCredits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +98,29 @@ export function CreditsPage() {
 
   const filteredCredits = credits.filter(c => {
     const searchLower = search.toLowerCase();
+
+  const visibleIds = filteredCredits.map((item) => item.sale_id);
+  const selectedRows = filteredCredits.filter((item) => selection.isSelected(item.sale_id));
+  const exportSelectedCsv = () => {
+    const rowsSrc = selectedRows.length ? selectedRows : filteredCredits;
+    if (!rowsSrc.length) { toast.error("No hay filas para exportar"); return; }
+    downloadCsv(
+      `creditos_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["sale_id","factura","cliente","total","pagado","pendiente","vencimiento"],
+      rowsSrc.map((c) => [c.sale_id, c.invoice_number, c.customer_name, c.total, c.amount_paid, c.amount_pending, c.due_date])
+    );
+    toast.success(`CSV exportado (${rowsSrc.length})`);
+  };
+  const copySelectedIds = async () => {
+    if (!selectedRows.length) { toast.error("Selecciona al menos una fila"); return; }
+    try {
+      await copyTextToClipboard(selectedRows.map((item) => item.sale_id).filter(Boolean).join(", "));
+      toast.success("IDs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
     return (
       c.customer_name?.toLowerCase().includes(searchLower) ||
       c.invoice_number?.toLowerCase().includes(searchLower)
@@ -206,16 +235,27 @@ export function CreditsPage() {
 
       {/* Search */}
       <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por cliente o factura..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="search-credits"
-          />
-        </div>
+        <ListSelectionBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por cliente o factura..."
+        searchTestId="search-credits"
+        selectedCount={selection.count}
+        visibleCount={visibleIds.length}
+        allVisibleSelected={selection.allVisibleSelected(visibleIds)}
+        someVisibleSelected={selection.someVisibleSelected(visibleIds)}
+        onSelectAll={() => selection.toggleAllVisible(visibleIds)}
+        onDeselectAll={selection.clear}
+        testId="credits-selection-bar"
+      >
+        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedCsv}>
+          <Download className="h-4 w-4 mr-1" /> CSV
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedIds}>
+          <Copy className="h-4 w-4 mr-1" /> Copiar IDs
+        </Button>
+      </ListSelectionBar>
+
       </div>
 
       {/* Credits Table */}
@@ -224,6 +264,12 @@ export function CreditsPage() {
           <Table>
             <TableHeader>
               <TableRow className={densityTok.tableRow}>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={selection.allVisibleSelected(visibleIds) ? true : selection.someVisibleSelected(visibleIds) ? "indeterminate" : false}
+                    onCheckedChange={() => selection.toggleAllVisible(visibleIds)}
+                  />
+                </TableHead>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Total</TableHead>
@@ -237,13 +283,13 @@ export function CreditsPage() {
             <TableBody>
               {loading ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredCredits.length === 0 ? (
                 <TableRow className={densityTok.tableRow}>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No hay créditos pendientes
                   </TableCell>
                 </TableRow>
@@ -259,6 +305,9 @@ export function CreditsPage() {
                       className={overdue ? "bg-red-500/5" : ""}
                       data-testid={`credit-row-${credit.sale_id}`}
                     >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selection.isSelected(credit.sale_id)} onCheckedChange={() => selection.toggle(credit.sale_id)} />
+                      </TableCell>
                       <TableCell className="font-mono">{credit.invoice_number}</TableCell>
                       <TableCell>
                         <div>
