@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Camera, CheckCircle2, Clock, MapPin, Package, RefreshCw, Truck } from "lucide-react";
+import { Camera, CheckCircle2, Clock, Flag, MapPin, Package, RefreshCw, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import { SwipeableRow } from "@/components/lists/SwipeableRow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +20,52 @@ import {
   isSecureCameraContext,
 } from "@/lib/cameraAccess";
 
-function JobCard({ job, driverType, onAction, busy, requiresProof }) {
+function resolveDriverSafeAction(job, isTransfer, status, requiresProof, onAction, busy) {
+  if (busy) return null;
+  if (isTransfer) {
+    if (status === "approved") {
+      return { label: "Salida", onAction: () => onAction(job, "salida_origen") };
+    }
+    if (status === "shipped") {
+      return { label: "Recibir", onAction: () => onAction(job, "recibido") };
+    }
+    return null;
+  }
+  if (status === "entregado" || status === "delivered") return null;
+  return {
+    label: requiresProof ? "Liquidar" : "Entregar",
+    onAction: () => onAction(job, requiresProof ? "proof" : "entregado"),
+  };
+}
+
+function JobCard({ job, driverType, onAction, busy, requiresProof, onFlag, onUnflag, flagged, peekHint = false }) {
   const isTransfer = job.job_type === "transfer_request" || driverType === "inter_branch_haul";
   const status = String(job.status || "").toLowerCase();
+  const safeAction = resolveDriverSafeAction(job, isTransfer, status, requiresProof, onAction, busy);
+  const destroyAction =
+    status === "entregado" || status === "delivered"
+      ? null
+      : {
+          label: "Marcar",
+          icon: Flag,
+          onAction: () => onFlag?.(job),
+          undo: {
+            message: "Tarea marcada",
+            description: "Deshacer para quitar la marca",
+            durationMs: 5000,
+            onUndo: async () => onUnflag?.(job),
+          },
+        };
 
   return (
-    <Card className="border-slate-200 shadow-sm">
+    <SwipeableRow
+      testId={`driver-swipe-${job.job_id}`}
+      peekHint={peekHint}
+      safeAction={safeAction}
+      destroyAction={destroyAction}
+      disabled={!!busy}
+    >
+    <Card className={cn("border-slate-200 shadow-sm bg-card", flagged && "ring-2 ring-amber-400/70")}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           {isTransfer ? <Package className="h-4 w-4 text-amber-600" /> : <Truck className="h-4 w-4 text-sky-600" />}
@@ -70,6 +111,7 @@ function JobCard({ job, driverType, onAction, busy, requiresProof }) {
         </div>
       </CardContent>
     </Card>
+    </SwipeableRow>
   );
 }
 
@@ -116,6 +158,7 @@ export function DriverPortalPage() {
   const [deepLinkJob, setDeepLinkJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busyJobId, setBusyJobId] = useState("");
+  const [flaggedJobIds, setFlaggedJobIds] = useState(() => new Set());
   const [notes, setNotes] = useState("");
   const [proofJob, setProofJob] = useState(null);
   const [proofFile, setProofFile] = useState(null);
@@ -425,7 +468,17 @@ export function DriverPortalPage() {
         {sections.focus ? (
           <section>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Tarea del enlace</p>
-            <JobCard job={sections.focus} driverType={driverType} onAction={handleAction} busy={busyJobId === sections.focus.job_id} requiresProof={requiresProof} />
+            <JobCard
+              job={sections.focus}
+              driverType={driverType}
+              onAction={handleAction}
+              busy={busyJobId === sections.focus.job_id}
+              requiresProof={requiresProof}
+              flagged={flaggedJobIds.has(sections.focus.job_id)}
+              onFlag={(j) => setFlaggedJobIds((prev) => new Set(prev).add(j.job_id))}
+              onUnflag={(j) => setFlaggedJobIds((prev) => { const n = new Set(prev); n.delete(j.job_id); return n; })}
+              peekHint
+            />
           </section>
         ) : null}
 
@@ -434,8 +487,19 @@ export function DriverPortalPage() {
             <Clock className="h-3.5 w-3.5" /> Pendientes ({sections.pending.length})
           </p>
           <div className="space-y-3">
-            {sections.pending.map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} requiresProof={requiresProof} />
+            {sections.pending.map((job, idx) => (
+              <JobCard
+                key={job.job_id}
+                job={job}
+                driverType={driverType}
+                onAction={handleAction}
+                busy={busyJobId === job.job_id}
+                requiresProof={requiresProof}
+                flagged={flaggedJobIds.has(job.job_id)}
+                onFlag={(j) => setFlaggedJobIds((prev) => new Set(prev).add(j.job_id))}
+                onUnflag={(j) => setFlaggedJobIds((prev) => { const n = new Set(prev); n.delete(j.job_id); return n; })}
+                peekHint={!sections.focus && idx === 0}
+              />
             ))}
             {!loading && sections.pending.length === 0 ? <p className="text-sm text-white/50">Sin pendientes</p> : null}
           </div>
@@ -445,7 +509,17 @@ export function DriverPortalPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">En curso ({sections.active.length})</p>
           <div className="space-y-3">
             {sections.active.map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={busyJobId === job.job_id} requiresProof={requiresProof} />
+              <JobCard
+                key={job.job_id}
+                job={job}
+                driverType={driverType}
+                onAction={handleAction}
+                busy={busyJobId === job.job_id}
+                requiresProof={requiresProof}
+                flagged={flaggedJobIds.has(job.job_id)}
+                onFlag={(j) => setFlaggedJobIds((prev) => new Set(prev).add(j.job_id))}
+                onUnflag={(j) => setFlaggedJobIds((prev) => { const n = new Set(prev); n.delete(j.job_id); return n; })}
+              />
             ))}
           </div>
         </section>
@@ -454,7 +528,15 @@ export function DriverPortalPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">Completados</p>
           <div className="space-y-3">
             {sections.completed.slice(0, 10).map((job) => (
-              <JobCard key={job.job_id} job={job} driverType={driverType} onAction={handleAction} busy={false} requiresProof={requiresProof} />
+              <JobCard
+                key={job.job_id}
+                job={job}
+                driverType={driverType}
+                onAction={handleAction}
+                busy={false}
+                requiresProof={requiresProof}
+                flagged={flaggedJobIds.has(job.job_id)}
+              />
             ))}
           </div>
         </section>

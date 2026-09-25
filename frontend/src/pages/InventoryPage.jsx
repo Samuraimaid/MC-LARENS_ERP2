@@ -38,6 +38,8 @@ import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import { SwipeableRow } from "@/components/lists/SwipeableRow";
+import { useDevice } from "@/hooks/useDevice";
 import { FileUploadQueue } from "@/components/uploads";
 import { densityTokens } from "@/components/lists/listDensity";
 
@@ -100,6 +102,9 @@ export function InventoryPage() {
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok, isCompact } = useListDensity();
+  const { isPhone, isTouchDevice, isDesktop } = useDevice();
+  /** U7: swipe only on narrow/touch — desktop keeps click/selection (#81/#83). */
+  const inventorySwipeEnabled = canEditInventory && (isPhone || (isTouchDevice && !isDesktop));
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -298,6 +303,42 @@ export function InventoryPage() {
       toast.error(err.response?.data?.detail || "Error al desactivar el producto");
     } finally {
       setDeactivateBusy(false);
+    }
+  };
+
+  /** U7 full-swipe destroy: no confirm modal — soft deactivate + ~5s undo toast. */
+  const swipeDeactivateProduct = async (item) => {
+    if (!canEditInventory || !item) return;
+    try {
+      await applySingleProductStatus(item, false);
+      await fetchData();
+      showUndoToast({
+        message: "Desactivado 1 producto",
+        description: "Puedes deshacer durante unos segundos",
+        durationMs: 5000,
+        onUndo: async () => {
+          try {
+            await applySingleProductStatus(item, true);
+            await fetchData();
+            toast.success("Producto reactivado");
+          } catch {
+            toast.error("No se pudo deshacer");
+          }
+        },
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
+    }
+  };
+
+  const swipeActivateProduct = async (item) => {
+    if (!canEditInventory || !item) return;
+    try {
+      await applySingleProductStatus(item, true);
+      await fetchData();
+      toast.success("Producto activado en bodega");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al activar el producto");
     }
   };
 
@@ -2893,7 +2934,7 @@ export function InventoryPage() {
             data-list-density={listDensity}
             data-testid={`inventory-view-${listDensity}`}
           >
-            {filteredInventory.slice(0, inventoryVisibleLimit).map((item) => {
+            {filteredInventory.slice(0, inventoryVisibleLimit).map((item, invIdx) => {
               const product = item.product || {};
               const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
               const qtyDamaged = item.quantity_damaged ?? 0;
@@ -2912,8 +2953,30 @@ export function InventoryPage() {
               const isRoomy = listDensity === "cozy";
 
               return (
-                <div
+                <SwipeableRow
                   key={item.inventory_id}
+                  testId={`inv-swipe-${item.inventory_id}`}
+                  enabled={inventorySwipeEnabled ? "touch" : false}
+                  peekHint={inventorySwipeEnabled && invIdx === 0}
+                  safeAction={
+                    !isActiveInWarehouse
+                      ? {
+                          label: "Activar",
+                          onAction: () => swipeActivateProduct(item),
+                        }
+                      : null
+                  }
+                  destroyAction={
+                    isActiveInWarehouse
+                      ? {
+                          label: "Desactivar",
+                          onAction: () => swipeDeactivateProduct(item),
+                          undo: null, // undo handled inside swipeDeactivateProduct
+                        }
+                      : null
+                  }
+                >
+                <div
                   data-testid={`inv-row-${item.inventory_id}`}
                   data-selected={selection.isSelected(item.inventory_id) ? "true" : "false"}
                   className={`relative rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
@@ -3021,6 +3084,7 @@ export function InventoryPage() {
                     </div>
                   </div>
                 </div>
+                </SwipeableRow>
               );
             })}
           </div>

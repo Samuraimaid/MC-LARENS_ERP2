@@ -44,9 +44,11 @@ import {
   Volume2,
   Scissors,
   Zap,
+  Flag,
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import { SwipeableRow } from "@/components/lists/SwipeableRow";
 
 export function TechnicianMobilePage() {
   const { user, logout } = useAuth();
@@ -56,6 +58,9 @@ export function TechnicianMobilePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  /** U7: local omit/flag for reversible swipe-left (no modal). */
+  const [omittedOrderIds, setOmittedOrderIds] = useState(() => new Set());
+  const [flaggedOrderIds, setFlaggedOrderIds] = useState(() => new Set());
   const prevOrdersCountRef = useRef(null);
 
   const handleTestSound = () => {
@@ -206,7 +211,10 @@ export function TechnicianMobilePage() {
       o.status !== "delivered"
   );
   const availableOrders = orders.filter(
-    (o) => !o.technician_id && o.status === "pending"
+    (o) =>
+      !o.technician_id &&
+      o.status === "pending" &&
+      !omittedOrderIds.has(o.work_order_id)
   );
   const completedToday = orders.filter(
     (o) =>
@@ -368,10 +376,48 @@ export function TechnicianMobilePage() {
             Mis Órdenes Activas
           </h2>
           <div className="space-y-3">
-            {myActiveOrders.map((order) => (
-              <Card
+            {myActiveOrders.map((order, idx) => (
+              <SwipeableRow
                 key={order.work_order_id}
-                className="overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+                testId={`tech-swipe-active-${order.work_order_id}`}
+                peekHint={idx === 0}
+                safeAction={
+                  order.status === "pending"
+                    ? {
+                        label: "Iniciar",
+                        onAction: () => startOrder(order.work_order_id),
+                      }
+                    : order.status === "in_progress"
+                      ? {
+                          label: "Completar",
+                          onAction: () => sendToQualityCheck(order.work_order_id),
+                        }
+                      : null
+                }
+                destroyAction={{
+                  label: "Marcar",
+                  icon: Flag,
+                  onAction: () => {
+                    setFlaggedOrderIds((prev) => new Set(prev).add(order.work_order_id));
+                  },
+                  undo: {
+                    message: "Orden marcada",
+                    description: "Deshacer para quitar la marca",
+                    durationMs: 5000,
+                    onUndo: async () => {
+                      setFlaggedOrderIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(order.work_order_id);
+                        return next;
+                      });
+                    },
+                  },
+                }}
+              >
+              <Card
+                className={`overflow-hidden cursor-pointer active:scale-[0.98] transition-transform bg-card ${
+                  flaggedOrderIds.has(order.work_order_id) ? "ring-2 ring-amber-400/60" : ""
+                }`}
                 onClick={() => setSelectedOrder(order)}
                 data-testid={`order-${order.work_order_id}`}
               >
@@ -420,6 +466,7 @@ export function TechnicianMobilePage() {
                   </div>
                 </CardContent>
               </Card>
+              </SwipeableRow>
             ))}
           </div>
         </section>
@@ -432,8 +479,36 @@ export function TechnicianMobilePage() {
             Órdenes Disponibles
           </h2>
           <div className="space-y-3">
-            {availableOrders.map((order) => (
-              <Card key={order.work_order_id} className="overflow-hidden">
+            {availableOrders.map((order, idx) => (
+              <SwipeableRow
+                key={order.work_order_id}
+                testId={`tech-swipe-avail-${order.work_order_id}`}
+                peekHint={myActiveOrders.length === 0 && idx === 0}
+                safeAction={{
+                  label: "Tomar",
+                  onAction: () => claimOrder(order.work_order_id),
+                }}
+                destroyAction={{
+                  label: "Omitir",
+                  icon: Flag,
+                  onAction: () => {
+                    setOmittedOrderIds((prev) => new Set(prev).add(order.work_order_id));
+                  },
+                  undo: {
+                    message: "Orden omitida",
+                    description: "Deshacer para mostrarla de nuevo",
+                    durationMs: 5000,
+                    onUndo: async () => {
+                      setOmittedOrderIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(order.work_order_id);
+                        return next;
+                      });
+                    },
+                  },
+                }}
+              >
+              <Card className="overflow-hidden bg-card">
                 <div className="h-1 bg-blue-500" />
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
@@ -465,6 +540,7 @@ export function TechnicianMobilePage() {
                   </Button>
                 </CardContent>
               </Card>
+              </SwipeableRow>
             ))}
           </div>
         </section>

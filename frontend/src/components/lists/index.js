@@ -34,3 +34,5 @@ export { downloadCsv, copyTextToClipboard, openWhatsAppLinks } from "./listBulkU
 export { PullToRefresh, dampenPull } from "./PullToRefresh";
 
 export { showUndoToast } from "./undoToast";
+
+export { SwipeableRow, dampenSwipe, PEEK_STORAGE_KEY, SWIPE_UNDO_MS } from "./SwipeableRow";
