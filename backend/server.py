@@ -154,17 +154,49 @@ def get_build_health_metadata() -> Dict[str, Any]:
 
 
 # Basic API root & health checks
+# Keep / and /api/health (build metadata). Keep bare /health for Cloud Run / vite probes.
+# Pack 5: GET /api/ping and GET /ping retired → 410 Gone (use /api/health or /health).
 @api_router.get("/")
 @api_router.get("/health")
-@api_router.get("/ping")
 async def api_root():
     return JSONResponse(get_build_health_metadata())
 
 
+@api_router.get("/ping")
+async def api_ping_gone():
+    """Pack 5: ping alias retired. Use GET /api/health."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). GET /api/ping ya no está "
+                "disponible. Use GET /api/health."
+            ),
+            "canonical_path": "/api/health",
+        },
+    )
+
+
 @app.get("/health")
-@app.get("/ping")
 async def app_health_root():
     return JSONResponse(get_build_health_metadata())
+
+
+@app.get("/ping")
+async def app_ping_gone():
+    """Pack 5: bare /ping alias retired. Use GET /health."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). GET /ping ya no está "
+                "disponible. Use GET /health."
+            ),
+            "canonical_path": "/health",
+        },
+    )
 
 
 # Drafts backup endpoints - scoped by authenticated user.
@@ -14581,34 +14613,19 @@ async def create_checkout(checkout_req: CheckoutRequest, request: Request):
 
 @api_router.get("/payments/status/{session_id}")
 async def get_payment_status(session_id: str, request: Request):
-    await require_auth(request)
-    stripe_checkout = _create_stripe_checkout("")
-    status = await stripe_checkout.get_checkout_status(session_id)
-
-    # Update transaction and sale if paid
-    if status.payment_status == "paid":
-        txn = await db.payment_transactions.find_one({"stripe_session_id": session_id})
-        if txn and txn["status"] != "paid":
-            await db.payment_transactions.update_one(
-                {"stripe_session_id": session_id}, {"$set": {"status": "paid"}}
-            )
-            sale = await db.sales.find_one(
-                {"stripe_session_id": session_id},
-                {"_id": 0, "sale_id": 1, "payment_status": 1},
-            )
-            if sale and sale.get("sale_id") and str(sale.get("payment_status") or "").lower() != "paid":
-                await db.sales.update_one(
-                    {"sale_id": sale.get("sale_id")},
-                    {"$set": {"payment_status": "paid", "invoice_state": "closed"}},
-                )
-                await trigger_sale_fulfillment_after_payment(str(sale.get("sale_id")))
-
-    return {
-        "status": status.status,
-        "payment_status": status.payment_status,
-        "amount_total": status.amount_total,
-        "currency": status.currency,
-    }
+    """Pack 5: Stripe session polling HTTP retired. Fulfillment remains via webhook."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El polling HTTP de estado de "
+                "pago Stripe ya no está disponible. El fulfillment sigue vía webhook "
+                "POST /api/webhook/stripe."
+            ),
+            "canonical_path": "/api/webhook/stripe",
+        },
+    )
 
 
 @api_router.post("/webhook/stripe")
@@ -19549,133 +19566,34 @@ async def send_invoice_email(
 
 @api_router.get("/alerts/low-stock")
 async def get_low_stock_alerts(request: Request):
-    """Get all products with low stock"""
-    await require_roles(request, ["gerencia", "supervisor", "bodegas"])
-
-    # Find inventory items where quantity <= min_stock
-    pipeline = [
-        {"$match": {"$expr": {"$lte": ["$quantity", "$min_stock"]}}},
-        {
-            "$lookup": {
-                "from": "products",
-                "localField": "product_id",
-                "foreignField": "product_id",
-                "as": "product",
-            }
+    """Pack 5: low-stock alert HTTP retired. Use inventory UI / reports."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las alertas de stock bajo por "
+                "HTTP ya no están disponibles. Use la UI de inventario / reportes."
+            ),
+            "canonical_path": "n/a — inventory UI / reports",
         },
-        {"$unwind": {"path": "$product", "preserveNullAndEmptyArrays": True}},
-        {
-            "$lookup": {
-                "from": "warehouses",
-                "localField": "warehouse_id",
-                "foreignField": "warehouse_id",
-                "as": "warehouse",
-            }
-        },
-        {"$unwind": {"path": "$warehouse", "preserveNullAndEmptyArrays": True}},
-        {"$project": {"_id": 0, "product._id": 0, "warehouse._id": 0}},
-    ]
-
-    alerts = await db.inventory.aggregate(pipeline).to_list(500)
-    return alerts
+    )
 
 
 @api_router.post("/alerts/send-low-stock")
 async def send_low_stock_alerts(request: Request, background_tasks: BackgroundTasks):
-    """Send email alerts for all low stock items to supervisors"""
-    await require_roles(request, ["gerencia"])
-
-    # Get low stock items
-    low_stock = await db.inventory.find(
-        {"$expr": {"$lte": ["$quantity", "$min_stock"]}}, {"_id": 0}
-    ).to_list(500)
-
-    if not low_stock:
-        return {"message": "No low stock items"}
-
-    # Get product and warehouse details
-    alerts = []
-    for item in low_stock:
-        product = await db.products.find_one(
-            {"product_id": item["product_id"]}, {"_id": 0}
-        )
-        warehouse = await db.warehouses.find_one(
-            {"warehouse_id": item["warehouse_id"]}, {"_id": 0}
-        )
-        if product:
-            alerts.append(
-                {
-                    "product_name": product["name"],
-                    "sku": product["sku"],
-                    "warehouse": (
-                        warehouse["name"] if warehouse else item["warehouse_id"]
-                    ),
-                    "current_stock": item["quantity"],
-                    "min_stock": item["min_stock"],
-                }
-            )
-
-    # Generate HTML email
-    # Build rows in a loop to avoid very long single-line comprehensions
-    rows = []
-    for a in alerts:
-        rows.append(
-            (
-                "<tr>"
-                "<td>{sku}</td>"
-                "<td>{name}</td>"
-                "<td>{warehouse}</td>"
-                "<td style='color:red;font-weight:bold;'>{current}</td>"
-                "<td>{min_stock}</td>"
-                "</tr>"
-            ).format(
-                sku=a.get("sku"),
-                name=a.get("product_name"),
-                warehouse=a.get("warehouse"),
-                current=a.get("current_stock"),
-                min_stock=a.get("min_stock"),
-            )
-        )
-
-    items_html = "".join(rows)
-
-    html_content = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif;">
-        <h2>⚠️ Alerta de Stock Bajo</h2>
-        <p>Los siguientes productos tienen stock por debajo del mínimo:</p>
-        <table style="border-collapse: collapse; width: 100%;">
-            <tr style="background-color: #f2f2f2;">
-                <th style="padding: 8px; border: 1px solid #ddd;">SKU</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Producto</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Bodega</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Stock Actual</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Stock Mínimo</th>
-            </tr>
-            {items_html}
-        </table>
-        <p><em>Este es un mensaje automático del sistema MUNDO DE ACCESORIOS</em></p>
-    </body>
-    </html>
-    """
-
-    # Get admin/supervisor emails
-    admins = await db.users.find(
-        {"role": {"$in": ["gerencia", "supervisor"]}, "is_active": True}, {"_id": 0}
-    ).to_list(100)
-
-    for admin in admins:
-        if admin.get("email"):
-            background_tasks.add_task(
-                send_email_notification,
-                admin["email"],
-                f"⚠️ Alerta: {len(alerts)} productos con stock bajo - MUNDO DE ACCESORIOS",
-                html_content,
-            )
-
-    return {
-        "message": f"Alerts sent to {len(admins)} supervisors for {len(alerts)} products"
-    }
+    """Pack 5: send low-stock alert HTTP retired. Use inventory UI / reports."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El envío de alertas de stock "
+                "bajo por HTTP ya no está disponible. Use la UI de inventario / reportes."
+            ),
+            "canonical_path": "n/a — inventory UI / reports",
+        },
+    )
 
 
 # ============ RETURNS/DEVOLUCIONES ============
@@ -20743,117 +20661,19 @@ async def create_notification(
 
 @api_router.get("/dashboard/role-stats")
 async def get_role_dashboard(request: Request):
-    """Get dashboard stats specific to user's role"""
-    user = await require_auth(request)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-    stats: dict[str, Any] = {"role": user.role}
-
-    if user.role in ["gerencia", "supervisor"]:
-        # Gerencia: all branches | Supervisor: own branch only
-        sales_scope_query = build_sales_visibility_query(user)
-        sales_today = await db.sales.find(
-            merge_queries(sales_scope_query, {"created_at": {"$regex": f"^{today}"}}),
-            {"_id": 0},
-        ).to_list(1000)
-        stats["sales_today"] = {
-            "count": len(sales_today),
-            "total": round(sum(s["total"] for s in sales_today), 2),
-        }
-        stats["pending_work_orders"] = await db.work_orders.count_documents(
-            {"status": {"$in": ["pending", "in_progress"]}}
-        )
-        stats["low_stock_items"] = await db.inventory.count_documents(
-            {"$expr": {"$lte": ["$quantity", "$min_stock"]}}
-        )
-        stats["pending_deliveries"] = await db.sales.count_documents(
-            merge_queries(sales_scope_query, {"delivery_status": "pending"})
-        )
-        stats["pending_credits"] = await db.sales.count_documents(
-            merge_queries(
-                sales_scope_query,
-                {"payment_type": "credit", "payment_status": {"$ne": "paid"}},
-            )
-        )
-        stats["pending_returns"] = await db.returns.count_documents(
-            {"status": "pending"}
-        )
-        stats["warranty_claims"] = await db.warranty_claims.count_documents(
-            {"status": "pending"}
-        )
-
-    elif user.role in {"ventas", "cajero"}:
-        # Salesperson stats
-        my_sales = await db.sales.find(
-            {"salesperson_id": user.user_id, "created_at": {"$regex": f"^{today}"}},
-            {"_id": 0},
-        ).to_list(100)
-        stats["my_sales_today"] = {
-            "count": len(my_sales),
-            "total": round(sum(s["total"] for s in my_sales), 2),
-        }
-        stats["my_pending_quotations"] = await db.quotations.count_documents(
-            {"salesperson_id": user.user_id, "status": "pending"}
-        )
-
-    elif user.role == "instalaciones":
-        # Technician stats
-        stats["my_assigned_orders"] = await db.work_orders.count_documents(
-            {
-                "technician_id": user.user_id,
-                "status": {"$in": ["pending", "in_progress"]},
-            }
-        )
-        stats["available_orders"] = await db.work_orders.count_documents(
-            {"technician_id": None, "status": "pending"}
-        )
-        completed_today = await db.work_orders.find(
-            {
-                "technician_id": user.user_id,
-                "status": "completed",
-                "end_time": {"$regex": f"^{today}"},
-            },
-            {"_id": 0},
-        ).to_list(100)
-        stats["completed_today"] = len(completed_today)
-
-    elif user.role == "transporte":
-        # Driver stats
-        stats["my_pending_deliveries"] = await db.sales.count_documents(
-            {
-                "delivery_driver_id": user.user_id,
-                "delivery_status": {"$in": ["pending", "assigned", "in_transit"]},
-            }
-        )
-        stats["unassigned_deliveries"] = await db.sales.count_documents(
-            {
-                "delivery_required": True,
-                "delivery_driver_id": None,
-                "delivery_status": "pending",
-            }
-        )
-        delivered_today = await db.sales.find(
-            {
-                "delivery_driver_id": user.user_id,
-                "delivery_status": "delivered",
-                "delivery_completed_at": {"$regex": f"^{today}"},
-            },
-            {"_id": 0},
-        ).to_list(100)
-        stats["delivered_today"] = len(delivered_today)
-
-    elif user.role == "bodegas":
-        # Warehouse stats
-        query = {}
-        if user.warehouse_id:
-            query["warehouse_id"] = user.warehouse_id
-        stats["total_items"] = await db.inventory.count_documents(query)
-        stats["low_stock_items"] = await db.inventory.count_documents(
-            {**query, "$expr": {"$lte": ["$quantity", "$min_stock"]}}
-        )
-        stats["pending_transfers"] = 0  # TODO: implement transfer tracking
-
-    return stats
+    """Pack 5: role dashboard stats HTTP unused by FE. Use existing dashboard/caja APIs."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). Las estadísticas de dashboard "
+                "por rol por HTTP no son usadas por el frontend. Use los endpoints "
+                "existentes de dashboard/caja."
+            ),
+            "canonical_path": "n/a — use existing dashboard/caja APIs",
+        },
+    )
 
 
 # ============ PUSH NOTIFICATIONS (PWA) ============
