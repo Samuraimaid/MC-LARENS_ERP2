@@ -5991,7 +5991,8 @@ async def reset_all_pin_locks_and_users(request: Request):
 
 
 @api_router.post("/auth/pin/sync-all")
-async def manual_sync_pin_users():
+async def manual_sync_pin_users(request: Request):
+    await require_roles(request, ["gerencia", "programador"])
     await sync_canonical_user_pins()
     count = await db.users.count_documents({"is_active": True})
     return {"status": "ok", "message": f"Successfully synchronized {count} users with SHA-256 PIN indices", "users_count": count}
