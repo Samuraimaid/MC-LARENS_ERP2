@@ -128,6 +128,28 @@ export function ThemeProvider({ children }) {
     }, 350);
   }, [buildThemeCustom]);
 
+  /**
+   * U13 — awaitable theme PUT (clears debounce). Throws on API error so callers
+   * can rollback MorphToggle + show «No se pudo guardar — intenta de nuevo».
+   * Returns { skipped: true } when not yet allowed to persist (logged out / boot).
+   */
+  const persistThemeNow = useCallback(async (includeCustom = false) => {
+    if (typeof window === "undefined") return { skipped: true };
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    }
+    if (skipPersistRef.current || !canPersistRef.current) {
+      return { skipped: true };
+    }
+    const body = { mode: modeRef.current, skin: skinRef.current };
+    if (includeCustom) {
+      body.custom = buildThemeCustom();
+    }
+    await axios.put(`${API}/settings/theme`, body, { withCredentials: true });
+    return { skipped: false };
+  }, [buildThemeCustom]);
+
   const applyFromServerOrStorage = useCallback((opts = {}) => {
     const { mode: nextMode, skin: nextSkin, custom } = opts;
     skipPersistRef.current = true;
@@ -298,22 +320,28 @@ export function ThemeProvider({ children }) {
     window.dispatchEvent(new Event("theme:sync"));
   };
 
-  const setLiquidGlass = (value) => {
+  const setLiquidGlass = (value, options = {}) => {
+    const persist = options?.persist !== false;
     const next = Boolean(value);
     setLiquidGlassState(next);
     localStorage.setItem(LIQUID_GLASS_KEY, next ? "true" : "false");
     window.dispatchEvent(new Event("theme:sync"));
-    // Persist glass into theme_custom when logged in.
-    persistToBackend(modeRef.current, skinRef.current, true);
+    // Persist glass into theme_custom when logged in (U13 can pass persist:false + persistThemeNow).
+    if (persist) {
+      persistToBackend(modeRef.current, skinRef.current, true);
+    }
   };
 
-  const setLiquidGlassOpacity = (value) => {
+  const setLiquidGlassOpacity = (value, options = {}) => {
+    const persist = options?.persist !== false;
     const normalized = normalizeLiquidGlassOpacity(value);
     setLiquidGlassOpacityState(normalized);
     localStorage.setItem(LIQUID_GLASS_OPACITY_KEY, String(normalized));
     applyLiquidGlassOpacityVar(normalized);
     window.dispatchEvent(new Event("theme:sync"));
-    persistToBackend(modeRef.current, skinRef.current, true);
+    if (persist) {
+      persistToBackend(modeRef.current, skinRef.current, true);
+    }
   };
 
   return (
@@ -330,6 +358,7 @@ export function ThemeProvider({ children }) {
         setWatermarkOpacity,
         setLiquidGlass,
         setLiquidGlassOpacity,
+        persistThemeNow,
         toggleMode,
         setSystemTheme,
       }}

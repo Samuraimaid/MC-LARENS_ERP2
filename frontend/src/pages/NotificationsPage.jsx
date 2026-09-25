@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Switch } from "../components/ui/switch";
+import { MorphToggle, MORPH_TOGGLE_ERROR_ES } from "../components/common/MorphToggle";
 import { Separator } from "../components/ui/separator";
 import { toast } from "sonner";
 import { optimisticUpdate } from "@/lib/optimisticUpdate";
@@ -192,7 +192,7 @@ export function NotificationsPage() {
       return true;
     } catch (error) {
       if (typeof rollback === "function") rollback();
-      toast.error(error?.response?.data?.detail || "No se pudieron guardar las preferencias");
+      toast.error(error?.response?.data?.detail || MORPH_TOGGLE_ERROR_ES);
       return false;
     } finally {
       setSavingUiPrefs(false);
@@ -382,7 +382,13 @@ export function NotificationsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {soundMuted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-muted-foreground" />}
-                  <Switch checked={soundMuted} onCheckedChange={handleSoundMutedChange} disabled={savingUiPrefs} />
+                  <MorphToggle
+                    checked={soundMuted}
+                    onCheckedChange={handleSoundMutedChange}
+                    pending={savingUiPrefs}
+                    aria-label="Silencio total"
+                    data-testid="notifications-sound-mute"
+                  />
                   <span className="text-xs text-muted-foreground">Silencio total</span>
                 </div>
               </div>

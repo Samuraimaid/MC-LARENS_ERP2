@@ -11,7 +11,7 @@ import { ContextualDialogHeader } from "../components/ui/contextual-dialog-heade
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
-import { Switch } from "../components/ui/switch";
+import { MorphToggle, MORPH_TOGGLE_ERROR_ES } from "../components/common/MorphToggle";
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ export function PromotionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(true);
+  const [pendingPromoIds, setPendingPromoIds] = useState(() => new Set());
   const [showNewPromo, setShowNewPromo] = useState(false);
 
   // New promotion form
@@ -127,35 +128,43 @@ export function PromotionsPage() {
     }
   };
 
-  /** U10: soft activate/deactivate — optimistic flip + rollback + ES toast. */
+  /** U10 + U13: soft activate/deactivate — optimistic MorphToggle + knob spinner + rollback. */
   const togglePromoStatus = async (promo) => {
+    const id = promo.promotion_id;
+    if (pendingPromoIds.has(id)) return;
     const nextActive = !promo.is_active;
     const prevActive = promo.is_active;
+    setPendingPromoIds((prev) => new Set(prev).add(id));
     await optimisticUpdate({
       apply: () => {
         setPromotions((prev) =>
           prev.map((p) =>
-            p.promotion_id === promo.promotion_id ? { ...p, is_active: nextActive } : p
+            p.promotion_id === id ? { ...p, is_active: nextActive } : p
           )
         );
       },
       request: () =>
         axios.put(
-          `${API}/promotions/${promo.promotion_id}`,
+          `${API}/promotions/${id}`,
           { is_active: nextActive },
           { withCredentials: true }
         ),
       rollback: () => {
         setPromotions((prev) =>
           prev.map((p) =>
-            p.promotion_id === promo.promotion_id ? { ...p, is_active: prevActive } : p
+            p.promotion_id === id ? { ...p, is_active: prevActive } : p
           )
         );
       },
-      errorMessage: "Error al actualizar promoción",
+      errorMessage: MORPH_TOGGLE_ERROR_ES,
       onSuccess: () => {
         toast.success(prevActive ? "Promoción desactivada" : "Promoción activada");
       },
+    });
+    setPendingPromoIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
     });
   };
 
@@ -433,10 +442,12 @@ export function PromotionsPage() {
               </div>
               
               <div className="flex items-center space-x-2">
-                <Switch
+                <MorphToggle
                   id="active"
                   checked={newPromo.is_active}
                   onCheckedChange={(checked) => setNewPromo({ ...newPromo, is_active: checked })}
+                  aria-label="Activar inmediatamente"
+                  data-testid="promo-new-active"
                 />
                 <Label htmlFor="active">Activar inmediatamente</Label>
               </div>
@@ -527,10 +538,12 @@ export function PromotionsPage() {
       </ListSelectionBar>
 
       <div className="flex items-center space-x-2">
-          <Switch
+          <MorphToggle
             id="activeOnly"
             checked={showActiveOnly}
             onCheckedChange={setShowActiveOnly}
+            aria-label="Solo activas"
+            data-testid="promotions-active-only"
           />
           <Label htmlFor="activeOnly">Solo activas</Label>
         </div>
@@ -640,18 +653,13 @@ export function PromotionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => togglePromoStatus(promo)}
-                            title={promo.is_active ? "Desactivar" : "Activar"}
-                          >
-                            {promo.is_active ? (
-                              <XCircle className="h-4 w-4 text-red-500" />
-                            ) : (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            )}
-                          </Button>
+                          <MorphToggle
+                            checked={Boolean(promo.is_active)}
+                            pending={pendingPromoIds.has(promo.promotion_id)}
+                            onCheckedChange={() => togglePromoStatus(promo)}
+                            aria-label={promo.is_active ? "Desactivar promoción" : "Activar promoción"}
+                            data-testid={`promo-active-${promo.promotion_id}`}
+                          />
                           <Button
                             variant="ghost"
                             size="icon"

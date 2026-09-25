@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { MorphToggle, MORPH_TOGGLE_ERROR_ES } from "@/components/common/MorphToggle";
+import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -133,6 +134,7 @@ export function PromotionalVideosSettingsPanel() {
   const canDelete = ["gerencia", "programador"].includes(userRole);
 
   const [videos, setVideos] = useState([]);
+  const [pendingVideoIds, setPendingVideoIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [previewModalVideo, setPreviewModalVideo] = useState(null);
@@ -313,18 +315,35 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
+  /** U13: optimistic video active MorphToggle + knob spinner + rollback. */
   const handleToggleActive = async (v, newActive) => {
-    try {
-      await axios.put(
-        `${API}/settings/promotional-videos/${v.id}`,
-        { active: newActive },
-        { withCredentials: true }
-      );
-      toast.success(`Video ${newActive ? "activado" : "desactivado"}`);
-      setVideos((prev) => prev.map((item) => (item.id === v.id ? { ...item, active: newActive } : item)));
-    } catch (err) {
-      toast.error("No se pudo actualizar el estado");
-    }
+    const id = v.id;
+    if (pendingVideoIds.has(id)) return;
+    const prevActive = v.active !== false;
+    setPendingVideoIds((prev) => new Set(prev).add(id));
+    await optimisticUpdate({
+      apply: () => {
+        setVideos((prev) => prev.map((item) => (item.id === id ? { ...item, active: newActive } : item)));
+      },
+      request: () =>
+        axios.put(
+          `${API}/settings/promotional-videos/${id}`,
+          { active: newActive },
+          { withCredentials: true }
+        ),
+      rollback: () => {
+        setVideos((prev) => prev.map((item) => (item.id === id ? { ...item, active: prevActive } : item)));
+      },
+      errorMessage: MORPH_TOGGLE_ERROR_ES,
+      onSuccess: () => {
+        toast.success(`Video ${newActive ? "activado" : "desactivado"}`);
+      },
+    });
+    setPendingVideoIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const handleDelete = async (v) => {
@@ -556,10 +575,13 @@ export function PromotionalVideosSettingsPanel() {
                     {/* Actions & Switch */}
                     <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Switch
+                        <MorphToggle
                           checked={v.active !== false}
+                          pending={pendingVideoIds.has(v.id)}
                           onCheckedChange={(checked) => handleToggleActive(v, checked)}
                           id={`switch-${v.id}`}
+                          aria-label={v.active !== false ? "Desactivar video" : "Activar video"}
+                          data-testid={`promo-video-active-${v.id}`}
                         />
                         <Label htmlFor={`switch-${v.id}`} className="text-xs font-medium cursor-pointer">
                           {v.active !== false ? "Activo" : "Inactivo"}
@@ -737,10 +759,11 @@ export function PromotionalVideosSettingsPanel() {
                       Si está activo, el video panorámico se ajustará automáticamente a pantallas de celulares.
                     </p>
                   </div>
-                  <Switch
+                  <MorphToggle
                     id="allow-mobile"
                     checked={allowWidescreenOnMobile}
                     onCheckedChange={setAllowWidescreenOnMobile}
+                    aria-label="Permitir en pantallas móviles verticales"
                   />
                 </div>
 
@@ -753,7 +776,7 @@ export function PromotionalVideosSettingsPanel() {
                       Solo los videos activos se incluirán en el carrusel de inicio.
                     </p>
                   </div>
-                  <Switch id="vid-active" checked={active} onCheckedChange={setActive} />
+                  <MorphToggle id="vid-active" checked={active} onCheckedChange={setActive} aria-label="Video activo" />
                 </div>
               </div>
             </div>
