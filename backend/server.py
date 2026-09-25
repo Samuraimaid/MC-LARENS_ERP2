@@ -5968,9 +5968,9 @@ async def unlock_pin_terminal(payload: TerminalUnlockRequest, request: Request):
 
 
 @api_router.post("/auth/pin/reset-all-locks")
-@api_router.get("/auth/pin/reset-all-locks")
 async def reset_all_pin_locks_and_users(request: Request):
-    """Restablecimiento masivo de todos los bloqueos de PIN, IP y activación total de usuarios."""
+    """Restablecimiento masivo de bloqueos PIN/IP y reactivación de usuarios (solo gerencia/programador)."""
+    await require_roles(request, ["gerencia", "programador"])
     try:
         await db.pin_login_ip_lockouts.delete_many({})
         await db.pin_login_ip_attempts.delete_many({})
