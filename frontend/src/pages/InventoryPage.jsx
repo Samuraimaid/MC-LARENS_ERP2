@@ -18,13 +18,15 @@ import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2, Star, Check, Loader2
+  Truck, Trash2, Star, Check, Loader2, List, LayoutGrid, Columns2
 } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { buildTransferJobId } from "@/lib/driverDispatch";
 import { buildProductPricePayload, roundTo2 } from "@/lib/priceTiers";
 
@@ -81,6 +83,25 @@ export function InventoryPage() {
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
+  const INV_VIEW_KEY = "mclarens_inventory_view_mode";
+  const INV_VIEW_MODES = ["delgada", "intermedia", "columnas"];
+  const [inventoryViewMode, setInventoryViewMode] = useState(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(INV_VIEW_KEY) : null;
+      return INV_VIEW_MODES.includes(raw) ? raw : "delgada";
+    } catch {
+      return "delgada";
+    }
+  });
+  const setInventoryViewModePersist = (mode) => {
+    const next = INV_VIEW_MODES.includes(mode) ? mode : "delgada";
+    setInventoryViewMode(next);
+    try {
+      window.localStorage.setItem(INV_VIEW_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  };
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -153,7 +174,21 @@ export function InventoryPage() {
     from_warehouse: "",
     to_warehouse: "",
     quantity: 1,
+    notes: "",
   });
+  // Product WhatsApp share context (stock/bodega for message template)
+  const [waStockContext, setWaStockContext] = useState(null);
+  // Post-transfer WhatsApp notify (destination warehouse has no phone in API)
+  const [showTransferWhatsApp, setShowTransferWhatsApp] = useState(false);
+  const [transferWaSummary, setTransferWaSummary] = useState(null);
+  const [transferWaPhone, setTransferWaPhone] = useState(() => {
+    try {
+      return localStorage.getItem("mclarens_default_transfer_wa_phone") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [transferWaRememberPhone, setTransferWaRememberPhone] = useState(false);
 
   const [addStock, setAddStock] = useState({
     product_id: "",
@@ -729,13 +764,70 @@ export function InventoryPage() {
     }
   };
 
+  const emptyTransferForm = () => ({
+    product_id: "",
+    from_warehouse: "",
+    to_warehouse: "",
+    quantity: 1,
+    notes: "",
+  });
+
+  const openRowWarehouseTransfer = (item, product) => {
+    if (!canEditInventory) {
+      toast.error("No tienes permiso para transferir inventario");
+      return;
+    }
+    const fromWh = item.warehouse_id === "none" ? "" : (item.warehouse_id || "");
+    const maxQty = Math.max(1, Number(item.quantity_available ?? item.quantity ?? 1) || 1);
+    setTransfer({
+      product_id: product.product_id || item.product_id || "",
+      from_warehouse: fromWh,
+      to_warehouse: "",
+      quantity: Math.min(1, maxQty) || 1,
+      notes: "",
+    });
+    setShowTransfer(true);
+  };
+
+  const openProductWhatsApp = (item, product) => {
+    const warehouse = warehouses.find((w) => w.warehouse_id === item.warehouse_id);
+    const warehouseName = item.warehouse_id === "none"
+      ? "Sin asignar"
+      : (warehouse?.name || item.warehouse_id || "—");
+    setWaProduct(product);
+    setWaStockContext({
+      quantity: Number(item.quantity_available ?? item.quantity ?? 0) || 0,
+      warehouseName,
+      warehouseId: item.warehouse_id,
+    });
+    setWaSearch("");
+    setWaResults([]);
+    setWaSelectedCustomer(null);
+    setShowWhatsApp(true);
+  };
+
+  const normalizeWaPhone = (raw) => {
+    let digits = String(raw || "").replace(/[^0-9]/g, "");
+    if (digits.length === 8) digits = `505${digits}`;
+    return digits;
+  };
+
   const executeTransfer = async () => {
     if (!canEditInventory) {
       toast.error("No tienes permiso para transferir inventario");
       return;
     }
+    if (!transfer.product_id || !transfer.from_warehouse || !transfer.to_warehouse) {
+      toast.error("Completa producto, bodega origen y destino");
+      return;
+    }
     if (transfer.from_warehouse === transfer.to_warehouse) {
       toast.error("Las bodegas deben ser diferentes");
+      return;
+    }
+    const qty = Math.max(1, parseInt(transfer.quantity, 10) || 0);
+    if (!qty) {
+      toast.error("Cantidad inválida");
       return;
     }
     try {
@@ -744,13 +836,32 @@ export function InventoryPage() {
           product_id: transfer.product_id,
           from_warehouse: transfer.from_warehouse,
           to_warehouse: transfer.to_warehouse,
-          quantity: transfer.quantity,
+          quantity: qty,
         },
         withCredentials: true,
       });
-      toast.success("Transferencia realizada");
+      const product = products.find((p) => p.product_id === transfer.product_id) || {};
+      const fromName = warehouses.find((w) => w.warehouse_id === transfer.from_warehouse)?.name || transfer.from_warehouse;
+      const toName = warehouses.find((w) => w.warehouse_id === transfer.to_warehouse)?.name || transfer.to_warehouse;
+      const summary = {
+        productName: product.name || transfer.product_id,
+        sku: product.sku || "",
+        quantity: qty,
+        fromName,
+        toName,
+        notes: (transfer.notes || "").trim(),
+      };
+      toast.success("Traslado entre bodegas realizado");
       setShowTransfer(false);
-      setTransfer({ product_id: "", from_warehouse: "", to_warehouse: "", quantity: 1 });
+      setTransfer(emptyTransferForm());
+      setTransferWaSummary(summary);
+      try {
+        setTransferWaPhone(localStorage.getItem("mclarens_default_transfer_wa_phone") || "");
+      } catch {
+        setTransferWaPhone("");
+      }
+      setTransferWaRememberPhone(false);
+      setShowTransferWhatsApp(true);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error en transferencia");
@@ -1252,6 +1363,84 @@ export function InventoryPage() {
     };
   }, [inventory, products]);
 
+
+  const renderInventoryRowActions = (item, product, qtyAvailable, qtyTotal) => (
+    <div className="flex gap-1 flex-wrap justify-end">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setShowProductDetail(product)}
+        title="Ver detalles"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setEditingProduct(product)}
+        disabled={!canEditInventory}
+        title="Editar producto"
+      >
+        <Edit className="h-4 w-4" />
+      </Button>
+      {canViewInventoryLabels ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Imprimir etiquetas"
+          onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
+        >
+          <Barcode className="h-4 w-4" />
+        </Button>
+      ) : null}
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Ingresar stock"
+        onClick={() => {
+          setAddStock({
+            product_id: product.product_id || "",
+            warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
+            quantity: 1,
+          });
+          setShowAddStock(true);
+        }}
+        disabled={!canEditInventory}
+      >
+        <Plus className="h-4 w-4 text-primary" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
+        onClick={() => handleOpenZoneTransfer(item)}
+        disabled={!canEditInventory || qtyTotal <= 0}
+      >
+        <ArrowRightLeft className="h-4 w-4 text-amber-600" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Trasladar entre bodegas"
+        data-testid="transfer-row-btn"
+        onClick={() => openRowWarehouseTransfer(item, product)}
+        disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
+      >
+        <Truck className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Enviar por WhatsApp"
+        data-testid="whatsapp-row-btn"
+        onClick={() => openProductWhatsApp(item, product)}
+        className="hover:bg-[#25D366]/15"
+      >
+        <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6" data-testid="inventory-page">
       {!canViewInventory ? (
@@ -1346,22 +1535,36 @@ export function InventoryPage() {
           ) : null}
 
           {!isWarehouseRole ? (
-          <Dialog open={showTransfer} onOpenChange={setShowTransfer}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="transfer-btn" disabled={!canEditInventory}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Transferir
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+            <Button
+              variant="outline"
+              data-testid="transfer-btn"
+              disabled={!canEditInventory}
+              onClick={() => {
+                setTransfer(emptyTransferForm());
+                setShowTransfer(true);
+              }}
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              Transferir
+            </Button>
+          ) : null}
+
+          <Dialog open={showTransfer} onOpenChange={(open) => {
+            setShowTransfer(open);
+            if (!open) setTransfer(emptyTransferForm());
+          }}>
+            <DialogContent data-testid="warehouse-transfer-dialog">
               <DialogHeader>
-                <DialogTitle>Transferir Inventario</DialogTitle>
+                <DialogTitle>Trasladar entre bodegas</DialogTitle>
+                <DialogDescription>
+                  Traslado inmediato de stock (mismo flujo que Transferir del encabezado). Las notas se usan solo para el aviso por WhatsApp.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label>Producto</Label>
                   <Select value={transfer.product_id} onValueChange={(v) => setTransfer({ ...transfer, product_id: v })}>
-                    <SelectTrigger>
+                    <SelectTrigger data-testid="transfer-product-select">
                       <SelectValue placeholder="Seleccionar producto" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1375,9 +1578,9 @@ export function InventoryPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Desde Bodega</Label>
+                    <Label>Desde bodega</Label>
                     <Select value={transfer.from_warehouse} onValueChange={(v) => setTransfer({ ...transfer, from_warehouse: v })}>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="transfer-from-select">
                         <SelectValue placeholder="Origen" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1388,9 +1591,9 @@ export function InventoryPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Hacia Bodega</Label>
+                    <Label>Hacia bodega</Label>
                     <Select value={transfer.to_warehouse} onValueChange={(v) => setTransfer({ ...transfer, to_warehouse: v })}>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="transfer-to-select">
                         <SelectValue placeholder="Destino" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1408,15 +1611,26 @@ export function InventoryPage() {
                     min="1"
                     value={transfer.quantity}
                     onChange={(e) => setTransfer({ ...transfer, quantity: parseInt(e.target.value) || 1 })}
+                    data-testid="transfer-quantity-input"
+                  />
+                </div>
+                <div>
+                  <Label>Notas (opcional)</Label>
+                  <Textarea
+                    value={transfer.notes || ""}
+                    onChange={(e) => setTransfer({ ...transfer, notes: e.target.value })}
+                    placeholder="Ej. urgente para pedido de mostrador"
+                    rows={2}
+                    data-testid="transfer-notes-input"
                   />
                 </div>
                 <Button onClick={executeTransfer} className="w-full" data-testid="execute-transfer-btn" disabled={!canEditInventory}>
-                  Ejecutar Transferencia
+                  <Truck className="h-4 w-4 mr-2" />
+                  Registrar traslado
                 </Button>
               </div>
-              </DialogContent>
+            </DialogContent>
           </Dialog>
-          ) : null}
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
             <DialogTrigger asChild>
@@ -2228,9 +2442,63 @@ export function InventoryPage() {
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4" />
         </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-muted-foreground hidden sm:inline">Vista</span>
+          <ToggleGroup
+            type="single"
+            value={inventoryViewMode}
+            onValueChange={(v) => v && setInventoryViewModePersist(v)}
+            variant="outline"
+            size="sm"
+            className="rounded-full border border-border/60 bg-card/70 p-0.5 backdrop-blur-md shadow-sm"
+            data-testid="inventory-view-mode"
+            aria-label="Modo de vista de inventario"
+          >
+            <ToggleGroupItem
+              value="delgada"
+              title="Delgada — filas compactas"
+              aria-label="Vista delgada"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <List className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">Delgada</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="intermedia"
+              title="Intermedia — tarjetas con imagen"
+              aria-label="Vista intermedia"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">Intermedia</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="columnas"
+              title="2 columnas — rejilla con imágenes grandes"
+              aria-label="Vista 2 columnas"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Columns2 className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">2 columnas</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
 
-      {/* Inventory Table */}
+      {/* Inventory list (view modes) */}
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 flex justify-center">
+            <RefreshCw className="h-6 w-6 animate-spin" />
+          </CardContent>
+        </Card>
+      ) : filteredInventory.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            No hay inventario para mostrar
+          </CardContent>
+        </Card>
+      ) : inventoryViewMode === "delgada" ? (
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -2251,27 +2519,13 @@ export function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8">
-                    <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-                  </TableCell>
-                </TableRow>
-              ) : filteredInventory.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                    No hay inventario para mostrar
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
+              {filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
                   const product = item.product || {};
                   const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
                   const qtyDamaged = item.quantity_damaged ?? 0;
                   const qtyIncomplete = item.quantity_incomplete ?? 0;
                   const qtyWarranty = item.quantity_warranty ?? 0;
                   const qtyTotal = item.quantity ?? 0;
-
                   const isZero = qtyAvailable === 0;
                   const isLow = !isZero && (qtyAvailable <= (item.min_stock || 5));
                   const warehouse = warehouses.find(w => w.warehouse_id === item.warehouse_id);
@@ -2279,14 +2533,19 @@ export function InventoryPage() {
                     ? <span className="text-muted-foreground italic text-xs">Sin asignar (0 stock)</span>
                     : (warehouse?.name || item.warehouse_id);
                   const isActiveInWarehouse = item.is_active !== false;
+                  const thumb = product.image_url || product.image || product.images?.[0];
 
                   return (
                     <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : ""}>
                       <TableCell className="font-mono">{product.sku || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {(product.image_url || product.image || product.images?.[0]) && (
-                            <img src={product.image_url || product.image || product.images?.[0]} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                          {thumb ? (
+                            <img src={thumb} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center">
+                              <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
                           )}
                           <span className="font-medium">{product.name || "Desconocido"}</span>
                         </div>
@@ -2300,7 +2559,6 @@ export function InventoryPage() {
                         </div>
                       </TableCell>
                       <TableCell>{warehouseLabel}</TableCell>
-                      {/* Virtual Zones breakdown */}
                       <TableCell className="text-center">
                         <span className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}>
                           {qtyAvailable}
@@ -2333,7 +2591,6 @@ export function InventoryPage() {
                       <TableCell className="text-right font-mono">
                         {formatCurrency(product.price || 0)}
                       </TableCell>
-                      {/* Warehouse Activation Toggle */}
                       <TableCell className="text-center">
                         <Badge
                           variant={isActiveInWarehouse ? "outline" : "secondary"}
@@ -2349,73 +2606,11 @@ export function InventoryPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setShowProductDetail(product)}
-                            title="Ver detalles"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setEditingProduct(product)}
-                            disabled={!canEditInventory}
-                            title="Editar producto"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {canViewInventoryLabels ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Imprimir etiquetas"
-                              onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
-                            >
-                              <Barcode className="h-4 w-4" />
-                            </Button>
-                          ) : null}
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Ingresar stock"
-                            onClick={() => {
-                              setAddStock({
-                                product_id: product.product_id || "",
-                                warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
-                                quantity: 1,
-                              });
-                              setShowAddStock(true);
-                            }}
-                            disabled={!canEditInventory}
-                          >
-                            <Plus className="h-4 w-4 text-primary" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
-                            onClick={() => handleOpenZoneTransfer(item)}
-                            disabled={!canEditInventory || qtyTotal <= 0}
-                          >
-                            <ArrowRightLeft className="h-4 w-4 text-amber-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Enviar por WhatsApp"
-                            onClick={() => { setWaProduct(product); setShowWhatsApp(true); setWaSearch(''); setWaResults([]); setWaSelectedCustomer(null); }}
-                          >
-                            <Truck className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {renderInventoryRowActions(item, product, qtyAvailable, qtyTotal)}
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
+                })}
             </TableBody>
           </Table>
           {filteredInventory.length > inventoryVisibleLimit && (
@@ -2431,6 +2626,141 @@ export function InventoryPage() {
           )}
         </CardContent>
       </Card>
+      ) : (
+        <>
+          <div
+            className={
+              inventoryViewMode === "columnas"
+                ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                : "flex flex-col gap-3"
+            }
+            data-testid={`inventory-view-${inventoryViewMode}`}
+          >
+            {filteredInventory.slice(0, inventoryVisibleLimit).map((item) => {
+              const product = item.product || {};
+              const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
+              const qtyDamaged = item.quantity_damaged ?? 0;
+              const qtyIncomplete = item.quantity_incomplete ?? 0;
+              const qtyWarranty = item.quantity_warranty ?? 0;
+              const qtyTotal = item.quantity ?? 0;
+              const isZero = qtyAvailable === 0;
+              const isLow = !isZero && (qtyAvailable <= (item.min_stock || 5));
+              const warehouse = warehouses.find((w) => w.warehouse_id === item.warehouse_id);
+              const warehouseLabel =
+                item.warehouse_id === "none"
+                  ? "Sin asignar (0 stock)"
+                  : warehouse?.name || item.warehouse_id;
+              const isActiveInWarehouse = item.is_active !== false;
+              const thumb = product.image_url || product.image || product.images?.[0];
+              const isGrid = inventoryViewMode === "columnas";
+
+              return (
+                <div
+                  key={item.inventory_id}
+                  data-testid={`inv-row-${item.inventory_id}`}
+                  className={`rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
+                    !isActiveInWarehouse ? "opacity-60" : ""
+                  } ${isGrid ? "flex flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
+                >
+                  <div
+                    className={`relative shrink-0 bg-muted/30 ${
+                      isGrid
+                        ? "w-full aspect-[16/10]"
+                        : "w-full sm:w-28 h-36 sm:h-auto sm:self-stretch"
+                    }`}
+                  >
+                    {thumb ? (
+                      <img
+                        src={thumb}
+                        alt=""
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Package className="h-10 w-10 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+                  <div className={`flex-1 p-4 flex flex-col gap-3 min-w-0 ${isGrid ? "" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs text-muted-foreground">{product.sku || "-"}</p>
+                        <h3 className="font-semibold text-base leading-snug truncate">
+                          {product.name || "Desconocido"}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">
+                            {getCategoryName(product.category)}
+                          </Badge>
+                          {product.subcategory ? (
+                            <span className="text-xs text-muted-foreground">{product.subcategory}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={isActiveInWarehouse ? "outline" : "secondary"}
+                        className={`cursor-pointer shrink-0 text-[11px] ${
+                          isActiveInWarehouse
+                            ? "border-emerald-500 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10"
+                            : "line-through"
+                        }`}
+                        onClick={() => canEditInventory && handleToggleProductStatus(item)}
+                      >
+                        {isActiveInWarehouse ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Bodega</p>
+                        <p className="font-medium truncate">{warehouseLabel}</p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Disponible</p>
+                        <p className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : "text-emerald-600"}`}>
+                          {qtyAvailable}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Total</p>
+                        <p className="font-mono font-bold">{qtyTotal}</p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Precio</p>
+                        <p className="font-mono font-semibold">{formatCurrency(product.price || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+                      <span>Dañ. {qtyDamaged}</span>
+                      <span>·</span>
+                      <span>Inc. {qtyIncomplete}</span>
+                      <span>·</span>
+                      <span>Gar. {qtyWarranty}</span>
+                    </div>
+
+                    <div className="mt-auto pt-1 border-t border-border/40">
+                      {renderInventoryRowActions(item, product, qtyAvailable, qtyTotal)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filteredInventory.length > inventoryVisibleLimit && (
+            <div className="pt-2 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setInventoryVisibleLimit((prev) => prev + 50)}
+                className="w-full sm:w-auto rounded-full"
+              >
+                Cargar más inventario ({inventoryVisibleLimit} de {filteredInventory.length})
+              </Button>
+            </div>
+          )}
+        </>
+      )}
       </TabsContent>
 
       {canManageLogistics ? (
@@ -3107,14 +3437,31 @@ export function InventoryPage() {
         canPrint={canPrintInventoryLabels}
       />
 
-      {/* WhatsApp send dialog */}
-      <Dialog open={showWhatsApp} onOpenChange={() => setShowWhatsApp(false)}>
-        <DialogContent className="max-w-2xl">
+      {/* WhatsApp send dialog — product/stock share */}
+      <Dialog open={showWhatsApp} onOpenChange={(open) => {
+        setShowWhatsApp(open);
+        if (!open) {
+          setWaProduct(null);
+          setWaStockContext(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl" data-testid="product-whatsapp-dialog">
           <DialogHeader>
             <DialogTitle>Enviar producto por WhatsApp</DialogTitle>
-            <DialogDescription>Selecciona el cliente al que deseas enviar la información</DialogDescription>
+            <DialogDescription>Selecciona el cliente al que deseas enviar la información de stock</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            {waProduct ? (
+              <div className="rounded border bg-muted/30 p-3 text-sm">
+                <div className="font-medium">{waProduct.name}</div>
+                <div className="text-muted-foreground">
+                  SKU: {waProduct.sku || "—"} · Precio: {formatCurrency(waProduct.price || 0)}
+                  {waStockContext ? (
+                    <> · Stock en {waStockContext.warehouseName}: {waStockContext.quantity}</>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <div>
               <Label>Buscar cliente por nombre, teléfono, placa o VIN</Label>
               <Input value={waSearch} onChange={(e) => setWaSearch(e.target.value)} placeholder="Ej: placa, VIN, nombre o teléfono" />
@@ -3129,7 +3476,6 @@ export function InventoryPage() {
                     ]);
                     const customers = Array.isArray(custRes.data) ? custRes.data : [];
                     const vehicles = Array.isArray(vehRes.data) ? vehRes.data : [];
-                    // Map vehicles to their customers if possible
                     const vehMapped = vehicles.map(v => ({
                       type: 'vehicle',
                       id: v.vehicle_id,
@@ -3163,19 +3509,106 @@ export function InventoryPage() {
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowWhatsApp(false)}>Cancelar</Button>
-              <Button onClick={() => {
+              <Button data-testid="product-whatsapp-send-btn" onClick={() => {
                 if (!waSelectedCustomer) { toast.error('Selecciona un cliente'); return; }
-                // Build phone
-                const raw = (waSelectedCustomer.phone || '').toString().replace(/[^0-9]/g, '');
-                let digits = raw;
+                const digits = normalizeWaPhone(waSelectedCustomer.phone);
                 if (!digits) { toast.error('No hay teléfono disponible para este cliente'); return; }
-                if (digits.length === 8) digits = `505${digits}`;
-                const url = `https://wa.me/${digits}?text=${encodeURIComponent(`Hola ${waSelectedCustomer.label.split(' • ')[0] || ''}, le comparto este producto: ${waProduct?.name || ''} (SKU: ${waProduct?.sku || ''}) Precio: ${formatCurrency(waProduct?.price || 0)}.`)}`;
+                const nombre = waSelectedCustomer.label.split(' • ')[0] || '';
+                const stockLine = waStockContext
+                  ? ` Stock en ${waStockContext.warehouseName}: ${waStockContext.quantity}.`
+                  : '';
+                const msg = `Hola ${nombre}, le comparto: ${waProduct?.name || ''} (SKU: ${waProduct?.sku || ''}).${stockLine} Precio: ${formatCurrency(waProduct?.price || 0)}.`;
+                const url = `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
                 window.open(url, '_blank');
                 setShowWhatsApp(false);
-              }}>Enviar por WhatsApp</Button>
+              }}>
+                <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />
+                Enviar por WhatsApp
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Post-transfer WhatsApp — notify destination (manual phone; warehouses API has no phone) */}
+      <Dialog open={showTransferWhatsApp} onOpenChange={(open) => {
+        setShowTransferWhatsApp(open);
+        if (!open) setTransferWaSummary(null);
+      }}>
+        <DialogContent className="max-w-md" data-testid="transfer-whatsapp-dialog">
+          <DialogHeader>
+            <DialogTitle>¿Avisar destino? (opcional)</DialogTitle>
+            <DialogDescription>
+              Opcional. El traslado ya quedó registrado. Puedes omitir o enviar un aviso por WhatsApp si tienes el teléfono del contacto en destino.
+            </DialogDescription>
+          </DialogHeader>
+          {transferWaSummary ? (
+            <div className="space-y-4">
+              <div className="rounded border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                {`MC-LARENS — Traslado
+${transferWaSummary.productName}${transferWaSummary.sku ? ` (SKU: ${transferWaSummary.sku})` : ''} x${transferWaSummary.quantity}
+${transferWaSummary.fromName} → ${transferWaSummary.toName}
+Ref: inmediato
+Estado: Transferido${transferWaSummary.notes ? `
+Notas: ${transferWaSummary.notes}` : ''}`}
+              </div>
+              <div>
+                <Label>Teléfono destino</Label>
+                <Input
+                  value={transferWaPhone}
+                  onChange={(e) => setTransferWaPhone(e.target.value)}
+                  placeholder="Ej. 88887777 o 50588887777"
+                  data-testid="transfer-wa-phone-input"
+                />
+                <label className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={transferWaRememberPhone}
+                    onChange={(e) => setTransferWaRememberPhone(e.target.checked)}
+                  />
+                  Guardar como predeterminado en este navegador
+                </label>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setShowTransferWhatsApp(false)} data-testid="transfer-wa-skip-btn">
+                  Omitir
+                </Button>
+                <Button
+                  variant="outline"
+                  data-testid="transfer-wa-send-btn"
+                  onClick={() => {
+                    const digits = normalizeWaPhone(transferWaPhone);
+                    if (!digits || digits.length < 8) {
+                      toast.error("Ingresa un teléfono válido");
+                      return;
+                    }
+                    if (transferWaRememberPhone) {
+                      try {
+                        localStorage.setItem("mclarens_default_transfer_wa_phone", digits);
+                      } catch {
+                        /* ignore */
+                      }
+                    }
+                    const s = transferWaSummary;
+                    const msg = [
+                      "MC-LARENS — Traslado",
+                      `${s.productName}${s.sku ? ` (SKU: ${s.sku})` : ""} x${s.quantity}`,
+                      `${s.fromName} → ${s.toName}`,
+                      "Ref: inmediato",
+                      "Estado: Transferido",
+                      s.notes ? `Notas: ${s.notes}` : null,
+                    ].filter(Boolean).join("\n");
+                    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+                    setShowTransferWhatsApp(false);
+                    setTransferWaSummary(null);
+                  }}
+                >
+                  <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />
+                  Abrir WhatsApp
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 

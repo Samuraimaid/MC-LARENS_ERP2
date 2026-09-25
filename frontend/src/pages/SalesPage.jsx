@@ -95,6 +95,8 @@ import { computeDraftSnapshotTotals } from "@/lib/saleTotals";
 import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { buildCustomerProofWhatsAppUrl } from "@/lib/deliveryProof";
+import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
+
 
 // Divisas disponibles
 const CURRENCIES = [
@@ -103,15 +105,6 @@ const CURRENCIES = [
 ];
 
 const CATALOG_SOURCE_CONTEXT_KEY = "catalog_source_context_v1";
-
-const WhatsAppIcon = ({ className }) => (
-  <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-    <path
-      fill="currentColor"
-      d="M19.11 17.72c-.28-.14-1.64-.81-1.9-.9-.25-.1-.44-.14-.62.14-.18.28-.71.9-.87 1.08-.16.18-.32.2-.6.06-.28-.14-1.16-.43-2.21-1.37-.82-.73-1.37-1.63-1.53-1.9-.16-.28-.02-.43.12-.57.12-.12.28-.32.42-.48.14-.16.18-.28.28-.46.1-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.44-.46-.62-.47h-.53c-.18 0-.48.07-.73.34-.25.28-.96.94-.96 2.3 0 1.36.99 2.68 1.12 2.86.14.18 1.95 2.98 4.73 4.18.66.28 1.17.45 1.58.58.66.21 1.26.18 1.73.11.53-.08 1.64-.67 1.87-1.32.23-.65.23-1.21.16-1.32-.07-.12-.25-.18-.53-.32zM16.03 5.5c-5.72 0-10.37 4.65-10.37 10.37 0 1.83.48 3.54 1.32 5.03l-1.4 5.13 5.26-1.38a10.33 10.33 0 0 0 5.19 1.4c5.72 0 10.37-4.65 10.37-10.37S21.75 5.5 16.03 5.5zm0 18.9c-1.7 0-3.3-.46-4.67-1.34l-.34-.2-3.13.82.83-3.05-.22-.35a8.84 8.84 0 0 1-1.38-4.71 8.9 8.9 0 0 1 17.8 0 8.9 8.9 0 0 1-8.9 8.83z"
-    />
-  </svg>
-);
 
 // Prefijos de placa Nicaragua
 const PLATE_PREFIXES = [
