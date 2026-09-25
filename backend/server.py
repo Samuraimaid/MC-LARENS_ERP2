@@ -27238,8 +27238,10 @@ app.add_middleware(
 
 
 from backend.middlewares.emergency_standby import EmergencyStandbyMiddleware
+from backend.middlewares.rate_limit import RateLimitMiddleware
 
 app.add_middleware(EmergencyStandbyMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 
 frontend_build_dir = Path("/app/frontend/build")
