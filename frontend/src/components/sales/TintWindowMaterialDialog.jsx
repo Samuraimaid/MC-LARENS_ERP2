@@ -116,7 +116,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Máximo control térmico (99% IR) y total privacidad en rollo de 20 pulgadas.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -133,7 +133,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Tono Intermedio",
     "description": "Tonalidad intermedia más popular y versátil en rollo de 20 pulgadas.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": true
   },
   {
@@ -150,7 +150,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "NR (Non-Reflective)",
     "description": "Claridad óptica superior (100% visibilidad nocturna) en 20\" y 40\".",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -167,7 +167,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Estándar Claro",
     "description": "Transparencia total para parabrisas delantero y visión nocturna.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": true
   },
   {
@@ -184,7 +184,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 98,
     "tech_type": "Estándar 40\"",
     "description": "Película Tinmax Raybar de 40 pulgadas tono oscuro 5%.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -201,7 +201,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Sin tintes: tono que jamás se degrada ni se torna morado con los años.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -218,7 +218,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -235,7 +235,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "3M Series",
     "description": "Look uniforme, deportivo y elegante: balance perfecto entre privacidad y seguridad.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -252,7 +252,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Negro profundo resistente a rayaduras en rollo de 40 pulgadas.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -269,7 +269,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Tono intermedio 22% en rollo de 20 pulgadas para ventanas laterales.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -286,7 +286,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP Carbón",
     "description": "Ultra oscura: máxima privacidad, estética agresiva y cero interferencia electrónica.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -303,7 +303,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HC Hard Coated",
     "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -320,7 +320,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Estándar Deportivo",
     "description": "Punto dulce deportivo: auto oscuro y deportivo a precio accesible.",
-    "extra_price": 0,
+    "extra_price": 40,
     "is_default": false
   },
   {
@@ -337,7 +337,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Privacidad extrema y 90% rechazo infrarrojo. Tecnología multicapa en 20 pulgadas.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -354,7 +354,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Elegancia y confort con 90% IR. Control solar superior en rollo de 20 pulgadas.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -371,7 +371,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico 30\"",
     "description": "Rollo especial de 30 pulgadas Supreme 15% con alto rechazo infrarrojo.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -388,7 +388,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Claridad superior y estilo elegante en rollos versátiles de 20 y 40 pulgadas.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -405,7 +405,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Gama media clara en 20 pulgadas: visibilidad, confort y look ejecutivo.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -422,7 +422,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico 40\"",
     "description": "Tono 30% en rollo de 40 pulgadas con rechazo térmico superior.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -439,7 +439,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Nano Cerámico",
     "description": "Acabado ultra claro con protección solar y visión transparente en 20\" y 40\".",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -456,7 +456,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Híbrida Metalizada",
     "description": "Arquitectura híbrida metalizada para climas hostiles y sol directo en 20\" y 40\".",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -473,7 +473,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Multicapa Tornasol",
     "description": "Efecto tornasol dinámico de alta gama que cambia de color según la luz solar.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -490,7 +490,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Barrera Titanio",
     "description": "Blindaje térmico profesional basado en partículas de titanio al vacío.",
-    "extra_price": 45,
+    "extra_price": 95,
     "is_default": false
   },
   {
@@ -507,7 +507,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Película 100% metalizada por pulverización catódica en 20\" y 40\".",
-    "extra_price": 80,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -524,7 +524,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Metalizada Sputtered",
     "description": "Punto medio perfecto (80% IR): excelente privacidad sin perder visión nocturna.",
-    "extra_price": 80,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -541,7 +541,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "HP High Performance",
     "description": "Tono claro y sutil: 72% IR sin oscurecer el auto en 20\" y 40\".",
-    "extra_price": 80,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -558,7 +558,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Gama Intermedia-Alta",
     "description": "Privacidad absoluta, oscuridad profunda y rendimiento térmico en 20\".",
-    "extra_price": 80,
+    "extra_price": 120,
     "is_default": false
   },
   {
@@ -575,7 +575,7 @@ export const ALL_OFFICIAL_TINT_MATERIALS = [
     "uv_rejection_pct": 99,
     "tech_type": "Gama Intermedia-Alta",
     "description": "Tono claro, sutil y elegante con visibilidad nocturna impecable en 40\".",
-    "extra_price": 80,
+    "extra_price": 120,
     "is_default": false
   }
 ];
@@ -638,7 +638,75 @@ const OFFICIAL_GAMAS = [
     description: "Quantum Original (14%, 19%, 28%), Endeavor",
     tierPill: "text-amber-800 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold",
   },
+
 ];
+
+// Body × gama surcharge matrix (sedán = 1.0 reference).
+// total ≈ POL body base + Σ zone extras × BODY_SURCHARGE_MULTIPLIERS[bodyClass]
+// Offline extra_price values below are full-car sedán surcharges (Tinmax 40 / Nano 95 / Premium 120).
+export const BODY_SURCHARGE_MULTIPLIERS = {
+  partial: 0.45,
+  hatch: 0.9,
+  sedan: 1.0,
+  pickup: 1.15,
+  suv: 1.25,
+  van: 1.35,
+  camion: 1.4,
+};
+
+export const BODY_CLASS_BY_CATEGORY = {
+  hatchback: "hatch",
+  sedan: "sedan",
+  camioneta_doble_cabina: "pickup",
+  camioneta_cabina_media: "pickup",
+  camioneta_1_cabina: "pickup",
+  suv: "suv",
+  station_wagon: "suv",
+  microbus_pasajeros: "van",
+  microbus_techo_alto: "van",
+  microbus_carga: "van",
+  bus_mediano_coaster: "van",
+  bus_grande_marcopolo: "van",
+  camion_1_cabina: "camion",
+  camion_2_cabinas: "camion",
+  camion_carga_furgon: "camion",
+  moto: "partial",
+};
+
+export function resolveBodyClass(categoryId) {
+  if (!categoryId) return "sedan";
+  const key = String(categoryId).trim().toLowerCase();
+  if (BODY_CLASS_BY_CATEGORY[key]) return BODY_CLASS_BY_CATEGORY[key];
+  if (key.includes("microbus") || key.includes("bus") || key.includes("van")) return "van";
+  if (key.includes("camioneta") || key.includes("pickup") || key.includes("pick-up")) return "pickup";
+  if (key.includes("camion") || key.includes("cabezal") || key.includes("truck")) return "camion";
+  if (key.includes("hatch")) return "hatch";
+  if (key.includes("suv") || key.includes("station")) return "suv";
+  if (key.includes("moto") || key.includes("franja") || key.includes("ventana")) return "partial";
+  return "sedan";
+}
+
+export function bodySurchargeMultiplier(categoryId) {
+  const body = resolveBodyClass(categoryId);
+  return BODY_SURCHARGE_MULTIPLIERS[body] ?? 1.0;
+}
+
+// Sedán-reference zone extras by gama (mirrors backend price_by_zone_group ladder)
+const GAMA_ZONE_EXTRAS_SEDAN = {
+  gama_economica: { windshield: 0, sides: 0, rear: 0 },
+  tinmax: { windshield: 10, sides: 20, rear: 10 },
+  nano_ceramico: { windshield: 25, sides: 45, rear: 25 },
+  gama_premium: { windshield: 35, sides: 50, rear: 35 },
+};
+
+const ZONE_TO_GROUP_FE = {
+  windshield: "windshield",
+  front_sides: "sides",
+  rear_sides: "sides",
+  rear: "rear",
+};
+
+
 
 // Configuración por defecto de zonas y políticas
 export const DEFAULT_TINT_CONFIG = {
@@ -1041,6 +1109,7 @@ export default function TintWindowMaterialDialog({
     const computeQuote = async () => {
       const planPayload = {
         vehicle_id: vehicle?.vehicle_id || vehicle?.id || null,
+        vehicle_category: selectedVehicleType || null,
         link_sides: linkSides,
         windows: {
           windshield: {
@@ -1079,7 +1148,7 @@ export default function TintWindowMaterialDialog({
     };
 
     computeQuote();
-  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle?.vehicle_id || vehicle?.id, isUnlocked, allowedZones]);
+  }, [isOpen, config, selectedMaterials, secondLayers, sunstrips, overrideFlags, linkSides, empalmeRear, vehicle?.vehicle_id || vehicle?.id, isUnlocked, allowedZones, selectedVehicleType]);
 
   const handleSelectMaterial = (zone, materialId) => {
     if (isSunstripOnly) {
@@ -1214,37 +1283,79 @@ export default function TintWindowMaterialDialog({
     });
   }, [allowedZones, isSunstripOnly, selectedMaterials, sunstrips]);
 
+  const bodyMultiplier = useMemo(
+    () => bodySurchargeMultiplier(selectedVehicleType),
+    [selectedVehicleType]
+  );
+
   const localMaterialsExtraTotal = useMemo(() => {
-    let total = 0;
+    // Offline / pre-quote fallback mirroring backend quote_tint_window_plan:
+    // charge windshield + sides (once if linked same mat) + rear using gama zone ladder,
+    // then scale by body multiplier. Prefer price_by_zone_group / price_extra_usd when present.
     const matsMap = {};
     activeMaterials.forEach((m) => {
       if (m.id) matsMap[m.id] = m;
       if (m.material_id) matsMap[m.material_id] = m;
     });
 
-    allowedZones.forEach((z) => {
-      const matId = selectedMaterials[z];
-      if (matId && matId !== "none") {
-        const matObj = matsMap[matId];
-        if (matObj?.price_extra_usd) {
-          total += Number(matObj.price_extra_usd);
-        } else if (matObj?.extra_price) {
-          total += Number(matObj.extra_price);
+    const zoneExtra = (zone, matObj) => {
+      if (!matObj) return 0;
+      const group = ZONE_TO_GROUP_FE[zone] || "sides";
+      const byZone = matObj.price_by_zone_group;
+      if (byZone && typeof byZone[group] === "number") return Number(byZone[group]);
+      if (typeof matObj.price_extra_usd === "number") return Number(matObj.price_extra_usd);
+      const gama = matObj.gama || matObj.gama_id || "tinmax";
+      const ladder = GAMA_ZONE_EXTRAS_SEDAN[gama] || GAMA_ZONE_EXTRAS_SEDAN.tinmax;
+      if (typeof matObj.extra_price === "number" && matObj.extra_price > 0) {
+        // extra_price is full-car sedán surcharge — allocate by zone share of ladder
+        const full = (ladder.windshield || 0) + (ladder.sides || 0) + (ladder.rear || 0);
+        if (full > 0) return (Number(matObj.extra_price) * (ladder[group] || 0)) / full;
+      }
+      return ladder[group] || 0;
+    };
+
+    let total = 0;
+    const ws = selectedMaterials.windshield;
+    const fs = selectedMaterials.front_sides;
+    const rs = selectedMaterials.rear_sides;
+    const rr = selectedMaterials.rear;
+
+    if (allowedZones.includes("windshield") && ws && ws !== "none") {
+      total += zoneExtra("windshield", matsMap[ws]);
+    }
+
+    const sidesAllowed =
+      (allowedZones.includes("front_sides") && fs && fs !== "none") ||
+      (allowedZones.includes("rear_sides") && rs && rs !== "none");
+    if (sidesAllowed) {
+      if (fs && rs && fs === rs && fs !== "none") {
+        total += zoneExtra("front_sides", matsMap[fs]);
+      } else {
+        if (allowedZones.includes("front_sides") && fs && fs !== "none") {
+          total += zoneExtra("front_sides", matsMap[fs]) * 0.5;
+        }
+        if (allowedZones.includes("rear_sides") && rs && rs !== "none") {
+          total += zoneExtra("rear_sides", matsMap[rs]) * 0.5;
         }
       }
+    }
+
+    if (allowedZones.includes("rear") && rr && rr !== "none") {
+      total += zoneExtra("rear", matsMap[rr]);
+    }
+
+    allowedZones.forEach((z) => {
       if (secondLayers[z]?.enabled) {
-        const secId = secondLayers[z]?.material_id;
-        const secObj = matsMap[secId];
-        if (secObj?.price_extra_usd) {
-          total += Number(secObj.price_extra_usd);
-        } else if (secObj?.extra_price) {
-          total += Number(secObj.extra_price);
-        }
+        const secObj = matsMap[secondLayers[z]?.material_id];
+        const group = ZONE_TO_GROUP_FE[z] || "sides";
+        let sec = zoneExtra(z, secObj);
+        if (z === "front_sides" || z === "rear_sides") sec *= 0.5;
+        total += sec;
       }
     });
 
-    return total;
-  }, [allowedZones, selectedMaterials, secondLayers, activeMaterials]);
+    return Math.round(total * bodyMultiplier * 100) / 100;
+  }, [allowedZones, selectedMaterials, secondLayers, activeMaterials, bodyMultiplier]);
 
   const effectiveMaterialsExtra = useMemo(() => {
     if (typeof quoteData?.materials_extra_total === "number" && quoteData.valid !== false) {
@@ -1456,7 +1567,7 @@ export default function TintWindowMaterialDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[98vw] sm:w-[96vw] max-w-6xl md:max-w-7xl max-h-[98dvh] h-[96dvh] md:h-[94vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl">
+      <DialogContent className="!w-[100dvw] !max-w-[100dvw] !h-[100dvh] !max-h-[100dvh] !rounded-none sm:!w-[min(100vw-1rem,1480px)] sm:!max-w-[1480px] sm:!h-[min(100dvh-1rem,980px)] sm:!max-h-[min(100dvh-1rem,980px)] sm:!rounded-2xl flex flex-col !p-0 overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl">
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 px-3.5 py-2.5 sm:p-4 text-white shrink-0 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

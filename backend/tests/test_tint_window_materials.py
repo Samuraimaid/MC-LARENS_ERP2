@@ -10,6 +10,7 @@ from backend.domains.tint.window_materials import (
     validate_tint_window_plan,
     quote_tint_window_plan,
     merge_policy_for_role,
+    resolve_body_surcharge_multiplier,
     DEFAULT_TINT_WINDOW_MATERIALS_POLICY,
 )
 
@@ -41,89 +42,137 @@ def test_resolve_vehicle_glass_bands_with_explicit_measurements():
     assert bands["front_sides"] == "side_under_20"
 
 
-def test_quote_standard_plan_zero_extra():
+def test_quote_tinmax_sedan_reference_extra():
+    """Tinmax full-car sedán reference: 10+20+10 = 40."""
     plan = {
-        "windows": {
-            "windshield": {"material_id": "std_20"},
-            "front_sides": {"material_id": "std_20"},
-            "rear_sides": {"material_id": "std_20"},
-            "rear": {"material_id": "std_20"},
-        }
-    }
-    quote = quote_tint_window_plan(plan)
-    assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 0.0
-
-
-def test_quote_carbon_plan_charge_once_per_group():
-    plan = {
-        "windows": {
-            "windshield": {"material_id": "sg_quantum_orig_19"},
-            "front_sides": {"material_id": "sg_quantum_orig_19"},
-            "rear_sides": {"material_id": "sg_quantum_orig_19"},
-            "rear": {"material_id": "sg_quantum_orig_19"},
-        }
-    }
-    # windshield=35, sides=60 (charged once for front+rear), rear=35 -> total = 130.0
-    quote = quote_tint_window_plan(plan)
-    assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 130.0
-
-
-def test_quote_with_independent_sides_materials():
-    plan = {
-        "windows": {
-            "windshield": {"material_id": "std_20"},
-            "front_sides": {"material_id": "std_20"},              # sides price = 0
-            "rear_sides": {"material_id": "sg_quantum_orig_19"},   # sides price = 60 -> 50% = 30.00
-            "rear": {"material_id": "std_20"},
-        }
-    }
-    quote = quote_tint_window_plan(plan)
-    assert quote["valid"] is True
-    # front_sides (0*0.5) + rear_sides (60*0.5=30) = 30.00
-    assert quote["materials_extra_total"] == 30.0
-
-
-def test_quote_with_second_layer():
-    plan = {
-        "windows": {
-            "windshield": {
-                "material_id": "std_70",
-                "second_layer": {"enabled": True, "material_id": "sg_quantum_orig_19"}, # +35
-            },
-            "front_sides": {"material_id": "std_20"},
-            "rear_sides": {"material_id": "std_20"},
-            "rear": {"material_id": "std_20"},
-        }
-    }
-    quote = quote_tint_window_plan(plan)
-    assert quote["valid"] is True
-    assert quote["materials_extra_total"] == 35.0
-    sec_layer_breakdown = [b for b in quote["price_breakdown"] if "2da Capa" in b["group_label"]]
-    assert len(sec_layer_breakdown) == 1
-    assert sec_layer_breakdown[0]["price_extra_usd"] == 35.0
-
-
-def test_quote_with_sunstrips():
-    plan = {
+        "vehicle_category": "sedan",
         "windows": {
             "windshield": {"material_id": "std_20"},
             "front_sides": {"material_id": "std_20"},
             "rear_sides": {"material_id": "std_20"},
             "rear": {"material_id": "std_20"},
         },
-        "sunstrips": {
-            "windshield_top": {"enabled": True, "material_id": "std_20"}, # +10
-            "rear_top": {"enabled": True, "material_id": "std_20"},       # +10
-        }
     }
     quote = quote_tint_window_plan(plan)
     assert quote["valid"] is True
-    # Base 0 + 10 (top windshield) + 10 (top rear) = 20
+    assert quote["materials_extra_total"] == 40.0
+    assert quote["body_class"] == "sedan"
+    assert quote["body_surcharge_multiplier"] == 1.0
+
+
+def test_quote_premium_sedan_extra():
+    """Premium full-car sedán: 35+50+35 = 120."""
+    plan = {
+        "vehicle_category": "sedan",
+        "windows": {
+            "windshield": {"material_id": "sg_quantum_orig_19"},
+            "front_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear": {"material_id": "sg_quantum_orig_19"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    assert quote["materials_extra_total"] == 120.0
+
+
+def test_quote_tinmax_suv_scales_by_body_multiplier():
+    """SUV multiplier 1.25 → Tinmax 40 * 1.25 = 50.0."""
+    plan = {
+        "vehicle_category": "suv",
+        "windows": {
+            "windshield": {"material_id": "std_20"},
+            "front_sides": {"material_id": "std_20"},
+            "rear_sides": {"material_id": "std_20"},
+            "rear": {"material_id": "std_20"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    assert quote["body_class"] == "suv"
+    assert quote["body_surcharge_multiplier"] == 1.25
+    assert quote["materials_extra_total"] == 50.0
+
+
+def test_quote_premium_van_highest_ladder():
+    """Van multiplier 1.35 → Premium 120 * 1.35 = 162.0."""
+    plan = {
+        "vehicle_category": "microbus_pasajeros",
+        "windows": {
+            "windshield": {"material_id": "sg_quantum_orig_19"},
+            "front_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},
+            "rear": {"material_id": "sg_quantum_orig_19"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    assert quote["body_class"] == "van"
+    assert quote["materials_extra_total"] == 162.0
+
+
+def test_quote_with_independent_sides_materials():
+    plan = {
+        "vehicle_category": "sedan",
+        "windows": {
+            "windshield": {"material_id": "std_20"},
+            "front_sides": {"material_id": "std_20"},  # sides 20 * 0.5 = 10
+            "rear_sides": {"material_id": "sg_quantum_orig_19"},  # sides 50 * 0.5 = 25
+            "rear": {"material_id": "std_20"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    # windshield 10 + front 10 + rear_sides 25 + rear 10 = 55
+    assert quote["materials_extra_total"] == 55.0
+
+
+def test_quote_with_second_layer():
+    plan = {
+        "vehicle_category": "sedan",
+        "windows": {
+            "windshield": {
+                "material_id": "std_70",  # tinmax windshield 10
+                "second_layer": {"enabled": True, "material_id": "sg_quantum_orig_19"},  # +35
+            },
+            "front_sides": {"material_id": "std_20"},
+            "rear_sides": {"material_id": "std_20"},
+            "rear": {"material_id": "std_20"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    # full tinmax 40 + second layer premium windshield 35 = 75
+    assert quote["materials_extra_total"] == 75.0
+    sec_layer_breakdown = [b for b in quote["price_breakdown"] if "2da Capa" in b["group_label"]]
+    assert len(sec_layer_breakdown) == 1
+    assert sec_layer_breakdown[0]["price_extra_usd"] == 35.0
+
+
+def test_quote_with_sunstrips_not_scaled_by_body():
+    plan = {
+        "vehicle_category": "suv",  # mult 1.25 — sunstrips stay flat
+        "windows": {
+            "windshield": {"material_id": "q1_05_40"},
+            "front_sides": {"material_id": "q1_05_40"},
+            "rear_sides": {"material_id": "q1_05_40"},
+            "rear": {"material_id": "q1_05_40"},
+        },
+        "sunstrips": {
+            "windshield_top": {"enabled": True, "material_id": "std_20"},
+            "rear_top": {"enabled": True, "material_id": "std_20"},
+        },
+    }
+    quote = quote_tint_window_plan(plan)
+    assert quote["valid"] is True
+    # económica extras 0 + 10 + 10 = 20 (sunstrips unscaled)
     assert quote["materials_extra_total"] == 20.0
-    sunstrip_breakdown = [b for b in quote["price_breakdown"] if "Banda" in b["group_label"]]
-    assert len(sunstrip_breakdown) == 2
+
+
+def test_resolve_body_multiplier_defaults_to_sedan():
+    body, mult = resolve_body_surcharge_multiplier({}, None, None)
+    assert body == "sedan"
+    assert mult == 1.0
 
 
 def test_validate_max_materials_exceeded():
@@ -135,8 +184,8 @@ def test_validate_max_materials_exceeded():
             "rear": {"material_id": "sg_endeavor_05"},
         },
         "sunstrips": {
-            "windshield_top": {"enabled": True, "material_id": "q1_05_40"}, # 5th material!
-        }
+            "windshield_top": {"enabled": True, "material_id": "q1_05_40"},
+        },
     }
     is_valid, err = validate_tint_window_plan(plan)
     assert is_valid is False

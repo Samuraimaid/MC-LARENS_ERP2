@@ -67,6 +67,66 @@ TINT_GAMAS = [
     },
 ]
 
+# ------------------------------------------------------------------------------
+# Body × gama pricing matrix (Lot B clarification 2026-09-25)
+#
+# Architecture:
+#   total ≈ POL-* body base (Económica unit_price) + Σ zone extras × body_multiplier
+# Zone extras in materials.price_by_zone_group are the **sedán / reference** ladder:
+#   Económica 0 / Tinmax 10+20+10=40 / Nano 25+45+25=95 / Premium 35+50+35=120
+# Body multipliers scale ONLY the gama zone surcharge (not the POL base, not sunstrips).
+# More windows / larger glass → higher multiplier. Gama names unchanged.
+# ------------------------------------------------------------------------------
+BODY_SURCHARGE_MULTIPLIERS = {
+    "partial": 0.45,  # ventana individual / franja / few panes
+    "hatch": 0.90,
+    "sedan": 1.00,  # reference
+    "pickup": 1.15,
+    "suv": 1.25,
+    "van": 1.35,
+    "camion": 1.40,
+}
+
+BODY_CLASS_BY_CATEGORY = {
+    "hatchback": "hatch",
+    "sedan": "sedan",
+    "camioneta_doble_cabina": "pickup",
+    "camioneta_cabina_media": "pickup",
+    "camioneta_1_cabina": "pickup",
+    "suv": "suv",
+    "station_wagon": "suv",
+    "microbus_pasajeros": "van",
+    "microbus_techo_alto": "van",
+    "microbus_carga": "van",
+    "bus_mediano_coaster": "van",
+    "bus_grande_marcopolo": "van",
+    "camion_1_cabina": "camion",
+    "camion_2_cabinas": "camion",
+    "camion_carga_furgon": "camion",
+    "moto": "partial",
+    # loose aliases
+    "hatch": "hatch",
+    "compacto": "hatch",
+    "pickup": "pickup",
+    "pick-up": "pickup",
+    "camioneta": "pickup",
+    "van": "van",
+    "microbus": "van",
+    "autobus": "van",
+    "bus": "van",
+    "camion": "camion",
+    "camión": "camion",
+    "cabezal": "camion",
+    "truck": "camion",
+    "partial": "partial",
+    "franja": "partial",
+    "delanteros": "partial",
+    "ventana": "partial",
+}
+
+# Target full-job examples (USD) ≈ $80–$300 band (2026-09-25 recal)
+#   sedán económica 90 | sedán nano 185 | SUV tinmax ≈155 | van/camion premium ≈282–298
+
 DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
     "require_plan_on_installed_sale": False,
     "max_materials_per_vehicle": 4,
@@ -80,6 +140,8 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
     "second_layer_policy": {
         "allow_second_layer": True,
     },
+    "body_surcharge_multipliers": dict(BODY_SURCHARGE_MULTIPLIERS),
+    "body_class_by_category": dict(BODY_CLASS_BY_CATEGORY),
     "glass_templates": {
         "toyota_hilux": {"windshield": "windshield_over_40", "sides": "side_over_20", "rear": "side_over_20"},
         "toyota_land_cruiser": {"windshield": "windshield_over_40", "sides": "side_over_20", "rear": "side_over_20"},
@@ -181,7 +243,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Máximo control térmico (99% IR) y total privacidad en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-05-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-05-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -204,7 +266,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tonalidad intermedia más popular y versátil en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-20-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-20-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -227,7 +289,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Claridad óptica superior (100% visibilidad nocturna) en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-35-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-35-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
@@ -250,7 +312,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Transparencia total para parabrisas delantero y visión nocturna.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-STD-70-W40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-STD-70-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -273,7 +335,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Película Tinmax Raybar de 40 pulgadas tono oscuro 5%.",
             "warranty_years": {"regular": 1, "original": 3},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-RB-05-W40", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-RB-05-W40", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -296,7 +358,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Sin tintes: tono que jamás se degrada ni se torna morado con los años.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-25-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-25-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -319,7 +381,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -342,7 +404,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Look uniforme, deportivo y elegante: balance perfecto entre privacidad y seguridad.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-3M-LSX-20-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-3M-LSX-20-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -365,7 +427,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Negro profundo resistente a rayaduras en rollo de 40 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-CH-07-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-CH-07-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -388,7 +450,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono intermedio 22% en rollo de 20 pulgadas para ventanas laterales.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-22-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-22-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -411,7 +473,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Ultra oscura: máxima privacidad, estética agresiva y cero interferencia electrónica.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-20-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-20-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -434,7 +496,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -484,7 +546,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Privacidad extrema y 90% rechazo infrarrojo. Tecnología multicapa en 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-04-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-04-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -507,7 +569,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Elegancia y confort con 90% IR. Control solar superior en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -599,7 +661,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono 30% en rollo de 40 pulgadas con rechazo térmico superior.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-30-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-30-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -622,7 +684,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Acabado ultra claro con protección solar y visión transparente en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CER-70-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CER-70-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
@@ -668,7 +730,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Efecto tornasol dinámico de alta gama que cambia de color según la luz solar.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 40.0, "sides": 70.0, "rear": 40.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-CAM-20-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-CAM-20-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
@@ -691,7 +753,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Blindaje térmico profesional basado en partículas de titanio al vacío.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-TIT-26-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-TIT-26-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
@@ -718,7 +780,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Película 100% metalizada por pulverización catódica en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 50.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-14-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-14-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -741,7 +803,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Punto medio perfecto (80% IR): excelente privacidad sin perder visión nocturna.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 50.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-19-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-19-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -764,7 +826,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro y sutil: 72% IR sin oscurecer el auto en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 50.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-28-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-28-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -787,7 +849,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Privacidad absoluta, oscuridad profunda y rendimiento térmico en 20\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 40.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 50.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-05-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -810,7 +872,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro, sutil y elegante con visibilidad nocturna impecable en 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 40.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 50.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -1080,6 +1142,91 @@ def validate_tint_window_plan(
     return True, None
 
 
+
+def normalize_vehicle_category_key(raw: Optional[str]) -> str:
+    """Normalize UI / vehicle type strings to a lookup key."""
+    if not raw:
+        return ""
+    s = str(raw).strip().lower()
+    for ch in ("/", "-", " "):
+        s = s.replace(ch, "_")
+    while "__" in s:
+        s = s.replace("__", "_")
+    return s.strip("_")
+
+
+def resolve_body_class(
+    plan: Optional[Dict[str, Any]] = None,
+    vehicle_doc: Optional[Dict[str, Any]] = None,
+    policy: Optional[Dict[str, Any]] = None,
+) -> str:
+    """
+    Map plan.vehicle_category / vehicle fields → body class used for surcharge scaling.
+    Default: sedan (multiplier 1.0).
+    """
+    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
+    class_map = pol.get("body_class_by_category") or BODY_CLASS_BY_CATEGORY
+
+    candidates: List[str] = []
+    if isinstance(plan, dict):
+        for k in ("vehicle_category", "body_class", "vehicle_type", "category"):
+            v = plan.get(k)
+            if v:
+                candidates.append(str(v))
+    if isinstance(vehicle_doc, dict):
+        for k in ("category", "vehicle_category", "type", "vehicle_type", "body_type"):
+            v = vehicle_doc.get(k)
+            if v:
+                candidates.append(str(v))
+
+    for raw in candidates:
+        key = normalize_vehicle_category_key(raw)
+        if key in class_map:
+            return class_map[key]
+        # try first token
+        token = key.split("_")[0] if key else ""
+        if token in class_map:
+            return class_map[token]
+        # substring heuristics
+        for needle, body in (
+            ("microbus", "van"),
+            ("autobus", "van"),
+            ("bus", "van"),
+            ("van", "van"),
+            ("camioneta", "pickup"),
+            ("pickup", "pickup"),
+            ("pick_up", "pickup"),
+            ("camion", "camion"),
+            ("cabezal", "camion"),
+            ("hatch", "hatch"),
+            ("sedan", "sedan"),
+            ("suv", "suv"),
+            ("station", "suv"),
+            ("moto", "partial"),
+        ):
+            if needle in key:
+                return body
+    return "sedan"
+
+
+def resolve_body_surcharge_multiplier(
+    plan: Optional[Dict[str, Any]] = None,
+    vehicle_doc: Optional[Dict[str, Any]] = None,
+    policy: Optional[Dict[str, Any]] = None,
+) -> Tuple[str, float]:
+    """Return (body_class, multiplier). Sedán reference = 1.0."""
+    pol = policy or DEFAULT_TINT_WINDOW_MATERIALS_POLICY
+    multipliers = pol.get("body_surcharge_multipliers") or BODY_SURCHARGE_MULTIPLIERS
+    body_class = resolve_body_class(plan, vehicle_doc, pol)
+    try:
+        mult = float(multipliers.get(body_class, 1.0))
+    except (TypeError, ValueError):
+        mult = 1.0
+    if mult <= 0:
+        mult = 1.0
+    return body_class, mult
+
+
 def quote_tint_window_plan(
     plan: Optional[Dict[str, Any]],
     vehicle_doc: Optional[Dict[str, Any]] = None,
@@ -1346,6 +1493,20 @@ def quote_tint_window_plan(
 
     has_empalme = any(r.get("is_empalme") for r in rolls_consumed)
 
+    # Scale gama zone surcharges by body class (sedán = 1.0). Sunstrips stay flat.
+    body_class, body_mult = resolve_body_surcharge_multiplier(plan, vehicle_doc, pol)
+    if abs(body_mult - 1.0) > 1e-9:
+        scaled_total = 0.0
+        for item in breakdown:
+            group = str(item.get("group") or "")
+            label = str(item.get("group_label") or "")
+            is_sunstrip = group.startswith("sunstrip") or "Banda" in label
+            if not is_sunstrip:
+                item["price_extra_usd"] = round(float(item.get("price_extra_usd") or 0.0) * body_mult, 2)
+                item["body_surcharge_multiplier"] = body_mult
+            scaled_total += float(item.get("price_extra_usd") or 0.0)
+        total_extra_usd = scaled_total
+
     return {
         "valid": True,
         "error": None,
@@ -1353,6 +1514,8 @@ def quote_tint_window_plan(
         "price_breakdown": breakdown,
         "rolls_consumed": rolls_consumed,
         "vehicle_size_bands": bands,
+        "body_class": body_class,
+        "body_surcharge_multiplier": body_mult,
         "has_empalme": has_empalme,
         "empalme_warning": "⚠️ AVISO DE CALIDAD: Instalación con empalme horizontal en 2 pliegos de 20\" autorizada." if has_empalme else None,
         "plan": plan,
