@@ -27,6 +27,7 @@ import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { showUndoToast } from "@/components/lists/undoToast";
 import { scheduleDelayedSend, DELAYED_SEND_MS } from "@/components/lists/delayedSend";
+import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { DestructiveConfirmDialog } from "@/components/destructive";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
@@ -125,6 +126,8 @@ export function InventoryPage() {
     notes: "",
   });
   const [zoneTransferLoading, setZoneTransferLoading] = useState(false);
+  /** U10: warehouse truck transfer waits for server — never optimistic. */
+  const [transferBusy, setTransferBusy] = useState(false);
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -260,90 +263,113 @@ export function InventoryPage() {
     }, { withCredentials: true });
   };
 
-  /** Soft activate: one click. Soft deactivate: U6 hold + verbs (irreversible-feel), then U3-style undo toast. */
+  /** Local UI flip for soft activate/deactivate (U10 optimistic + rollback). */
+  const patchInventoryActive = (item, makeActive) => {
+    if (!item?.inventory_id) return;
+    setInventory((prev) =>
+      prev.map((row) =>
+        row.inventory_id === item.inventory_id ? { ...row, is_active: makeActive } : row
+      )
+    );
+  };
+
+  /**
+   * Soft activate: U10 optimistic flip → API → rollback + ES toast on fail.
+   * Soft deactivate: U6 hold + verbs first (never skip confirm), then optimistic flip + U3 undo toast.
+   */
   const handleToggleProductStatus = async (item) => {
     if (!canEditInventory) return;
     const currentActive = item.is_active !== false;
     if (currentActive) {
-      // Deactivate → confirm dialog (never Sí/No)
+      // Deactivate → confirm dialog (never Sí/No); U6 hold preserved
       setPendingDeactivateItem(item);
       return;
     }
-    try {
-      await applySingleProductStatus(item, true);
-      toast.success("Producto activado en bodega");
-      fetchData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al cambiar estado del producto");
-    }
+    await optimisticUpdate({
+      apply: () => patchInventoryActive(item, true),
+      request: () => applySingleProductStatus(item, true),
+      rollback: () => patchInventoryActive(item, false),
+      errorMessage: "Error al activar el producto",
+      onSuccess: () => {
+        toast.success("Producto activado en bodega");
+      },
+    });
   };
 
   const confirmDeactivateProduct = async () => {
     const item = pendingDeactivateItem;
     if (!item) return;
     setDeactivateBusy(true);
-    try {
-      await applySingleProductStatus(item, false);
-      setPendingDeactivateItem(null);
-      await fetchData();
-      showUndoToast({
-        message: "Desactivado 1 producto",
-        description: "Puedes deshacer durante unos segundos",
-        durationMs: 10000,
-        onUndo: async () => {
-          try {
-            await applySingleProductStatus(item, true);
-            await fetchData();
-            toast.success("Producto reactivado");
-          } catch {
-            toast.error("No se pudo deshacer");
-          }
-        },
-      });
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
-    } finally {
-      setDeactivateBusy(false);
+    setPendingDeactivateItem(null);
+    const ok = await optimisticUpdate({
+      apply: () => patchInventoryActive(item, false),
+      request: () => applySingleProductStatus(item, false),
+      rollback: () => patchInventoryActive(item, true),
+      errorMessage: "Error al desactivar el producto",
+      onSuccess: () => {
+        showUndoToast({
+          message: "Desactivado 1 producto",
+          description: "Puedes deshacer durante unos segundos",
+          durationMs: 10000,
+          onUndo: async () => {
+            try {
+              await applySingleProductStatus(item, true);
+              patchInventoryActive(item, true);
+              toast.success("Producto reactivado");
+            } catch {
+              toast.error("No se pudo deshacer");
+            }
+          },
+        });
+      },
+    });
+    setDeactivateBusy(false);
+    if (!ok) {
+      /* rollback already applied inside optimisticUpdate */
     }
   };
 
-  /** U7 full-swipe destroy: no confirm modal — soft deactivate + ~5s undo toast. */
+  /** U7 full-swipe destroy: no confirm modal — soft deactivate + ~5s undo toast. U10: optimistic flip. */
   const swipeDeactivateProduct = async (item) => {
     if (!canEditInventory || !item) return;
-    try {
-      await applySingleProductStatus(item, false);
-      await fetchData();
-      showUndoToast({
-        message: "Desactivado 1 producto",
-        description: "Puedes deshacer durante unos segundos",
-        durationMs: 5000,
-        onUndo: async () => {
-          try {
-            await applySingleProductStatus(item, true);
-            await fetchData();
-            toast.success("Producto reactivado");
-          } catch {
-            toast.error("No se pudo deshacer");
-          }
-        },
-      });
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
-    }
+    await optimisticUpdate({
+      apply: () => patchInventoryActive(item, false),
+      request: () => applySingleProductStatus(item, false),
+      rollback: () => patchInventoryActive(item, true),
+      errorMessage: "Error al desactivar el producto",
+      onSuccess: () => {
+        showUndoToast({
+          message: "Desactivado 1 producto",
+          description: "Puedes deshacer durante unos segundos",
+          durationMs: 5000,
+          onUndo: async () => {
+            try {
+              await applySingleProductStatus(item, true);
+              patchInventoryActive(item, true);
+              toast.success("Producto reactivado");
+            } catch {
+              toast.error("No se pudo deshacer");
+            }
+          },
+        });
+      },
+    });
   };
 
   const swipeActivateProduct = async (item) => {
     if (!canEditInventory || !item) return;
-    try {
-      await applySingleProductStatus(item, true);
-      await fetchData();
-      toast.success("Producto activado en bodega");
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al activar el producto");
-    }
+    await optimisticUpdate({
+      apply: () => patchInventoryActive(item, true),
+      request: () => applySingleProductStatus(item, true),
+      rollback: () => patchInventoryActive(item, false),
+      errorMessage: "Error al activar el producto",
+      onSuccess: () => {
+        toast.success("Producto activado en bodega");
+      },
+    });
   };
 
-  const handleOpenZoneTransfer = (item) => {
+    const handleOpenZoneTransfer = (item) => {
     setZoneTransferItem(item);
     setZoneTransferForm({
       from_zone: "principal",
@@ -355,6 +381,7 @@ export function InventoryPage() {
     setShowZoneTransferDialog(true);
   };
 
+  /** U10 HARD GUARD — zone transfer: NEVER optimistic; wait for server + «Transfiriendo…». */
   const handleExecuteZoneTransfer = async () => {
     if (!zoneTransferItem) return;
     setZoneTransferLoading(true);
@@ -574,6 +601,7 @@ export function InventoryPage() {
     }
   };
 
+  /** U10 HARD GUARD — approve transfer: NEVER optimistic; await server then refresh. */
   const approveTransferRequest = async (requestId) => {
     try {
       await axios.put(`${API}/inventory/transfer-requests/${requestId}/approve`, null, { withCredentials: true });
@@ -586,6 +614,7 @@ export function InventoryPage() {
     }
   };
 
+  /** U10 HARD GUARD — reject transfer: NEVER optimistic; await server then refresh. */
   const rejectTransferRequest = async (requestId) => {
     try {
       await axios.put(`${API}/inventory/transfer-requests/${requestId}/reject`, null, {
@@ -599,6 +628,7 @@ export function InventoryPage() {
     }
   };
 
+  /** U10 HARD GUARD — ship transfer: NEVER optimistic; await server then refresh. */
   const shipTransferRequest = async (requestId) => {
     try {
       await axios.put(`${API}/inventory/transfer-requests/${requestId}/ship`, null, { withCredentials: true });
@@ -611,6 +641,7 @@ export function InventoryPage() {
     }
   };
 
+  /** U10 HARD GUARD — receive transfer: NEVER optimistic; await server then refresh. */
   const receiveTransferRequest = async (requestId) => {
     try {
       await axios.put(`${API}/inventory/transfer-requests/${requestId}/receive`, null, { withCredentials: true });
@@ -893,6 +924,10 @@ export function InventoryPage() {
     return digits;
   };
 
+  /**
+   * U10 HARD GUARD — warehouse truck transfer: NEVER optimistic.
+   * Show «Procesando…» / «Transfiriendo…» and wait for server truth before closing UI.
+   */
   const executeTransfer = async () => {
     if (!canEditInventory) {
       toast.error("No tienes permiso para transferir inventario");
@@ -911,6 +946,7 @@ export function InventoryPage() {
       toast.error("Cantidad inválida");
       return;
     }
+    setTransferBusy(true);
     try {
       await axios.post(`${API}/inventory/transfer`, null, {
         params: {
@@ -946,6 +982,8 @@ export function InventoryPage() {
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error en transferencia");
+    } finally {
+      setTransferBusy(false);
     }
   };
 
@@ -1429,11 +1467,30 @@ export function InventoryPage() {
       toast.message(makeActive ? "Todos ya están activos" : "Todos ya están inactivos");
       return;
     }
-    // U3: sin modal de confirmación; acción inmediata + toast Deshacer ~10s
+    // U3: sin modal; U10: optimistic local flip + rollback failures; toast Deshacer ~10s
+    const snapshot = targets.map((item) => ({
+      inventory_id: item.inventory_id,
+      is_active: item.is_active,
+    }));
+    const idSet = new Set(targets.map((t) => t.inventory_id));
+    setInventory((prev) =>
+      prev.map((row) => (idSet.has(row.inventory_id) ? { ...row, is_active: makeActive } : row))
+    );
     const { ok, fail, done } = await applyProductStatusBatch(targets, makeActive);
-    if (fail) toast.error(`${fail} con error`);
+    if (fail) {
+      const doneIds = new Set(done.map((d) => d.inventory_id));
+      setInventory((prev) =>
+        prev.map((row) => {
+          const snap = snapshot.find((s) => s.inventory_id === row.inventory_id);
+          if (snap && !doneIds.has(row.inventory_id)) {
+            return { ...row, is_active: snap.is_active };
+          }
+          return row;
+        })
+      );
+      toast.error(`${fail} con error`);
+    }
     if (!ok) return;
-    await fetchData();
     const verb = makeActive ? "Activado" : "Desactivado";
     const verbPlural = makeActive ? "Activados" : "Desactivados";
     showUndoToast({
@@ -1442,9 +1499,16 @@ export function InventoryPage() {
       durationMs: 10000,
       onUndo: async () => {
         const { ok: undone, fail: undoFail } = await applyProductStatusBatch(done, !makeActive);
-        if (undone) toast.success(undone === 1 ? "Cambio deshecho" : `${undone} cambios deshechos`);
+        if (undone) {
+          const undoneIds = new Set(done.map((d) => d.inventory_id));
+          setInventory((prev) =>
+            prev.map((row) =>
+              undoneIds.has(row.inventory_id) ? { ...row, is_active: !makeActive } : row
+            )
+          );
+          toast.success(undone === 1 ? "Cambio deshecho" : `${undone} cambios deshechos`);
+        }
         if (undoFail) toast.error(`${undoFail} no se pudieron deshacer`);
-        await fetchData();
       },
     });
   };
@@ -1909,9 +1973,12 @@ export function InventoryPage() {
                     data-testid="transfer-notes-input"
                   />
                 </div>
-                <Button onClick={executeTransfer} className="w-full" data-testid="execute-transfer-btn" disabled={!canEditInventory}>
-                  <Truck className="h-4 w-4 mr-2" />
-                  Registrar traslado
+                <Button onClick={executeTransfer} className="w-full" data-testid="execute-transfer-btn" disabled={!canEditInventory || transferBusy}>
+                  {transferBusy ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Procesando...</>
+                  ) : (
+                    <><Truck className="h-4 w-4 mr-2" /> Registrar traslado</>
+                  )}
                 </Button>
               </div>
             </DialogContent>

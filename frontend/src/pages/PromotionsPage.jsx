@@ -15,6 +15,7 @@ import { Switch } from "../components/ui/switch";
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { toast } from "sonner";
+import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { 
   Plus, Search, RefreshCw, Tag, Percent, DollarSign, 
   Calendar as CalendarIcon, Trash2, CheckCircle2, XCircle,
@@ -126,18 +127,39 @@ export function PromotionsPage() {
     }
   };
 
+  /** U10: soft activate/deactivate — optimistic flip + rollback + ES toast. */
   const togglePromoStatus = async (promo) => {
-    try {
-      await axios.put(`${API}/promotions/${promo.promotion_id}`, {
-        is_active: !promo.is_active
-      }, { withCredentials: true });
-      toast.success(promo.is_active ? "Promoción desactivada" : "Promoción activada");
-      fetchData();
-    } catch (error) {
-      toast.error("Error al actualizar promoción");
-    }
+    const nextActive = !promo.is_active;
+    const prevActive = promo.is_active;
+    await optimisticUpdate({
+      apply: () => {
+        setPromotions((prev) =>
+          prev.map((p) =>
+            p.promotion_id === promo.promotion_id ? { ...p, is_active: nextActive } : p
+          )
+        );
+      },
+      request: () =>
+        axios.put(
+          `${API}/promotions/${promo.promotion_id}`,
+          { is_active: nextActive },
+          { withCredentials: true }
+        ),
+      rollback: () => {
+        setPromotions((prev) =>
+          prev.map((p) =>
+            p.promotion_id === promo.promotion_id ? { ...p, is_active: prevActive } : p
+          )
+        );
+      },
+      errorMessage: "Error al actualizar promoción",
+      onSuccess: () => {
+        toast.success(prevActive ? "Promoción desactivada" : "Promoción activada");
+      },
+    });
   };
 
+  /** U10 HARD GUARD — hard Delete: NEVER optimistic; confirm then wait for server. */
   const deletePromotion = async (promo) => {
     if (!window.confirm(`¿Eliminar promoción "${promo.name}"?`)) return;
     try {

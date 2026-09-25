@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
 import { toast } from "sonner";
+import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { API_BASE as API } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { FollowupsPage } from "./FollowupsPage";
@@ -70,35 +71,47 @@ export function NotificationsPage() {
     }
   };
 
+  /** U10: mark-read is toggle-like — optimistic + rollback + ES toast. */
   const markRead = async (id) => {
-    // Optimistic update: mark locally first, update badge via event, then call API
     const prev = notes;
-    setNotes(notes.map(n => n.notification_id === id ? { ...n, read: true } : n));
-    // notify other components (Sidebar) to refresh unread badge
-    try {
-      window.dispatchEvent(new CustomEvent('notifications:changed'));
-    } catch (_) { /* ignore cross-window dispatch errors */ }
-    try {
-      await axios.put(`${API}/notifications/${id}/read`, null, { withCredentials: true });
-      // refresh list to ensure server state
-      fetchNotes();
-    } catch (e) {
-      toast.error("Error al marcar leída");
-      setNotes(prev);
-      try { window.dispatchEvent(new CustomEvent('notifications:changed')); } catch(_) { /* ignore */ }
-    }
+    await optimisticUpdate({
+      apply: () => {
+        setNotes((curr) => curr.map((n) => (n.notification_id === id ? { ...n, read: true } : n)));
+        try {
+          window.dispatchEvent(new CustomEvent("notifications:changed"));
+        } catch (_) { /* ignore */ }
+      },
+      request: () => axios.put(`${API}/notifications/${id}/read`, null, { withCredentials: true }),
+      rollback: () => {
+        setNotes(prev);
+        try {
+          window.dispatchEvent(new CustomEvent("notifications:changed"));
+        } catch (_) { /* ignore */ }
+      },
+      errorMessage: "Error al marcar leída",
+      onSuccess: () => {
+        fetchNotes();
+      },
+    });
   };
 
+  /**
+   * U10 HARD GUARD — Delete: NEVER optimistic.
+   * Wait for server truth, then update list (show busy via processing if needed).
+   */
   const deleteNote = async (id) => {
-    const prev = notes;
-    setNotes(notes.filter(n => n.notification_id !== id));
+    setProcessingAction(`delete:${id}`);
     try {
       await axios.delete(`${API}/notifications/${id}`, { withCredentials: true });
-      try { window.dispatchEvent(new CustomEvent('notifications:changed')); } catch (_) { /* ignore cross-window dispatch errors */ }
-      toast.success('Notificación eliminada');
+      setNotes((curr) => curr.filter((n) => n.notification_id !== id));
+      try {
+        window.dispatchEvent(new CustomEvent("notifications:changed"));
+      } catch (_) { /* ignore */ }
+      toast.success("Notificación eliminada");
     } catch (e) {
-      toast.error('Error al eliminar notificación');
-      setNotes(prev);
+      toast.error("Error al eliminar notificación");
+    } finally {
+      setProcessingAction("");
     }
   };
 
@@ -146,14 +159,23 @@ export function NotificationsPage() {
     navigate(`/sales?sale_id=${encodeURIComponent(saleId)}`);
   };
 
-  const persistUiPreferences = async ({ nextMode = mode, nextSkin = skin, nextMuted = soundMuted, nextProfile = soundProfile }) => {
+  /**
+   * U10: theme / sound prefs — local apply is instant (already OK); on API fail
+   * rollback previous values + Spanish error toast via optimisticUpdate.
+   */
+  const persistUiPreferences = async ({
+    nextMode = mode,
+    nextSkin = skin,
+    nextMuted = soundMuted,
+    nextProfile = soundProfile,
+    rollback,
+  }) => {
     setSavingUiPrefs(true);
+    const mergedCustom = mergeSoundPreferencesIntoThemeCustom(themeCustom, {
+      muted: nextMuted,
+      profile: nextProfile,
+    });
     try {
-      const mergedCustom = mergeSoundPreferencesIntoThemeCustom(themeCustom, {
-        muted: nextMuted,
-        profile: nextProfile,
-      });
-
       await axios.put(
         `${API}/settings/theme`,
         {
@@ -163,40 +185,69 @@ export function NotificationsPage() {
         },
         { withCredentials: true }
       );
-
       setThemeCustom(mergedCustom);
       persistSoundPreferencesToLocalStorage({ muted: nextMuted, profile: nextProfile });
       window.dispatchEvent(new Event("theme:sync"));
       window.dispatchEvent(new Event("ui:sound-sync"));
+      return true;
     } catch (error) {
+      if (typeof rollback === "function") rollback();
       toast.error(error?.response?.data?.detail || "No se pudieron guardar las preferencias");
+      return false;
     } finally {
       setSavingUiPrefs(false);
     }
   };
 
   const handleThemeModeChange = (nextMode) => {
+    const prevMode = mode;
     if (nextMode === "system") {
       setSystemTheme();
     } else {
       setMode(nextMode);
     }
-    persistUiPreferences({ nextMode });
+    persistUiPreferences({
+      nextMode,
+      rollback: () => {
+        if (prevMode === "system") setSystemTheme();
+        else setMode(prevMode);
+      },
+    });
   };
 
   const handleThemeSkinChange = (nextSkin) => {
+    const prevSkin = skin;
     setSkin(nextSkin);
-    persistUiPreferences({ nextSkin });
+    persistUiPreferences({
+      nextSkin,
+      rollback: () => setSkin(prevSkin),
+    });
   };
 
   const handleSoundMutedChange = (nextMuted) => {
+    const prevMuted = soundMuted;
     setSoundMuted(nextMuted);
-    persistUiPreferences({ nextMuted });
+    persistUiPreferences({
+      nextMuted,
+      rollback: () => {
+        setSoundMuted(prevMuted);
+        persistSoundPreferencesToLocalStorage({ muted: prevMuted, profile: soundProfile });
+        window.dispatchEvent(new Event("ui:sound-sync"));
+      },
+    });
   };
 
   const handleSoundProfileChange = (nextProfile) => {
+    const prevProfile = soundProfile;
     setSoundProfile(nextProfile);
-    persistUiPreferences({ nextProfile });
+    persistUiPreferences({
+      nextProfile,
+      rollback: () => {
+        setSoundProfile(prevProfile);
+        persistSoundPreferencesToLocalStorage({ muted: soundMuted, profile: prevProfile });
+        window.dispatchEvent(new Event("ui:sound-sync"));
+      },
+    });
   };
 
   return (
@@ -264,7 +315,7 @@ export function NotificationsPage() {
                     )}
                   </>
                 )}
-                {n.read && <Button variant="ghost" onClick={() => deleteNote(n.notification_id)}>Eliminar</Button>}
+                {n.read && <Button variant="ghost" onClick={() => deleteNote(n.notification_id)} disabled={processingAction === `delete:${n.notification_id}`}>Eliminar</Button>}
               </div>
             </CardContent>
           </Card>
