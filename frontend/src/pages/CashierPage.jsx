@@ -1388,6 +1388,8 @@ export function CashierPage() {
         }));
     }
 
+    const isPartialCollect = amount < pendingDue - 0.009;
+
     const payload = {
       sesion_id: sessionId,
       amount,
@@ -1396,6 +1398,7 @@ export function CashierPage() {
       notes: quick ? "Cobro rápido desde tarjeta" : collectForm.notes,
       received_amount: quick ? null : receivedAmount,
       force_remove_discount: Boolean(collectForm.force_remove_discount),
+      allow_partial: isPartialCollect,
       card_type: mode === "single" && cardSingle ? collectForm.card_type : null,
       bank_name: mode === "single" && cardSingle ? collectForm.bank_name : null,
       transaction_number: mode === "single" && cardSingle ? collectForm.transaction_number : null,
@@ -1406,8 +1409,6 @@ export function CashierPage() {
       toast.error("El monto debe ser mayor a 0");
       return;
     }
-
-    const isPartialCollect = amount < pendingDue - 0.009;
     if (!quick && useDualCurrency && !isPartialCollect) {
       if (!dualTotals.isComplete) {
         toast.error(`El cobro no cubre el pendiente. Faltan ${formatCashierMoney(dualTotals.remainingNio)}`);

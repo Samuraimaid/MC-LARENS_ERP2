@@ -247,6 +247,7 @@ def validate_cashier_collect_input(payload: Any) -> Dict[str, Any]:
     clean_data["amount"] = amount
     clean_data["reference"] = clean_reference or None
     clean_data["notes"] = clean_notes or None
+    clean_data["allow_partial"] = bool(data.get("allow_partial", False))
 
     return clean_data
 

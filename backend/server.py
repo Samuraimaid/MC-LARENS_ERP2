@@ -2187,6 +2187,7 @@ class CashierCollectRequest(FlexibleModel):
     idempotency_key: Optional[str] = None
     received_amount: Optional[float] = None
     force_remove_discount: bool = False
+    allow_partial: bool = False
     pagos: List[MixedPaymentItem] = Field(default_factory=list)
     autorizacion_descuento_pos: Optional[PosDiscountAuthorization] = None
     card_type: Optional[str] = None
@@ -14275,6 +14276,18 @@ async def collect_sale_invoice(sale_id: str, payload: CashierCollectRequest, req
 
     if amount > pending:
         raise HTTPException(status_code=400, detail=f"El cobro excede el pendiente. Pendiente actual: C${pending:.2f}")
+
+    if amount < _round2(pending - 0.009) and not getattr(payload, "allow_partial", False):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "AMOUNT_MISMATCH",
+                "code": "AMOUNT_MISMATCH",
+                "message": f"El monto a cobrar (C${amount:.2f}) es menor al saldo pendiente (C${pending:.2f}) sin 'allow_partial=true'",
+                "amount": amount,
+                "pending": pending,
+            },
+        )
 
     from backend.domains.sales.planned_payment_plan import validate_collect_against_plan
 
