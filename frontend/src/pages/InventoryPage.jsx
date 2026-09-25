@@ -18,8 +18,9 @@ import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2, Star, Check, Loader2
+  Truck, Trash2, Star, Check, Loader2, List, LayoutGrid, Columns2
 } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
@@ -82,6 +83,25 @@ export function InventoryPage() {
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
+  const INV_VIEW_KEY = "mclarens_inventory_view_mode";
+  const INV_VIEW_MODES = ["delgada", "intermedia", "columnas"];
+  const [inventoryViewMode, setInventoryViewMode] = useState(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(INV_VIEW_KEY) : null;
+      return INV_VIEW_MODES.includes(raw) ? raw : "delgada";
+    } catch {
+      return "delgada";
+    }
+  });
+  const setInventoryViewModePersist = (mode) => {
+    const next = INV_VIEW_MODES.includes(mode) ? mode : "delgada";
+    setInventoryViewMode(next);
+    try {
+      window.localStorage.setItem(INV_VIEW_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  };
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -1343,6 +1363,84 @@ export function InventoryPage() {
     };
   }, [inventory, products]);
 
+
+  const renderInventoryRowActions = (item, product, qtyAvailable, qtyTotal) => (
+    <div className="flex gap-1 flex-wrap justify-end">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setShowProductDetail(product)}
+        title="Ver detalles"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setEditingProduct(product)}
+        disabled={!canEditInventory}
+        title="Editar producto"
+      >
+        <Edit className="h-4 w-4" />
+      </Button>
+      {canViewInventoryLabels ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Imprimir etiquetas"
+          onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
+        >
+          <Barcode className="h-4 w-4" />
+        </Button>
+      ) : null}
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Ingresar stock"
+        onClick={() => {
+          setAddStock({
+            product_id: product.product_id || "",
+            warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
+            quantity: 1,
+          });
+          setShowAddStock(true);
+        }}
+        disabled={!canEditInventory}
+      >
+        <Plus className="h-4 w-4 text-primary" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
+        onClick={() => handleOpenZoneTransfer(item)}
+        disabled={!canEditInventory || qtyTotal <= 0}
+      >
+        <ArrowRightLeft className="h-4 w-4 text-amber-600" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Trasladar entre bodegas"
+        data-testid="transfer-row-btn"
+        onClick={() => openRowWarehouseTransfer(item, product)}
+        disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
+      >
+        <Truck className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Enviar por WhatsApp"
+        data-testid="whatsapp-row-btn"
+        onClick={() => openProductWhatsApp(item, product)}
+        className="hover:bg-[#25D366]/15"
+      >
+        <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6" data-testid="inventory-page">
       {!canViewInventory ? (
@@ -2344,9 +2442,63 @@ export function InventoryPage() {
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4" />
         </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-muted-foreground hidden sm:inline">Vista</span>
+          <ToggleGroup
+            type="single"
+            value={inventoryViewMode}
+            onValueChange={(v) => v && setInventoryViewModePersist(v)}
+            variant="outline"
+            size="sm"
+            className="rounded-full border border-border/60 bg-card/70 p-0.5 backdrop-blur-md shadow-sm"
+            data-testid="inventory-view-mode"
+            aria-label="Modo de vista de inventario"
+          >
+            <ToggleGroupItem
+              value="delgada"
+              title="Delgada — filas compactas"
+              aria-label="Vista delgada"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <List className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">Delgada</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="intermedia"
+              title="Intermedia — tarjetas con imagen"
+              aria-label="Vista intermedia"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">Intermedia</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="columnas"
+              title="2 columnas — rejilla con imágenes grandes"
+              aria-label="Vista 2 columnas"
+              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Columns2 className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline text-xs">2 columnas</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
 
-      {/* Inventory Table */}
+      {/* Inventory list (view modes) */}
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 flex justify-center">
+            <RefreshCw className="h-6 w-6 animate-spin" />
+          </CardContent>
+        </Card>
+      ) : filteredInventory.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            No hay inventario para mostrar
+          </CardContent>
+        </Card>
+      ) : inventoryViewMode === "delgada" ? (
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -2367,27 +2519,13 @@ export function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8">
-                    <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-                  </TableCell>
-                </TableRow>
-              ) : filteredInventory.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                    No hay inventario para mostrar
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
+              {filteredInventory.slice(0, inventoryVisibleLimit).map(item => {
                   const product = item.product || {};
                   const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
                   const qtyDamaged = item.quantity_damaged ?? 0;
                   const qtyIncomplete = item.quantity_incomplete ?? 0;
                   const qtyWarranty = item.quantity_warranty ?? 0;
                   const qtyTotal = item.quantity ?? 0;
-
                   const isZero = qtyAvailable === 0;
                   const isLow = !isZero && (qtyAvailable <= (item.min_stock || 5));
                   const warehouse = warehouses.find(w => w.warehouse_id === item.warehouse_id);
@@ -2395,14 +2533,19 @@ export function InventoryPage() {
                     ? <span className="text-muted-foreground italic text-xs">Sin asignar (0 stock)</span>
                     : (warehouse?.name || item.warehouse_id);
                   const isActiveInWarehouse = item.is_active !== false;
+                  const thumb = product.image_url || product.image || product.images?.[0];
 
                   return (
                     <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : ""}>
                       <TableCell className="font-mono">{product.sku || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {(product.image_url || product.image || product.images?.[0]) && (
-                            <img src={product.image_url || product.image || product.images?.[0]} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                          {thumb ? (
+                            <img src={thumb} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center">
+                              <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
                           )}
                           <span className="font-medium">{product.name || "Desconocido"}</span>
                         </div>
@@ -2416,7 +2559,6 @@ export function InventoryPage() {
                         </div>
                       </TableCell>
                       <TableCell>{warehouseLabel}</TableCell>
-                      {/* Virtual Zones breakdown */}
                       <TableCell className="text-center">
                         <span className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}>
                           {qtyAvailable}
@@ -2449,7 +2591,6 @@ export function InventoryPage() {
                       <TableCell className="text-right font-mono">
                         {formatCurrency(product.price || 0)}
                       </TableCell>
-                      {/* Warehouse Activation Toggle */}
                       <TableCell className="text-center">
                         <Badge
                           variant={isActiveInWarehouse ? "outline" : "secondary"}
@@ -2465,84 +2606,11 @@ export function InventoryPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setShowProductDetail(product)}
-                            title="Ver detalles"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setEditingProduct(product)}
-                            disabled={!canEditInventory}
-                            title="Editar producto"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {canViewInventoryLabels ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Imprimir etiquetas"
-                              onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
-                            >
-                              <Barcode className="h-4 w-4" />
-                            </Button>
-                          ) : null}
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Ingresar stock"
-                            onClick={() => {
-                              setAddStock({
-                                product_id: product.product_id || "",
-                                warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
-                                quantity: 1,
-                              });
-                              setShowAddStock(true);
-                            }}
-                            disabled={!canEditInventory}
-                          >
-                            <Plus className="h-4 w-4 text-primary" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
-                            onClick={() => handleOpenZoneTransfer(item)}
-                            disabled={!canEditInventory || qtyTotal <= 0}
-                          >
-                            <ArrowRightLeft className="h-4 w-4 text-amber-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Trasladar entre bodegas"
-                            data-testid="transfer-row-btn"
-                            onClick={() => openRowWarehouseTransfer(item, product)}
-                            disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
-                          >
-                            <Truck className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Enviar por WhatsApp"
-                            data-testid="whatsapp-row-btn"
-                            onClick={() => openProductWhatsApp(item, product)}
-                          >
-                            <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
-                          </Button>
-                        </div>
+                        {renderInventoryRowActions(item, product, qtyAvailable, qtyTotal)}
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
+                })}
             </TableBody>
           </Table>
           {filteredInventory.length > inventoryVisibleLimit && (
@@ -2558,6 +2626,141 @@ export function InventoryPage() {
           )}
         </CardContent>
       </Card>
+      ) : (
+        <>
+          <div
+            className={
+              inventoryViewMode === "columnas"
+                ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                : "flex flex-col gap-3"
+            }
+            data-testid={`inventory-view-${inventoryViewMode}`}
+          >
+            {filteredInventory.slice(0, inventoryVisibleLimit).map((item) => {
+              const product = item.product || {};
+              const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
+              const qtyDamaged = item.quantity_damaged ?? 0;
+              const qtyIncomplete = item.quantity_incomplete ?? 0;
+              const qtyWarranty = item.quantity_warranty ?? 0;
+              const qtyTotal = item.quantity ?? 0;
+              const isZero = qtyAvailable === 0;
+              const isLow = !isZero && (qtyAvailable <= (item.min_stock || 5));
+              const warehouse = warehouses.find((w) => w.warehouse_id === item.warehouse_id);
+              const warehouseLabel =
+                item.warehouse_id === "none"
+                  ? "Sin asignar (0 stock)"
+                  : warehouse?.name || item.warehouse_id;
+              const isActiveInWarehouse = item.is_active !== false;
+              const thumb = product.image_url || product.image || product.images?.[0];
+              const isGrid = inventoryViewMode === "columnas";
+
+              return (
+                <div
+                  key={item.inventory_id}
+                  data-testid={`inv-row-${item.inventory_id}`}
+                  className={`rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
+                    !isActiveInWarehouse ? "opacity-60" : ""
+                  } ${isGrid ? "flex flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
+                >
+                  <div
+                    className={`relative shrink-0 bg-muted/30 ${
+                      isGrid
+                        ? "w-full aspect-[16/10]"
+                        : "w-full sm:w-28 h-36 sm:h-auto sm:self-stretch"
+                    }`}
+                  >
+                    {thumb ? (
+                      <img
+                        src={thumb}
+                        alt=""
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Package className="h-10 w-10 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+                  <div className={`flex-1 p-4 flex flex-col gap-3 min-w-0 ${isGrid ? "" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs text-muted-foreground">{product.sku || "-"}</p>
+                        <h3 className="font-semibold text-base leading-snug truncate">
+                          {product.name || "Desconocido"}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">
+                            {getCategoryName(product.category)}
+                          </Badge>
+                          {product.subcategory ? (
+                            <span className="text-xs text-muted-foreground">{product.subcategory}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={isActiveInWarehouse ? "outline" : "secondary"}
+                        className={`cursor-pointer shrink-0 text-[11px] ${
+                          isActiveInWarehouse
+                            ? "border-emerald-500 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10"
+                            : "line-through"
+                        }`}
+                        onClick={() => canEditInventory && handleToggleProductStatus(item)}
+                      >
+                        {isActiveInWarehouse ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Bodega</p>
+                        <p className="font-medium truncate">{warehouseLabel}</p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Disponible</p>
+                        <p className={`font-mono font-bold ${isZero ? "text-muted-foreground" : isLow ? "text-red-500" : "text-emerald-600"}`}>
+                          {qtyAvailable}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Total</p>
+                        <p className="font-mono font-bold">{qtyTotal}</p>
+                      </div>
+                      <div className="rounded-xl bg-background/50 border border-border/40 px-2.5 py-1.5">
+                        <p className="text-muted-foreground">Precio</p>
+                        <p className="font-mono font-semibold">{formatCurrency(product.price || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+                      <span>Dañ. {qtyDamaged}</span>
+                      <span>·</span>
+                      <span>Inc. {qtyIncomplete}</span>
+                      <span>·</span>
+                      <span>Gar. {qtyWarranty}</span>
+                    </div>
+
+                    <div className="mt-auto pt-1 border-t border-border/40">
+                      {renderInventoryRowActions(item, product, qtyAvailable, qtyTotal)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filteredInventory.length > inventoryVisibleLimit && (
+            <div className="pt-2 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setInventoryVisibleLimit((prev) => prev + 50)}
+                className="w-full sm:w-auto rounded-full"
+              >
+                Cargar más inventario ({inventoryVisibleLimit} de {filteredInventory.length})
+              </Button>
+            </div>
+          )}
+        </>
+      )}
       </TabsContent>
 
       {canManageLogistics ? (
@@ -3334,9 +3537,9 @@ export function InventoryPage() {
       }}>
         <DialogContent className="max-w-md" data-testid="transfer-whatsapp-dialog">
           <DialogHeader>
-            <DialogTitle>Avisar bodega destino por WhatsApp</DialogTitle>
+            <DialogTitle>¿Avisar destino? (opcional)</DialogTitle>
             <DialogDescription>
-              Las bodegas no tienen teléfono en el sistema. Ingresa el número del contacto destino (o usa el predeterminado guardado en este navegador).
+              Opcional. El traslado ya quedó registrado. Puedes omitir o enviar un aviso por WhatsApp si tienes el teléfono del contacto en destino.
             </DialogDescription>
           </DialogHeader>
           {transferWaSummary ? (
@@ -3367,10 +3570,11 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                 </label>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowTransferWhatsApp(false)} data-testid="transfer-wa-skip-btn">
+                <Button onClick={() => setShowTransferWhatsApp(false)} data-testid="transfer-wa-skip-btn">
                   Omitir
                 </Button>
                 <Button
+                  variant="outline"
                   data-testid="transfer-wa-send-btn"
                   onClick={() => {
                     const digits = normalizeWaPhone(transferWaPhone);
