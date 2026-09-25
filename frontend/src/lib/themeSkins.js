@@ -17,6 +17,7 @@ export const THEME_SKINS = [
   { id: "blossom", label: "Blossom", group: "Femenino", description: "Rosa y arena", swatches: ["#BE123C", "#F59E0B", "#F472B6", "#FDE68A"] },
   { id: "prism", label: "Prism", group: "LGBT+", description: "Arcoiris moderno", swatches: ["#EF4444", "#F59E0B", "#22C55E", "#3B82F6"] },
   { id: "wild-paws", label: "Wild Paws", group: "Furry", description: "Bosque y canela", swatches: ["#166534", "#A16207", "#92400E", "#F59E0B"] },
+  { id: "wachin", label: "Wachin", group: "Custom", description: "Teal de selección + rojo destructivo (paleta design-motion de los videos UX)", swatches: ["#05080A", "#14B8A6", "#EF4444", "#F3FAF8"] },
   { id: "spectrum-01", label: "Spectrum 01", group: "Spectrum", description: "Rojo", swatches: ["#EF4444", "#0F172A", "#E2E8F0", "#F8FAFC"] },
   { id: "spectrum-02", label: "Spectrum 02", group: "Spectrum", description: "Naranja", swatches: ["#F97316", "#0F172A", "#E2E8F0", "#F8FAFC"] },
   { id: "spectrum-03", label: "Spectrum 03", group: "Spectrum", description: "Ambar", swatches: ["#F59E0B", "#0F172A", "#E2E8F0", "#F8FAFC"] },

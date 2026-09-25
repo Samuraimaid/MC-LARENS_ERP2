@@ -896,6 +896,73 @@
         --font-body: 'Nunito', sans-serif;
     }
 
+
+    /* Wachin — paleta de los videos UX (teal selección + rojo destructivo) */
+    :root[data-skin="wachin"] {
+        --background: 160 33% 97%;
+        --foreground: 190 25% 8%;
+        --card: 160 28% 94%;
+        --card-foreground: 190 25% 8%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 190 25% 8%;
+        --primary: 173 80% 36%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 174 45% 90%;
+        --secondary-foreground: 173 60% 22%;
+        --muted: 160 18% 92%;
+        --muted-foreground: 190 10% 40%;
+        --accent: 173 70% 42%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 173 40% 36% / 0.22;
+        --input: 160 18% 88%;
+        --ring: 173 80% 36%;
+        --chart-1: 173 80% 36%;
+        --chart-2: 190 70% 45%;
+        --chart-3: 0 72% 51%;
+        --chart-4: 38 92% 50%;
+        --chart-5: 262 70% 55%;
+        --success: 173 70% 36%;
+        --warning: 38 92% 50%;
+        --error: 0 72% 51%;
+        --info: 190 80% 42%;
+        --font-heading: 'Microgramma', 'Michroma', 'Chakra Petch', sans-serif;
+        --font-body: 'Microgramma', 'Michroma', 'Chakra Petch', sans-serif;
+    }
+    .dark[data-skin="wachin"] {
+        --background: 190 22% 4%;
+        --foreground: 0 0% 98%;
+        --card: 185 16% 9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 190 22% 5%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 172 70% 45%;
+        --primary-foreground: 190 25% 6%;
+        --secondary: 185 14% 16%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 185 12% 14%;
+        --muted-foreground: 180 10% 65%;
+        --accent: 172 66% 50%;
+        --accent-foreground: 190 25% 6%;
+        --destructive: 0 72% 55%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 172 50% 40% / 0.28;
+        --input: 185 12% 16%;
+        --ring: 172 70% 45%;
+        --chart-1: 172 70% 45%;
+        --chart-2: 190 70% 50%;
+        --chart-3: 0 72% 55%;
+        --chart-4: 38 80% 55%;
+        --chart-5: 262 70% 60%;
+        --success: 172 65% 42%;
+        --warning: 38 80% 55%;
+        --error: 0 72% 55%;
+        --info: 190 70% 50%;
+        --font-heading: 'Microgramma', 'Michroma', 'Chakra Petch', sans-serif;
+        --font-body: 'Microgramma', 'Michroma', 'Chakra Petch', sans-serif;
+    }
+
     :root[data-skin="spectrum-01"] {
         --background: 0 50% 97%;
         --foreground: 220 18% 12%;

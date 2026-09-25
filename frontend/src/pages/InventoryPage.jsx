@@ -35,6 +35,7 @@ import { buildProductPricePayload, roundTo2 } from "@/lib/priceTiers";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { densityTokens } from "@/components/lists/listDensity";
 
 export function InventoryPage() {
@@ -201,15 +202,16 @@ export function InventoryPage() {
   const [newBrand, setNewBrand] = useState("");
   const [newModel, setNewModel] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (opts) => {
+    const silent = Boolean(opts && typeof opts === "object" && opts.silent);
     if (!canViewInventory) {
       setInventory([]);
       setProducts([]);
       setWarehouses([]);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (selectedWarehouse !== "all") params.append("warehouse_id", selectedWarehouse);
@@ -233,9 +235,11 @@ export function InventoryPage() {
     } catch (error) {
       toast.error("Error al cargar inventario");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [selectedWarehouse, showLowStock, selectedCategory, selectedZone, includeInactive, canViewInventory]);
+
+  const softRefresh = useCallback(() => fetchData({ silent: true }), [fetchData]);
 
   const handleToggleProductStatus = async (item) => {
     const currentActive = item.is_active !== false;
@@ -1560,6 +1564,7 @@ export function InventoryPage() {
   );
 
   return (
+    <PullToRefresh onRefresh={softRefresh} testId="inventory-pull-to-refresh">
     <div className="p-6 space-y-6" data-testid="inventory-page">
       {!canViewInventory ? (
         <Card>
@@ -4096,5 +4101,6 @@ Notas: ${transferWaSummary.notes}` : ''}`}
       </>
       )}
     </div>
+    </PullToRefresh>
   );
 }

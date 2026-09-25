@@ -33,6 +33,7 @@ import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelec
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
+import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function VehiclesPage() {
@@ -85,8 +86,9 @@ export function VehiclesPage() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (opts) => {
+    const silent = Boolean(opts && typeof opts === "object" && opts.silent);
+    if (!silent) setLoading(true);
     try {
       const [vehiclesRes, customersRes] = await Promise.all([
         axios.get(`${API}/vehicles`, { withCredentials: true }),
@@ -97,9 +99,11 @@ export function VehiclesPage() {
     } catch (error) {
       toast.error("Error al cargar datos");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  const softRefresh = () => fetchData({ silent: true });
 
   const createVehicle = async () => {
     if (!formData.customer_id || !formData.plate || !formData.brand || !formData.year || !formData.model) {
@@ -253,6 +257,7 @@ export function VehiclesPage() {
   };
 
   return (
+    <PullToRefresh onRefresh={softRefresh} testId="vehicles-pull-to-refresh">
     <div className="p-6 space-y-6" data-testid="vehicles-page">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -562,5 +567,6 @@ export function VehiclesPage() {
       </div>
       <BackToTopButton />
     </div>
+    </PullToRefresh>
   );
 }

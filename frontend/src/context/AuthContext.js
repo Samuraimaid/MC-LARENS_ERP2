@@ -236,6 +236,19 @@ const applyThemePreferences = (userDoc) => {
   }
   window.localStorage.setItem(THEME_SKIN_KEY, nextSkin);
 
+  const themeCustom = userDoc.theme_custom && typeof userDoc.theme_custom === "object"
+    ? userDoc.theme_custom
+    : {};
+  if (typeof themeCustom.liquid_glass === "boolean") {
+    window.localStorage.setItem("liquid_glass", themeCustom.liquid_glass ? "true" : "false");
+  }
+  if (themeCustom.liquid_glass_opacity != null) {
+    window.localStorage.setItem(
+      "mclarens-liquid-glass-opacity",
+      String(themeCustom.liquid_glass_opacity)
+    );
+  }
+
   const userSoundPrefs = extractSoundPreferencesFromThemeCustom(userDoc.theme_custom);
   persistSoundPreferencesToLocalStorage({
     muted: userSoundPrefs.muted ?? DEFAULT_UI_SOUND_MUTED,
@@ -388,8 +401,9 @@ export function AuthProvider({ children }) {
         { session_id: sessionId },
         { withCredentials: true }
       );
-      setUser(response.data);
-      setStoredUser(response.data);
+      const sessionUser = response.data?.user || response.data;
+      setUser(sessionUser);
+      setStoredUser(sessionUser);
       if (response.data?.session_token) {
         setStoredSessionToken(response.data.session_token);
       }
@@ -400,7 +414,7 @@ export function AuthProvider({ children }) {
       } catch (error) {
         setPermissions(null);
       }
-      applyThemePreferences(response.data);
+      applyThemePreferences(response.data?.user || response.data);
       restoreDrafts();
       try {
         const res = await axios.get(`${API}/drafts/backup`, { withCredentials: true });

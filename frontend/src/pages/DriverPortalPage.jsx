@@ -5,6 +5,7 @@ import { Camera, CheckCircle2, Clock, MapPin, Package, RefreshCw, Truck } from "
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE as API } from "@/lib/api";
+import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -203,8 +204,9 @@ export function DriverPortalPage() {
     document.title = "MC-LARENS Conductor";
   }, []);
 
-  const loadJobs = useCallback(async () => {
-    setLoading(true);
+  const loadJobs = useCallback(async (opts) => {
+    const silent = Boolean(opts && typeof opts === "object" && opts.silent);
+    if (!silent) setLoading(true);
     try {
       const response = await axios.get(`${API}/hr/drivers/portal/jobs`, { withCredentials: true });
       setJobsPayload(response.data);
@@ -215,9 +217,11 @@ export function DriverPortalPage() {
       }
       toast.error(error?.response?.data?.detail || "No se pudieron cargar las tareas");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [navigate, token]);
+
+  const softRefresh = useCallback(() => loadJobs({ silent: true }), [loadJobs]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -365,6 +369,11 @@ export function DriverPortalPage() {
   }
 
   return (
+    <PullToRefresh
+      onRefresh={softRefresh}
+      scrollRoot="window"
+      testId="driver-pull-to-refresh"
+    >
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white pb-10">
       <header className="sticky top-0 z-10 border-b border-white/10 bg-slate-950/90 backdrop-blur px-4 py-4">
         <div className="mx-auto max-w-lg flex items-center justify-between gap-3">
@@ -547,5 +556,6 @@ export function DriverPortalPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </PullToRefresh>
   );
 }
