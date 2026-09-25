@@ -3130,7 +3130,7 @@ class CheckoutRequest(FlexibleModel):
 
 
 class WorkOrder(FlexibleModel):
-    work_order_id: Optional[str] = None
+    work_order_id: str = Field(default_factory=lambda: f"wo_{uuid.uuid4().hex[:8]}")
     sale_id: Optional[str] = None
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
@@ -15420,7 +15420,9 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
         f"{vehicle['brand']} {vehicle['model']} {vehicle['year']} - {vehicle['plate']}"
     )
 
+    generated_wo_id = f"wo_{uuid.uuid4().hex[:8]}"
     work_order = WorkOrder(
+        work_order_id=generated_wo_id,
         sale_id=wo_data.sale_id,
         customer_id=customer["customer_id"],
         customer_name=customer["name"],
@@ -15434,6 +15436,8 @@ async def create_work_order(wo_data: WorkOrderCreate, request: Request):
     )
 
     doc = work_order.model_dump()
+    if not doc.get("work_order_id"):
+        doc["work_order_id"] = generated_wo_id
     doc["created_at"] = doc["created_at"].isoformat()
     await db.work_orders.insert_one(doc)
     doc.pop("_id", None)
