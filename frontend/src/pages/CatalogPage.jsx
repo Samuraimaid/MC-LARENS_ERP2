@@ -980,7 +980,7 @@ export function CatalogPage() {
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
                 <Input
                   ref={searchInputRef}
-                  placeholder="Buscar SKU, nombre, marca… (pegar funciona)"
+                  placeholder="Buscar SKU, nombre, marca…"
                   value={search}
                   onChange={(event) => applySearchValue(event.target.value)}
                   onInput={(event) => applySearchValue(event.target.value)}

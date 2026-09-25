@@ -7071,15 +7071,11 @@ async def get_products(
         
     search_term = (q or search or "").strip()
     if search_term:
-        conditions.append({
-            "$or": [
-                {"name": {"$regex": search_term, "$options": "i"}},
-                {"sku": {"$regex": search_term, "$options": "i"}},
-                {"description": {"$regex": search_term, "$options": "i"}},
-                {"brand": {"$regex": search_term, "$options": "i"}},
-                {"barcode": {"$regex": search_term, "$options": "i"}},
-            ]
-        })
+        from backend.domains.search.product_search_soft import build_product_search_or_clauses
+
+        soft_or = build_product_search_or_clauses(search_term)
+        if soft_or:
+            conditions.append({"$or": soft_or})
 
     if len(conditions) > 1:
         query: Dict[str, Any] = {"$and": conditions}
