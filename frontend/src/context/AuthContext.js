@@ -22,7 +22,7 @@ const DRAFT_BACKUP_KEY = "draft_backup_v1";
 const THEME_MODE_KEY = "theme_mode";
 const THEME_SKIN_KEY = "theme_skin";
 const LEGACY_THEME_KEY = "theme";
-const SYNC_DEBOUNCE_MS = 1500;
+const SYNC_DEBOUNCE_MS = 800;
 
 const debounce = (fn, waitMs) => {
   let timer = null;

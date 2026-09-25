@@ -32,7 +32,24 @@ import {
 import SaleForm from "../components/sales/SaleForm";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
-import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
+import {
+  AUTOSAVE_DEBOUNCE_MS,
+  AUTOSAVE_STATUS,
+  clearAutosaveDirty,
+  emitAutosaveStatus,
+  setAutosaveDirty,
+} from "@/lib/autosaveStatus";
+import {
+  drainOfflineDraftQueue,
+  enqueueOfflineDraftSave,
+  isBrowserOffline,
+} from "@/lib/offlineDraftQueue";
+import {
+  detectDraftConflicts,
+  promptDraftConflictToast,
+} from "@/lib/draftConflict";
+import AutosavePill from "@/components/common/AutosavePill";
+import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
 import { fetchEffectiveIvaRate, DEFAULT_IVA_RATE } from "@/lib/taxRate";
@@ -372,6 +389,7 @@ export function QuotationsPage() {
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
   const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
   const [draftSaveState, setDraftSaveState] = useState("idle");
+  useAutosaveLifecycle({ enabled: true });
   const [saveFlash, setSaveFlash] = useState(false);
   const [boardTab, setBoardTab] = useState("drafts");
   const [currency, setCurrency] = useState("NIO");
@@ -381,19 +399,40 @@ export function QuotationsPage() {
   const quoteFormAnchorRef = useRef(null);
   const draftSyncTimersRef = useRef(new Map());
   const supervisorWatchingDraftRef = useRef(null);
+    const markDraftTyping = useCallback(() => {
+      setDraftSaveState("typing");
+      setAutosaveDirty("quotations", true);
+      emitAutosaveStatus(AUTOSAVE_STATUS.TYPING, { source: "quotations" });
+    }, []);
+
     const markDraftSaving = useCallback(() => {
       setDraftSaveState("saving");
-      emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "quotations" });
+      setAutosaveDirty("quotations", true);
+      emitAutosaveStatus(AUTOSAVE_STATUS.TYPING, { source: "quotations" });
+    }, []);
+
+    const markDraftSyncing = useCallback(() => {
+      setDraftSaveState("saving");
+      setAutosaveDirty("quotations", true);
+      emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "quotations" });
     }, []);
 
     const markDraftSaved = useCallback(() => {
       setDraftSaveState("saved");
+      clearAutosaveDirty("quotations");
       emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
     }, []);
 
     const markDraftSaveError = useCallback(() => {
       setDraftSaveState("error");
-      emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "quotations" });
+      setAutosaveDirty("quotations", true);
+      emitAutosaveStatus(AUTOSAVE_STATUS.ERROR, { source: "quotations", message: "No se pudo guardar" });
+    }, []);
+
+    const markDraftOffline = useCallback(() => {
+      setDraftSaveState("offline");
+      setAutosaveDirty("quotations", true);
+      emitAutosaveStatus(AUTOSAVE_STATUS.OFFLINE, { source: "quotations" });
     }, []);
 
   useEffect(() => {
@@ -687,11 +726,26 @@ export function QuotationsPage() {
           ? bundle.activeDraftId
           : (eligibleServerDrafts[0]?.id ?? null);
 
+        const conflicts = detectDraftConflicts(DRAFT_KEY_PREFIX, eligibleServerDrafts);
+        const conflictIds = new Set(conflicts.map((c) => c.draftId));
+        conflicts.forEach((conflict) => {
+          promptDraftConflictToast(conflict, {
+            draftKeyPrefix: DRAFT_KEY_PREFIX,
+            onResolved: (result) => {
+              if (result?.applied === "local" && result.snapshot) {
+                scheduleDraftSync(conflict.draftId, result.snapshot);
+              }
+              setDraftContentRevision((prev) => prev + 1);
+              setQuoteFormRenderNonce((prev) => prev + 1);
+            },
+          });
+        });
+        const safeServerDrafts = eligibleServerDrafts.filter((d) => !conflictIds.has(d.id));
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: eligibleServerDrafts,
+          drafts: safeServerDrafts,
           activeDraftId: nextActiveDraftId,
         });
         setDraftTabs(eligibleServerDrafts.map((draft) => ({
@@ -704,6 +758,7 @@ export function QuotationsPage() {
         })));
         setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "quotations" });
+        drainOfflineDraftQueue().catch(() => {});
       } catch (error) {
         if (cancelled) return;
         const fallback = getUsableLocalDraftState();
@@ -891,17 +946,28 @@ export function QuotationsPage() {
 
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
-    setDraftSaveState("saving");
-    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "quotations" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
     if (!isSaleDraftSaveEligible(snapshot)) {
       markDraftSaved();
       return;
     }
+    const draftName = nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`;
+    if (isBrowserOffline()) {
+      enqueueOfflineDraftSave({
+        flow: DRAFT_FLOW,
+        draftId,
+        name: draftName,
+        snapshot,
+        source: "quotations",
+      });
+      markDraftOffline();
+      return;
+    }
+    markDraftSyncing();
     try {
       const saved = await saveServerDraft(DRAFT_FLOW, draftId, {
-        name: nameOverride || tab?.name || `Cotización ${draftTabsRef.current.length || 1}`,
+        name: draftName,
         snapshot,
       });
       if (saved?.review) {
@@ -922,13 +988,28 @@ export function QuotationsPage() {
           "Este borrador está en revisión por supervisión. El formulario se ocultó; al liberarlo usa «Mostrar formulario» o «Abrir borrador».",
         );
         setShowNewQuote(false);
+        markDraftSaveError();
+        throw error;
+      }
+      enqueueOfflineDraftSave({
+        flow: DRAFT_FLOW,
+        draftId,
+        name: draftName,
+        snapshot,
+        source: "quotations",
+      });
+      if (isBrowserOffline() || !error.response) {
+        markDraftOffline();
+      } else {
+        markDraftSaveError();
       }
       throw error;
     }
-  }, [DRAFT_FLOW, markDraftSaved]);
+  }, [DRAFT_FLOW, markDraftOffline, markDraftSaved, markDraftSaveError, markDraftSyncing]);
 
   const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId || typeof window === "undefined") return;
+    markDraftTyping();
     const existingTimer = draftSyncTimersRef.current.get(draftId);
     if (existingTimer) {
       window.clearTimeout(existingTimer);
@@ -938,9 +1019,9 @@ export function QuotationsPage() {
         // keep local draft if remote sync fails
       });
       draftSyncTimersRef.current.delete(draftId);
-    }, 500);
+    }, AUTOSAVE_DEBOUNCE_MS);
     draftSyncTimersRef.current.set(draftId, timerId);
-  }, [syncDraftToServer]);
+  }, [markDraftTyping, syncDraftToServer]);
 
   const isDraftEmpty = (draftId) => {
     if (typeof window === "undefined") return true;
@@ -1763,6 +1844,7 @@ export function QuotationsPage() {
                   />
                 ) : null}
               </ErpFormToolbar>
+              <AutosavePill sourceFilter="quotations" testId="quotations-autosave-pill" />
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
@@ -1854,7 +1936,7 @@ export function QuotationsPage() {
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
                 if (!isSaleDraftSaveEligible(snapshot)) return;
-                markDraftSaving();
+                markDraftTyping();
                 updateDraftTabMeta(activeDraftId, {
                   ...snapshot,
                   validDays,
@@ -1863,11 +1945,12 @@ export function QuotationsPage() {
               onDraftSaveStateChange={(payload) => {
                 const state = payload?.state;
                 if (state === "saving") {
-                  markDraftSaving();
+                  markDraftTyping();
                   return;
                 }
                 if (state === "saved") {
-                  markDraftSaved();
+                  // Local only — Guardado requires server confirm
+                  markDraftTyping();
                   return;
                 }
                 if (state === "error") {

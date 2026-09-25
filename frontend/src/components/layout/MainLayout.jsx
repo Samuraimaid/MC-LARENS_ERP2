@@ -12,6 +12,8 @@ import { getWatermarkLogoForSkin } from "../../lib/themeSkins";
 import { APP_ENV } from "../../lib/env";
 import { API_BASE as API } from "@/lib/api";
 import { AUTOSAVE_STATUS, AUTOSAVE_STATUS_EVENT } from "../../lib/autosaveStatus";
+import { useAutosaveLifecycle } from "../../hooks/useAutosaveLifecycle";
+import AutosavePill from "../common/AutosavePill";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -101,6 +103,7 @@ export function MainLayout() {
   const [unlockRemainingAttempts, setUnlockRemainingAttempts] = useState(3);
   const [lockOverlayTone, setLockOverlayTone] = useState("warning");
   const [sellerAutosaveStatus, setSellerAutosaveStatus] = useState(AUTOSAVE_STATUS.SYNCED);
+  useAutosaveLifecycle({ enabled: true });
   const [sellerServerStatus, setSellerServerStatus] = useState("unknown");
   const lastBackWarningRef = useRef(0);
   const branding = getBrandingForBranch(user?.branch_id);
@@ -176,9 +179,17 @@ export function MainLayout() {
 
     switch (effectiveStatus) {
       case AUTOSAVE_STATUS.DISCONNECTED:
+      case AUTOSAVE_STATUS.OFFLINE:
         return {
           icon: CloudAlert,
-          title: "Sin conexión con el servidor",
+          title: "Sin conexión",
+          className: "text-destructive hover:text-destructive hover:bg-destructive/10",
+          iconClassName: "",
+        };
+      case AUTOSAVE_STATUS.ERROR:
+        return {
+          icon: CloudAlert,
+          title: "Error · No se pudo guardar",
           className: "text-destructive hover:text-destructive hover:bg-destructive/10",
           iconClassName: "",
         };
@@ -189,17 +200,18 @@ export function MainLayout() {
           className: "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10",
           iconClassName: "animate-pulse",
         };
+      case AUTOSAVE_STATUS.TYPING:
       case AUTOSAVE_STATUS.SAVING:
         return {
           icon: CloudUpload,
-          title: "Guardando cambios localmente",
+          title: "Escribiendo…",
           className: "text-violet-600 hover:text-violet-700 hover:bg-violet-500/10",
           iconClassName: "animate-pulse",
         };
       case AUTOSAVE_STATUS.SYNCING:
         return {
           icon: HeaderCloudSyncIcon,
-          title: "Sincronizando con el servidor",
+          title: "Guardando…",
           className: "text-primary hover:text-primary hover:bg-primary/10",
           iconClassName: "animate-spin",
         };
@@ -207,7 +219,7 @@ export function MainLayout() {
       default:
         return {
           icon: HeaderCloudCheckIcon,
-          title: "Todo guardado y sincronizado",
+          title: "Guardado",
           className: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10",
           iconClassName: "",
         };
@@ -769,6 +781,11 @@ export function MainLayout() {
             </div>
             <div className="relative z-10">
               <Outlet />
+              <div className="pointer-events-none fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6">
+                <div className="pointer-events-auto">
+                  <AutosavePill testId="layout-autosave-pill" />
+                </div>
+              </div>
             </div>
           </main>
         </div>

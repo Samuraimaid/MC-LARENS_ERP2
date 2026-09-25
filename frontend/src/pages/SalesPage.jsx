@@ -34,7 +34,24 @@ import {
   User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock, Copy } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
-import { AUTOSAVE_STATUS, emitAutosaveStatus } from "@/lib/autosaveStatus";
+import {
+  AUTOSAVE_DEBOUNCE_MS,
+  AUTOSAVE_STATUS,
+  clearAutosaveDirty,
+  emitAutosaveStatus,
+  setAutosaveDirty,
+} from "@/lib/autosaveStatus";
+import {
+  drainOfflineDraftQueue,
+  enqueueOfflineDraftSave,
+  isBrowserOffline,
+} from "@/lib/offlineDraftQueue";
+import {
+  detectDraftConflicts,
+  promptDraftConflictToast,
+} from "@/lib/draftConflict";
+import AutosavePill from "@/components/common/AutosavePill";
+import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import {
@@ -477,6 +494,7 @@ export function SalesPage() {
   const [draftContentRevision, setDraftContentRevision] = useState(0);
   const [showArchivedSales, setShowArchivedSales] = useState(false);
   const [draftSaveState, setDraftSaveState] = useState("idle");
+  useAutosaveLifecycle({ enabled: true });
   const [draftSavedAt, setDraftSavedAt] = useState(null);
   const deliveryNotifSinceRef = useRef(null);
   const seenDeliveryNotifIdsRef = useRef(new Set());
@@ -567,20 +585,41 @@ export function SalesPage() {
   const supervisorWatchingDraftRef = useRef(null);
   const saleFormAnchorRef = useRef(null);
 
+  const markDraftTyping = useCallback(() => {
+    setDraftSaveState("typing");
+    setAutosaveDirty("sales", true);
+    emitAutosaveStatus(AUTOSAVE_STATUS.TYPING, { source: "sales" });
+  }, []);
+
   const markDraftSaving = useCallback(() => {
     setDraftSaveState("saving");
-    emitAutosaveStatus(AUTOSAVE_STATUS.SAVING, { source: "sales" });
+    setAutosaveDirty("sales", true);
+    emitAutosaveStatus(AUTOSAVE_STATUS.TYPING, { source: "sales" });
+  }, []);
+
+  const markDraftSyncing = useCallback(() => {
+    setDraftSaveState("saving");
+    setAutosaveDirty("sales", true);
+    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "sales" });
   }, []);
 
   const markDraftSaved = useCallback(() => {
     setDraftSaveState("saved");
     setDraftSavedAt(new Date());
+    clearAutosaveDirty("sales");
     emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
   }, []);
 
   const markDraftSaveError = useCallback(() => {
     setDraftSaveState("error");
-    emitAutosaveStatus(AUTOSAVE_STATUS.DISCONNECTED, { source: "sales" });
+    setAutosaveDirty("sales", true);
+    emitAutosaveStatus(AUTOSAVE_STATUS.ERROR, { source: "sales", message: "No se pudo guardar" });
+  }, []);
+
+  const markDraftOffline = useCallback(() => {
+    setDraftSaveState("offline");
+    setAutosaveDirty("sales", true);
+    emitAutosaveStatus(AUTOSAVE_STATUS.OFFLINE, { source: "sales" });
   }, []);
   const formVisibilityStorageKey = useMemo(() => {
     const userToken = user?.user_id || user?.pin_user_id || "anon";
@@ -676,13 +715,29 @@ export function SalesPage() {
           ? bundle.activeDraftId
           : (eligibleServerDrafts[0]?.id ?? null);
 
+        const conflicts = detectDraftConflicts(DRAFT_KEY_PREFIX, eligibleServerDrafts);
+        const conflictIds = new Set(conflicts.map((c) => c.draftId));
+        const safeServerDrafts = eligibleServerDrafts.filter((d) => !conflictIds.has(d.id));
+        conflicts.forEach((conflict) => {
+          promptDraftConflictToast(conflict, {
+            draftKeyPrefix: DRAFT_KEY_PREFIX,
+            onResolved: (result) => {
+              if (result?.applied === "local" && result.snapshot) {
+                scheduleDraftSync(conflict.draftId, result.snapshot);
+              }
+              setDraftContentRevision((prev) => prev + 1);
+              setSaleFormRenderNonce((prev) => prev + 1);
+            },
+          });
+        });
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: eligibleServerDrafts,
+          drafts: safeServerDrafts.length ? safeServerDrafts : eligibleServerDrafts.filter((d) => conflictIds.has(d.id) ? false : true),
           activeDraftId: nextActiveDraftId,
         });
+        // For conflicts keep local snapshot; still show tab meta from server list
         setDraftTabs(eligibleServerDrafts.map((draft) => ({
           id: draft.id,
           name: draft.name,
@@ -693,6 +748,7 @@ export function SalesPage() {
         })));
         setActiveDraftId(nextActiveDraftId);
         emitAutosaveStatus(AUTOSAVE_STATUS.SYNCED, { source: "sales" });
+        drainOfflineDraftQueue().catch(() => {});
       } catch (error) {
         if (cancelled) return;
         const fallback = getUsableLocalDraftState();
@@ -1234,17 +1290,28 @@ export function SalesPage() {
 
   const syncDraftToServer = useCallback(async (draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId) return;
-    setDraftSaveState("saving");
-    emitAutosaveStatus(AUTOSAVE_STATUS.SYNCING, { source: "sales" });
     const tab = draftTabsRef.current.find((entry) => entry.id === draftId);
     const snapshot = snapshotOverride === undefined ? readDraft(draftId) || {} : (snapshotOverride || {});
     if (!isSaleDraftSaveEligible(snapshot)) {
       markDraftSaved();
       return;
     }
+    const draftName = nameOverride || tab?.name || `Venta ${draftTabsRef.current.length || 1}`;
+    if (isBrowserOffline()) {
+      enqueueOfflineDraftSave({
+        flow: DRAFT_FLOW,
+        draftId,
+        name: draftName,
+        snapshot,
+        source: "sales",
+      });
+      markDraftOffline();
+      return;
+    }
+    markDraftSyncing();
     try {
       const saved = await saveServerDraft(DRAFT_FLOW, draftId, {
-        name: nameOverride || tab?.name || `Venta ${draftTabsRef.current.length || 1}`,
+        name: draftName,
         snapshot,
       });
       if (saved?.review) {
@@ -1265,11 +1332,24 @@ export function SalesPage() {
           "Este borrador está en revisión por supervisión. El formulario se ocultó; al liberarlo usa «Mostrar formulario» o «Abrir borrador».",
         );
         setShowNewSale(false);
+        markDraftSaveError();
+        throw error;
       }
-      markDraftSaveError();
+      enqueueOfflineDraftSave({
+        flow: DRAFT_FLOW,
+        draftId,
+        name: draftName,
+        snapshot,
+        source: "sales",
+      });
+      if (isBrowserOffline() || !error.response) {
+        markDraftOffline();
+      } else {
+        markDraftSaveError();
+      }
       throw error;
     }
-  }, [DRAFT_FLOW, markDraftSaved, markDraftSaveError, markDraftSaving]);
+  }, [DRAFT_FLOW, markDraftOffline, markDraftSaved, markDraftSaveError, markDraftSyncing]);
 
   const cancelScheduledDraftSync = useCallback((draftId) => {
     if (!draftId || typeof window === "undefined") return;
@@ -1282,6 +1362,7 @@ export function SalesPage() {
 
   const scheduleDraftSync = useCallback((draftId, snapshotOverride = undefined, nameOverride = undefined) => {
     if (!draftId || typeof window === "undefined") return;
+    markDraftTyping();
     const existingTimer = draftSyncTimersRef.current.get(draftId);
     if (existingTimer) {
       window.clearTimeout(existingTimer);
@@ -1291,9 +1372,9 @@ export function SalesPage() {
         // preserve local draft state if server sync fails
       });
       draftSyncTimersRef.current.delete(draftId);
-    }, 500);
+    }, AUTOSAVE_DEBOUNCE_MS);
     draftSyncTimersRef.current.set(draftId, timerId);
-  }, [syncDraftToServer]);
+  }, [markDraftTyping, syncDraftToServer]);
 
   const isDraftEmpty = (draftId) => {
     if (typeof window === "undefined") return true;
@@ -2928,6 +3009,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   />
                 ) : null}
               </ErpFormToolbar>
+              <AutosavePill sourceFilter="sales" testId="sales-autosave-pill" />
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
@@ -3013,18 +3095,19 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               onDraftPersist={(snapshot) => {
                 if (!activeDraftId) return;
                 if (!isSaleDraftSaveEligible(snapshot)) return;
-                markDraftSaving();
+                markDraftTyping();
                 updateDraftTabMeta(activeDraftId, snapshot);
               }}
               onDraftSaveStateChange={(payload) => {
                 if (!activeDraftId) return;
                 const state = payload?.state;
                 if (state === "saving") {
-                  markDraftSaving();
+                  markDraftTyping();
                   return;
                 }
                 if (state === "saved") {
-                  markDraftSaved();
+                  // Local only — Guardado requires server confirm via syncDraftToServer
+                  markDraftTyping();
                   return;
                 }
                 if (state === "error") {
