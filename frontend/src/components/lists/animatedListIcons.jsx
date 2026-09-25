@@ -1,27 +1,12 @@
+/**
+ * Density / back-to-top icons.
+ * Import only from lucide-react — lucideAnimatedBridge rewrites those imports.
+ * Do NOT also import lucide-animated or createAnimatedLucideIcon here (duplicate symbol).
+ */
 import { List, ListPlus, LayoutGrid, ChevronUp, ArrowUp } from "lucide-react";
-import {
-  ListIcon as AnimatedList,
-  LayoutGridIcon as AnimatedLayoutGrid,
-  ChevronUpIcon as AnimatedChevronUp,
-  ArrowUpIcon as AnimatedArrowUp,
-} from "lucide-animated";
-import { createAnimatedLucideIcon } from "@/icons/createAnimatedLucideIcon";
 
-/** List / ListPlus / LayoutGrid / ChevronUp — lucide-animated con fallback. */
-export const AnimatedListIcon = createAnimatedLucideIcon(AnimatedList, List, "AnimatedListIcon");
-export const AnimatedListPlusIcon = createAnimatedLucideIcon(null, ListPlus, "AnimatedListPlusIcon");
-export const AnimatedLayoutGridIcon = createAnimatedLucideIcon(
-  AnimatedLayoutGrid,
-  LayoutGrid,
-  "AnimatedLayoutGridIcon"
-);
-export const AnimatedChevronUpIcon = createAnimatedLucideIcon(
-  AnimatedChevronUp,
-  ChevronUp,
-  "AnimatedChevronUpIcon"
-);
-export const AnimatedArrowUpIcon = createAnimatedLucideIcon(
-  AnimatedArrowUp,
-  ArrowUp,
-  "AnimatedArrowUpIcon"
-);
+export const AnimatedListIcon = List;
+export const AnimatedListPlusIcon = ListPlus;
+export const AnimatedLayoutGridIcon = LayoutGrid;
+export const AnimatedChevronUpIcon = ChevronUp;
+export const AnimatedArrowUpIcon = ArrowUp;
