@@ -25,6 +25,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { buildTransferJobId } from "@/lib/driverDispatch";
 import { buildProductPricePayload, roundTo2 } from "@/lib/priceTiers";
 
@@ -153,7 +154,21 @@ export function InventoryPage() {
     from_warehouse: "",
     to_warehouse: "",
     quantity: 1,
+    notes: "",
   });
+  // Product WhatsApp share context (stock/bodega for message template)
+  const [waStockContext, setWaStockContext] = useState(null);
+  // Post-transfer WhatsApp notify (destination warehouse has no phone in API)
+  const [showTransferWhatsApp, setShowTransferWhatsApp] = useState(false);
+  const [transferWaSummary, setTransferWaSummary] = useState(null);
+  const [transferWaPhone, setTransferWaPhone] = useState(() => {
+    try {
+      return localStorage.getItem("mclarens_default_transfer_wa_phone") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [transferWaRememberPhone, setTransferWaRememberPhone] = useState(false);
 
   const [addStock, setAddStock] = useState({
     product_id: "",
@@ -729,13 +744,70 @@ export function InventoryPage() {
     }
   };
 
+  const emptyTransferForm = () => ({
+    product_id: "",
+    from_warehouse: "",
+    to_warehouse: "",
+    quantity: 1,
+    notes: "",
+  });
+
+  const openRowWarehouseTransfer = (item, product) => {
+    if (!canEditInventory) {
+      toast.error("No tienes permiso para transferir inventario");
+      return;
+    }
+    const fromWh = item.warehouse_id === "none" ? "" : (item.warehouse_id || "");
+    const maxQty = Math.max(1, Number(item.quantity_available ?? item.quantity ?? 1) || 1);
+    setTransfer({
+      product_id: product.product_id || item.product_id || "",
+      from_warehouse: fromWh,
+      to_warehouse: "",
+      quantity: Math.min(1, maxQty) || 1,
+      notes: "",
+    });
+    setShowTransfer(true);
+  };
+
+  const openProductWhatsApp = (item, product) => {
+    const warehouse = warehouses.find((w) => w.warehouse_id === item.warehouse_id);
+    const warehouseName = item.warehouse_id === "none"
+      ? "Sin asignar"
+      : (warehouse?.name || item.warehouse_id || "—");
+    setWaProduct(product);
+    setWaStockContext({
+      quantity: Number(item.quantity_available ?? item.quantity ?? 0) || 0,
+      warehouseName,
+      warehouseId: item.warehouse_id,
+    });
+    setWaSearch("");
+    setWaResults([]);
+    setWaSelectedCustomer(null);
+    setShowWhatsApp(true);
+  };
+
+  const normalizeWaPhone = (raw) => {
+    let digits = String(raw || "").replace(/[^0-9]/g, "");
+    if (digits.length === 8) digits = `505${digits}`;
+    return digits;
+  };
+
   const executeTransfer = async () => {
     if (!canEditInventory) {
       toast.error("No tienes permiso para transferir inventario");
       return;
     }
+    if (!transfer.product_id || !transfer.from_warehouse || !transfer.to_warehouse) {
+      toast.error("Completa producto, bodega origen y destino");
+      return;
+    }
     if (transfer.from_warehouse === transfer.to_warehouse) {
       toast.error("Las bodegas deben ser diferentes");
+      return;
+    }
+    const qty = Math.max(1, parseInt(transfer.quantity, 10) || 0);
+    if (!qty) {
+      toast.error("Cantidad inválida");
       return;
     }
     try {
@@ -744,13 +816,32 @@ export function InventoryPage() {
           product_id: transfer.product_id,
           from_warehouse: transfer.from_warehouse,
           to_warehouse: transfer.to_warehouse,
-          quantity: transfer.quantity,
+          quantity: qty,
         },
         withCredentials: true,
       });
-      toast.success("Transferencia realizada");
+      const product = products.find((p) => p.product_id === transfer.product_id) || {};
+      const fromName = warehouses.find((w) => w.warehouse_id === transfer.from_warehouse)?.name || transfer.from_warehouse;
+      const toName = warehouses.find((w) => w.warehouse_id === transfer.to_warehouse)?.name || transfer.to_warehouse;
+      const summary = {
+        productName: product.name || transfer.product_id,
+        sku: product.sku || "",
+        quantity: qty,
+        fromName,
+        toName,
+        notes: (transfer.notes || "").trim(),
+      };
+      toast.success("Traslado entre bodegas realizado");
       setShowTransfer(false);
-      setTransfer({ product_id: "", from_warehouse: "", to_warehouse: "", quantity: 1 });
+      setTransfer(emptyTransferForm());
+      setTransferWaSummary(summary);
+      try {
+        setTransferWaPhone(localStorage.getItem("mclarens_default_transfer_wa_phone") || "");
+      } catch {
+        setTransferWaPhone("");
+      }
+      setTransferWaRememberPhone(false);
+      setShowTransferWhatsApp(true);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error en transferencia");
@@ -1346,22 +1437,36 @@ export function InventoryPage() {
           ) : null}
 
           {!isWarehouseRole ? (
-          <Dialog open={showTransfer} onOpenChange={setShowTransfer}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="transfer-btn" disabled={!canEditInventory}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Transferir
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+            <Button
+              variant="outline"
+              data-testid="transfer-btn"
+              disabled={!canEditInventory}
+              onClick={() => {
+                setTransfer(emptyTransferForm());
+                setShowTransfer(true);
+              }}
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              Transferir
+            </Button>
+          ) : null}
+
+          <Dialog open={showTransfer} onOpenChange={(open) => {
+            setShowTransfer(open);
+            if (!open) setTransfer(emptyTransferForm());
+          }}>
+            <DialogContent data-testid="warehouse-transfer-dialog">
               <DialogHeader>
-                <DialogTitle>Transferir Inventario</DialogTitle>
+                <DialogTitle>Trasladar entre bodegas</DialogTitle>
+                <DialogDescription>
+                  Traslado inmediato de stock (mismo flujo que Transferir del encabezado). Las notas se usan solo para el aviso por WhatsApp.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label>Producto</Label>
                   <Select value={transfer.product_id} onValueChange={(v) => setTransfer({ ...transfer, product_id: v })}>
-                    <SelectTrigger>
+                    <SelectTrigger data-testid="transfer-product-select">
                       <SelectValue placeholder="Seleccionar producto" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1375,9 +1480,9 @@ export function InventoryPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Desde Bodega</Label>
+                    <Label>Desde bodega</Label>
                     <Select value={transfer.from_warehouse} onValueChange={(v) => setTransfer({ ...transfer, from_warehouse: v })}>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="transfer-from-select">
                         <SelectValue placeholder="Origen" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1388,9 +1493,9 @@ export function InventoryPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Hacia Bodega</Label>
+                    <Label>Hacia bodega</Label>
                     <Select value={transfer.to_warehouse} onValueChange={(v) => setTransfer({ ...transfer, to_warehouse: v })}>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="transfer-to-select">
                         <SelectValue placeholder="Destino" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1408,15 +1513,26 @@ export function InventoryPage() {
                     min="1"
                     value={transfer.quantity}
                     onChange={(e) => setTransfer({ ...transfer, quantity: parseInt(e.target.value) || 1 })}
+                    data-testid="transfer-quantity-input"
+                  />
+                </div>
+                <div>
+                  <Label>Notas (opcional)</Label>
+                  <Textarea
+                    value={transfer.notes || ""}
+                    onChange={(e) => setTransfer({ ...transfer, notes: e.target.value })}
+                    placeholder="Ej. urgente para pedido de mostrador"
+                    rows={2}
+                    data-testid="transfer-notes-input"
                   />
                 </div>
                 <Button onClick={executeTransfer} className="w-full" data-testid="execute-transfer-btn" disabled={!canEditInventory}>
-                  Ejecutar Transferencia
+                  <Truck className="h-4 w-4 mr-2" />
+                  Registrar traslado
                 </Button>
               </div>
-              </DialogContent>
+            </DialogContent>
           </Dialog>
-          ) : null}
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
             <DialogTrigger asChild>
@@ -2405,10 +2521,21 @@ export function InventoryPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Enviar por WhatsApp"
-                            onClick={() => { setWaProduct(product); setShowWhatsApp(true); setWaSearch(''); setWaResults([]); setWaSelectedCustomer(null); }}
+                            title="Trasladar entre bodegas"
+                            data-testid="transfer-row-btn"
+                            onClick={() => openRowWarehouseTransfer(item, product)}
+                            disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
                           >
                             <Truck className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Enviar por WhatsApp"
+                            data-testid="whatsapp-row-btn"
+                            onClick={() => openProductWhatsApp(item, product)}
+                          >
+                            <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                           </Button>
                         </div>
                       </TableCell>
@@ -3107,14 +3234,31 @@ export function InventoryPage() {
         canPrint={canPrintInventoryLabels}
       />
 
-      {/* WhatsApp send dialog */}
-      <Dialog open={showWhatsApp} onOpenChange={() => setShowWhatsApp(false)}>
-        <DialogContent className="max-w-2xl">
+      {/* WhatsApp send dialog — product/stock share */}
+      <Dialog open={showWhatsApp} onOpenChange={(open) => {
+        setShowWhatsApp(open);
+        if (!open) {
+          setWaProduct(null);
+          setWaStockContext(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl" data-testid="product-whatsapp-dialog">
           <DialogHeader>
             <DialogTitle>Enviar producto por WhatsApp</DialogTitle>
-            <DialogDescription>Selecciona el cliente al que deseas enviar la información</DialogDescription>
+            <DialogDescription>Selecciona el cliente al que deseas enviar la información de stock</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            {waProduct ? (
+              <div className="rounded border bg-muted/30 p-3 text-sm">
+                <div className="font-medium">{waProduct.name}</div>
+                <div className="text-muted-foreground">
+                  SKU: {waProduct.sku || "—"} · Precio: {formatCurrency(waProduct.price || 0)}
+                  {waStockContext ? (
+                    <> · Stock en {waStockContext.warehouseName}: {waStockContext.quantity}</>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <div>
               <Label>Buscar cliente por nombre, teléfono, placa o VIN</Label>
               <Input value={waSearch} onChange={(e) => setWaSearch(e.target.value)} placeholder="Ej: placa, VIN, nombre o teléfono" />
@@ -3129,7 +3273,6 @@ export function InventoryPage() {
                     ]);
                     const customers = Array.isArray(custRes.data) ? custRes.data : [];
                     const vehicles = Array.isArray(vehRes.data) ? vehRes.data : [];
-                    // Map vehicles to their customers if possible
                     const vehMapped = vehicles.map(v => ({
                       type: 'vehicle',
                       id: v.vehicle_id,
@@ -3163,19 +3306,105 @@ export function InventoryPage() {
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowWhatsApp(false)}>Cancelar</Button>
-              <Button onClick={() => {
+              <Button data-testid="product-whatsapp-send-btn" onClick={() => {
                 if (!waSelectedCustomer) { toast.error('Selecciona un cliente'); return; }
-                // Build phone
-                const raw = (waSelectedCustomer.phone || '').toString().replace(/[^0-9]/g, '');
-                let digits = raw;
+                const digits = normalizeWaPhone(waSelectedCustomer.phone);
                 if (!digits) { toast.error('No hay teléfono disponible para este cliente'); return; }
-                if (digits.length === 8) digits = `505${digits}`;
-                const url = `https://wa.me/${digits}?text=${encodeURIComponent(`Hola ${waSelectedCustomer.label.split(' • ')[0] || ''}, le comparto este producto: ${waProduct?.name || ''} (SKU: ${waProduct?.sku || ''}) Precio: ${formatCurrency(waProduct?.price || 0)}.`)}`;
+                const nombre = waSelectedCustomer.label.split(' • ')[0] || '';
+                const stockLine = waStockContext
+                  ? ` Stock en ${waStockContext.warehouseName}: ${waStockContext.quantity}.`
+                  : '';
+                const msg = `Hola ${nombre}, le comparto: ${waProduct?.name || ''} (SKU: ${waProduct?.sku || ''}).${stockLine} Precio: ${formatCurrency(waProduct?.price || 0)}.`;
+                const url = `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
                 window.open(url, '_blank');
                 setShowWhatsApp(false);
-              }}>Enviar por WhatsApp</Button>
+              }}>
+                <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />
+                Enviar por WhatsApp
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Post-transfer WhatsApp — notify destination (manual phone; warehouses API has no phone) */}
+      <Dialog open={showTransferWhatsApp} onOpenChange={(open) => {
+        setShowTransferWhatsApp(open);
+        if (!open) setTransferWaSummary(null);
+      }}>
+        <DialogContent className="max-w-md" data-testid="transfer-whatsapp-dialog">
+          <DialogHeader>
+            <DialogTitle>Avisar bodega destino por WhatsApp</DialogTitle>
+            <DialogDescription>
+              Las bodegas no tienen teléfono en el sistema. Ingresa el número del contacto destino (o usa el predeterminado guardado en este navegador).
+            </DialogDescription>
+          </DialogHeader>
+          {transferWaSummary ? (
+            <div className="space-y-4">
+              <div className="rounded border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                {`MC-LARENS — Traslado
+${transferWaSummary.productName}${transferWaSummary.sku ? ` (SKU: ${transferWaSummary.sku})` : ''} x${transferWaSummary.quantity}
+${transferWaSummary.fromName} → ${transferWaSummary.toName}
+Ref: inmediato
+Estado: Transferido${transferWaSummary.notes ? `
+Notas: ${transferWaSummary.notes}` : ''}`}
+              </div>
+              <div>
+                <Label>Teléfono destino</Label>
+                <Input
+                  value={transferWaPhone}
+                  onChange={(e) => setTransferWaPhone(e.target.value)}
+                  placeholder="Ej. 88887777 o 50588887777"
+                  data-testid="transfer-wa-phone-input"
+                />
+                <label className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={transferWaRememberPhone}
+                    onChange={(e) => setTransferWaRememberPhone(e.target.checked)}
+                  />
+                  Guardar como predeterminado en este navegador
+                </label>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowTransferWhatsApp(false)} data-testid="transfer-wa-skip-btn">
+                  Omitir
+                </Button>
+                <Button
+                  data-testid="transfer-wa-send-btn"
+                  onClick={() => {
+                    const digits = normalizeWaPhone(transferWaPhone);
+                    if (!digits || digits.length < 8) {
+                      toast.error("Ingresa un teléfono válido");
+                      return;
+                    }
+                    if (transferWaRememberPhone) {
+                      try {
+                        localStorage.setItem("mclarens_default_transfer_wa_phone", digits);
+                      } catch {
+                        /* ignore */
+                      }
+                    }
+                    const s = transferWaSummary;
+                    const msg = [
+                      "MC-LARENS — Traslado",
+                      `${s.productName}${s.sku ? ` (SKU: ${s.sku})` : ""} x${s.quantity}`,
+                      `${s.fromName} → ${s.toName}`,
+                      "Ref: inmediato",
+                      "Estado: Transferido",
+                      s.notes ? `Notas: ${s.notes}` : null,
+                    ].filter(Boolean).join("\n");
+                    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+                    setShowTransferWhatsApp(false);
+                    setTransferWaSummary(null);
+                  }}
+                >
+                  <WhatsAppIcon className="h-4 w-4 mr-2 text-[#25D366]" />
+                  Abrir WhatsApp
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
