@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,8 @@ export default function ProductQuickViewDialog({
   const [failedImages, setFailedImages] = useState({});
   const [srcOverrides, setSrcOverrides] = useState({});
   const touchStartXRef = useRef(null);
+  const lightboxRef = useRef(null);
+  const lightboxCloseRef = useRef(null);
 
   // Sync active product with prop
   useEffect(() => {
@@ -202,14 +205,22 @@ export default function ProductQuickViewDialog({
     setSelectedImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
   }, [images.length]);
 
-  // Keyboard navigation for fullscreen lightbox
+  const closeLightbox = useCallback(() => {
+    setIsFullscreen(false);
+  }, []);
+
+  // U9: trap focus in lightbox; Esc restores focus to opener via useFocusTrap cleanup.
+  useFocusTrap(Boolean(isFullscreen && currentImage && !failedImages[selectedImageIndex]), lightboxRef, {
+    onEscape: closeLightbox,
+    initialFocusRef: lightboxCloseRef,
+  });
+
+  // Arrow keys for fullscreen lightbox (Esc handled by useFocusTrap)
   useEffect(() => {
-    if (!isFullscreen) return;
+    if (!isFullscreen) return undefined;
 
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setIsFullscreen(false);
-      } else if (e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft") {
         prevImage();
       } else if (e.key === "ArrowRight") {
         nextImage();
@@ -853,6 +864,7 @@ export default function ProductQuickViewDialog({
         {/* Fullscreen Lightbox Carousel Overlay */}
         {isFullscreen && currentImage && !failedImages[selectedImageIndex] && (
           <div
+            ref={lightboxRef}
             className="fixed inset-0 z-[100] bg-white backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
             onClick={() => setIsFullscreen(false)}
             onTouchStart={handleTouchStart}
@@ -890,9 +902,10 @@ export default function ProductQuickViewDialog({
                   </span>
                 )}
                 <button
+                  ref={lightboxCloseRef}
                   type="button"
                   onClick={() => setIsFullscreen(false)}
-                  className="h-11 w-11 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 text-foreground border flex items-center justify-center transition-colors shadow-md cursor-pointer"
+                  className="h-11 w-11 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 text-foreground border flex items-center justify-center transition-colors shadow-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Cerrar pantalla completa"
                 >
                   <X className="h-6 w-6" />
@@ -913,7 +926,7 @@ export default function ProductQuickViewDialog({
                     e.stopPropagation();
                     prevImage();
                   }}
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Imagen anterior"
                 >
                   <ChevronLeft className="h-7 w-7 sm:h-8 sm:w-8 group-hover:-translate-x-0.5 transition-transform" />
@@ -939,7 +952,7 @@ export default function ProductQuickViewDialog({
                     e.stopPropagation();
                     nextImage();
                   }}
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-background/90 hover:bg-background active:scale-95 border shadow-lg text-foreground flex items-center justify-center transition-all cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Siguiente imagen"
                 >
                   <ChevronRight className="h-7 w-7 sm:h-8 sm:w-8 group-hover:translate-x-0.5 transition-transform" />

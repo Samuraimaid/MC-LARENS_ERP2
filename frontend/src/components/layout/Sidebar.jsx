@@ -235,7 +235,7 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
                     onClick={() => onNavigate?.()}
                     data-testid={`nav-${item.href.replace("/", "")}`}
                     className={cn(
-                        "group haptic-feedback touch-action-manipulation flex rounded-sm py-2 text-sm font-medium transition-colors",
+                        "group haptic-feedback touch-action-manipulation flex rounded-sm py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       isIconOnly ? "justify-center px-2" : "items-center gap-3 px-3",
                       isActive
                         ? "bg-primary text-primary-foreground"

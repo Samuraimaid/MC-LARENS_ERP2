@@ -61,7 +61,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
           "transition-all duration-200 ease-out",
           "hover:opacity-100 hover:bg-slate-100 hover:scale-110 hover:shadow-sm",
           "active:scale-95",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:pointer-events-none",
           "touch-manipulation min-h-9 min-w-9 flex items-center justify-center",
           "dark:hover:bg-slate-800",

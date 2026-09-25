@@ -141,7 +141,7 @@ export default function ServerConnectionDialog({ isOpen, onClose }) {
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="https://mclarens-erp-xxx.run.app/api o http://192.168.1.xxx:8001/api"
-              className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 text-zinc-900 dark:text-zinc-100"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 font-mono focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 text-zinc-900 dark:text-zinc-100"
             />
           </div>
 
