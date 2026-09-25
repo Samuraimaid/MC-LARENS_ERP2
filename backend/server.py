@@ -113,6 +113,9 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+from backend.core.error_handler import register_error_handlers
+register_error_handlers(app)
+
 api_router = APIRouter(prefix="/api")
 
 # Basic API root & health checks

@@ -547,5 +547,11 @@ Other open documents:
      - Límite de 60 mutaciones por minuto en endpoints sensibles de caja, ventas e inventario (`/api/sales`, `/caja/facturas/`, `/api/inventory`).
      - Suite unitaria automatizada en `backend/tests/test_rate_limit.py` ejecutada con 100% PASS.
      - Registrado `RateLimitMiddleware` en `backend/server.py`.
+  7. **Implementación de S3 (Higiene de Errores sin Stack Traces en Prod - `backend/core/error_handler.py`):**
+     - Módulo `register_error_handlers(app)` que captura excepciones imprevistas (`Exception`) y `HTTPException`.
+     - Registro seguro y detallado en logs internos para observabilidad/depuración de backend sin exponer trazas a clientes externos.
+     - Respuesta limpia y estandarizada `HTTP 500 INTERNAL_SERVER_ERROR` sin nombres de archivos, números de línea ni palabras clave de tracebacks.
+     - Suite unitaria automatizada en `backend/tests/test_error_hygiene.py` ejecutada con 100% PASS.
+
 
 

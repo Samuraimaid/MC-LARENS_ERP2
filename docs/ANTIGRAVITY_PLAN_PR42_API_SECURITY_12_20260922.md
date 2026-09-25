@@ -174,7 +174,7 @@ Marcar cada fila DONE / PARCIAL / N/A:
 | 9 | Idempotency Key (finalizar venta / cobros con store TTL) | **DONE** | PR S1 (`backend/core/idempotency.py`, TTL index 24h, `/api/sales`, `/caja/facturas/cobrar`, `/cashier/invoices/collect`) |
 | 10 | Audit Logging (mutaciones críticas sin secretos) | PENDIENTE (Fase 2) | S4 |
 | 11 | Dependency Scans (Dependabot o audit CI) | PENDIENTE (Fase 3) | S7 |
-| 12 | Error Hygiene (handler prod sin traceback) | PENDIENTE (Fase 1 / S3) | S3 |
+| 12 | Error Hygiene (handler prod sin traceback) | **DONE** | PR S3 (`backend/core/error_handler.py`, manejador global de excepciones sin exposición de stack trace en prod, JSON sanitizado) |
 | **C1** | Validación/recalc de montos en servidor (servidor gana, 409 TOTAL_MISMATCH) | **DONE** | PR S1 + C1 (`backend/core/money_validate.py`, saneamiento de ítems, totales garantizados en servidor) |
 | **C2** | Sesión: TTL o idle timeout (invalidar al cierre de turno) | PENDIENTE (Fase 2) | C2 |
 | **C3** | Separar lecturas de mutaciones privilegiadas | PENDIENTE (Fase 2) | S5 |
