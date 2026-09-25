@@ -4,18 +4,16 @@ import logging
 import os
 from typing import Any, Optional
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+except ImportError:
+    AsyncIOMotorClient = Any  # type: ignore
+    AsyncIOMotorDatabase = Any  # type: ignore
 
 logger = logging.getLogger("erp.distributed")
 
 _local_client: Optional[AsyncIOMotorClient] = None
 _central_client: Optional[AsyncIOMotorClient] = None
-
-
-DEFAULT_PROD_ATLAS_URI = (
-    "mongodb+srv://dayavar18_db_user:El_Peluka_Sapbeee.2026@mclarens-db.nkdcim0.mongodb.net/"
-    "mc-larens2_mundo_accesorios_erp?retryWrites=true&w=majority"
-)
 
 
 def resolve_local_mongo_uri() -> str:
@@ -26,11 +24,14 @@ def resolve_local_mongo_uri() -> str:
     )
     if env_uri:
         return env_uri.strip()
-    
-    # Si estamos en Google Cloud Run (K_SERVICE existe) usar Atlas automáticamente
+
+    # En Google Cloud Run (K_SERVICE existe), es obligatorio suministrar la conexión vía variable de entorno
     if os.environ.get("K_SERVICE"):
-        return DEFAULT_PROD_ATLAS_URI
-        
+        raise RuntimeError(
+            "CRITICAL: MONGO_URL/MONGODB_URI no está configurada en las variables de entorno de Cloud Run. "
+            "Configure la variable en el servicio antes de iniciar."
+        )
+
     return "mongodb://localhost:27017"
 
 
