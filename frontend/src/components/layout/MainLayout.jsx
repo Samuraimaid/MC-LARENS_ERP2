@@ -30,6 +30,7 @@ import {
 } from "../../lib/roleHome";
 import { formatRoleBadgeLabel } from "../../lib/priceTiers";
 import { IdleSessionCountdown } from "../auth/IdleSessionCountdown";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 const SESSION_LOCK_STORAGE_KEY = "erp:session-lock";
 const SESSION_LOCK_TAMPER_KEY = "erp:session-lock-tamper";
@@ -106,6 +107,9 @@ export function MainLayout() {
   useAutosaveLifecycle({ enabled: true });
   const [sellerServerStatus, setSellerServerStatus] = useState("unknown");
   const lastBackWarningRef = useRef(0);
+  const mainContentRef = useRef(null);
+  const lockOverlayRef = useRef(null);
+  const unlockPinInputRef = useRef(null);
   const branding = getBrandingForBranch(user?.branch_id);
   const branchLabel = formatUserBranchLabel(user);
   const roleLabel = formatRoleBadgeLabel(user);
@@ -479,6 +483,29 @@ export function MainLayout() {
     };
   }, [isSessionLocked]);
 
+
+  // U9: trap focus inside session-lock overlay; restore focus when unlocked.
+  // Escape does not unlock (PIN required) — trap only.
+  useFocusTrap(isSessionLocked, lockOverlayRef, {
+    initialFocusRef: unlockPinInputRef,
+  });
+
+
+  const handleSkipToContent = (event) => {
+    event.preventDefault();
+    const main = mainContentRef.current || document.getElementById("main-content");
+    if (!main) return;
+    if (!main.hasAttribute("tabindex")) {
+      main.setAttribute("tabindex", "-1");
+    }
+    main.focus({ preventScroll: false });
+    try {
+      main.scrollIntoView({ block: "start", behavior: "smooth" });
+    } catch {
+      // ignore
+    }
+  };
+
   const handleSelectTool = (tool) => {
     setActiveTool((prev) => (prev === tool ? null : tool));
   };
@@ -604,6 +631,15 @@ export function MainLayout() {
 
   return (
     <div className="relative h-screen overflow-hidden bg-background">
+      {/* U9: first focusable — skip past sidebar to main content */}
+      <a
+        href="#main-content"
+        className="erp-skip-link"
+        onClick={handleSkipToContent}
+        data-testid="skip-to-content"
+      >
+        Saltar al contenido
+      </a>
       {liquidGlass ? <div className="erp-liquid-wash" aria-hidden="true" /> : null}
       <IdleSessionCountdown paused={isSessionLocked} />
       <div className={cn("erp-liquid-shell flex h-screen", isSessionLocked ? "pointer-events-none select-none blur-[2px]" : "") }>
@@ -757,6 +793,9 @@ export function MainLayout() {
           </div>
 
           <main
+            id="main-content"
+            ref={mainContentRef}
+            tabIndex={-1}
             className={cn(
               "erp-shell-main flex-1 overflow-auto relative",
               isWorkbenchRoute || isSellerRole ? "p-0 sm:p-1" : "p-2 sm:p-4 md:p-6",
@@ -794,6 +833,7 @@ export function MainLayout() {
           <div
             className={`fixed inset-0 z-40 ${mobileNavOpen ? "pointer-events-auto" : "pointer-events-none"}`}
             aria-hidden={!mobileNavOpen}
+            {...(!mobileNavOpen ? { inert: "" } : {})}
           >
             <button
               className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${mobileNavOpen ? "opacity-100" : "opacity-0"}`}
@@ -825,6 +865,10 @@ export function MainLayout() {
 
       {isSessionLocked ? (
         <div
+          ref={lockOverlayRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sesión bloqueada"
           className={cn(
             "fixed inset-0 z-[80] flex items-center justify-center px-4 backdrop-blur-md",
             lockOverlayTone === "danger" ? "bg-rose-700/35" : "bg-amber-500/35"
@@ -857,6 +901,7 @@ export function MainLayout() {
             <div className="mt-3 space-y-2">
               <Label htmlFor="main-unlock-pin">PIN de usuario para desbloquear</Label>
               <Input
+                ref={unlockPinInputRef}
                 id="main-unlock-pin"
                 type="password"
                 inputMode="numeric"

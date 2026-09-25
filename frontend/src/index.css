@@ -2634,3 +2634,65 @@ html[data-liquid-glass="true"] .card-dark-contrast.overflow-visible,
 html[data-liquid-glass="true"] .card-dark-contrast:has(.overflow-visible) {
   overflow: visible;
 }
+
+/* ===== UX U9: keyboard / focus-visible a11y =====
+   Video 09: visible keyboard rings without mouse outline spam.
+   Spec: 2px width, 2px offset, theme --ring (≥3:1 on light+dark skins).
+   Components that set focus-visible:outline-none keep a matching box-shadow ring.
+*/
+@layer base {
+  :root {
+    --erp-focus-ring: hsl(var(--ring));
+    --erp-focus-ring-width: 2px;
+    --erp-focus-ring-offset: 2px;
+  }
+
+  /* Suppress native outline for pointer focus; keyboard uses :focus-visible below. */
+  :where(a, button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]):focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  :where(a, button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]):focus-visible {
+    outline: var(--erp-focus-ring-width) solid var(--erp-focus-ring);
+    outline-offset: var(--erp-focus-ring-offset);
+  }
+}
+
+/* Skip link: first focusable, invisible until keyboard focus */
+.erp-skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 2px solid hsl(var(--ring));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 16px hsl(var(--foreground) / 0.18);
+  transform: translateY(-160%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.erp-skip-link:focus,
+.erp-skip-link:focus-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Main landmark: allow programmatic focus from skip link without visible ring spam on click */
+main.erp-shell-main:focus {
+  outline: none;
+}
+main.erp-shell-main:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
