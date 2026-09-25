@@ -2195,6 +2195,8 @@ class CashierCollectRequest(FlexibleModel):
     card_type: Optional[str] = None
     bank_name: Optional[str] = None
     transaction_number: Optional[str] = None
+    sesion_id: Optional[str] = None
+    session_id: Optional[str] = None
 
 
 class MixedPaymentItem(FlexibleModel):

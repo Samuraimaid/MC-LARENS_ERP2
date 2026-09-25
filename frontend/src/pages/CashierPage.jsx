@@ -1455,7 +1455,7 @@ export function CashierPage() {
       const idempotencyKey = payload?.idempotency_key || (window.crypto?.randomUUID
         ? window.crypto.randomUUID()
         : `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
-      const response = await axios.post(`${API}/caja/facturas/${sale.sale_id}/cobrar`, payload, {
+      const response = await axios.post(`${API}/cashier/invoices/${sale.sale_id}/collect`, payload, {
         withCredentials: true,
         headers: { "Idempotency-Key": idempotencyKey },
       });
