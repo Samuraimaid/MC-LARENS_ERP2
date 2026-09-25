@@ -26,6 +26,7 @@ import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { showUndoToast } from "@/components/lists/undoToast";
+import { DestructiveConfirmDialog } from "@/components/destructive";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
@@ -37,6 +38,8 @@ import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import { SwipeableRow } from "@/components/lists/SwipeableRow";
+import { useDevice } from "@/hooks/useDevice";
 import { FileUploadQueue } from "@/components/uploads";
 import { densityTokens } from "@/components/lists/listDensity";
 
@@ -75,6 +78,8 @@ export function InventoryPage() {
   const [waResults, setWaResults] = useState([]);
   const [waSelectedCustomer, setWaSelectedCustomer] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [pendingDeactivateItem, setPendingDeactivateItem] = useState(null);
+  const [deactivateBusy, setDeactivateBusy] = useState(false);
   const [showImportCSV, setShowImportCSV] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -97,6 +102,9 @@ export function InventoryPage() {
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok, isCompact } = useListDensity();
+  const { isPhone, isTouchDevice, isDesktop } = useDevice();
+  /** U7: swipe only on narrow/touch — desktop keeps click/selection (#81/#83). */
+  const inventorySwipeEnabled = canEditInventory && (isPhone || (isTouchDevice && !isDesktop));
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -243,19 +251,94 @@ export function InventoryPage() {
 
   const softRefresh = useCallback(() => fetchData({ silent: true }), [fetchData]);
 
+  const applySingleProductStatus = async (item, makeActive) => {
+    await axios.post(`${API}/inventory/product-status`, {
+      warehouse_id: item.warehouse_id,
+      product_id: item.product_id,
+      is_active: makeActive,
+    }, { withCredentials: true });
+  };
+
+  /** Soft activate: one click. Soft deactivate: U6 hold + verbs (irreversible-feel), then U3-style undo toast. */
   const handleToggleProductStatus = async (item) => {
+    if (!canEditInventory) return;
     const currentActive = item.is_active !== false;
-    const newActive = !currentActive;
+    if (currentActive) {
+      // Deactivate → confirm dialog (never Sí/No)
+      setPendingDeactivateItem(item);
+      return;
+    }
     try {
-      await axios.post(`${API}/inventory/product-status`, {
-        warehouse_id: item.warehouse_id,
-        product_id: item.product_id,
-        is_active: newActive,
-      }, { withCredentials: true });
-      toast.success(`Producto ${newActive ? "activado" : "desactivado"} en bodega`);
+      await applySingleProductStatus(item, true);
+      toast.success("Producto activado en bodega");
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Error al cambiar estado del producto");
+    }
+  };
+
+  const confirmDeactivateProduct = async () => {
+    const item = pendingDeactivateItem;
+    if (!item) return;
+    setDeactivateBusy(true);
+    try {
+      await applySingleProductStatus(item, false);
+      setPendingDeactivateItem(null);
+      await fetchData();
+      showUndoToast({
+        message: "Desactivado 1 producto",
+        description: "Puedes deshacer durante unos segundos",
+        durationMs: 10000,
+        onUndo: async () => {
+          try {
+            await applySingleProductStatus(item, true);
+            await fetchData();
+            toast.success("Producto reactivado");
+          } catch {
+            toast.error("No se pudo deshacer");
+          }
+        },
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
+    } finally {
+      setDeactivateBusy(false);
+    }
+  };
+
+  /** U7 full-swipe destroy: no confirm modal — soft deactivate + ~5s undo toast. */
+  const swipeDeactivateProduct = async (item) => {
+    if (!canEditInventory || !item) return;
+    try {
+      await applySingleProductStatus(item, false);
+      await fetchData();
+      showUndoToast({
+        message: "Desactivado 1 producto",
+        description: "Puedes deshacer durante unos segundos",
+        durationMs: 5000,
+        onUndo: async () => {
+          try {
+            await applySingleProductStatus(item, true);
+            await fetchData();
+            toast.success("Producto reactivado");
+          } catch {
+            toast.error("No se pudo deshacer");
+          }
+        },
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al desactivar el producto");
+    }
+  };
+
+  const swipeActivateProduct = async (item) => {
+    if (!canEditInventory || !item) return;
+    try {
+      await applySingleProductStatus(item, true);
+      await fetchData();
+      toast.success("Producto activado en bodega");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Error al activar el producto");
     }
   };
 
@@ -2449,7 +2532,7 @@ export function InventoryPage() {
                                 )}
                                 <Button
                                   type="button"
-                                  variant="destructive"
+                                  variant="secondary"
                                   size="icon"
                                   className="h-7 w-7 shadow"
                                   title="Eliminar imagen"
@@ -2851,7 +2934,7 @@ export function InventoryPage() {
             data-list-density={listDensity}
             data-testid={`inventory-view-${listDensity}`}
           >
-            {filteredInventory.slice(0, inventoryVisibleLimit).map((item) => {
+            {filteredInventory.slice(0, inventoryVisibleLimit).map((item, invIdx) => {
               const product = item.product || {};
               const qtyAvailable = item.quantity_available ?? item.quantity ?? 0;
               const qtyDamaged = item.quantity_damaged ?? 0;
@@ -2870,8 +2953,30 @@ export function InventoryPage() {
               const isRoomy = listDensity === "cozy";
 
               return (
-                <div
+                <SwipeableRow
                   key={item.inventory_id}
+                  testId={`inv-swipe-${item.inventory_id}`}
+                  enabled={inventorySwipeEnabled ? "touch" : false}
+                  peekHint={inventorySwipeEnabled && invIdx === 0}
+                  safeAction={
+                    !isActiveInWarehouse
+                      ? {
+                          label: "Activar",
+                          onAction: () => swipeActivateProduct(item),
+                        }
+                      : null
+                  }
+                  destroyAction={
+                    isActiveInWarehouse
+                      ? {
+                          label: "Desactivar",
+                          onAction: () => swipeDeactivateProduct(item),
+                          undo: null, // undo handled inside swipeDeactivateProduct
+                        }
+                      : null
+                  }
+                >
+                <div
                   data-testid={`inv-row-${item.inventory_id}`}
                   data-selected={selection.isSelected(item.inventory_id) ? "true" : "false"}
                   className={`relative rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
@@ -2979,6 +3084,7 @@ export function InventoryPage() {
                     </div>
                   </div>
                 </div>
+                </SwipeableRow>
               );
             })}
           </div>
@@ -4017,7 +4123,7 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                           )}
                           <Button
                             type="button"
-                            variant="destructive"
+                            variant="secondary"
                             size="icon"
                             className="h-6 w-6 shadow"
                             title="Eliminar imagen"
@@ -4035,7 +4141,7 @@ Notas: ${transferWaSummary.notes}` : ''}`}
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="mt-4 flex justify-end gap-2 border-t border-border/60 pt-4">
                 <Button variant="outline" onClick={() => setEditingProduct(null)}>
                   Cancelar
                 </Button>
@@ -4047,6 +4153,24 @@ Notas: ${transferWaSummary.notes}` : ''}`}
           )}
         </DialogContent>
       </Dialog>
+
+      
+      <DestructiveConfirmDialog
+        open={!!pendingDeactivateItem}
+        onOpenChange={(open) => { if (!open) setPendingDeactivateItem(null); }}
+        title="Desactivar producto"
+        description={
+          pendingDeactivateItem
+            ? `Vas a desactivar «${pendingDeactivateItem.product?.name || pendingDeactivateItem.product_id}» en esta bodega. No aparecerá para venta hasta que lo reactives.`
+            : undefined
+        }
+        confirmVerb="Desactivar producto"
+        cancelVerb="Conservar producto"
+        onConfirm={confirmDeactivateProduct}
+        loading={deactivateBusy}
+        footnote="Desactivar es reversible desde aquí (toast Deshacer) o reactivando el estado. No hay eliminación permanente multi-día en el API."
+        testId="inventory-deactivate-confirm"
+      />
 
       {/* Virtual Zone Transfer Dialog */}
       <Dialog open={showZoneTransferDialog} onOpenChange={setShowZoneTransferDialog}>

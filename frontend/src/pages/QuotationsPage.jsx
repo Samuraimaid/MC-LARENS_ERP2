@@ -12,6 +12,7 @@ import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
+import { HoldToConfirmButton } from "@/components/destructive";
 import { Search, FileText, CheckCircle, XCircle, ShoppingCart, RefreshCw, Eye, Eraser, SaveAll, Unlock, Download, Copy } from "lucide-react";
 import ErpFormToolbar, { ErpToolbarButton } from "@/components/erp/ErpFormToolbar";
 import { isErpDraftSupervisor, isOwnErpDraft } from "@/lib/roleHome";
@@ -294,7 +295,7 @@ function DraftBoardCard({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-1">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-2">
           <button
             type="button"
             className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-white transition-colors ${
@@ -306,12 +307,13 @@ function DraftBoardCard({
           >
             {resolvedOpenLabel}
           </button>
-          <button
-            type="button"
-            className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-destructive-foreground transition-colors ${
+          <HoldToConfirmButton
+            size="sm"
+            variant="destructive"
+            className={`px-3 py-1.5 text-xs h-auto ${
               deleteDisabled
-                ? "bg-rose-300 dark:bg-rose-950/40 text-rose-500 cursor-not-allowed"
-                : "bg-destructive hover:bg-destructive/90 text-white"
+                ? "bg-rose-300 dark:bg-rose-950/40 text-rose-500 opacity-60"
+                : ""
             }`}
             disabled={deleteDisabled}
             title={
@@ -319,16 +321,16 @@ function DraftBoardCard({
                 ? "No puedes eliminar un borrador revisado por supervisión"
                 : isBlocked
                   ? "Borrador en revisión por supervisión"
-                  : "Eliminar borrador"
+                  : "Mantener pulsado para eliminar borrador"
             }
-            onClick={(e) => {
-              e.stopPropagation();
+            onConfirm={() => {
               if (deleteDisabled) return;
               onDelete?.();
             }}
+            testId="quotation-draft-delete-hold"
           >
-            Eliminar
-          </button>
+            Eliminar borrador
+          </HoldToConfirmButton>
         </div>
       </div>
     </div>

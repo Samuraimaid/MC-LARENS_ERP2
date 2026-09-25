@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HoldToConfirmButton } from "@/components/destructive";
 import { cn } from "@/lib/utils";
 
 /**
- * Quarantined danger zone at bottom of settings (U4).
- * Red border budget; destructive action locked until user types exact confirmPhrase.
+ * Quarantined danger zone at bottom of settings (U4 + U6).
+ * Red border budget; type-phrase unlock + hold-to-confirm (~300ms ring).
+ * Verb label (never Sí/No). Away from primary Save path by placement.
  */
 export function SettingsDangerZone({
   title = "Zona de peligro",
@@ -22,6 +23,8 @@ export function SettingsDangerZone({
   children,
   className,
   testId = "settings-danger-zone",
+  /** Optional note when multi-day cooldown API is absent */
+  cooldownNote = "No hay periodo de gracia multi-día: esta acción es permanente en este dispositivo.",
 }) {
   const [typed, setTyped] = useState("");
   const expected = String(confirmPhrase || "").trim();
@@ -78,16 +81,22 @@ export function SettingsDangerZone({
                 disabled={loading || disabled}
               />
             </div>
-            <Button
-              type="button"
+            <HoldToConfirmButton
               variant="destructive"
               disabled={!unlocked || loading || disabled}
-              onClick={handleConfirm}
-              data-testid={`${testId}-confirm-btn`}
+              loading={loading}
+              onConfirm={handleConfirm}
+              testId={`${testId}-confirm-btn`}
+              title={`Mantener pulsado para ${String(actionLabel).toLowerCase()}`}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
               {loading ? "Eliminando…" : actionLabel}
-            </Button>
+            </HoldToConfirmButton>
+            {cooldownNote ? (
+              <p className="text-[11px] text-muted-foreground" data-testid={`${testId}-cooldown-note`}>
+                {cooldownNote}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </CardContent>

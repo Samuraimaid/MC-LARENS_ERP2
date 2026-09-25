@@ -22,6 +22,7 @@ import { Checkbox } from "../components/ui/checkbox";
 import SearchableSelect from "@/components/ui/searchable-select";
 import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
+import { DestructiveConfirmDialog } from "@/components/destructive";
 import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSounds";
 import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter, Download, Copy, MessageCircle } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
@@ -72,6 +73,8 @@ export function CustomersPage() {
   const canDeleteCustomers = hasPermission("customers", "delete");
   const canCreateSales = hasPermission("sales", "create");
   const canCreateQuotations = hasPermission("quotations", "create");
+  const [pendingDeleteCustomer, setPendingDeleteCustomer] = useState(null);
+  const [deleteCustomerBusy, setDeleteCustomerBusy] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -961,6 +964,31 @@ export function CustomersPage() {
     }
   };
 
+
+  const confirmDeleteCustomer = async ({ reason } = {}) => {
+    const customer = pendingDeleteCustomer;
+    if (!customer) return;
+    const motivo = String(reason || "").trim();
+    if (!motivo) {
+      toast.error("El motivo es obligatorio");
+      return;
+    }
+    setDeleteCustomerBusy(true);
+    try {
+      await axios.post(
+        `${API}/approvals`,
+        { type: "delete_customer", payload: { customer_id: customer.customer_id }, reason: motivo },
+        { withCredentials: true },
+      );
+      toast.success("Solicitud de eliminación enviada");
+      setPendingDeleteCustomer(null);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Error al solicitar eliminación");
+    } finally {
+      setDeleteCustomerBusy(false);
+    }
+  };
+
   return (
     <PullToRefresh onRefresh={softRefresh} testId="customers-pull-to-refresh">
     <div className="p-6 space-y-6" data-testid="customers-page">
@@ -1479,15 +1507,7 @@ export function CustomersPage() {
                     <Button variant="ghost" size="icon" title="Editar cliente" className="ui-interactive h-8 w-8" onClick={() => openEditCustomer(customer)} disabled={!canEditCustomers}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="destructive" size="icon" title="Eliminar cliente" className="ui-interactive h-8 w-8" disabled={!canDeleteCustomers} onClick={async () => {
-                      const motivo = prompt('Motivo para eliminar el cliente (obligatorio):', 'Cliente inactivo');
-                      if (motivo === null) return;
-                      if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
-                      try {
-                        await axios.post(`${API}/approvals`, { type: 'delete_customer', payload: { customer_id: customer.customer_id }, reason: motivo.trim() }, { withCredentials: true });
-                        toast.success('Solicitud de eliminación enviada');
-                      } catch (e) { toast.error(e.response?.data?.detail || 'Error al solicitar eliminación'); }
-                    }}>
+                    <Button variant="destructive" size="icon" title="Eliminar cliente" className="ui-interactive h-8 w-8" disabled={!canDeleteCustomers} onClick={() => setPendingDeleteCustomer(customer)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1640,6 +1660,27 @@ export function CustomersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      
+      <DestructiveConfirmDialog
+        open={!!pendingDeleteCustomer}
+        onOpenChange={(open) => { if (!open) setPendingDeleteCustomer(null); }}
+        title="Eliminar cliente"
+        description={
+          pendingDeleteCustomer
+            ? `Se enviará una solicitud de aprobación para eliminar a «${pendingDeleteCustomer.name}». Esta acción no se puede deshacer desde aquí.`
+            : undefined
+        }
+        confirmVerb="Eliminar cliente"
+        cancelVerb="Conservar cliente"
+        requireReason
+        defaultReason="Cliente inactivo"
+        reasonPlaceholder="Motivo de la eliminación…"
+        onConfirm={confirmDeleteCustomer}
+        loading={deleteCustomerBusy}
+        footnote="No hay periodo de gracia multi-día en el API de clientes; la eliminación pasa por aprobación de gerencia."
+        testId="customer-delete-confirm"
+      />
 
       {/* WhatsApp Preview Dialog */}
       <Dialog open={showWaPreview} onOpenChange={setShowWaPreview}>
