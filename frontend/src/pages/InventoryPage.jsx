@@ -36,6 +36,7 @@ import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { PullToRefresh } from "@/components/lists/PullToRefresh";
+import { FileUploadQueue } from "@/components/uploads";
 import { densityTokens } from "@/components/lists/listDensity";
 
 export function InventoryPage() {
@@ -101,7 +102,6 @@ export function InventoryPage() {
     warehouseId: "",
     quantity: 1,
   });
-  const [uploadingImages, setUploadingImages] = useState(false);
   const [selectedZone, setSelectedZone] = useState("all");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [showZoneTransferDialog, setShowZoneTransferDialog] = useState(false);
@@ -941,47 +941,98 @@ export function InventoryPage() {
     });
   };
 
-  const handleFileUpload = async (e, isEditing = false) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+  // U2: per-file uploads with honest xhr progress (independent lanes + retry).
+  // start_index keeps {SKU}_main / {SKU}_add_XX naming across parallel requests.
+  const createUploadNameIndexRef = React.useRef(0);
+  const editUploadNameIndexRef = React.useRef(0);
 
-    const currentTarget = isEditing ? editingProduct : newProduct;
-    const currentSku = currentTarget?.sku || "";
-    
-    const formData = new FormData();
-    files.forEach(file => {
+  React.useEffect(() => {
+    if (showNewProduct) {
+      createUploadNameIndexRef.current = Array.isArray(newProduct?.images)
+        ? newProduct.images.length
+        : 0;
+    }
+  }, [showNewProduct]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    if (editingProduct?.product_id) {
+      editUploadNameIndexRef.current = Array.isArray(editingProduct.images)
+        ? editingProduct.images.length
+        : 0;
+    }
+  }, [editingProduct?.product_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const uploadOneProductImage = React.useCallback(
+    async (file, { onProgress } = {}, { isEditing = false } = {}) => {
+      const currentTarget = isEditing ? editingProduct : newProduct;
+      const currentSku = currentTarget?.sku || "";
+      const indexRef = isEditing ? editUploadNameIndexRef : createUploadNameIndexRef;
+      const startIndex = indexRef.current;
+      indexRef.current = startIndex + 1;
+
+      const formData = new FormData();
       formData.append("files", file);
-    });
-    if (currentSku) formData.append("sku", currentSku);
-    if (isEditing && editingProduct?.product_id) formData.append("product_id", editingProduct.product_id);
+      if (currentSku) formData.append("sku", currentSku);
+      formData.append("start_index", String(startIndex));
+      // Omit product_id on per-file uploads: gallery is persisted on product save.
+      // (Passing product_id with start_index==0 would replace DB images.)
 
-    try {
-      setUploadingImages(true);
       const res = await axios.post(`${API}/products/images/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true
+        withCredentials: true,
+        onUploadProgress: (evt) => {
+          if (typeof onProgress === "function" && evt.total) {
+            onProgress({ loaded: evt.loaded, total: evt.total });
+          }
+        },
       });
-      
-      const newUrls = res.data.image_urls || [];
-      if (isEditing) {
-        setEditingProduct(prev => ({
-          ...prev,
-          images: [...(prev.images || []), ...newUrls]
-        }));
-      } else {
-        setNewProduct(prev => ({
-          ...prev,
-          images: [...prev.images, ...newUrls]
-        }));
-      }
-      toast.success(`${newUrls.length} imagen(es) subida(s) y renombradas con SKU`);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error subiendo imágenes");
-    } finally {
-      setUploadingImages(false);
-      e.target.value = "";
+      return res.data;
+    },
+    [editingProduct, newProduct]
+  );
+
+  const handleCreateUploadFile = React.useCallback(
+    (file, opts) => uploadOneProductImage(file, opts, { isEditing: false }),
+    [uploadOneProductImage]
+  );
+
+  const handleEditUploadFile = React.useCallback(
+    (file, opts) => uploadOneProductImage(file, opts, { isEditing: true }),
+    [uploadOneProductImage]
+  );
+
+  const appendUploadedUrls = React.useCallback((result, isEditing) => {
+    const newUrls = result?.image_urls || [];
+    if (!newUrls.length) return;
+    if (isEditing) {
+      setEditingProduct((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), ...newUrls],
+      }));
+    } else {
+      setNewProduct((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), ...newUrls],
+      }));
     }
-  };
+  }, []);
+
+  const removeUploadedUrls = React.useCallback((item, isEditing) => {
+    const urls = item?.result?.image_urls || [];
+    if (!urls.length) return;
+    const drop = new Set(urls);
+    if (isEditing) {
+      setEditingProduct((prev) => ({
+        ...prev,
+        images: (prev.images || []).filter((u) => !drop.has(u)),
+      }));
+    } else {
+      setNewProduct((prev) => ({
+        ...prev,
+        images: (prev.images || []).filter((u) => !drop.has(u)),
+      }));
+    }
+  }, []);
 
   const setPrimaryImage = (url, isEditing = false) => {
     if (isEditing) {
@@ -2303,28 +2354,16 @@ export function InventoryPage() {
                         Sube las fotos del producto desde tu equipo (se renombrarán automáticamente como <code className="bg-muted px-1 rounded">{'{SKU}_main'}</code> y <code className="bg-muted px-1 rounded">{'{SKU}_add_XX'}</code>) o añade enlaces directos.
                       </p>
 
-                      <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-                        <label className="flex-1 flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/60 hover:bg-muted/40 transition bg-muted/20 text-sm font-medium">
-                          {uploadingImages ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                              <span>Subiendo y renombrando imágenes...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="h-4 w-4 text-primary" />
-                              <span>Seleccionar múltiples archivos</span>
-                            </>
-                          )}
-                          <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            disabled={uploadingImages}
-                            className="hidden"
-                            onChange={(e) => handleFileUpload(e, false)}
-                          />
-                        </label>
+                      <div className="space-y-3">
+                        <FileUploadQueue
+                          key={showNewProduct ? "create-uploads-open" : "create-uploads-closed"}
+                          accept="image/*"
+                          multiple
+                          testId="inventory-create-uploads"
+                          onUploadFile={handleCreateUploadFile}
+                          onFileDone={(result) => appendUploadedUrls(result, false)}
+                          onItemRemove={(item) => removeUploadedUrls(item, false)}
+                        />
 
                         <div className="flex flex-1 gap-2">
                           <Input
@@ -3883,19 +3922,19 @@ Notas: ${transferWaSummary.notes}` : ''}`}
               <div className="space-y-3 pt-2 border-t">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-semibold">Imágenes del Producto ({editingProduct.images?.length || 0})</Label>
-                  <label className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline cursor-pointer">
-                    <Upload className="h-3.5 w-3.5" />
-                    <span>Subir más fotos</span>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      disabled={uploadingImages}
-                      className="hidden"
-                      onChange={(e) => handleFileUpload(e, true)}
-                    />
-                  </label>
                 </div>
+                <FileUploadQueue
+                  key={editingProduct?.product_id || "edit-uploads"}
+                  accept="image/*"
+                  multiple
+                  compact
+                  testId="inventory-edit-uploads"
+                  idleLabel="Suelta las imágenes aquí"
+                  idleHint="o haz clic para subir más fotos"
+                  onUploadFile={handleEditUploadFile}
+                  onFileDone={(result) => appendUploadedUrls(result, true)}
+                  onItemRemove={(item) => removeUploadedUrls(item, true)}
+                />
 
                 {editingProduct.images && editingProduct.images.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-lg bg-background/50">
