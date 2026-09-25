@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, ConfigDict
 
 from backend.domains.billing.accounting import (
     build_accounting_summary,
@@ -38,6 +39,71 @@ from backend.domains.export.pdf_documents import (
 )
 
 
+
+class _PettyCashFlexibleModel(BaseModel):
+    """Module-level FlexibleModel stand-in (extra=allow).
+
+    Nested classes inside get_petty_cash_accounting_router broke OpenAPI
+    generation under ``from __future__ import annotations`` (ForwardRef not
+    fully defined → GET /openapi.json 500).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    def get(self, key: str, default: Any = None) -> Any:
+        if hasattr(self, key):
+            val = getattr(self, key)
+            return val if val is not None else default
+        extra = getattr(self, "__pydantic_extra__", None) or {}
+        return extra.get(key, default)
+
+
+class PettyCashSettingsUpdate(_PettyCashFlexibleModel):
+    fund_amount: Optional[float] = None
+    currency: Optional[str] = None
+    monthly_cap: Optional[float] = None
+    low_balance_threshold_pct: Optional[float] = None
+    requires_approval_above: Optional[float] = None
+    voucher_prefix: Optional[str] = None
+    allowed_categories: Optional[List[str]] = None
+
+
+class PettyCashExpenseCreate(_PettyCashFlexibleModel):
+    branch_id: Optional[str] = None
+    category: str = "otros"
+    description: str = ""
+    beneficiary: str = ""
+    employee_user_id: Optional[str] = None
+    amount: float = 0.0
+    currency: Optional[str] = None
+    payment_method: str = "cash"
+    received_by: Optional[str] = None
+    notes: Optional[str] = None
+    session_id: Optional[str] = None
+    submit: bool = False
+
+
+class PettyCashExpenseUpdate(_PettyCashFlexibleModel):
+    category: Optional[str] = None
+    description: Optional[str] = None
+    beneficiary: Optional[str] = None
+    amount: Optional[float] = None
+    payment_method: Optional[str] = None
+    received_by: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PettyCashRejectPayload(_PettyCashFlexibleModel):
+    reason: Optional[str] = None
+
+
+class PettyCashReplenishmentCreate(_PettyCashFlexibleModel):
+    branch_id: Optional[str] = None
+    amount: float = 0.0
+    reference: Optional[str] = None
+    notes: Optional[str] = None
+
+
 def get_petty_cash_accounting_router(
     db,
     require_auth,
@@ -55,47 +121,6 @@ def get_petty_cash_accounting_router(
     ACCOUNTING_WRITE_ROLES = ["gerencia", "recursos_humanos"]
     APPROVAL_ROLES = ["gerencia"]
     PAY_ROLES = ["gerencia", "cajero", "supervisor"]
-
-    class PettyCashSettingsUpdate(FlexibleModel):
-        fund_amount: Optional[float] = None
-        currency: Optional[str] = None
-        monthly_cap: Optional[float] = None
-        low_balance_threshold_pct: Optional[float] = None
-        requires_approval_above: Optional[float] = None
-        voucher_prefix: Optional[str] = None
-        allowed_categories: Optional[List[str]] = None
-
-    class PettyCashExpenseCreate(FlexibleModel):
-        branch_id: Optional[str] = None
-        category: str = "otros"
-        description: str = ""
-        beneficiary: str = ""
-        employee_user_id: Optional[str] = None
-        amount: float = 0.0
-        currency: Optional[str] = None
-        payment_method: str = "cash"
-        received_by: Optional[str] = None
-        notes: Optional[str] = None
-        session_id: Optional[str] = None
-        submit: bool = False
-
-    class PettyCashExpenseUpdate(FlexibleModel):
-        category: Optional[str] = None
-        description: Optional[str] = None
-        beneficiary: Optional[str] = None
-        amount: Optional[float] = None
-        payment_method: Optional[str] = None
-        received_by: Optional[str] = None
-        notes: Optional[str] = None
-
-    class PettyCashRejectPayload(FlexibleModel):
-        reason: Optional[str] = None
-
-    class PettyCashReplenishmentCreate(FlexibleModel):
-        branch_id: Optional[str] = None
-        amount: float = 0.0
-        reference: Optional[str] = None
-        notes: Optional[str] = None
 
     async def _resolve_branch(user, requested_branch_id: Optional[str] = None) -> str:
         role = str(getattr(user, "role", "") or "").lower()
