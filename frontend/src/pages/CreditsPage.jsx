@@ -18,8 +18,13 @@ import {
   CheckCircle2, FileText, Receipt
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function CreditsPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [credits, setCredits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -128,6 +133,10 @@ export function CreditsPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="credits-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="credits-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -214,7 +223,7 @@ export function CreditsPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Total</TableHead>
@@ -227,13 +236,13 @@ export function CreditsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredCredits.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay créditos pendientes
                   </TableCell>
@@ -477,6 +486,7 @@ export function CreditsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

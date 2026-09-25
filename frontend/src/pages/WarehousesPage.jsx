@@ -8,8 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function WarehousesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -65,6 +70,10 @@ export function WarehousesPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="warehouses-list-density" />
+      </div>
+
       <div>
         <h1 className="font-heading text-3xl font-bold tracking-tight">Bodegas</h1>
         <p className="text-muted-foreground">Ver y administrar bodegas del sistema</p>
@@ -110,7 +119,7 @@ export function WarehousesPage() {
           ) : (
             <Table>
               <TableHead>
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell>ID</TableCell>
                   <TableCell>Nombre</TableCell>
                   <TableCell>Acciones</TableCell>
@@ -118,7 +127,7 @@ export function WarehousesPage() {
               </TableHead>
               <TableBody>
                 {warehouses.map(w => (
-                  <TableRow key={w.warehouse_id}>
+                  <TableRow className={densityTok.tableRow} key={w.warehouse_id}>
                     <TableCell>{w.warehouse_id}</TableCell>
                     <TableCell>{w.name}</TableCell>
                     <TableCell>
@@ -134,6 +143,7 @@ export function WarehousesPage() {
           )}
         </CardContent>
       </Card>
+      <BackToTopButton />
     </div>
   );
 }

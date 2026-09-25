@@ -23,6 +23,9 @@ import { FilterCombobox } from "@/components/users/FilterCombobox";
 import { DirectoryPagination } from "@/components/users/DirectoryPagination";
 import { useUserDirectory } from "@/hooks/useUserDirectory";
 import { SELLER_TYPES } from "@/lib/priceTiers";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -43,6 +46,8 @@ const getErrorMessage = (error, fallback = "Ocurrió un error inesperado") => {
 };
 
 export function UsersAdminPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user, loading: authLoading, hasPermission, hasRole } = useAuth();
   const [users, setUsers] = useState([]);
   const [pinUsers, setPinUsers] = useState([]);
@@ -717,7 +722,7 @@ export function UsersAdminPage() {
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className={densityTok.tableRow}>
                     <TableHead>Función</TableHead>
                     {PERMISSION_ACTIONS.map((action) => (
                       <TableHead key={action} className="text-center">{ACTION_LABELS[action]}</TableHead>
@@ -726,7 +731,7 @@ export function UsersAdminPage() {
                 </TableHeader>
                 <TableBody>
                   {Object.entries(moduleCfg.functions || {}).map(([functionKey, functionLabel]) => (
-                    <TableRow key={functionKey}>
+                    <TableRow className={densityTok.tableRow} key={functionKey}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span>{functionLabel}</span>
@@ -775,6 +780,10 @@ export function UsersAdminPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="users-admin-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="users-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1095,7 +1104,7 @@ export function UsersAdminPage() {
               >
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className={densityTok.tableRow}>
                     <TableHead>Usuario</TableHead>
                     <TableHead>Apellidos</TableHead>
                     <TableHead>Rol</TableHead>
@@ -1107,13 +1116,13 @@ export function UsersAdminPage() {
                 </TableHeader>
                 <TableBody>
                   {loading || pinDirectory.loading ? (
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableCell colSpan={7} className="text-center py-8">
                         <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
                   ) : pinDirectory.rows.length === 0 ? (
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         <KeyRound className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>{pinUsers.length === 0 ? "No hay usuarios PIN creados" : "No hay usuarios con esos filtros"}</p>
@@ -1130,7 +1139,7 @@ export function UsersAdminPage() {
                       const warehouse = warehouses.find(w => w.warehouse_id === user.warehouse_id);
                       
                       return (
-                        <TableRow key={user.user_id} data-testid={`pin-user-${user.user_id}`} className="ui-interactive">
+                        <TableRow key={user.user_id} data-testid={`pin-user-${user.user_id}`} className={`${densityTok.tableRow} ui-interactive`}>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
@@ -1341,7 +1350,7 @@ export function UsersAdminPage() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className={densityTok.tableRow}>
                     <TableHead>Usuario</TableHead>
                     <TableHead>Apellidos</TableHead>
                     <TableHead>Rol</TableHead>
@@ -1354,7 +1363,7 @@ export function UsersAdminPage() {
                 </TableHeader>
                 <TableBody>
                   {kioskPinsTable.length === 0 ? (
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                         No hay PINes registrados aún.
                       </TableCell>
@@ -1372,7 +1381,7 @@ export function UsersAdminPage() {
                         );
                       })
                       .map((item) => (
-                        <TableRow key={`kiosk-${item.user_id}`} className="hover:bg-muted/40">
+                        <TableRow key={`kiosk-${item.user_id}`} className={`${densityTok.tableRow} hover:bg-muted/40`}>
                           <TableCell className="font-medium">
                             <div>
                               <p>{item.name || item.user_id}</p>
@@ -1869,6 +1878,7 @@ export function UsersAdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

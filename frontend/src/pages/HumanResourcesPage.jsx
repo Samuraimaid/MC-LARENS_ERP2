@@ -15,6 +15,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from "sonner";
 import { Download, RefreshCw } from "lucide-react";
 import { DriversManagementTab } from "../components/hr/DriversManagementTab";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const ROLE_LABELS = {
   gerencia: "Gerencia",
@@ -30,6 +33,8 @@ const ROLE_LABELS = {
 };
 
 export function HumanResourcesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user, hasPermission } = useAuth();
   const canView = hasPermission("human_resources", "view");
   const canEdit = hasPermission("human_resources", "edit");
@@ -478,6 +483,10 @@ export function HumanResourcesPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="human-resources-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="hr-list-density" />
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Recursos Humanos</h1>
@@ -709,10 +718,10 @@ export function HumanResourcesPage() {
               )}
 
               <Table>
-                <TableHeader><TableRow><TableHead>Usuario</TableHead><TableHead>Semáforo</TableHead><TableHead>Horas Semana</TableHead><TableHead>Horas Quincena</TableHead><TableHead>Δ Horas</TableHead><TableHead>Min tardanza</TableHead><TableHead>Δ Tardanza</TableHead><TableHead>Ausencias</TableHead><TableHead>Exceso almuerzo (min)</TableHead><TableHead>Δ Almuerzo</TableHead><TableHead>Horas extra (min)</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Usuario</TableHead><TableHead>Semáforo</TableHead><TableHead>Horas Semana</TableHead><TableHead>Horas Quincena</TableHead><TableHead>Δ Horas</TableHead><TableHead>Min tardanza</TableHead><TableHead>Δ Tardanza</TableHead><TableHead>Ausencias</TableHead><TableHead>Exceso almuerzo (min)</TableHead><TableHead>Δ Almuerzo</TableHead><TableHead>Horas extra (min)</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {biweeklyRows.slice(0, 30).map((row) => (
-                    <TableRow key={row.user_id}>
+                    <TableRow className={densityTok.tableRow} key={row.user_id}>
                       <TableCell>{getUserLabel(row.user_id)}</TableCell>
                       <TableCell><Badge variant={getComplianceVariant(row.compliance_status)}>{row.compliance_status || "-"}</Badge></TableCell>
                       <TableCell className="text-xs max-w-[260px]">{row.worked_hours_weekly_text || "-"}</TableCell>
@@ -737,10 +746,10 @@ export function HumanResourcesPage() {
                   </CardHeader>
                   <CardContent>
                     <Table>
-                      <TableHeader><TableRow><TableHead>Colaborador</TableHead><TableHead>Semáforo</TableHead><TableHead>Min tardanza</TableHead><TableHead>Exceso almuerzo</TableHead><TableHead>Ausencias</TableHead></TableRow></TableHeader>
+                      <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Colaborador</TableHead><TableHead>Semáforo</TableHead><TableHead>Min tardanza</TableHead><TableHead>Exceso almuerzo</TableHead><TableHead>Ausencias</TableHead></TableRow></TableHeader>
                       <TableBody>
                         {biweeklySummary.top_incidents.map((item, index) => (
-                          <TableRow key={`${item.user_id || index}-incident`}>
+                          <TableRow className={densityTok.tableRow} key={`${item.user_id || index}-incident`}>
                             <TableCell>{item.user_name || getUserLabel(item.user_id)}</TableCell>
                             <TableCell><Badge variant={getComplianceVariant(item.compliance_status)}>{item.compliance_status || "-"}</Badge></TableCell>
                             <TableCell>{item.late_minutes ?? 0}</TableCell>
@@ -760,10 +769,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Incidencias automáticas de asistencia</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Usuario</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Usuario</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {attendanceIncidents.slice(0, 30).map((item) => (
-                    <TableRow key={item.incident_id}>
+                    <TableRow className={densityTok.tableRow} key={item.incident_id}>
                       <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</TableCell>
                       <TableCell>{getUserLabel(item.user_id)}</TableCell>
                       <TableCell>{item.incident_type}</TableCell>
@@ -780,10 +789,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Auditoría de cambios de configuración</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Ámbito</TableHead><TableHead>Sucursal</TableHead><TableHead>Usuario</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Ámbito</TableHead><TableHead>Sucursal</TableHead><TableHead>Usuario</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {settingsAudit.slice(0, 20).map((item) => (
-                    <TableRow key={item.audit_id}>
+                    <TableRow className={densityTok.tableRow} key={item.audit_id}>
                       <TableCell>{item.changed_at ? new Date(item.changed_at).toLocaleString() : "-"}</TableCell>
                       <TableCell>{item.scope}</TableCell>
                       <TableCell>{item.branch_id ? getBranchLabel(item.branch_id) : "Global"}</TableCell>
@@ -799,10 +808,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Últimas marcaciones</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Usuario</TableHead><TableHead>Evento</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Usuario</TableHead><TableHead>Evento</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {clockEvents.slice(0, 20).map((item) => (
-                    <TableRow key={item.clock_id}>
+                    <TableRow className={densityTok.tableRow} key={item.clock_id}>
                       <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</TableCell>
                       <TableCell>{getUserLabel(item.user_id)}</TableCell>
                       <TableCell>{item.event_type}</TableCell>
@@ -896,10 +905,10 @@ export function HumanResourcesPage() {
                 </div>
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Empleado</TableHead><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Empleado</TableHead><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {payStubs.slice(0, 30).map((item) => (
-                    <TableRow key={item.stub_id}>
+                    <TableRow className={densityTok.tableRow} key={item.stub_id}>
                       <TableCell>{item.user_name || getUserLabel(item.user_id)}</TableCell>
                       <TableCell>{item.period_label || `${item.period_start} - ${item.period_end}`}</TableCell>
                       <TableCell>{Number(item.gross_earnings || 0).toFixed(2)}</TableCell>
@@ -922,10 +931,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Ajustes de nómina registrados</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Monto</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Monto</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {payrollAdjustments.slice(0, 30).map((item) => (
-                    <TableRow key={item.adjustment_id}>
+                    <TableRow className={densityTok.tableRow} key={item.adjustment_id}>
                       <TableCell>{formatDateTime(item.effective_date || item.created_at)}</TableCell>
                       <TableCell>{getUserLabel(item.user_id)}</TableCell>
                       <TableCell>{item.adjustment_type}</TableCell>
@@ -942,10 +951,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Ausencias / permisos registrados</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Inicio</TableHead><TableHead>Fin</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Empleado</TableHead><TableHead>Tipo</TableHead><TableHead>Inicio</TableHead><TableHead>Fin</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {leaves.slice(0, 30).map((item) => (
-                    <TableRow key={item.leave_id}>
+                    <TableRow className={densityTok.tableRow} key={item.leave_id}>
                       <TableCell>{getUserLabel(item.user_id)}</TableCell>
                       <TableCell>{item.leave_type}</TableCell>
                       <TableCell>{item.start_date}</TableCell>
@@ -990,10 +999,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Histórico de movimientos</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Acción</TableHead><TableHead>Empleado</TableHead><TableHead>Cambio</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Acción</TableHead><TableHead>Empleado</TableHead><TableHead>Cambio</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {personnelActions.slice(0, 20).map((item) => (
-                    <TableRow key={item.action_id}>
+                    <TableRow className={densityTok.tableRow} key={item.action_id}>
                       <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</TableCell>
                       <TableCell>{item.action_type}</TableCell>
                       <TableCell>{item.employee_name || item.user_id || "-"}</TableCell>
@@ -1115,10 +1124,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Auditorías recientes</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Técnico</TableHead><TableHead>Faltantes</TableHead><TableHead>Monto faltante</TableHead><TableHead>Estado</TableHead><TableHead>Acción</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Técnico</TableHead><TableHead>Faltantes</TableHead><TableHead>Monto faltante</TableHead><TableHead>Estado</TableHead><TableHead>Acción</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {toolAudits.slice(0, 20).map((item) => (
-                    <TableRow key={item.audit_id}>
+                    <TableRow className={densityTok.tableRow} key={item.audit_id}>
                       <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</TableCell>
                       <TableCell>{getUserLabel(item.technician_id)}</TableCell>
                       <TableCell>{item.missing_count}</TableCell>
@@ -1142,10 +1151,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Programación de auditorías (2 veces al mes)</CardTitle><CardDescription>Control quincenal por técnico: próximos vencimientos y retrasos.</CardDescription></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Técnico</TableHead><TableHead>Rol</TableHead><TableHead>Última auditoría</TableHead><TableHead>Próxima auditoría</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Técnico</TableHead><TableHead>Rol</TableHead><TableHead>Última auditoría</TableHead><TableHead>Próxima auditoría</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {toolSchedule.map((item) => (
-                    <TableRow key={item.technician_id}>
+                    <TableRow className={densityTok.tableRow} key={item.technician_id}>
                       <TableCell>{getUserLabel(item.technician_id)}</TableCell>
                       <TableCell>{getRoleLabel(item.role)}</TableCell>
                       <TableCell>{item.last_audit_at ? new Date(item.last_audit_at).toLocaleString() : "-"}</TableCell>
@@ -1179,10 +1188,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Mis incidencias de asistencia</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.incidents || []).slice(0, 30).map((item) => (
-                    <TableRow key={item.incident_id}>
+                    <TableRow className={densityTok.tableRow} key={item.incident_id}>
                       <TableCell>{formatDateTime(item.created_at)}</TableCell>
                       <TableCell>{item.incident_type || "-"}</TableCell>
                       <TableCell>{item.description || "-"}</TableCell>
@@ -1198,10 +1207,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Mis notificaciones</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Categoría</TableHead><TableHead>Título</TableHead><TableHead>Mensaje</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Categoría</TableHead><TableHead>Título</TableHead><TableHead>Mensaje</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.notifications || []).slice(0, 30).map((item) => (
-                    <TableRow key={item.notification_id || `${item.created_at}-${item.title}`}>
+                    <TableRow className={densityTok.tableRow} key={item.notification_id || `${item.created_at}-${item.title}`}>
                       <TableCell>{formatDateTime(item.created_at)}</TableCell>
                       <TableCell>{item.category || "-"}</TableCell>
                       <TableCell>{item.title || "-"}</TableCell>
@@ -1217,10 +1226,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Mis comprobantes de pago</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Periodo</TableHead><TableHead>Bruto</TableHead><TableHead>INSS</TableHead><TableHead>Neto</TableHead><TableHead>PDF</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {myPayStubs.slice(0, 20).map((item) => (
-                    <TableRow key={item.stub_id}>
+                    <TableRow className={densityTok.tableRow} key={item.stub_id}>
                       <TableCell>{item.period_label || `${item.period_start} - ${item.period_end}`}</TableCell>
                       <TableCell>{Number(item.gross_earnings || 0).toFixed(2)}</TableCell>
                       <TableCell>{Number(item.inss_amount || 0).toFixed(2)}</TableCell>
@@ -1242,10 +1251,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Mis deducciones y ajustes de nómina</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Monto</TableHead><TableHead>Moneda</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Monto</TableHead><TableHead>Moneda</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.payroll_adjustments || []).slice(0, 30).map((item) => (
-                    <TableRow key={item.adjustment_id || `${item.created_at}-${item.adjustment_type}`}>
+                    <TableRow className={densityTok.tableRow} key={item.adjustment_id || `${item.created_at}-${item.adjustment_type}`}>
                       <TableCell>{formatDateTime(item.created_at || item.effective_date)}</TableCell>
                       <TableCell>{item.adjustment_type || "-"}</TableCell>
                       <TableCell>{Number(item.amount || 0).toFixed(2)}</TableCell>
@@ -1262,10 +1271,10 @@ export function HumanResourcesPage() {
             <CardHeader><CardTitle>Mis amonestaciones</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Detalle</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.sanctions || []).slice(0, 30).map((item) => (
-                    <TableRow key={item.action_id}>
+                    <TableRow className={densityTok.tableRow} key={item.action_id}>
                       <TableCell>{formatDateTime(item.created_at)}</TableCell>
                       <TableCell>{item.action_type || "-"}</TableCell>
                       <TableCell>{item.notes || "-"}</TableCell>
@@ -1286,10 +1295,10 @@ export function HumanResourcesPage() {
                 <div className="border rounded-md px-3 py-2 text-sm">Ventas registradas: {myOverview?.sales_commissions?.sales_count ?? 0}</div>
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>ID Venta</TableHead><TableHead>Total</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>ID Venta</TableHead><TableHead>Total</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.sales_commissions?.recent_sales || []).slice(0, 20).map((item) => (
-                    <TableRow key={item.sale_id || `${item.created_at}-${item.total}`}>
+                    <TableRow className={densityTok.tableRow} key={item.sale_id || `${item.created_at}-${item.total}`}>
                       <TableCell>{formatDateTime(item.created_at)}</TableCell>
                       <TableCell>{item.sale_id || "-"}</TableCell>
                       <TableCell>{Number(item.total || 0).toFixed(2)}</TableCell>
@@ -1310,10 +1319,10 @@ export function HumanResourcesPage() {
                 <div className="border rounded-md px-3 py-2 text-sm">Disponibles: {myOverview?.vacations?.available_days ?? 0} días</div>
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Inicio</TableHead><TableHead>Fin</TableHead><TableHead>Estado</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Inicio</TableHead><TableHead>Fin</TableHead><TableHead>Estado</TableHead><TableHead>Notas</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(myOverview?.vacations?.records || []).slice(0, 20).map((item, index) => (
-                    <TableRow key={`${item.start_date || index}-${item.end_date || index}`}>
+                    <TableRow className={densityTok.tableRow} key={`${item.start_date || index}-${item.end_date || index}`}>
                       <TableCell>{item.start_date || "-"}</TableCell>
                       <TableCell>{item.end_date || "-"}</TableCell>
                       <TableCell>{item.status || "-"}</TableCell>
@@ -1344,10 +1353,10 @@ export function HumanResourcesPage() {
                 <div className="border rounded-md px-3 py-2">Ausencias: {selectedBiweeklyRow.absences || 0}</div>
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Entrada</TableHead><TableHead>Salida almuerzo</TableHead><TableHead>Entrada almuerzo</TableHead><TableHead>Salida</TableHead><TableHead>Horas</TableHead><TableHead>Tarde (min)</TableHead><TableHead>Exceso almuerzo</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className={densityTok.tableRow}><TableHead>Fecha</TableHead><TableHead>Entrada</TableHead><TableHead>Salida almuerzo</TableHead><TableHead>Entrada almuerzo</TableHead><TableHead>Salida</TableHead><TableHead>Horas</TableHead><TableHead>Tarde (min)</TableHead><TableHead>Exceso almuerzo</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(selectedBiweeklyRow.daily_details || []).map((item, index) => (
-                    <TableRow key={`${item.date || index}-${index}`}>
+                    <TableRow className={densityTok.tableRow} key={`${item.date || index}-${index}`}>
                       <TableCell>{item.date || "-"}</TableCell>
                       <TableCell>{formatDateTime(item.clock_in)}</TableCell>
                       <TableCell>{formatDateTime(item.lunch_out)}</TableCell>
@@ -1367,6 +1376,7 @@ export function HumanResourcesPage() {
       </Dialog>
 
       {loading && <p className="text-sm text-muted-foreground">Cargando módulo de RRHH...</p>}
+      <BackToTopButton />
     </div>
   );
 }

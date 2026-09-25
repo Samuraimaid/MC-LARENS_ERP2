@@ -96,6 +96,9 @@ import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { buildCustomerProofWhatsAppUrl } from "@/lib/deliveryProof";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 
 // Divisas disponibles
@@ -380,6 +383,8 @@ function DraftBoardCard({
 }
 
 export function SalesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const navigate = useNavigate();
   const { hasPermission, user } = useAuth();
   const { getMessage: getDialogMessage } = useDialogMessages();
@@ -2777,6 +2782,10 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
 
   return (
     <div className="p-0 space-y-4" data-testid="sales-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="sales-list-density" />
+      </div>
+
       {!canViewSales ? (
         <Card>
           <CardContent className="py-6">
@@ -3832,6 +3841,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       />
       </>
       )}
+      <BackToTopButton />
     </div>
   );
 }

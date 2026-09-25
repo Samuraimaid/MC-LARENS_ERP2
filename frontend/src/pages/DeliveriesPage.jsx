@@ -20,6 +20,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveFleetTrackingRadar } from "@/components/delivery/LiveFleetTrackingRadar";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const DELIVERY_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -30,6 +33,8 @@ const DELIVERY_STATUSES = {
 };
 
 export function DeliveriesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [deliveries, setDeliveries] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +158,10 @@ export function DeliveriesPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="deliveries-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="deliveries-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -260,7 +269,7 @@ export function DeliveriesPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Dirección</TableHead>
@@ -272,13 +281,13 @@ export function DeliveriesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={7} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredDeliveries.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No hay entregas para mostrar
                   </TableCell>
@@ -289,7 +298,7 @@ export function DeliveriesPage() {
                   const StatusIcon = status.icon;
                   
                   return (
-                    <TableRow key={delivery.sale_id} data-testid={`delivery-row-${delivery.sale_id}`}>
+                    <TableRow className={densityTok.tableRow} key={delivery.sale_id} data-testid={`delivery-row-${delivery.sale_id}`}>
                       <TableCell className="font-mono">{delivery.invoice_number}</TableCell>
                       <TableCell>
                         <div>
@@ -485,6 +494,7 @@ export function DeliveriesPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

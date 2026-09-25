@@ -26,8 +26,14 @@ import {
 } from "@/lib/vehicleCatalog";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function VehiclesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [vehicles, setVehicles] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -355,6 +361,10 @@ export function VehiclesPage() {
         </div>
       )}
 
+      <div className="flex justify-end">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="vehicles-list-density" />
+      </div>
+
       {/* Board tabs selector (mobile/tablet) */}
       <div className="xl:hidden">
         <Tabs value={boardTab} onValueChange={setBoardTab}>
@@ -389,61 +399,35 @@ export function VehiclesPage() {
               ) : list.length === 0 ? (
                 <div className="border border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground">No hay vehículos registrados.</div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 ui-fade-in-stagger">
+                <DensityList density={listDensity} className="ui-fade-in-stagger" testId={`vehicles-density-list-${key}`}>
                   {list.map(vehicle => {
                     const customer = getCustomer(vehicle.customer_id);
                     const isCompany = customer?.customer_type === "empresa";
-                    const cardTone = isCompany
-                      ? "border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-blue-50"
-                      : "border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-50";
                     const plateTone = isCompany
                       ? "border-sky-200 bg-sky-100 text-sky-800"
                       : "border-emerald-200 bg-emerald-100 text-emerald-800";
 
               return (
-              <Card key={vehicle.vehicle_id} className={`group relative h-full overflow-hidden shadow-sm ui-panel animate-fade-up-soft ${cardTone}`}>
-                <VehicleThumbnailWatermark vehicle={vehicle} />
-                <CardHeader className="relative gap-4 pb-4">
-                  <CardTitle className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 items-start gap-3">
-                      <Badge variant="outline" className={`font-mono font-bold text-lg py-1 px-2 ${plateTone}`}>{vehicle.plate}</Badge>
-                      <div className="min-w-0 space-y-2">
-                        <div className="inline-flex items-center gap-2 font-medium text-base">
-                          <CarFront className={`h-4 w-4 shrink-0 icon-spring ${isCompany ? 'text-sky-700' : 'text-emerald-700'}`} />
-                          <span className="truncate">{vehicle.brand} {vehicle.model}</span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-500 icon-spring" />
-                            {vehicle.year || '-'}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Palette className="h-3.5 w-3.5 text-slate-500 icon-spring" />
-                            {vehicle.color || '-'}
-                          </span>
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500 icon-spring" />
-                            <span className="truncate">{vehicle.vin || 'Sin VIN/chasis'}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-muted-foreground">
-                      {isCompany ? (
-                        <Building2 className="h-4 w-4 shrink-0 text-sky-600 icon-spring" />
-                      ) : (
-                        <User className="h-4 w-4 shrink-0 text-emerald-600 icon-spring" />
-                      )}
-                      <span className="max-w-[180px] truncate">{getCustomerName(vehicle.customer_id)}</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex h-full flex-col gap-4">
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-3 text-sm font-medium text-slate-700">
-                    <ClipboardList className={`h-4 w-4 icon-spring ${isCompany ? 'text-sky-700' : 'text-emerald-700'}`} />
-                    <span>Acciones rápidas</span>
-                  </div>
-                  <div className="mt-auto flex flex-wrap items-center gap-2">
+              <DensityListItem
+                key={vehicle.vehicle_id}
+                density={listDensity}
+                testId={`vehicle-row-${vehicle.vehicle_id}`}
+                mediaFallback={<CarFront className={`${densityTok.mediaIcon} ${isCompany ? 'text-sky-700' : 'text-emerald-700'} icon-spring`} />}
+                primary={
+                  <span className="inline-flex items-center gap-2 min-w-0">
+                    <Badge variant="outline" className={`font-mono font-bold ${plateTone}`}>{vehicle.plate}</Badge>
+                    <span className="truncate">{vehicle.brand} {vehicle.model}</span>
+                  </span>
+                }
+                secondary={`${vehicle.year || "-"} · ${vehicle.color || "-"} · ${vehicle.vin || "Sin VIN/chasis"}`}
+                meta={
+                  <span className="inline-flex items-center gap-1.5">
+                    {isCompany ? <Building2 className="h-3.5 w-3.5 text-sky-600" /> : <User className="h-3.5 w-3.5 text-emerald-600" />}
+                    <span className="truncate">{getCustomerName(vehicle.customer_id)}</span>
+                  </span>
+                }
+              >
+                  <div className="flex flex-wrap items-center gap-2">
                       <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700 ui-interactive" onClick={() => {
                         const customer = customers.find(c => c.customer_id === vehicle.customer_id) || { name: getCustomerName(vehicle.customer_id), customer_id: vehicle.customer_id };
                         createQuotationFromVehicle(customer, vehicle);
@@ -489,16 +473,16 @@ export function VehiclesPage() {
                         Eliminar
                       </Button>
                   </div>
-                </CardContent>
-              </Card>
+              </DensityListItem>
               );
                     })}
-                </div>
+                </DensityList>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
+      <BackToTopButton />
     </div>
   );
 }

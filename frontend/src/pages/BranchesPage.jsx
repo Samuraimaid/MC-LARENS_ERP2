@@ -10,8 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Plus, Building2, MapPin, Phone, RefreshCw, Edit, Trash2 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 export function BranchesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -146,6 +151,10 @@ export function BranchesPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="branches-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="branches-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -348,7 +357,7 @@ export function BranchesPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>Sucursal</TableHead>
                 <TableHead>Dirección</TableHead>
                 <TableHead>Teléfono</TableHead>
@@ -359,13 +368,13 @@ export function BranchesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={6} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : branches.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No hay sucursales registradas</p>
@@ -373,7 +382,7 @@ export function BranchesPage() {
                 </TableRow>
               ) : (
                 branches.map(branch => (
-                  <TableRow key={branch.branch_id} data-testid={`branch-${branch.branch_id}`}>
+                  <TableRow className={densityTok.tableRow} key={branch.branch_id} data-testid={`branch-${branch.branch_id}`}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {branch.logo_url ? (
@@ -567,6 +576,7 @@ export function BranchesPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

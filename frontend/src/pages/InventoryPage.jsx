@@ -18,9 +18,8 @@ import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2, Star, Check, Loader2, List, LayoutGrid, Columns2
+  Truck, Trash2, Star, Check, Loader2
 } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel } from "@/lib/branding";
@@ -29,6 +28,10 @@ import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDis
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { buildTransferJobId } from "@/lib/driverDispatch";
 import { buildProductPricePayload, roundTo2 } from "@/lib/priceTiers";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import { densityTokens } from "@/components/lists/listDensity";
 
 export function InventoryPage() {
   const { hasPermission, user } = useAuth();
@@ -83,25 +86,7 @@ export function InventoryPage() {
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
-  const INV_VIEW_KEY = "mclarens_inventory_view_mode";
-  const INV_VIEW_MODES = ["delgada", "intermedia", "columnas"];
-  const [inventoryViewMode, setInventoryViewMode] = useState(() => {
-    try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(INV_VIEW_KEY) : null;
-      return INV_VIEW_MODES.includes(raw) ? raw : "delgada";
-    } catch {
-      return "delgada";
-    }
-  });
-  const setInventoryViewModePersist = (mode) => {
-    const next = INV_VIEW_MODES.includes(mode) ? mode : "delgada";
-    setInventoryViewMode(next);
-    try {
-      window.localStorage.setItem(INV_VIEW_KEY, next);
-    } catch {
-      /* ignore */
-    }
-  };
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok, isCompact } = useListDensity();
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);
   const [labelDialog, setLabelDialog] = useState({
     open: false,
@@ -2442,47 +2427,13 @@ export function InventoryPage() {
         <Button variant="outline" onClick={fetchData}>
           <RefreshCw className="h-4 w-4" />
         </Button>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground hidden sm:inline">Vista</span>
-          <ToggleGroup
-            type="single"
-            value={inventoryViewMode}
-            onValueChange={(v) => v && setInventoryViewModePersist(v)}
-            variant="outline"
-            size="sm"
-            className="rounded-full border border-border/60 bg-card/70 p-0.5 backdrop-blur-md shadow-sm"
-            data-testid="inventory-view-mode"
-            aria-label="Modo de vista de inventario"
-          >
-            <ToggleGroupItem
-              value="delgada"
-              title="Delgada — filas compactas"
-              aria-label="Vista delgada"
-              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-            >
-              <List className="h-4 w-4 mr-1" />
-              <span className="hidden md:inline text-xs">Delgada</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="intermedia"
-              title="Intermedia — tarjetas con imagen"
-              aria-label="Vista intermedia"
-              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-            >
-              <LayoutGrid className="h-4 w-4 mr-1" />
-              <span className="hidden md:inline text-xs">Intermedia</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="columnas"
-              title="2 columnas — rejilla con imágenes grandes"
-              aria-label="Vista 2 columnas"
-              className="rounded-full px-2.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-            >
-              <Columns2 className="h-4 w-4 mr-1" />
-              <span className="hidden md:inline text-xs">2 columnas</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        <ListDensityToggle
+          value={listDensity}
+          onChange={setListDensity}
+          className="ml-auto"
+          testId="inventory-view-mode"
+          aria-label="Densidad de lista de inventario"
+        />
       </div>
 
       {/* Inventory list (view modes) */}
@@ -2498,7 +2449,7 @@ export function InventoryPage() {
             No hay inventario para mostrar
           </CardContent>
         </Card>
-      ) : inventoryViewMode === "delgada" ? (
+      ) : listDensity === "compact" ? (
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -2630,11 +2581,12 @@ export function InventoryPage() {
         <>
           <div
             className={
-              inventoryViewMode === "columnas"
-                ? "grid grid-cols-1 md:grid-cols-2 gap-4"
-                : "flex flex-col gap-3"
+              listDensity === "cozy"
+                ? "flex flex-col gap-3"
+                : "flex flex-col gap-2"
             }
-            data-testid={`inventory-view-${inventoryViewMode}`}
+            data-list-density={listDensity}
+            data-testid={`inventory-view-${listDensity}`}
           >
             {filteredInventory.slice(0, inventoryVisibleLimit).map((item) => {
               const product = item.product || {};
@@ -2652,7 +2604,7 @@ export function InventoryPage() {
                   : warehouse?.name || item.warehouse_id;
               const isActiveInWarehouse = item.is_active !== false;
               const thumb = product.image_url || product.image || product.images?.[0];
-              const isGrid = inventoryViewMode === "columnas";
+              const isRoomy = listDensity === "cozy";
 
               return (
                 <div
@@ -2660,13 +2612,13 @@ export function InventoryPage() {
                   data-testid={`inv-row-${item.inventory_id}`}
                   className={`rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden transition hover:border-primary/30 hover:shadow-lg ${
                     !isActiveInWarehouse ? "opacity-60" : ""
-                  } ${isGrid ? "flex flex-col" : "flex flex-col sm:flex-row gap-0 sm:gap-4"}`}
+                  } "flex flex-col sm:flex-row gap-0 sm:gap-4"`}
                 >
                   <div
                     className={`relative shrink-0 bg-muted/30 ${
-                      isGrid
-                        ? "w-full aspect-[16/10]"
-                        : "w-full sm:w-28 h-36 sm:h-auto sm:self-stretch"
+                      isRoomy
+                        ? "w-full sm:w-36 h-40 sm:h-auto sm:self-stretch"
+                        : "w-full sm:w-24 h-28 sm:h-auto sm:self-stretch"
                     }`}
                   >
                     {thumb ? (
@@ -2682,7 +2634,7 @@ export function InventoryPage() {
                       </div>
                     )}
                   </div>
-                  <div className={`flex-1 p-4 flex flex-col gap-3 min-w-0 ${isGrid ? "" : ""}`}>
+                  <div className={`flex-1 flex flex-col gap-3 min-w-0 ${densityTok.cardPad}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-mono text-xs text-muted-foreground">{product.sku || "-"}</p>
@@ -2761,6 +2713,7 @@ export function InventoryPage() {
           )}
         </>
       )}
+      <BackToTopButton />
       </TabsContent>
 
       {canManageLogistics ? (

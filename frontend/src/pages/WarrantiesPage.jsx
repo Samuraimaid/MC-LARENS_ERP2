@@ -18,6 +18,9 @@ import {
   CheckCircle2, Clock, Plus, XCircle, Barcode, FileText
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const CLAIM_STATUSES = {
   pending: { label: "Pendiente", color: "bg-yellow-500", icon: Clock },
@@ -28,6 +31,8 @@ const CLAIM_STATUSES = {
 };
 
 export function WarrantiesPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const [claims, setClaims] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -203,6 +208,10 @@ export function WarrantiesPage() {
 
   return (
     <div className="p-6 space-y-6" data-testid="warranties-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="warranties-list-density" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -506,7 +515,7 @@ export function WarrantiesPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className={densityTok.tableRow}>
                 <TableHead>ID</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Vehículo</TableHead>
@@ -519,13 +528,13 @@ export function WarrantiesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredClaims.length === 0 ? (
-                <TableRow>
+                <TableRow className={densityTok.tableRow}>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No hay reclamos de garantía
                   </TableCell>
@@ -538,7 +547,7 @@ export function WarrantiesPage() {
                   const isExpired = warrantyEnd < new Date();
                   
                   return (
-                    <TableRow key={claim.claim_id}>
+                    <TableRow className={densityTok.tableRow} key={claim.claim_id}>
                       <TableCell className="font-mono text-xs">{claim.claim_id}</TableCell>
                       <TableCell>{claim.customer_name}</TableCell>
                       <TableCell>
@@ -716,6 +725,7 @@ export function WarrantiesPage() {
           )}
         </DialogContent>
       </Dialog>
+      <BackToTopButton />
     </div>
   );
 }

@@ -12,11 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner";
 import { ArrowRightLeft, Download, RefreshCw, Truck, CheckCircle2, AlertCircle, Clock, ShieldCheck } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
+import { useListDensity } from "@/hooks/useListDensity";
+import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
+import { BackToTopButton } from "@/components/lists/BackToTopButton";
 
 const TRANSFER_IN_REASONS = new Set(["transfer_in", "transfer_request_in", "transfer_received"]);
 const TRANSFER_OUT_REASONS = new Set(["transfer_out", "transfer_request_out", "transfer_shipped"]);
 
 export function ProductTransfersPage() {
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -213,6 +218,10 @@ export function ProductTransfersPage() {
 
   return (
     <div className="space-y-6" data-testid="product-transfers-page">
+      <div className="flex justify-end mb-2">
+        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="transfers-list-density" />
+      </div>
+
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Gestión de Traslados e Inventario en Tránsito</h1>
@@ -394,7 +403,7 @@ export function ProductTransfersPage() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className={densityTok.tableRow}>
                     <TableHead>Fecha Despacho</TableHead>
                     <TableHead>Producto</TableHead>
                     <TableHead>Origen</TableHead>
@@ -406,14 +415,14 @@ export function ProductTransfersPage() {
                 </TableHeader>
                 <TableBody>
                   {inTransitRequests.length === 0 ? (
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No hay mercancía en tránsito en este momento.
                       </TableCell>
                     </TableRow>
                   ) : (
                     inTransitRequests.map((req) => (
-                      <TableRow key={req.request_id}>
+                      <TableRow className={densityTok.tableRow} key={req.request_id}>
                         <TableCell>{String(req.shipped_at || req.created_at || "").slice(0, 16).replace("T", " ")}</TableCell>
                         <TableCell className="font-medium">{req.product_id}</TableCell>
                         <TableCell>{warehouseLabel(req.from_warehouse_id)}</TableCell>
@@ -454,7 +463,7 @@ export function ProductTransfersPage() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className={densityTok.tableRow}>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Producto</TableHead>
                     <TableHead>Origen</TableHead>
@@ -466,14 +475,14 @@ export function ProductTransfersPage() {
                 </TableHeader>
                 <TableBody>
                   {pendingRequests.length === 0 ? (
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No hay solicitudes pendientes por despachar.
                       </TableCell>
                     </TableRow>
                   ) : (
                     pendingRequests.map((req) => (
-                      <TableRow key={req.request_id}>
+                      <TableRow className={densityTok.tableRow} key={req.request_id}>
                         <TableCell>{String(req.created_at || "").slice(0, 16).replace("T", " ")}</TableCell>
                         <TableCell className="font-medium">{req.product_id}</TableCell>
                         <TableCell>{warehouseLabel(req.from_warehouse_id)}</TableCell>
@@ -517,7 +526,7 @@ export function ProductTransfersPage() {
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Producto</TableHead>
                       <TableHead>Desde</TableHead>
@@ -526,12 +535,12 @@ export function ProductTransfersPage() {
                   </TableHeader>
                   <TableBody>
                     {incoming.length === 0 ? (
-                      <TableRow>
+                      <TableRow className={densityTok.tableRow}>
                         <TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sin recepciones</TableCell>
                       </TableRow>
                     ) : (
                       incoming.slice(0, 20).map((movement, index) => (
-                        <TableRow key={`${movement.reference_id || movement.created_at}-${index}`}>
+                        <TableRow className={densityTok.tableRow} key={`${movement.reference_id || movement.created_at}-${index}`}>
                           <TableCell>{String(movement.created_at || "").slice(0, 16).replace("T", " ")}</TableCell>
                           <TableCell className="font-medium">{movement.product_id}</TableCell>
                           <TableCell>{warehouseLabel(movementSource(movement))}</TableCell>
@@ -553,7 +562,7 @@ export function ProductTransfersPage() {
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className={densityTok.tableRow}>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Producto</TableHead>
                       <TableHead>Hacia</TableHead>
@@ -562,12 +571,12 @@ export function ProductTransfersPage() {
                   </TableHeader>
                   <TableBody>
                     {outgoing.length === 0 ? (
-                      <TableRow>
+                      <TableRow className={densityTok.tableRow}>
                         <TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sin salidas</TableCell>
                       </TableRow>
                     ) : (
                       outgoing.slice(0, 20).map((movement, index) => (
-                        <TableRow key={`${movement.reference_id || movement.created_at}-${index}`}>
+                        <TableRow className={densityTok.tableRow} key={`${movement.reference_id || movement.created_at}-${index}`}>
                           <TableCell>{String(movement.created_at || "").slice(0, 16).replace("T", " ")}</TableCell>
                           <TableCell className="font-medium">{movement.product_id}</TableCell>
                           <TableCell>{warehouseLabel(movementTarget(movement))}</TableCell>
@@ -584,6 +593,7 @@ export function ProductTransfersPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <BackToTopButton />
     </div>
   );
 }
