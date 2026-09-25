@@ -6597,90 +6597,19 @@ async def get_kiosk_pins_table(request: Request):
 
 @api_router.post("/users/pin/kiosk/seed")
 async def seed_kiosk_pins_for_testing(payload: Dict[str, Any], request: Request):
-    current_user = await require_auth(request)
-    if not can_manage_login_pin(current_user) and not can_manage_other_users_pin(current_user):
-        raise HTTPException(status_code=403, detail="No tienes permiso para generar PIN Kiosko")
-
-    reset_all = bool((payload or {}).get("reset_all", True))
-    now_iso = datetime.now(timezone.utc).isoformat()
-
-    users = await db.users.find(
-        {"is_pin_user": True},
-        {
-            "_id": 0,
-            "user_id": 1,
-            "name": 1,
-            "role": 1,
-            "branch_id": 1,
-            "is_active": 1,
-            "kiosk_pin_plain": 1,
-            "attendance_pin_index": 1,
-            "pin_index": 1,
+    """Mass kiosk PIN seed HTTP — retired (Pack 6). Use per-user PIN Kiosko update, HR sync, or scripts."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed masivo de PIN Kiosko por HTTP "
+                "ya no está disponible en producción. Use la actualización de PIN Kiosko por usuario "
+                "en Administración de Usuarios, POST /api/hr/timeclock/pin-directory/sync, o scripts de backend."
+            ),
+            "canonical_path": "n/a — per-user PIN update / hr timeclock sync / scripts",
         },
-    ).to_list(5000)
-
-    used_indexes = {
-        str(item.get("attendance_pin_index") or item.get("pin_index"))
-        for item in users
-        if item.get("attendance_pin_index") or item.get("pin_index")
-    }
-
-    table_rows: List[Dict[str, Any]] = []
-    for item in users:
-        if not item.get("is_active"):
-            continue
-        current_pin = item.get("kiosk_pin_plain")
-        should_regenerate = reset_all or not current_pin
-
-        pin_value = str(current_pin) if current_pin else ""
-        if should_regenerate:
-            attempts = 0
-            while True:
-                attempts += 1
-                if attempts > 20000:
-                    raise HTTPException(status_code=500, detail="No se pudo generar un PIN único")
-                candidate = generate_kiosk_pin()
-                candidate_index = compute_pin_index(candidate)
-                if candidate_index not in used_indexes:
-                    pin_value = candidate
-                    used_indexes.add(candidate_index)
-                    break
-        pin_index = compute_pin_index(pin_value)
-
-        await db.users.update_one(
-            {"user_id": item.get("user_id")},
-            {
-                "$set": {
-                    "attendance_pin_hash": hash_pin(pin_value),
-                    "attendance_pin_index": pin_index,
-                    "attendance_pin_last_set_at": now_iso,
-                    "kiosk_pin_plain": pin_value,
-                    "pin_hash": hash_pin(pin_value),
-                    "pin_index": pin_index,
-                    "pin_last_set_at": now_iso,
-                }
-            },
-        )
-
-        table_rows.append(
-            {
-                "user_id": item.get("user_id"),
-                "name": item.get("name"),
-                "last_name": item.get("last_name"),
-                "role": item.get("role"),
-                "branch_id": item.get("branch_id"),
-                "kiosk_pin": pin_value,
-                "pin_last_set_at": now_iso,
-            }
-        )
-
-    await touch_kiosk_pin_sync_marker(current_user.user_id)
-
-    return {
-        "message": "PIN Kiosko generados correctamente",
-        "count": len(table_rows),
-        "rows": table_rows,
-    }
+    )
 
 
 @api_router.put("/users/{user_id}/login-pin")
@@ -22814,17 +22743,19 @@ async def list_all_promotional_videos(request: Request, branch_id: str = Query(d
 
 @api_router.post("/settings/promotional-videos/seed-defaults")
 async def seed_default_promotional_videos(request: Request):
-    user = await require_roles(request, ["gerencia", "programador", "publicidad"])
-    inserted = 0
-    for item in DEFAULT_PROMOTIONAL_VIDEOS:
-        exists = await db.promotional_videos.find_one({"id": item["id"]})
-        if not exists:
-            doc = dict(item)
-            doc["created_by"] = getattr(user, "username", getattr(user, "name", "admin"))
-            doc["created_at"] = _utc_now().isoformat()
-            await db.promotional_videos.insert_one(doc)
-            inserted += 1
-    return {"message": f"{inserted} videos preinstalados cargados correctamente", "inserted": inserted}
+    """Factory promotional video seed HTTP — retired (Pack 6). Use upload/create in settings."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "GONE",
+            "message": (
+                "Endpoint deprecado y retirado (410 Gone). El seed de videos promocionales de fábrica "
+                "por HTTP ya no está disponible en producción. Use la carga/creación de videos "
+                "promocionales en Configuración."
+            ),
+            "canonical_path": "n/a — promotional video upload/create UI",
+        },
+    )
 
 
 @api_router.post("/settings/promotional-videos/upload")

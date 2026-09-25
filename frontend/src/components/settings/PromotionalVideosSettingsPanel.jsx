@@ -273,18 +273,6 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
-  const handleSeedDefaults = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/settings/promotional-videos/seed-defaults`, {}, { withCredentials: true });
-      toast.success(res.data?.message || "Videos preinstalados cargados correctamente");
-      loadVideos();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Error al cargar videos preinstalados");
-      setLoading(false);
-    }
-  };
-
   const handleSave = async (e) => {
     e?.preventDefault();
     if (!title.trim()) {
@@ -435,10 +423,6 @@ export function PromotionalVideosSettingsPanel() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSeedDefaults} disabled={loading} title="Restaura o carga la lista de 11 videos de fábrica">
-              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
-              Cargar Videos de Fábrica
-            </Button>
             <Button variant="outline" size="sm" onClick={loadVideos} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
               Actualizar
@@ -461,14 +445,10 @@ export function PromotionalVideosSettingsPanel() {
               <div>
                 <p className="text-base font-semibold text-muted-foreground">No hay videos en la base de datos de administración</p>
                 <p className="text-sm text-muted-foreground/80 mt-1 max-w-md mx-auto">
-                  Carga los 11 videos promocionales preinstalados o sube uno nuevo directamente desde tu dispositivo.
+                  Sube un video nuevo directamente desde tu dispositivo o créalo desde Configuración.
                 </p>
               </div>
               <div className="flex justify-center gap-3 pt-2">
-                <Button className="bg-sky-600 hover:bg-sky-500 text-white" onClick={handleSeedDefaults} disabled={loading}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                  Cargar los 11 Videos Preinstalados
-                </Button>
                 <Button variant="outline" onClick={handleOpenCreate}>
                   <Plus className="h-4 w-4 mr-1" /> Subir Video Local
                 </Button>
