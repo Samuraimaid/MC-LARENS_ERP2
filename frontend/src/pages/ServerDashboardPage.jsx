@@ -28,6 +28,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { buildApiUrl } from "@/lib/runtimeApi";
 import { cn } from "@/lib/utils";
+import { PasswordField } from "@/components/common/PasswordField";
 
 const DONUT_COLORS = {
   used: "#22d3ee",
@@ -736,16 +737,18 @@ function TeraBoxManagementPanel({ defaultRoot = "/MCLarensERP" }) {
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
                 />
               </label>
-              <label className="block text-xs text-slate-400">
-                Contraseña (dejar vacío para no cambiar)
-                <input
-                  type="password"
+              <div className="block text-xs text-slate-400 [&_label]:text-slate-300 [&_input]:mt-1 [&_input]:border-slate-700 [&_input]:bg-slate-900 [&_input]:text-white [&_input]:focus-visible:ring-cyan-500/40 [&_.text-muted-foreground]:text-slate-500">
+                <PasswordField
+                  label="Contraseña (dejar vacío para no cambiar)"
+                  mode="password"
                   value={form.password}
-                  onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                  onChange={(next) => setForm((prev) => ({ ...prev, password: next }))}
                   placeholder="••••••••"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                  autoComplete="new-password"
+                  coaching
+                  data-testid="terabox-password"
                 />
-              </label>
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-xs text-slate-400">
                   Carpeta raíz

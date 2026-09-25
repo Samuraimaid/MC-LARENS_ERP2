@@ -33,6 +33,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import axios from "axios";
+import { PasswordField } from "@/components/common/PasswordField";
 
 const DEFAULT_FX_RATE = 36.5;
 
@@ -1188,17 +1189,17 @@ export function AntiTamperGuard({ children }) {
             </div>
 
             <form onSubmit={handleUnlock} className="mt-6 space-y-3">
-              <div className="relative">
-                <input
-                  type="password"
-                  maxLength={8}
-                  placeholder="PIN de Gerencia para desbloquear"
+              <div className="relative [&_input]:rounded-xl [&_input]:border-zinc-700 [&_input]:bg-zinc-900 [&_input]:px-4 [&_input]:py-3 [&_input]:text-center [&_input]:text-sm [&_input]:font-semibold [&_input]:text-white [&_input]:placeholder-zinc-500 [&_input]:focus-visible:ring-red-500/50">
+                <PasswordField
+                  mode="pin"
+                  pinLength={8}
                   value={unlockPin}
-                  onChange={(e) => setUnlockPin(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-center text-sm font-semibold tracking-widest text-white placeholder-zinc-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  autoFocus
+                  onChange={(next) => setUnlockPin(next)}
+                  placeholder="PIN de Gerencia para desbloquear"
+                  coaching={false}
+                  autoComplete="current-password"
+                  data-testid="antitamper-unlock-pin"
                 />
-                <KeyRound className="absolute right-3.5 top-3.5 h-4 w-4 text-zinc-500" />
               </div>
 
               {unlockError && (

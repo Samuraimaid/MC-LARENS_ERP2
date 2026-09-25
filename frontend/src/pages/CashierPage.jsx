@@ -8,6 +8,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import { PasswordField } from "@/components/common/PasswordField";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Textarea } from "../components/ui/textarea";
@@ -2213,15 +2214,17 @@ export function CashierPage() {
               Desbloquea con tu PIN para reactivar caja. Mientras esté bloqueada, sidebar, tema, cierre de sesión y acciones quedan deshabilitadas.
             </p>
             <div className="mt-3 space-y-2">
-              <Label htmlFor="cashier-unlock-pin">PIN de usuario para desbloquear</Label>
-              <Input
+              <PasswordField
                 id="cashier-unlock-pin"
-                type="password"
-                inputMode="numeric"
-                maxLength={8}
+                label="PIN de usuario para desbloquear"
+                mode="pin"
+                pinLength={8}
                 value={unlockPin}
-                onChange={(e) => setUnlockPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                onChange={(next) => setUnlockPin(next)}
                 placeholder="PIN de 8 dígitos"
+                coaching={false}
+                autoComplete="current-password"
+                data-testid="cashier-unlock-pin"
                 autoFocus
               />
             </div>
