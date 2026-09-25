@@ -201,6 +201,7 @@ export function CatalogPage() {
   const [vehicleType, setVehicleType] = useState("all");
   const [stayInCatalog, setStayInCatalog] = useState(false);
   const [sourceContext, setSourceContext] = useState(null);
+  const [pickCartTick, setPickCartTick] = useState(0);
   const [vehiclesById, setVehiclesById] = useState({});
   const [effectiveUsdNioRate, setEffectiveUsdNioRate] = useState(DEFAULT_USD_NIO_RATE);
   const [visibleCount, setVisibleCount] = useState(30);
@@ -681,6 +682,7 @@ export function CatalogPage() {
       return;
     }
     toast.success(`${product.name || "Producto"} agregado al borrador`);
+    setPickCartTick((n) => n + 1);
   };
 
   const handleAddClick = (type, product) => {
@@ -859,6 +861,17 @@ export function CatalogPage() {
     setWhatsappDialog({ open: false, product: null, batch: false, selectedClient: null, batchText: '' });
   };
 
+  const pickModeDraftType = sourceContext?.source === "quote-form" ? "quote" : "sale";
+  const pickModeCart = useMemo(() => {
+    if (!isSalePickMode || !sourceContext?.draftId) return null;
+    return getDraftSnapshot(pickModeDraftType, sourceContext.draftId);
+  }, [isSalePickMode, sourceContext, pickCartTick, pickModeDraftType]);
+  const pickModeCartItems = Array.isArray(pickModeCart?.cartItems) ? pickModeCart.cartItems : [];
+  const pickModeCartTotal = useMemo(
+    () => computeDraftTotal(pickModeCart),
+    [pickModeCart, effectiveUsdNioRate]
+  );
+
   return (
     <div className="space-y-6" data-testid="catalog-page">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -951,6 +964,14 @@ export function CatalogPage() {
         </Card>
       )}
 
+      <div
+        className={cn(
+          isSalePickMode && sourceContext
+            ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-4 lg:items-start"
+            : undefined
+        )}
+      >
+        <div className="min-w-0 space-y-6">
       <div className="sticky top-0 z-20 -mx-1 px-1 pt-2 sm:pt-3 pb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50 overflow-visible">
         <Card className="shadow-sm overflow-visible">
           <CardContent className="p-4 sm:p-5 space-y-3 overflow-visible">
@@ -1523,6 +1544,72 @@ export function CatalogPage() {
           )}
         </>
       )}
+        </div>
+
+        {isSalePickMode && sourceContext ? (
+          <aside className="hidden lg:block lg:sticky lg:top-24 self-start">
+            <Card className="border-emerald-500/30 shadow-md overflow-hidden">
+              <CardHeader className="py-3 px-4 bg-emerald-500/10 border-b border-emerald-500/20">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                  Carrito del cliente
+                </CardTitle>
+                <p className="text-[11px] text-muted-foreground font-normal mt-1">
+                  {contextCustomerName || "Sin cliente"} · {sourceContext.draftName || sourceContext.draftId}
+                </p>
+              </CardHeader>
+              <CardContent className="p-3 space-y-3 max-h-[min(70vh,640px)] overflow-y-auto">
+                {pickModeCartItems.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">
+                    Agrega productos desde el catálogo. El carrito se actualiza al instante.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {pickModeCartItems.map((item, idx) => (
+                      <li
+                        key={`${item.product_id || item.sku || "line"}-${idx}`}
+                        className="rounded-lg border bg-card px-2.5 py-2 text-xs"
+                      >
+                        <div className="font-medium leading-snug line-clamp-2">
+                          {item.name || item.sku || "Producto"}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between gap-2 text-muted-foreground">
+                          <span className="font-mono">×{item.quantity || 1}</span>
+                          <span className="font-semibold text-foreground">
+                            {formatCurrency(
+                              (Number(item.unit_price) || 0) * (Number(item.quantity) || 1),
+                              pickModeCart?.currency || "USD"
+                            )}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="border-t pt-2 flex items-center justify-between text-sm font-semibold">
+                  <span>Total</span>
+                  <span className="font-mono">
+                    {formatCurrency(pickModeCartTotal || 0, pickModeCart?.currency || "NIO")}
+                  </span>
+                </div>
+                <Button
+                  className="w-full h-9 text-xs font-semibold gap-1.5"
+                  onClick={() => {
+                    const target =
+                      sourceContext.source === "quote-form"
+                        ? "/workbench?tab=quotations"
+                        : "/workbench?tab=sales";
+                    navigate(target);
+                  }}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  {sourceContext.source === "quote-form" ? "Volver a cotización" : "Volver a la venta"}
+                </Button>
+              </CardContent>
+            </Card>
+          </aside>
+        ) : null}
+      </div>
 
       <Dialog
         open={draftDialog.open}

@@ -181,7 +181,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Máximo control térmico (99% IR) y total privacidad en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-05-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-05-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -204,7 +204,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tonalidad intermedia más popular y versátil en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-20-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-20-W60", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -227,7 +227,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Claridad óptica superior (100% visibilidad nocturna) en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SMK-35-W40", "virtual_qty": 50, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SMK-35-W60", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
@@ -250,7 +250,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Transparencia total para parabrisas delantero y visión nocturna.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-STD-70-W40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-STD-70-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -273,7 +273,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Película Tinmax Raybar de 40 pulgadas tono oscuro 5%.",
             "warranty_years": {"regular": 1, "original": 3},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 0.0, "sides": 0.0, "rear": 0.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-RB-05-W40", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-RB-05-W40", "virtual_qty": 40, "is_available": True, "qty_per_job": 1.0},
@@ -296,7 +296,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Sin tintes: tono que jamás se degrada ni se torna morado con los años.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-25-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-25-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -319,7 +319,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Nitidez superior al polarizado convencional y alto rechazo térmico.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTR-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTR-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -365,7 +365,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Negro profundo resistente a rayaduras en rollo de 40 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-CH-07-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-CH-07-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -388,7 +388,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono intermedio 22% en rollo de 20 pulgadas para ventanas laterales.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-22-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-22-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -411,7 +411,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Ultra oscura: máxima privacidad, estética agresiva y cero interferencia electrónica.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-20-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-20-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -434,7 +434,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro con tecnología de carbón: visibilidad nocturna impecable y elegancia.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 15.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-CRB-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-CRB-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -457,7 +457,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Punto dulce deportivo: auto oscuro y deportivo a precio accesible.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 10.0, "sides": 20.0, "rear": 10.0},
+            "price_by_zone_group": {"windshield": 15.0, "sides": 25.0, "rear": 15.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-GLX-12-W40", "virtual_qty": 30, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-GLX-12-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -484,7 +484,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Privacidad extrema y 90% rechazo infrarrojo. Tecnología multicapa en 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-04-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-04-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -507,7 +507,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Elegancia y confort con 90% IR. Control solar superior en rollo de 20 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-10-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-10-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -530,7 +530,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Rollo especial de 30 pulgadas Supreme 15% con alto rechazo infrarrojo.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-15-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-15-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -553,7 +553,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Claridad superior y estilo elegante en rollos versátiles de 20 y 40 pulgadas.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-16-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-16-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -576,7 +576,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Gama media clara en 20 pulgadas: visibilidad, confort y look ejecutivo.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-22-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-22-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -599,7 +599,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono 30% en rollo de 40 pulgadas con rechazo térmico superior.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 30.0, "sides": 50.0, "rear": 30.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SUP-30-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SUP-30-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -645,7 +645,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Arquitectura híbrida metalizada para climas hostiles y sol directo en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 45.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-SLS-05-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-SLS-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -668,7 +668,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Efecto tornasol dinámico de alta gama que cambia de color según la luz solar.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 40.0, "sides": 70.0, "rear": 40.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-CAM-20-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-CAM-20-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
@@ -691,7 +691,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Blindaje térmico profesional basado en partículas de titanio al vacío.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 35.0, "sides": 55.0, "rear": 35.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-TIT-26-W40", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-TIT-26-W60", "virtual_qty": 15, "is_available": True, "qty_per_job": 1.0},
@@ -718,7 +718,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Película 100% metalizada por pulverización catódica en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 50.0, "sides": 80.0, "rear": 50.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-14-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-14-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -741,7 +741,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Punto medio perfecto (80% IR): excelente privacidad sin perder visión nocturna.",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 50.0, "sides": 80.0, "rear": 50.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-19-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-19-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -764,7 +764,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro y sutil: 72% IR sin oscurecer el auto en 20\" y 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 35.0, "sides": 60.0, "rear": 35.0},
+            "price_by_zone_group": {"windshield": 50.0, "sides": 80.0, "rear": 50.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-QTO-28-W40", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-QTO-28-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -787,7 +787,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Privacidad absoluta, oscuridad profunda y rendimiento térmico en 20\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 40.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 50.0, "sides": 80.0, "rear": 50.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-05-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-05-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
@@ -810,7 +810,7 @@ DEFAULT_TINT_WINDOW_MATERIALS_POLICY = {
             "description": "Tono claro, sutil y elegante con visibilidad nocturna impecable en 40\".",
             "warranty_years": {"regular": 1, "original": 5},
             "is_active": True,
-            "price_by_zone_group": {"windshield": 25.0, "sides": 40.0, "rear": 25.0},
+            "price_by_zone_group": {"windshield": 50.0, "sides": 80.0, "rear": 50.0},
             "rolls": {
                 "windshield_under_40": {"sku": "ROLL-SG-END-35-W40", "virtual_qty": 25, "is_available": True, "qty_per_job": 1.0},
                 "windshield_over_40": {"sku": "ROLL-SG-END-35-W60", "virtual_qty": 20, "is_available": True, "qty_per_job": 1.0},
