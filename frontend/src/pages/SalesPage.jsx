@@ -50,7 +50,6 @@ import {
   detectDraftConflicts,
   promptDraftConflictToast,
 } from "@/lib/draftConflict";
-import AutosavePill from "@/components/common/AutosavePill";
 import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
 import { getVehicleThumbnail } from "@/lib/vehicleThumbnail";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
@@ -495,7 +494,7 @@ export function SalesPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showNewSale, setShowNewSale] = useState(true);
   const [saleFormRenderNonce, setSaleFormRenderNonce] = useState(0);
-  const [saveFlash, setSaveFlash] = useState(false);
+  const [, setSaveFlash] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [draftTabs, setDraftTabs] = useState([]);
   const [activeDraftId, setActiveDraftId] = useState(null);
@@ -2994,7 +2993,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
               <div className="hidden md:contents">
-              <ErpFormToolbar saveFlash={saveFlash}>
+              <ErpFormToolbar>
                 <ErpToolbarButton
                   action="refresh"
                   icon={RefreshCw}
@@ -3030,7 +3029,6 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 ) : null}
               </ErpFormToolbar>
               </div>
-              <AutosavePill sourceFilter="sales" testId="sales-autosave-pill" />
               <div className="flex shrink-0 items-center gap-2 rounded-md border px-2 py-1 text-xs text-muted-foreground md:ml-auto md:px-3 md:py-1.5">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
