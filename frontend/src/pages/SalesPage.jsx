@@ -111,7 +111,6 @@ import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { buildCustomerProofWhatsAppUrl } from "@/lib/deliveryProof";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
-import { useDevice } from "@/hooks/useDevice";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
@@ -410,8 +409,6 @@ function DraftBoardCard({
 
 export function SalesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
-  const { viewportWidth } = useDevice();
-  const isBelowMd = viewportWidth < 768;
   const selection = useListSelection();
   const scrollRestore = useListScrollRestore({ pageKey: "sales" });
 
@@ -2895,7 +2892,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
     setNewCustomerTab("customer");
   };
 
-  const showListSelectionBar = !(isBelowMd && showNewSale);
+  const showListSelectionBar = !showNewSale;
 
   return (
     <div

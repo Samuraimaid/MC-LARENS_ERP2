@@ -25,6 +25,24 @@ export function sanitizeToastValue(val) {
   return String(val);
 }
 
+const TOAST_DURATION_MS = {
+  success: 4000,
+  info: 4000,
+  message: 4000,
+  warning: 6000,
+  error: 8000,
+  loading: 4000,
+};
+
+const recentToasts = new Map();
+
+function toastDedupeKey(type, message, opts) {
+  const description = opts && typeof opts === "object" && opts.description != null
+    ? String(sanitizeToastValue(opts.description))
+    : "";
+  return `${type}|${String(message)}|${description}`;
+}
+
 // Monkey-patch rawToast in-place so all files importing `toast` from "sonner" or "@/components/ui/sonner" are automatically protected
 try {
   const methodsToWrap = ["error", "success", "warning", "info", "message", "loading"];
@@ -35,8 +53,24 @@ try {
         const cleanMsg = sanitizeToastValue(msg);
         const cleanOpts = opts && typeof opts === "object" && opts.description
           ? { ...opts, description: sanitizeToastValue(opts.description) }
-          : opts;
-        return orig(cleanMsg, cleanOpts);
+          : (opts && typeof opts === "object" ? { ...opts } : opts);
+        const key = toastDedupeKey(m, cleanMsg, cleanOpts);
+        const now = Date.now();
+        const recent = recentToasts.get(key);
+        if (recent && now - recent.at < 2000) return recent.id;
+        const duration = cleanOpts && typeof cleanOpts === "object" && cleanOpts.duration != null
+          ? cleanOpts.duration
+          : (TOAST_DURATION_MS[m] ?? 4000);
+        const id = orig(cleanMsg, {
+          ...(cleanOpts && typeof cleanOpts === "object" ? cleanOpts : {}),
+          duration,
+          style: {
+            ...(cleanOpts && typeof cleanOpts === "object" ? cleanOpts.style : {}),
+            "--erp-toast-ms": typeof duration === "number" ? `${duration}ms` : "4s",
+          },
+        });
+        recentToasts.set(key, { at: now, id });
+        return id;
       };
     }
   });
@@ -44,18 +78,24 @@ try {
   // ignore
 }
 
-const Toaster = ({ ...props }) => {
+const Toaster = ({ richColors: _richColors, position = "top-right", ...props }) => {
   const { theme = "system" } = useTheme();
 
   return (
     <Sonner
       theme={theme}
+      position={position}
+      visibleToasts={3}
+      closeButton
+      duration={4000}
+      gap={8}
       className="toaster group"
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
+            "group toast relative overflow-hidden group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+          title: "group-[.toast]:text-sm group-[.toast]:font-semibold",
+          description: "group-[.toast]:text-muted-foreground truncate max-w-[16rem]",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:

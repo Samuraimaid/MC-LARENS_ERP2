@@ -104,53 +104,43 @@ export function applyDraftConflictChoice(conflict, choice, { draftKeyPrefix } = 
   return null;
 }
 
+const pendingDraftConflictToasts = [];
+let draftConflictFlushTimer = 0;
+
 /**
- * Minimal toast UI: keep local / take server / keep both.
+ * One toast for a burst of draft conflicts. "Conservar ambos" applies to every draft in the burst.
  */
 export function promptDraftConflictToast(conflict, {
   draftKeyPrefix,
   onResolved,
-  duration = 20000,
 } = {}) {
   if (!conflict) return;
-
-  const title = "Conflicto de borrador";
-  const description =
-    `El borrador «${conflict.name || conflict.draftId}» cambió en otra pestaña o dispositivo. ` +
-    "Elige qué versión conservar (no se sobrescribe en silencio).";
-
-  toast.warning(title, {
-    description,
-    duration,
-    action: {
-      label: "Usar servidor",
-      onClick: () => {
-        const result = applyDraftConflictChoice(conflict, "server", { draftKeyPrefix });
-        toast.message("Se aplicó la versión del servidor");
-        if (typeof onResolved === "function") onResolved(result);
+  pendingDraftConflictToasts.push({ conflict, draftKeyPrefix, onResolved });
+  if (draftConflictFlushTimer) return;
+  draftConflictFlushTimer = window.setTimeout(() => {
+    const items = pendingDraftConflictToasts.splice(0);
+    draftConflictFlushTimer = 0;
+    if (!items.length) return;
+    const count = items.length;
+    const first = items[0].conflict;
+    toast.warning(count > 1 ? "Sincronizando borradores" : "Conflicto de borrador", {
+      id: "draft-sync",
+      description: count > 1
+        ? `${count} borradores cambiaron en otro dispositivo.`
+        : `El borrador «${first.name || first.draftId}» cambió en otro dispositivo.`,
+      duration: 6000,
+      action: {
+        label: "Conservar ambos",
+        onClick: () => {
+          items.forEach(({ conflict: item, draftKeyPrefix: prefix, onResolved: done }) => {
+            const result = applyDraftConflictChoice(item, "both", { draftKeyPrefix: prefix });
+            if (typeof done === "function") done(result);
+          });
+          toast.success("Borradores sincronizados", {
+            description: count > 1 ? `${count} borradores quedaron al día.` : "Se conservaron ambas versiones.",
+          });
+        },
       },
-    },
-    cancel: {
-      label: "Mantener local",
-      onClick: () => {
-        const result = applyDraftConflictChoice(conflict, "local", { draftKeyPrefix });
-        toast.message("Se mantuvo la versión local — se sincronizará al servidor");
-        if (typeof onResolved === "function") onResolved(result);
-      },
-    },
-  });
-
-  // Secondary path for "keep both" via a follow-up toast button
-  toast.message("¿Conservar ambos?", {
-    description: "Guarda tu copia local como respaldo y carga la del servidor.",
-    duration: Math.min(duration, 16000),
-    action: {
-      label: "Conservar ambos",
-      onClick: () => {
-        const result = applyDraftConflictChoice(conflict, "both", { draftKeyPrefix });
-        toast.success("Se conservaron ambas versiones (local como respaldo)");
-        if (typeof onResolved === "function") onResolved(result);
-      },
-    },
-  });
+    });
+  }, 0);
 }

@@ -2696,3 +2696,50 @@ main.erp-shell-main:focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
+
+/* Sonner cards: colored icon, one-line copy, draining progress */
+[data-sonner-toast] {
+  position: relative;
+  overflow: hidden;
+}
+[data-sonner-toast] [data-description] {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-sonner-toast]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  transform-origin: left center;
+  animation: erp-toast-drain var(--erp-toast-ms, 4s) linear forwards;
+  pointer-events: none;
+}
+@keyframes erp-toast-drain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+[data-sonner-toast][data-type="success"] [data-icon] { color: #16a34a; }
+[data-sonner-toast][data-type="success"]::after { background: #16a34a; }
+[data-sonner-toast][data-type="error"] [data-icon] { color: #dc2626; }
+[data-sonner-toast][data-type="error"]::after { background: #dc2626; }
+[data-sonner-toast][data-type="warning"] [data-icon] { color: #d97706; }
+[data-sonner-toast][data-type="warning"]::after { background: #d97706; }
+[data-sonner-toast][data-type="info"] [data-icon],
+[data-sonner-toast][data-type="message"] [data-icon] { color: #2563eb; }
+[data-sonner-toast][data-type="info"]::after,
+[data-sonner-toast][data-type="message"]::after { background: #2563eb; }
+.dark [data-sonner-toast][data-type="success"] [data-icon] { color: #4ade80; }
+.dark [data-sonner-toast][data-type="success"]::after { background: #4ade80; }
+.dark [data-sonner-toast][data-type="error"] [data-icon] { color: #f87171; }
+.dark [data-sonner-toast][data-type="error"]::after { background: #f87171; }
+.dark [data-sonner-toast][data-type="warning"] [data-icon] { color: #fbbf24; }
+.dark [data-sonner-toast][data-type="warning"]::after { background: #fbbf24; }
+.dark [data-sonner-toast][data-type="info"] [data-icon],
+.dark [data-sonner-toast][data-type="message"] [data-icon] { color: #60a5fa; }
+.dark [data-sonner-toast][data-type="info"]::after,
+.dark [data-sonner-toast][data-type="message"]::after { background: #60a5fa; }
