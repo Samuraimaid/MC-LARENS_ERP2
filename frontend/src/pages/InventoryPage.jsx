@@ -18,12 +18,17 @@ import { toast } from "sonner";
 import { 
   Plus, Search, Package, AlertTriangle, ArrowRightLeft, RefreshCw, 
   Image, Car, Wrench, Clock, DollarSign, X, Edit, Eye, Upload, Download, FileSpreadsheet, Barcode,
-  Truck, Trash2, Star, Check, Loader2, Copy, Power
+  Truck, Trash2, Star, Check, Loader2, Copy, Power, MoreHorizontal
 } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
-import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { showUndoToast } from "@/components/lists/undoToast";
 import { scheduleDelayedSend, DELAYED_SEND_MS } from "@/components/lists/delayedSend";
@@ -43,7 +48,6 @@ import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import { SwipeableRow } from "@/components/lists/SwipeableRow";
 import { useDevice } from "@/hooks/useDevice";
 import { FileUploadQueue } from "@/components/uploads/FileUploadQueue";
-import { densityTokens } from "@/components/lists/listDensity";
 import EmptyState from "@/components/common/EmptyState";
 import { humanApiError } from "@/lib/humanApiError";
 import ValidatedInput, { VALIDATION_SUCCESS_SHORT } from "@/components/common/ValidatedInput";
@@ -107,7 +111,10 @@ export function InventoryPage() {
   const [kardexUsers, setKardexUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [inventoryVisibleLimit, setInventoryVisibleLimit] = useState(50);
-  const { density: listDensity, setDensity: setListDensity, tokens: densityTok, isCompact } = useListDensity();
+  const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity({
+    pageId: "inventory",
+    preferPageOverride: true,
+  });
   const { isPhone, isTouchDevice, isDesktop } = useDevice();
   /** U7: swipe only on narrow/touch — desktop keeps click/selection (#81/#83). */
   const inventorySwipeEnabled = canEditInventory && (isPhone || (isTouchDevice && !isDesktop));
@@ -1736,82 +1743,97 @@ export function InventoryPage() {
   }, [inventory, products]);
 
 
-  const renderInventoryRowActions = (item, product, qtyAvailable, qtyTotal) => (
-    <div className="flex gap-1 flex-wrap justify-end">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => { scrollRestore.save(); setShowProductDetail(product); }}
-        title="Ver detalles"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => { scrollRestore.save(); setEditingProduct(product); }}
-        disabled={!canEditInventory}
-        title="Editar producto"
-      >
-        <Edit className="h-4 w-4" />
-      </Button>
-      {canViewInventoryLabels ? (
+  const renderInventoryRowActions = (item, product, qtyAvailable, qtyTotal) => {
+    const labelWarehouseId = item.warehouse_id === "none"
+      ? (warehouses[0]?.warehouse_id || "wh_main")
+      : item.warehouse_id;
+    return (
+      <div className="flex flex-nowrap items-center justify-end gap-1">
         <Button
           variant="ghost"
           size="icon"
-          title="Imprimir etiquetas"
-          onClick={() => openLabelPrintDialog(product, item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id, 1)}
+          className="h-8 w-8"
+          onClick={() => { scrollRestore.save(); setShowProductDetail(product); }}
+          title="Ver detalles"
         >
-          <Barcode className="h-4 w-4" />
+          <Eye className="h-4 w-4" />
         </Button>
-      ) : null}
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Ingresar stock"
-        onClick={() => {
-          setAddStock({
-            product_id: product.product_id || "",
-            warehouse_id: item.warehouse_id === "none" ? (warehouses[0]?.warehouse_id || "wh_main") : item.warehouse_id,
-            quantity: 1,
-          });
-          setShowAddStock(true);
-        }}
-        disabled={!canEditInventory}
-      >
-        <Plus className="h-4 w-4 text-primary" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
-        onClick={() => handleOpenZoneTransfer(item)}
-        disabled={!canEditInventory || qtyTotal <= 0}
-      >
-        <ArrowRightLeft className="h-4 w-4 text-amber-600" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Trasladar entre bodegas"
-        data-testid="transfer-row-btn"
-        onClick={() => openRowWarehouseTransfer(item, product)}
-        disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
-      >
-        <Truck className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Enviar por WhatsApp"
-        data-testid="whatsapp-row-btn"
-        onClick={() => openProductWhatsApp(item, product)}
-        className="hover:bg-[#25D366]/15"
-      >
-        <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
-      </Button>
-    </div>
-  );
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => { scrollRestore.save(); setEditingProduct(product); }}
+          disabled={!canEditInventory}
+          title="Editar producto"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Enviar por WhatsApp"
+          data-testid="whatsapp-row-btn"
+          onClick={() => openProductWhatsApp(item, product)}
+        >
+          <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Más acciones"
+              aria-label="Más acciones de la fila"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {canViewInventoryLabels ? (
+              <DropdownMenuItem
+                onSelect={() => openLabelPrintDialog(product, labelWarehouseId, 1)}
+              >
+                <Barcode className="h-4 w-4" />
+                Imprimir etiquetas
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              disabled={!canEditInventory}
+              onSelect={() => {
+                setAddStock({
+                  product_id: product.product_id || "",
+                  warehouse_id: labelWarehouseId,
+                  quantity: 1,
+                });
+                setShowAddStock(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Ingresar stock
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!canEditInventory || qtyTotal <= 0}
+              title="Mover entre zonas virtuales (Disponible, Dañado, Incompleto, Garantía)"
+              onSelect={() => handleOpenZoneTransfer(item)}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Mover entre zonas
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="transfer-row-btn"
+              disabled={!canEditInventory || item.warehouse_id === "none" || qtyAvailable <= 0}
+              onSelect={() => openRowWarehouseTransfer(item, product)}
+            >
+              <Truck className="h-4 w-4" />
+              Trasladar entre bodegas
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
 
   return (
     <PullToRefresh onRefresh={softRefresh} testId="inventory-pull-to-refresh">
@@ -1825,21 +1847,65 @@ export function InventoryPage() {
       ) : (
       <>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Inventario</h1>
           <p className="text-muted-foreground">Gestión de productos y stock en bodegas</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {/* Import CSV Dialog */}
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-9" data-testid="inventory-more-actions">
+                Más
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {!isWarehouseRole ? (
+                <DropdownMenuItem
+                  data-testid="import-csv-btn"
+                  disabled={!canCreateInventory}
+                  onSelect={() => setShowImportCSV(true)}
+                >
+                  <Upload className="h-4 w-4" />
+                  Importar CSV
+                </DropdownMenuItem>
+              ) : null}
+              {!isWarehouseRole ? (
+                <DropdownMenuItem
+                  data-testid="transfer-btn"
+                  disabled={!canEditInventory}
+                  onSelect={() => {
+                    setTransfer(emptyTransferForm());
+                    setShowTransfer(true);
+                  }}
+                >
+                  <ArrowRightLeft className="h-4 w-4" />
+                  Transferir
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem
+                data-testid="add-stock-btn"
+                disabled={!canEditInventory}
+                onSelect={() => setShowAddStock(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Agregar Inventario
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {!isWarehouseRole ? (
+            <Button
+              className="h-9"
+              data-testid="new-product-btn"
+              disabled={!canCreateInventory}
+              onClick={() => setShowNewProduct(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Crear producto
+            </Button>
+          ) : null}
           {!isWarehouseRole ? (
           <Dialog open={showImportCSV} onOpenChange={setShowImportCSV}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="import-csv-btn" disabled={!canCreateInventory}>
-                <Upload className="h-4 w-4 mr-2" />
-                Importar CSV
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <ContextualDialogHeader
                 variant="information"
@@ -1905,21 +1971,6 @@ export function InventoryPage() {
               </div>
             </DialogContent>
           </Dialog>
-          ) : null}
-
-          {!isWarehouseRole ? (
-            <Button
-              variant="outline"
-              data-testid="transfer-btn"
-              disabled={!canEditInventory}
-              onClick={() => {
-                setTransfer(emptyTransferForm());
-                setShowTransfer(true);
-              }}
-            >
-              <ArrowRightLeft className="h-4 w-4 mr-2" />
-              Transferir
-            </Button>
           ) : null}
 
           <Dialog open={showTransfer} onOpenChange={(open) => {
@@ -2009,12 +2060,6 @@ export function InventoryPage() {
           </Dialog>
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="add-stock-btn" disabled={!canEditInventory}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Inventario
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Ingreso de Inventario</DialogTitle>
@@ -2071,12 +2116,6 @@ export function InventoryPage() {
           
           {!isWarehouseRole ? (
           <Dialog open={showNewProduct} onOpenChange={(open) => { setShowNewProduct(open); if (!open) resetProductForm(); }}>
-            <DialogTrigger asChild>
-              <Button data-testid="new-product-btn" disabled={!canCreateInventory}>
-                <Plus className="h-4 w-4 mr-2" />
-                Crear producto
-              </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>Crear producto</DialogTitle>
@@ -2570,6 +2609,7 @@ export function InventoryPage() {
                           key={showNewProduct ? "create-uploads-open" : "create-uploads-closed"}
                           accept="image/*"
                           multiple
+                          compact
                           testId="inventory-create-uploads"
                           onUploadFile={handleCreateUploadFile}
                           onFileDone={(result) => appendUploadedUrls(result, false)}
@@ -2681,24 +2721,24 @@ export function InventoryPage() {
           <TabsTrigger value="kardex">Kardex</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inventory" className="space-y-4 mt-0">
+        <TabsContent value="inventory" className="space-y-3 mt-0">
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL EN CATÁLOGO</CardTitle>
+          <CardHeader className="space-y-0 p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">TOTAL EN CATÁLOGO</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold">{inventoryMetrics.totalCatalogCount}</div>
+          <CardContent className="px-3 pb-3 pt-0">
+            <div className="font-heading text-2xl font-bold leading-none">{inventoryMetrics.totalCatalogCount}</div>
             <p className="text-[11px] text-muted-foreground mt-1">Productos maestros sincronizados</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">CON STOCK FÍSICO</CardTitle>
+          <CardHeader className="space-y-0 p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">CON STOCK FÍSICO</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+          <CardContent className="px-3 pb-3 pt-0">
+            <div className="font-heading text-2xl font-bold leading-none text-emerald-600 dark:text-emerald-400">
               {inventoryMetrics.withPhysicalStockCount}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -2707,22 +2747,22 @@ export function InventoryPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">STOCK BAJO (REPOSICIÓN)</CardTitle>
+          <CardHeader className="space-y-0 p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">STOCK BAJO (REPOSICIÓN)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold text-amber-500">
+          <CardContent className="px-3 pb-3 pt-0">
+            <div className="font-heading text-2xl font-bold leading-none text-amber-500">
               {inventoryMetrics.lowStockCount}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">Existencia menor a umbral mínimo</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">BODEGAS REGISTRADAS</CardTitle>
+          <CardHeader className="space-y-0 p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">BODEGAS REGISTRADAS</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="font-heading text-3xl font-bold">{warehouses.length}</div>
+          <CardContent className="px-3 pb-3 pt-0">
+            <div className="font-heading text-2xl font-bold leading-none">{warehouses.length}</div>
             <p className="text-[11px] text-muted-foreground mt-1">Ubicaciones activas en ERP</p>
           </CardContent>
         </Card>
@@ -2751,57 +2791,91 @@ export function InventoryPage() {
         </div>
       )}
 
-      <ListSelectionBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar producto..."
-        searchTestId="search-inventory"
-        selectedCount={selection.count}
-        visibleCount={visibleInventoryIds.length}
-        matchingCount={matchingInventoryIds.length}
-        allVisibleSelected={selection.allVisibleSelected(visibleInventoryIds)}
-        someVisibleSelected={selection.someVisibleSelected(visibleInventoryIds)}
-        allMatchingSelected={selection.allVisibleSelected(matchingInventoryIds)}
-        onSelectAll={() => selection.toggleAllVisible(visibleInventoryIds)}
-        onSelectMatching={() => selection.selectMatching(matchingInventoryIds)}
-        onDeselectAll={selection.clear}
-        testId="inventory-selection-bar"
+      <div
+        className="sticky top-0 z-20 flex flex-wrap items-center gap-2 bg-background/90 py-1 backdrop-blur-sm"
+        data-testid="inventory-selection-bar"
       >
-        <Button type="button" size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" disabled={selection.count === 0} onClick={bulkOpenWhatsAppFirst}>
-          <WhatsAppIcon className="h-4 w-4 mr-1" />
-          WhatsApp
-        </Button>
-        {canViewInventoryLabels && (
-          <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={bulkPrintLabels}>
-            <Barcode className="h-4 w-4 mr-1" />
-            Etiqueta
+        <div className="relative w-full min-w-[12rem] sm:w-56">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto..."
+            className="h-9 pl-9"
+            data-testid="search-inventory"
+          />
+        </div>
+        <label className="inline-flex h-9 items-center gap-2 text-sm cursor-pointer select-none">
+          <Checkbox
+            checked={selection.allVisibleSelected(visibleInventoryIds) ? true : selection.someVisibleSelected(visibleInventoryIds) ? "indeterminate" : false}
+            onCheckedChange={() => selection.toggleAllVisible(visibleInventoryIds)}
+            aria-label="Seleccionar página"
+            data-testid="inventory-selection-bar-select-all-check"
+          />
+          <span className="whitespace-nowrap">
+            {matchingInventoryIds.length > visibleInventoryIds.length && visibleInventoryIds.length > 0
+              ? `Seleccionar página (${visibleInventoryIds.length})`
+              : matchingInventoryIds.length > 0
+                ? `Seleccionar los ${matchingInventoryIds.length} que coinciden`
+                : "Seleccionar todos"}
+          </span>
+        </label>
+        {selection.count > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-9 px-2"
+            onClick={selection.clear}
+            data-testid="inventory-selection-bar-deselect"
+          >
+            Deseleccionar
           </Button>
-        )}
-        {canEditInventory && (
-          <>
-            <Button type="button" variant="secondary" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(false)}>
-              <Power className="h-4 w-4 mr-1" />
-              {selection.count > 0 ? `Desactivar ${selection.count}` : "Desactivar"}
+        ) : null}
+        <span
+          className={`inline-flex h-9 items-center rounded-full border px-2.5 text-xs font-medium ${
+            selection.count > 0
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border/60 bg-muted/40 text-muted-foreground"
+          }`}
+          data-testid="inventory-selection-bar-count"
+        >
+          {selection.count === 1 ? "1 seleccionado" : `${selection.count} seleccionados`}
+        </span>
+        {selection.count > 0 ? (
+          <div className="flex flex-wrap items-center gap-1" data-testid="inventory-selection-bar-actions">
+            <Button type="button" className="h-9 bg-green-600 hover:bg-green-700 text-white" onClick={bulkOpenWhatsAppFirst}>
+              <WhatsAppIcon className="h-4 w-4 mr-1" />
+              WhatsApp
             </Button>
-            <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={() => bulkToggleActive(true)}>
-              {selection.count > 0 ? `Activar ${selection.count}` : "Activar"}
+            {canViewInventoryLabels ? (
+              <Button type="button" variant="outline" className="h-9" onClick={bulkPrintLabels}>
+                <Barcode className="h-4 w-4 mr-1" />
+                Etiqueta
+              </Button>
+            ) : null}
+            {canEditInventory ? (
+              <>
+                <Button type="button" variant="secondary" className="h-9" onClick={() => bulkToggleActive(false)}>
+                  <Power className="h-4 w-4 mr-1" />
+                  {`Desactivar ${selection.count}`}
+                </Button>
+                <Button type="button" variant="outline" className="h-9" onClick={() => bulkToggleActive(true)}>
+                  {`Activar ${selection.count}`}
+                </Button>
+              </>
+            ) : null}
+            <Button type="button" variant="secondary" className="h-9" onClick={exportSelectedInventoryCsv}>
+              <Download className="h-4 w-4 mr-1" />
+              CSV
             </Button>
-          </>
-        )}
-        <Button type="button" variant="secondary" size="sm" className="h-8" onClick={exportSelectedInventoryCsv}>
-          <Download className="h-4 w-4 mr-1" />
-          CSV
-        </Button>
-        <Button type="button" variant="outline" size="sm" className="h-8" disabled={selection.count === 0} onClick={copySelectedSkus}>
-          <Copy className="h-4 w-4 mr-1" />
-          Copiar SKUs
-        </Button>
-      </ListSelectionBar>
-
-      {/* Filters */}
-      <div className="flex gap-4 flex-wrap items-center">
+            <Button type="button" variant="outline" className="h-9" onClick={copySelectedSkus}>
+              <Copy className="h-4 w-4 mr-1" />
+              Copiar SKUs
+            </Button>
+          </div>
+        ) : null}
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-52" data-testid="filter-category">
+          <SelectTrigger className="h-9 w-44" data-testid="filter-category">
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
@@ -2812,7 +2886,7 @@ export function InventoryPage() {
           </SelectContent>
         </Select>
         <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
-          <SelectTrigger className="w-48" data-testid="filter-warehouse">
+          <SelectTrigger className="h-9 w-40" data-testid="filter-warehouse">
             <SelectValue placeholder="Bodega" />
           </SelectTrigger>
           <SelectContent>
@@ -2823,7 +2897,7 @@ export function InventoryPage() {
           </SelectContent>
         </Select>
         <Select value={selectedZone} onValueChange={setSelectedZone}>
-          <SelectTrigger className="w-44" data-testid="filter-zone">
+          <SelectTrigger className="h-9 w-40" data-testid="filter-zone">
             <SelectValue placeholder="Zona Virtual" />
           </SelectTrigger>
           <SelectContent>
@@ -2836,6 +2910,7 @@ export function InventoryPage() {
         </Select>
         <Button
           variant={showLowStock ? "default" : "outline"}
+          className="h-9"
           onClick={() => setShowLowStock(!showLowStock)}
           data-testid="filter-low-stock"
         >
@@ -2844,12 +2919,13 @@ export function InventoryPage() {
         </Button>
         <Button
           variant={includeInactive ? "secondary" : "outline"}
+          className="h-9"
           onClick={() => setIncludeInactive(!includeInactive)}
           title="Mostrar u ocultar productos desactivados en bodega"
         >
           {includeInactive ? "Ocultar Desact." : "Ver Desact."}
         </Button>
-        <Button variant="outline" onClick={fetchData}>
+        <Button variant="outline" size="icon" className="h-9 w-9" onClick={fetchData} title="Actualizar">
           <RefreshCw className="h-4 w-4" />
         </Button>
         <ListDensityToggle
@@ -2860,6 +2936,23 @@ export function InventoryPage() {
           aria-label="Densidad de lista de inventario"
         />
       </div>
+      {selection.allVisibleSelected(visibleInventoryIds) &&
+      !selection.allVisibleSelected(matchingInventoryIds) &&
+      matchingInventoryIds.length > visibleInventoryIds.length &&
+      visibleInventoryIds.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="inventory-selection-bar-matching-prompt">
+          <span>Los {visibleInventoryIds.length} de esta página están seleccionados.</span>
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto p-0"
+            onClick={() => selection.selectMatching(matchingInventoryIds)}
+            data-testid="inventory-selection-bar-select-matching"
+          >
+            {`Seleccionar los ${matchingInventoryIds.length} que coinciden`}
+          </Button>
+        </div>
+      ) : null}
 
       {/* Inventory list (view modes) */}
       {loading ? (
@@ -2883,8 +2976,8 @@ export function InventoryPage() {
           testId="inventory-empty-state"
           actionTestId="inventory-empty-create-product"
         />
-      ) : listDensity === "compact" ? (
-      <Card>
+      ) : listDensity !== "cozy" ? (
+      <Card data-list-density={listDensity} data-testid={`inventory-view-${listDensity}`}>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
@@ -2928,8 +3021,10 @@ export function InventoryPage() {
                   const isActiveInWarehouse = item.is_active !== false;
                   const thumb = product.image_url || product.image || product.images?.[0];
 
+                  const thumbSize = listDensity === "comfortable" ? "h-10 w-10" : "h-8 w-8";
+                  const categoryTitle = [getCategoryName(product.category), product.subcategory].filter(Boolean).join(" · ");
                   return (
-                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={!isActiveInWarehouse ? "opacity-60 bg-muted/20" : (selection.isSelected(item.inventory_id) ? "bg-primary/5" : "")}>
+                    <TableRow key={item.inventory_id} data-testid={`inv-row-${item.inventory_id}`} className={`${listDensity === "comfortable" ? "h-14" : "h-10"} ${!isActiveInWarehouse ? "opacity-60 bg-muted/20" : (selection.isSelected(item.inventory_id) ? "bg-primary/5" : "")}`}>
                       <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selection.isSelected(item.inventory_id)}
@@ -2944,26 +3039,27 @@ export function InventoryPage() {
                           aria-label="Seleccionar fila"
                         />
                       </TableCell>
-                      <TableCell className="font-mono">{product.sku || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      <TableCell className="max-w-[9.5rem]">
+                        <span className="block max-w-[9.5rem] truncate whitespace-nowrap font-mono" title={product.sku || undefined}>
+                          {product.sku || "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-[18rem]">
+                        <div className="flex items-center gap-2 min-w-0">
                           {thumb ? (
-                            <img src={thumb} alt="" loading="lazy" className="w-8 h-8 rounded object-cover" />
+                            <img src={thumb} alt="" loading="lazy" className={`${thumbSize} shrink-0 rounded object-cover`} />
                           ) : (
-                            <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center">
+                            <div className={`${thumbSize} shrink-0 rounded bg-muted/50 flex items-center justify-center`}>
                               <Package className="h-3.5 w-3.5 text-muted-foreground" />
                             </div>
                           )}
-                          <span className="font-medium">{product.name || "Desconocido"}</span>
+                          <span className="min-w-0 truncate font-medium" title={product.name || "Desconocido"}>{product.name || "Desconocido"}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="outline">{getCategoryName(product.category)}</Badge>
-                          {product.subcategory && (
-                            <span className="text-xs text-muted-foreground">{product.subcategory}</span>
-                          )}
-                        </div>
+                      <TableCell className="max-w-[12rem]">
+                        <span className="block max-w-[12rem] truncate whitespace-nowrap text-sm" title={categoryTitle || undefined}>
+                          {categoryTitle || "—"}
+                        </span>
                       </TableCell>
                       <TableCell>{warehouseLabel}</TableCell>
                       <TableCell className="text-center">
@@ -3012,7 +3108,7 @@ export function InventoryPage() {
                           {isActiveInWarehouse ? "Activo" : "Inactivo"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {renderInventoryRowActions(item, product, qtyAvailable, qtyTotal)}
                       </TableCell>
                     </TableRow>
