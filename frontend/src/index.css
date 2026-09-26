@@ -2460,8 +2460,9 @@ html[data-liquid-glass="true"] {
 
 /* Light mode: near-black text on glass (not muted gray). Dark theme unchanged. */
 html[data-liquid-glass="true"]:not(.dark) {
-  --lg-text: #0a0a0a;
-  --lg-muted: #171717;
+  --lg-text: #1e293b;
+  --lg-muted: #334155;
+  --lg-fill-light: hsl(var(--card) / 0.86);
 }
 
 html[data-liquid-glass="true"]:not(.dark) .card-dark-contrast,
@@ -2505,9 +2506,34 @@ html[data-liquid-glass="true"] .erp-liquid-wash {
   opacity: 0.95;
 }
 
+html[data-liquid-glass="true"]:not(.dark) .erp-liquid-wash {
+  opacity: 0.42;
+}
+
 html[data-liquid-glass="true"].dark .erp-liquid-wash {
   opacity: 0.85;
   filter: blur(10px) saturate(1.35);
+}
+
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main .ui-panel,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main .bg-card\/40 {
+  background-color: rgb(255 255 255 / 0.9) !important;
+}
+
+html[data-liquid-glass="true"]:not(.dark) [role="dialog"].erp-liquid-panel {
+  background: rgb(255 255 255 / 0.96) !important;
+  color: #1e293b !important;
+}
+
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main .text-muted-foreground,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main label {
+  color: #334155 !important;
+}
+
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main input::placeholder,
+html[data-liquid-glass="true"]:not(.dark) .erp-shell-main textarea::placeholder {
+  color: #475569;
+  opacity: 1;
 }
 
 html[data-liquid-glass="true"] .erp-liquid-shell {
@@ -2530,6 +2556,11 @@ html[data-liquid-glass="true"].dark .card-dark-contrast {
 }
 
 /* Dialog / popover shells */
+html[data-liquid-glass="true"]:not(.dark) .erp-liquid-panel,
+html[data-liquid-glass="true"]:not(.dark) [role="dialog"].erp-liquid-panel {
+  background: hsl(var(--card) / 0.9) !important;
+}
+
 html[data-liquid-glass="true"] [role="dialog"].erp-liquid-panel,
 html[data-liquid-glass="true"] .erp-liquid-panel {
   background: hsl(var(--card) / var(--liquid-glass-alpha, 0.40)) !important;

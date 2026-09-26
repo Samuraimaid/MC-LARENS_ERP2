@@ -318,7 +318,7 @@ function App() {
             <BrowserRouter>
               <AntiTamperGuard>
                 <AppRouter />
-                <Toaster position="top-center" richColors />
+                <Toaster position="top-right" />
               </AntiTamperGuard>
             </BrowserRouter>
           </DialogMessagesProvider>
