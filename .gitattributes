@@ -1,0 +1,7 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Ensure all shell scripts always have LF endings across git checkouts
+*.sh text eol=lf
+Dockerfile* text eol=lf
+.env* text eol=lf

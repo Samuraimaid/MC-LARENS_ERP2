@@ -58,7 +58,9 @@ ENV PORT=8080
 EXPOSE 8080
 
 COPY backend/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh \
+    && sed -i 's/\r$//' /app/backend/scripts/backup_server_node.sh \
     && chmod +x /app/backend/scripts/backup_server_node.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
