@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { 
   Search, CreditCard, Printer, Download, RefreshCw,
   Wrench, Package, ShieldCheck, Car, XCircle,
-  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock, Copy } from "lucide-react";
+  User, Truck, Tag, Percent, ArrowRightLeft, Building2, Eye, Eraser, SaveAll, Unlock, Copy, MoreHorizontal } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { loadLocalDraftState, mirrorServerDraftsToLocalStorage } from "@/lib/draftStorage";
 import {
@@ -112,9 +112,16 @@ import { isSaleDraftSaveEligible } from "@/lib/draftSaveEligibility";
 import { scrollPageToTop } from "@/lib/scrollPageToTop";
 import { buildCustomerProofWhatsAppUrl } from "@/lib/deliveryProof";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
+import { useDevice } from "@/hooks/useDevice";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
@@ -404,6 +411,8 @@ function DraftBoardCard({
 
 export function SalesPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
+  const { viewportWidth } = useDevice();
+  const isBelowMd = viewportWidth < 768;
   const selection = useListSelection();
   const scrollRestore = useListScrollRestore({ pageKey: "sales" });
 
@@ -2887,11 +2896,21 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
     setNewCustomerTab("customer");
   };
 
-  return (
-    <div className="p-0 space-y-4" data-testid="sales-page">
-      <div className="flex justify-end mb-2">
-        <ListDensityToggle value={listDensity} onChange={setListDensity} testId="sales-list-density" />
+  const showListSelectionBar = !(isBelowMd && showNewSale);
 
+  return (
+    <div
+      className={cn(
+        "p-0 space-y-4",
+        showNewSale && "max-md:pb-[calc(6rem+env(safe-area-inset-bottom,0px))]",
+      )}
+      data-testid="sales-page"
+    >
+      {showListSelectionBar ? (
+      <div className="mb-2 flex flex-col gap-2">
+        <div className="flex justify-end">
+          <ListDensityToggle value={listDensity} onChange={setListDensity} testId="sales-list-density" />
+        </div>
       <ListSelectionBar
         searchValue={search}
         onSearchChange={setSearch}
@@ -2911,8 +2930,8 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
           <Copy className="h-4 w-4 mr-1" /> Copiar IDs
         </Button>
       </ListSelectionBar>
-
       </div>
+      ) : null}
 
       {!canViewSales ? (
         <Card>
@@ -2974,6 +2993,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
         <Card ref={saleFormAnchorRef} className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
+              <div className="hidden md:contents">
               <ErpFormToolbar saveFlash={saveFlash}>
                 <ErpToolbarButton
                   action="refresh"
@@ -3009,8 +3029,9 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                   />
                 ) : null}
               </ErpFormToolbar>
+              </div>
               <AutosavePill sourceFilter="sales" testId="sales-autosave-pill" />
-              <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+              <div className="flex shrink-0 items-center gap-2 rounded-md border px-2 py-1 text-xs text-muted-foreground md:ml-auto md:px-3 md:py-1.5">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
                   checked={currency === "USD"}
@@ -3028,6 +3049,57 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 />
                 <span className={currency === "USD" ? "font-semibold text-foreground" : ""}>US$</span>
               </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 md:hidden"
+                    aria-label="Más acciones de la venta"
+                  >
+                    <MoreHorizontal className="h-4 w-4 mr-1" />
+                    Más
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    disabled={isRefreshingData}
+                    onSelect={() => {
+                      playSelectionFeedbackSound();
+                      handleRefreshData();
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Actualizar datos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!canCreateSales}
+                    data-testid="save-and-clear-sale-btn-mobile"
+                    onSelect={handleSaveAndClearSale}
+                  >
+                    <SaveAll className="h-4 w-4" />
+                    Guardar y limpiar
+                  </DropdownMenuItem>
+                  {showReleaseDraftButton ? (
+                    <DropdownMenuItem onSelect={handleReleaseDraft}>
+                      <Unlock className="h-4 w-4" />
+                      Liberar
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem
+                    disabled={!canCreateSales}
+                    onSelect={() => {
+                      playSelectionFeedbackSound();
+                      setShowClearSaleConfirm(true);
+                    }}
+                  >
+                    <Eraser className="h-4 w-4" />
+                    Limpiar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="hidden md:block">
               <ErpToolbarButton
                 action="clear"
                 icon={Eraser}
@@ -3039,6 +3111,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
                 disabled={!canCreateSales}
                 title="Limpiar Formulario"
               />
+              </div>
             </div>
             <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
               <DialogContent className="max-w-sm">
@@ -3124,6 +3197,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               currencyValue={currency}
               onCurrencyChange={setCurrency}
               hideCurrencyField={true}
+              singleStepOnMobile
               submitLabel="Crear venta"
               confirmSendToCashier={isSellerOnly || String(user?.role || "").toLowerCase() === "ventas"}
               onSubmit={async (payload) => {
