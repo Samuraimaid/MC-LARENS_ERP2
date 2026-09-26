@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { ContextualDialogFooter, ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
-import { Checkbox } from "../components/ui/checkbox";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
@@ -48,6 +47,7 @@ import ProductQuickViewDialog from "@/components/erp/ProductQuickViewDialog";
 import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
 import ProductImageHoverZoom from "@/components/erp/ProductImageHoverZoom";
 import ProductThumb from "@/components/products/ProductThumb";
+import MorphToggle from "@/components/common/MorphToggle";
 import { getProductImageUrl } from "@/lib/productImage";
 import { productMatchesSearch } from "@/lib/productLookup";
 import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
@@ -57,6 +57,20 @@ import {
   sortProductsByBombilloCompat,
   bombilloCompatRowClass,
 } from "@/lib/bombilloCompat";
+
+const STAY_IN_CATALOG_KEY = "mclarens_stay_in_catalog";
+
+function readStayInCatalog(mode) {
+  if (typeof window === "undefined") return mode === "sale-pick";
+  try {
+    const raw = window.localStorage.getItem(STAY_IN_CATALOG_KEY);
+    if (raw === "1" || raw === "true") return true;
+    if (raw === "0" || raw === "false") return false;
+  } catch {
+    /* ignore */
+  }
+  return mode === "sale-pick";
+}
 
 const DRAFT_CONFIG = {
   sale: {
@@ -199,7 +213,7 @@ export function CatalogPage() {
   const [subcategory, setSubcategory] = useState("all");
   const [productType, setProductType] = useState("all");
   const [vehicleType, setVehicleType] = useState("all");
-  const [stayInCatalog, setStayInCatalog] = useState(false);
+  const [stayInCatalog, setStayInCatalog] = useState(() => readStayInCatalog(searchParams.get("mode")));
   const [sourceContext, setSourceContext] = useState(null);
   const [pickCartTick, setPickCartTick] = useState(0);
   const [vehiclesById, setVehiclesById] = useState({});
@@ -221,9 +235,29 @@ export function CatalogPage() {
     choices: [],
   });
 
+  const persistStayInCatalog = useCallback((next) => {
+    const value = Boolean(next);
+    setStayInCatalog(value);
+    try {
+      window.localStorage.setItem(STAY_IN_CATALOG_KEY, value ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const modeParam = searchParams.get("mode");
   const compatParam = searchParams.get("compat");
   const isSalePickMode = modeParam === "sale-pick" || modeParam === "quote-pick" || compatParam === "1";
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STAY_IN_CATALOG_KEY);
+      if (raw === "1" || raw === "true" || raw === "0" || raw === "false") return;
+    } catch {
+      /* ignore */
+    }
+    if (modeParam === "sale-pick") setStayInCatalog(true);
+  }, [modeParam]);
 
   useEffect(() => {
     setVisibleCount(30);
@@ -810,6 +844,7 @@ export function CatalogPage() {
       return;
     }
     toast.success(`${productsToAdd.length} productos agregados al borrador`);
+    setPickCartTick((n) => n + 1);
   };
 
   const handleAddMultipleClick = (type, productsToAdd) => {
@@ -933,6 +968,15 @@ export function CatalogPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center pt-1 md:pt-0">
+              <label className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-2.5 py-1 text-xs font-medium">
+                <MorphToggle
+                  checked={stayInCatalog}
+                  onCheckedChange={persistStayInCatalog}
+                  aria-label="Permanecer en catálogo al agregar"
+                  data-testid="stay-in-catalog-toggle"
+                />
+                Permanecer en catálogo
+              </label>
               <Button
                 size="sm"
                 variant="outline"
@@ -1201,10 +1245,11 @@ export function CatalogPage() {
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Checkbox
+                  <MorphToggle
                     id="stay-in-catalog"
                     checked={stayInCatalog}
-                    onCheckedChange={(value) => setStayInCatalog(Boolean(value))}
+                    onCheckedChange={persistStayInCatalog}
+                    aria-label="Permanecer en catálogo al agregar"
                   />
                   <Label htmlFor="stay-in-catalog" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
                     <Pin className="h-3.5 w-3.5" />
@@ -1564,33 +1609,71 @@ export function CatalogPage() {
                   </p>
                 ) : (
                   <ul className="space-y-2">
-                    {pickModeCartItems.map((item, idx) => (
+                    {pickModeCartItems.map((item, idx) => {
+                      const qty = Number(item.quantity) || 1;
+                      const unitUsd = Number(item.unit_price) || 0;
+                      const unitDual = usdAndNioFromUsdBase(unitUsd, effectiveUsdNioRate);
+                      const lineDual = usdAndNioFromUsdBase(unitUsd * qty, effectiveUsdNioRate);
+                      const catalogMatch = products.find((row) => String(row.product_id) === String(item.product_id));
+                      const sku = item.sku || catalogMatch?.sku || item.product_id || "—";
+                      const lineName = item.product_name || item.name || catalogMatch?.name || "Producto";
+                      return (
                       <li
-                        key={`${item.product_id || item.sku || "line"}-${idx}`}
+                        key={`${item.product_id || sku || "line"}-${idx}`}
                         className="rounded-lg border bg-card px-2.5 py-2 text-xs"
                       >
-                        <div className="font-medium leading-snug line-clamp-2">
-                          {item.name || item.sku || "Producto"}
-                        </div>
+                        <div className="font-medium leading-snug line-clamp-2">{lineName}</div>
+                        <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{sku}</div>
                         <div className="mt-1 flex items-center justify-between gap-2 text-muted-foreground">
-                          <span className="font-mono">×{item.quantity || 1}</span>
-                          <span className="font-semibold text-foreground">
-                            {formatCurrency(
-                              (Number(item.unit_price) || 0) * (Number(item.quantity) || 1),
-                              pickModeCart?.currency || "USD"
-                            )}
+                          <span className="font-mono">×{qty}</span>
+                          <span className="text-right">
+                            <span className="block text-foreground">{formatCurrency(unitDual.usd, "USD")}</span>
+                            <span className="block">≈ {formatCurrency(unitDual.nio, "NIO")}</span>
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between gap-2 border-t border-dashed pt-1">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="text-right font-semibold text-foreground">
+                            <span className="block">{formatCurrency(lineDual.usd, "USD")}</span>
+                            <span className="block font-normal text-muted-foreground">≈ {formatCurrency(lineDual.nio, "NIO")}</span>
                           </span>
                         </div>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
-                <div className="border-t pt-2 flex items-center justify-between text-sm font-semibold">
-                  <span>Total</span>
-                  <span className="font-mono">
-                    {formatCurrency(pickModeCartTotal || 0, pickModeCart?.currency || "NIO")}
-                  </span>
+                {(() => {
+                  const subtotalUsd = pickModeCartItems.reduce((sum, item) => {
+                    return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
+                  }, 0);
+                  const subtotalDual = usdAndNioFromUsdBase(subtotalUsd, effectiveUsdNioRate);
+                  const totalIsUsd = (pickModeCart?.currency || "NIO") === "USD";
+                  const totalUsd = totalIsUsd
+                    ? (Number(pickModeCartTotal) || 0)
+                    : (Number(effectiveUsdNioRate) > 0
+                      ? (Number(pickModeCartTotal) || 0) / Number(effectiveUsdNioRate)
+                      : 0);
+                  const totalDual = usdAndNioFromUsdBase(totalUsd, effectiveUsdNioRate);
+                  return (
+                <div className="border-t pt-2 space-y-1 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Subtotal</span>
+                    <span className="text-right font-mono">
+                      <span className="block">{formatCurrency(subtotalDual.usd, "USD")}</span>
+                      <span className="block text-muted-foreground">≈ {formatCurrency(subtotalDual.nio, "NIO")}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-sm font-semibold">
+                    <span>Total</span>
+                    <span className="text-right font-mono">
+                      <span className="block">{formatCurrency(totalDual.usd, "USD")}</span>
+                      <span className="block text-xs font-normal text-muted-foreground">≈ {formatCurrency(totalDual.nio, "NIO")}</span>
+                    </span>
+                  </div>
                 </div>
+                  );
+                })()}
                 <Button
                   className="w-full h-9 text-xs font-semibold gap-1.5"
                   onClick={() => {
