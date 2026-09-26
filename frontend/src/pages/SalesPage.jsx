@@ -48,7 +48,8 @@ import {
 } from "@/lib/offlineDraftQueue";
 import {
   detectDraftConflicts,
-  promptDraftConflictToast,
+  resolveDraftConflictsKeepBoth,
+  DraftSyncBanner,
 } from "@/lib/draftConflict";
 import AutosavePill from "@/components/common/AutosavePill";
 import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
@@ -500,6 +501,7 @@ export function SalesPage() {
   const [draftTabs, setDraftTabs] = useState([]);
   const [activeDraftId, setActiveDraftId] = useState(null);
   const [draftsLoaded, setDraftsLoaded] = useState(false);
+  const [draftSyncProgress, setDraftSyncProgress] = useState(null);
   const [draftContentRevision, setDraftContentRevision] = useState(0);
   const [showArchivedSales, setShowArchivedSales] = useState(false);
   const [draftSaveState, setDraftSaveState] = useState("idle");
@@ -727,18 +729,27 @@ export function SalesPage() {
         const conflicts = detectDraftConflicts(DRAFT_KEY_PREFIX, eligibleServerDrafts);
         const conflictIds = new Set(conflicts.map((c) => c.draftId));
         const safeServerDrafts = eligibleServerDrafts.filter((d) => !conflictIds.has(d.id));
-        conflicts.forEach((conflict) => {
-          promptDraftConflictToast(conflict, {
+        if (conflicts.length) {
+          resolveDraftConflictsKeepBoth(conflicts, {
             draftKeyPrefix: DRAFT_KEY_PREFIX,
+            shouldAbort: () => cancelled,
             onResolved: (result) => {
               if (result?.applied === "local" && result.snapshot) {
-                scheduleDraftSync(conflict.draftId, result.snapshot);
+                scheduleDraftSync(result.draftId, result.snapshot);
               }
               setDraftContentRevision((prev) => prev + 1);
               setSaleFormRenderNonce((prev) => prev + 1);
             },
+            onProgress: (progress) => {
+              if (!cancelled) setDraftSyncProgress(progress);
+            },
+          }).then((outcome) => {
+            if (cancelled || outcome?.failed?.length) return;
+            window.setTimeout(() => {
+              if (!cancelled) setDraftSyncProgress(null);
+            }, 700);
           });
-        });
+        }
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
@@ -2906,6 +2917,27 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
       )}
       data-testid="sales-page"
     >
+      <DraftSyncBanner
+        progress={draftSyncProgress}
+        onRetry={(failed) => {
+          const pending = (failed || []).map((row) => row.conflict).filter(Boolean);
+          if (!pending.length) return;
+          resolveDraftConflictsKeepBoth(pending, {
+            draftKeyPrefix: DRAFT_KEY_PREFIX,
+            onResolved: (result) => {
+              if (result?.applied === "local" && result.snapshot) {
+                scheduleDraftSync(result.draftId, result.snapshot);
+              }
+              setDraftContentRevision((prev) => prev + 1);
+              setSaleFormRenderNonce((prev) => prev + 1);
+            },
+            onProgress: setDraftSyncProgress,
+          }).then((outcome) => {
+            if (outcome?.failed?.length) return;
+            window.setTimeout(() => setDraftSyncProgress(null), 700);
+          });
+        }}
+      />
       {showListSelectionBar ? (
       <div className="mb-2 flex flex-col gap-2">
         <div className="flex justify-end">

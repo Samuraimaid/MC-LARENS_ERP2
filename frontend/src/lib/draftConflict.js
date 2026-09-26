@@ -1,9 +1,18 @@
 /**
- * Draft conflict helpers (U5) — no silent last-write-wins when both sides diverge.
+ * Draft conflict helpers (U5).
+ * Login/workbench resolves diverged drafts as "keep both" (local backup + server)
+ * and shows one non-blocking progress banner. No stacked choice toasts.
  */
 
-import { toast } from "sonner";
+import React from "react";
 import { getDraftSnapshotFingerprint } from "@/lib/draftStorage";
+
+const resolvedConflictKeys = new Set();
+
+export function draftConflictSyncKey(conflict) {
+  if (!conflict?.draftId) return "";
+  return `${conflict.draftId}|${conflict.localAt || 0}|${conflict.serverAt || 0}`;
+}
 
 function parseSnapshot(raw) {
   if (!raw) return null;
@@ -104,53 +113,118 @@ export function applyDraftConflictChoice(conflict, choice, { draftKeyPrefix } = 
   return null;
 }
 
+function uniqueConflicts(conflicts = []) {
+  const seen = new Set();
+  const list = [];
+  (Array.isArray(conflicts) ? conflicts : []).forEach((conflict) => {
+    const key = draftConflictSyncKey(conflict);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    list.push(conflict);
+  });
+  return list;
+}
+
 /**
- * Minimal toast UI: keep local / take server / keep both.
+ * Keep both: backup the local snapshot and load the server copy.
+ * One progress callback for the whole batch. Already-resolved keys are skipped.
  */
-export function promptDraftConflictToast(conflict, {
+export async function resolveDraftConflictsKeepBoth(conflicts, {
   draftKeyPrefix,
   onResolved,
-  duration = 20000,
+  onProgress,
+  shouldAbort,
 } = {}) {
-  if (!conflict) return;
+  const list = uniqueConflicts(conflicts);
+  const failed = [];
+  let done = 0;
+  const report = (running) => {
+    if (typeof onProgress === "function") {
+      onProgress({
+        visible: running || failed.length > 0 || done > 0,
+        running,
+        done,
+        total: list.length,
+        failed: failed.slice(),
+      });
+    }
+  };
 
-  const title = "Conflicto de borrador";
-  const description =
-    `El borrador «${conflict.name || conflict.draftId}» cambió en otra pestaña o dispositivo. ` +
-    "Elige qué versión conservar (no se sobrescribe en silencio).";
-
-  toast.warning(title, {
-    description,
-    duration,
-    action: {
-      label: "Usar servidor",
-      onClick: () => {
-        const result = applyDraftConflictChoice(conflict, "server", { draftKeyPrefix });
-        toast.message("Se aplicó la versión del servidor");
-        if (typeof onResolved === "function") onResolved(result);
-      },
-    },
-    cancel: {
-      label: "Mantener local",
-      onClick: () => {
-        const result = applyDraftConflictChoice(conflict, "local", { draftKeyPrefix });
-        toast.message("Se mantuvo la versión local — se sincronizará al servidor");
-        if (typeof onResolved === "function") onResolved(result);
-      },
-    },
-  });
-
-  // Secondary path for "keep both" via a follow-up toast button
-  toast.message("¿Conservar ambos?", {
-    description: "Guarda tu copia local como respaldo y carga la del servidor.",
-    duration: Math.min(duration, 16000),
-    action: {
-      label: "Conservar ambos",
-      onClick: () => {
+  report(list.length > 0);
+  for (const conflict of list) {
+    if (typeof shouldAbort === "function" && shouldAbort()) break;
+    const key = draftConflictSyncKey(conflict);
+    try {
+      if (!resolvedConflictKeys.has(key)) {
         const result = applyDraftConflictChoice(conflict, "both", { draftKeyPrefix });
-        toast.success("Se conservaron ambas versiones (local como respaldo)");
+        if (!result) throw new Error("empty");
+        resolvedConflictKeys.add(key);
         if (typeof onResolved === "function") onResolved(result);
-      },
+      }
+    } catch {
+      failed.push({
+        draftId: conflict.draftId,
+        name: conflict.name || conflict.draftId,
+        conflict,
+      });
+    }
+    done += 1;
+    report(done < list.length);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 16);
+    });
+  }
+
+  const outcome = {
+    visible: failed.length > 0 || done > 0,
+    running: false,
+    done,
+    total: list.length,
+    failed: failed.slice(),
+  };
+  if (typeof onProgress === "function") onProgress(outcome);
+  return outcome;
+}
+
+/**
+ * One non-blocking pill. The form underneath stays clickable.
+ */
+export function DraftSyncBanner({ progress, onRetry }) {
+  if (!progress?.visible) return null;
+  const failedNames = (progress.failed || [])
+    .map((row) => row.name || row.draftId)
+    .filter(Boolean);
+  const label = progress.running
+    ? `Sincronizando borradores… ${progress.done}/${progress.total}`
+    : `No se pudo sincronizar ${failedNames.join(", ")} — reintentar`;
+
+  return React.createElement(
+    "div",
+    {
+      className: "pointer-events-none fixed left-1/2 top-3 z-40 -translate-x-1/2",
+      role: "status",
+      "aria-live": "polite",
     },
-  });
+    React.createElement(
+      "div",
+      {
+        className: progress.running
+          ? "pointer-events-none inline-flex items-center gap-2 rounded-full border border-sky-500/40 bg-background/85 px-3 py-1 text-[11px] font-medium text-sky-900 shadow-sm backdrop-blur dark:text-sky-100"
+          : "pointer-events-auto inline-flex items-center gap-2 rounded-full border border-amber-500/50 bg-background/90 px-3 py-1 text-[11px] font-medium text-amber-950 shadow-sm backdrop-blur dark:text-amber-100",
+        "data-testid": "draft-sync-banner",
+      },
+      React.createElement("span", null, label),
+      !progress.running && failedNames.length && typeof onRetry === "function"
+        ? React.createElement(
+            "button",
+            {
+              type: "button",
+              className: "underline underline-offset-2",
+              onClick: () => onRetry(progress.failed || []),
+            },
+            "Reintentar"
+          )
+        : null
+    )
+  );
 }
