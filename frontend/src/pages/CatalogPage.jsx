@@ -34,6 +34,11 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Plus,
+  Minus,
+  PencilLine,
+  Trash2,
+  FlaskConical,
 } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { usdAndNioFromUsdBase, formatDualCurrency } from "@/lib/documentCurrency";
@@ -59,6 +64,36 @@ import {
 } from "@/lib/bombilloCompat";
 
 const STAY_IN_CATALOG_KEY = "mclarens_stay_in_catalog";
+
+function isMessyProductTitle(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return false;
+  if (raw.length > 90) return true;
+  const tokens = raw.toUpperCase().split(/\s+/).filter(Boolean);
+  if (tokens.length >= 6) {
+    const short = tokens.filter((token) => token.length <= 3).length;
+    if (short / tokens.length >= 0.55) return true;
+  }
+  const words = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((word) => word.length >= 4);
+  if (words.length >= 6) {
+    const counts = {};
+    words.forEach((word) => { counts[word] = (counts[word] || 0) + 1; });
+    const max = Math.max(...Object.values(counts));
+    if (max >= 4 && max / words.length >= 0.45) return true;
+  }
+  return false;
+}
+
+function shortDraftLabel(name, customerName) {
+  let text = String(name || "").trim();
+  if (!text) return "";
+  if (customerName) {
+    const escaped = customerName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(escaped, "ig"), " ").replace(/\s+/g, " ").trim();
+    text = text.replace(/^[\s\-–—:]+|[\s\-–—:]+$/g, "").trim();
+  }
+  return text;
+}
 
 function readStayInCatalog() {
   if (typeof window === "undefined") return true;
@@ -309,6 +344,19 @@ export function CatalogPage() {
       return "/workbench?tab=quotations";
     }
     return "/workbench?tab=sales";
+  };
+
+  const returnToOpenDraft = (type) => {
+    const quote = type === "quote" || sourceContext?.source === "quote-form";
+    const targetPath = quote ? "/workbench?tab=quotations" : "/workbench?tab=sales";
+    markInternalWorkbenchNavigation(targetPath);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", quote ? "quotations" : "sales");
+      next.delete("mode");
+      next.delete("compat");
+      return next;
+    });
   };
 
   const fetchCatalog = async () => {
@@ -699,10 +747,8 @@ export function CatalogPage() {
       // keep catalog workflow functional if remote draft sync fails
     }
     if (navigate && !stayInCatalog) {
-      const targetPath = resolveDraftTargetPath(type);
       window.localStorage.setItem("catalog_open_draft", config.flag);
-      markInternalWorkbenchNavigation(targetPath);
-      window.location.assign(targetPath);
+      returnToOpenDraft(type);
       return;
     }
     toast.success(`${product.name || "Producto"} agregado al borrador`);
@@ -828,10 +874,8 @@ export function CatalogPage() {
       // keep catalog workflow functional if remote draft sync fails
     }
     if (navigate && !stayInCatalog) {
-      const targetPath = resolveDraftTargetPath(type);
       window.localStorage.setItem("catalog_open_draft", config.flag);
-      markInternalWorkbenchNavigation(targetPath);
-      window.location.assign(targetPath);
+      returnToOpenDraft(type);
       return;
     }
     toast.success(`${productsToAdd.length} productos agregados al borrador`);
@@ -898,8 +942,79 @@ export function CatalogPage() {
     [pickModeCart, effectiveUsdNioRate]
   );
 
+  const embeddedInWorkbench = location.pathname.replace(/\/+$/, "") === "/workbench";
+
+  const writePickCartItems = async (nextItems) => {
+    if (typeof window === "undefined" || !sourceContext?.draftId) return;
+    const config = getDraftConfig(pickModeDraftType);
+    if (!config) return;
+    const draftKey = `${config.prefix}${sourceContext.draftId}`;
+    const draft = parseJson(window.localStorage.getItem(draftKey), {}) || {};
+    const nextDraft = {
+      ...draft,
+      cartItems: nextItems,
+      updatedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(draftKey, JSON.stringify(nextDraft));
+    try {
+      await saveServerDraft(pickModeDraftType === "quote" ? "quotation" : "sale", sourceContext.draftId, {
+        name: sourceContext.draftName || sourceContext.draftId,
+        snapshot: nextDraft,
+      });
+    } catch {
+      /* el carrito local sigue */
+    }
+    setPickCartTick((n) => n + 1);
+  };
+
+  const requestPickSample = async (item) => {
+    const customerId = pickModeCart?.selectedCustomerId || sourceContext?.selectedCustomerId;
+    if (!customerId) {
+      toast.error("Selecciona un cliente antes de solicitar la muestra");
+      return;
+    }
+    const warehouseId = pickModeCart?.selectedWarehouse || warehouses[0]?.warehouse_id;
+    if (!warehouseId) {
+      toast.error("Selecciona una bodega para solicitar la muestra");
+      return;
+    }
+    try {
+      await axios.post(
+        `${API}/samples/request`,
+        {
+          customer_id: customerId,
+          product_id: item.product_id,
+          warehouse_id: warehouseId,
+          quantity: 1,
+        },
+        { withCredentials: true },
+      );
+      toast.success("Muestra solicitada a bodega");
+      await writePickCartItems(pickModeCartItems.map((row) => (
+        row.product_id === item.product_id ? { ...row, sample_status: "requested" } : row
+      )));
+    } catch {
+      toast.error("No se pudo solicitar la muestra");
+    }
+  };
+
+  const cartHeaderLines = [];
+  if (contextCustomerName) cartHeaderLines.push(`Cliente: ${contextCustomerName}`);
+  const vehicleBits = [
+    selectedContextVehicle?.brand,
+    selectedContextVehicle?.model,
+    selectedContextVehicle?.year,
+  ].filter(Boolean).join(" ");
+  const logisticMode = pickModeCart?.logisticMode || pickModeCart?.logistic_mode || "";
+  if (vehicleBits) cartHeaderLines.push(`Vehículo: ${vehicleBits}`);
+  else if (logisticMode === "carryout") cartHeaderLines.push("Vehículo: Para llevar");
+  else if (logisticMode === "delivery") cartHeaderLines.push("Vehículo: Con envío");
+  const draftLabel = shortDraftLabel(sourceContext?.draftName || pickModeCart?.name || "", contextCustomerName);
+  if (draftLabel) cartHeaderLines.push(`Borrador: ${draftLabel}`);
+
   return (
     <div className="space-y-6" data-testid="catalog-page">
+      {!embeddedInWorkbench ? (
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Catálogo</h1>
@@ -909,6 +1024,7 @@ export function CatalogPage() {
           Actualizar
         </Button>
       </div>
+      ) : null}
 
       {isSalePickMode && sourceContext && (
         <Card className="border-emerald-500/30 bg-emerald-500/10 shadow-sm animate-fade-up-soft">
@@ -993,7 +1109,7 @@ export function CatalogPage() {
       <div
         className={cn(
           isSalePickMode && sourceContext
-            ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-4 lg:items-start"
+            ? "flex flex-col-reverse gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:items-start"
             : undefined
         )}
       >
@@ -1386,8 +1502,13 @@ export function CatalogPage() {
                         <div className="p-5 space-y-3.5">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0 flex-1 space-y-1">
-                              <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-snug">
-                                {product.name || "Producto"}
+                              <h3
+                                className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-snug"
+                                title={product.name || "Producto"}
+                              >
+                                {isMessyProductTitle(product.name)
+                                  ? ([product.brand, product.sku].filter(Boolean).join(" · ") || "Producto")
+                                  : (product.name || "Producto")}
                               </h3>
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-mono">
                                 <span>SKU: {product.sku || "Sin SKU"}</span>
@@ -1573,16 +1694,18 @@ export function CatalogPage() {
         </div>
 
         {isSalePickMode && sourceContext ? (
-          <aside className="hidden lg:block lg:sticky lg:top-24 self-start">
+          <aside className="w-full lg:sticky lg:top-24 self-start">
             <Card className="border-emerald-500/30 shadow-md overflow-hidden">
               <CardHeader className="py-3 px-4 bg-emerald-500/10 border-b border-emerald-500/20">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                   Carrito del cliente
                 </CardTitle>
-                <p className="text-[11px] text-muted-foreground font-normal mt-1">
-                  {contextCustomerName || "Sin cliente"} · {sourceContext.draftName || sourceContext.draftId}
-                </p>
+                <div className="mt-1 space-y-0.5 text-[11px] text-muted-foreground font-normal">
+                  {cartHeaderLines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
               </CardHeader>
               <CardContent className="p-3 space-y-3 max-h-[min(70vh,640px)] overflow-y-auto">
                 {pickModeCartItems.length === 0 ? (
@@ -1599,15 +1722,33 @@ export function CatalogPage() {
                       const catalogMatch = products.find((row) => String(row.product_id) === String(item.product_id));
                       const sku = item.sku || catalogMatch?.sku || item.product_id || "—";
                       const lineName = item.product_name || item.name || catalogMatch?.name || "Producto";
+                      const thumb = item.image || getProductImageUrl(catalogMatch || item);
                       return (
                         <li
                           key={`${item.product_id || sku || "line"}-${idx}`}
                           className="rounded-lg border bg-card px-2.5 py-2 text-xs"
                         >
-                          <div className="font-medium leading-snug line-clamp-2">{lineName}</div>
-                          <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{sku}</div>
+                          <div className="flex gap-2">
+                            {thumb ? (
+                              <img src={thumb} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+                            ) : (
+                              <div className="h-10 w-10 shrink-0 rounded bg-muted" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium leading-snug line-clamp-2" title={lineName}>{lineName}</div>
+                              <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{sku}</div>
+                            </div>
+                          </div>
                           <div className="mt-1 flex items-center justify-between gap-2 text-muted-foreground">
-                            <span className="font-mono">×{qty}</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Button type="button" size="icon" variant="outline" className="h-7 w-7" title="Menos" onClick={() => writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, quantity: Math.max(1, qty - 1) } : row))}>
+                                <Minus className="h-3.5 w-3.5" />
+                              </Button>
+                              <span className="min-w-[1.25rem] text-center font-mono">{qty}</span>
+                              <Button type="button" size="icon" variant="outline" className="h-7 w-7" title="Más" onClick={() => writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, quantity: qty + 1 } : row))}>
+                                <Plus className="h-3.5 w-3.5" />
+                              </Button>
+                            </span>
                             <span className="text-right">
                               <span className="block text-foreground">{formatCurrency(unitDual.usd, "USD")}</span>
                               <span className="block">≈ {formatCurrency(unitDual.nio, "NIO")}</span>
@@ -1619,6 +1760,23 @@ export function CatalogPage() {
                               <span className="block">{formatCurrency(lineDual.usd, "USD")}</span>
                               <span className="block font-normal text-muted-foreground">≈ {formatCurrency(lineDual.nio, "NIO")}</span>
                             </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-end gap-1">
+                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar precio" onClick={() => {
+                              const next = window.prompt("Precio unitario en US$", String(unitUsd));
+                              if (next == null) return;
+                              const value = Number(String(next).replace(",", "."));
+                              if (!Number.isFinite(value) || value < 0) return;
+                              writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, unit_price: value } : row));
+                            }}>
+                              <PencilLine className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Solicitar muestra" onClick={() => requestPickSample(item)}>
+                              <FlaskConical className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-destructive" title="Quitar" onClick={() => writePickCartItems(pickModeCartItems.filter((row) => row.product_id !== item.product_id))}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </li>
                       );
