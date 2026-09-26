@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Eye, Package, Sparkles, Volume2, Lightbulb, Shield, Wrench, Droplet } from "lucide-react";
+import { Package, Sparkles, Volume2, Lightbulb, Shield, Wrench, Droplet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getProductBrandLogo, formatCategoryLabel } from "@/lib/branding";
 import { getProductImageUrl, uploadsToGcsUrl, brandInitials } from "@/lib/productImage";
@@ -25,7 +25,6 @@ export default function ProductImageHoverZoom({
   className = "",
   imageClassName = "",
   badge = null,
-  showEyeButton = false,
   enableHoverPreview = true,
   retryGcs = true,
 }) {
@@ -70,8 +69,17 @@ export default function ProductImageHoverZoom({
   const initials = brandInitials(resolvedBrand);
   const isImageValid = Boolean(currentSrc && !hasError);
 
+  const canOpenQuickView = typeof onOpenQuickView === "function";
+
+  const handleOpenQuickView = (event) => {
+    if (!canOpenQuickView) return;
+    event.stopPropagation();
+    onOpenQuickView();
+  };
+
   const handleMouseEnter = () => {
-    if (!isImageValid) return;
+    if (!enableHoverPreview || !isImageValid) return;
+    if (typeof window !== "undefined" && !window.matchMedia("(min-width: 768px)").matches) return;
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
@@ -110,8 +118,20 @@ export default function ProductImageHoverZoom({
       ref={containerRef}
       className={cn(
         "relative rounded-xl overflow-hidden bg-muted/30 border border-border/70 flex items-center justify-center group select-none transition-all duration-200",
+        canOpenQuickView && "cursor-pointer",
         className
       )}
+      title={canOpenQuickView ? "Ver detalle" : undefined}
+      aria-label={canOpenQuickView ? "Ver detalle" : undefined}
+      role={canOpenQuickView ? "button" : undefined}
+      tabIndex={canOpenQuickView ? 0 : undefined}
+      onClick={handleOpenQuickView}
+      onKeyDown={(event) => {
+        if (!canOpenQuickView) return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleOpenQuickView(event);
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -181,25 +201,6 @@ export default function ProductImageHoverZoom({
 
       {/* Floating Badge (e.g. Stock) */}
       {badge && <div className="absolute top-2 left-2 z-10">{badge}</div>}
-
-      {/* Quick View Eye Button */}
-      {showEyeButton && onOpenQuickView && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenQuickView();
-          }}
-          className={cn(
-            "absolute top-1.5 right-1.5 z-20 h-6 w-6 rounded-full bg-background/90 hover:bg-primary hover:text-primary-foreground border shadow-xs flex items-center justify-center text-foreground transition-all duration-200",
-            "opacity-0 group-hover:opacity-100 group-hover:scale-105 hover:scale-115"
-          )}
-          title="Ver detalles completos del producto"
-          aria-label="Ver detalles completos del producto"
-        >
-          <Eye className="h-3 w-3" />
-        </button>
-      )}
 
       {/* Hover Floating Enlarged Zoom Overlay */}
       {isImageValid && enableHoverPreview && isHovered && (

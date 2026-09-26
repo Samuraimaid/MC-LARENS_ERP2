@@ -1341,7 +1341,6 @@ export function CatalogPage() {
                             category={product.category}
                             className="w-full h-full min-h-[190px] max-h-[230px]"
                             onOpenQuickView={() => setQuickViewProduct(product)}
-                            showEyeButton={true}
                             badge={
                               stock !== null && stock > 0 ? (
                                 <Badge className="bg-emerald-600/90 backdrop-blur text-white text-[11px] font-semibold shadow-sm">
