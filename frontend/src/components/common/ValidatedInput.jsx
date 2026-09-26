@@ -1,6 +1,6 @@
 import React, { useId, useImperativeHandle } from "react";
 import PropTypes from "prop-types";
-import { Check } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,9 @@ export function fieldValidationInputClass(field, { showSuccessChrome = true } = 
 /**
  * Label + Input with U12 timing: blur first → live after error;
  * green border + check + “Se ve bien”/“Listo” when OK.
+ * 
+ * Video 04 / 12 Pattern:
+ * Supports optional `originalValue` and `onResetField` for visible change dot + reset.
  *
  * Ref API: { markSubmitAttempted(), reset(), valid }
  */
@@ -85,6 +88,8 @@ export const ValidatedInput = React.forwardRef(function ValidatedInput(
     resetKey,
     successLabel = VALIDATION_SUCCESS_LONG,
     showSuccessChrome = true,
+    originalValue,
+    onResetField,
     id: idProp,
     className,
     inputClassName,
@@ -121,14 +126,34 @@ export const ValidatedInput = React.forwardRef(function ValidatedInput(
   };
 
   const showOk = showSuccessChrome && field.showSuccess;
+  const isDirty = originalValue !== undefined && String(value ?? "") !== String(originalValue ?? "");
 
   return (
     <div className={cn("space-y-1", wrapperClassName)} data-field-validation="">
       {label ? (
-        <Label htmlFor={id} className={labelClassName}>
-          {label}
-          {requiredMark ? " *" : null}
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor={id} className={cn("inline-flex items-center gap-1.5", labelClassName)}>
+            <span>{label}</span>
+            {requiredMark ? <span className="text-destructive font-bold">*</span> : null}
+            {isDirty && (
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"
+                title="Campo modificado respecto al valor original"
+              />
+            )}
+          </Label>
+          {isDirty && typeof onResetField === "function" && (
+            <button
+              type="button"
+              onClick={onResetField}
+              title="Restaurar valor original"
+              className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+            >
+              <RotateCcw className="h-2.5 w-2.5" />
+              <span>Restablecer</span>
+            </button>
+          )}
+        </div>
       ) : null}
       <div className="relative">
         <Input
@@ -182,6 +207,8 @@ ValidatedInput.propTypes = {
   resetKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
   successLabel: PropTypes.string,
   showSuccessChrome: PropTypes.bool,
+  originalValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onResetField: PropTypes.func,
   id: PropTypes.string,
   className: PropTypes.string,
   inputClassName: PropTypes.string,

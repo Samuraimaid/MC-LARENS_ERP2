@@ -2,11 +2,13 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { densityTokens, normalizeListDensity } from "@/components/lists/listDensity";
+import { RowContextMenu } from "@/components/lists/RowContextMenu";
 
 /**
  * Fila de lista estilo Google: media izquierda + primary/secondary + trailing.
  * Liquid Glass compatible (borde suave / backdrop) sin “card chaos”.
  * Opcional: checkbox multi-select a la izquierda del media.
+ * Opcional: menú contextual (clic derecho en PC / long-press).
  */
 export function DensityListItem({
   density = "comfortable",
@@ -28,6 +30,7 @@ export function DensityListItem({
   selected = false,
   onSelectChange,
   selectStopPropagation = true,
+  contextMenuItems,
 }) {
   const mode = normalizeListDensity(density);
   const t = densityTokens(mode);
@@ -59,7 +62,7 @@ export function DensityListItem({
     </div>
   ) : null;
 
-  return (
+  const itemContent = (
     <Comp
       data-testid={testId}
       data-list-density={mode}
@@ -115,6 +118,16 @@ export function DensityListItem({
       ) : null}
     </Comp>
   );
+
+  if (contextMenuItems && contextMenuItems.length > 0) {
+    return (
+      <RowContextMenu items={contextMenuItems} disabled={disabled}>
+        {itemContent}
+      </RowContextMenu>
+    );
+  }
+
+  return itemContent;
 }
 
 /**
