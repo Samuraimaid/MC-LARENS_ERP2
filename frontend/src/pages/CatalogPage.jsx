@@ -1014,7 +1014,7 @@ export function CatalogPage() {
 
   return (
     <div className="space-y-6" data-testid="catalog-page">
-      {!embeddedInWorkbench ? (
+      {!embeddedInWorkbench && !isSalePickMode ? (
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Catálogo</h1>
@@ -1027,89 +1027,67 @@ export function CatalogPage() {
       ) : null}
 
       {isSalePickMode && sourceContext && (
-        <Card className="border-emerald-500/30 bg-emerald-500/10 shadow-sm animate-fade-up-soft">
-          <CardContent className="p-3.5 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-emerald-600 text-white font-semibold text-xs">
-                  Modo Selección: {sourceContext.source === "quote-form" ? "Cotización" : "Venta"}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  Al pulsar "Agregar", el producto se asigna de inmediato al borrador activo.
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="text-xs font-mono">
-                  Borrador: {sourceContext.draftName || sourceContext.draftId}
-                </Badge>
-                {contextCustomerName && (
-                  <Badge variant="outline" className="text-xs">
-                    Cliente: {contextCustomerName}
-                  </Badge>
-                )}
-                <Badge variant="outline" className="text-xs">
-                  Vehículo: {selectedContextVehicle
-                    ? `${selectedContextVehicle.brand || ""} ${selectedContextVehicle.model || ""} ${selectedContextVehicle.year || ""}`.trim() || "Sin detalle"
-                    : "Sin vehículo"}
-                </Badge>
-                {enforceVehicleCompatibility ? (
-                  <Badge className="bg-emerald-700 text-white text-[11px] gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Filtrado por compatibilidad de vehículo
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="text-[11px]">
-                    Catálogo completo
-                  </Badge>
-                )}
-                {selectedContextVehicle && selectedContextBombillos && !selectedContextBombillos.hasData ? (
-                  <Badge variant="outline" className="text-[11px] text-amber-800 border-amber-300 bg-amber-50">
-                    Sin ficha de bombillos para este vehículo
-                  </Badge>
-                ) : null}
-                {selectedContextVehicle && selectedContextBombillos?.hasData ? (
-                  <Badge variant="outline" className="text-[11px] text-emerald-800 border-emerald-300 bg-emerald-50">
-                    Bombillos: {[...selectedContextBombillos.sizes].join(", ")}
-                  </Badge>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center pt-1 md:pt-0">
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-xs shadow-sm animate-fade-up-soft">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
+            <Badge className="bg-emerald-600 text-white font-semibold text-[11px] px-2 py-0.5 shrink-0">
+              Modo Selección: {sourceContext.source === "quote-form" ? "Cotización" : "Venta"}
+            </Badge>
+            <span className="font-mono text-xs text-foreground/90 font-medium truncate">
+              {sourceContext.draftName || sourceContext.draftId}
+            </span>
+            {contextCustomerName && (
+              <span className="text-muted-foreground truncate hidden sm:inline">
+                · {contextCustomerName}
+              </span>
+            )}
+            {vehicleBits ? (
+              <span className="text-muted-foreground truncate hidden md:inline">
+                · {vehicleBits}
+              </span>
+            ) : null}
+            {enforceVehicleCompatibility ? (
+              <Badge className="bg-emerald-700 text-white text-[10px] py-0 px-1.5 gap-1 shrink-0">
+                <CheckCircle2 className="h-3 w-3" />
+                Compatible
+              </Badge>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+            {enforceVehicleCompatibility && (
               <Button
                 size="sm"
-                variant="outline"
-                className="text-xs h-8 bg-background/80 hover:bg-background"
+                variant="ghost"
+                className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setSearchParams((prev) => {
                     const next = new URLSearchParams(prev);
-                    next.delete("mode");
                     next.delete("compat");
                     return next;
                   });
                 }}
               >
-                Ver catálogo completo
+                Ver todo
               </Button>
-              <Button
-                size="sm"
-                className="bg-primary text-primary-foreground text-xs h-8 gap-1.5 font-semibold shadow-sm"
-                onClick={() => {
-                  const target = sourceContext.source === "quote-form" ? "/workbench?tab=quotations" : "/workbench?tab=sales";
-                  navigate(target);
-                }}
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                {sourceContext.source === "quote-form" ? "Volver a cotización" : "Volver a la venta"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 gap-1 font-medium shadow-sm"
+              onClick={() => {
+                const target = sourceContext.source === "quote-form" ? "/workbench?tab=quotations" : "/workbench?tab=sales";
+                navigate(target);
+              }}
+            >
+              <ArrowLeft className="h-3 w-3" />
+              {sourceContext.source === "quote-form" ? "Volver a cotización" : "Volver a la venta"}
+            </Button>
+          </div>
+        </div>
       )}
 
       <div
         className={cn(
           isSalePickMode && sourceContext
-            ? "flex flex-col-reverse gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:items-start"
+            ? "flex flex-col-reverse gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_380px] lg:items-start"
             : undefined
         )}
       >
@@ -1739,44 +1717,41 @@ export function CatalogPage() {
                               <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{sku}</div>
                             </div>
                           </div>
-                          <div className="mt-1 flex items-center justify-between gap-2 text-muted-foreground">
+                          <div className="mt-1.5 flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">
+                              {formatCurrency(unitDual.usd, "USD")} <span className="text-[11px] opacity-80">≈ {formatCurrency(unitDual.nio, "NIO")}</span>
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {formatCurrency(lineDual.usd, "USD")} <span className="text-[11px] font-normal text-muted-foreground">≈ {formatCurrency(lineDual.nio, "NIO")}</span>
+                            </span>
+                          </div>
+                          <div className="mt-1.5 flex items-center justify-between gap-1 border-t border-dashed pt-1.5">
                             <span className="inline-flex items-center gap-1">
                               <Button type="button" size="icon" variant="outline" className="h-7 w-7" title="Menos" onClick={() => writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, quantity: Math.max(1, qty - 1) } : row))}>
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
-                              <span className="min-w-[1.25rem] text-center font-mono">{qty}</span>
+                              <span className="min-w-[1.25rem] text-center font-mono font-medium">{qty}</span>
                               <Button type="button" size="icon" variant="outline" className="h-7 w-7" title="Más" onClick={() => writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, quantity: qty + 1 } : row))}>
                                 <Plus className="h-3.5 w-3.5" />
                               </Button>
                             </span>
-                            <span className="text-right">
-                              <span className="block text-foreground">{formatCurrency(unitDual.usd, "USD")}</span>
-                              <span className="block">≈ {formatCurrency(unitDual.nio, "NIO")}</span>
-                            </span>
-                          </div>
-                          <div className="mt-1 flex items-center justify-between gap-2 border-t border-dashed pt-1">
-                            <span className="text-muted-foreground">Subtotal</span>
-                            <span className="text-right font-semibold text-foreground">
-                              <span className="block">{formatCurrency(lineDual.usd, "USD")}</span>
-                              <span className="block font-normal text-muted-foreground">≈ {formatCurrency(lineDual.nio, "NIO")}</span>
-                            </span>
-                          </div>
-                          <div className="mt-1 flex items-center justify-end gap-1">
-                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar precio" onClick={() => {
-                              const next = window.prompt("Precio unitario en US$", String(unitUsd));
-                              if (next == null) return;
-                              const value = Number(String(next).replace(",", "."));
-                              if (!Number.isFinite(value) || value < 0) return;
-                              writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, unit_price: value } : row));
-                            }}>
-                              <PencilLine className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Solicitar muestra" onClick={() => requestPickSample(item)}>
-                              <FlaskConical className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-destructive" title="Quitar" onClick={() => writePickCartItems(pickModeCartItems.filter((row) => row.product_id !== item.product_id))}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            <div className="flex items-center gap-0.5">
+                              <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Editar precio" onClick={() => {
+                                const next = window.prompt("Precio unitario en US$", String(unitUsd));
+                                if (next == null) return;
+                                const value = Number(String(next).replace(",", "."));
+                                if (!Number.isFinite(value) || value < 0) return;
+                                writePickCartItems(pickModeCartItems.map((row) => row.product_id === item.product_id ? { ...row, unit_price: value } : row));
+                              }}>
+                                <PencilLine className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Solicitar muestra" onClick={() => requestPickSample(item)}>
+                                <FlaskConical className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10" title="Quitar" onClick={() => writePickCartItems(pickModeCartItems.filter((row) => row.product_id !== item.product_id))}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         </li>
                       );
