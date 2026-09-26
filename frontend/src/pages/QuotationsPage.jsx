@@ -50,7 +50,6 @@ import {
   detectDraftConflicts,
   promptDraftConflictToast,
 } from "@/lib/draftConflict";
-import AutosavePill from "@/components/common/AutosavePill";
 import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
 import { fetchEffectiveUsdNioRate, DEFAULT_USD_NIO_RATE } from "@/lib/exchangeRate";
@@ -393,7 +392,7 @@ export function QuotationsPage() {
   const [effectiveIvaRate, setEffectiveIvaRate] = useState(DEFAULT_IVA_RATE);
   const [draftSaveState, setDraftSaveState] = useState("idle");
   useAutosaveLifecycle({ enabled: true });
-  const [saveFlash, setSaveFlash] = useState(false);
+  const [, setSaveFlash] = useState(false);
   const [boardTab, setBoardTab] = useState("drafts");
   const [currency, setCurrency] = useState("NIO");
   const draftTabsRef = useRef([]);
@@ -1817,7 +1816,7 @@ export function QuotationsPage() {
         <Card ref={quoteFormAnchorRef} className="border-primary/30 shadow-sm ui-panel animate-fade-up-soft">
           <CardHeader className="pb-3">
             <div className="flex w-full flex-wrap items-center gap-2 ui-fade-in-stagger">
-              <ErpFormToolbar saveFlash={saveFlash}>
+              <ErpFormToolbar>
                 <ErpToolbarButton
                   action="refresh"
                   icon={RefreshCw}
@@ -1847,7 +1846,6 @@ export function QuotationsPage() {
                   />
                 ) : null}
               </ErpFormToolbar>
-              <AutosavePill sourceFilter="quotations" testId="quotations-autosave-pill" />
               <div className="ml-auto flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
                 <span className={currency === "NIO" ? "font-semibold text-foreground" : ""}>C$</span>
                 <Switch
