@@ -5058,7 +5058,6 @@ export default function SaleForm({
                       category={p.category}
                       className="h-full w-full"
                       onOpenQuickView={() => setQuickViewProduct(p)}
-                      showEyeButton={false}
                     />
                   </div>
                   <div className="min-w-0 self-start">
