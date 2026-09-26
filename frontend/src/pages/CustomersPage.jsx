@@ -1506,6 +1506,49 @@ export function CustomersPage() {
                     orderedIds: matchingCustomerIds,
                   })
                 }
+                contextMenuItems={[
+                  {
+                    id: "edit",
+                    label: "Editar cliente",
+                    icon: Pencil,
+                    onClick: () => openEditCustomer(customer),
+                    disabled: !canEditCustomers,
+                  },
+                  {
+                    id: "vehicles",
+                    label: "Ver vehículos registrados",
+                    icon: CarFront,
+                    onClick: () => openCustomerVehiclesModal(customer),
+                  },
+                  {
+                    id: "whatsapp",
+                    label: "Contactar por WhatsApp",
+                    icon: Phone,
+                    onClick: () => sendWhatsAppWithTemplate(customer),
+                    disabled: user?.role === "bodegas" || !customer.phone,
+                  },
+                  {
+                    id: "copy-phone",
+                    label: "Copiar teléfono",
+                    icon: Copy,
+                    onClick: () => {
+                      if (customer.phone) {
+                        navigator.clipboard?.writeText(customer.phone);
+                        toast.success("Teléfono copiado al portapapeles");
+                      }
+                    },
+                    disabled: !customer.phone,
+                  },
+                  {
+                    id: "delete",
+                    label: "Eliminar cliente",
+                    icon: Trash2,
+                    variant: "destructive",
+                    separatorBefore: true,
+                    onClick: () => setPendingDeleteCustomer(customer),
+                    disabled: !canDeleteCustomers,
+                  },
+                ]}
                 mediaFallback={
                   isCompany ? (
                     <Building2 className={`${densityTok.mediaIcon} text-sky-700 icon-spring`} />

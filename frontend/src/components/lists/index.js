@@ -50,3 +50,4 @@ export {
 export { scheduleDelayedSend, cancelDelayedSend, DELAYED_SEND_MS } from "./delayedSend";
 
 export { SwipeableRow, dampenSwipe, PEEK_STORAGE_KEY, SWIPE_UNDO_MS } from "./SwipeableRow";
+export { RowContextMenu } from "./RowContextMenu";

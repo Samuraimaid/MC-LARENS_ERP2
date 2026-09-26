@@ -39,6 +39,7 @@ import {
   PencilLine,
   Trash2,
   FlaskConical,
+  Clock,
 } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "../lib/utils";
 import { usdAndNioFromUsdBase, formatDualCurrency } from "@/lib/documentCurrency";
@@ -64,6 +65,42 @@ import {
 } from "@/lib/bombilloCompat";
 
 const STAY_IN_CATALOG_KEY = "mclarens_stay_in_catalog";
+const RECENT_SEARCHES_KEY = "mclarens_catalog_recent_searches";
+
+function getRecentCatalogSearches() {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_SEARCHES_KEY);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.slice(0, 6) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentCatalogSearch(term) {
+  if (typeof window === "undefined") return;
+  const clean = String(term || "").trim();
+  if (!clean || clean.length < 2) return;
+  try {
+    const existing = getRecentCatalogSearches();
+    const updated = [clean, ...existing.filter((t) => t.toLowerCase() !== clean.toLowerCase())].slice(0, 6);
+    window.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  } catch {
+    /* ignore */
+  }
+}
+
+function removeRecentCatalogSearch(term) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getRecentCatalogSearches();
+    const updated = existing.filter((t) => t.toLowerCase() !== String(term || "").toLowerCase());
+    window.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  } catch {
+    /* ignore */
+  }
+}
 
 function isMessyProductTitle(text) {
   const raw = String(text || "").trim();
@@ -242,6 +279,8 @@ export function CatalogPage() {
   const [warehousesById, setWarehousesById] = useState({});
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(getRecentCatalogSearches);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [subcategory, setSubcategory] = useState("all");
@@ -362,15 +401,13 @@ export function CatalogPage() {
   const fetchCatalog = async () => {
     setLoading(true);
     try {
-      const [productsRes, categoriesRes, customersRes, inventoryRes, warehousesRes, vehiclesRes] = await Promise.all([
-        axios.get(`${API}/products?limit=10000`, { withCredentials: true }),
+      const [categoriesRes, customersRes, inventoryRes, warehousesRes, vehiclesRes] = await Promise.all([
         axios.get(`${API}/categories`, { withCredentials: true }),
         axios.get(`${API}/customers`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/inventory`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/warehouses`, { withCredentials: true }).catch(() => ({ data: [] })),
         axios.get(`${API}/vehicles`, { withCredentials: true }).catch(() => ({ data: [] })),
       ]);
-      setProducts(productsRes.data || []);
       setCategories(categoriesRes?.data?.categories || {});
       setVehicleTypes(categoriesRes?.data?.vehicle_types || []);
       const customerMap = {};
@@ -423,6 +460,46 @@ export function CatalogPage() {
   useEffect(() => {
     fetchCatalog();
   }, []);
+
+  // Carga reactiva y eficiente de productos bajo demanda (no carga masiva 10k por defecto)
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setProducts([]);
+      setLoadingProducts(false);
+      return;
+    }
+
+    setLoadingProducts(true);
+    const timer = setTimeout(async () => {
+      try {
+        const params = {
+          limit: 300,
+        };
+        const trimmed = search.trim();
+        if (trimmed) params.search = trimmed;
+        if (category !== "all") params.category = category;
+        if (subcategory !== "all") params.subcategory = subcategory;
+        if (productType !== "all") params.product_type = productType;
+
+        const res = await axios.get(`${API}/products`, {
+          params,
+          withCredentials: true,
+        });
+        setProducts(res.data || []);
+        if (trimmed.length >= 2) {
+          saveRecentCatalogSearch(trimmed);
+          setRecentSearches(getRecentCatalogSearches());
+        }
+      } catch (err) {
+        console.error("Error fetching catalog products:", err);
+        toast.error("No se pudieron cargar los productos");
+      } finally {
+        setLoadingProducts(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [hasActiveFilters, search, category, subcategory, productType]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1338,13 +1415,109 @@ export function CatalogPage() {
         </Card>
       </div>
 
-      {loading ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">Cargando...</CardContent>
+      {loading || loadingProducts ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse" data-testid="catalog-loading-skeleton">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="rounded-2xl border border-white/15 dark:border-white/10 bg-card/50 p-4 space-y-3 backdrop-blur-md shadow-sm">
+              <div className="h-44 w-full rounded-xl bg-muted/70" />
+              <div className="h-4 w-3/4 rounded bg-muted/70" />
+              <div className="h-3 w-1/2 rounded bg-muted/50" />
+              <div className="flex items-center justify-between pt-2">
+                <div className="h-5 w-20 rounded bg-muted/60" />
+                <div className="h-8 w-24 rounded-lg bg-muted/70" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : !hasActiveFilters ? (
+        <Card className="rounded-3xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] overflow-hidden">
+          <CardContent className="py-14 sm:py-20 px-6 text-center max-w-2xl mx-auto flex flex-col items-center">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-4">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Búsqueda rápida optimizada</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Explora el Catálogo de Productos
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">
+              Escribe en la barra de búsqueda por nombre, SKU o marca, o pulsa en una de las categorías para explorar el inventario disponible.
+            </p>
+
+            {/* Chips de categorías sugeridas */}
+            {Object.keys(categories).length > 0 && (
+              <div className="mt-8 w-full">
+                <div className="text-xs font-semibold text-muted-foreground mb-3 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                  <Tags className="h-3.5 w-3.5" />
+                  <span>Categorías sugeridas</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {Object.keys(categories).slice(0, 10).map((catKey) => (
+                    <button
+                      key={catKey}
+                      type="button"
+                      onClick={() => setCategory(catKey)}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-muted/60 hover:bg-primary hover:text-primary-foreground border border-border/60 transition-all duration-150 shadow-sm flex items-center gap-1.5 ui-interactive"
+                    >
+                      <span>{formatCategoryLabel(catKey)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Búsquedas recientes */}
+            {recentSearches && recentSearches.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-border/40 w-full">
+                <div className="text-xs font-semibold text-muted-foreground mb-3 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Búsquedas recientes</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {recentSearches.map((term) => (
+                    <div
+                      key={term}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs bg-muted/40 hover:bg-muted border border-border/50 text-foreground transition-colors group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => applySearchValue(term)}
+                        className="truncate max-w-[150px] font-medium"
+                      >
+                        {term}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRecentCatalogSearch(term);
+                          setRecentSearches(getRecentCatalogSearches());
+                        }}
+                        className="text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 p-0.5 rounded"
+                        title="Quitar de recientes"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
         </Card>
       ) : filteredProducts.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">Sin resultados</CardContent>
+        <Card className="rounded-2xl border border-white/15 dark:border-white/10 bg-card/65 dark:bg-card/40 backdrop-blur-xl">
+          <CardContent className="py-14 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50 mb-3">
+              <Search className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground">Sin resultados encontrados</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+              No encontramos productos que coincidan con los filtros aplicados. Revisa la ortografía o intenta buscar por marca o código SKU.
+            </p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
+              Limpiar filtros
+            </Button>
+          </CardContent>
         </Card>
       ) : (
         <>
