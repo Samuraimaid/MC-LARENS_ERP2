@@ -78,8 +78,8 @@ export function ReportsPage() {
     <div className="p-6 space-y-6" data-testid="reports-page">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-3xl font-bold tracking-tight">Reportes</h1>
-        <p className="text-muted-foreground">Análisis de ventas e instalaciones</p>
+        <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Reportes</h1>
+        <p className="hidden text-muted-foreground md:block">Análisis de ventas e instalaciones</p>
       </div>
 
       {/* Filters */}

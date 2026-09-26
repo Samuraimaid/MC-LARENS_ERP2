@@ -422,8 +422,8 @@ export function HyperVisorPage() {
     <div className="p-6 space-y-6" data-testid="hypervisor-page">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">HyiperVisor</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">HyiperVisor</h1>
+          <p className="mt-1 hidden text-sm text-muted-foreground md:block">
             Trazabilidad global de cambios y respaldos operativos.
           </p>
         </div>

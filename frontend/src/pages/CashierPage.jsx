@@ -1780,8 +1780,8 @@ export function CashierPage() {
     <div className={cn("p-4 sm:p-6 space-y-4 transition-colors", activePageToneClass)} data-testid="cashier-page">
       <div className="flex items-start justify-between gap-3 flex-wrap ui-fade-in-stagger">
         <div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">Caja</h1>
-          <p className="text-sm text-muted-foreground">Cobro, arqueo y control de turno</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Caja</h1>
+          <p className="hidden text-sm text-muted-foreground md:block">Cobro, arqueo y control de turno</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isSessionOpenedHere ? (

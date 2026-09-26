@@ -240,8 +240,8 @@ export function PromotionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Promociones</h1>
-          <p className="text-muted-foreground">Gestión de descuentos y ofertas de temporada</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Promociones</h1>
+          <p className="hidden text-muted-foreground md:block">Gestión de descuentos y ofertas de temporada</p>
         </div>
         <Dialog open={showNewPromo} onOpenChange={(open) => { setShowNewPromo(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>

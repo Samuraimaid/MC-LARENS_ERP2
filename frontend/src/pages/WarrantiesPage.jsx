@@ -244,8 +244,8 @@ export function WarrantiesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Garantías</h1>
-          <p className="text-muted-foreground">Gestión de garantías y reclamos</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Garantías</h1>
+          <p className="hidden text-muted-foreground md:block">Gestión de garantías y reclamos</p>
         </div>
         <Dialog open={showNewClaim} onOpenChange={setShowNewClaim}>
           <DialogTrigger asChild>

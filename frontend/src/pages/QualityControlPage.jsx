@@ -175,8 +175,8 @@ export function QualityControlPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Control de Calidad</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Control de Calidad</h1>
+          <p className="hidden text-muted-foreground md:block">
             Aprobación final de instalaciones y trabajos eléctricos por el coordinador
           </p>
         </div>

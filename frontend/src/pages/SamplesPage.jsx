@@ -143,8 +143,8 @@ export function SamplesPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Muestras</h1>
-          <p className="text-muted-foreground">Control de muestras solicitadas y devoluciones a bodega</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Muestras</h1>
+          <p className="hidden text-muted-foreground md:block">Control de muestras solicitadas y devoluciones a bodega</p>
         </div>
         <Button variant="outline" onClick={fetchSamples} disabled={loading}>
           Actualizar
