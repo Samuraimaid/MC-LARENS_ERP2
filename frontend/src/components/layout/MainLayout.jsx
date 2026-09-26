@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Sidebar } from "./Sidebar";
-import { Toaster } from "../ui/sonner";
 import { FloatingTools } from "../FloatingTools";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
 import { useAuth } from "../../context/AuthContext";
@@ -930,8 +929,6 @@ export function MainLayout() {
       ) : null}
 
       <CommandPalette onLockSession={handleLockSession} />
-
-      <Toaster position="top-right" richColors />
     </div>
   );
 }
