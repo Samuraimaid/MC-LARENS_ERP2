@@ -68,7 +68,7 @@ export default function PriceTierSelector({
         ) : null}
       </div>
       {canChange && allowed.length > 1 ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-nowrap gap-1.5 overflow-x-auto">
           {allowed.map((tier) => {
             const needsApproval = tier === TIER_PRECIO2 && precio2RequiresApproval;
             return (
@@ -78,7 +78,7 @@ export default function PriceTierSelector({
                 size="sm"
                 variant={tier === activeTier ? "default" : "outline"}
                 className={cn(
-                  "h-8 text-xs",
+                  "h-8 shrink-0 text-xs",
                   tier === activeTier && "bg-violet-700 hover:bg-violet-800",
                   needsApproval && tier !== activeTier && "border-amber-300 text-amber-900",
                 )}

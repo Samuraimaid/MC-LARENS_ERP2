@@ -139,6 +139,7 @@ import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelec
 import ProductBarcodeScannerDialog from "@/components/erp/ProductBarcodeScannerDialog";
 import { getCameraContextError } from "@/lib/cameraAccess";
 import SaleFlowStepProgress from "@/components/erp/SaleFlowStepProgress";
+import { useDevice } from "@/hooks/useDevice";
 import EmptyCartPlaceholder from "@/components/erp/EmptyCartPlaceholder";
 import SavingsHighlightRow from "@/components/erp/SavingsHighlightRow";
 import { ErpRollingCurrency, ErpRollingQuantity } from "@/components/erp/ErpRollingNumber";
@@ -556,8 +557,10 @@ export default function SaleForm({
   onCurrencyChange = null,
   hideCurrencyField = false,
   draftReview = {},
+  singleStepOnMobile = false,
 }) {
   const { user } = useAuth();
+  const { isPhone } = useDevice();
   const { getMessage: getDialogMessage } = useDialogMessages();
   const isSupervisorUser = isErpDraftSupervisor(user?.role);
   const isSellerRole = String(user?.role || "").toLowerCase() === "ventas";
@@ -3719,6 +3722,40 @@ export default function SaleForm({
     [stepOneComplete, stepTwoComplete, normalizedCartItems.length]
   );
 
+  const [mobileStep, setMobileStep] = useState(1);
+  const mobileStepBootRef = useRef(false);
+  const mobileStepFlagsRef = useRef({ s1: false, s2: false, cart: 0 });
+  useEffect(() => {
+    if (!singleStepOnMobile) return undefined;
+    const s1 = Boolean(stepOneComplete);
+    const s2 = Boolean(stepTwoComplete);
+    const cart = normalizedCartItems.length;
+    const prev = mobileStepFlagsRef.current;
+    if (!mobileStepBootRef.current) {
+      mobileStepBootRef.current = true;
+      setMobileStep(!s1 ? 1 : !s2 ? 2 : cart === 0 ? 3 : 4);
+    } else if (!prev.s1 && s1) {
+      setMobileStep(2);
+    } else if (!prev.s2 && s2) {
+      setMobileStep(3);
+    } else if (prev.cart === 0 && cart > 0) {
+      setMobileStep(4);
+    }
+    mobileStepFlagsRef.current = { s1, s2, cart };
+    return undefined;
+  }, [singleStepOnMobile, stepOneComplete, stepTwoComplete, normalizedCartItems.length]);
+
+  const mobileStepCount = saleFlowSteps.length || 5;
+  const mobileStepMeta = saleFlowSteps[mobileStep - 1];
+  const mobileStepReady = mobileStep === 1
+    ? stepOneComplete
+    : mobileStep === 2
+      ? stepTwoComplete
+      : mobileStep === 3 || mobileStep === 4
+        ? normalizedCartItems.length > 0
+        : false;
+  const hideMobileStep = (step) => (singleStepOnMobile && mobileStep !== step ? "max-md:hidden" : "");
+
   const productsById = useMemo(
     () => new Map((products || []).map((product) => [String(product.product_id), product])),
     [products]
@@ -4061,13 +4098,34 @@ export default function SaleForm({
   }, [stepTwoComplete]);
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", singleStepOnMobile && "max-md:pb-[calc(6rem+env(safe-area-inset-bottom,0px))]")}>
       {sellerReleasedRestricted ? (
         <div className={ERP_SEMANTIC_TONES?.restrictedBanner || "rounded-lg border border-violet-300/70 bg-violet-50/80 px-3 py-2 text-xs text-violet-900 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-100"}>
           Borrador liberado por supervisión. Cliente, vehículo, líneas existentes, método de pago y retención IR están bloqueados; puedes agregar productos nuevos y ajustar montos del plan de cobro acordado.
         </div>
       ) : null}
-      <SaleFlowStepProgress steps={saleFlowSteps} />
+      {singleStepOnMobile ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/20 px-2 py-2 md:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 px-2"
+            disabled={mobileStep <= 1}
+            onClick={() => setMobileStep((step) => Math.max(1, step - 1))}
+          >
+            Anterior
+          </Button>
+          <div className="min-w-0 text-center">
+            <p className="text-sm font-semibold">Paso {mobileStep} de {mobileStepCount}</p>
+            <p className="truncate text-xs text-muted-foreground">{mobileStepMeta?.label || ""}</p>
+          </div>
+          <span className="w-16 shrink-0" aria-hidden="true" />
+        </div>
+      ) : null}
+      <div className={singleStepOnMobile ? "hidden md:block" : undefined}>
+        <SaleFlowStepProgress steps={saleFlowSteps} />
+      </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start">
       {productTransferAnimation ? (
         <div
@@ -4091,8 +4149,8 @@ export default function SaleForm({
           </div>
         </div>
       ) : null}
-      <div ref={leftPaneRef} className="space-y-4 lg:pr-1 lg:min-h-[28rem]">
-        <div className="shrink-0 overflow-hidden">
+      <div ref={leftPaneRef} className={cn("space-y-4 lg:pr-1 lg:min-h-[28rem]", singleStepOnMobile && mobileStep > 3 && "max-md:hidden", singleStepOnMobile && "max-md:min-h-0")}>
+        <div className={cn("shrink-0 overflow-hidden", hideMobileStep(1))}>
           <Label className="inline-flex items-center gap-2">
             <User className="h-4 w-4" />
             <span>Paso 1: Agregar Cliente/Empresa o buscar en la lista</span>
@@ -4305,7 +4363,8 @@ export default function SaleForm({
           ref={stepTwoSectionRef}
           className={cn(
             "space-y-2 animate-fade-up-soft",
-            !stepOneComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked
+            !stepOneComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked,
+            hideMobileStep(2)
           )}
         >
           <Label className="inline-flex items-center gap-2">
@@ -4843,7 +4902,8 @@ export default function SaleForm({
           className={cn(
             "space-y-2 animate-fade-up-soft",
             !stepTwoComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked,
-            stepThreeUnlockFlash && ERP_ANIMATION_CLASSES.unlock
+            stepThreeUnlockFlash && ERP_ANIMATION_CLASSES.unlock,
+            hideMobileStep(3)
           )}
         >
           <Label className="inline-flex items-center gap-2">
@@ -5268,11 +5328,13 @@ export default function SaleForm({
       <div
         ref={stepFourSectionRef}
         className={cn(
-          "relative min-h-[28rem] space-y-4 rounded-2xl transition-all duration-500",
+          "relative space-y-4 rounded-2xl transition-all duration-500 lg:min-h-[28rem]",
+          singleStepOnMobile && mobileStep < 4 && "max-md:hidden",
           cartFlashActive ? "ring-2 ring-sky-300 shadow-[0_0_0_1px_rgba(125,211,252,0.35),0_18px_40px_rgba(56,189,248,0.12)]" : "",
           !stepTwoComplete ? ERP_ANIMATION_CLASSES.stepLocked : ERP_ANIMATION_CLASSES.stepUnlocked
         )}
       >
+        <div className={cn("space-y-4", hideMobileStep(4))}>
         {!stepTwoComplete ? (
           <p className="text-xs text-muted-foreground">Los pasos 4 y 5 se habilitan después de definir la forma de entrega</p>
         ) : null}
@@ -5670,6 +5732,7 @@ export default function SaleForm({
             );
           })}
         </div>
+        </div>
 
         <Dialog
           open={priceEditorOpen}
@@ -5977,6 +6040,7 @@ export default function SaleForm({
           </DialogContent>
         </Dialog>
 
+        <div className={cn("space-y-4", hideMobileStep(5))}>
         <div className="space-y-3 rounded-md border border-dashed border-input/70 bg-background/60 p-2.5">
           <Label className="inline-flex items-center gap-1.5 text-sm font-medium">
             <Tag className="h-3.5 w-3.5" />
@@ -6409,7 +6473,7 @@ export default function SaleForm({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className={cn("flex gap-2", singleStepOnMobile && "max-md:hidden")}>
           <Button
             onClick={handleSubmit}
             disabled={
@@ -6426,8 +6490,47 @@ export default function SaleForm({
             {submittingToCashier ? "Creando venta…" : submitLabel}
           </Button>
         </div>
+        </div>
       </div>
       </div>
+      {singleStepOnMobile ? (
+        <div
+          className="fixed inset-x-0 z-30 border-t bg-background/95 px-3 py-2 backdrop-blur md:hidden"
+          style={{
+            bottom: isPhone
+              ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
+              : "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          {mobileStep < mobileStepCount ? (
+            <Button
+              type="button"
+              className="h-11 w-full"
+              disabled={!mobileStepReady}
+              onClick={() => setMobileStep((step) => Math.min(mobileStepCount, step + 1))}
+            >
+              Continuar
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className={cn(
+                "h-11 w-full",
+                (normalizedPaymentMethod === "credit" || isPaymentPlanReady)
+                  && "bg-emerald-600 text-white hover:bg-emerald-700",
+              )}
+              disabled={
+                submittingToCashier
+                || (normalizedPaymentMethod !== "credit" && !isPaymentPlanReady)
+              }
+              onClick={handleSubmit}
+            >
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              {submittingToCashier ? "Creando venta…" : "Cobrar"}
+            </Button>
+          )}
+        </div>
+      ) : null}
 
       <Dialog
         open={showNewVehicleDialog}
