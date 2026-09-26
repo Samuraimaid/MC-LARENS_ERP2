@@ -1784,9 +1784,11 @@ export function QuotationsPage() {
 
   return (
     <div className="p-0 space-y-4" data-testid="quotations-page">
+      {!showNewQuote ? (
       <div className="flex justify-end mb-2">
         <ListDensityToggle value={listDensity} onChange={setListDensity} testId="quotations-list-density" />
       </div>
+      ) : null}
 
       {!showNewQuote ? (
         <Card className="border-dashed border-primary/40 bg-primary/5">
@@ -2015,6 +2017,7 @@ export function QuotationsPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
+        {!showNewQuote ? (
         <ListSelectionBar
         searchValue={search}
         onSearchChange={setSearch}
@@ -2034,6 +2037,7 @@ export function QuotationsPage() {
           <Copy className="h-4 w-4 mr-1" /> Copiar IDs
         </Button>
       </ListSelectionBar>
+        ) : null}
 
       <Button
           type="button"
