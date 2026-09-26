@@ -13,7 +13,6 @@ import { APP_ENV } from "../../lib/env";
 import { API_BASE as API } from "@/lib/api";
 import { AUTOSAVE_STATUS, AUTOSAVE_STATUS_EVENT } from "../../lib/autosaveStatus";
 import { useAutosaveLifecycle } from "../../hooks/useAutosaveLifecycle";
-import AutosavePill from "../common/AutosavePill";
 import { PasswordField } from "@/components/common/PasswordField";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -826,11 +825,6 @@ export function MainLayout() {
             </div>
             <div className="relative z-10">
               <Outlet />
-              <div className="pointer-events-none fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6">
-                <div className="pointer-events-auto">
-                  <AutosavePill testId="layout-autosave-pill" />
-                </div>
-              </div>
             </div>
           </main>
         </div>
