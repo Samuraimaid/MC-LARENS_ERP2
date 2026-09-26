@@ -1,0 +1,8 @@
+sku,name,brand,has_image,name_len,flags
+TY-COR-001,Toyota Corolla Halogeno TY-COR-001,Toyota,true,34,
+ACC-002,Toyota Yaris Neblinera DLAA,Toyota,false,26,no_image
+FOO-001,LED,Toyota,true,3,name_too_short
+DLAA-01,DLAA HALOGENO A CON A RE LUGAR DE ORIGEN GUANGDONG CHINA,DLAA,true,57,name_ocr_garbage
+SCAN-99,DLAA SCAN-99 Detalles Rapidos Lugar de Origen Guangdong China Fabricado en China Halogeno Auto Lampara Delantera Bombillo Para Carro,DLAA,true,126,name_ocr_garbage
+BRK-990,Pastillas de freno delanteras ceramicas alta duracion,Brembo,true,53,name_unrelated_tokens
+SPK-001,A CON A RE DETALLES RAPIDOS PARLANTE COAXIAL 6 PULGADAS,Pioneer,false,56,no_image|name_ocr_garbage|name_unrelated_tokens
