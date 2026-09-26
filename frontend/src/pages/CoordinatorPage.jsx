@@ -428,11 +428,11 @@ export function CoordinatorPage({ profile = "instalaciones" }) {
     <div className="p-6 space-y-6" data-testid={profileConfig.testId}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="mb-1 flex items-center gap-2 text-2xl font-semibold tracking-tight md:mb-0">
             <HeaderIcon className="h-7 w-7 text-primary" />
             {profileConfig.title}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 hidden text-sm text-muted-foreground md:block">
             {profileConfig.description}
           </p>
           {refreshLabel ? (

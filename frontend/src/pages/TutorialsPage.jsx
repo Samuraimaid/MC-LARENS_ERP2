@@ -300,13 +300,13 @@ export function TutorialsPage() {
               <GraduationCap className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              <p className="hidden text-xs uppercase tracking-[0.2em] text-slate-500 md:block">
                 Academia multi-rol
               </p>
-              <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight text-slate-900 md:mb-0 md:text-3xl">
                 {catalog?.title || "Tutoriales"}
               </h1>
-              <p className="text-slate-600 mt-1 max-w-3xl">
+              <p className="mt-1 hidden max-w-3xl text-slate-600 md:block">
                 {catalog?.subtitle}
                 {canViewAll
                   ? " Puedes revisar y editar el contenido de todos los roles."

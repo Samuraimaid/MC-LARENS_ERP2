@@ -215,8 +215,8 @@ export function TintOrdersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Órdenes de Polarizado</h1>
-          <p className="text-muted-foreground">Gestión de trabajos de polarizado de vidrios</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Órdenes de Polarizado</h1>
+          <p className="hidden text-muted-foreground md:block">Gestión de trabajos de polarizado de vidrios</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchData} variant="outline" size="sm">

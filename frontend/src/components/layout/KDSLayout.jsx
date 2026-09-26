@@ -39,11 +39,11 @@ export function KDSLayout() {
               </Link>
             )}
             <div>
-              <h1 className="font-heading text-2xl font-bold">
+              <h1 className="font-heading text-xl font-bold md:text-2xl">
                 {isAttendanceKiosk ? "RELOJ MARCADOR" : screenMeta.title}
               </h1>
               {!isAttendanceKiosk && screenMeta.subtitle ? (
-                <p className="text-xs text-muted-foreground">{screenMeta.subtitle}</p>
+                <p className="hidden text-xs text-muted-foreground md:block">{screenMeta.subtitle}</p>
               ) : null}
             </div>
           </div>

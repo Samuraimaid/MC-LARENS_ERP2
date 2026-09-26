@@ -8,11 +8,11 @@ export function FlowHealthPage() {
       data-testid="flow-health-page"
     >
       <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-1">Operaciones</p>
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900">
+        <p className="mb-1 hidden text-xs uppercase tracking-[0.2em] text-slate-500 md:block">Operaciones</p>
+        <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight text-slate-900 md:mb-0 md:text-3xl">
           Salud del flujo
         </h1>
-        <p className="text-slate-600 mt-1 max-w-3xl">
+        <p className="mt-1 hidden max-w-3xl text-slate-600 md:block">
           Vista gerencial de cuellos de botella en caja, despacho, órdenes de trabajo,
           polarizados y control de calidad. Se actualiza automáticamente.
         </p>

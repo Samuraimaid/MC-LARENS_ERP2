@@ -265,8 +265,8 @@ export function VehiclesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Vehículos</h1>
-          <p className="text-muted-foreground">Registro de vehículos para garantías</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Vehículos</h1>
+          <p className="hidden text-muted-foreground md:block">Registro de vehículos para garantías</p>
         </div>
         <Dialog open={showNewVehicle} onOpenChange={(open) => {
           if (open) scrollRestore.save();

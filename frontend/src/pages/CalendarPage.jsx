@@ -198,8 +198,8 @@ export function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Calendario</h1>
-          <p className="text-muted-foreground">Programación de instalaciones y citas</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Calendario</h1>
+          <p className="hidden text-muted-foreground md:block">Programación de instalaciones y citas</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={syncWorkOrders}>

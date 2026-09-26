@@ -876,8 +876,8 @@ export function CatalogPage() {
     <div className="space-y-6" data-testid="catalog-page">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Catálogo</h1>
-          <p className="text-muted-foreground">Cards con detalle, compatibilidad y acciones rápidas</p>
+          <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Catálogo</h1>
+          <p className="hidden text-muted-foreground md:block">Cards con detalle, compatibilidad y acciones rápidas</p>
         </div>
         <Button variant="outline" onClick={fetchCatalog} disabled={loading}>
           Actualizar

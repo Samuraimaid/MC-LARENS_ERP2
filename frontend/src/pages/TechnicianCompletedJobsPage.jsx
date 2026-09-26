@@ -260,14 +260,14 @@ export function TechnicianCompletedJobsPage() {
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold tracking-tight md:mb-0">
             <ClipboardList className="h-7 w-7 text-primary" />
             Mis Trabajos Realizados
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Conteo de trabajos QC aprobados · quincena con corte día 9 y 24.
+          <p className={cn("mt-1 text-xs text-muted-foreground md:text-sm", !data?.technician_name && "hidden md:block")}>
+            <span className="hidden md:inline">Conteo de trabajos QC aprobados · quincena con corte día 9 y 24.</span>
             {data?.technician_name ? (
-              <span className="ml-1 font-medium text-foreground">
+              <span className="font-medium text-foreground md:ml-1">
                 {data.technician_name}
                 {roleLabel ? ` · ${roleLabel}` : ""}
               </span>
