@@ -293,8 +293,11 @@ export function AuthProvider({ children }) {
           (detailCode === "SESSION_IDLE_TIMEOUT" ||
             detailCode === "SESSION_EXPIRED" ||
             detailCode === "SESSION_INVALID" ||
+            detailCode === "SESSION_CONFLICT" ||
+            detailCode === "SESSION_REVOKED" ||
             detailMessage === "Invalid session" ||
-            detailMessage === "Unauthorized");
+            detailMessage === "Unauthorized" ||
+            (typeof detailMessage === "string" && (detailMessage.includes("otro dispositivo") || detailMessage.includes("otro terminal"))));
 
         const isLoginPage = typeof window !== "undefined" && window.location.pathname.startsWith("/login");
         if (isSessionTimeout) {
@@ -305,6 +308,7 @@ export function AuthProvider({ children }) {
           setPermissions(null);
           if (!invalidSessionNotifiedRef.current && !isLoginPage && hadPriorSession) {
             let msg = "Por favor ingresa tu PIN para continuar.";
+            let isWarning = false;
             if (detailCode === "SESSION_IDLE_TIMEOUT") {
               msg =
                 (typeof detailMessage === "string" ? detailMessage : null) ||
@@ -315,12 +319,17 @@ export function AuthProvider({ children }) {
                 "La sesión ha expirado. Vuelve a ingresar tu PIN.";
             } else if (
               detailCode === "SESSION_CONFLICT" ||
-              (typeof detailMessage === "string" && detailMessage.toLowerCase().includes("dispositivo"))
+              (typeof detailMessage === "string" && (detailMessage.includes("otro dispositivo") || detailMessage.includes("otro terminal")))
             ) {
               msg =
-                "Tu sesión se inició en otro terminal. Ingresa tu PIN si deseas continuar en este equipo.";
+                "Tu sesión se inició en otro dispositivo o terminal. Ingresa tu PIN si deseas continuar en este equipo.";
+              isWarning = true;
             }
-            toast.info(typeof msg === "string" ? msg : "Ingresa tu PIN para continuar");
+            if (isWarning) {
+              toast.warning(typeof msg === "string" ? msg : "Sesión cerrada en otro equipo", { duration: 6000 });
+            } else {
+              toast.info(typeof msg === "string" ? msg : "Ingresa tu PIN para continuar");
+            }
             invalidSessionNotifiedRef.current = true;
           }
         }
