@@ -16,7 +16,7 @@ Garantías:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from backend.domains.auth.session_policy import (
@@ -51,6 +51,60 @@ async def invalidate_user_sessions(db: Any, user_id: str, reason: str = "securit
             return deleted
     except Exception:
         logger.exception("Error al invalidar sesiones para usuario %s", user_id)
+    return 0
+
+
+async def revoke_user_sessions_for_concurrent_login(
+    db: Any,
+    user_id: str,
+    ip: str = "",
+    user_agent: str = "",
+) -> int:
+    """
+    Marca las sesiones activas previas de un usuario como revocadas por conflicto de concurrencia
+    en lugar de borrarlas inmediatamente, permitiendo que el cliente anterior reciba SESSION_CONFLICT
+    y sea expulsado en tiempo real con una notificación descriptiva.
+    """
+    if db is None or not user_id:
+        return 0
+    try:
+        coll = getattr(db, "sessions", None)
+        if coll is not None:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            target_uid = str(user_id).strip()
+            # 1. Purgar sesiones revocadas muy antiguas de este usuario (> 2 horas)
+            if hasattr(coll, "delete_many"):
+                two_hours_ago = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+                await coll.delete_many({
+                    "user_id": target_uid,
+                    "revoked": True,
+                    "revoked_at": {"$lt": two_hours_ago},
+                })
+            # 2. Marcar las sesiones activas previas como revocadas por login concurrente
+            if hasattr(coll, "update_many"):
+                res = await coll.update_many(
+                    {"user_id": target_uid, "revoked": {"$ne": True}},
+                    {
+                        "$set": {
+                            "revoked": True,
+                            "revoked_reason": "concurrent_login",
+                            "revoked_at": now_iso,
+                            "revoked_by_ip": ip,
+                            "revoked_by_ua": (user_agent or "")[:120],
+                        }
+                    },
+                )
+                modified = int(getattr(res, "modified_count", 0))
+                if modified > 0:
+                    logger.warning(
+                        "[CONCURRENT_SESSION_REVOKED] user_id=%s count=%d new_ip=%s",
+                        user_id,
+                        modified,
+                        ip,
+                    )
+                return modified
+    except Exception:
+        logger.exception("Error al marcar sesiones revocadas por login concurrente para %s", user_id)
     return 0
 
 

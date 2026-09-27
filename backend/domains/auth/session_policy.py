@@ -228,8 +228,17 @@ def validate_session_freshness(
 ) -> Tuple[bool, Optional[str], Optional[str]]:
     """
     Returns (ok, error_code, message).
-    Codes: SESSION_EXPIRED, SESSION_IDLE_TIMEOUT
+    Codes: SESSION_EXPIRED, SESSION_IDLE_TIMEOUT, SESSION_CONFLICT, SESSION_REVOKED
     """
+    if session.get("revoked"):
+        if session.get("revoked_reason") == "concurrent_login":
+            return (
+                False,
+                "SESSION_CONFLICT",
+                "Tu sesión ha sido cerrada porque se inició sesión en otro dispositivo o terminal.",
+            )
+        return False, "SESSION_REVOKED", "Sesión revocada."
+
     now = now or datetime.now(timezone.utc)
     expires = parse_iso_dt(session.get("expires_at"))
     if expires is not None and expires < now:

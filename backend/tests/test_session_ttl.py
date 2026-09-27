@@ -35,12 +35,27 @@ class MockSessionCollection:
         initial_count = len(self.sessions)
         if "user_id" in query:
             target_uid = str(query["user_id"])
-            self.sessions = [s for s in self.sessions if str(s.get("user_id")) != target_uid]
+            if query.get("revoked") is True:
+                self.sessions = [s for s in self.sessions if not (str(s.get("user_id")) == target_uid and s.get("revoked") is True)]
+            else:
+                self.sessions = [s for s in self.sessions if str(s.get("user_id")) != target_uid]
         elif "session_token" in query:
             target_tok = str(query["session_token"])
             self.sessions = [s for s in self.sessions if str(s.get("session_token")) != target_tok]
         deleted_count = initial_count - len(self.sessions)
         return type("DeleteResult", (), {"deleted_count": deleted_count})()
+
+    async def update_many(self, query: Dict[str, Any], update: Dict[str, Any]):
+        target_uid = str(query.get("user_id") or "")
+        modified_count = 0
+        set_fields = update.get("$set", {})
+        for s in self.sessions:
+            if str(s.get("user_id")) == target_uid:
+                if query.get("revoked") == {"$ne": True} and s.get("revoked") is True:
+                    continue
+                s.update(set_fields)
+                modified_count += 1
+        return type("UpdateResult", (), {"modified_count": modified_count})()
 
 
 class MockDatabase:
@@ -176,6 +191,37 @@ async def test_invalidate_session_token_logout():
     assert db.sessions.sessions[0]["session_token"] == "tok_stay_active"
 
 
+async def test_concurrent_session_revocation_conflict():
+    """Prueba que un nuevo login revoca la sesion anterior con razon concurrent_login y codigo SESSION_CONFLICT."""
+    print("Running test_concurrent_session_revocation_conflict...")
+    from backend.core.session_security import revoke_user_sessions_for_concurrent_login
+
+    db = MockDatabase()
+    db.sessions.sessions = [
+        {"session_token": "tok_device_a", "user_id": "usr_vendedor_01", "created_at": datetime.now(timezone.utc).isoformat()},
+        {"session_token": "tok_device_b", "user_id": "usr_other_seller", "created_at": datetime.now(timezone.utc).isoformat()},
+    ]
+
+    # Device A is initially valid
+    ok, code, msg = check_session_validity(db.sessions.sessions[0], role="ventas")
+    assert ok is True
+    assert code is None
+
+    # New login for usr_vendedor_01 from Device B
+    modified = await revoke_user_sessions_for_concurrent_login(
+        db, "usr_vendedor_01", ip="192.168.1.50", user_agent="Mobile Safari"
+    )
+    assert modified == 1
+    assert db.sessions.sessions[0]["revoked"] is True
+    assert db.sessions.sessions[0]["revoked_reason"] == "concurrent_login"
+
+    # Device A attempts to use its token -> rejected with SESSION_CONFLICT
+    ok, code, msg = check_session_validity(db.sessions.sessions[0], role="ventas")
+    assert ok is False
+    assert code == "SESSION_CONFLICT"
+    assert "otro dispositivo" in (msg or "").lower() or "otro terminal" in (msg or "").lower()
+
+
 def main():
     test_cashier_idle_window_8_to_12_hours()
     print("[OK] test_cashier_idle_window_8_to_12_hours")
@@ -194,6 +240,9 @@ def main():
 
     asyncio.run(test_invalidate_session_token_logout())
     print("[OK] test_invalidate_session_token_logout")
+
+    asyncio.run(test_concurrent_session_revocation_conflict())
+    print("[OK] test_concurrent_session_revocation_conflict")
 
     print("\nALL C2 SESSION SECURITY TESTS PASSED SUCCESSFULLY!")
 

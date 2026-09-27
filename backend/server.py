@@ -4700,9 +4700,18 @@ async def _create_session_response(
     role = str(user_doc.get("role") or "")
     policy = await _load_session_security_policy()
 
-    # Single-session policy: invalidate any previous sessions for this user
+    # Single-session policy: invalidate any previous sessions for this user with conflict status
     if policy.get("single_session", True):
-        await db.sessions.delete_many({"user_id": user_id})
+        from backend.core.session_security import revoke_user_sessions_for_concurrent_login
+
+        client_ip = (
+            str(
+                (request.client.host if request and request.client else "")
+                or (request.headers.get("x-forwarded-for", "").split(",")[0].strip() if request else "")
+            )[:80]
+        )
+        ua = str(request.headers.get("user-agent") or "")[:120] if request else ""
+        await revoke_user_sessions_for_concurrent_login(db, user_id, ip=client_ip, user_agent=ua)
 
     session_token = secrets.token_hex(16)
     now = datetime.now(timezone.utc)

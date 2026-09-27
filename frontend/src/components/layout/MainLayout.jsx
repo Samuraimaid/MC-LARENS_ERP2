@@ -66,7 +66,7 @@ function HeaderCloudCheckIcon({ className }) {
 }
 
 export function MainLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, checkAuth } = useAuth();
   const { resolvedMode, toggleMode, watermarkOpacity, skin, liquidGlass } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -289,6 +289,15 @@ export function MainLayout() {
           setSellerServerStatus("down");
         }
       }
+
+      // Heartbeat activo: valida vigencia de la sesión en el servidor y expulsa en tiempo real si hubo login en otro equipo
+      if (user && !disposed) {
+        try {
+          await axios.get(`${API}/auth/me`, { timeout: 4000, withCredentials: true });
+        } catch {
+          // El interceptor de Axios en AuthContext captura el 401 (SESSION_CONFLICT / SESSION_EXPIRED) y limpia la sesión
+        }
+      }
     };
 
     checkServerStatus();
@@ -334,7 +343,14 @@ export function MainLayout() {
     const syncServerLockState = async () => {
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (!mounted || !res.ok) return;
+        if (!mounted) return;
+        if (res.status === 401) {
+          if (typeof checkAuth === "function") {
+            checkAuth();
+          }
+          return;
+        }
+        if (!res.ok) return;
         const me = await res.json();
         const serverLocked = Boolean(me?.session_locked);
         if (serverLocked) {
