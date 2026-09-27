@@ -22,7 +22,7 @@ import {
 import {
   Video, Plus, Trash2, Edit, Play, RefreshCw, Smartphone, Monitor,
   Upload, Link as LinkIcon, FileVideo, CheckCircle2, Loader2,
-  GripVertical, ChevronUp, ChevronDown, ArrowUpDown
+  GripVertical, ChevronUp, ChevronDown, ArrowUpDown, Star
 } from "lucide-react";
 
 function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
@@ -131,7 +131,8 @@ function PromoVideoCardThumbnail({ video, sortIndex, onPreviewFull }) {
 export function PromotionalVideosSettingsPanel() {
   const { user } = useAuth();
   const userRole = String(user?.role || "").toLowerCase();
-  const canDelete = ["gerencia", "programador"].includes(userRole);
+  const canDelete = ["gerencia", "programador", "programacion", "administrador", "admin"].includes(userRole);
+  const [settingPortraitId, setSettingPortraitId] = useState(null);
 
   const [videos, setVideos] = useState([]);
   const [pendingVideoIds, setPendingVideoIds] = useState(() => new Set());
@@ -361,6 +362,23 @@ export function PromotionalVideosSettingsPanel() {
     }
   };
 
+  const handleSetAsPortrait = async (video) => {
+    setSettingPortraitId(video.id);
+    try {
+      await axios.post(
+        `${API}/promos/active-portrait`,
+        { video_id: video.id },
+        { withCredentials: true }
+      );
+      toast.success(`"${video.title}" establecido como video de portada de login`);
+      await loadVideos();
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Error al establecer video como portada");
+    } finally {
+      setSettingPortraitId(null);
+    }
+  };
+
   const handleSaveOrder = async (newVideosList) => {
     setSavingOrder(true);
     try {
@@ -517,6 +535,11 @@ export function PromotionalVideosSettingsPanel() {
                           #{index + 1}
                         </span>
                         <span className="text-[11px] text-muted-foreground font-normal">en cola</span>
+                        {((v.orientation === "portrait" || v.orientation === "vertical") && (v.sort_order === 0 || v.sort_order === "0")) && (
+                          <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 text-[10px] font-semibold border border-amber-500/30">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Portada Login
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-0.5">
                         <Button
@@ -588,6 +611,20 @@ export function PromotionalVideosSettingsPanel() {
                         </Label>
                       </div>
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-8 w-8 ${((v.orientation === "portrait" || v.orientation === "vertical") && (v.sort_order === 0 || v.sort_order === "0")) ? "text-amber-500 hover:text-amber-400" : "text-muted-foreground hover:text-foreground"}`}
+                          onClick={() => handleSetAsPortrait(v)}
+                          disabled={settingPortraitId === v.id}
+                          title="Fijar como video principal de portada de login"
+                        >
+                          {settingPortraitId === v.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-sky-500" />
+                          ) : (
+                            <Star className={`h-4 w-4 ${((v.orientation === "portrait" || v.orientation === "vertical") && (v.sort_order === 0 || v.sort_order === "0")) ? "fill-amber-400 text-amber-400" : ""}`} />
+                          )}
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} title="Editar">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -727,6 +764,7 @@ export function PromotionalVideosSettingsPanel() {
                       <SelectValue placeholder="Orientación" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="portrait">Portrait / Vertical (Portada Móvil Login)</SelectItem>
                       <SelectItem value="horizontal">Horizontal (16:9 Panorámico)</SelectItem>
                       <SelectItem value="vertical">Vertical (9:16 Tótem)</SelectItem>
                       <SelectItem value="universal">Universal (Todo formato)</SelectItem>

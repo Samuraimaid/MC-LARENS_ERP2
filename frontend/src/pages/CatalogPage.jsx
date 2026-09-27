@@ -57,6 +57,7 @@ import { markInternalWorkbenchNavigation } from "@/hooks/useAutosaveLifecycle";
 import { getProductImageUrl } from "@/lib/productImage";
 import { productMatchesSearch } from "@/lib/productLookup";
 import { sanitizeProductCopy, isUniversalProduct } from "@/lib/sanitizeCopy";
+import InfiniteScrollSentinel from "@/components/common/InfiniteScrollSentinel";
 import {
   getVehicleBombillos,
   getBombilloCompatStatus,
@@ -1829,15 +1830,13 @@ export function CatalogPage() {
                 );
               })}
 
-              {currentActiveList.length > visibleCount ? (
-                <div ref={loadMoreRef} className="text-center pt-3 pb-8 text-xs text-muted-foreground">
-                  Cargando más productos… ({visibleCount} de {currentActiveList.length})
-                </div>
-              ) : currentActiveList.length > 0 ? (
-                <div className="text-center pt-2 pb-6 text-xs text-muted-foreground">
-                  Fin de resultados ({currentActiveList.length})
-                </div>
-              ) : null}
+              <InfiniteScrollSentinel
+                hasMore={currentActiveList.length > visibleCount}
+                onLoadMore={() => setVisibleCount((prev) => Math.min(prev + 30, currentActiveList.length))}
+                currentCount={Math.min(visibleCount, currentActiveList.length)}
+                totalCount={currentActiveList.length}
+                label="productos"
+              />
             </div>
           )}
         </>

@@ -1977,6 +1977,15 @@ class PromotionalVideosReorderPayload(FlexibleModel):
     video_ids: List[str]
 
 
+class SetPortraitPromoVideoPayload(FlexibleModel):
+    video_id: Optional[str] = None
+    url: Optional[str] = None
+    filename: Optional[str] = None
+    title: Optional[str] = "2022 Mint 400 Offroad Racing"
+    brand: Optional[str] = "Mundo de Accesorios"
+    active: bool = True
+
+
 class BillingSellerVoucherSectionsPayload(FlexibleModel):
     header_rules: Optional[bool] = None
     company_name: Optional[bool] = None
@@ -17387,6 +17396,11 @@ async def get_active_cash_session(
     if not session:
         return {"active": False, "session": None}
 
+    theoretical = await _compute_cash_theoretical(session, as_of=datetime.now(timezone.utc))
+    expected_by_currency = theoretical.get("expected_by_currency") or {}
+    available_usd_in_drawer = _round2(float(expected_by_currency.get("USD") or 0.0))
+    available_nio_in_drawer = _round2(float(expected_by_currency.get("NIO") or 0.0))
+
     return {
         "active": True,
         "session": {
@@ -17401,6 +17415,8 @@ async def get_active_cash_session(
             "opening_totals": session.get("opening_totals") or {},
             "opening_total_nio_equiv": session.get("opening_total_nio_equiv") or 0,
             "usd_to_nio_rate": session.get("usd_to_nio_rate"),
+            "available_usd_in_drawer": available_usd_in_drawer,
+            "available_nio_in_drawer": available_nio_in_drawer,
         },
     }
 
@@ -22685,6 +22701,7 @@ def _optimize_video_with_ffmpeg(input_path: Path) -> Path:
 
 
 DEFAULT_PROMOTIONAL_VIDEOS = [
+    {"id": "mint-400-portrait", "title": "2022 Mint 400 Offroad Racing", "orientation": "portrait", "filename": "mint_400_shorts_portrait.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/mint_400_shorts_portrait.mp4", "brand": "Mundo de Accesorios", "active": True, "sort_order": 0, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "fox-raptor", "title": "Ford Gen 3 Raptor - FOX Factory Race Series", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Ford-Gen-3-Raptor-FOX-Factory-Race-Serie_Media_Lb9K-TsubZ8_001_1080p.mp4", "active": True, "sort_order": 1, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "auxbeam-master-t", "title": "Auxbeam MASTER T-Series 3 Flood Beam", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Auxbeam-MASTER-T-Series-3-Flood-Beam-Off_Media_E25hxrZjQ_g_001_1080p.mp4", "active": True, "sort_order": 2, "branches": ["*"], "allow_widescreen_on_mobile": True},
     {"id": "rigid-industries", "title": "Rigid Industries LED Lighting Built to Last", "orientation": "horizontal", "filename": "YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "url": f"{GCS_PROMO_VIDEOS_CDN}/YTDown.com_YouTube_Rigid-Industries-LED-Lighting-Built-to-b_Media_8rkTz-3j2wg_001_1080p.mp4", "active": True, "sort_order": 3, "branches": ["*"], "allow_widescreen_on_mobile": True},
@@ -22723,8 +22740,10 @@ async def list_active_promotional_videos(
         ]
     if orientation.strip():
         req_orient = orientation.strip().lower()
-        if req_orient in ["vertical", "horizontal"]:
-            query["orientation"] = {"$in": [req_orient, "universal", "both", "all"]}
+        if req_orient in ["vertical", "portrait"]:
+            query["orientation"] = {"$in": ["vertical", "portrait", "universal", "both", "all"]}
+        elif req_orient == "horizontal":
+            query["orientation"] = {"$in": ["horizontal", "universal", "both", "all"]}
 
     cursor = db.promotional_videos.find(query).sort("sort_order", 1)
     videos = []
@@ -22792,7 +22811,7 @@ async def upload_promotional_video_file(
     request: Request,
     file: UploadFile = File(...),
 ):
-    await require_roles(request, ["gerencia", "programador", "publicidad"])
+    await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
     filename = (file.filename or "").lower()
     if not any(filename.endswith(ext) for ext in (".mp4", ".webm", ".mov", ".m4v", ".mkv")):
         raise HTTPException(status_code=400, detail="Formato no admitido. Usa un archivo de video .mp4, .webm o .mov")
@@ -22849,7 +22868,7 @@ async def upload_promotional_video_chunk(
     Subida por fragmentos (Chunked Upload de 3.5MB).
     Supera de forma transparente el límite de 32MB de Cloud Run y evita desconexiones en móviles.
     """
-    await require_roles(request, ["gerencia", "programador", "publicidad"])
+    await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
     
     clean_upload_id = "".join(c for c in upload_id if c.isalnum() or c in "_-")
     temp_dir = Path("/tmp/video_uploads") / clean_upload_id
@@ -22930,10 +22949,10 @@ async def upload_promotional_video_chunk(
 
 @api_router.post("/settings/promotional-videos")
 async def create_promotional_video(payload: PromotionalVideoCreatePayload, request: Request):
-    user = await require_roles(request, ["gerencia", "programador", "publicidad"])
+    user = await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
     video_id = _new_entity_id("promo_vid")
     orientation_val = payload.orientation.strip().lower() if payload.orientation else "horizontal"
-    if orientation_val not in ["vertical", "horizontal", "universal", "both", "all"]:
+    if orientation_val not in ["vertical", "portrait", "horizontal", "universal", "both", "all"]:
         orientation_val = "horizontal"
     raw_url = payload.url.strip()
     norm_url = _normalize_promo_video_url(raw_url, payload.filename or "")
@@ -22958,13 +22977,13 @@ async def create_promotional_video(payload: PromotionalVideoCreatePayload, reque
 
 @api_router.put("/settings/promotional-videos/{video_id}")
 async def update_promotional_video(video_id: str, payload: PromotionalVideoUpdatePayload, request: Request):
-    await require_roles(request, ["gerencia", "programador", "publicidad"])
+    await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
     update_data = {}
     if payload.title is not None:
         update_data["title"] = payload.title.strip()
     if payload.orientation is not None:
         orientation_val = payload.orientation.strip().lower()
-        if orientation_val in ["vertical", "horizontal", "universal", "both", "all"]:
+        if orientation_val in ["vertical", "portrait", "horizontal", "universal", "both", "all"]:
             update_data["orientation"] = orientation_val
     if payload.allow_widescreen_on_mobile is not None:
         update_data["allow_widescreen_on_mobile"] = bool(payload.allow_widescreen_on_mobile)
@@ -23013,9 +23032,169 @@ async def reorder_promotional_videos(payload: PromotionalVideosReorderPayload, r
     return {"message": "Orden de reproducción actualizado exitosamente", "count": len(payload.video_ids)}
 
 
+@api_router.get("/promos/active-portrait")
+async def get_active_portrait_promo_video():
+    """
+    Obtiene el video promocional portrait activo para la portada de Login.
+    Accesible públicamente para streaming de login.
+    """
+    doc = await db.promotional_videos.find_one(
+        {"orientation": {"$in": ["portrait", "vertical"]}, "active": True},
+        sort=[("sort_order", 1)]
+    )
+    if not doc:
+        return {
+            "id": "mint-400-portrait",
+            "title": "2022 Mint 400 Offroad Racing",
+            "orientation": "portrait",
+            "url": f"{GCS_PROMO_VIDEOS_CDN}/mint_400_shorts_portrait.mp4",
+            "filename": "mint_400_shorts_portrait.mp4",
+            "brand": "Mundo de Accesorios",
+            "active": True,
+            "sort_order": 0,
+        }
+    doc["_id"] = str(doc.get("_id", ""))
+    doc["url"] = _normalize_promo_video_url(doc.get("url", ""), doc.get("filename", ""))
+    return doc
+
+
+@api_router.put("/promos/active-portrait")
+@api_router.post("/promos/active-portrait")
+@api_router.post("/settings/promotional-videos/set-portrait")
+async def set_active_portrait_promo_video(payload: SetPortraitPromoVideoPayload, request: Request):
+    """
+    Permite a usuario, gerencia, administrador o programación establecer o cambiar 
+    el video promocional portrait de la pantalla de login.
+    """
+    user = await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
+
+    # 1. Si se proporciona video_id existente, activarlo y ponerlo en sort_order: 0
+    if payload.video_id:
+        clean_id = payload.video_id.strip()
+        doc = await db.promotional_videos.find_one({"$or": [{"id": clean_id}, {"_id": _safe_object_id(clean_id)}]})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Video promocional no encontrado")
+        await db.promotional_videos.update_many(
+            {"orientation": {"$in": ["portrait", "vertical"]}},
+            {"$set": {"sort_order": 10}}
+        )
+        await db.promotional_videos.update_one(
+            {"_id": doc["_id"]},
+            {"$set": {
+                "orientation": "portrait",
+                "active": True,
+                "sort_order": 0,
+                "updated_at": _utc_now().isoformat(),
+                "updated_by": getattr(user, "username", getattr(user, "name", "usuario"))
+            }}
+        )
+        doc = await db.promotional_videos.find_one({"_id": doc["_id"]})
+        doc["_id"] = str(doc["_id"])
+        return {"message": "Video portrait establecido correctamente", "video": doc}
+
+    # 2. Si se proporciona url o filename, crear o actualizar el registro
+    raw_url = (payload.url or "").strip()
+    filename = (payload.filename or "").strip() or (raw_url.split("/")[-1].split("?")[0] if raw_url else "mint_400_shorts_portrait.mp4")
+    norm_url = _normalize_promo_video_url(raw_url, filename) or f"{GCS_PROMO_VIDEOS_CDN}/{filename}"
+
+    await db.promotional_videos.update_many(
+        {"orientation": {"$in": ["portrait", "vertical"]}},
+        {"$set": {"sort_order": 10}}
+    )
+
+    doc_id = "mint-400-portrait" if "mint" in filename.lower() else _new_entity_id("promo_port")
+    doc = {
+        "id": doc_id,
+        "title": payload.title or "2022 Mint 400 Offroad Racing",
+        "orientation": "portrait",
+        "allow_widescreen_on_mobile": True,
+        "url": norm_url,
+        "filename": filename,
+        "brand": payload.brand or "Mundo de Accesorios",
+        "active": bool(payload.active),
+        "sort_order": 0,
+        "branches": ["*"],
+        "updated_at": _utc_now().isoformat(),
+        "created_by": getattr(user, "username", getattr(user, "name", "usuario")),
+    }
+    await db.promotional_videos.update_one(
+        {"id": doc_id},
+        {"$set": doc},
+        upsert=True
+    )
+    return {"message": "Video portrait guardado y activado exitosamente", "video": doc}
+
+
+@api_router.post("/promos/active-portrait/upload")
+async def upload_active_portrait_promo_video(
+    request: Request,
+    file: UploadFile = File(...),
+    title: Optional[str] = Form("2022 Mint 400 Offroad Racing"),
+    brand: Optional[str] = Form("Mundo de Accesorios"),
+):
+    """
+    Permite subir directamente un video portrait y activarlo como la portada de Login.
+    Sube a Google Cloud Storage en el bucket mclarens-erp-vehicles.
+    Accesible para usuario, gerencia, administrador o programación.
+    """
+    user = await require_roles(request, ["usuario", "user", "gerencia", "administrador", "admin", "programador", "programacion", "supervisor", "publicidad"])
+    filename = (file.filename or "").lower()
+    if not any(filename.endswith(ext) for ext in (".mp4", ".webm", ".mov", ".m4v", ".mkv")):
+        raise HTTPException(status_code=400, detail="Formato no admitido. Usa un archivo de video .mp4, .webm o .mov")
+
+    upload_dir = Path("/app/uploads/promos")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    clean_base = "".join(c if c.isalnum() or c in "._-" else "_" for c in os.path.splitext(file.filename)[0])
+    ext = os.path.splitext(filename)[1] or ".mp4"
+    unique_name = f"{clean_base}_{_new_entity_id('v')}{ext}"
+    target_path = upload_dir / unique_name
+
+    content = await file.read()
+    with open(target_path, "wb") as f:
+        f.write(content)
+
+    gcs_uploaded = False
+    gcs_url = None
+    try:
+        from google.cloud import storage
+        gcs_client = storage.Client()
+        bucket = gcs_client.bucket("mclarens-erp-vehicles")
+        blob = bucket.blob(f"videos/promos/{unique_name}")
+        blob.upload_from_filename(str(target_path), content_type="video/mp4")
+        gcs_url = f"https://storage.googleapis.com/mclarens-erp-vehicles/videos/promos/{unique_name}"
+        gcs_uploaded = True
+    except Exception as gcs_err:
+        logger.warning(f"Could not upload video to GCS directly: {gcs_err}")
+
+    final_url = gcs_url if gcs_uploaded else f"{GCS_PROMO_VIDEOS_CDN}/{unique_name}"
+
+    await db.promotional_videos.update_many(
+        {"orientation": {"$in": ["portrait", "vertical"]}},
+        {"$set": {"sort_order": 10}}
+    )
+
+    doc_id = _new_entity_id("promo_port")
+    doc = {
+        "id": doc_id,
+        "title": title or file.filename or "Video Portada Login",
+        "orientation": "portrait",
+        "allow_widescreen_on_mobile": True,
+        "url": final_url,
+        "filename": unique_name,
+        "brand": brand or "Mundo de Accesorios",
+        "active": True,
+        "sort_order": 0,
+        "branches": ["*"],
+        "updated_at": _utc_now().isoformat(),
+        "created_by": getattr(user, "username", getattr(user, "name", "usuario")),
+    }
+    await db.promotional_videos.update_one({"id": doc_id}, {"$set": doc}, upsert=True)
+    return {"message": "Video portrait subido a Google Cloud Storage y activado como portada exitosamente", "video": doc}
+
+
 @api_router.delete("/settings/promotional-videos/{video_id}")
 async def delete_promotional_video(video_id: str, request: Request):
-    await require_roles(request, ["gerencia", "programador"])
+    await require_roles(request, ["gerencia", "programador", "programacion", "administrador", "admin"])
     doc = await db.promotional_videos.find_one({
         "$or": [{"id": video_id}, {"_id": _safe_object_id(video_id)}, {"filename": video_id}]
     })

@@ -20,11 +20,32 @@ export default function BackgroundPromoVideo({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [resolvedVideoSrc, setResolvedVideoSrc] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [useSlowNetworkFallback, setUseSlowNetworkFallback] = useState(() => {
+    if (typeof navigator !== "undefined" && navigator.connection) {
+      const conn = navigator.connection;
+      if (conn.saveData) return true;
+      if (conn.effectiveType === "2g" || conn.effectiveType === "slow-2g") return true;
+      if (conn.downlink && conn.downlink < 1.2) return true;
+    }
+    return false;
+  });
   
   const videoRef = useRef(null);
   const lastTimeRef = useRef(0);
   const stallCountRef = useRef(0);
   const transitionTimeoutRef = useRef(null);
+
+  // Watchdog de red lenta: si el video no reproduce en 3.5s en conexiones lentas, activar fondo liviano
+  useEffect(() => {
+    if (isVideoPlaying || useSlowNetworkFallback) return;
+    const slowNetTimer = setTimeout(() => {
+      if (!isVideoPlaying) {
+        setUseSlowNetworkFallback(true);
+      }
+    }, 3500);
+
+    return () => clearTimeout(slowNetTimer);
+  }, [isVideoPlaying, useSlowNetworkFallback, resolvedVideoSrc]);
 
   // 1. Cargar y sincronizar lista de videos promocionales periódicamente (detecta videos nuevos en vivo sin recargar)
   useEffect(() => {
@@ -241,8 +262,51 @@ export default function BackgroundPromoVideo({
       className="absolute inset-0 z-0 overflow-hidden bg-black select-none pointer-events-auto"
       onClick={onInteract}
     >
+      {/* Fondo de alta velocidad para conexiones lentas: Cuadrícula tecnológica + Degradado + Marca de agua Mundo de Accesorios */}
+      {useSlowNetworkFallback ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-hidden bg-[#070b14] select-none">
+          {/* Degradado Radial Profundo */}
+          <div 
+            className="absolute inset-0 opacity-90"
+            style={{
+              background: "radial-gradient(ellipse at 50% 35%, rgba(226, 7, 37, 0.22) 0%, rgba(15, 23, 42, 0.9) 50%, #030712 100%)",
+            }}
+          />
+
+          {/* Cuadrícula Geométrica Estilo Blueprint / Malla Técnica */}
+          <div 
+            className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px)
+              `,
+              backgroundSize: "36px 36px",
+            }}
+          />
+
+          {/* Marca de Agua Translúcida Mundo de Accesorios con Respiración Sutil */}
+          <div className="relative z-10 flex flex-col items-center justify-center p-6 text-center animate-pulse duration-1000">
+            <img 
+              src="/mundo-logo.png" 
+              alt="Mundo de Accesorios" 
+              className="w-64 sm:w-80 max-w-[85vw] h-auto object-contain opacity-35 drop-shadow-[0_0_35px_rgba(226,7,37,0.45)] filter contrast-125 transition-all duration-700"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+            <div className="mt-5 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md shadow-lg">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-white/70">
+                Mundo de Accesorios · Red Conectada
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Fondo ambiental desenfocado del mismo video cuando se muestra video horizontal en pantalla vertical/totem (sin barras negras) */}
-      {isCurrentVideoHorizontalInPortrait && (
+      {!useSlowNetworkFallback && isCurrentVideoHorizontalInPortrait && (
         <video
           ref={bgVideoRef}
           autoPlay
@@ -256,6 +320,7 @@ export default function BackgroundPromoVideo({
       )}
 
       {/* Elemento de video principal con object-contain en modo totem para no recortar ni distorsionar */}
+      {!useSlowNetworkFallback && (
       <video
         ref={videoRef}
         autoPlay
@@ -293,6 +358,7 @@ export default function BackgroundPromoVideo({
             : "object-cover object-center"
         } ${isVideoPlaying ? "opacity-100" : "opacity-90"}`}
       />
+      )}
 
       {/* Capa de viñeta oscura translúcida que solo se activa al interactuar para contrastar el PIN pad */}
       <div 

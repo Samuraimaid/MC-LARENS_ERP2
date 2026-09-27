@@ -206,6 +206,46 @@ export function computeTotalCashChangeNio({
   };
 }
 
+export function canOfferUsdCashChange({ changeUsd = 0, drawerUsdBalance = 0 }) {
+  const surplusUsd = round2(Number(changeUsd || 0));
+  const availableUsd = round2(Number(drawerUsdBalance || 0));
+  return surplusUsd > 0.009 && availableUsd >= surplusUsd;
+}
+
+export function computeOptimizedCashChangeBreakdown({
+  nioAmount = 0,
+  usdAmount = 0,
+  receivedNio = 0,
+  receivedUsd = 0,
+  exchangeRate = 36.5,
+  buyRate = null,
+  drawerUsdBalance = 0,
+  preferUsdChange = false,
+}) {
+  const totals = computeTotalCashChangeNio({
+    nioAmount,
+    usdAmount,
+    receivedNio,
+    receivedUsd,
+    exchangeRate,
+    buyRate,
+  });
+
+  const changeUsd = totals.usd.changeUsd;
+  const canGiveUsd = canOfferUsdCashChange({ changeUsd, drawerUsdBalance });
+  const deliverInUsd = canGiveUsd && preferUsdChange;
+
+  return {
+    ...totals,
+    changeUsd,
+    drawerUsdBalance: round2(Number(drawerUsdBalance || 0)),
+    canOfferUsdChange: canGiveUsd,
+    deliverInUsd,
+    effectiveChangeUsd: deliverInUsd ? changeUsd : 0,
+    effectiveChangeNio: deliverInUsd ? totals.nio.change : totals.totalChangeNio,
+  };
+}
+
 export function isCashSingleCollect(collectForm) {
   const nio = Number(collectForm?.nio_amount || 0);
   const usd = Number(collectForm?.usd_amount || 0);

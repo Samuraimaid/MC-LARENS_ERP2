@@ -1,15 +1,20 @@
 const TECHNICIAN_KIOSK_ROLES = new Set([
   "instalaciones",
   "instalador",
+  "instaladores",
   "electrico",
+  "electricista",
+  "electricos",
   "polarizador",
+  "polarizadores",
+  "polarizados",
 ]);
 
 /** Roles que pueden operar el módulo de caja (API + menú). */
 const CASHIER_ACCESS_ROLES = new Set(["gerencia", "supervisor", "programador", "cajero"]);
 
 /** Roles de venta con UI restringida (sin sidebar completo). */
-const SELLER_ROLES = new Set(["ventas", "jefe_vendedores", "jefe_tienda"]);
+const SELLER_ROLES = new Set(["ventas", "vendedor", "vendedores", "jefe_vendedores", "jefe_tienda"]);
 
 /**
  * Rol dedicado de cajero: kiosko fijo en /cashier, sin sidebar.
@@ -32,9 +37,13 @@ export function isSellerRole(role) {
   return SELLER_ROLES.has(String(role || "").toLowerCase());
 }
 
-/** UI sin sidebar/menú lateral (cajero dedicado o vendedor). */
+export function isPublicidadRole(role) {
+  return String(role || "").toLowerCase() === "publicidad";
+}
+
+/** UI sin sidebar/menú lateral (cajero dedicado, vendedor o publicidad). */
 export function usesRestrictedNavigation(role) {
-  return isCashierKioskRole(role) || isSellerRole(role);
+  return isCashierKioskRole(role) || isSellerRole(role) || isPublicidadRole(role);
 }
 
 export function canPrintLetterInvoice(role, sale) {
@@ -54,11 +63,29 @@ export function getRoleHomePath(role) {
   const normalized = String(role || "").toLowerCase();
   if (isCashierKioskRole(normalized)) return "/cashier";
   if (TECHNICIAN_KIOSK_ROLES.has(normalized)) return "/technician";
-  if (normalized === "recursos_humanos") return "/human-resources";
+  if (normalized === "recursos_humanos" || normalized === "rrhh") return "/human-resources";
   if (normalized === "coordinador_instalaciones") return "/coordinator/instalaciones";
   if (normalized === "coordinador_polarizados") return "/coordinator/polarizados";
-  if (normalized === "bodegas" || normalized === "jefe_tienda") return "/dispatch";
-  if (normalized === "transporte" || normalized === "entregador") return "/driver";
+  if (
+    normalized === "bodegas" ||
+    normalized === "bodega" ||
+    normalized === "bodeguero" ||
+    normalized === "bodegueros" ||
+    normalized === "almacen" ||
+    normalized === "jefe_tienda"
+  ) {
+    return "/dispatch";
+  }
+  if (
+    normalized === "transporte" ||
+    normalized === "entregador" ||
+    normalized === "repartidor" ||
+    normalized === "repartidores" ||
+    normalized === "chofer" ||
+    normalized === "conductor"
+  ) {
+    return "/driver";
+  }
   if (normalized === "publicidad") return "/settings?tab=videos";
   return "/workbench";
 }

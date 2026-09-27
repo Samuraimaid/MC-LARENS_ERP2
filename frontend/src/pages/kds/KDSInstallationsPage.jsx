@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Car, CheckCircle, Clock, Eraser, Trash2, User, Wrench, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
+import { useSilentMemoryPurge } from "@/hooks/useSilentMemoryPurge";
 
 const DEPARTMENTS = [
   { id: "instalaciones", label: "Instalaciones", icon: Wrench },
@@ -39,6 +40,14 @@ export function KDSInstallationsPage() {
   const [busyId, setBusyId] = useState("");
   const [deletingId, setDeletingId] = useState("");
   const [clearing, setClearing] = useState(false);
+
+  // Purga de memoria silenciosa proactiva cada 6 horas
+  useSilentMemoryPurge({
+    screenName: "KDS-Instalaciones",
+    onPurge: () => {
+      fetchOrders();
+    },
+  });
 
   const fetchOrders = useCallback(async () => {
     try {

@@ -7,6 +7,8 @@ import {
   computeTotalCashChangeNio,
   computeUnifiedCashSettlement,
   computeUsdCashChangeInNio,
+  canOfferUsdCashChange,
+  computeOptimizedCashChangeBreakdown,
   dualCurrencyAmountFromPlan,
   isCashSingleCollect,
 } from "@/lib/cashierCollect";
@@ -127,5 +129,57 @@ describe("cashierCollect", () => {
       useDualCurrency: true,
     });
     expect(allowed).toBe(true);
+  });
+
+  it("checks drawer availability before offering USD change", () => {
+    // Insuficiente en caja: 15 USD disponibles, se necesitan 20 USD
+    expect(canOfferUsdCashChange({ changeUsd: 20, drawerUsdBalance: 15 })).toBe(false);
+    // Suficiente en caja: 50 USD disponibles, se necesitan 20 USD
+    expect(canOfferUsdCashChange({ changeUsd: 20, drawerUsdBalance: 50 })).toBe(true);
+    // Exacto en caja: 20 USD disponibles, se necesitan 20 USD
+    expect(canOfferUsdCashChange({ changeUsd: 20, drawerUsdBalance: 20 })).toBe(true);
+    // Sin cambio requerido
+    expect(canOfferUsdCashChange({ changeUsd: 0, drawerUsdBalance: 100 })).toBe(false);
+  });
+
+  it("optimizes change breakdown: default in NIO, optional in USD if sufficient drawer cash", () => {
+    // Pago de $50 USD para cobro de $30 USD -> Vuelto $20 USD (TC 36.5 = C$ 730 NIO)
+    // 1. Por defecto, siempre ofrece NIO aunque haya suficiente USD en caja
+    const defaultNio = computeOptimizedCashChangeBreakdown({
+      usdAmount: 30,
+      receivedUsd: 50,
+      exchangeRate: 36.5,
+      drawerUsdBalance: 100,
+      preferUsdChange: false,
+    });
+    expect(defaultNio.effectiveChangeNio).toBe(730);
+    expect(defaultNio.effectiveChangeUsd).toBe(0);
+    expect(defaultNio.canOfferUsdChange).toBe(true);
+    expect(defaultNio.deliverInUsd).toBe(false);
+
+    // 2. Si el cajero activa vuelto en USD y hay saldo en caja: entrega $20 USD
+    const deliveredUsd = computeOptimizedCashChangeBreakdown({
+      usdAmount: 30,
+      receivedUsd: 50,
+      exchangeRate: 36.5,
+      drawerUsdBalance: 100,
+      preferUsdChange: true,
+    });
+    expect(deliveredUsd.effectiveChangeUsd).toBe(20);
+    expect(deliveredUsd.effectiveChangeNio).toBe(0);
+    expect(deliveredUsd.deliverInUsd).toBe(true);
+
+    // 3. Si el cajero prefiere USD pero no hay suficiente en caja: forzar vuelto en NIO
+    const fallbackNio = computeOptimizedCashChangeBreakdown({
+      usdAmount: 30,
+      receivedUsd: 50,
+      exchangeRate: 36.5,
+      drawerUsdBalance: 10, // Solo hay $10
+      preferUsdChange: true,
+    });
+    expect(fallbackNio.canOfferUsdChange).toBe(false);
+    expect(fallbackNio.deliverInUsd).toBe(false);
+    expect(fallbackNio.effectiveChangeNio).toBe(730);
+    expect(fallbackNio.effectiveChangeUsd).toBe(0);
   });
 });

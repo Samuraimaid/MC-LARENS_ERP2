@@ -31,9 +31,11 @@ import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDis
 import { buildSaleJobId } from "@/lib/driverDispatch";
 import {
   buildDualCurrencyPagos,
+  canOfferUsdCashChange,
   canSubmitCashierCollect,
   CASHIER_QUICK_BILLS_NIO,
   computeDualCurrencyTotals,
+  computeOptimizedCashChangeBreakdown,
   computeTotalCashChangeNio,
   dualCurrencyAmountFromPlan,
   formatCashierMoney,
@@ -1409,6 +1411,8 @@ export function CashierPage() {
       bank_name: mode === "single" && cardSingle ? collectForm.bank_name : null,
       transaction_number: mode === "single" && cardSingle ? collectForm.transaction_number : null,
       pagos: useDualCurrency && pagos.length > 0 ? pagos : (mode === "mixed" ? pagos : []),
+      give_change_in_usd: Boolean(collectForm.give_change_in_usd),
+      change_currency: collectForm.give_change_in_usd ? "USD" : "NIO",
     };
 
     if (payload.amount <= 0) {
@@ -1472,11 +1476,14 @@ export function CashierPage() {
       const successMessage = quick
         ? "Cobro total aplicado"
         : (isPartial ? "Abono parcial registrado" : "Cobro aplicado correctamente");
-      toast.success(
-        changeAmount > 0.009
-          ? `${successMessage}. Cambio: ${formatCashierMoney(changeAmount)}`
-          : successMessage,
-      );
+      const isUsdChange = Boolean(collectForm.give_change_in_usd);
+      const usdChangeVal = Number(collectForm.received_usd || 0) - Number(collectForm.usd_amount || 0);
+      const changeNotice = changeAmount > 0.009
+        ? (isUsdChange && usdChangeVal > 0.009
+            ? `${successMessage}. Cambio entregado: ${formatUsdMoney(usdChangeVal)} USD`
+            : `${successMessage}. Cambio entregado: ${formatCashierMoney(changeAmount)}`)
+        : successMessage;
+      toast.success(changeNotice);
       await printInvoiceAfterCollect(sale, response.data);
       if (sale?.delivery_info?.is_delivery || sale?.delivery_required) {
         setDeliveryDispatchJobId(buildSaleJobId(sale.sale_id));
@@ -2393,22 +2400,27 @@ function CashierDualCurrencyPayment({
   onChange,
   amountsLocked = false,
   showPartialHint = false,
+  drawerUsdBalance = 0,
+  preferUsdChange = false,
 }) {
   const totals = useMemo(
     () => computeDualCurrencyTotals({ pendingNio, nioAmount, usdAmount, exchangeRate, buyRate: exchangeRate }),
     [pendingNio, nioAmount, usdAmount, exchangeRate],
   );
-  const cashTotals = useMemo(
-    () => computeTotalCashChangeNio({
+  const optimized = useMemo(
+    () => computeOptimizedCashChangeBreakdown({
       nioAmount,
       usdAmount,
       receivedNio,
       receivedUsd,
       exchangeRate,
       buyRate: exchangeRate,
+      drawerUsdBalance,
+      preferUsdChange,
     }),
-    [nioAmount, usdAmount, receivedNio, receivedUsd, exchangeRate],
+    [nioAmount, usdAmount, receivedNio, receivedUsd, exchangeRate, drawerUsdBalance, preferUsdChange],
   );
+  const cashTotals = optimized;
   const showNioReceived = Number(nioAmount || 0) > 0;
   const showUsdReceived = Number(usdAmount || 0) > 0;
   const methodLabel = paymentMethodLabel(method);
@@ -2519,16 +2531,72 @@ function CashierDualCurrencyPayment({
         {totals.isComplete ? (
           <p className="text-emerald-700 dark:text-emerald-300 text-xs font-medium">Monto completo para este cobro</p>
         ) : null}
-        {cashTotals.totalChangeNio > 0.009 ? (
-          <div className="flex items-center justify-between gap-2 border-t pt-2 text-emerald-800 dark:text-emerald-200">
-            <span className="font-medium">Cambio total (en córdobas)</span>
-            <span className="text-xl font-bold tabular-nums">{formatCashierMoney(cashTotals.totalChangeNio)}</span>
+        {showUsdReceived && cashTotals.usd.changeUsd > 0.009 ? (
+          <div className="mt-2 rounded-md border p-2.5 text-xs space-y-2 bg-muted/40">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <span className="font-semibold text-foreground">
+                  Vuelto calculado por pago en USD: {formatUsdMoney(cashTotals.usd.changeUsd)}
+                </span>
+                <p className="text-[11px] text-muted-foreground">
+                  Equivalente oficial: {formatCashierMoney(cashTotals.usd.changeNio)}
+                </p>
+              </div>
+              {optimized.canOfferUsdChange ? (
+                <label className="flex items-center gap-2 cursor-pointer rounded border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                  <input
+                    type="checkbox"
+                    checked={preferUsdChange}
+                    onChange={(e) => onChange({ give_change_in_usd: e.target.checked })}
+                    className="h-4 w-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span>Entregar en USD ({formatUsdMoney(cashTotals.usd.changeUsd)})</span>
+                </label>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200">
+                  🔒 Gaveta sin USD suficiente ({formatUsdMoney(drawerUsdBalance)})
+                </span>
+              )}
+            </div>
+            {optimized.canOfferUsdChange && !preferUsdChange ? (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                💡 Por defecto se entrega en Córdobas para proteger la reserva de dólares en caja (disponible en gaveta: {formatUsdMoney(drawerUsdBalance)}).
+              </p>
+            ) : null}
+            {!optimized.canOfferUsdChange ? (
+              <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                Gaveta cuenta con {formatUsdMoney(drawerUsdBalance)} USD en efectivo. Se entrega el vuelto íntegro en Córdobas.
+              </p>
+            ) : null}
           </div>
         ) : null}
-        {showUsdReceived && cashTotals.usd.changeNio > 0.009 ? (
-          <p className="text-[11px] text-muted-foreground tabular-nums">
-            Incluye cambio por dólares: {formatUsdMoney(cashTotals.usd.changeUsd)} = {formatCashierMoney(cashTotals.usd.changeNio)}
-          </p>
+
+        {cashTotals.totalChangeNio > 0.009 ? (
+          <div className="flex items-center justify-between gap-2 border-t pt-2 text-emerald-800 dark:text-emerald-200">
+            <span className="font-medium">
+              {preferUsdChange && optimized.canOfferUsdChange
+                ? "Cambio a entregar (Dólares + resto en Córdobas)"
+                : "Cambio total a entregar (en córdobas)"}
+            </span>
+            <div className="text-right">
+              {preferUsdChange && optimized.canOfferUsdChange ? (
+                <div>
+                  <span className="text-xl font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+                    {formatUsdMoney(optimized.effectiveChangeUsd)}
+                  </span>
+                  {optimized.effectiveChangeNio > 0.009 ? (
+                    <span className="text-xs text-muted-foreground ml-1.5 tabular-nums">
+                      + {formatCashierMoney(optimized.effectiveChangeNio)}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-xl font-bold tabular-nums">
+                  {formatCashierMoney(cashTotals.totalChangeNio)}
+                </span>
+              )}
+            </div>
+          </div>
         ) : null}
       </div>
     </div>
@@ -2749,6 +2817,8 @@ function CollectActionCard({
             receivedUsd={collectForm.received_usd}
             amountsLocked={paymentPlanLocked}
             showPartialHint={showPartialHint}
+            drawerUsdBalance={serverActiveSession?.available_usd_in_drawer ?? 0}
+            preferUsdChange={Boolean(collectForm.give_change_in_usd)}
             onChange={(patch) => setCollectForm((prev) => ({ ...prev, ...patch }))}
           />
         ) : null}

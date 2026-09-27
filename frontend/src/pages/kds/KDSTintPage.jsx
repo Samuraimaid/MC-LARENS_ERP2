@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Car, CheckCircle, Clock, Eraser, Palette, Scissors, Trash2, User } from "lucide-react";
 import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
+import { useSilentMemoryPurge } from "@/hooks/useSilentMemoryPurge";
 
 const WINDOW_LABELS = {
   frontal: "Frontal",
@@ -39,6 +40,14 @@ export function KDSTintPage() {
   const [busyId, setBusyId] = useState("");
   const [deletingId, setDeletingId] = useState("");
   const [clearing, setClearing] = useState(false);
+
+  // Purga de memoria silenciosa proactiva cada 6 horas
+  useSilentMemoryPurge({
+    screenName: "KDS-Polarizado",
+    onPurge: () => {
+      fetchOrders();
+    },
+  });
 
   const fetchOrders = useCallback(async () => {
     try {

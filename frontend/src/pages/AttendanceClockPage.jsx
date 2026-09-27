@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useTheme } from "../context/ThemeContext";
+import { useSilentMemoryPurge } from "@/hooks/useSilentMemoryPurge";
 
 const PIN_LENGTH = 4;
 const OFFLINE_QUEUE_KEY = "attendance_offline_queue_v1";
@@ -56,6 +57,14 @@ export function AttendanceClockPage() {
   const [isGalaxyTab8PortraitViewport, setIsGalaxyTab8PortraitViewport] = useState(false);
   const [feedbackState, setFeedbackState] = useState("idle");
   const feedbackTimerRef = useRef(null);
+
+  // Purga de memoria silenciosa proactiva cada 6 horas para operación continua 24/7
+  useSilentMemoryPurge({
+    screenName: "RelojMarcador-Asistencia",
+    onPurge: () => {
+      loadKioskData();
+    },
+  });
 
   const triggerFeedback = useCallback((state) => {
     if (feedbackTimerRef.current) {

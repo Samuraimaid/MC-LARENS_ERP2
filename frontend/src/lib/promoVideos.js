@@ -21,6 +21,18 @@ export function resolveDirectPromoVideoUrl(videoUrl) {
 }
 
 export const DEFAULT_PROMOTIONAL_VIDEOS = [
+  // Video Portrait Exclusivo para Pantallas Verticales / Tótems / Móviles
+  {
+    id: "mint-400-portrait",
+    title: "2022 Mint 400 Offroad Racing",
+    orientation: "portrait",
+    filename: "mint_400_shorts_portrait.mp4",
+    url: `${GCS_PROMO_VIDEOS_BASE}/mint_400_shorts_portrait.mp4`,
+    localFallbackUrl: "/videos/promos/mint_400_shorts_portrait.mp4",
+    brand: "Mundo de Accesorios",
+    active: true,
+    sort_order: 0,
+  },
   // Videos Horizontales y Universales (Catálogo Oficial de Fábrica - 19 Videos Verificados en GCS)
   {
     id: "fox-raptor",
@@ -262,6 +274,15 @@ export function getBrandInfoForVideo(video) {
   };
   
   const text = `${video.brand || ""} ${video.title || ""} ${video.filename || ""} ${video.id || ""}`.toLowerCase();
+
+  if (text.includes("mundo") || text.includes("mint") || text.includes("accesorios")) {
+    return {
+      brand: "Mundo de Accesorios",
+      logo: "/mundo-logo.png",
+      theme: "mundo",
+      accent: "#E20725",
+    };
+  }
 
   if (text.includes("auxbeam")) {
     return {

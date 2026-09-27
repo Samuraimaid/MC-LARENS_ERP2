@@ -52,6 +52,7 @@ import EmptyState from "@/components/common/EmptyState";
 import { humanApiError } from "@/lib/humanApiError";
 import ValidatedInput, { VALIDATION_SUCCESS_SHORT } from "@/components/common/ValidatedInput";
 import { requiredSku, requiredProductName, requiredPrice } from "@/lib/fieldValidators";
+import InfiniteScrollSentinel from "@/components/common/InfiniteScrollSentinel";
 
 export function InventoryPage() {
   const selection = useListSelection();
@@ -3116,17 +3117,13 @@ export function InventoryPage() {
                 })}
             </TableBody>
           </Table>
-          {filteredInventory.length > inventoryVisibleLimit && (
-            <div className="p-4 text-center border-t">
-              <Button
-                variant="outline"
-                onClick={() => setInventoryVisibleLimit(prev => prev + 50)}
-                className="w-full sm:w-auto"
-              >
-                Cargar más inventario ({inventoryVisibleLimit} de {filteredInventory.length})
-              </Button>
-            </div>
-          )}
+          <InfiniteScrollSentinel
+            hasMore={filteredInventory.length > inventoryVisibleLimit}
+            onLoadMore={() => setInventoryVisibleLimit((prev) => prev + 50)}
+            currentCount={inventoryVisibleLimit}
+            totalCount={filteredInventory.length}
+            label="productos de inventario"
+          />
         </CardContent>
       </Card>
       ) : (
@@ -3294,17 +3291,13 @@ export function InventoryPage() {
               );
             })}
           </div>
-          {filteredInventory.length > inventoryVisibleLimit && (
-            <div className="pt-2 text-center">
-              <Button
-                variant="outline"
-                onClick={() => setInventoryVisibleLimit((prev) => prev + 50)}
-                className="w-full sm:w-auto rounded-full"
-              >
-                Cargar más inventario ({inventoryVisibleLimit} de {filteredInventory.length})
-              </Button>
-            </div>
-          )}
+          <InfiniteScrollSentinel
+            hasMore={filteredInventory.length > inventoryVisibleLimit}
+            onLoadMore={() => setInventoryVisibleLimit((prev) => prev + 50)}
+            currentCount={inventoryVisibleLimit}
+            totalCount={filteredInventory.length}
+            label="productos de inventario"
+          />
         </>
       )}
       <BackToTopButton />

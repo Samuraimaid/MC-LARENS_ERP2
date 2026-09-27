@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, Eraser, Package, Play, Trash2, User } from "lucide-react";
 import { canPurgeOperationalQueue } from "@/lib/queuePurgeAccess";
+import { useSilentMemoryPurge } from "@/hooks/useSilentMemoryPurge";
 
 export function KDSWarehousePage() {
   const { user } = useAuth();
@@ -22,6 +23,14 @@ export function KDSWarehousePage() {
   const [busyId, setBusyId] = useState("");
   const [deletingId, setDeletingId] = useState("");
   const [clearing, setClearing] = useState(false);
+
+  // Purga de memoria silenciosa proactiva cada 6 horas
+  useSilentMemoryPurge({
+    screenName: "KDS-Bodega",
+    onPurge: () => {
+      fetchDispatches();
+    },
+  });
 
   const fetchDispatches = useCallback(async () => {
     try {
