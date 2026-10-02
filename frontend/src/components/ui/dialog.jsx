@@ -30,11 +30,25 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
  * - Caps height with dvh + safe-area so content scrolls instead of cutting off
  * - Rounded, touch-friendly close control
  */
-const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
+const DialogContent = React.forwardRef(({ className, children, onPointerDownOutside, onInteractOutside, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      onPointerDownOutside={(e) => {
+        if (typeof onPointerDownOutside === "function") {
+          onPointerDownOutside(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+      onInteractOutside={(e) => {
+        if (typeof onInteractOutside === "function") {
+          onInteractOutside(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
       className={cn(
         "fixed z-50 grid gap-4 border-0 bg-white text-slate-800 shadow-2xl outline-none dark:bg-slate-950 dark:text-slate-100 erp-liquid-panel",
         // Mobile gutters; callers may override max-w-* (tailwind-merge)

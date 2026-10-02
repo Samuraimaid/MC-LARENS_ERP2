@@ -2,7 +2,7 @@
   "name": "MUNDO DE ACCESORIOS ERP",
   "short_name": "MUNDO",
   "description": "Sistema de facturación e inventario para accesorios automotrices",
-  "start_url": "/technician",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#2563eb",

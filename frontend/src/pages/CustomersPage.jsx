@@ -8,42 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-/* table UI not required in this page currently */
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "../components/ui/dialog";
-import {
-  ContextualDialogFooter,
-  ContextualDialogHeader,
-  getStatusPrimaryButtonClass,
-  getStatusSecondaryButtonClass,
-} from "../components/ui/contextual-dialog-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Dialog, DialogContent } from "../components/ui/dialog";
+import { ContextualDialogHeader } from "../components/ui/contextual-dialog-header";
 import { Label } from "../components/ui/label";
-import { Checkbox } from "../components/ui/checkbox";
-import SearchableSelect from "@/components/ui/searchable-select";
-import CustomerVehicleFormTabs from "@/components/customers/CustomerVehicleFormTabs";
 import { toast } from "sonner";
 import { DestructiveConfirmDialog } from "@/components/destructive";
-import { playCreationSuccessSound, playSelectionFeedbackSound } from "@/lib/uiSounds";
+import CustomerDialog from "@/components/customers/CustomerDialog";
 import { Plus, Search, User, Phone, Car, RefreshCw, Building2, ShieldCheck, Pencil, Trash2, Mail, CalendarDays, CarFront, MapPin, ListFilter, Download, Copy, MessageCircle } from "lucide-react";
 import { API_BASE as API } from "@/lib/api";
 import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard, openWhatsAppLinks } from "@/components/lists/listBulkUtils";
-import {
-  getVehicleSelectOptionsByBrandYear,
-  getVehicleYearsByBrand,
-  isValidVehicleSelection,
-  VEHICLE_CATALOG_BRANDS,
-  VEHICLE_COLOR_SUGGESTIONS,
-} from "@/lib/vehicleCatalog";
-import {
-  formatChasis,
-  formatCedula,
-  formatPhone,
-  formatPlateNumber,
-  formatRUC,
-} from "@/lib/formatters";
 import { PRICING_PROFILES } from "@/lib/priceTiers";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
@@ -52,13 +28,6 @@ import { PullToRefresh } from "@/components/lists/PullToRefresh";
 import EmptyState from "@/components/common/EmptyState";
 import { humanApiError } from "@/lib/humanApiError";
 import { BackToTopButton } from "@/components/lists/BackToTopButton";
-
-// Prefijos de placa Nicaragua
-const PLATE_PREFIXES = [
-  "M", "LE", "CH", "MY", "GR", "CZ", "MT", "BO", "CT", "RI", 
-  "NS", "ES", "MZ", "JI", "RS", "AN", "AS", "TM", "ZC", "PN", 
-  "EN", "CD", "MI", "OI"
-];
 
 export function CustomersPage() {
   const { density: listDensity, setDensity: setListDensity, tokens: densityTok } = useListDensity();
@@ -82,81 +51,19 @@ export function CustomersPage() {
   const [search, setSearch] = useState("");
   const [customerTypeFilter, setCustomerTypeFilter] = useState("all");
   const [boardTab, setBoardTab] = useState("todos");
-  const [showNewCustomer, setShowNewCustomer] = useState(false);
-  const [customerValidationResetKey, setCustomerValidationResetKey] = useState(0);
-  const [customerValidationSubmitSignal, setCustomerValidationSubmitSignal] = useState(0);
-  const [activeTab, setActiveTab] = useState("customer");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingCustomerId, setEditingCustomerId] = useState(null);
-  
-  // Credit limit authorization
-  const [showCreditAuth, setShowCreditAuth] = useState(false);
-  const [creditAuthCode, setCreditAuthCode] = useState("");
-  const [pendingCreditLimit, setPendingCreditLimit] = useState(0);
 
-  const [formData, setFormData] = useState({
-    // Customer fields
-    first_name: "",
-    last_name: "",
-    customer_type: "natural", // natural or empresa
-    tax_id: "", // Cédula or RUC
-    email: "",
-    phone_prefix: "+505",
-    phone: "",
-    address: "",
-    credit_limit: 0,
-    pricing_profile: "standard",
-    // Vehicle fields (optional)
-    add_vehicle: false,
-    plate_prefix: "M",
-    plate_number: "",
-    brand: "",
-    model: "",
-    year: "",
-    color: "",
-    chasis: "",
-  });
+  // Customer Dialog (Create & Edit)
+  const [showCustomerDialog, setShowCustomerDialog] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
 
-  const [customerVehicles, setCustomerVehicles] = useState([]);
+  // Customer Vehicles modal & actions
   const [allVehicles, setAllVehicles] = useState([]);
-  const [selectedVehicleId, setSelectedVehicleId] = useState("");
-  const [isAddingVehicle, setIsAddingVehicle] = useState(false);
-  const [showDeleteVehicle, setShowDeleteVehicle] = useState(false);
   const [showVehiclesModal, setShowVehiclesModal] = useState(false);
   const [modalVehicles, setModalVehicles] = useState([]);
   const [modalCustomer, setModalCustomer] = useState(null);
   const [showVehicleActionModal, setShowVehicleActionModal] = useState(false);
   const [actionVehicle, setActionVehicle] = useState(null);
   const [actionCustomer, setActionCustomer] = useState(null);
-  const [useVinDecoderNewVehicle, setUseVinDecoderNewVehicle] = useState(false);
-  const [useVinDecoderEditVehicle, setUseVinDecoderEditVehicle] = useState(false);
-  const [isDecodingVinNewVehicle, setIsDecodingVinNewVehicle] = useState(false);
-  const [isDecodingVinEditVehicle, setIsDecodingVinEditVehicle] = useState(false);
-  const [vehicleForm, setVehicleForm] = useState({
-    plate_prefix: "M",
-    plate_number: "",
-    vin: "",
-    brand: "",
-    model: "",
-    year: "",
-    color: "",
-  });
-  const formYearOptions = useMemo(
-    () => getVehicleYearsByBrand(formData.brand),
-    [formData.brand]
-  );
-  const formBrandModelOptions = useMemo(
-    () => getVehicleSelectOptionsByBrandYear(formData.brand, formData.year),
-    [formData.brand, formData.year]
-  );
-  const editYearOptions = useMemo(
-    () => getVehicleYearsByBrand(vehicleForm.brand),
-    [vehicleForm.brand]
-  );
-  const editBrandModelOptions = useMemo(
-    () => getVehicleSelectOptionsByBrandYear(vehicleForm.brand, vehicleForm.year),
-    [vehicleForm.brand, vehicleForm.year]
-  );
 
   useEffect(() => {
     fetchCustomers();
@@ -187,74 +94,7 @@ export function CustomersPage() {
 
   const softRefresh = () => fetchCustomers({ silent: true });
 
-  const decodeVin = async (vinInput) => {
-    const vin = formatChasis(vinInput || "");
-    if (vin.length !== 17) {
-      throw new Error("Ingresa un VIN válido de 17 caracteres");
-    }
-    const response = await axios.get(`${API}/vehicles/decode-vin`, {
-      params: { vin },
-      withCredentials: true,
-    });
-    return response.data;
-  };
 
-  const resetForm = () => {
-    setCustomerValidationResetKey((k) => k + 1);
-    setFormData({
-      first_name: "",
-      last_name: "",
-      customer_type: "natural",
-      tax_id: "",
-      email: "",
-      phone_prefix: "+505",
-      phone: "",
-      address: "",
-      credit_limit: 0,
-      pricing_profile: "standard",
-      add_vehicle: false,
-      plate_prefix: "M",
-      plate_number: "",
-      brand: "",
-      model: "",
-      year: "",
-      color: "",
-      chasis: "",
-    });
-    setActiveTab("customer");
-    setIsEditing(false);
-    setEditingCustomerId(null);
-    setCustomerVehicles([]);
-    setSelectedVehicleId("");
-    setIsAddingVehicle(false);
-    setUseVinDecoderNewVehicle(false);
-    setUseVinDecoderEditVehicle(false);
-    setIsDecodingVinNewVehicle(false);
-    setIsDecodingVinEditVehicle(false);
-    setVehicleForm({
-      plate_prefix: "M",
-      plate_number: "",
-      vin: "",
-      brand: "",
-      model: "",
-      year: "",
-      color: "",
-    });
-  };
-
-  const splitPhone = (value) => {
-    const raw = (value || "").toString().replace(/\s/g, "");
-    if (!raw) return { prefix: "+505", number: "" };
-    const match = raw.match(/^(\+?\d+)[-]?(.+)$/);
-    if (match) {
-      let prefix = match[1] || "+505";
-      let number = match[2] || "";
-      if (!prefix.startsWith("+")) prefix = `+${prefix}`;
-      number = formatPhone(number.replace(/[^0-9]/g, ""));
-      return { prefix, number };
-    }
-    return { prefix: "+505", number: formatPhone(raw.replace(/[^0-9]/g, "")) };
-  };
 
   const normalize = (str = '') => {
     return String(str)
@@ -370,433 +210,14 @@ export function CustomersPage() {
     setWaTemplates(prev => prev.filter(t => t.id !== id));
   };
 
-  const parsePlate = (plate) => {
-    const raw = (plate || "").toString().trim();
-    if (!raw) return { prefix: "M", number: "" };
-    const parts = raw.split(" ");
-    const prefix = parts[0]?.toUpperCase() || "M";
-    const numberRaw = parts.slice(1).join(" ");
-    return {
-      prefix: PLATE_PREFIXES.includes(prefix) ? prefix : "M",
-      number: formatPlateNumber(prefix, numberRaw),
-    };
-  };
-
-  const setVehicleFormFromVehicle = useCallback((vehicle) => {
-    const { prefix, number } = parsePlate(vehicle?.plate);
-    setVehicleForm({
-      plate_prefix: prefix,
-      plate_number: number,
-      vin: vehicle?.vin || "",
-      brand: vehicle?.brand || "",
-      model: vehicle?.model || "",
-      year: vehicle?.year ? String(vehicle.year) : "",
-      color: vehicle?.color || "",
-    });
-  }, []);
-
-  const openEditCustomer = async (customer) => {
+  const openEditCustomer = (customer) => {
     if (!canEditCustomers) {
       toast.error("No tienes permiso para editar clientes");
       return;
     }
-    const { prefix, number } = splitPhone(customer.phone);
-    const nameParts = (customer.name || "").trim().split(" ");
-    setFormData({
-      first_name: customer.first_name || nameParts[0] || "",
-      last_name: customer.last_name || nameParts.slice(1).join(" "),
-      customer_type: customer.customer_type || "natural",
-      tax_id: customer.tax_id || "",
-      email: customer.email || "",
-      phone_prefix: prefix,
-      phone: number,
-      address: customer.address || "",
-      credit_limit: customer.credit_limit || 0,
-      pricing_profile: customer.pricing_profile || "standard",
-      add_vehicle: false,
-      plate_prefix: "M",
-      plate_number: "",
-      brand: "",
-      model: "",
-      year: "",
-      color: "",
-      chasis: "",
-    });
-    setActiveTab("customer");
-    setIsEditing(true);
-    setEditingCustomerId(customer.customer_id);
-    setCreditAuthCode("");
-    setPendingCreditLimit(0);
     scrollRestore.save();
-    setShowNewCustomer(true);
-    setIsAddingVehicle(false);
-
-    try {
-      const vehiclesRes = await axios.get(
-        `${API}/vehicles?customer_id=${customer.customer_id}`,
-        { withCredentials: true }
-      );
-      const vehicles = Array.isArray(vehiclesRes.data) ? vehiclesRes.data : [];
-      setCustomerVehicles(vehicles);
-      const firstVehicle = vehicles[0];
-      if (firstVehicle?.vehicle_id) {
-        setSelectedVehicleId(firstVehicle.vehicle_id);
-        setVehicleFormFromVehicle(firstVehicle);
-        setUseVinDecoderEditVehicle(false);
-      } else {
-        setSelectedVehicleId("");
-        setIsAddingVehicle(true);
-        setVehicleForm({
-          plate_prefix: "M",
-          plate_number: "",
-          vin: "",
-          brand: "",
-          model: "",
-          year: "",
-          color: "",
-        });
-        setUseVinDecoderEditVehicle(false);
-      }
-    } catch (error) {
-      setCustomerVehicles([]);
-      setSelectedVehicleId("");
-      toast.error("Error al cargar vehículos del cliente");
-    }
-  };
-
-  useEffect(() => {
-    if (!selectedVehicleId) return;
-    setIsAddingVehicle(false);
-    setUseVinDecoderEditVehicle(false);
-    const vehicle = customerVehicles.find(v => v.vehicle_id === selectedVehicleId);
-    if (vehicle) {
-      setVehicleFormFromVehicle(vehicle);
-    }
-  }, [selectedVehicleId, customerVehicles, setVehicleFormFromVehicle]);
-
-  const updateVehicle = async () => {
-    if (!canEditCustomers) {
-      toast.error("No tienes permiso para editar vehículos");
-      return;
-    }
-    if (isAddingVehicle || !selectedVehicleId) return;
-    if (!vehicleForm.brand || !vehicleForm.year || !vehicleForm.model) {
-      toast.error("Selecciona marca, año y modelo");
-      return;
-    }
-    if (!isValidVehicleSelection(vehicleForm.brand, vehicleForm.year, vehicleForm.model)) {
-      toast.error("Marca, año y modelo deben seleccionarse desde la lista");
-      return;
-    }
-    try {
-      const plateFormatted = vehicleForm.plate_prefix === "M"
-        ? `M ${vehicleForm.plate_number}`
-        : `${vehicleForm.plate_prefix} ${vehicleForm.plate_number}`;
-
-      const changes = {
-        plate: plateFormatted,
-        vin: vehicleForm.vin || null,
-        brand: vehicleForm.brand,
-        model: vehicleForm.model,
-        year: parseInt(vehicleForm.year) || new Date().getFullYear(),
-        color: vehicleForm.color || null,
-      };
-
-      // Create an approval request instead of updating directly
-      // pedir motivo obligatorio para la solicitud
-      const motivo = prompt('Ingrese el motivo de la solicitud (obligatorio):', 'Corrección de datos');
-      if (motivo === null) return; // usuario canceló
-      if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
-      await axios.post(`${API}/approvals`, {
-        type: 'edit_vehicle',
-        payload: { vehicle_id: selectedVehicleId, changes },
-        reason: motivo.trim()
-      }, { withCredentials: true });
-
-      toast.success("Solicitud enviada para aprobación");
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo enviar la solicitud — inténtalo de nuevo"));
-    }
-  };
-
-  const createVehicle = async () => {
-    if (!canCreateCustomers) {
-      toast.error("No tienes permiso para crear vehículos");
-      return;
-    }
-    if (!editingCustomerId) return;
-    if (!vehicleForm.brand || !vehicleForm.year || !vehicleForm.model || !vehicleForm.plate_number) {
-      toast.error("Completa placa, marca, año y modelo");
-      return;
-    }
-    if (!isValidVehicleSelection(vehicleForm.brand, vehicleForm.year, vehicleForm.model)) {
-      toast.error("Marca, año y modelo deben seleccionarse desde la lista");
-      return;
-    }
-    try {
-      const plateFormatted = vehicleForm.plate_prefix === "M"
-        ? `M ${vehicleForm.plate_number}`
-        : `${vehicleForm.plate_prefix} ${vehicleForm.plate_number}`;
-
-      const payload = {
-        customer_id: editingCustomerId,
-        plate: plateFormatted,
-        brand: vehicleForm.brand,
-        model: vehicleForm.model,
-        year: parseInt(vehicleForm.year) || new Date().getFullYear(),
-        color: vehicleForm.color || null,
-        vin: vehicleForm.vin || null,
-        vehicle_type: "sedan",
-      };
-
-      const response = await axios.post(`${API}/vehicles`, payload, { withCredentials: true });
-      const newVehicle = response.data;
-      toast.success("Vehículo agregado");
-      playCreationSuccessSound();
-      setCustomerVehicles(prev => [newVehicle, ...prev]);
-      if (newVehicle?.vehicle_id) {
-        setSelectedVehicleId(newVehicle.vehicle_id);
-        setIsAddingVehicle(false);
-      }
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo agregar el vehículo — revisa placa y datos e inténtalo de nuevo"));
-    }
-  };
-
-  const decodeNewVehicleVin = async () => {
-    try {
-      setIsDecodingVinNewVehicle(true);
-      const decoded = await decodeVin(formData.chasis);
-      setFormData((prev) => ({
-        ...prev,
-        chasis: formatChasis(decoded?.vin || prev.chasis),
-        brand: decoded?.brand || prev.brand,
-        model: decoded?.model || prev.model,
-        year: decoded?.year ? String(decoded.year) : prev.year,
-      }));
-      toast.success("VIN decodificado");
-    } catch (error) {
-      toast.error(error.response?.data?.detail || error.message || "No se pudo decodificar el VIN");
-    } finally {
-      setIsDecodingVinNewVehicle(false);
-    }
-  };
-
-  const decodeEditVehicleVin = async () => {
-    try {
-      setIsDecodingVinEditVehicle(true);
-      const decoded = await decodeVin(vehicleForm.vin);
-      setVehicleForm((prev) => ({
-        ...prev,
-        vin: formatChasis(decoded?.vin || prev.vin),
-        brand: decoded?.brand || prev.brand,
-        model: decoded?.model || prev.model,
-        year: decoded?.year ? String(decoded.year) : prev.year,
-      }));
-      toast.success("VIN decodificado");
-    } catch (error) {
-      toast.error(error.response?.data?.detail || error.message || "No se pudo decodificar el VIN");
-    } finally {
-      setIsDecodingVinEditVehicle(false);
-    }
-  };
-
-  /** U8: typed confirm (exact plate) + motivo — approval request, no prompt(). */
-  const deleteVehicle = async ({ reason } = {}) => {
-    if (!canDeleteCustomers) {
-      toast.error("No tienes permiso para eliminar vehículos");
-      return;
-    }
-    if (!selectedVehicleId) return;
-    const motivoDel = String(reason || "").trim();
-    if (!motivoDel) {
-      toast.error("El motivo es obligatorio");
-      return;
-    }
-    try {
-      await axios.post(`${API}/approvals`, {
-        type: 'delete_vehicle',
-        payload: { vehicle_id: selectedVehicleId },
-        reason: motivoDel,
-      }, { withCredentials: true });
-
-      toast.success("Solicitud de eliminación enviada para aprobación");
-      setShowDeleteVehicle(false);
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo solicitar la eliminación — inténtalo de nuevo"));
-    }
-  };
-
-  const pendingDeleteVehiclePlate = (() => {
-    const v = customerVehicles.find((x) => x.vehicle_id === selectedVehicleId);
-    return String(v?.plate || "").trim();
-  })();
-
-  const requestCreditAuthorization = async () => {
-    try {
-      const response = await axios.post(`${API}/auth/manager/generate-code`, null, {
-        params: { reason: "Autorización de límite de crédito" },
-        withCredentials: true
-      });
-      toast.success(`Código generado: ${response.data.code}`);
-      setCreditAuthCode(response.data.code);
-    } catch (error) {
-      toast.error("Error al generar código. ¿Eres gerente?");
-    }
-  };
-
-  const saveCustomer = async () => {
-    if (isEditing && !canEditCustomers) {
-      toast.error("No tienes permiso para editar clientes");
-      return;
-    }
-    if (!isEditing && !canCreateCustomers) {
-      toast.error("No tienes permiso para crear clientes");
-      return;
-    }
-    setCustomerValidationSubmitSignal((n) => n + 1);
-    const isCompany = formData.customer_type === "empresa";
-    const nameMissing = !String(formData.first_name || "").trim();
-    const lastMissing = !isCompany && !String(formData.last_name || "").trim();
-    const phoneMissing = !String(formData.phone || "").trim();
-    if (nameMissing || lastMissing || phoneMissing) {
-      toast.error(isCompany
-        ? "Nombre de empresa y teléfono son requeridos"
-        : "Nombres, apellidos y teléfono son requeridos");
-      return;
-    }
-
-    if (formData.customer_type === "empresa" && !String(formData.tax_id || "").trim()) {
-      toast.error("El RUC es requerido para registrar una empresa");
-      return;
-    }
-
-    // Check if trying to set credit limit > 0 without being manager
-    if (formData.credit_limit > 0 && !canManageCreditLimit) {
-      if (!creditAuthCode) {
-        setShowCreditAuth(true);
-        setPendingCreditLimit(formData.credit_limit);
-        return;
-      }
-    }
-
-    if (isEditing) {
-      await updateCustomer();
-    } else {
-      await createCustomer();
-    }
-  };
-
-  const createCustomer = async () => {
-    if (!canCreateCustomers) {
-      toast.error("No tienes permiso para crear clientes");
-      return;
-    }
-    try {
-      // Build customer data
-      const fullName = `${formData.first_name} ${formData.last_name}`;
-      const fullPhone = `${formData.phone_prefix}-${formData.phone}`;
-      
-      const customerData = {
-        name: fullName,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        customer_type: formData.customer_type,
-        tax_id: formData.tax_id,
-        email: formData.email || null,
-        phone: fullPhone,
-        address: formData.address || null,
-        credit_limit: parseFloat(formData.credit_limit) || 0,
-        credit_auth_code: creditAuthCode || null,
-        ...(canManagePricingProfile ? { pricing_profile: formData.pricing_profile || "standard" } : {}),
-      };
-
-      const customerRes = await axios.post(`${API}/customers`, customerData, { withCredentials: true });
-      const customerId = customerRes.data.customer_id;
-      
-      toast.success("Cliente creado exitosamente");
-      playCreationSuccessSound();
-
-      // Create vehicle if requested
-      if (formData.add_vehicle && formData.brand && formData.model) {
-        if (!formData.year) {
-          toast.error("Selecciona el año del vehículo");
-          return;
-        }
-        if (!isValidVehicleSelection(formData.brand, formData.year, formData.model)) {
-          toast.error("Marca, año y modelo deben seleccionarse desde la lista");
-          return;
-        }
-        try {
-          const plateFormatted = formData.plate_prefix === "M"
-            ? `M ${formData.plate_number}`
-            : `${formData.plate_prefix} ${formData.plate_number}`;
-          
-          const vehicleData = {
-            customer_id: customerId,
-            plate: plateFormatted,
-            brand: formData.brand,
-            model: formData.model,
-            year: parseInt(formData.year) || new Date().getFullYear(),
-            color: formData.color || null,
-            vin: formData.chasis || null, // Backend uses 'vin' field
-            vehicle_type: "sedan", // Default
-          };
-
-          await axios.post(`${API}/vehicles`, vehicleData, { withCredentials: true });
-          toast.success("Vehículo registrado");
-          playCreationSuccessSound();
-        } catch (error) {
-          toast.error("Cliente creado pero error al registrar vehículo");
-        }
-      }
-
-      setShowNewCustomer(false);
-      resetForm();
-      setCreditAuthCode("");
-      fetchCustomers();
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo crear el cliente — revisa los datos e inténtalo de nuevo"));
-    }
-  };
-
-  const updateCustomer = async () => {
-    if (!canEditCustomers) {
-      toast.error("No tienes permiso para editar clientes");
-      return;
-    }
-    if (!editingCustomerId) return;
-    try {
-      const fullName = `${formData.first_name} ${formData.last_name}`.trim();
-      const fullPhone = `${formData.phone_prefix}-${formData.phone}`;
-
-      const customerData = {
-        name: fullName,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        customer_type: formData.customer_type,
-        tax_id: formData.tax_id,
-        email: formData.email || null,
-        phone: fullPhone,
-        address: formData.address || null,
-        credit_limit: parseFloat(formData.credit_limit) || 0,
-        credit_auth_code: creditAuthCode || null,
-        ...(canManagePricingProfile ? { pricing_profile: formData.pricing_profile || "standard" } : {}),
-      };
-
-      // Instead of updating directly, create an approval request
-      const motivo = prompt('Motivo de la solicitud (obligatorio):', 'Actualización de datos del cliente');
-      if (motivo === null) return;
-      if (!motivo.trim()) { toast.error('El motivo es obligatorio'); return; }
-      await axios.post(`${API}/approvals`, { type: 'edit_customer', payload: { customer_id: editingCustomerId, changes: customerData }, reason: motivo.trim() }, { withCredentials: true });
-      toast.success('Solicitud de actualización enviada para aprobación');
-      setShowNewCustomer(false);
-      resetForm();
-      setCreditAuthCode("");
-      fetchCustomers();
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo enviar la solicitud de actualización — inténtalo de nuevo"));
-    }
+    setEditingCustomer(customer);
+    setShowCustomerDialog(true);
   };
 
   const normSearch = normalize(search);
@@ -1028,301 +449,36 @@ export function CustomersPage() {
           <Button variant="outline" onClick={fetchCustomers} className="col-span-2 h-9 px-3 sm:col-auto sm:px-4">
             <RefreshCw className="h-4 w-4" />
           </Button>
-            <Dialog open={showNewCustomer} onOpenChange={(open) => {
-              if (open) scrollRestore.save();
-              setShowNewCustomer(open);
-              if (!open) { resetForm(); scrollRestore.restore(); }
-            }}>
-            <DialogTrigger asChild>
-              <Button data-testid="new-customer-btn" disabled={!canCreateCustomers} className="h-9 w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Crear cliente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <ContextualDialogHeader
-                variant="information"
-                size="inline"
-                title={isEditing ? "Editar Cliente" : "Nuevo Cliente"}
-                description={
-                  isEditing
-                    ? "Actualiza los datos del cliente"
-                    : "Registra un nuevo cliente y opcionalmente su vehículo"
-                }
-              />
-              
-              <CustomerVehicleFormTabs
-                formData={formData}
-                onFormDataChange={setFormData}
-                validationResetKey={customerValidationResetKey}
-                validationSubmitSignal={customerValidationSubmitSignal}
-                activeTab={activeTab}
-                onActiveTabChange={setActiveTab}
-                canManageCreditLimit={canManageCreditLimit}
-                canManagePricingProfile={canManagePricingProfile}
-                disableAddVehicle={isEditing}
-                addVehicleLabel="Registrar vehículo del cliente"
-                useVinDecoder={useVinDecoderNewVehicle}
-                onUseVinDecoderChange={setUseVinDecoderNewVehicle}
-                isDecodingVin={isDecodingVinNewVehicle}
-                onDecodeVin={decodeNewVehicleVin}
-                yearOptions={formYearOptions}
-                modelOptions={formBrandModelOptions}
-                platePrefixes={PLATE_PREFIXES}
-                vehicleBrands={VEHICLE_CATALOG_BRANDS}
-                colorSuggestions={VEHICLE_COLOR_SUGGESTIONS}
-                formatPhone={formatPhone}
-                formatCedula={formatCedula}
-                formatRUC={formatRUC}
-                formatChasis={formatChasis}
-                formatPlateNumber={formatPlateNumber}
-                customerTypeTestId="customer-type"
-                phoneTestId="phone"
-                creditLimitTestId="credit-limit"
-                platePrefixTestId="plate-prefix"
-                plateNumberTestId="plate-number"
-                vehicleChasisTestId="vehicle-chasis"
-                colorDatalistId="customers-color-options"
-                addVehicleCheckboxId="add-vehicle"
-                useVinCheckboxId="use-vin-decoder-new-vehicle"
-              />
-
-              {isEditing && (
-                <div className="mt-4 space-y-4 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base">Vehículo del cliente</Label>
-                    <span className="text-xs text-muted-foreground">
-                      {customerVehicles.length} registrado(s)
-                    </span>
-                  </div>
-
-                  {customerVehicles.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Este cliente no tiene vehículos registrados.
-                    </p>
-                  ) : (
-                    <>
-                      <div>
-                        <Label>Seleccionar vehículo</Label>
-                        <Select
-                          value={selectedVehicleId}
-                          onValueChange={(value) => {
-                            setSelectedVehicleId(value);
-                            playSelectionFeedbackSound();
-                          }}
-                          disabled={isAddingVehicle}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar vehículo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {customerVehicles.map(vehicle => (
-                              <SelectItem key={vehicle.vehicle_id} value={vehicle.vehicle_id}>
-                                {vehicle.plate} · {vehicle.brand} {vehicle.model}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setIsAddingVehicle(true);
-                            setSelectedVehicleId("");
-                            setUseVinDecoderEditVehicle(false);
-                            setVehicleForm({
-                              plate_prefix: "M",
-                              plate_number: "",
-                              vin: "",
-                              brand: "",
-                              model: "",
-                              year: "",
-                              color: "",
-                            });
-                          }}
-                          disabled={!canCreateCustomers}
-                        >
-                          Agregar nuevo vehículo
-                        </Button>
-                        {isAddingVehicle && customerVehicles.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              const firstVehicle = customerVehicles[0];
-                              if (firstVehicle?.vehicle_id) {
-                                setSelectedVehicleId(firstVehicle.vehicle_id);
-                              }
-                              setUseVinDecoderEditVehicle(false);
-                              setIsAddingVehicle(false);
-                            }}
-                          >
-                            Cancelar
-                          </Button>
-                        )}
-                        {!isAddingVehicle && selectedVehicleId && (
-                          <Button
-                            variant="destructive"
-                            onClick={() => setShowDeleteVehicle(true)}
-                            disabled={!canDeleteCustomers}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Eliminar vehículo
-                          </Button>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label>Placa</Label>
-                        <div className="flex gap-2">
-                          <Select 
-                            value={vehicleForm.plate_prefix} 
-                            onValueChange={(v) => setVehicleForm({ ...vehicleForm, plate_prefix: v, plate_number: "" })}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PLATE_PREFIXES.map(prefix => (
-                                <SelectItem key={prefix} value={prefix}>{prefix}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            value={vehicleForm.plate_number}
-                            onChange={(e) => setVehicleForm({
-                              ...vehicleForm,
-                              plate_number: formatPlateNumber(vehicleForm.plate_prefix, e.target.value)
-                            })}
-                            placeholder={vehicleForm.plate_prefix === "M" ? "123 456" : "12345"}
-                            className="flex-1 font-mono"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="use-vin-decoder-edit-vehicle"
-                          checked={useVinDecoderEditVehicle}
-                          onCheckedChange={(checked) => setUseVinDecoderEditVehicle(Boolean(checked))}
-                        />
-                        <Label htmlFor="use-vin-decoder-edit-vehicle">Usar decodificador VIN</Label>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_0.8fr_1.9fr] gap-4">
-                        <div>
-                          <Label>Marca</Label>
-                          <SearchableSelect
-                            value={vehicleForm.brand}
-                            onChange={(v) => setVehicleForm({ ...vehicleForm, brand: v, year: "", model: "" })}
-                            options={VEHICLE_CATALOG_BRANDS}
-                            placeholder="Seleccionar marca"
-                            searchPlaceholder="Buscar marca..."
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Año</Label>
-                          <SearchableSelect
-                            value={String(vehicleForm.year || "")}
-                            onChange={(v) => setVehicleForm({ ...vehicleForm, year: v, model: "" })}
-                            options={editYearOptions}
-                            placeholder="Seleccionar año"
-                            searchPlaceholder="Buscar año..."
-                            disabled={!vehicleForm.brand}
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Modelo</Label>
-                          <SearchableSelect
-                            value={vehicleForm.model}
-                            onChange={(v) => setVehicleForm({ ...vehicleForm, model: v })}
-                            options={editBrandModelOptions}
-                            placeholder="Seleccionar modelo"
-                            searchPlaceholder="Buscar modelo..."
-                            disabled={!vehicleForm.brand || !vehicleForm.year}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>Color</Label>
-                        <Input
-                          list="customers-edit-color-options"
-                          value={vehicleForm.color}
-                          onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
-                          placeholder="Escribe para sugerencias de color"
-                        />
-                        <datalist id="customers-edit-color-options">
-                          {VEHICLE_COLOR_SUGGESTIONS.map((color) => (
-                            <option key={color} value={color} />
-                          ))}
-                        </datalist>
-                      </div>
-
-                      <div>
-                        <Label>CHASIS (VIN)</Label>
-                        <Input
-                          value={vehicleForm.vin}
-                          onChange={(e) => setVehicleForm({ ...vehicleForm, vin: formatChasis(e.target.value) })}
-                          placeholder="1HGBH41JXMN109186"
-                          className="font-mono"
-                          maxLength={17}
-                        />
-                        {useVinDecoderEditVehicle && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="mt-2"
-                            onClick={decodeEditVehicleVin}
-                            disabled={isDecodingVinEditVehicle || vehicleForm.vin.length !== 17}
-                          >
-                            {isDecodingVinEditVehicle ? "Decodificando VIN..." : "Decodificar VIN"}
-                          </Button>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        onClick={isAddingVehicle ? createVehicle : updateVehicle}
-                        disabled={(isAddingVehicle && !canCreateCustomers) || (!isAddingVehicle && (!selectedVehicleId || !canEditCustomers))}
-                      >
-                        {isAddingVehicle ? "Agregar vehículo" : "Guardar vehículo"}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <DestructiveConfirmDialog
-                open={showDeleteVehicle}
-                onOpenChange={setShowDeleteVehicle}
-                title="Eliminar vehículo"
-                description={
-                  pendingDeleteVehiclePlate
-                    ? `Se enviará una solicitud de aprobación para eliminar el vehículo «${pendingDeleteVehiclePlate}». Escribí la placa exacta para confirmar.`
-                    : "Se enviará una solicitud de aprobación para eliminar el vehículo seleccionado."
-                }
-                confirmVerb="Eliminar vehículo"
-                cancelVerb="Conservar vehículo"
-                requireReason
-                reasonLabel="Motivo (obligatorio)"
-                reasonPlaceholder="Ej. Vehículo duplicado"
-                defaultReason="Vehículo duplicado"
-                requireTypedPhrase={pendingDeleteVehiclePlate || selectedVehicleId || "ELIMINAR"}
-                footnote="No hay soft-delete de vehículo en UI: va por aprobación. Sin papelera multi-día."
-                onConfirm={async ({ reason } = {}) => {
-                  await deleteVehicle({ reason });
-                }}
-                testId="customers-delete-vehicle"
-              />
-
-              <Button onClick={saveCustomer} className="w-full mt-4" data-testid="save-customer-btn" disabled={isEditing ? !canEditCustomers : !canCreateCustomers}>
-                {isEditing ? "Guardar Cambios" : (formData.add_vehicle ? "Crear Cliente y Vehículo" : "Crear Cliente")}
-              </Button>
-            </DialogContent>
-          </Dialog>
+          <Button
+            data-testid="new-customer-btn"
+            disabled={!canCreateCustomers}
+            onClick={() => {
+              scrollRestore.save();
+              setEditingCustomer(null);
+              setShowCustomerDialog(true);
+            }}
+            className="h-9 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Crear cliente
+          </Button>
+          <CustomerDialog
+            open={showCustomerDialog}
+            onOpenChange={(open) => {
+              setShowCustomerDialog(open);
+              if (!open) {
+                setEditingCustomer(null);
+                scrollRestore.restore();
+              }
+            }}
+            customer={editingCustomer}
+            onCustomerSaved={() => fetchCustomers({ silent: true })}
+            canCreate={canCreateCustomers}
+            canEdit={canEditCustomers}
+            canDelete={canDeleteCustomers}
+            canManageCreditLimit={canManageCreditLimit}
+            canManagePricingProfile={canManagePricingProfile}
+          />
           <Button variant="outline" onClick={() => setShowManageTemplates(true)} className="h-9 w-full sm:w-auto">
             <span className="sm:hidden">Plantillas</span>
             <span className="hidden sm:inline">Plantillas WA</span>
@@ -1777,48 +933,7 @@ export function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Credit Authorization Dialog */}
-      <Dialog open={showCreditAuth} onOpenChange={setShowCreditAuth}>
-        <DialogContent>
-          <ContextualDialogHeader
-            variant="warning"
-            size="hero"
-            icon={ShieldCheck}
-            title="Autorización de Crédito"
-            description={`Se requiere autorización del gerente para asignar límite de crédito de ${formatCurrency(pendingCreditLimit)}`}
-          />
-          <div className="space-y-4">
-            <div>
-              <Label>Código de Autorización</Label>
-              <Input
-                value={creditAuthCode}
-                onChange={(e) => setCreditAuthCode(e.target.value.toUpperCase())}
-                placeholder="Código del gerente"
-                className="font-mono"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={requestCreditAuthorization} className="flex-1">
-                Generar Código (Gerente)
-              </Button>
-              <Button 
-                onClick={() => { setShowCreditAuth(false); saveCustomer(); }}
-                disabled={!creditAuthCode}
-                className="flex-1"
-              >
-                Asignar límite de crédito
-              </Button>
-            </div>
-            <Button 
-              variant="ghost" 
-              onClick={() => { setFormData({...formData, credit_limit: 0}); setShowCreditAuth(false); }}
-              className="w-full"
-            >
-              Continuar sin límite de crédito
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
       </>
       )}
       <BackToTopButton />

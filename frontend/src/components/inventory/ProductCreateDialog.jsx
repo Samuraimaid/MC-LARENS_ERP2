@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  Plus, X, Image, Car, Wrench, Clock, DollarSign, Star, Trash2, RefreshCw, Package
+  Plus, X, Image, Car, Wrench, Clock, DollarSign, Star, Trash2, RefreshCw, Package, Check, Building2, Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,12 +98,21 @@ export default function ProductCreateDialog({
   const priceRef = useRef(null);
   const uploadIndexRef = useRef(0);
 
-  // Reset form when dialog opens
+  // Initialize and reset form when dialog opens
   useEffect(() => {
     if (open) {
       uploadIndexRef.current = formData.images.length || 0;
+      setFormData((prev) => {
+        // If it's a fresh form, pre-select all branches and warehouses
+        const isFresh = !prev.sku && !prev.name;
+        return {
+          ...prev,
+          available_store_ids: isFresh && branches.length > 0 ? branches.map((b) => b.branch_id) : (prev.available_store_ids || []),
+          source_warehouse_ids: isFresh && warehouses.length > 0 ? warehouses.map((w) => w.warehouse_id) : (prev.source_warehouse_ids || []),
+        };
+      });
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, branches, warehouses]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = () => {
     onOpenChange(false);
@@ -111,7 +120,11 @@ export default function ProductCreateDialog({
 
   const resetForm = () => {
     setValidationKey((k) => k + 1);
-    setFormData(DEFAULT_NEW_PRODUCT);
+    setFormData({
+      ...DEFAULT_NEW_PRODUCT,
+      available_store_ids: branches.map((b) => b.branch_id),
+      source_warehouse_ids: warehouses.map((w) => w.warehouse_id),
+    });
     setNewImageUrl("");
     setNewBrand("");
     setNewModel("");
@@ -119,6 +132,39 @@ export default function ProductCreateDialog({
 
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const selectedStores = Array.isArray(formData.available_store_ids) ? formData.available_store_ids : [];
+  const selectedWarehouses = Array.isArray(formData.source_warehouse_ids) ? formData.source_warehouse_ids : [];
+
+  const handleToggleStore = (branchId) => {
+    const next = selectedStores.includes(branchId)
+      ? selectedStores.filter((id) => id !== branchId)
+      : [...selectedStores, branchId];
+    updateField("available_store_ids", next);
+  };
+
+  const handleSelectAllStores = () => {
+    updateField("available_store_ids", branches.map((b) => b.branch_id));
+  };
+
+  const handleSelectNoStores = () => {
+    updateField("available_store_ids", []);
+  };
+
+  const handleToggleWarehouse = (warehouseId) => {
+    const next = selectedWarehouses.includes(warehouseId)
+      ? selectedWarehouses.filter((id) => id !== warehouseId)
+      : [...selectedWarehouses, warehouseId];
+    updateField("source_warehouse_ids", next);
+  };
+
+  const handleSelectAllWarehouses = () => {
+    updateField("source_warehouse_ids", warehouses.map((w) => w.warehouse_id));
+  };
+
+  const handleSelectNoWarehouses = () => {
+    updateField("source_warehouse_ids", []);
   };
 
   const addCompatibilityBrand = () => {
@@ -504,97 +550,167 @@ export default function ProductCreateDialog({
               {/* Branches & Source Warehouses matrix */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tiendas autorizadas */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Tiendas de Venta Autorizadas</Label>
-                    <div className="flex gap-2">
-                      <button
+                <div className="p-3.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1 border-b border-border/50">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Store className="h-4 w-4 text-primary shrink-0" />
+                      <Label className="text-xs font-semibold text-foreground truncate">
+                        Tiendas Autorizadas
+                      </Label>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                        {selectedStores.length}/{branches.length}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
                         type="button"
-                        onClick={() => updateField("available_store_ids", branches.map(b => b.branch_id))}
-                        className="text-[11px] text-primary hover:underline font-semibold"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSelectAllStores}
+                        className="h-6 px-1.5 text-[11px] text-primary hover:text-primary hover:bg-primary/10 font-semibold"
                       >
                         Todas
-                      </button>
+                      </Button>
                       <span className="text-slate-300 dark:text-slate-700">|</span>
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => updateField("available_store_ids", [])}
-                        className="text-[11px] text-muted-foreground hover:underline"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSelectNoStores}
+                        className="h-6 px-1.5 text-[11px] text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 font-semibold"
                       >
                         Ninguna
-                      </button>
+                      </Button>
                     </div>
                   </div>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                    {branches.map(b => {
-                      const selectedStores = formData.available_store_ids || [];
-                      const isChecked = selectedStores.length === 0 || selectedStores.includes(b.branch_id);
-                      return (
-                        <label key={b.branch_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const base = selectedStores.length === 0 ? branches.map(x => x.branch_id) : selectedStores;
-                              const next = e.target.checked
-                                ? [...base, b.branch_id]
-                                : base.filter(id => id !== b.branch_id);
-                              updateField("available_store_ids", next);
-                            }}
-                            className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="truncate">{b.name}</span>
-                        </label>
-                      );
-                    })}
+
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {branches.length === 0 ? (
+                      <div className="text-[11px] text-muted-foreground italic py-2 text-center">
+                        No hay sucursales registradas
+                      </div>
+                    ) : (
+                      branches.map((b) => {
+                        const isChecked = selectedStores.includes(b.branch_id);
+                        return (
+                          <div
+                            key={b.branch_id}
+                            onClick={() => handleToggleStore(b.branch_id)}
+                            className={`flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none ${
+                              isChecked
+                                ? "bg-primary/10 border-primary/40 text-foreground font-medium shadow-2xs"
+                                : "bg-background/80 border-border/60 text-muted-foreground hover:bg-muted/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${
+                                  isChecked
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : "border-muted-foreground/40 bg-background"
+                                }`}
+                              >
+                                {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                              </div>
+                              <span className="text-xs truncate">{b.name}</span>
+                            </div>
+                            {isChecked && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-primary/30 text-primary bg-primary/5">
+                                Activa
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
+                  <p className="text-[10px] text-muted-foreground pt-0.5">
+                    {selectedStores.length === 0
+                      ? "⚠️ Ninguna tienda seleccionada (no se podrá facturar)."
+                      : "Sucursales donde estará disponible para venta."}
+                  </p>
                 </div>
 
                 {/* Bodegas de origen */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Bodegas de Origen / Abastecimiento</Label>
-                    <div className="flex gap-2">
-                      <button
+                <div className="p-3.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1 border-b border-border/50">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Building2 className="h-4 w-4 text-primary shrink-0" />
+                      <Label className="text-xs font-semibold text-foreground truncate">
+                        Bodegas de Suministro
+                      </Label>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                        {selectedWarehouses.length}/{warehouses.length}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
                         type="button"
-                        onClick={() => updateField("source_warehouse_ids", warehouses.map(w => w.warehouse_id))}
-                        className="text-[11px] text-primary hover:underline font-semibold"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSelectAllWarehouses}
+                        className="h-6 px-1.5 text-[11px] text-primary hover:text-primary hover:bg-primary/10 font-semibold"
                       >
                         Todas
-                      </button>
+                      </Button>
                       <span className="text-slate-300 dark:text-slate-700">|</span>
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => updateField("source_warehouse_ids", [])}
-                        className="text-[11px] text-muted-foreground hover:underline"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSelectNoWarehouses}
+                        className="h-6 px-1.5 text-[11px] text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 font-semibold"
                       >
                         Ninguna
-                      </button>
+                      </Button>
                     </div>
                   </div>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                    {warehouses.map(w => {
-                      const selectedWarehouses = formData.source_warehouse_ids || [];
-                      const isChecked = selectedWarehouses.length === 0 || selectedWarehouses.includes(w.warehouse_id);
-                      return (
-                        <label key={w.warehouse_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const base = selectedWarehouses.length === 0 ? warehouses.map(x => x.warehouse_id) : selectedWarehouses;
-                              const next = e.target.checked
-                                ? [...base, w.warehouse_id]
-                                : base.filter(id => id !== w.warehouse_id);
-                              updateField("source_warehouse_ids", next);
-                            }}
-                            className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="truncate">{w.name}</span>
-                        </label>
-                      );
-                    })}
+
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {warehouses.length === 0 ? (
+                      <div className="text-[11px] text-muted-foreground italic py-2 text-center">
+                        No hay bodegas registradas
+                      </div>
+                    ) : (
+                      warehouses.map((w) => {
+                        const isChecked = selectedWarehouses.includes(w.warehouse_id);
+                        return (
+                          <div
+                            key={w.warehouse_id}
+                            onClick={() => handleToggleWarehouse(w.warehouse_id)}
+                            className={`flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none ${
+                              isChecked
+                                ? "bg-primary/10 border-primary/40 text-foreground font-medium shadow-2xs"
+                                : "bg-background/80 border-border/60 text-muted-foreground hover:bg-muted/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${
+                                  isChecked
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : "border-muted-foreground/40 bg-background"
+                                }`}
+                              >
+                                {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                              </div>
+                              <span className="text-xs truncate">{w.name}</span>
+                            </div>
+                            {isChecked && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-primary/30 text-primary bg-primary/5">
+                                Activa
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
+                  <p className="text-[10px] text-muted-foreground pt-0.5">
+                    {selectedWarehouses.length === 0
+                      ? "⚠️ Ninguna bodega seleccionada para stock."
+                      : "Bodegas autorizadas para almacenar y despachar."}
+                  </p>
                 </div>
               </div>
               
