@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useKdsPolling } from "@/hooks/useKdsPolling";
-import { getKDSStatusClass } from "@/lib/utils";
+import { getKDSStatusClass, formatVehicleDisplay } from "@/lib/utils";
 import { getTimeElapsed, PRIORITY_BADGE, sortByPriorityThenAge } from "@/lib/kdsHelpers";
 import { KDSStatsBar } from "@/components/kds/KDSStatsBar";
 import { Badge } from "@/components/ui/badge";
@@ -260,7 +260,7 @@ export function KDSTintPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm mt-1 truncate">
                     <Car className="h-4 w-4 text-muted-foreground shrink-0" />
-                    {order.vehicle_info || order.vehicle_description || "Vehículo"}
+                    <span className="truncate">{formatVehicleDisplay(order.vehicle_info || order.vehicle_description || order.vehicle)}</span>
                   </div>
                   {order.assigned_technician_name && (
                     <p className="text-xs mt-2">Polarizador: {order.assigned_technician_name}</p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { formatDate } from "../lib/utils";
+import { formatDate, formatVehicleDisplay } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -280,7 +280,7 @@ export function QualityControlPage() {
                       <TableRow key={order.work_order_id} data-testid={`pending-${order.work_order_id}`}>
                         <TableCell className="font-mono">{order.work_order_id}</TableCell>
                         <TableCell>{order.customer_name}</TableCell>
-                        <TableCell>{order.vehicle_info}</TableCell>
+                        <TableCell>{formatVehicleDisplay(order.vehicle_info || order.vehicle)}</TableCell>
                         <TableCell>{order.technician_name || "Sin asignar"}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {order.end_time ? formatDate(order.end_time) : "-"}
@@ -436,7 +436,7 @@ export function QualityControlPage() {
                 <Card className="bg-muted/30">
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div><span className="text-muted-foreground">Vehículo:</span> {selectedOrder.vehicle_info}</div>
+                      <div><span className="text-muted-foreground">Vehículo:</span> {formatVehicleDisplay(selectedOrder.vehicle_info || selectedOrder.vehicle)}</div>
                       <div><span className="text-muted-foreground">Técnico:</span> {selectedOrder.technician_name || "Sin asignar"}</div>
                       <div><span className="text-muted-foreground">Tiempo:</span> {selectedOrder.actual_time || selectedOrder.estimated_time} min</div>
                       <div><span className="text-muted-foreground">Items:</span> {selectedOrder.items?.length || 0}</div>

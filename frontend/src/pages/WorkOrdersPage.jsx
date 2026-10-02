@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { getStatusColor, getPriorityColor, WORK_ORDER_STATUS } from "../lib/utils";
+import { getStatusColor, getPriorityColor, WORK_ORDER_STATUS, formatVehicleDisplay } from "../lib/utils";
 import { API_BASE as API } from "@/lib/api";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -454,7 +454,7 @@ export function WorkOrdersPage() {
                         {workOrderId ? `#${workOrderId.slice(-6).toUpperCase()}` : "—"}
                       </TableCell>
                       <TableCell>{order.customer_name || "—"}</TableCell>
-                      <TableCell className="text-sm">{order.vehicle_info || "—"}</TableCell>
+                      <TableCell className="text-sm">{formatVehicleDisplay(order.vehicle_info || order.vehicle, "—")}</TableCell>
                       <TableCell>
                         <Badge className={getPriorityColor(order.priority || "normal")}>
                           {priorityLabel}
@@ -518,7 +518,7 @@ export function WorkOrdersPage() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Vehículo</Label>
-                  <p className="font-medium">{showDetails.vehicle_info || "—"}</p>
+                  <p className="font-medium">{formatVehicleDisplay(showDetails.vehicle_info || showDetails.vehicle, "—")}</p>
                 </div>
               </div>
               

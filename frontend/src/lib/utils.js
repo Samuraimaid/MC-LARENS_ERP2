@@ -134,3 +134,20 @@ export const WORK_ORDER_STATUS = {
   completed: "Completado",
   delivered: "Entregado",
 };
+
+export function formatVehicleDisplay(vehicleInfo, fallback = "Vehículo") {
+  if (!vehicleInfo) return fallback;
+  if (typeof vehicleInfo === "string") return vehicleInfo.trim() || fallback;
+  if (typeof vehicleInfo === "object") {
+    const parts = [
+      vehicleInfo.brand,
+      vehicleInfo.model,
+      vehicleInfo.year ? `(${vehicleInfo.year})` : null,
+      vehicleInfo.plate ? `· ${vehicleInfo.plate}` : null,
+      vehicleInfo.color ? `· ${vehicleInfo.color}` : null,
+    ].filter(Boolean);
+    return parts.join(" ").trim() || fallback;
+  }
+  return String(vehicleInfo);
+}
+

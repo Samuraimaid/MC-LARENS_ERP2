@@ -19,18 +19,29 @@ backend/__pycache__/
 catalogos/
 catalogos/**
 backend/data/blueprints_raw/
+backend/data/blueprints_raw/**
 backend/data/blueprints_cleaned/
-frontend/public/vehicles/models/
-frontend/public/vehicles/blueprints/
+backend/data/blueprints_cleaned/**
+frontend/public/vehicles/
+frontend/public/vehicles/**
 frontend/public/videos/
+frontend/public/videos/**
 frontend/public/uploads/
+frontend/public/uploads/**
 # NEVER use bare uploads/ — excludes frontend/src/components/uploads (U2)
 !frontend/src/components/uploads/
 !frontend/src/components/uploads/**
 temporary_cleanup_validation/
+temporary_cleanup_validation/**
 backups/
+backups/**
+scratch/
+scratch/**
 
 # Archivos pesados y volcados de depuración
+*.bundle
+*.tar
+*.tgz
 *.zip
 *.pdf
 *.eps

@@ -1,6 +1,14 @@
 # ANTIGRAVITY_MASTER — Fuente canónica única (MC-LARENS ERP2)
 
-> **P0 HOY (2026-09-25):** crash Workbench ticket `B-28113-25/SEP/2026 16:10:13` — `visibleSaleIds is not defined` en `SalesPage.jsx`.
+> **P0 2026-10-01: leer SOLO docs/ANTIGRAVITY_BRIEF_20261001.md**
+> - **HEAD de código:** `739efc00`. Último merge: PR **#117**.
+> - Los handoffs del 26 sep se quedaron en `0a39cc8f` (#113) y están viejos.
+> - **No reimplementar #77–#117 ni U1–U15.**
+> - **Antigravity:** código + PR. Sin gcloud.
+> - **Smoke Grok Web:** solo PC. Móvil lo prueba Xinon.
+> - **Deploy:** solo Xinon en Cloud Shell, botón verde, después de `git log -1`.
+
+> **P0 HOY (2026-09-25 - ARCHIVADO):** crash Workbench ticket `B-28113-25/SEP/2026 16:10:13` — `visibleSaleIds is not defined` en `SalesPage.jsx`.
 > Leer e implementar **primero:** `docs/ANTIGRAVITY_PROMPT_BUG_B28113_VISIBLE_SALE_IDS_20260925.md`
 > Historial Case del día: `docs/CASE_CHAT_HISTORY_UX_STACK_20260925.md`
 > Telemetría: `docs/crash_reports/B-28113-25_SEP_2026_16-10-13.json`

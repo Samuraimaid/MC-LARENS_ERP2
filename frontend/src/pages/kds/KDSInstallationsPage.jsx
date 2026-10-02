@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { API_BASE as API } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useKdsPolling } from "@/hooks/useKdsPolling";
-import { getKDSStatusClass } from "@/lib/utils";
+import { getKDSStatusClass, formatVehicleDisplay } from "@/lib/utils";
 import { getTimeElapsed, PRIORITY_BADGE, sortByPriorityThenAge } from "@/lib/kdsHelpers";
 import { expandOrdersToItemCards } from "@/lib/workOrderItemCards";
 import { KDSStatsBar } from "@/components/kds/KDSStatsBar";
@@ -278,8 +278,8 @@ export function KDSInstallationsPage() {
                     <span className="text-sm font-medium truncate">{order.customer_name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Car className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm truncate">{order.vehicle_info}</span>
+                    <Car className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm truncate">{formatVehicleDisplay(order.vehicle_info || order.vehicle)}</span>
                   </div>
                   <p className="text-sm font-medium leading-snug">
                     {getItemLabel(displayItem)}

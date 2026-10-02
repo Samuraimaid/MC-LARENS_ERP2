@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { formatDate } from "../lib/utils";
+import { formatDate, formatVehicleDisplay } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -200,7 +200,7 @@ export function WarrantiesPage() {
   const filteredClaims = claims.filter(c =>
     c.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.product_name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.vehicle_info?.toLowerCase().includes(search.toLowerCase())
+    formatVehicleDisplay(c.vehicle_info || c.vehicle).toLowerCase().includes(search.toLowerCase())
   );
 
   const visibleIds = filteredClaims.map((item) => item.claim_id);
@@ -601,7 +601,7 @@ export function WarrantiesPage() {
                       <TableCell>{claim.customer_name}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p>{claim.vehicle_info}</p>
+                          <p>{formatVehicleDisplay(claim.vehicle_info || claim.vehicle)}</p>
                         </div>
                       </TableCell>
                       <TableCell>

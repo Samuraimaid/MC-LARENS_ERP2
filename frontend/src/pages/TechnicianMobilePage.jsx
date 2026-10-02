@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
-import { getPriorityColor, WORK_ORDER_STATUS } from "../lib/utils";
+import { getPriorityColor, WORK_ORDER_STATUS, formatVehicleDisplay } from "../lib/utils";
 import { formatQuincenaLabel } from "../lib/payrollPeriods";
 import { TechnicianKioskNav } from "../components/technician/TechnicianKioskNav";
 import { audioAlerts } from "../lib/audioAlerts";
@@ -450,7 +450,7 @@ export function TechnicianMobilePage() {
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Car className="h-4 w-4" />
-                      <span className="truncate">{order.vehicle_info}</span>
+                      <span className="truncate">{formatVehicleDisplay(order.vehicle_info || order.vehicle)}</span>
                     </div>
                     {order.start_time && (
                       <div className="flex items-center gap-2 text-orange-500">
@@ -523,7 +523,7 @@ export function TechnicianMobilePage() {
                   <div className="space-y-2 text-sm mb-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Car className="h-4 w-4" />
-                      <span className="truncate">{order.vehicle_info}</span>
+                      <span className="truncate">{formatVehicleDisplay(order.vehicle_info || order.vehicle)}</span>
                     </div>
                     <p className="text-muted-foreground">
                       {(order.items || []).length} trabajo(s)
@@ -572,7 +572,7 @@ export function TechnicianMobilePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Car className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedOrder.vehicle_info}</span>
+                  <span>{formatVehicleDisplay(selectedOrder.vehicle_info || selectedOrder.vehicle)}</span>
                 </div>
               </div>
 
