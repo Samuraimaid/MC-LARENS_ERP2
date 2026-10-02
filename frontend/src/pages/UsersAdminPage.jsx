@@ -84,7 +84,6 @@ export function UsersAdminPage() {
   const [newKioskPin, setNewKioskPin] = useState("");
   const [kioskPinsTable, setKioskPinsTable] = useState([]);
   const [syncingKioskPins, setSyncingKioskPins] = useState(false);
-  const [isViewOnly, setIsViewOnly] = useState(false);
   const [showLoginPins, setShowLoginPins] = useState(false);
   const [kioskTableSearch, setKioskTableSearch] = useState("");
   const [copiedPinId, setCopiedPinId] = useState(null);
