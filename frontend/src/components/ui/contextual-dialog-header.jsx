@@ -198,11 +198,11 @@ export function ContextualDialogHeader({
             "relative flex shrink-0 items-center justify-center text-white",
             isHero
               ? isWarning
-                ? "h-[7.5rem] w-[7.5rem] sm:h-36 sm:w-36"
-                : "h-28 w-28 sm:h-36 sm:w-36"
+                ? "h-20 w-20 sm:h-24 sm:w-24"
+                : "h-20 w-20 sm:h-24 sm:w-24"
               : isWarning
-                ? "mt-0.5 h-12 w-12"
-                : "mt-0.5 h-11 w-11",
+                ? "mt-0.5 h-10 w-10"
+                : "mt-0.5 h-10 w-10",
             style.shape,
             isHero && "status-dialog-glyph",
           )}
@@ -210,7 +210,7 @@ export function ContextualDialogHeader({
         >
           {LegacyIcon && !GlyphOverride ? (
             <LegacyIcon
-              className={cn(isHero ? "h-14 w-14 sm:h-16 sm:w-16" : "h-6 w-6")}
+              className={cn(isHero ? "h-10 w-10 sm:h-12 sm:w-12" : "h-5 w-5")}
               strokeWidth={isHero ? 2.5 : 2.25}
             />
           ) : (
@@ -218,9 +218,9 @@ export function ContextualDialogHeader({
               className={cn(
                 isHero
                   ? isWarning
-                    ? "h-12 w-12 translate-y-1 sm:h-14 sm:w-14"
-                    : "h-14 w-14 sm:h-16 sm:w-16"
-                  : "h-6 w-6",
+                    ? "h-9 w-9 translate-y-0.5 sm:h-11 sm:w-11"
+                    : "h-10 w-10 sm:h-12 sm:w-12"
+                  : "h-5 w-5",
               )}
             />
           )}
@@ -229,7 +229,7 @@ export function ContextualDialogHeader({
         <div
           className={cn(
             "min-w-0 flex-1 space-y-1.5",
-            isHero ? "w-full sm:pr-6" : "pr-6",
+            isHero ? "w-full sm:pr-2" : "pr-2",
           )}
         >
           <DialogTitle

@@ -5743,7 +5743,7 @@ export default function SaleForm({
             setPriceEditorOpen(open);
           }}
         >
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-md">
             <ContextualDialogHeader
               variant={getDialogMessage("sale.edit_product_price").variant || "information"}
               size="hero"

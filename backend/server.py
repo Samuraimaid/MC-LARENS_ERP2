@@ -6973,12 +6973,109 @@ async def get_branches(request: Request):
     return branches
 
 
+DEFAULT_ERP_CATEGORIES = {
+    "suspension_alzas": {
+        "name": "Suspensión, Alzas y Espaciadores",
+        "subcategories": ["Alzas", "Espaciadores", "Amortiguadores", "Resortes", "Barras Estabilizadoras", "General"]
+    },
+    "iluminacion": {
+        "name": "Iluminación y Faros LED",
+        "subcategories": ["Faros de Neblina", "Barras LED", "Bombillos LED", "Ojos de Ángel", "Luces Principales", "Halógenos", "General"]
+    },
+    "accesorios_iluminacion": {
+        "name": "Iluminación y Faros LED",
+        "subcategories": ["Faros de Neblina", "Barras LED", "Bombillos LED", "General"]
+    },
+    "audio_multimedia": {
+        "name": "Car Audio y Multimedia",
+        "subcategories": ["Pantallas Android", "Parlantes", "Subwoofers", "Amplificadores", "Cámaras de Retroceso", "General"]
+    },
+    "car_audio": {
+        "name": "Car Audio y Multimedia",
+        "subcategories": ["Pantallas Android", "Parlantes", "Subwoofers", "Amplificadores", "General"]
+    },
+    "polarizados": {
+        "name": "Películas y Polarizados",
+        "subcategories": ["Nanocerámico", "Carbón", "Titanio", "Humo", "Seguridad", "General"]
+    },
+    "accesorios_4x4_exterior": {
+        "name": "Accesorios 4x4 y Exterior",
+        "subcategories": ["Defensas / Bumpers", "Canasteras", "Snorkels", "Rollbars", "Estribos", "Winches", "Tapas de Tina", "General"]
+    },
+    "seguridad_alarmas": {
+        "name": "Seguridad y Alarmas",
+        "subcategories": ["Alarmas", "GPS Tracker", "Sensores de Parqueo", "Cerraduras Centralizadas", "General"]
+    },
+    "rines_llantas": {
+        "name": "Rines, Llantas y Accesorios",
+        "subcategories": ["Tuercas de Seguridad", "Válvulas", "Rines", "Llantas", "General"]
+    },
+    "detailing_cuidado": {
+        "name": "Detailing y Cuidado Automotriz",
+        "subcategories": ["Shampoos", "Ceras y Selladores", "Microfibras", "Aromatizantes", "Limpiadores de Interiores", "General"]
+    },
+    "cuidado_automotriz": {
+        "name": "Detailing y Cuidado Automotriz",
+        "subcategories": ["Shampoos", "Ceras y Selladores", "Aromatizantes", "General"]
+    },
+    "lubricantes_fluidos": {
+        "name": "Lubricantes, Grasas y Fluidos",
+        "subcategories": ["Aceite de Motor", "Líquido de Frenos", "Refrigerante / Coolant", "Aceite de Transmisión", "Grasas", "General"]
+    },
+    "servicios_taller": {
+        "name": "Servicios e Instalaciones",
+        "subcategories": ["Instalación Eléctrica", "Instalación de Polarizado", "Instalación de Audio", "Instalación 4x4", "Mecánica Ligera", "General"]
+    },
+    "servicios": {
+        "name": "Servicios de Taller",
+        "subcategories": ["Instalación", "Mano de Obra", "Diagnóstico", "Mantenimiento", "General"]
+    },
+    "taller_mecanica": {
+        "name": "Servicios y Mano de Obra",
+        "subcategories": ["Mano de Obra", "Instalación", "Alineación y Balanceo", "General"]
+    },
+    "repuestos_mantenimiento": {
+        "name": "Repuestos y Mantenimiento",
+        "subcategories": ["Filtros de Aire", "Filtros de Aceite", "Filtros de Cabina", "Bujías", "Pastillas de Freno", "General"]
+    },
+    "accesorios_electronicos": {
+        "name": "Accesorios Electrónicos",
+        "subcategories": ["Cargadores / Inversores", "Soportes de Teléfono", "Dashcams", "General"]
+    },
+    "accesorios_no_electricos": {
+        "name": "Accesorios Generales",
+        "subcategories": ["Emblemas", "Protectores", "Portaplacas", "Parasoles", "General"]
+    },
+}
+
+
 @api_router.get("/categories")
 async def get_categories(request: Request):
     await require_auth(request)
-    categories: Dict[str, Dict[str, List[str]]] = {}
+    import copy
+    categories: Dict[str, Dict[str, Any]] = copy.deepcopy(DEFAULT_ERP_CATEGORIES)
     vehicle_type_set: set[str] = set()
     window_options_set: set[str] = set()
+
+    # Load custom categories from db.product_categories
+    try:
+        custom_cats = await db.product_categories.find({}, {"_id": 0}).to_list(200)
+        for cc in custom_cats:
+            cat_key = cc.get("key") or cc.get("category_id")
+            if cat_key:
+                if cat_key not in categories:
+                    categories[cat_key] = {
+                        "name": cc.get("name") or cat_key.replace("_", " ").title(),
+                        "subcategories": cc.get("subcategories") or ["General"],
+                    }
+                else:
+                    if cc.get("name"):
+                        categories[cat_key]["name"] = cc["name"]
+                    for sub in cc.get("subcategories") or []:
+                        if sub and sub not in categories[cat_key]["subcategories"]:
+                            categories[cat_key]["subcategories"].append(sub)
+    except Exception as e:
+        logger.warning(f"Error loading custom product categories: {e}")
 
     cursor = db.products.find(
         {},
@@ -6987,7 +7084,11 @@ async def get_categories(request: Request):
     async for product in cursor:
         category = product.get("category") or "otros"
         subcategory = product.get("subcategory") or "General"
-        categories.setdefault(category, {"subcategories": []})
+        if category not in categories:
+            categories[category] = {
+                "name": category.replace("_", " ").title(),
+                "subcategories": []
+            }
         if subcategory not in categories[category]["subcategories"]:
             categories[category]["subcategories"].append(subcategory)
 
@@ -7019,6 +7120,44 @@ async def get_categories(request: Request):
         "vehicle_types": sorted(vehicle_type_set),
         "window_options": sorted(window_options_set),
     }
+
+
+@api_router.post("/categories")
+async def create_category(payload: Dict[str, Any], request: Request):
+    user = await require_roles(request, ["gerencia", "supervisor", "bodegas", "jefe_tienda"])
+    name = str(payload.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="El nombre de la categoría es requerido.")
+    
+    key = str(payload.get("key") or "").strip()
+    if not key:
+        import re
+        key = re.sub(r'[^a-zA-Z0-9_]+', '_', name.lower()).strip('_')
+    
+    subcategories = payload.get("subcategories") or []
+    if isinstance(subcategories, str):
+        subcategories = [s.strip() for s in subcategories.split(",") if s.strip()]
+    if not subcategories and payload.get("subcategory"):
+        subcategories = [str(payload.get("subcategory")).strip()]
+    if "General" not in subcategories:
+        subcategories.append("General")
+
+    doc = {
+        "key": key,
+        "name": name,
+        "subcategories": list(dict.fromkeys(subcategories)),
+        "created_by": getattr(user, "username", "admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.product_categories.update_one(
+        {"key": key},
+        {
+            "$set": {"name": name, "updated_at": datetime.now(timezone.utc).isoformat()},
+            "$addToSet": {"subcategories": {"$each": subcategories}}
+        },
+        upsert=True,
+    )
+    return {"status": "ok", "category": doc}
 
 
 @api_router.post("/warehouses")
@@ -7196,10 +7335,22 @@ async def create_product(product_data: ProductCreate, request: Request):
 
     raw_initial_stock = doc.pop("initial_stock", 0)
     raw_initial_warehouse_id = doc.pop("initial_warehouse_id", None)
+    provision_all = bool(doc.pop("provision_all_warehouses", True))
     try:
         initial_stock = max(0, int(float(raw_initial_stock or 0)))
     except Exception:
         initial_stock = 0
+
+    sku = str(doc.get("sku") or "").strip()
+    if sku:
+        doc["sku"] = sku
+        existing_prod = await db.products.find_one({"sku": sku}, {"_id": 0, "product_id": 1, "name": 1})
+        if existing_prod:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El SKU '{sku}' ya está registrado con el producto '{existing_prod.get('name')}'."
+            )
+
     # Ensure created_at exists and is ISO string
     created_at_val = doc.get("created_at")
     if not created_at_val:
@@ -7271,25 +7422,41 @@ async def create_product(product_data: ProductCreate, request: Request):
                 "filename": Path(img_u.split("?")[0]).name
             }]
 
+    # Normalize stores and source warehouses
+    if "available_store_ids" in doc and isinstance(doc["available_store_ids"], list):
+        doc["available_store_ids"] = [str(x).strip() for x in doc["available_store_ids"] if str(x).strip()]
+    if "source_warehouse_ids" in doc and isinstance(doc["source_warehouse_ids"], list):
+        doc["source_warehouse_ids"] = [str(x).strip() for x in doc["source_warehouse_ids"] if str(x).strip()]
+
     await db.products.insert_one(doc)
 
-    if initial_stock > 0:
-        warehouse_id = str(raw_initial_warehouse_id or user.warehouse_id or "").strip()
-        if not warehouse_id:
-            fallback = await db.warehouses.find_one({}, {"_id": 0, "warehouse_id": 1})
-            warehouse_id = str((fallback or {}).get("warehouse_id") or "")
+    is_physical = doc.get("product_type", "product") == "product"
+    target_warehouse_id = str(raw_initial_warehouse_id or user.warehouse_id or "").strip()
+    if not target_warehouse_id:
+        fallback = await db.warehouses.find_one({}, {"_id": 0, "warehouse_id": 1})
+        target_warehouse_id = str((fallback or {}).get("warehouse_id") or "")
 
-        if warehouse_id:
-            inv_filter = {"product_id": doc["product_id"], "warehouse_id": warehouse_id}
+    # Multi-warehouse provisioning (provision across all active warehouses)
+    if is_physical and provision_all:
+        all_warehouses = await db.warehouses.find({}, {"_id": 0, "warehouse_id": 1}).to_list(100)
+        for w in all_warehouses:
+            w_id = str(w.get("warehouse_id") or "").strip()
+            if not w_id:
+                continue
+            is_initial_target = (w_id == target_warehouse_id)
+            stock_qty = int(initial_stock) if is_initial_target else 0
+            
+            inv_filter = {"product_id": doc["product_id"], "warehouse_id": w_id}
             existing_inventory = await db.inventory.find_one(inv_filter, {"_id": 0, "inventory_id": 1})
             if existing_inventory:
-                await db.inventory.update_one(
-                    inv_filter,
-                    {
-                        "$inc": {"quantity": int(initial_stock)},
-                        "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
-                    },
-                )
+                if stock_qty > 0:
+                    await db.inventory.update_one(
+                        inv_filter,
+                        {
+                            "$inc": {"quantity": stock_qty},
+                            "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
+                        },
+                    )
                 inventory_id = existing_inventory.get("inventory_id")
             else:
                 inventory_id = f"inv_{uuid.uuid4().hex[:8]}"
@@ -7297,23 +7464,59 @@ async def create_product(product_data: ProductCreate, request: Request):
                     {
                         "inventory_id": inventory_id,
                         "product_id": doc["product_id"],
-                        "warehouse_id": warehouse_id,
-                        "quantity": int(initial_stock),
+                        "warehouse_id": w_id,
+                        "quantity": stock_qty,
                         "min_stock": int(doc.get("low_stock_threshold") or 5),
                         "last_updated": datetime.now(timezone.utc).isoformat(),
                     }
                 )
 
-            await audit_service.log_inventory_movement(
-                product_id=doc["product_id"],
-                warehouse_id=warehouse_id,
-                quantity_change=int(initial_stock),
-                reason="initial_stock_product_create",
-                actor=user,
-                branch_id=user.branch_id,
-                reference_id=inventory_id,
-                metadata={"sku": doc.get("sku")},
+            if is_initial_target and initial_stock > 0:
+                await audit_service.log_inventory_movement(
+                    product_id=doc["product_id"],
+                    warehouse_id=w_id,
+                    quantity_change=int(initial_stock),
+                    reason="initial_stock_product_create",
+                    actor=user,
+                    branch_id=user.branch_id,
+                    reference_id=inventory_id,
+                    metadata={"sku": doc.get("sku")},
+                )
+    elif initial_stock > 0 and target_warehouse_id:
+        inv_filter = {"product_id": doc["product_id"], "warehouse_id": target_warehouse_id}
+        existing_inventory = await db.inventory.find_one(inv_filter, {"_id": 0, "inventory_id": 1})
+        if existing_inventory:
+            await db.inventory.update_one(
+                inv_filter,
+                {
+                    "$inc": {"quantity": int(initial_stock)},
+                    "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
+                },
             )
+            inventory_id = existing_inventory.get("inventory_id")
+        else:
+            inventory_id = f"inv_{uuid.uuid4().hex[:8]}"
+            await db.inventory.insert_one(
+                {
+                    "inventory_id": inventory_id,
+                    "product_id": doc["product_id"],
+                    "warehouse_id": target_warehouse_id,
+                    "quantity": int(initial_stock),
+                    "min_stock": int(doc.get("low_stock_threshold") or 5),
+                    "last_updated": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+
+        await audit_service.log_inventory_movement(
+            product_id=doc["product_id"],
+            warehouse_id=target_warehouse_id,
+            quantity_change=int(initial_stock),
+            reason="initial_stock_product_create",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=inventory_id,
+            metadata={"sku": doc.get("sku")},
+        )
 
     # Return authoritative stored document when possible
     stored = await db.products.find_one({"product_id": doc["product_id"]}, {"_id": 0})

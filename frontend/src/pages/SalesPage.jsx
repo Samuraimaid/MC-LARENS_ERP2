@@ -3102,7 +3102,7 @@ TOTAL: C$${(sale.total || 0).toFixed(2)}
               </div>
             </div>
             <Dialog open={showClearSaleConfirm} onOpenChange={setShowClearSaleConfirm}>
-              <DialogContent className="max-w-sm">
+              <DialogContent className="max-w-md">
                 {(() => {
                   const msg = getDialogMessage("sale.clear_form");
                   const variant = msg.variant || "warning";

@@ -546,7 +546,7 @@ export function ReturnsPage() {
 
       {/* Reject Dialog */}
       <Dialog open={!!showReject} onOpenChange={() => setShowReject(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <ContextualDialogHeader
             variant="error"
             size="hero"

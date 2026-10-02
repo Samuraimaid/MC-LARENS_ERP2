@@ -2052,7 +2052,7 @@ export function CatalogPage() {
 
       {/* WhatsApp send dialog */}
       <Dialog open={whatsappDialog.open && !isWarehouseRole} onOpenChange={(open) => setWhatsappDialog((prev) => ({ ...prev, open }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <ContextualDialogHeader
             variant="information"
             size="hero"

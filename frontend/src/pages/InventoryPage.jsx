@@ -35,7 +35,9 @@ import { scheduleDelayedSend, DELAYED_SEND_MS } from "@/components/lists/delayed
 import { optimisticUpdate } from "@/lib/optimisticUpdate";
 import { DestructiveConfirmDialog } from "@/components/destructive";
 import { useAuth } from "../context/AuthContext";
-import { formatCategoryLabel } from "@/lib/branding";
+import { formatCategoryLabel, getProductBrandLogo, ERP_CATEGORY_LABELS } from "@/lib/branding";
+import { productMatchesSearch } from "@/lib/productLookup";
+import ProductCatalogSelect from "@/components/inventory/ProductCatalogSelect";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
@@ -157,6 +159,12 @@ export function InventoryPage() {
   });
 
 
+  // Category creation dialog state
+  const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategorySubcategories, setNewCategorySubcategories] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
   // New product form with all fields
   const [newProduct, setNewProduct] = useState({
     sku: "",
@@ -191,6 +199,11 @@ export function InventoryPage() {
     hourly_rate: "",
     warranty_months: 12,
     low_stock_threshold: 5,
+    initial_stock: 0,
+    initial_warehouse_id: "",
+    provision_all_warehouses: true,
+    available_store_ids: [],
+    source_warehouse_ids: [],
   });
 
   // Transfer form
@@ -429,12 +442,51 @@ export function InventoryPage() {
   const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/categories`, { withCredentials: true });
-      setCategories(res.data.categories);
-      setVehicleTypes(res.data.vehicle_types);
+      setCategories(res.data?.categories || {});
+      setVehicleTypes(res.data?.vehicle_types || []);
     } catch (error) {
       console.error("Error loading categories:", error);
     }
   }, []);
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Ingresa el nombre de la categoría");
+      return;
+    }
+    setCreatingCategory(true);
+    try {
+      const subcats = newCategorySubcategories
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const res = await axios.post(
+        `${API}/categories`,
+        {
+          name: newCategoryName.trim(),
+          subcategories: subcats.length ? subcats : ["General"],
+        },
+        { withCredentials: true }
+      );
+      toast.success("Categoría registrada exitosamente");
+      await fetchCategories();
+      const createdKey = res.data?.category?.key;
+      if (createdKey) {
+        setNewProduct((prev) => ({
+          ...prev,
+          category: createdKey,
+          subcategory: res.data?.category?.subcategories?.[0] || "",
+        }));
+      }
+      setShowNewCategoryDialog(false);
+      setNewCategoryName("");
+      setNewCategorySubcategories("");
+    } catch (err) {
+      toast.error(humanApiError(err, "No se pudo crear la categoría"));
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -805,6 +857,9 @@ export function InventoryPage() {
       low_stock_threshold: 5,
       initial_stock: 0,
       initial_warehouse_id: "",
+      provision_all_warehouses: true,
+      available_store_ids: [],
+      source_warehouse_ids: [],
     });
     setNewImageUrl("");
     setNewBrand("");
@@ -836,6 +891,9 @@ export function InventoryPage() {
         low_stock_threshold: Math.max(1, parseInt(newProduct.low_stock_threshold, 10) || 5),
         initial_stock: Math.max(0, parseInt(newProduct.initial_stock, 10) || 0),
         initial_warehouse_id: newProduct.initial_warehouse_id || "",
+        provision_all_warehouses: newProduct.provision_all_warehouses !== false,
+        available_store_ids: newProduct.available_store_ids?.length ? newProduct.available_store_ids : branches.map(b => b.branch_id),
+        source_warehouse_ids: newProduct.source_warehouse_ids?.length ? newProduct.source_warehouse_ids : warehouses.map(w => w.warehouse_id),
         barcode: String(newProduct.barcode || "").trim() || undefined,
         installation_type: newProduct.installation_type || "optional",
         hourly_rate: newProduct.hourly_rate ? parseFloat(newProduct.hourly_rate) : null,
@@ -1659,14 +1717,46 @@ export function InventoryPage() {
   const approvedTransfers = transferRequests.filter((req) => req.status === "approved");
   const pendingTransfers = transferRequests.filter((req) => req.status === "pending");
 
+  const inventoryByProductWarehouse = useMemo(() => {
+    const map = {};
+    for (const item of inventory) {
+      if (item.product_id && item.warehouse_id) {
+        map[`${item.product_id}_${item.warehouse_id}`] = item.quantity ?? 0;
+      }
+    }
+    return map;
+  }, [inventory]);
+
+  const intakeQuickMatches = useMemo(() => {
+    const q = intakeProductSearch.trim().toLowerCase();
+    if (!q) return [];
+    return products.filter((p) => productMatchesSearch(p, q)).slice(0, 12);
+  }, [products, intakeProductSearch]);
+
+  const handleAddProductToIntake = (productId) => {
+    setIntakeForm((prev) => {
+      const existingEmptyIndex = prev.lines.findIndex((l) => !l.product_id);
+      if (existingEmptyIndex >= 0) {
+        const nextLines = [...prev.lines];
+        nextLines[existingEmptyIndex] = { ...nextLines[existingEmptyIndex], product_id: productId };
+        return { ...prev, lines: nextLines };
+      }
+      return {
+        ...prev,
+        lines: [
+          ...prev.lines,
+          { line_id: `line_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`, product_id: productId, quantity: 1 }
+        ]
+      };
+    });
+    toast.success("Producto agregado a la lista de ingreso");
+  };
+
   const intakeProductsFiltered = products
     .filter((product) => {
       const term = intakeProductSearch.trim().toLowerCase();
       if (!term) return true;
-      return (
-        (product.name || "").toLowerCase().includes(term) ||
-        (product.sku || "").toLowerCase().includes(term)
-      );
+      return productMatchesSearch(product, term);
     })
     .sort((a, b) => (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" }));
 
@@ -1988,18 +2078,15 @@ export function InventoryPage() {
               <div className="space-y-4">
                 <div>
                   <Label>Producto</Label>
-                  <Select value={transfer.product_id} onValueChange={(v) => setTransfer({ ...transfer, product_id: v })}>
-                    <SelectTrigger data-testid="transfer-product-select">
-                      <SelectValue placeholder="Seleccionar producto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map(p => (
-                        <SelectItem key={p.product_id} value={p.product_id}>
-                          {p.name} ({p.sku})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ProductCatalogSelect
+                    products={products}
+                    value={transfer.product_id}
+                    onChange={(productId) => setTransfer({ ...transfer, product_id: productId })}
+                    showStockForWarehouseId={transfer.from_warehouse}
+                    inventoryMap={inventoryByProductWarehouse}
+                    placeholder="Buscar producto por SKU, nombre, marca..."
+                    data-testid="transfer-product-select"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -2061,25 +2148,19 @@ export function InventoryPage() {
           </Dialog>
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Ingreso de Inventario</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label>Producto</Label>
-                  <Select value={addStock.product_id} onValueChange={(v) => setAddStock({ ...addStock, product_id: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar producto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map((p) => (
-                        <SelectItem key={p.product_id} value={p.product_id}>
-                          {p.name} ({p.sku || "sin-sku"})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ProductCatalogSelect
+                    products={products}
+                    value={addStock.product_id}
+                    onChange={(productId) => setAddStock({ ...addStock, product_id: productId })}
+                    placeholder="Buscar producto por SKU, nombre, marca..."
+                  />
                 </div>
 
                 <div>
@@ -2198,7 +2279,16 @@ export function InventoryPage() {
                         </Select>
                       </div>
                       <div>
-                        <Label>Categoría *</Label>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-xs">Categoría *</Label>
+                          <button
+                            type="button"
+                            onClick={() => setShowNewCategoryDialog(true)}
+                            className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-0.5"
+                          >
+                            <Plus className="h-3 w-3" /> Nueva
+                          </button>
+                        </div>
                         <Select 
                           value={newProduct.category} 
                           onValueChange={(v) => setNewProduct({
@@ -2210,17 +2300,17 @@ export function InventoryPage() {
                           })}
                         >
                           <SelectTrigger data-testid="product-category">
-                            <SelectValue placeholder="Seleccionar" />
+                            <SelectValue placeholder="Seleccionar categoría" />
                           </SelectTrigger>
                           <SelectContent>
                             {Object.entries(categories).map(([key, cat]) => (
-                              <SelectItem key={key} value={key}>{cat.name}</SelectItem>
+                              <SelectItem key={key} value={key}>{cat?.name || formatCategoryLabel(key)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label>Subcategoría</Label>
+                        <Label className="text-xs">Subcategoría</Label>
                         <Select 
                           value={newProduct.subcategory} 
                           onValueChange={(v) => setNewProduct({ ...newProduct, subcategory: v })}
@@ -2238,9 +2328,9 @@ export function InventoryPage() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <Label>Marca</Label>
+                        <Label className="text-xs">Marca</Label>
                         <Input
                           value={newProduct.brand}
                           onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
@@ -2248,7 +2338,7 @@ export function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <Label>Garantía (meses)</Label>
+                        <Label className="text-xs">Garantía (meses)</Label>
                         <Input
                           type="number"
                           value={newProduct.warranty_months}
@@ -2256,7 +2346,7 @@ export function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <Label>Umbral stock bajo</Label>
+                        <Label className="text-xs">Umbral stock bajo</Label>
                         <Input
                           type="number"
                           min="1"
@@ -2265,35 +2355,166 @@ export function InventoryPage() {
                           placeholder="5"
                         />
                       </div>
-                      <div>
-                        <Label>Alta inicial</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={newProduct.initial_stock}
-                          onChange={(e) => setNewProduct({ ...newProduct, initial_stock: e.target.value })}
-                          placeholder="0"
-                        />
+                    </div>
+
+                    {/* Multi-warehouse provisioning section */}
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-xs text-slate-900 dark:text-slate-100">Disponibilidad de Inventario en Bodegas</div>
+                          <div className="text-[11px] text-muted-foreground">Crear producto disponible en todas las bodegas (con stock 0 inicial en las demás)</div>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border shadow-xs">
+                          <input
+                            type="checkbox"
+                            checked={newProduct.provision_all_warehouses !== false}
+                            onChange={(e) => setNewProduct({ ...newProduct, provision_all_warehouses: e.target.checked })}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <span>Alta en todas las bodegas</span>
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200 dark:border-slate-800">
+                        <div>
+                          <Label className="text-xs">Bodega para alta inicial (opcional)</Label>
+                          <Select
+                            value={newProduct.initial_warehouse_id}
+                            onValueChange={(v) => setNewProduct({ ...newProduct, initial_warehouse_id: v })}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Seleccionar bodega inicial" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {warehouses.map((w) => (
+                                <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
+                                  {w.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Cantidad alta inicial</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={newProduct.initial_stock}
+                            onChange={(e) => setNewProduct({ ...newProduct, initial_stock: e.target.value })}
+                            placeholder="0"
+                            className="h-9 text-xs"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <Label>Bodega para alta inicial</Label>
-                      <Select
-                        value={newProduct.initial_warehouse_id}
-                        onValueChange={(v) => setNewProduct({ ...newProduct, initial_warehouse_id: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar bodega (opcional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {warehouses.map((w) => (
-                            <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
-                              {w.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {/* Branches & Source Warehouses matrix */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Tiendas autorizadas */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Tiendas de Venta Autorizadas</Label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setNewProduct({
+                                ...newProduct,
+                                available_store_ids: branches.map(b => b.branch_id)
+                              })}
+                              className="text-[11px] text-primary hover:underline font-semibold"
+                            >
+                              Todas
+                            </button>
+                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewProduct({
+                                ...newProduct,
+                                available_store_ids: []
+                              })}
+                              className="text-[11px] text-muted-foreground hover:underline"
+                            >
+                              Ninguna
+                            </button>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                          {branches.map(b => {
+                            const selectedStores = newProduct.available_store_ids || [];
+                            const isChecked = selectedStores.length === 0 || selectedStores.includes(b.branch_id);
+                            return (
+                              <label key={b.branch_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const base = selectedStores.length === 0 ? branches.map(x => x.branch_id) : selectedStores;
+                                    const next = e.target.checked
+                                      ? [...base, b.branch_id]
+                                      : base.filter(id => id !== b.branch_id);
+                                    setNewProduct({ ...newProduct, available_store_ids: next });
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="truncate">{b.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Bodegas de origen */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Bodegas de Origen / Abastecimiento</Label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setNewProduct({
+                                ...newProduct,
+                                source_warehouse_ids: warehouses.map(w => w.warehouse_id)
+                              })}
+                              className="text-[11px] text-primary hover:underline font-semibold"
+                            >
+                              Todas
+                            </button>
+                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewProduct({
+                                ...newProduct,
+                                source_warehouse_ids: []
+                              })}
+                              className="text-[11px] text-muted-foreground hover:underline"
+                            >
+                              Ninguna
+                            </button>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                          {warehouses.map(w => {
+                            const selectedWarehouses = newProduct.source_warehouse_ids || [];
+                            const isChecked = selectedWarehouses.length === 0 || selectedWarehouses.includes(w.warehouse_id);
+                            return (
+                              <label key={w.warehouse_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const base = selectedWarehouses.length === 0 ? warehouses.map(x => x.warehouse_id) : selectedWarehouses;
+                                    const next = e.target.checked
+                                      ? [...base, w.warehouse_id]
+                                      : base.filter(id => id !== w.warehouse_id);
+                                    setNewProduct({ ...newProduct, source_warehouse_ids: next });
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="truncate">{w.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                     
                     {newProduct.category === "polarizados" && (
@@ -2707,6 +2928,55 @@ export function InventoryPage() {
             </DialogContent>
           </Dialog>
           ) : null}
+
+          <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nueva Categoría de Producto</DialogTitle>
+                <DialogDescription>
+                  Crea una nueva categoría para clasificar productos en Catálogo e Inventario.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Nombre de la Categoría *</Label>
+                  <Input
+                    placeholder="Ej: Accesorios de Remolque"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Subcategorías iniciales (opcional, separadas por coma)</Label>
+                  <Input
+                    placeholder="Ej: Bolas de Tiro, Conectores, Lengüetas"
+                    value={newCategorySubcategories}
+                    onChange={(e) => setNewCategorySubcategories(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNewCategoryDialog(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleCreateCategory}
+                    disabled={creatingCategory || !newCategoryName.trim()}
+                  >
+                    {creatingCategory ? (
+                      <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>
+                    ) : (
+                      <><Plus className="h-4 w-4 mr-2" /> Crear Categoría</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -3343,14 +3613,72 @@ export function InventoryPage() {
               </Button>
             </div>
 
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Buscar producto..."
-                value={intakeProductSearch}
-                onChange={(e) => setIntakeProductSearch(e.target.value)}
-              />
+            <div className="space-y-2">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-9 pr-8"
+                  placeholder="Buscar en catálogo (SKU, marca, compatibilidad)..."
+                  value={intakeProductSearch}
+                  onChange={(e) => setIntakeProductSearch(e.target.value)}
+                />
+                {intakeProductSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setIntakeProductSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {intakeProductSearch.trim() && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                    <span>Resultados en Catálogo ({intakeQuickMatches.length}):</span>
+                    <span className="text-[11px] hidden sm:inline">Haz clic en "+ Agregar" para añadir a la lista</span>
+                  </div>
+                  {intakeQuickMatches.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2 text-center">No se encontraron productos para "{intakeProductSearch}"</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                      {intakeQuickMatches.map((product) => (
+                        <div
+                          key={product.product_id}
+                          className="flex items-center justify-between p-2 rounded-lg border bg-white dark:bg-slate-950 hover:border-primary/50 text-xs gap-2 shadow-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ProductThumb product={product} size="sm" className="h-8 w-8 rounded shrink-0" />
+                            <div className="min-w-0">
+                              <div className="font-mono font-bold text-[11px] text-slate-800 dark:text-slate-200 truncate">
+                                {product.sku || "SIN-SKU"}
+                              </div>
+                              <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                                {product.name}
+                              </div>
+                              {product.brand && (
+                                <div className="text-[10px] text-muted-foreground truncate uppercase font-semibold">
+                                  {product.brand}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 px-2 text-[11px] shrink-0 font-medium"
+                            onClick={() => handleAddProductToIntake(product.product_id)}
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Agregar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -3372,21 +3700,12 @@ export function InventoryPage() {
                   <div className="grid gap-3 md:grid-cols-3">
                     <div className="md:col-span-2">
                       <Label>Producto</Label>
-                      <Select
+                      <ProductCatalogSelect
+                        products={products}
                         value={line.product_id}
-                        onValueChange={(value) => updateIntakeLine(line.line_id, "product_id", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar producto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {intakeProductsFiltered.map((product) => (
-                            <SelectItem key={product.product_id} value={product.product_id}>
-                              {product.name} ({product.sku || "sin-sku"})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(value) => updateIntakeLine(line.line_id, "product_id", value)}
+                        placeholder="Buscar producto por SKU, nombre o marca..."
+                      />
                     </div>
                     <div>
                       <Label>Cantidad</Label>
@@ -3545,26 +3864,16 @@ export function InventoryPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <Select value={kardexProductId} onValueChange={setKardexProductId}>
-              <SelectTrigger className="w-72">
-                <SelectValue placeholder="Producto" />
-              </SelectTrigger>
-              <SelectContent>
-                <div className="p-2">
-                  <Input
-                    value={kardexProductSearch}
-                    onChange={(e) => setKardexProductSearch(e.target.value)}
-                    placeholder="Buscar producto o SKU"
-                  />
-                </div>
-                <SelectItem value="all">Todos los productos</SelectItem>
-                {kardexProductsFiltered.map((p) => (
-                  <SelectItem key={p.product_id} value={p.product_id}>
-                    {p.name} ({p.sku || "sin-sku"})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-72 sm:w-80">
+              <ProductCatalogSelect
+                products={products}
+                value={kardexProductId === "all" ? "" : kardexProductId}
+                onChange={(val) => setKardexProductId(val || "all")}
+                placeholder="Todos los productos (búsqueda catálogo)..."
+                allowClear
+                data-testid="kardex-product-select"
+              />
+            </div>
 
             <Select value={kardexWarehouseId} onValueChange={setKardexWarehouseId}>
               <SelectTrigger className="w-56">

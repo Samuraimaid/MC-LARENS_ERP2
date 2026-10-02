@@ -1871,7 +1871,7 @@ export function QuotationsPage() {
               />
             </div>
             <Dialog open={showClearQuoteConfirm} onOpenChange={setShowClearQuoteConfirm}>
-              <DialogContent className="max-w-sm">
+              <DialogContent className="max-w-md">
                 <ContextualDialogHeader
                   variant="warning"
                   size="hero"
