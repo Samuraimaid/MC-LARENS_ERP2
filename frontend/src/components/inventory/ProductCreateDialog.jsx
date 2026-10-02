@@ -31,6 +31,7 @@ import { requiredSku, requiredProductName, requiredPrice } from "@/lib/fieldVali
 import { buildProductPricePayload } from "@/lib/priceTiers";
 import { formatCategoryLabel } from "@/lib/branding";
 import { FileUploadQueue } from "@/components/uploads/FileUploadQueue";
+import SearchableSelect from "@/components/ui/searchable-select";
 import { API_BASE as API } from "@/lib/api";
 import { humanApiError } from "@/lib/humanApiError";
 
@@ -133,6 +134,32 @@ export default function ProductCreateDialog({
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const categoryOptions = React.useMemo(() => {
+    const seenNames = new Set();
+    const list = [];
+    Object.entries(categories || {}).forEach(([key, cat]) => {
+      const label = (cat?.name || formatCategoryLabel(key)).trim();
+      if (label && !seenNames.has(label.toLowerCase())) {
+        seenNames.add(label.toLowerCase());
+        list.push({
+          value: key,
+          label: label,
+        });
+      }
+    });
+    return list.sort((a, b) => a.label.localeCompare(b.label));
+  }, [categories]);
+
+  const subcategoryOptions = React.useMemo(() => {
+    if (!formData.category) return [];
+    const subs = typeof getSubcategories === "function" ? getSubcategories(formData.category) : (categories?.[formData.category]?.subcategories || []);
+    const uniqueSubs = Array.from(new Set((subs || []).map((s) => String(s).trim()))).filter(Boolean);
+    return uniqueSubs.map((sub) => ({
+      value: sub,
+      label: sub,
+    }));
+  }, [formData.category, getSubcategories, categories]);
 
   const selectedStores = Array.isArray(formData.available_store_ids) ? formData.available_store_ids : [];
   const selectedWarehouses = Array.isArray(formData.source_warehouse_ids) ? formData.source_warehouse_ids : [];
@@ -428,42 +455,34 @@ export default function ProductCreateDialog({
                       <Plus className="h-3 w-3" /> Nueva
                     </button>
                   </div>
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(v) => setFormData((prev) => ({
+                  <SearchableSelect
+                    value={formData.category}
+                    onChange={(v) => setFormData((prev) => ({
                       ...prev,
                       category: v,
                       subcategory: "",
                       installation_type: v === "polarizados" ? "required" : prev.installation_type,
                       installation_required: v === "polarizados" ? true : prev.installation_required,
                     }))}
-                  >
-                    <SelectTrigger data-testid="product-category">
-                      <SelectValue placeholder="Seleccionar categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(categories).map(([key, cat]) => (
-                        <SelectItem key={key} value={key}>{cat?.name || formatCategoryLabel(key)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={categoryOptions}
+                    placeholder="Buscar o seleccionar categoría..."
+                    searchPlaceholder="Escribe para filtrar categorías..."
+                    emptyText="No se encontraron categorías coincidentes"
+                    data-testid="product-category"
+                  />
                 </div>
                 <div>
                   <Label className="text-xs">Subcategoría</Label>
-                  <Select 
-                    value={formData.subcategory} 
-                    onValueChange={(v) => updateField("subcategory", v)}
+                  <SearchableSelect
+                    value={formData.subcategory}
+                    onChange={(v) => updateField("subcategory", v)}
+                    options={subcategoryOptions}
+                    placeholder={formData.category ? "Buscar o seleccionar subcategoría..." : "Elige primero una categoría"}
+                    searchPlaceholder="Escribe para filtrar subcategorías..."
+                    emptyText="Sin subcategorías (General)"
                     disabled={!formData.category}
-                  >
-                    <SelectTrigger data-testid="product-subcategory">
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getSubcategories(formData.category).map(sub => (
-                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    data-testid="product-subcategory"
+                  />
                 </div>
               </div>
               

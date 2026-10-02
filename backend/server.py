@@ -6982,17 +6982,9 @@ DEFAULT_ERP_CATEGORIES = {
         "name": "Iluminación y Faros LED",
         "subcategories": ["Faros de Neblina", "Barras LED", "Bombillos LED", "Ojos de Ángel", "Luces Principales", "Halógenos", "General"]
     },
-    "accesorios_iluminacion": {
-        "name": "Iluminación y Faros LED",
-        "subcategories": ["Faros de Neblina", "Barras LED", "Bombillos LED", "General"]
-    },
-    "audio_multimedia": {
-        "name": "Car Audio y Multimedia",
-        "subcategories": ["Pantallas Android", "Parlantes", "Subwoofers", "Amplificadores", "Cámaras de Retroceso", "General"]
-    },
     "car_audio": {
         "name": "Car Audio y Multimedia",
-        "subcategories": ["Pantallas Android", "Parlantes", "Subwoofers", "Amplificadores", "General"]
+        "subcategories": ["Pantallas Android", "Parlantes", "Subwoofers", "Amplificadores", "Cámaras de Retroceso", "General"]
     },
     "polarizados": {
         "name": "Películas y Polarizados",
@@ -7014,25 +7006,13 @@ DEFAULT_ERP_CATEGORIES = {
         "name": "Detailing y Cuidado Automotriz",
         "subcategories": ["Shampoos", "Ceras y Selladores", "Microfibras", "Aromatizantes", "Limpiadores de Interiores", "General"]
     },
-    "cuidado_automotriz": {
-        "name": "Detailing y Cuidado Automotriz",
-        "subcategories": ["Shampoos", "Ceras y Selladores", "Aromatizantes", "General"]
-    },
     "lubricantes_fluidos": {
         "name": "Lubricantes, Grasas y Fluidos",
         "subcategories": ["Aceite de Motor", "Líquido de Frenos", "Refrigerante / Coolant", "Aceite de Transmisión", "Grasas", "General"]
     },
-    "servicios_taller": {
+    "servicios_instalaciones": {
         "name": "Servicios e Instalaciones",
-        "subcategories": ["Instalación Eléctrica", "Instalación de Polarizado", "Instalación de Audio", "Instalación 4x4", "Mecánica Ligera", "General"]
-    },
-    "servicios": {
-        "name": "Servicios de Taller",
-        "subcategories": ["Instalación", "Mano de Obra", "Diagnóstico", "Mantenimiento", "General"]
-    },
-    "taller_mecanica": {
-        "name": "Servicios y Mano de Obra",
-        "subcategories": ["Mano de Obra", "Instalación", "Alineación y Balanceo", "General"]
+        "subcategories": ["Instalación Eléctrica", "Instalación de Polarizado", "Instalación de Audio", "Instalación 4x4", "Mecánica Ligera", "Alineación y Balanceo", "Diagnóstico", "Mano de Obra", "General"]
     },
     "repuestos_mantenimiento": {
         "name": "Repuestos y Mantenimiento",
@@ -7042,10 +7022,24 @@ DEFAULT_ERP_CATEGORIES = {
         "name": "Accesorios Electrónicos",
         "subcategories": ["Cargadores / Inversores", "Soportes de Teléfono", "Dashcams", "General"]
     },
-    "accesorios_no_electricos": {
+    "accesorios_generales": {
         "name": "Accesorios Generales",
         "subcategories": ["Emblemas", "Protectores", "Portaplacas", "Parasoles", "General"]
     },
+}
+
+CATEGORY_KEY_ALIASES = {
+    "accesorios_iluminacion": "iluminacion",
+    "iluminacion_led": "iluminacion",
+    "audio_multimedia": "car_audio",
+    "audio": "car_audio",
+    "cuidado_automotriz": "detailing_cuidado",
+    "detailing": "detailing_cuidado",
+    "limpieza_detailing": "detailing_cuidado",
+    "servicios_taller": "servicios_instalaciones",
+    "servicios": "servicios_instalaciones",
+    "taller_mecanica": "servicios_instalaciones",
+    "accesorios_no_electricos": "accesorios_generales",
 }
 
 
@@ -7057,23 +7051,39 @@ async def get_categories(request: Request):
     vehicle_type_set: set[str] = set()
     window_options_set: set[str] = set()
 
+    # Name-to-key index for case-insensitive deduplication
+    name_to_key: Dict[str, str] = {
+        cat["name"].strip().lower(): k for k, cat in categories.items()
+    }
+
     # Load custom categories from db.product_categories
     try:
         custom_cats = await db.product_categories.find({}, {"_id": 0}).to_list(200)
         for cc in custom_cats:
-            cat_key = cc.get("key") or cc.get("category_id")
+            raw_key = cc.get("key") or cc.get("category_id") or ""
+            raw_name = (cc.get("name") or "").strip()
+            cat_key = CATEGORY_KEY_ALIASES.get(raw_key, raw_key)
+            if not cat_key and raw_name:
+                cat_key = name_to_key.get(raw_name.lower()) or raw_name.lower().replace(" ", "_")
+
             if cat_key:
-                if cat_key not in categories:
-                    categories[cat_key] = {
-                        "name": cc.get("name") or cat_key.replace("_", " ").title(),
+                # check if an existing category has this exact display name
+                existing_key = name_to_key.get(raw_name.lower()) if raw_name else None
+                target_key = existing_key or cat_key
+
+                if target_key not in categories:
+                    categories[target_key] = {
+                        "name": raw_name or target_key.replace("_", " ").title(),
                         "subcategories": cc.get("subcategories") or ["General"],
                     }
+                    if raw_name:
+                        name_to_key[raw_name.lower()] = target_key
                 else:
-                    if cc.get("name"):
-                        categories[cat_key]["name"] = cc["name"]
+                    if raw_name and not existing_key:
+                        categories[target_key]["name"] = raw_name
                     for sub in cc.get("subcategories") or []:
-                        if sub and sub not in categories[cat_key]["subcategories"]:
-                            categories[cat_key]["subcategories"].append(sub)
+                        if sub and sub not in categories[target_key]["subcategories"]:
+                            categories[target_key]["subcategories"].append(sub)
     except Exception as e:
         logger.warning(f"Error loading custom product categories: {e}")
 
@@ -7082,21 +7092,28 @@ async def get_categories(request: Request):
         {"_id": 0, "category": 1, "subcategory": 1, "compatibility": 1, "vehicle_types": 1},
     )
     async for product in cursor:
-        category = product.get("category") or "otros"
-        subcategory = product.get("subcategory") or "General"
-        if category not in categories:
-            categories[category] = {
-                "name": category.replace("_", " ").title(),
+        raw_cat = product.get("category") or "otros"
+        cat_key = CATEGORY_KEY_ALIASES.get(raw_cat, raw_cat)
+        subcategory = (product.get("subcategory") or "General").strip()
+
+        # check if raw_cat matches an existing category display name
+        if cat_key not in categories and raw_cat.strip().lower() in name_to_key:
+            cat_key = name_to_key[raw_cat.strip().lower()]
+
+        if cat_key not in categories:
+            categories[cat_key] = {
+                "name": cat_key.replace("_", " ").title(),
                 "subcategories": []
             }
-        if subcategory not in categories[category]["subcategories"]:
-            categories[category]["subcategories"].append(subcategory)
+            name_to_key[categories[cat_key]["name"].lower()] = cat_key
+
+        if subcategory and subcategory not in categories[cat_key]["subcategories"]:
+            categories[cat_key]["subcategories"].append(subcategory)
 
         compatibility = product.get("compatibility") or {}
         for vehicle_type in compatibility.get("vehicle_types") or []:
             if vehicle_type:
                 vehicle_type_set.add(vehicle_type)
-        # collect window options if present (e.g., for polarizados services)
         for wo in product.get("window_options") or []:
             if wo:
                 window_options_set.add(wo)

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { formatCurrency } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -1689,7 +1689,12 @@ export function InventoryPage() {
             setShowTransfer(open);
             if (!open) setTransfer(emptyTransferForm());
           }}>
-            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} data-testid="warehouse-transfer-dialog">
+            <DialogContent 
+              className="w-[calc(100vw-1.25rem)] max-w-lg md:max-w-2xl max-h-[92vh] overflow-y-auto p-6 sm:p-7"
+              onPointerDownOutside={(e) => e.preventDefault()} 
+              onInteractOutside={(e) => e.preventDefault()} 
+              data-testid="warehouse-transfer-dialog"
+            >
               <DialogHeader>
                 <DialogTitle>Trasladar entre bodegas</DialogTitle>
                 <DialogDescription>
@@ -1709,7 +1714,7 @@ export function InventoryPage() {
                     data-testid="transfer-product-select"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Desde bodega</Label>
                     <Select value={transfer.from_warehouse} onValueChange={(v) => setTransfer({ ...transfer, from_warehouse: v })}>
@@ -1769,7 +1774,11 @@ export function InventoryPage() {
           </Dialog>
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
-            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-md">
+            <DialogContent 
+              className="w-[calc(100vw-1.25rem)] max-w-lg md:max-w-xl max-h-[92vh] overflow-y-auto p-6 sm:p-7"
+              onPointerDownOutside={(e) => e.preventDefault()} 
+              onInteractOutside={(e) => e.preventDefault()}
+            >
               <DialogHeader>
                 <DialogTitle>Ingreso de Inventario</DialogTitle>
               </DialogHeader>

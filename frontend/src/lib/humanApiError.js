@@ -5,21 +5,26 @@
 
 const DEFAULT_ES = "Eso no se pudo completar — inténtalo de nuevo";
 
-/** @type {Array<[RegExp|string, string]>} */
 const DETAIL_MAP = [
   [/sku already exists/i, "Ese SKU ya existe — usa otro código o edita el producto existente."],
   [/product not found/i, "No encontramos ese producto. Revisa el SKU o créalo en Inventario."],
   [/customer not found/i, "No encontramos ese cliente. ¿Quieres registrarlo?"],
   [/vehicle not found/i, "No encontramos ese vehículo. Revisa la placa o regístralo."],
   [/warehouse not found/i, "No encontramos esa bodega. Elige otra bodega e inténtalo de nuevo."],
+  [/branch not found/i, "No encontramos esa sucursal. Revisa los datos e inténtalo de nuevo."],
   [/sale not found/i, "No encontramos esa venta. Actualiza la lista e inténtalo de nuevo."],
+  [/technician not found/i, "No encontramos ese técnico. Actualiza la lista e inténtalo de nuevo."],
   [/approval already processed/i, "Esa solicitud ya fue procesada. Actualiza la lista."],
   [/approval not found/i, "No encontramos esa solicitud de aprobación. Actualiza la lista."],
   [/invalid session/i, "Tu sesión expiró — vuelve a iniciar sesión."],
-  [/insufficient.?stock|stock insuficiente|not enough stock/i, "No hay stock suficiente. Revisa existencias o elige otra bodega."],
+  [/insufficient.?(inventory|stock)|stock insuficiente|inventario insuficiente|out of stock|not enough stock/i, "Inventario insuficiente en la bodega de origen. Revisa las existencias disponibles o elige otra bodega."],
   [/duplicate|already exists|ya existe/i, "Ese registro ya existe — revisa los datos o edita el existente."],
   [/permission|forbidden|not allowed|no tienes permiso|unauthorized/i, "No tienes permiso para esta acción. Pide ayuda a un gerente."],
   [/invalid input|validation error|unprocessable/i, "Revisa los campos marcados e inténtalo de nuevo."],
+  [/draft id is required/i, "El identificador del borrador es requerido."],
+  [/invalid draft/i, "El flujo del borrador no es válido."],
+  [/cannot delete/i, "No se puede eliminar este registro."],
+  [/missing /i, "Completa todos los campos obligatorios antes de continuar."],
   [/network error|failed to fetch|timeout|econnrefused/i, "Sin conexión con el servidor — revisa la red e inténtalo de nuevo."],
   [/^error$/i, DEFAULT_ES],
   [/^ERROR:?\s*operation failed$/i, DEFAULT_ES],
@@ -57,11 +62,11 @@ function normalizeDetail(detail) {
 function looksEnglishOrRaw(text) {
   if (!text) return true;
   if (/^(ERROR|Exception|Traceback|TypeError|ValueError|KeyError)\b/i.test(text)) return true;
-  if (/\b(not found|already exists|invalid|forbidden|unauthorized|failed|required)\b/i.test(text)) {
+  if (/\b(not found|already exists|invalid|forbidden|unauthorized|failed|required|insufficient|inventory|cannot|missing|bad request|internal server)\b/i.test(text)) {
     return true;
   }
   // Mostly ASCII technical jargon without Spanish accents/common words
-  if (/^[A-Za-z0-9 _\-.:/"']+$/.test(text) && /\b(error|failed|invalid|not)\b/i.test(text)) {
+  if (/^[A-Za-z0-9 _\-.:/"']+$/.test(text) && /\b(error|failed|invalid|not|insufficient)\b/i.test(text)) {
     return true;
   }
   return false;

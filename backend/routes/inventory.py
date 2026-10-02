@@ -1270,7 +1270,7 @@ def get_inventory_router(
             {"product_id": product_id, "warehouse_id": from_warehouse}
         )
         if not source or source["quantity"] < quantity:
-            raise HTTPException(status_code=400, detail="Insufficient inventory")
+            raise HTTPException(status_code=400, detail="Inventario insuficiente en la bodega de origen para realizar el traslado")
 
         # Update source
         await db.inventory.update_one(
