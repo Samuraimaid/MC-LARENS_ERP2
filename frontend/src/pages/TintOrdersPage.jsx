@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { formatDate } from "../lib/utils";
+import { formatDate, formatVehicleDisplay } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -197,9 +197,10 @@ export function TintOrdersPage() {
   };
 
   const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-                         o.tint_order_id?.toLowerCase().includes(search.toLowerCase()) ||
-                         o.vehicle_info?.plate?.toLowerCase().includes(search.toLowerCase());
+    const vehText = formatVehicleDisplay(o.vehicle_info || o.vehicle, "");
+    const matchesSearch = (o.customer_name || "").toLowerCase().includes(search.toLowerCase()) ||
+                         (o.tint_order_id || "").toLowerCase().includes(search.toLowerCase()) ||
+                         vehText.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filterStatus === "all" || o.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -344,10 +345,14 @@ export function TintOrdersPage() {
                         <div className="flex items-center gap-2">
                           <Car className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <p className="font-medium">{order.vehicle_info?.plate}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {order.vehicle_info?.brand} {order.vehicle_info?.model} {order.vehicle_info?.year}
+                            <p className="font-medium">
+                              {order.vehicle_info?.plate || formatVehicleDisplay(order.vehicle_info || order.vehicle)}
                             </p>
+                            {order.vehicle_info?.brand && (
+                              <p className="text-xs text-muted-foreground">
+                                {order.vehicle_info.brand} {order.vehicle_info.model} {order.vehicle_info.year}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -568,7 +573,7 @@ export function TintOrdersPage() {
               {selectedOrder?.tint_order_id}
             </DialogTitle>
             <DialogDescription>
-              {selectedOrder?.customer_name} · {selectedOrder?.vehicle_info?.plate} - {selectedOrder?.vehicle_info?.brand} {selectedOrder?.vehicle_info?.model}
+              {selectedOrder?.customer_name} · {formatVehicleDisplay(selectedOrder?.vehicle_info || selectedOrder?.vehicle)}
             </DialogDescription>
           </DialogHeader>
 
@@ -617,10 +622,18 @@ function TintOrderDetails({ order, technicians, materials, onUpdateWindow, onCom
           <div className="flex items-center gap-4">
             <Car className="h-10 w-10 text-primary" />
             <div>
-              <p className="font-heading text-xl font-bold">{order.vehicle_info?.plate}</p>
-              <p className="text-muted-foreground">
-                {order.vehicle_info?.brand} {order.vehicle_info?.model} ({order.vehicle_info?.year}) - {order.vehicle_info?.color}
+              <p className="font-heading text-xl font-bold">
+                {order.vehicle_info?.plate || formatVehicleDisplay(order.vehicle_info || order.vehicle)}
               </p>
+              {order.vehicle_info?.brand ? (
+                <p className="text-muted-foreground">
+                  {order.vehicle_info.brand} {order.vehicle_info.model} ({order.vehicle_info.year}) - {order.vehicle_info.color}
+                </p>
+              ) : (
+                <p className="text-muted-foreground">
+                  {formatVehicleDisplay(order.vehicle_info || order.vehicle)}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

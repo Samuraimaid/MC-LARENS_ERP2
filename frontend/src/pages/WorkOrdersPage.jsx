@@ -204,7 +204,7 @@ export function WorkOrdersPage() {
     return (
       (order.work_order_id || "").toLowerCase().includes(query) ||
       (order.customer_name || "").toLowerCase().includes(query) ||
-      (order.vehicle_info || "").toLowerCase().includes(query)
+      formatVehicleDisplay(order.vehicle_info || order.vehicle, "").toLowerCase().includes(query)
     );
   });
 
