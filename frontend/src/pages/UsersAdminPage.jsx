@@ -31,6 +31,8 @@ import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
 import { PasswordField } from "@/components/common/PasswordField";
+import CreatePinUserDialog from "@/components/users/CreatePinUserDialog";
+import EditUserDialog from "@/components/users/EditUserDialog";
 
 // Roles will be loaded from backend `/api/roles` when available; fall back to local `ROLES`.
 const PERMISSION_ACTIONS = ["create", "view", "edit", "delete"];
@@ -72,36 +74,10 @@ export function UsersAdminPage() {
   
   // (Google auth removed)
   const [editingUser, setEditingUser] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editLastName, setEditLastName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editRole, setEditRole] = useState("");
-  const [editSellerType, setEditSellerType] = useState("piso");
-  const [editBranch, setEditBranch] = useState("");
-  const [editWarehouse, setEditWarehouse] = useState("");
-  const [editBaseSalary, setEditBaseSalary] = useState("");
-  const [editEarnsCommissions, setEditEarnsCommissions] = useState(false);
-  const [editHasSocialSecurity, setEditHasSocialSecurity] = useState(false);
-  const [editEligibleAttendanceBonus, setEditEligibleAttendanceBonus] = useState(false);
+  const [isViewOnly, setIsViewOnly] = useState(false);
   
   // PIN user dialogs
   const [showCreatePin, setShowCreatePin] = useState(false);
-  const [pinForm, setPinForm] = useState({
-    name: "",
-    last_name: "",
-    phone: "",
-    role: "ventas",
-    seller_type: "piso",
-    pin: "",
-    login_pin: "",
-    branch_id: "",
-    warehouse_id: "",
-    base_salary: "",
-    earns_commissions: false,
-    has_social_security: false,
-    eligible_for_attendance_bonus: false,
-  });
   const [editingPinUser, setEditingPinUser] = useState(null);
   const [newPin, setNewPin] = useState("");
   const [editingKioskPinUser, setEditingKioskPinUser] = useState(null);
@@ -483,114 +459,7 @@ export function UsersAdminPage() {
 
   // promoteToAdmin removed (Google-based invites no longer supported)
 
-  const updateUserRole = async () => {
-    if (!editingUser) return;
-    if (!editName.trim()) {
-      toast.error("El nombre es requerido");
-      return;
-    }
-    if (!editLastName.trim()) {
-      toast.error("Los apellidos son requeridos");
-      return;
-    }
-    if (editEmail && !/^[^@\s]+@[^@\s]+$/.test(editEmail.trim())) {
-      toast.error("El correo electrónico no es válido");
-      return;
-    }
-    if (!/^\d{4}-\d{4}$/.test(editPhone)) {
-      toast.error("El número de contacto es requerido y debe tener formato 0000-0000");
-      return;
-    }
-    if (!editRole) {
-      toast.error("El rol es requerido");
-      return;
-    }
-    if (!editBranch) {
-      toast.error("La sucursal es requerida");
-      return;
-    }
-    try {
-      await axios.put(`${API}/users/${editingUser.user_id}/role`, {
-        name: editName.trim(),
-        last_name: editLastName.trim(),
-        email: editEmail.trim() || null,
-        phone: editPhone.trim(),
-        role: editRole,
-        ...(editRole === "ventas" ? { seller_type: editSellerType || "piso" } : {}),
-        branch_id: editBranch,
-        warehouse_id: editWarehouse || null,
-        base_salary: Number(editBaseSalary || 0),
-        earns_commissions: editEarnsCommissions,
-        has_social_security: editHasSocialSecurity,
-        eligible_for_attendance_bonus: editEligibleAttendanceBonus,
-      }, { withCredentials: true });
-      toast.success("Rol actualizado");
-      setEditingUser(null);
-      fetchData();
-    } catch (error) {
-      toast.error("Error al actualizar rol");
-    }
-  };
 
-  
-
-  // PIN User functions
-  const createPinUser = async () => {
-    if (!canCreateUsers) {
-      toast.error("No tienes permiso para crear usuarios");
-      return;
-    }
-    if (!pinForm.name.trim() || !pinForm.last_name.trim() || !pinForm.phone.trim() || !pinForm.role || !pinForm.branch_id || !pinForm.login_pin || pinForm.login_pin.length !== 8) {
-      toast.error("Completa nombre, apellidos, contacto, rol, sucursal y PIN de inicio (8)");
-      return;
-    }
-    if (!/^\d{4}-\d{4}$/.test(pinForm.phone)) {
-      toast.error("El número de contacto debe tener formato 0000-0000");
-      return;
-    }
-    if (!/^\d{8}$/.test(pinForm.login_pin)) {
-      toast.error("El PIN de inicio debe ser de 8 dígitos numéricos");
-      return;
-    }
-    
-    try {
-      await axios.post(`${API}/users/pin`, {
-        name: pinForm.name.trim(),
-        last_name: pinForm.last_name.trim(),
-        phone: pinForm.phone.trim(),
-        role: pinForm.role,
-        ...(pinForm.role === "ventas" ? { seller_type: pinForm.seller_type || "piso" } : {}),
-        pin: pinForm.pin || null,
-        login_pin: pinForm.login_pin,
-        branch_id: pinForm.branch_id,
-        warehouse_id: pinForm.warehouse_id || null,
-        base_salary: Number(pinForm.base_salary || 0),
-        earns_commissions: pinForm.earns_commissions,
-        has_social_security: pinForm.has_social_security,
-        eligible_for_attendance_bonus: pinForm.eligible_for_attendance_bonus,
-      }, { withCredentials: true });
-      
-      toast.success(`Usuario ${pinForm.name} creado con acceso PIN`);
-      setShowCreatePin(false);
-      setPinForm({
-        name: "",
-        last_name: "",
-        phone: "",
-        role: "ventas",
-        pin: "",
-        login_pin: "",
-        branch_id: "",
-        warehouse_id: "",
-        base_salary: "",
-        earns_commissions: false,
-        has_social_security: false,
-        eligible_for_attendance_bonus: false,
-      });
-      fetchData();
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Error al crear usuario PIN"));
-    }
-  };
 
   const updatePinUserPin = async () => {
     if (!canEditUsers) {
@@ -921,205 +790,10 @@ export function UsersAdminPage() {
                 >
                   {syncingKioskPins ? "Sincronizando..." : "Sincronizar PINs Kiosko"}
                 </Button>
-                <Dialog open={showCreatePin} onOpenChange={setShowCreatePin}>
-                  <DialogTrigger asChild>
-                    <Button data-testid="create-pin-user-btn" disabled={!canCreateUsers}>
-                      <KeyRound className="h-4 w-4 mr-2" />
-                      Crear Usuario PIN
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Crear Usuario con PIN</DialogTitle>
-                    <DialogDescription>
-                      Configura PIN de marcación (4 dígitos) y PIN de inicio de sesión (8 dígitos)
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Nombre Completo</Label>
-                      <Input
-                        value={pinForm.name}
-                        onChange={(e) => setPinForm({...pinForm, name: e.target.value})}
-                        placeholder="Juan"
-                        className="mt-1"
-                        data-testid="pin-user-name"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Apellidos</Label>
-                      <Input
-                        value={pinForm.last_name}
-                        onChange={(e) => setPinForm({...pinForm, last_name: e.target.value})}
-                        placeholder="Pérez López"
-                        className="mt-1"
-                        data-testid="pin-user-last-name"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Número de contacto</Label>
-                      <Input
-                        value={pinForm.phone}
-                        onChange={(e) => setPinForm({ ...pinForm, phone: formatPhone(e.target.value) })}
-                        placeholder="0000-0000"
-                        className="mt-1"
-                        data-testid="pin-user-phone"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Rol</Label>
-                      <Select value={pinForm.role} onValueChange={(v) => setPinForm({...pinForm, role: v})}>
-                        <SelectTrigger className="mt-1" data-testid="pin-user-role">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.keys(rolesMap || ROLES).filter(r => r !== "gerencia").map(role => (
-                            <SelectItem key={role} value={role}>
-                              {(rolesMap && rolesMap[role]?.label) || ROLES[role]?.label || role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        El rol Gerencia requiere autenticación con Google
-                      </p>
-                    </div>
-
-                    {pinForm.role === "ventas" ? (
-                      <div>
-                        <Label>Tipo de vendedor</Label>
-                        <Select
-                          value={pinForm.seller_type || "piso"}
-                          onValueChange={(v) => setPinForm({ ...pinForm, seller_type: v })}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(SELLER_TYPES).map(([key, label]) => (
-                              <SelectItem key={key} value={key}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ) : null}
-                    
-                    <PasswordField
-                      label="PIN de Marcación (4 dígitos, opcional)"
-                      mode="pin"
-                      pinLength={4}
-                      pinLabel="PIN de marcación"
-                      value={pinForm.pin}
-                      onChange={(next) => setPinForm({ ...pinForm, pin: next })}
-                      placeholder="••••"
-                      autoComplete="new-password"
-                      data-testid="pin-user-pin"
-                    />
-
-                    <PasswordField
-                      label="PIN de Inicio de Sesión (8 dígitos)"
-                      mode="pin"
-                      pinLength={8}
-                      pinLabel="PIN de inicio"
-                      value={pinForm.login_pin}
-                      onChange={(next) => setPinForm({ ...pinForm, login_pin: next })}
-                      placeholder="••••••••"
-                      required
-                      autoComplete="new-password"
-                      data-testid="pin-user-login-pin"
-                    />
-                    
-                    <div>
-                      <Label>Sucursal</Label>
-                      <Select value={pinForm.branch_id || "none"} onValueChange={(v) => setPinForm({...pinForm, branch_id: v === "none" ? "" : v})}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecciona sucursal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Selecciona sucursal</SelectItem>
-                          {branches.map(b => (
-                            <SelectItem key={b.branch_id} value={b.branch_id}>{b.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label>Salario base mensual (C$)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={pinForm.base_salary}
-                        onChange={(e) => setPinForm({ ...pinForm, base_salary: e.target.value })}
-                        placeholder="15000"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={pinForm.earns_commissions}
-                          onCheckedChange={(v) => setPinForm({ ...pinForm, earns_commissions: Boolean(v) })}
-                        />
-                        Aprobación de comisiones
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={pinForm.has_social_security}
-                          onCheckedChange={(v) => setPinForm({ ...pinForm, has_social_security: Boolean(v) })}
-                        />
-                        Seguro social INSS (7%)
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={pinForm.eligible_for_attendance_bonus}
-                          onCheckedChange={(v) => setPinForm({ ...pinForm, eligible_for_attendance_bonus: Boolean(v) })}
-                        />
-                        Bono de puntualidad y asistencia
-                      </label>
-                    </div>
-
-                    {(pinForm.role === "bodegas" || pinForm.role === "transporte") && (
-                      <div>
-                        <Label>Bodega (Opcional)</Label>
-                        <Select value={pinForm.warehouse_id || "none"} onValueChange={(v) => setPinForm({...pinForm, warehouse_id: v === "none" ? "" : v})}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Sin asignar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Sin asignar</SelectItem>
-                            {warehouses.map(w => (
-                              <SelectItem key={w.warehouse_id} value={w.warehouse_id}>{w.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    
-                    <Button 
-                      onClick={createPinUser} 
-                      className="w-full"
-                      disabled={
-                        !pinForm.name.trim() ||
-                        !pinForm.last_name.trim() ||
-                        !/^\d{4}-\d{4}$/.test(pinForm.phone) ||
-                        !pinForm.role ||
-                        !pinForm.branch_id ||
-                        pinForm.login_pin.length !== 8 ||
-                        !canCreateUsers
-                      }
-                      data-testid="save-pin-user-btn"
-                    >
-                      <KeyRound className="h-4 w-4 mr-2" />
-                      Crear Usuario
-                    </Button>
-                  </div>
-                  </DialogContent>
-                </Dialog>
+                <Button data-testid="create-pin-user-btn" disabled={!canCreateUsers} onClick={() => setShowCreatePin(true)}>
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Crear Usuario PIN
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1261,20 +935,7 @@ export function UsersAdminPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // Open edit dialog in edit mode
                                   setEditingUser(user);
-                                  setEditName(user.name || "");
-                                  setEditLastName(user.last_name || "");
-                                  setEditEmail(user.email || "");
-                                  setEditPhone(formatPhone(user.phone || ""));
-                                  setEditRole(user.role || "");
-                                  setEditSellerType(user.seller_type || "piso");
-                                  setEditBranch(user.branch_id || "");
-                                  setEditWarehouse(user.warehouse_id || "");
-                                  setEditBaseSalary(String(user.base_salary ?? ""));
-                                  setEditEarnsCommissions(Boolean(user.earns_commissions));
-                                  setEditHasSocialSecurity(Boolean(user.has_social_security));
-                                  setEditEligibleAttendanceBonus(Boolean(user.eligible_for_attendance_bonus));
                                   setIsViewOnly(false);
                                 }}
                                 data-testid={`edit-user-${user.user_id}`}
@@ -1286,20 +947,7 @@ export function UsersAdminPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
-                                  // Open edit dialog in view-only mode
                                   setEditingUser(user);
-                                  setEditName(user.name || "");
-                                  setEditLastName(user.last_name || "");
-                                  setEditEmail(user.email || "");
-                                  setEditPhone(formatPhone(user.phone || ""));
-                                  setEditRole(user.role || "");
-                                  setEditSellerType(user.seller_type || "piso");
-                                  setEditBranch(user.branch_id || "");
-                                  setEditWarehouse(user.warehouse_id || "");
-                                  setEditBaseSalary(String(user.base_salary ?? ""));
-                                  setEditEarnsCommissions(Boolean(user.earns_commissions));
-                                  setEditHasSocialSecurity(Boolean(user.has_social_security));
-                                  setEditEligibleAttendanceBonus(Boolean(user.eligible_for_attendance_bonus));
                                   setIsViewOnly(true);
                                 }}
                                 className="text-foreground/80"
@@ -1667,164 +1315,33 @@ export function UsersAdminPage() {
         )}
       </Tabs>
 
-      {/* Edit Google User Role Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) { setEditingUser(null); setIsViewOnly(false); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isViewOnly ? `Ver Usuario ${getUserDisplayLabel(editingUser)}` : `Editar Rol de ${getUserDisplayLabel(editingUser)}`}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Nombre del colaborador</Label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Nombre completo"
-                disabled={isViewOnly}
-              />
-            </div>
+      {/* Create PIN User Dialog */}
+      <CreatePinUserDialog
+        open={showCreatePin}
+        onOpenChange={setShowCreatePin}
+        rolesMap={rolesMap}
+        branches={branches}
+        warehouses={warehouses}
+        canCreate={canCreateUsers}
+        onUserCreated={fetchData}
+      />
 
-            <div>
-              <Label>Apellidos del colaborador</Label>
-              <Input
-                value={editLastName}
-                onChange={(e) => setEditLastName(e.target.value)}
-                placeholder="Apellidos"
-                disabled={isViewOnly}
-              />
-            </div>
-
-            <div>
-              <Label>Correo electrónico</Label>
-              <Input
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="usuario@dominio"
-                disabled={isViewOnly}
-              />
-            </div>
-
-            <div>
-              <Label>Número de contacto</Label>
-              <Input
-                value={editPhone}
-                onChange={(e) => setEditPhone(formatPhone(e.target.value))}
-                placeholder="0000-0000"
-                disabled={isViewOnly}
-                inputMode="numeric"
-                maxLength={9}
-              />
-            </div>
-
-            <div>
-              <Label>Rol</Label>
-              <Select value={editRole} onValueChange={setEditRole}>
-                <SelectTrigger data-testid="select-role" disabled={isViewOnly}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(rolesMap || ROLES).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>{value.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {editRole === "ventas" ? (
-              <div>
-                <Label>Tipo de vendedor</Label>
-                <Select value={editSellerType || "piso"} onValueChange={setEditSellerType}>
-                  <SelectTrigger disabled={isViewOnly}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(SELLER_TYPES).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-            
-            <div>
-              <Label>Sucursal Asignada</Label>
-              <Select value={editBranch || "none"} onValueChange={(v) => setEditBranch(v === "none" ? "" : v)}>
-                <SelectTrigger disabled={isViewOnly}>
-                  <SelectValue placeholder="Sin asignar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar</SelectItem>
-                  {branches.map(b => (
-                    <SelectItem key={b.branch_id} value={b.branch_id}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {(editRole === "bodegas" || editRole === "transporte") && (
-              <div>
-                <Label>Bodega Asignada</Label>
-                <Select value={editWarehouse || "none"} onValueChange={(v) => setEditWarehouse(v === "none" ? "" : v)}>
-                  <SelectTrigger disabled={isViewOnly}>
-                    <SelectValue placeholder="Sin asignar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sin asignar</SelectItem>
-                    {warehouses.map(w => (
-                      <SelectItem key={w.warehouse_id} value={w.warehouse_id}>{w.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <Label>Salario base mensual (C$)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={editBaseSalary}
-                onChange={(e) => setEditBaseSalary(e.target.value)}
-                disabled={isViewOnly}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={editEarnsCommissions}
-                  onCheckedChange={(v) => setEditEarnsCommissions(Boolean(v))}
-                  disabled={isViewOnly}
-                />
-                Aprobación de comisiones
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={editHasSocialSecurity}
-                  onCheckedChange={(v) => setEditHasSocialSecurity(Boolean(v))}
-                  disabled={isViewOnly}
-                />
-                Seguro social INSS (7%)
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={editEligibleAttendanceBonus}
-                  onCheckedChange={(v) => setEditEligibleAttendanceBonus(Boolean(v))}
-                  disabled={isViewOnly}
-                />
-                Bono de puntualidad y asistencia
-              </label>
-            </div>
-
-            {!isViewOnly && canEditUsers && (
-              <Button onClick={updateUserRole} className="w-full" data-testid="save-role-btn">
-                Guardar Cambios
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Edit User Role Dialog */}
+      <EditUserDialog
+        user={editingUser}
+        open={!!editingUser}
+        isViewOnly={isViewOnly}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingUser(null);
+            setIsViewOnly(false);
+          }
+        }}
+        rolesMap={rolesMap}
+        branches={branches}
+        warehouses={warehouses}
+        onUserUpdated={fetchData}
+      />
 
       {/* Change PIN Dialog */}
       <Dialog open={!!editingPinUser} onOpenChange={() => setEditingPinUser(null)}>

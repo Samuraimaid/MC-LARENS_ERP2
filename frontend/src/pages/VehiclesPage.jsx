@@ -5,12 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-/* table UI not used here */
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Label } from "../components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
-import SearchableSelect from "@/components/ui/searchable-select";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
 import { Plus, Search, RefreshCw, CarFront, User, CalendarDays, Palette, FileText, ShoppingCart, ClipboardList, Pencil, Trash2, Building2, Download, Copy } from "lucide-react";
@@ -19,17 +14,8 @@ import { useListSelection } from "@/hooks/useListSelection";
 import { useListScrollRestore } from "@/hooks/useListScrollRestore";
 import { ListSelectionBar } from "@/components/lists/ListSelectionBar";
 import { downloadCsv, copyTextToClipboard } from "@/components/lists/listBulkUtils";
-import {
-  getVehicleSelectOptionsByBrandYear,
-  getVehicleYearsByBrand,
-  getCatalogVehiclePayload,
-  isPickupCatalogModel,
-  isValidVehicleSelection,
-  VEHICLE_CATALOG_BRANDS,
-  VEHICLE_COLOR_SUGGESTIONS,
-} from "@/lib/vehicleCatalog";
 import { VehicleThumbnailWatermark } from "@/components/erp/VehicleThumbnailWatermark";
-import { VehicleCabVariantSelect } from "@/components/erp/VehicleCabVariantSelect";
+import VehicleDialog from "@/components/vehicles/VehicleDialog";
 import { useListDensity } from "@/hooks/useListDensity";
 import { ListDensityToggle } from "@/components/lists/ListDensityToggle";
 import { DensityList, DensityListItem } from "@/components/lists/DensityListItem";
@@ -52,28 +38,7 @@ export function VehiclesPage() {
   const [showNewVehicle, setShowNewVehicle] = useState(false);
   const [boardTab, setBoardTab] = useState("todos");
 
-  const [formData, setFormData] = useState({
-    customer_id: "",
-    plate: "",
-    vin: "",
-    brand: "",
-    model: "",
-    year: "",
-    color: "",
-    vehicle_cab_variant: "",
-  });
-
   const navigate = useNavigate();
-  const brandOptions = VEHICLE_CATALOG_BRANDS;
-  const yearOptions = useMemo(() => getVehicleYearsByBrand(formData.brand), [formData.brand]);
-  const modelOptions = useMemo(
-    () => getVehicleSelectOptionsByBrandYear(formData.brand, formData.year),
-    [formData.brand, formData.year]
-  );
-  const showCabVariant = useMemo(
-    () => isPickupCatalogModel(formData.brand, formData.model),
-    [formData.brand, formData.model]
-  );
 
   const normalize = (str = '') => {
     return String(str)
@@ -106,37 +71,6 @@ export function VehiclesPage() {
   };
 
   const softRefresh = () => fetchData({ silent: true });
-
-  const createVehicle = async () => {
-    if (!formData.customer_id || !formData.plate || !formData.brand || !formData.year || !formData.model) {
-      toast.error("Completa los campos requeridos");
-      return;
-    }
-    if (!isValidVehicleSelection(formData.brand, formData.year, formData.model)) {
-      toast.error("Selecciona marca, año y modelo desde la lista");
-      return;
-    }
-    if (showCabVariant && !formData.vehicle_cab_variant) {
-      toast.error("Selecciona el tipo de cabina para esta camioneta");
-      return;
-    }
-    try {
-      const catalogVehicle = getCatalogVehiclePayload(formData.brand, formData.model, {
-        vehicleCabVariant: formData.vehicle_cab_variant,
-      }) || {};
-      await axios.post(`${API}/vehicles`, {
-        ...formData,
-        year: parseInt(formData.year),
-        ...catalogVehicle,
-      }, { withCredentials: true });
-      toast.success("Vehículo registrado");
-      setShowNewVehicle(false);
-      setFormData({ customer_id: "", plate: "", vin: "", brand: "", model: "", year: "", color: "", vehicle_cab_variant: "" });
-      fetchData();
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo registrar el vehículo — revisa placa y datos e inténtalo de nuevo"));
-    }
-  };
 
   const getCustomerName = (customerId) => {
     const customer = customers.find(c => c.customer_id === customerId);
@@ -268,117 +202,25 @@ export function VehiclesPage() {
           <h1 className="font-heading text-2xl mb-1 font-bold tracking-tight md:mb-0 md:text-3xl">Vehículos</h1>
           <p className="hidden text-muted-foreground md:block">Registro de vehículos para garantías</p>
         </div>
-        <Dialog open={showNewVehicle} onOpenChange={(open) => {
-          if (open) scrollRestore.save();
-          setShowNewVehicle(open);
-          if (!open) scrollRestore.restore();
-        }}>
-          <DialogTrigger asChild>
-            <Button data-testid="new-vehicle-btn">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear vehículo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Crear vehículo</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Cliente *</Label>
-                <Select value={formData.customer_id} onValueChange={(v) => setFormData({ ...formData, customer_id: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map(c => (
-                      <SelectItem key={c.customer_id} value={c.customer_id}>
-                        {c.name} - {c.phone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Placa *</Label>
-                  <Input
-                    value={formData.plate}
-                    onChange={(e) => setFormData({ ...formData, plate: e.target.value.toUpperCase() })}
-                    placeholder="ABC-123"
-                  />
-                </div>
-                <div>
-                  <Label>VIN</Label>
-                  <Input
-                    value={formData.vin}
-                    onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
-                    placeholder="Número de chasis"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_0.8fr_1.9fr] gap-4">
-                <div>
-                  <Label>Marca *</Label>
-                  <SearchableSelect
-                    value={formData.brand}
-                    onChange={(v) => setFormData({ ...formData, brand: v, year: "", model: "", vehicle_cab_variant: "" })}
-                    options={brandOptions}
-                    placeholder="Seleccionar marca"
-                    searchPlaceholder="Buscar marca..."
-                  />
-                </div>
-                <div>
-                  <Label>Año *</Label>
-                  <SearchableSelect
-                    value={String(formData.year || "")}
-                    onChange={(v) => setFormData({ ...formData, year: v, model: "", vehicle_cab_variant: "" })}
-                    options={yearOptions}
-                    placeholder="Seleccionar año"
-                    searchPlaceholder="Buscar año..."
-                    disabled={!formData.brand}
-                  />
-                </div>
-                <div>
-                  <Label>Modelo *</Label>
-                  <SearchableSelect
-                    value={formData.model}
-                    onChange={(v) => setFormData({ ...formData, model: v, vehicle_cab_variant: "" })}
-                    options={modelOptions}
-                    placeholder="Seleccionar modelo"
-                    searchPlaceholder="Buscar modelo..."
-                    disabled={!formData.brand || !formData.year}
-                  />
-                </div>
-              </div>
-              {showCabVariant && (
-                <VehicleCabVariantSelect
-                  value={formData.vehicle_cab_variant}
-                  onChange={(value) => setFormData({ ...formData, vehicle_cab_variant: value })}
-                />
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Color</Label>
-                  <Input
-                    list="vehicle-color-options"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    placeholder="Blanco"
-                  />
-                  <datalist id="vehicle-color-options">
-                    {VEHICLE_COLOR_SUGGESTIONS.map((color) => (
-                      <option key={color} value={color} />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
-              <Button onClick={createVehicle} className="w-full" data-testid="save-vehicle-btn">
-                Crear vehículo
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button
+          data-testid="new-vehicle-btn"
+          onClick={() => {
+            scrollRestore.save();
+            setShowNewVehicle(true);
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Crear vehículo
+        </Button>
+        <VehicleDialog
+          open={showNewVehicle}
+          onOpenChange={(open) => {
+            setShowNewVehicle(open);
+            if (!open) scrollRestore.restore();
+          }}
+          customers={customers}
+          onVehicleSaved={fetchData}
+        />
       </div>
 
       <ListSelectionBar
