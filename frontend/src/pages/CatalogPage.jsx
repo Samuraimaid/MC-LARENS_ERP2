@@ -1105,28 +1105,28 @@ export function CatalogPage() {
       ) : null}
 
       {isSalePickMode && sourceContext && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-xs shadow-sm animate-fade-up-soft">
+        <div className="rounded-xl border border-emerald-500/30 dark:border-emerald-500/40 bg-gradient-to-r from-emerald-950/40 via-slate-900/60 to-emerald-950/40 backdrop-blur-xl px-3.5 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 text-xs shadow-md shadow-emerald-950/20 animate-fade-up-soft">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
-            <Badge className="bg-emerald-600 text-white font-semibold text-[11px] px-2 py-0.5 shrink-0">
+            <Badge className="bg-emerald-600 dark:bg-emerald-500 text-white font-bold text-[11px] px-2.5 py-0.5 shrink-0 shadow-xs uppercase tracking-wider font-microgramma">
               Modo Selección: {sourceContext.source === "quote-form" ? "Cotización" : "Venta"}
             </Badge>
-            <span className="font-mono text-xs text-foreground/90 font-medium truncate">
+            <span className="font-mono text-xs text-foreground font-semibold truncate bg-background/50 px-2 py-0.5 rounded-md border border-border/60">
               {sourceContext.draftName || sourceContext.draftId}
             </span>
             {contextCustomerName && (
-              <span className="text-muted-foreground truncate hidden sm:inline">
+              <span className="text-muted-foreground truncate hidden sm:inline font-medium">
                 · {contextCustomerName}
               </span>
             )}
             {vehicleBits ? (
-              <span className="text-muted-foreground truncate hidden md:inline">
+              <span className="text-muted-foreground truncate hidden md:inline font-mono text-[11px]">
                 · {vehicleBits}
               </span>
             ) : null}
             {enforceVehicleCompatibility ? (
-              <Badge className="bg-emerald-700 text-white text-[10px] py-0 px-1.5 gap-1 shrink-0">
-                <CheckCircle2 className="h-3 w-3" />
-                Compatible
+              <Badge className="bg-emerald-700/80 text-emerald-100 text-[10px] py-0.5 px-2 gap-1 shrink-0 border border-emerald-500/30 font-medium">
+                <CheckCircle2 className="h-3 w-3 text-emerald-300" />
+                Compatible con vehículo
               </Badge>
             ) : null}
           </div>
@@ -1135,7 +1135,7 @@ export function CatalogPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
+                className="text-[11px] h-7 px-2.5 text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setSearchParams((prev) => {
                     const next = new URLSearchParams(prev);
@@ -1149,13 +1149,13 @@ export function CatalogPage() {
             )}
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 gap-1 font-medium shadow-sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-3 gap-1.5 font-semibold shadow-sm rounded-lg"
               onClick={() => {
                 const target = sourceContext.source === "quote-form" ? "/workbench?tab=quotations" : "/workbench?tab=sales";
                 navigate(target);
               }}
             >
-              <ArrowLeft className="h-3 w-3" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               {sourceContext.source === "quote-form" ? "Volver a cotización" : "Volver a la venta"}
             </Button>
           </div>

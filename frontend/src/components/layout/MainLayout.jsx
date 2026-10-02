@@ -722,19 +722,32 @@ export function MainLayout() {
                 </div>
               </div>
               {!isMobile && isWorkbenchRoute ? (
-                <div className="hidden min-w-0 flex-1 justify-center lg:flex">
-                  <Tabs value={activeWorkbenchTab} onValueChange={handleWorkbenchTabChange} className="w-full max-w-[980px]">
-                    <TabsList className="grid h-12 w-full grid-cols-8 rounded-full border bg-card/95 p-1">
-                      {WORKBENCH_TAB_ITEMS.map((tab) => {
+                <div className="hidden min-w-0 flex-1 justify-center lg:flex px-2">
+                  <Tabs value={activeWorkbenchTab} onValueChange={handleWorkbenchTabChange} className="w-full max-w-[1020px]">
+                    <TabsList className="grid h-11 w-full grid-cols-8 gap-1 rounded-xl border border-border/80 dark:border-slate-800/80 bg-muted/40 dark:bg-slate-950/60 p-1 backdrop-blur-md shadow-inner">
+                      {WORKBENCH_TAB_ITEMS.map((tab, idx) => {
                         const Icon = tab.icon;
+                        const isActive = activeWorkbenchTab === tab.key;
                         return (
                           <TabsTrigger
                             key={tab.key}
                             value={tab.key}
-                            title={tab.label}
-                            className="inline-flex h-full items-center justify-center rounded-full px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            title={`${tab.label} (Alt+${idx + 1})`}
+                            className={cn(
+                              "group relative inline-flex h-full items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition-all duration-200",
+                              "hover:text-foreground hover:bg-background/50 dark:hover:bg-slate-800/50",
+                              "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/25 data-[state=active]:ring-1 data-[state=active]:ring-primary/40",
+                              "data-[state=active]:font-semibold"
+                            )}
                           >
-                            <Icon className="h-5 w-5" />
+                            <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 group-data-[state=active]:scale-105" />
+                            <span className="hidden xl:inline truncate tracking-tight">{tab.label}</span>
+                            <span className={cn(
+                              "ml-0.5 hidden 2xl:inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded text-[9px] font-mono leading-none transition-opacity",
+                              isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground/70 opacity-60 group-hover:opacity-100"
+                            )}>
+                              {idx + 1}
+                            </span>
                           </TabsTrigger>
                         );
                       })}

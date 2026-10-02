@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 ];
 
 /**
- * Fixed bottom navigation bar — only rendered on phone-sized screens (<640px)
+ * Fixed bottom navigation bar — rendered on phone-sized screens (<640px)
  * when the user is on the /workbench route.
  */
 export function BottomNav() {
@@ -30,10 +30,10 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 safe-area-bottom"
+      className="fixed bottom-0 inset-x-0 z-40 border-t border-border/80 dark:border-slate-800/80 bg-background/90 dark:bg-slate-950/95 backdrop-blur-xl shadow-2xl shadow-black/50 safe-area-bottom"
       aria-label="Navegación principal"
     >
-      <div className="flex h-16 items-stretch">
+      <div className="flex h-16 items-stretch px-1">
         {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
           const active = currentTab === key;
           return (
@@ -43,24 +43,33 @@ export function BottomNav() {
               aria-label={label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 touch-action-manipulation transition-colors duration-150",
+                "group relative flex flex-1 flex-col items-center justify-center gap-1 touch-action-manipulation transition-all duration-200",
                 active
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground active:text-foreground"
+                  : "text-muted-foreground hover:text-foreground active:scale-95"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5 transition-transform duration-150",
-                  active ? "scale-110" : ""
-                )}
-              />
-              <span className={cn("text-[10px] leading-none font-medium truncate", active ? "font-semibold" : "")}>
+              {/* Active Top Glow Pill */}
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-primary shadow-sm shadow-primary/50" />
+              )}
+              <div className={cn(
+                "relative flex items-center justify-center rounded-lg p-1 transition-all duration-200",
+                active ? "bg-primary/10 ring-1 ring-primary/25 shadow-inner" : "group-hover:bg-muted/40"
+              )}>
+                <Icon
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    active ? "scale-110 text-primary" : "group-hover:scale-105"
+                  )}
+                />
+              </div>
+              <span className={cn(
+                "text-[9.5px] leading-none font-medium truncate tracking-tight transition-all",
+                active ? "font-bold text-primary" : "text-muted-foreground/90"
+              )}>
                 {label}
               </span>
-              {active && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary" />
-              )}
             </button>
           );
         })}
@@ -68,3 +77,4 @@ export function BottomNav() {
     </nav>
   );
 }
+
