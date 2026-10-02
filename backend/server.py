@@ -7353,6 +7353,7 @@ async def create_product(product_data: ProductCreate, request: Request):
     raw_initial_stock = doc.pop("initial_stock", 0)
     raw_initial_warehouse_id = doc.pop("initial_warehouse_id", None)
     raw_warehouse_stocks = doc.pop("warehouse_stocks", {}) or {}
+    raw_store_stocks = doc.pop("store_stocks", {}) or {}
     provision_all = bool(doc.pop("provision_all_warehouses", True))
     try:
         initial_stock = max(0, int(float(raw_initial_stock or 0)))
@@ -7461,19 +7462,26 @@ async def create_product(product_data: ProductCreate, request: Request):
         target_warehouse_id = str((fallback or {}).get("warehouse_id") or "")
 
     # Multi-warehouse provisioning (provision across all active warehouses with custom or uniform stock)
-    if is_physical and (provision_all or raw_warehouse_stocks):
-        all_warehouses = await db.warehouses.find({}, {"_id": 0, "warehouse_id": 1}).to_list(100)
+    if is_physical and (provision_all or raw_warehouse_stocks or raw_store_stocks):
+        all_warehouses = await db.warehouses.find({}, {"_id": 0, "warehouse_id": 1, "branch_id": 1}).to_list(100)
         for w in all_warehouses:
             w_id = str(w.get("warehouse_id") or "").strip()
             if not w_id:
                 continue
+            b_id = str(w.get("branch_id") or "").strip()
             
-            if w_id in raw_warehouse_stocks:
+            stock_qty = 0
+            if w_id in raw_warehouse_stocks and raw_warehouse_stocks[w_id] is not None:
                 try:
                     stock_qty = max(0, int(float(raw_warehouse_stocks[w_id] or 0)))
                 except Exception:
                     stock_qty = 0
-            else:
+            if stock_qty == 0 and b_id and b_id in raw_store_stocks and raw_store_stocks[b_id] is not None:
+                try:
+                    stock_qty = max(0, int(float(raw_store_stocks[b_id] or 0)))
+                except Exception:
+                    stock_qty = 0
+            if stock_qty == 0 and not (w_id in raw_warehouse_stocks or (b_id and b_id in raw_store_stocks)):
                 is_initial_target = (w_id == target_warehouse_id)
                 stock_qty = int(initial_stock) if is_initial_target else 0
             
