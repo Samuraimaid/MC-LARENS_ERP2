@@ -1316,6 +1316,17 @@ def get_inventory_router(
                 }
             )
 
+        # Auto-activate product in destination warehouse & store if not already active
+        try:
+            wh_doc = await db.warehouses.find_one({"warehouse_id": to_warehouse}, {"_id": 0, "branch_id": 1})
+            to_branch_id = (wh_doc or {}).get("branch_id")
+            product_activation = {"$addToSet": {"source_warehouse_ids": to_warehouse}}
+            if to_branch_id:
+                product_activation["$addToSet"]["available_store_ids"] = to_branch_id
+            await db.products.update_one({"product_id": product_id}, product_activation)
+        except Exception as act_err:
+            logger.warning("Error auto-activating product %s on transfer to %s: %s", product_id, to_warehouse, act_err)
+
         await audit_service.log_inventory_movement(
             product_id=product_id,
             warehouse_id=to_warehouse,
@@ -1723,6 +1734,17 @@ def get_inventory_router(
                     "last_updated": now_iso,
                 }
             )
+
+        # Auto-activate product in destination warehouse & store if not already active
+        try:
+            wh_doc = await db.warehouses.find_one({"warehouse_id": to_wh}, {"_id": 0, "branch_id": 1})
+            to_branch_id = (wh_doc or {}).get("branch_id")
+            product_activation = {"$addToSet": {"source_warehouse_ids": to_wh}}
+            if to_branch_id:
+                product_activation["$addToSet"]["available_store_ids"] = to_branch_id
+            await db.products.update_one({"product_id": transfer_req["product_id"]}, product_activation)
+        except Exception as act_err:
+            logger.warning("Error auto-activating product %s on receive transfer in %s: %s", transfer_req["product_id"], to_wh, act_err)
 
         await audit_service.log_inventory_movement(
             product_id=transfer_req["product_id"],

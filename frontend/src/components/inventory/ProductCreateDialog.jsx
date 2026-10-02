@@ -66,9 +66,10 @@ const DEFAULT_NEW_PRODUCT = {
   polarizado_type: "",
   window_options: [],
   hourly_rate: "",
-  warranty_months: 12,
+  warranty_months: 0,
   low_stock_threshold: 5,
   initial_stock: 0,
+  warehouse_stocks: {},
   initial_warehouse_id: "",
   provision_all_warehouses: true,
   available_store_ids: [],
@@ -84,6 +85,7 @@ export default function ProductCreateDialog({
   vehicleTypes = [],
   warehouses = [],
   branches = [],
+  products = [],
   canCreate = true,
   onOpenNewCategory = () => {},
 }) {
@@ -104,12 +106,19 @@ export default function ProductCreateDialog({
     if (open) {
       uploadIndexRef.current = formData.images.length || 0;
       setFormData((prev) => {
-        // If it's a fresh form, pre-select all branches and warehouses
+        // If it's a fresh form, pre-select all branches and warehouses with 0 stock
         const isFresh = !prev.sku && !prev.name;
+        const initialStocks = { ...(prev.warehouse_stocks || {}) };
+        warehouses.forEach((w) => {
+          if (initialStocks[w.warehouse_id] === undefined) {
+            initialStocks[w.warehouse_id] = 0;
+          }
+        });
         return {
           ...prev,
           available_store_ids: isFresh && branches.length > 0 ? branches.map((b) => b.branch_id) : (prev.available_store_ids || []),
           source_warehouse_ids: isFresh && warehouses.length > 0 ? warehouses.map((w) => w.warehouse_id) : (prev.source_warehouse_ids || []),
+          warehouse_stocks: initialStocks,
         };
       });
     }
@@ -121,10 +130,15 @@ export default function ProductCreateDialog({
 
   const resetForm = () => {
     setValidationKey((k) => k + 1);
+    const initialStocks = {};
+    warehouses.forEach((w) => {
+      initialStocks[w.warehouse_id] = 0;
+    });
     setFormData({
       ...DEFAULT_NEW_PRODUCT,
       available_store_ids: branches.map((b) => b.branch_id),
       source_warehouse_ids: warehouses.map((w) => w.warehouse_id),
+      warehouse_stocks: initialStocks,
     });
     setNewImageUrl("");
     setNewBrand("");
@@ -134,6 +148,18 @@ export default function ProductCreateDialog({
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const brandOptions = React.useMemo(() => {
+    const brandsSet = new Set();
+    (products || []).forEach((p) => {
+      const b = String(p?.brand || "").trim();
+      if (b) brandsSet.add(b);
+    });
+    ["DLAA", "LUCAS LED", "PIONEER", "AUXBEAM", "GENERICA", "3M", "NANO CERAMIC", "KENWOOD", "SONY"].forEach((b) => brandsSet.add(b));
+    return Array.from(brandsSet)
+      .sort((a, b) => a.localeCompare(b))
+      .map((b) => ({ value: b, label: b }));
+  }, [products]);
 
   const categoryOptions = React.useMemo(() => {
     const seenNames = new Set();
@@ -317,19 +343,32 @@ export default function ProductCreateDialog({
     try {
       const tier1 = parseFloat(formData.precio1 || formData.price) || 0;
       const tierPayload = buildProductPricePayload(formData, { precio1: tier1 });
+      
+      const stocks = formData.warehouse_stocks || {};
+      const activeWarehouses = formData.source_warehouse_ids?.length ? formData.source_warehouse_ids : warehouses.map((w) => w.warehouse_id);
+      const totalInitialStock = Object.entries(stocks).reduce((acc, [wId, qty]) => {
+        if (activeWarehouses.includes(wId)) {
+          return acc + Math.max(0, parseInt(qty, 10) || 0);
+        }
+        return acc;
+      }, 0);
+
+      const parsedWarranty = parseInt(formData.warranty_months, 10);
+      const warrantyMonths = !isNaN(parsedWarranty) && parsedWarranty >= 0 ? parsedWarranty : 0;
+
       const payload = {
         ...formData,
         ...tierPayload,
         cost: parseFloat(formData.cost) || 0,
-        warranty_months: parseInt(formData.warranty_months, 10) || 12,
+        warranty_months: warrantyMonths,
         installation_price: parseFloat(formData.installation_price) || 0,
         installation_time_minutes: parseInt(formData.installation_time_minutes, 10) || 0,
         low_stock_threshold: Math.max(1, parseInt(formData.low_stock_threshold, 10) || 5),
-        initial_stock: Math.max(0, parseInt(formData.initial_stock, 10) || 0),
-        initial_warehouse_id: formData.initial_warehouse_id || "",
-        provision_all_warehouses: formData.provision_all_warehouses !== false,
-        available_store_ids: formData.available_store_ids?.length ? formData.available_store_ids : branches.map(b => b.branch_id),
-        source_warehouse_ids: formData.source_warehouse_ids?.length ? formData.source_warehouse_ids : warehouses.map(w => w.warehouse_id),
+        initial_stock: totalInitialStock,
+        warehouse_stocks: stocks,
+        provision_all_warehouses: true,
+        available_store_ids: formData.available_store_ids?.length ? formData.available_store_ids : branches.map((b) => b.branch_id),
+        source_warehouse_ids: activeWarehouses,
         barcode: String(formData.barcode || "").trim() || undefined,
         installation_type: formData.installation_type || "optional",
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
@@ -486,21 +525,30 @@ export default function ProductCreateDialog({
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-xs">Marca</Label>
-                  <Input
+                  <SearchableSelect
                     value={formData.brand}
-                    onChange={(e) => updateField("brand", e.target.value)}
-                    placeholder="Marca del producto"
+                    onChange={(v) => updateField("brand", v)}
+                    options={brandOptions}
+                    placeholder="Buscar o escribir marca..."
+                    searchPlaceholder="Escribe para buscar o crear marca..."
+                    emptyText="Sin marcas coincidentes"
+                    allowCustom={true}
+                    customLabelPrefix="+ Usar nueva marca:"
+                    data-testid="product-brand"
                   />
                 </div>
                 <div>
                   <Label className="text-xs">Garantía (meses)</Label>
                   <Input
                     type="number"
+                    min="0"
                     value={formData.warranty_months}
                     onChange={(e) => updateField("warranty_months", e.target.value)}
+                    placeholder="0"
+                    data-testid="product-warranty"
                   />
                 </div>
                 <div>
@@ -512,57 +560,6 @@ export default function ProductCreateDialog({
                     onChange={(e) => updateField("low_stock_threshold", e.target.value)}
                     placeholder="5"
                   />
-                </div>
-              </div>
-
-              {/* Multi-warehouse provisioning section */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-xs text-slate-900 dark:text-slate-100">Disponibilidad de Inventario en Bodegas</div>
-                    <div className="text-[11px] text-muted-foreground">Crear producto disponible en todas las bodegas (con stock 0 inicial en las demás)</div>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-medium bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border shadow-xs">
-                    <input
-                      type="checkbox"
-                      checked={formData.provision_all_warehouses !== false}
-                      onChange={(e) => updateField("provision_all_warehouses", e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <span>Alta en todas las bodegas</span>
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200 dark:border-slate-800">
-                  <div>
-                    <Label className="text-xs">Bodega para alta inicial (opcional)</Label>
-                    <Select
-                      value={formData.initial_warehouse_id}
-                      onValueChange={(v) => updateField("initial_warehouse_id", v)}
-                    >
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar bodega inicial" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {warehouses.map((w) => (
-                          <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
-                            {w.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Cantidad alta inicial</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.initial_stock}
-                      onChange={(e) => updateField("initial_stock", e.target.value)}
-                      placeholder="0"
-                      className="h-9 text-xs"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -603,7 +600,7 @@ export default function ProductCreateDialog({
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                     {branches.length === 0 ? (
                       <div className="text-[11px] text-muted-foreground italic py-2 text-center">
                         No hay sucursales registradas
@@ -650,7 +647,7 @@ export default function ProductCreateDialog({
                   </p>
                 </div>
 
-                {/* Bodegas de origen */}
+                {/* Bodegas de origen con asignación de inventario inicial */}
                 <div className="p-3.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
                   <div className="flex items-center justify-between pb-1 border-b border-border/50">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -685,7 +682,7 @@ export default function ProductCreateDialog({
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                     {warehouses.length === 0 ? (
                       <div className="text-[11px] text-muted-foreground italic py-2 text-center">
                         No hay bodegas registradas
@@ -693,19 +690,20 @@ export default function ProductCreateDialog({
                     ) : (
                       warehouses.map((w) => {
                         const isChecked = selectedWarehouses.includes(w.warehouse_id);
+                        const qty = formData.warehouse_stocks?.[w.warehouse_id] ?? 0;
                         return (
                           <div
                             key={w.warehouse_id}
                             onClick={() => handleToggleWarehouse(w.warehouse_id)}
-                            className={`flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none ${
+                            className={`flex items-center justify-between p-2 rounded-lg border transition-all select-none gap-2 ${
                               isChecked
                                 ? "bg-primary/10 border-primary/40 text-foreground font-medium shadow-2xs"
-                                : "bg-background/80 border-border/60 text-muted-foreground hover:bg-muted/60"
+                                : "bg-background/80 border-border/60 text-muted-foreground hover:bg-muted/60 opacity-80"
                             }`}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer">
                               <div
-                                className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${
+                                className={`h-4 w-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                                   isChecked
                                     ? "bg-primary border-primary text-primary-foreground"
                                     : "border-muted-foreground/40 bg-background"
@@ -714,12 +712,40 @@ export default function ProductCreateDialog({
                                 {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
                               </div>
                               <span className="text-xs truncate">{w.name}</span>
+                              {isChecked && (
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-primary/30 text-primary bg-primary/5 shrink-0 hidden sm:inline-flex">
+                                  Activa
+                                </Badge>
+                              )}
                             </div>
-                            {isChecked && (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-primary/30 text-primary bg-primary/5">
-                                Activa
-                              </Badge>
-                            )}
+
+                            {/* Campo de cantidad inicial en cada bodega */}
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span className="text-[10px] text-muted-foreground">Stock:</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={qty}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10);
+                                  const safeVal = isNaN(val) ? 0 : Math.max(0, val);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    warehouse_stocks: {
+                                      ...(prev.warehouse_stocks || {}),
+                                      [w.warehouse_id]: safeVal,
+                                    },
+                                  }));
+                                }}
+                                disabled={!isChecked}
+                                placeholder="0"
+                                className="h-7 w-16 text-xs px-1.5 text-center font-mono"
+                                title={`Cantidad inicial para ${w.name}`}
+                              />
+                            </div>
                           </div>
                         );
                       })
@@ -728,7 +754,7 @@ export default function ProductCreateDialog({
                   <p className="text-[10px] text-muted-foreground pt-0.5">
                     {selectedWarehouses.length === 0
                       ? "⚠️ Ninguna bodega seleccionada para stock."
-                      : "Bodegas autorizadas para almacenar y despachar."}
+                      : "Si la bodega está activa, se asigna su cantidad inicial (por defecto 0)."}
                   </p>
                 </div>
               </div>

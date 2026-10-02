@@ -43,6 +43,8 @@ export default function SearchableSelect({
   searchPlaceholder = "Escribe para buscar...",
   emptyText = "Sin resultados",
   disabled = false,
+  allowCustom = false,
+  customLabelPrefix = "+ Usar / Crear:",
   className,
 }) {
   const [open, setOpen] = React.useState(false);
@@ -64,28 +66,20 @@ export default function SearchableSelect({
   const selectedOption = normalizedOptions.find((option) => option.value === selectedValue) || null;
   const triggerLabel = selectedOption?.label || selectedValue;
 
+  const exactMatchExists = React.useMemo(() => {
+    if (!search.trim()) return false;
+    const clean = search.trim().toLowerCase();
+    return normalizedOptions.some(
+      (opt) => opt.value.toLowerCase() === clean || opt.label.toLowerCase() === clean
+    );
+  }, [normalizedOptions, search]);
+
   const handleOpenChange = (nextOpen) => {
     setOpen(nextOpen);
     if (!nextOpen) {
       setSearch("");
     }
   };
-
-  React.useEffect(() => {
-    const list = listRef.current;
-    if (!list || !open) return undefined;
-
-    const handleWheel = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const delta = event.deltaY || event.deltaX;
-      if (!delta) return;
-      moveCommandSelection(commandRef.current, delta > 0 ? 1 : -1);
-    };
-
-    list.addEventListener("wheel", handleWheel, { passive: false });
-    return () => list.removeEventListener("wheel", handleWheel);
-  }, [open, visibleOptions.length]);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -119,36 +113,59 @@ export default function SearchableSelect({
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList ref={listRef}>
-            <CommandEmpty>{emptyText}</CommandEmpty>
-            <CommandGroup>
-              {visibleOptions.map((option) => (
+          <CommandList ref={listRef} className="max-h-60 overflow-y-auto overscroll-contain">
+            {allowCustom && search.trim() && !exactMatchExists ? (
+              <CommandGroup heading="Nueva opción">
                 <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  keywords={[option.label, option.hint].filter(Boolean)}
+                  value={`__custom_${search.trim()}`}
                   onSelect={() => {
-                    onChange(option.value);
+                    onChange(search.trim());
                     setSearch("");
                     setOpen(false);
                   }}
-                  title={option.hint || option.label}
+                  className="font-medium text-primary cursor-pointer"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
-                      selectedValue === option.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate">{option.label}</span>
-                    {option.hint ? (
-                      <span className="block truncate text-[11px] text-muted-foreground">{option.hint}</span>
-                    ) : null}
+                  <span className="truncate">
+                    {customLabelPrefix} <strong>&quot;{search.trim()}&quot;</strong>
                   </span>
                 </CommandItem>
-              ))}
-            </CommandGroup>
+              </CommandGroup>
+            ) : null}
+
+            {visibleOptions.length === 0 && (!allowCustom || !search.trim()) ? (
+              <CommandEmpty>{emptyText}</CommandEmpty>
+            ) : null}
+
+            {visibleOptions.length > 0 ? (
+              <CommandGroup>
+                {visibleOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    keywords={[option.label, option.hint].filter(Boolean)}
+                    onSelect={() => {
+                      onChange(option.value);
+                      setSearch("");
+                      setOpen(false);
+                    }}
+                    title={option.hint || option.label}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4 shrink-0",
+                        selectedValue === option.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{option.label}</span>
+                      {option.hint ? (
+                        <span className="block truncate text-[11px] text-muted-foreground">{option.hint}</span>
+                      ) : null}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
           </CommandList>
         </Command>
       </PopoverContent>

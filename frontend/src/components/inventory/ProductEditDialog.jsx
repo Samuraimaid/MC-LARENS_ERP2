@@ -141,7 +141,7 @@ export default function ProductEditDialog({
         installation_price: parseFloat(formData.installation_price) || 0,
         installation_time_minutes: parseInt(formData.installation_time_minutes, 10) || 0,
         low_stock_threshold: Math.max(1, parseInt(formData.low_stock_threshold, 10) || 5),
-        warranty_months: parseInt(formData.warranty_months, 10) || 12,
+        warranty_months: !isNaN(parseInt(formData.warranty_months, 10)) && parseInt(formData.warranty_months, 10) >= 0 ? parseInt(formData.warranty_months, 10) : 0,
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
       };
 

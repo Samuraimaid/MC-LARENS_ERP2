@@ -7352,11 +7352,18 @@ async def create_product(product_data: ProductCreate, request: Request):
 
     raw_initial_stock = doc.pop("initial_stock", 0)
     raw_initial_warehouse_id = doc.pop("initial_warehouse_id", None)
+    raw_warehouse_stocks = doc.pop("warehouse_stocks", {}) or {}
     provision_all = bool(doc.pop("provision_all_warehouses", True))
     try:
         initial_stock = max(0, int(float(raw_initial_stock or 0)))
     except Exception:
         initial_stock = 0
+
+    raw_warranty = doc.get("warranty_months", 0)
+    try:
+        doc["warranty_months"] = max(0, int(float(raw_warranty or 0)))
+    except Exception:
+        doc["warranty_months"] = 0
 
     sku = str(doc.get("sku") or "").strip()
     if sku:
@@ -7453,15 +7460,22 @@ async def create_product(product_data: ProductCreate, request: Request):
         fallback = await db.warehouses.find_one({}, {"_id": 0, "warehouse_id": 1})
         target_warehouse_id = str((fallback or {}).get("warehouse_id") or "")
 
-    # Multi-warehouse provisioning (provision across all active warehouses)
-    if is_physical and provision_all:
+    # Multi-warehouse provisioning (provision across all active warehouses with custom or uniform stock)
+    if is_physical and (provision_all or raw_warehouse_stocks):
         all_warehouses = await db.warehouses.find({}, {"_id": 0, "warehouse_id": 1}).to_list(100)
         for w in all_warehouses:
             w_id = str(w.get("warehouse_id") or "").strip()
             if not w_id:
                 continue
-            is_initial_target = (w_id == target_warehouse_id)
-            stock_qty = int(initial_stock) if is_initial_target else 0
+            
+            if w_id in raw_warehouse_stocks:
+                try:
+                    stock_qty = max(0, int(float(raw_warehouse_stocks[w_id] or 0)))
+                except Exception:
+                    stock_qty = 0
+            else:
+                is_initial_target = (w_id == target_warehouse_id)
+                stock_qty = int(initial_stock) if is_initial_target else 0
             
             inv_filter = {"product_id": doc["product_id"], "warehouse_id": w_id}
             existing_inventory = await db.inventory.find_one(inv_filter, {"_id": 0, "inventory_id": 1})
@@ -7488,11 +7502,11 @@ async def create_product(product_data: ProductCreate, request: Request):
                     }
                 )
 
-            if is_initial_target and initial_stock > 0:
+            if stock_qty > 0:
                 await audit_service.log_inventory_movement(
                     product_id=doc["product_id"],
                     warehouse_id=w_id,
-                    quantity_change=int(initial_stock),
+                    quantity_change=int(stock_qty),
                     reason="initial_stock_product_create",
                     actor=user,
                     branch_id=user.branch_id,
@@ -7528,6 +7542,12 @@ async def create_product(product_data: ProductCreate, request: Request):
             product_id=doc["product_id"],
             warehouse_id=target_warehouse_id,
             quantity_change=int(initial_stock),
+            reason="initial_stock_product_create",
+            actor=user,
+            branch_id=user.branch_id,
+            reference_id=inventory_id,
+            metadata={"sku": doc.get("sku")},
+        )
             reason="initial_stock_product_create",
             actor=user,
             branch_id=user.branch_id,

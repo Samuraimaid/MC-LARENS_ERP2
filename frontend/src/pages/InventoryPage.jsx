@@ -1834,6 +1834,7 @@ export function InventoryPage() {
                 fetchData();
                 fetchCategories();
               }}
+              products={products}
               categories={categories}
               getSubcategories={getSubcategories}
               vehicleTypes={vehicleTypes}
