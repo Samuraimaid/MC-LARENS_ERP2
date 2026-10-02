@@ -7548,12 +7548,6 @@ async def create_product(product_data: ProductCreate, request: Request):
             reference_id=inventory_id,
             metadata={"sku": doc.get("sku")},
         )
-            reason="initial_stock_product_create",
-            actor=user,
-            branch_id=user.branch_id,
-            reference_id=inventory_id,
-            metadata={"sku": doc.get("sku")},
-        )
 
     # Return authoritative stored document when possible
     stored = await db.products.find_one({"product_id": doc["product_id"]}, {"_id": 0})
