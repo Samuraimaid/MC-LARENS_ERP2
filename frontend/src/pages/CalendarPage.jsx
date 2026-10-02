@@ -18,6 +18,8 @@ import {
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { API_BASE as API } from "@/lib/api";
+import { formatVehicleDisplay } from "@/lib/utils";
+
 
 const EVENT_TYPES = {
   work_order: { label: "Orden de Trabajo", color: "bg-blue-500", icon: Wrench },
@@ -526,12 +528,12 @@ export function CalendarPage() {
                     <p>{selectedEvent.customer_name}</p>
                   </div>
                 )}
-                {selectedEvent.vehicle_info && (
+                {(selectedEvent.vehicle_info || selectedEvent.vehicle) && (
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Vehículo:</span>
                     <p className="flex items-center gap-1">
-                      <Car className="h-4 w-4" />
-                      {selectedEvent.vehicle_info}
+                      <Car className="h-4 w-4 shrink-0" />
+                      <span>{formatVehicleDisplay(selectedEvent.vehicle_info || selectedEvent.vehicle)}</span>
                     </p>
                   </div>
                 )}
