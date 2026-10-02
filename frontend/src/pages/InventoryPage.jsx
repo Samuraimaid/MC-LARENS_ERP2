@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { formatCurrency } from "../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -38,6 +38,8 @@ import { useAuth } from "../context/AuthContext";
 import { formatCategoryLabel, getProductBrandLogo, ERP_CATEGORY_LABELS } from "@/lib/branding";
 import { productMatchesSearch } from "@/lib/productLookup";
 import ProductCatalogSelect from "@/components/inventory/ProductCatalogSelect";
+import ProductCreateDialog from "@/components/inventory/ProductCreateDialog";
+import ProductEditDialog from "@/components/inventory/ProductEditDialog";
 import InventoryLabelPrintDialog from "@/components/inventory/InventoryLabelPrintDialog";
 import DriverWhatsAppDispatchButton from "@/components/drivers/DriverWhatsAppDispatchButton";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
@@ -142,13 +144,6 @@ export function InventoryPage() {
   const [zoneTransferLoading, setZoneTransferLoading] = useState(false);
   /** U10: warehouse truck transfer waits for server — never optimistic. */
   const [transferBusy, setTransferBusy] = useState(false);
-  /** U12: remount/reset validation timing when create dialog closes */
-  const [productValidationKey, setProductValidationKey] = useState(0);
-  const createSkuRef = useRef(null);
-  const createNameRef = useRef(null);
-  const createPriceRef = useRef(null);
-  const editNameRef = useRef(null);
-  const editPriceRef = useRef(null);
   const [warrantyForm, setWarrantyForm] = useState({
     product_id: "",
     warehouse_id: "",
@@ -158,53 +153,11 @@ export function InventoryPage() {
     notes: "",
   });
 
-
   // Category creation dialog state
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategorySubcategories, setNewCategorySubcategories] = useState("");
   const [creatingCategory, setCreatingCategory] = useState(false);
-
-  // New product form with all fields
-  const [newProduct, setNewProduct] = useState({
-    sku: "",
-    barcode: "",
-    name: "",
-    description: "",
-    category: "",
-    subcategory: "",
-    brand: "",
-    price: "",
-    precio1: "",
-    precio2: "",
-    precio_vip: "",
-    precio_casa_comercial: "",
-    precio3: "",
-    cost: "",
-    product_type: "product",
-    images: [],
-    compatibility: {
-      brands: [],
-      models: [],
-      year_from: null,
-      year_to: null,
-      vehicle_types: []
-    },
-    installation_required: false,
-    installation_price: "",
-    installation_time_minutes: "",
-    installation_type: "optional",
-    polarizado_type: "",
-    window_options: [],
-    hourly_rate: "",
-    warranty_months: 12,
-    low_stock_threshold: 5,
-    initial_stock: 0,
-    initial_warehouse_id: "",
-    provision_all_warehouses: true,
-    available_store_ids: [],
-    source_warehouse_ids: [],
-  });
 
   // Transfer form
   const [transfer, setTransfer] = useState({
@@ -240,13 +193,6 @@ export function InventoryPage() {
   });
   const [intakeProductSearch, setIntakeProductSearch] = useState("");
   const [intakeSubmitting, setIntakeSubmitting] = useState(false);
-
-  // Image URL input
-  const [newImageUrl, setNewImageUrl] = useState("");
-
-  // Compatibility inputs
-  const [newBrand, setNewBrand] = useState("");
-  const [newModel, setNewModel] = useState("");
 
   const fetchData = useCallback(async (opts) => {
     const silent = Boolean(opts && typeof opts === "object" && opts.silent);
@@ -820,152 +766,6 @@ export function InventoryPage() {
     }
   };
 
-  const resetProductForm = () => {
-    setProductValidationKey((k) => k + 1);
-    setNewProduct({
-      sku: "",
-      barcode: "",
-      name: "",
-      description: "",
-      category: "",
-      subcategory: "",
-      brand: "",
-      price: "",
-      precio1: "",
-      precio2: "",
-      precio_vip: "",
-      precio_casa_comercial: "",
-      precio3: "",
-      cost: "",
-      product_type: "product",
-      images: [],
-      compatibility: {
-        brands: [],
-        models: [],
-        year_from: null,
-        year_to: null,
-        vehicle_types: []
-      },
-      installation_required: false,
-      installation_price: "",
-      installation_time_minutes: "",
-      installation_type: "optional",
-      polarizado_type: "",
-      window_options: [],
-      hourly_rate: "",
-      warranty_months: 12,
-      low_stock_threshold: 5,
-      initial_stock: 0,
-      initial_warehouse_id: "",
-      provision_all_warehouses: true,
-      available_store_ids: [],
-      source_warehouse_ids: [],
-    });
-    setNewImageUrl("");
-    setNewBrand("");
-    setNewModel("");
-  };
-
-  const createProduct = async () => {
-    if (!canCreateInventory) {
-      toast.error("No tienes permiso para crear productos");
-      return;
-    }
-    createSkuRef.current?.markSubmitAttempted?.();
-    createNameRef.current?.markSubmitAttempted?.();
-    createPriceRef.current?.markSubmitAttempted?.();
-    if (!newProduct.sku || !newProduct.name || !newProduct.category || !newProduct.price) {
-      toast.error("Completa los campos obligatorios: SKU, Nombre, Categoría, Precio");
-      return;
-    }
-    try {
-      const tier1 = parseFloat(newProduct.precio1 || newProduct.price) || 0;
-      const tierPayload = buildProductPricePayload(newProduct, { precio1: tier1 });
-      const payload = {
-        ...newProduct,
-        ...tierPayload,
-        cost: parseFloat(newProduct.cost) || 0,
-        warranty_months: parseInt(newProduct.warranty_months) || 12,
-        installation_price: parseFloat(newProduct.installation_price) || 0,
-        installation_time_minutes: parseInt(newProduct.installation_time_minutes) || 0,
-        low_stock_threshold: Math.max(1, parseInt(newProduct.low_stock_threshold, 10) || 5),
-        initial_stock: Math.max(0, parseInt(newProduct.initial_stock, 10) || 0),
-        initial_warehouse_id: newProduct.initial_warehouse_id || "",
-        provision_all_warehouses: newProduct.provision_all_warehouses !== false,
-        available_store_ids: newProduct.available_store_ids?.length ? newProduct.available_store_ids : branches.map(b => b.branch_id),
-        source_warehouse_ids: newProduct.source_warehouse_ids?.length ? newProduct.source_warehouse_ids : warehouses.map(w => w.warehouse_id),
-        barcode: String(newProduct.barcode || "").trim() || undefined,
-        installation_type: newProduct.installation_type || "optional",
-        hourly_rate: newProduct.hourly_rate ? parseFloat(newProduct.hourly_rate) : null,
-        compatibility: newProduct.compatibility.brands.length > 0 || 
-                       newProduct.compatibility.vehicle_types.length > 0 ||
-                       newProduct.compatibility.year_from
-          ? {
-              brands: newProduct.compatibility.brands,
-              models: newProduct.compatibility.models,
-              year_from: newProduct.compatibility.year_from ? parseInt(newProduct.compatibility.year_from) : null,
-              year_to: newProduct.compatibility.year_to ? parseInt(newProduct.compatibility.year_to) : null,
-              vehicle_types: newProduct.compatibility.vehicle_types
-            }
-          : null
-      };
-      await axios.post(`${API}/products`, payload, { withCredentials: true });
-      toast.success("Producto creado exitosamente");
-      setShowNewProduct(false);
-      resetProductForm();
-      fetchData();
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo crear el producto — revisa SKU y datos e inténtalo de nuevo"));
-    }
-  };
-
-  const updateProduct = async () => {
-    if (!canEditInventory) {
-      toast.error("No tienes permiso para editar productos");
-      return;
-    }
-    if (!editingProduct) return;
-    editNameRef.current?.markSubmitAttempted?.();
-    editPriceRef.current?.markSubmitAttempted?.();
-    const nameOk = Boolean(String(editingProduct.name || "").trim());
-    const priceRaw = editingProduct.precio1 || editingProduct.price;
-    const priceOk = String(priceRaw ?? "").trim() !== "" && Number.isFinite(Number(priceRaw)) && Number(priceRaw) >= 0;
-    if (!nameOk || !priceOk) {
-      toast.error("Completa nombre y precio válidos antes de guardar");
-      return;
-    }
-    try {
-      const tier1 = parseFloat(editingProduct.precio1 || editingProduct.price) || 0;
-      const tierPayload = buildProductPricePayload(editingProduct, { precio1: tier1 });
-      const payload = {
-        name: editingProduct.name,
-        barcode: String(editingProduct.barcode || "").trim() || null,
-        description: editingProduct.description,
-        ...tierPayload,
-        cost: parseFloat(editingProduct.cost) || 0,
-        category: editingProduct.category,
-        subcategory: editingProduct.subcategory,
-        brand: editingProduct.brand,
-        product_type: editingProduct.product_type,
-        images: editingProduct.images,
-        compatibility: editingProduct.compatibility,
-        installation_required: editingProduct.installation_required,
-        installation_type: editingProduct.installation_type || "optional",
-        installation_price: parseFloat(editingProduct.installation_price) || 0,
-        installation_time_minutes: parseInt(editingProduct.installation_time_minutes) || 0,
-        low_stock_threshold: Math.max(1, parseInt(editingProduct.low_stock_threshold, 10) || 5),
-        warranty_months: parseInt(editingProduct.warranty_months) || 12,
-        hourly_rate: editingProduct.hourly_rate ? parseFloat(editingProduct.hourly_rate) : null,
-      };
-      await axios.put(`${API}/products/${editingProduct.product_id}`, payload, { withCredentials: true });
-      toast.success("Producto actualizado");
-      setEditingProduct(null);
-      fetchData();
-    } catch (error) {
-      toast.error(humanApiError(error, "No se pudo actualizar el producto — inténtalo de nuevo"));
-    }
-  };
-
   const emptyTransferForm = () => ({
     product_id: "",
     from_warehouse: "",
@@ -1137,185 +937,6 @@ export function InventoryPage() {
   };
 
 
-
-  const addImageUrl = () => {
-    if (newImageUrl && !newProduct.images.includes(newImageUrl)) {
-      setNewProduct({
-        ...newProduct,
-        images: [...newProduct.images, newImageUrl]
-      });
-      setNewImageUrl("");
-    }
-  };
-
-  const removeImage = (url) => {
-    setNewProduct({
-      ...newProduct,
-      images: newProduct.images.filter(img => img !== url)
-    });
-  };
-
-  // U2: per-file uploads with honest xhr progress (independent lanes + retry).
-  // start_index keeps {SKU}_main / {SKU}_add_XX naming across parallel requests.
-  const createUploadNameIndexRef = React.useRef(0);
-  const editUploadNameIndexRef = React.useRef(0);
-
-  React.useEffect(() => {
-    if (showNewProduct) {
-      createUploadNameIndexRef.current = Array.isArray(newProduct?.images)
-        ? newProduct.images.length
-        : 0;
-    }
-  }, [showNewProduct]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  React.useEffect(() => {
-    if (editingProduct?.product_id) {
-      editUploadNameIndexRef.current = Array.isArray(editingProduct.images)
-        ? editingProduct.images.length
-        : 0;
-    }
-  }, [editingProduct?.product_id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const uploadOneProductImage = React.useCallback(
-    async (file, { onProgress } = {}, { isEditing = false } = {}) => {
-      const currentTarget = isEditing ? editingProduct : newProduct;
-      const currentSku = currentTarget?.sku || "";
-      const indexRef = isEditing ? editUploadNameIndexRef : createUploadNameIndexRef;
-      const startIndex = indexRef.current;
-      indexRef.current = startIndex + 1;
-
-      const formData = new FormData();
-      formData.append("files", file);
-      if (currentSku) formData.append("sku", currentSku);
-      formData.append("start_index", String(startIndex));
-      // Omit product_id on per-file uploads: gallery is persisted on product save.
-      // (Passing product_id with start_index==0 would replace DB images.)
-
-      const res = await axios.post(`${API}/products/images/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-        onUploadProgress: (evt) => {
-          if (typeof onProgress === "function" && evt.total) {
-            onProgress({ loaded: evt.loaded, total: evt.total });
-          }
-        },
-      });
-      return res.data;
-    },
-    [editingProduct, newProduct]
-  );
-
-  const handleCreateUploadFile = React.useCallback(
-    (file, opts) => uploadOneProductImage(file, opts, { isEditing: false }),
-    [uploadOneProductImage]
-  );
-
-  const handleEditUploadFile = React.useCallback(
-    (file, opts) => uploadOneProductImage(file, opts, { isEditing: true }),
-    [uploadOneProductImage]
-  );
-
-  const appendUploadedUrls = React.useCallback((result, isEditing) => {
-    const newUrls = result?.image_urls || [];
-    if (!newUrls.length) return;
-    if (isEditing) {
-      setEditingProduct((prev) => ({
-        ...prev,
-        images: [...(prev.images || []), ...newUrls],
-      }));
-    } else {
-      setNewProduct((prev) => ({
-        ...prev,
-        images: [...(prev.images || []), ...newUrls],
-      }));
-    }
-  }, []);
-
-  const removeUploadedUrls = React.useCallback((item, isEditing) => {
-    const urls = item?.result?.image_urls || [];
-    if (!urls.length) return;
-    const drop = new Set(urls);
-    if (isEditing) {
-      setEditingProduct((prev) => ({
-        ...prev,
-        images: (prev.images || []).filter((u) => !drop.has(u)),
-      }));
-    } else {
-      setNewProduct((prev) => ({
-        ...prev,
-        images: (prev.images || []).filter((u) => !drop.has(u)),
-      }));
-    }
-  }, []);
-
-  const setPrimaryImage = (url, isEditing = false) => {
-    if (isEditing) {
-      setEditingProduct(prev => {
-        const remaining = (prev.images || []).filter(img => img !== url);
-        return { ...prev, images: [url, ...remaining] };
-      });
-    } else {
-      setNewProduct(prev => {
-        const remaining = prev.images.filter(img => img !== url);
-        return { ...prev, images: [url, ...remaining] };
-      });
-    }
-    toast.success("Imagen establecida como Principal");
-  };
-
-  const removeProductImage = (url, isEditing = false) => {
-    if (isEditing) {
-      setEditingProduct(prev => ({
-        ...prev,
-        images: (prev.images || []).filter(img => img !== url)
-      }));
-    } else {
-      setNewProduct(prev => ({
-        ...prev,
-        images: prev.images.filter(img => img !== url)
-      }));
-    }
-  };
-
-  const addCompatibilityBrand = () => {
-    if (newBrand && !newProduct.compatibility.brands.includes(newBrand)) {
-      setNewProduct({
-        ...newProduct,
-        compatibility: {
-          ...newProduct.compatibility,
-          brands: [...newProduct.compatibility.brands, newBrand]
-        }
-      });
-      setNewBrand("");
-    }
-  };
-
-  const addCompatibilityModel = () => {
-    if (newModel && !newProduct.compatibility.models.includes(newModel)) {
-      setNewProduct({
-        ...newProduct,
-        compatibility: {
-          ...newProduct.compatibility,
-          models: [...newProduct.compatibility.models, newModel]
-        }
-      });
-      setNewModel("");
-    }
-  };
-
-  const toggleVehicleType = (type) => {
-    const current = newProduct.compatibility.vehicle_types;
-    const updated = current.includes(type)
-      ? current.filter(t => t !== type)
-      : [...current, type];
-    setNewProduct({
-      ...newProduct,
-      compatibility: {
-        ...newProduct.compatibility,
-        vehicle_types: updated
-      }
-    });
-  };
 
   // CSV Import functions
   const downloadTemplate = async () => {
@@ -1997,7 +1618,7 @@ export function InventoryPage() {
           ) : null}
           {!isWarehouseRole ? (
           <Dialog open={showImportCSV} onOpenChange={setShowImportCSV}>
-            <DialogContent>
+            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
               <ContextualDialogHeader
                 variant="information"
                 size="inline"
@@ -2068,7 +1689,7 @@ export function InventoryPage() {
             setShowTransfer(open);
             if (!open) setTransfer(emptyTransferForm());
           }}>
-            <DialogContent data-testid="warehouse-transfer-dialog">
+            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} data-testid="warehouse-transfer-dialog">
               <DialogHeader>
                 <DialogTitle>Trasladar entre bodegas</DialogTitle>
                 <DialogDescription>
@@ -2148,7 +1769,7 @@ export function InventoryPage() {
           </Dialog>
 
           <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
-            <DialogContent className="max-w-md">
+            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Ingreso de Inventario</DialogTitle>
               </DialogHeader>
@@ -2197,740 +1818,25 @@ export function InventoryPage() {
           </Dialog>
           
           {!isWarehouseRole ? (
-          <Dialog open={showNewProduct} onOpenChange={(open) => { setShowNewProduct(open); if (!open) resetProductForm(); }}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-              <DialogHeader>
-                <DialogTitle>Crear producto</DialogTitle>
-                <DialogDescription>Completa la información del producto o servicio</DialogDescription>
-              </DialogHeader>
-              <ScrollArea className="h-[70vh] pr-4">
-                <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="basic">Básico</TabsTrigger>
-                    <TabsTrigger value="pricing">Precios</TabsTrigger>
-                    <TabsTrigger value="compatibility">Compatibilidad</TabsTrigger>
-                    <TabsTrigger value="media">Imágenes</TabsTrigger>
-                  </TabsList>
-                  
-                  {/* Basic Info Tab */}
-                  <TabsContent value="basic" className="space-y-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <ValidatedInput
-                        ref={createSkuRef}
-                        label="SKU"
-                        requiredMark
-                        value={newProduct.sku}
-                        onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                        validate={requiredSku}
-                        resetKey={productValidationKey}
-                        successLabel={VALIDATION_SUCCESS_SHORT}
-                        placeholder="PRD-001"
-                        data-testid="product-sku"
-                      />
-                      <div>
-                        <Label>Código de barras</Label>
-                        <Input
-                          value={newProduct.barcode}
-                          onChange={(e) => setNewProduct({ ...newProduct, barcode: e.target.value })}
-                          placeholder="EAN / UPC (opcional)"
-                          data-testid="product-barcode"
-                        />
-                      </div>
-                    </div>
-
-                    <ValidatedInput
-                      ref={createNameRef}
-                      label="Nombre"
-                      requiredMark
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                      validate={requiredProductName}
-                      resetKey={productValidationKey}
-                      successLabel="Se ve bien"
-                      placeholder="Nombre del producto"
-                      data-testid="product-name"
-                    />
-                    
-                    <div>
-                      <Label>Descripción</Label>
-                      <Textarea
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                        placeholder="Descripción detallada del producto..."
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label>Tipo *</Label>
-                        <Select 
-                          value={newProduct.product_type} 
-                          onValueChange={(v) => setNewProduct({ ...newProduct, product_type: v })}
-                        >
-                          <SelectTrigger data-testid="product-type">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="product">Producto Físico</SelectItem>
-                            <SelectItem value="service">Servicio</SelectItem>
-                            <SelectItem value="service_hourly">Servicio por Hora</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <Label className="text-xs">Categoría *</Label>
-                          <button
-                            type="button"
-                            onClick={() => setShowNewCategoryDialog(true)}
-                            className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-0.5"
-                          >
-                            <Plus className="h-3 w-3" /> Nueva
-                          </button>
-                        </div>
-                        <Select 
-                          value={newProduct.category} 
-                          onValueChange={(v) => setNewProduct({
-                            ...newProduct,
-                            category: v,
-                            subcategory: "",
-                            installation_type: v === "polarizados" ? "required" : newProduct.installation_type,
-                            installation_required: v === "polarizados" ? true : newProduct.installation_required,
-                          })}
-                        >
-                          <SelectTrigger data-testid="product-category">
-                            <SelectValue placeholder="Seleccionar categoría" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(categories).map(([key, cat]) => (
-                              <SelectItem key={key} value={key}>{cat?.name || formatCategoryLabel(key)}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Subcategoría</Label>
-                        <Select 
-                          value={newProduct.subcategory} 
-                          onValueChange={(v) => setNewProduct({ ...newProduct, subcategory: v })}
-                          disabled={!newProduct.category}
-                        >
-                          <SelectTrigger data-testid="product-subcategory">
-                            <SelectValue placeholder="Seleccionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getSubcategories(newProduct.category).map(sub => (
-                              <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-xs">Marca</Label>
-                        <Input
-                          value={newProduct.brand}
-                          onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
-                          placeholder="Marca del producto"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Garantía (meses)</Label>
-                        <Input
-                          type="number"
-                          value={newProduct.warranty_months}
-                          onChange={(e) => setNewProduct({ ...newProduct, warranty_months: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Umbral stock bajo</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={newProduct.low_stock_threshold}
-                          onChange={(e) => setNewProduct({ ...newProduct, low_stock_threshold: e.target.value })}
-                          placeholder="5"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Multi-warehouse provisioning section */}
-                    <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-xs text-slate-900 dark:text-slate-100">Disponibilidad de Inventario en Bodegas</div>
-                          <div className="text-[11px] text-muted-foreground">Crear producto disponible en todas las bodegas (con stock 0 inicial en las demás)</div>
-                        </div>
-                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border shadow-xs">
-                          <input
-                            type="checkbox"
-                            checked={newProduct.provision_all_warehouses !== false}
-                            onChange={(e) => setNewProduct({ ...newProduct, provision_all_warehouses: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span>Alta en todas las bodegas</span>
-                        </label>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200 dark:border-slate-800">
-                        <div>
-                          <Label className="text-xs">Bodega para alta inicial (opcional)</Label>
-                          <Select
-                            value={newProduct.initial_warehouse_id}
-                            onValueChange={(v) => setNewProduct({ ...newProduct, initial_warehouse_id: v })}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Seleccionar bodega inicial" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {warehouses.map((w) => (
-                                <SelectItem key={w.warehouse_id} value={w.warehouse_id}>
-                                  {w.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Cantidad alta inicial</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={newProduct.initial_stock}
-                            onChange={(e) => setNewProduct({ ...newProduct, initial_stock: e.target.value })}
-                            placeholder="0"
-                            className="h-9 text-xs"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Branches & Source Warehouses matrix */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Tiendas autorizadas */}
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Tiendas de Venta Autorizadas</Label>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setNewProduct({
-                                ...newProduct,
-                                available_store_ids: branches.map(b => b.branch_id)
-                              })}
-                              className="text-[11px] text-primary hover:underline font-semibold"
-                            >
-                              Todas
-                            </button>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <button
-                              type="button"
-                              onClick={() => setNewProduct({
-                                ...newProduct,
-                                available_store_ids: []
-                              })}
-                              className="text-[11px] text-muted-foreground hover:underline"
-                            >
-                              Ninguna
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                          {branches.map(b => {
-                            const selectedStores = newProduct.available_store_ids || [];
-                            const isChecked = selectedStores.length === 0 || selectedStores.includes(b.branch_id);
-                            return (
-                              <label key={b.branch_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    const base = selectedStores.length === 0 ? branches.map(x => x.branch_id) : selectedStores;
-                                    const next = e.target.checked
-                                      ? [...base, b.branch_id]
-                                      : base.filter(id => id !== b.branch_id);
-                                    setNewProduct({ ...newProduct, available_store_ids: next });
-                                  }}
-                                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                                <span className="truncate">{b.name}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Bodegas de origen */}
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Bodegas de Origen / Abastecimiento</Label>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setNewProduct({
-                                ...newProduct,
-                                source_warehouse_ids: warehouses.map(w => w.warehouse_id)
-                              })}
-                              className="text-[11px] text-primary hover:underline font-semibold"
-                            >
-                              Todas
-                            </button>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <button
-                              type="button"
-                              onClick={() => setNewProduct({
-                                ...newProduct,
-                                source_warehouse_ids: []
-                              })}
-                              className="text-[11px] text-muted-foreground hover:underline"
-                            >
-                              Ninguna
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                          {warehouses.map(w => {
-                            const selectedWarehouses = newProduct.source_warehouse_ids || [];
-                            const isChecked = selectedWarehouses.length === 0 || selectedWarehouses.includes(w.warehouse_id);
-                            return (
-                              <label key={w.warehouse_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 p-1 rounded">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    const base = selectedWarehouses.length === 0 ? warehouses.map(x => x.warehouse_id) : selectedWarehouses;
-                                    const next = e.target.checked
-                                      ? [...base, w.warehouse_id]
-                                      : base.filter(id => id !== w.warehouse_id);
-                                    setNewProduct({ ...newProduct, source_warehouse_ids: next });
-                                  }}
-                                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                                <span className="truncate">{w.name}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {newProduct.category === "polarizados" && (
-                      <div>
-                        <Label>Tipo de Polarizado</Label>
-                        <Input
-                          value={newProduct.polarizado_type}
-                          onChange={(e) => setNewProduct({ ...newProduct, polarizado_type: e.target.value })}
-                          placeholder="Ej: Premium, Cerámico, Espejo"
-                        />
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  {/* Pricing Tab */}
-                  <TabsContent value="pricing" className="space-y-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="relative space-y-1">
-                        <ValidatedInput
-                          ref={createPriceRef}
-                          label="Precio Base"
-                          requiredMark
-                          type="number"
-                          step="0.01"
-                          value={newProduct.price}
-                          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value, precio1: e.target.value || newProduct.precio1 })}
-                          validate={requiredPrice}
-                          resetKey={productValidationKey}
-                          successLabel={VALIDATION_SUCCESS_SHORT}
-                          placeholder="0.00"
-                          inputClassName="pl-9"
-                          data-testid="product-price"
-                        />
-                        <DollarSign className="pointer-events-none absolute left-3 top-[2.05rem] h-4 w-4 text-muted-foreground" aria-hidden />
-                      </div>
-                      <div>
-                        <Label>Costo</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.cost}
-                            onChange={(e) => setNewProduct({ ...newProduct, cost: e.target.value })}
-                            placeholder="0.00"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {newProduct.installation_type !== "not_available" && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Precio 1</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.precio1}
-                            onChange={(e) => setNewProduct({ ...newProduct, precio1: e.target.value })}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div>
-                          <Label>Precio 2</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.precio2}
-                            onChange={(e) => setNewProduct({ ...newProduct, precio2: e.target.value })}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div>
-                          <Label>Precio VIP</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.precio_vip}
-                            onChange={(e) => setNewProduct({ ...newProduct, precio_vip: e.target.value })}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div>
-                          <Label>Precio Casa Comercial</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.precio_casa_comercial || newProduct.precio3}
-                            onChange={(e) => setNewProduct({
-                              ...newProduct,
-                              precio_casa_comercial: e.target.value,
-                              precio3: e.target.value,
-                            })}
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {newProduct.product_type === "service_hourly" && (
-                      <div>
-                        <Label>Tarifa por Hora</Label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newProduct.hourly_rate}
-                            onChange={(e) => setNewProduct({ ...newProduct, hourly_rate: e.target.value })}
-                            placeholder="0.00"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-                      <div>
-                        <Label>Tipo de Instalación</Label>
-                        <Select 
-                          value={newProduct.installation_type} 
-                          onValueChange={(v) => setNewProduct({ 
-                            ...newProduct, 
-                            installation_type: v,
-                            installation_required: v === "required"
-                          })}
-                          disabled={newProduct.category === "polarizados"}
-                        >
-                          <SelectTrigger data-testid="installation-type-select">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="required">
-                              <span className="flex items-center gap-2">
-                                <Wrench className="h-4 w-4 text-green-600" />
-                                Requiere Instalación
-                              </span>
-                            </SelectItem>
-                            <SelectItem value="optional">
-                              <span className="flex items-center gap-2">
-                                <Wrench className="h-4 w-4 text-blue-600" />
-                                Instalación Opcional
-                              </span>
-                            </SelectItem>
-                            <SelectItem value="not_available">
-                              <span className="flex items-center gap-2">
-                                <Package className="h-4 w-4 text-orange-600" />
-                                Solo Para Llevar
-                              </span>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {newProduct.category === "polarizados" && "Polarizados se vende únicamente con instalación obligatoria"}
-                          {newProduct.installation_type === "required" && "El producto debe ser instalado obligatoriamente"}
-                          {newProduct.installation_type === "optional" && "El cliente puede elegir si desea instalación"}
-                          {newProduct.installation_type === "not_available" && "Producto solo para llevar. Requiere autorización del gerente para instalar"}
-                        </p>
-                      </div>
-                      
-                      {newProduct.installation_type !== "not_available" && (
-                        <div className="grid grid-cols-2 gap-4 mt-4">
-                          <div>
-                            <Label>Precio de Instalación</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={newProduct.installation_price}
-                              onChange={(e) => setNewProduct({ ...newProduct, installation_price: e.target.value })}
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <Label>Tiempo Estimado (minutos)</Label>
-                            <Input
-                              type="number"
-                              value={newProduct.installation_time_minutes}
-                              onChange={(e) => setNewProduct({ ...newProduct, installation_time_minutes: e.target.value })}
-                              placeholder="60"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                  
-                  {/* Compatibility Tab */}
-                  <TabsContent value="compatibility" className="space-y-4 mt-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Car className="h-4 w-4" />
-                          Compatibilidad de Vehículos
-                        </CardTitle>
-                        <CardDescription>Deja vacío para compatibilidad universal</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Marcas Compatibles</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                value={newBrand}
-                                onChange={(e) => setNewBrand(e.target.value)}
-                                placeholder="Toyota, Nissan..."
-                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCompatibilityBrand())}
-                              />
-                              <Button type="button" size="sm" onClick={addCompatibilityBrand}>
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {newProduct.compatibility.brands.map(brand => (
-                                <Badge key={brand} variant="secondary" className="gap-1">
-                                  {brand}
-                                  <X className="h-3 w-3 cursor-pointer" onClick={() => setNewProduct({
-                                    ...newProduct,
-                                    compatibility: {
-                                      ...newProduct.compatibility,
-                                      brands: newProduct.compatibility.brands.filter(b => b !== brand)
-                                    }
-                                  })} />
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <Label>Modelos Compatibles</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                value={newModel}
-                                onChange={(e) => setNewModel(e.target.value)}
-                                placeholder="Hilux, Frontier..."
-                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCompatibilityModel())}
-                              />
-                              <Button type="button" size="sm" onClick={addCompatibilityModel}>
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {newProduct.compatibility.models.map(model => (
-                                <Badge key={model} variant="secondary" className="gap-1">
-                                  {model}
-                                  <X className="h-3 w-3 cursor-pointer" onClick={() => setNewProduct({
-                                    ...newProduct,
-                                    compatibility: {
-                                      ...newProduct.compatibility,
-                                      models: newProduct.compatibility.models.filter(m => m !== model)
-                                    }
-                                  })} />
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Año Desde</Label>
-                            <Input
-                              type="number"
-                              value={newProduct.compatibility.year_from || ""}
-                              onChange={(e) => setNewProduct({
-                                ...newProduct,
-                                compatibility: { ...newProduct.compatibility, year_from: e.target.value }
-                              })}
-                              placeholder="2015"
-                            />
-                          </div>
-                          <div>
-                            <Label>Año Hasta</Label>
-                            <Input
-                              type="number"
-                              value={newProduct.compatibility.year_to || ""}
-                              onChange={(e) => setNewProduct({
-                                ...newProduct,
-                                compatibility: { ...newProduct.compatibility, year_to: e.target.value }
-                              })}
-                              placeholder="2024"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label>Tipos de Vehículo</Label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {vehicleTypes.map(type => (
-                              <Badge
-                                key={type}
-                                variant={newProduct.compatibility.vehicle_types.includes(type) ? "default" : "outline"}
-                                className="cursor-pointer"
-                                onClick={() => toggleVehicleType(type)}
-                              >
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  {/* Media Tab */}
-                  <TabsContent value="media" className="space-y-4 mt-4">
-                    <div className="space-y-3">
-                      <Label className="text-sm font-semibold">Cargar Imágenes del Producto</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Sube las fotos del producto desde tu equipo (se renombrarán automáticamente como <code className="bg-muted px-1 rounded">{'{SKU}_main'}</code> y <code className="bg-muted px-1 rounded">{'{SKU}_add_XX'}</code>) o añade enlaces directos.
-                      </p>
-
-                      <div className="space-y-3">
-                        <FileUploadQueue
-                          key={showNewProduct ? "create-uploads-open" : "create-uploads-closed"}
-                          accept="image/*"
-                          multiple
-                          compact
-                          testId="inventory-create-uploads"
-                          onUploadFile={handleCreateUploadFile}
-                          onFileDone={(result) => appendUploadedUrls(result, false)}
-                          onItemRemove={(item) => removeUploadedUrls(item, false)}
-                        />
-
-                        <div className="flex flex-1 gap-2">
-                          <Input
-                            value={newImageUrl}
-                            onChange={(e) => setNewImageUrl(e.target.value)}
-                            placeholder="https://ejemplo.com/foto.jpg"
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
-                          />
-                          <Button type="button" variant="outline" onClick={addImageUrl}>
-                            <Image className="h-4 w-4 mr-1.5" />
-                            Agregar URL
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {newProduct.images.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                          <span>Galería de Imágenes ({newProduct.images.length})</span>
-                          <span>La primera imagen es la Principal</span>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1 border rounded-lg bg-background/50">
-                          {newProduct.images.map((url, idx) => (
-                            <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted/20 transition hover:shadow-md">
-                              <img
-                                src={url}
-                                alt={`Producto ${idx + 1}`}
-                                className="w-full h-28 object-cover"
-                                onError={(e) => e.target.src = 'https://via.placeholder.com/150?text=Error'}
-                              />
-                              <div className="absolute top-1.5 left-1.5 flex gap-1">
-                                {idx === 0 ? (
-                                  <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 shadow">
-                                    ⭐ Principal (main)
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="secondary" className="bg-black/70 text-white text-[10px] font-normal px-1.5 py-0.5 backdrop-blur-sm">
-                                    Adicional #{idx} (add_{idx < 10 ? '0' + idx : idx})
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                                {idx !== 0 && (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="secondary"
-                                    className="h-7 text-xs px-2 shadow bg-white/90 hover:bg-white text-slate-800"
-                                    title="Hacer imagen principal"
-                                    onClick={() => setPrimaryImage(url, false)}
-                                  >
-                                    <Star className="h-3.5 w-3.5 mr-1 text-amber-500 fill-amber-500" />
-                                    Principal
-                                  </Button>
-                                )}
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-7 w-7 shadow"
-                                  title="Eliminar imagen"
-                                  onClick={() => removeProductImage(url, false)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-6 border border-dashed rounded-lg text-center text-muted-foreground text-xs">
-                        No hay imágenes agregadas aún. Selecciona archivos para cargar o ingresa una URL.
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-                
-                <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-                  <Button variant="outline" onClick={() => { setShowNewProduct(false); resetProductForm(); }}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={createProduct} data-testid="save-product-btn" disabled={!canCreateInventory}>
-                    Crear producto
-                  </Button>
-                </div>
-              </ScrollArea>
-            </DialogContent>
-          </Dialog>
+            <ProductCreateDialog
+              open={showNewProduct}
+              onOpenChange={setShowNewProduct}
+              onProductCreated={() => {
+                fetchData();
+                fetchCategories();
+              }}
+              categories={categories}
+              getSubcategories={getSubcategories}
+              vehicleTypes={vehicleTypes}
+              warehouses={warehouses}
+              branches={branches}
+              canCreate={canCreateInventory}
+              onOpenNewCategory={() => setShowNewCategoryDialog(true)}
+            />
           ) : null}
 
           <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-            <DialogContent className="max-w-md">
+            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Nueva Categoría de Producto</DialogTitle>
                 <DialogDescription>
@@ -3956,7 +2862,7 @@ export function InventoryPage() {
                   Solicitud Garantía
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle>Nueva Solicitud de Garantía</DialogTitle>
                   <DialogDescription>
@@ -4193,7 +3099,7 @@ export function InventoryPage() {
           scrollRestore.restore();
         }
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{showProductDetail?.name}</DialogTitle>
           </DialogHeader>
@@ -4299,7 +3205,7 @@ export function InventoryPage() {
           setWaStockContext(null);
         }
       }}>
-        <DialogContent className="max-w-2xl" data-testid="product-whatsapp-dialog">
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-2xl" data-testid="product-whatsapp-dialog">
           <DialogHeader>
             <DialogTitle>Enviar producto por WhatsApp</DialogTitle>
             <DialogDescription>Selecciona el cliente al que deseas enviar la información de stock</DialogDescription>
@@ -4397,7 +3303,7 @@ export function InventoryPage() {
         setShowTransferWhatsApp(open);
         if (!open) setTransferWaSummary(null);
       }}>
-        <DialogContent className="max-w-md" data-testid="transfer-whatsapp-dialog">
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-md" data-testid="transfer-whatsapp-dialog">
           <DialogHeader>
             <DialogTitle>¿Avisar destino? (opcional)</DialogTitle>
             <DialogDescription>
@@ -4484,208 +3390,20 @@ Notas: ${transferWaSummary.notes}` : ''}`}
       </Dialog>
 
       {/* Edit Product Dialog */}
-      <Dialog open={!!editingProduct} onOpenChange={(open) => {
-        if (!open) {
-          setEditingProduct(null);
-          scrollRestore.restore();
-        }
-      }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Editar Producto</DialogTitle>
-          </DialogHeader>
-          {editingProduct && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <ValidatedInput
-                  ref={editNameRef}
-                  label="Nombre"
-                  requiredMark
-                  value={editingProduct.name}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  validate={requiredProductName}
-                  resetKey={editingProduct.product_id || editingProduct.inventory_id || "edit"}
-                  successLabel="Se ve bien"
-                  data-testid="edit-product-name"
-                />
-                <div>
-                  <Label>Marca</Label>
-                  <Input
-                    value={editingProduct.brand}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Código de barras</Label>
-                <Input
-                  value={editingProduct.barcode || ""}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, barcode: e.target.value })}
-                  placeholder="EAN / UPC para etiquetas y escáner"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <ValidatedInput
-                  ref={editPriceRef}
-                  label="Precio 1"
-                  requiredMark
-                  type="number"
-                  step="0.01"
-                  value={editingProduct.precio1 || editingProduct.price}
-                  onChange={(e) => setEditingProduct({
-                    ...editingProduct,
-                    price: e.target.value,
-                    precio1: e.target.value,
-                  })}
-                  validate={requiredPrice}
-                  resetKey={editingProduct.product_id || editingProduct.inventory_id || "edit"}
-                  successLabel={VALIDATION_SUCCESS_SHORT}
-                  data-testid="edit-product-price"
-                />
-                <div>
-                  <Label>Precio 2</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={editingProduct.precio2 || ""}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, precio2: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Precio VIP</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={editingProduct.precio_vip || ""}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, precio_vip: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Precio Casa Comercial</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={editingProduct.precio_casa_comercial || editingProduct.precio3 || ""}
-                    onChange={(e) => setEditingProduct({
-                      ...editingProduct,
-                      precio_casa_comercial: e.target.value,
-                      precio3: e.target.value,
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label>Costo</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={editingProduct.cost}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, cost: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Umbral stock bajo</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={editingProduct.low_stock_threshold ?? 5}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, low_stock_threshold: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Descripción</Label>
-                <Textarea
-                  value={editingProduct.description || ""}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              {/* Edit Product Images Section */}
-              <div className="space-y-3 pt-2 border-t">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">Imágenes del Producto ({editingProduct.images?.length || 0})</Label>
-                </div>
-                <FileUploadQueue
-                  key={editingProduct?.product_id || "edit-uploads"}
-                  accept="image/*"
-                  multiple
-                  compact
-                  testId="inventory-edit-uploads"
-                  idleLabel="Suelta las imágenes aquí"
-                  idleHint="o haz clic para subir más fotos"
-                  onUploadFile={handleEditUploadFile}
-                  onFileDone={(result) => appendUploadedUrls(result, true)}
-                  onItemRemove={(item) => removeUploadedUrls(item, true)}
-                />
-
-                {editingProduct.images && editingProduct.images.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-lg bg-background/50">
-                    {editingProduct.images.map((url, idx) => (
-                      <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted/20 transition hover:shadow-md">
-                        <img
-                          src={url}
-                          alt={`Producto ${idx + 1}`}
-                          className="w-full h-24 object-cover"
-                          onError={(e) => e.target.src = 'https://via.placeholder.com/150?text=Error'}
-                        />
-                        <div className="absolute top-1 left-1 flex gap-1">
-                          {idx === 0 ? (
-                            <Badge className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 shadow">
-                              ⭐ Principal
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-black/70 text-white text-[9px] font-normal px-1 py-0.5 backdrop-blur-sm">
-                              #{idx}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5">
-                          {idx !== 0 && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="h-6 text-[10px] px-1.5 shadow bg-white text-slate-800"
-                              title="Hacer imagen principal"
-                              onClick={() => setPrimaryImage(url, true)}
-                            >
-                              <Star className="h-3 w-3 mr-0.5 text-amber-500 fill-amber-500" />
-                              Principal
-                            </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            className="h-6 w-6 shadow"
-                            title="Eliminar imagen"
-                            onClick={() => removeProductImage(url, true)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 border border-dashed rounded-lg text-center text-xs text-muted-foreground">
-                    Sin imágenes asignadas. Haz clic en "Subir más fotos" para agregar.
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 flex justify-end gap-2 border-t border-border/60 pt-4">
-                <Button variant="outline" onClick={() => setEditingProduct(null)}>
-                  Cancelar
-                </Button>
-                <Button onClick={updateProduct}>
-                  Guardar Cambios
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ProductEditDialog
+        product={editingProduct}
+        open={Boolean(editingProduct)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingProduct(null);
+            scrollRestore.restore();
+          }
+        }}
+        onProductUpdated={() => {
+          fetchData();
+        }}
+        canEdit={canEditInventory}
+      />
 
       
       <DestructiveConfirmDialog
@@ -4707,7 +3425,7 @@ Notas: ${transferWaSummary.notes}` : ''}`}
 
       {/* Virtual Zone Transfer Dialog */}
       <Dialog open={showZoneTransferDialog} onOpenChange={setShowZoneTransferDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()} className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <ArrowRightLeft className="h-5 w-5 text-amber-500" />
