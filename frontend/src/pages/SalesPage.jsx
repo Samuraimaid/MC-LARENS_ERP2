@@ -48,6 +48,7 @@ import {
 } from "@/lib/offlineDraftQueue";
 import {
   detectDraftConflicts,
+  resolveDraftConflictByLatest,
   promptDraftConflictToast,
 } from "@/lib/draftConflict";
 import { useAutosaveLifecycle } from "@/hooks/useAutosaveLifecycle";
@@ -721,25 +722,17 @@ export function SalesPage() {
           : (eligibleServerDrafts[0]?.id ?? null);
 
         const conflicts = detectDraftConflicts(DRAFT_KEY_PREFIX, eligibleServerDrafts);
-        const conflictIds = new Set(conflicts.map((c) => c.draftId));
-        const safeServerDrafts = eligibleServerDrafts.filter((d) => !conflictIds.has(d.id));
         conflicts.forEach((conflict) => {
-          promptDraftConflictToast(conflict, {
-            draftKeyPrefix: DRAFT_KEY_PREFIX,
-            onResolved: (result) => {
-              if (result?.applied === "local" && result.snapshot) {
-                scheduleDraftSync(conflict.draftId, result.snapshot);
-              }
-              setDraftContentRevision((prev) => prev + 1);
-              setSaleFormRenderNonce((prev) => prev + 1);
-            },
-          });
+          const result = resolveDraftConflictByLatest(conflict, { draftKeyPrefix: DRAFT_KEY_PREFIX });
+          if (result?.applied === "local" && result.snapshot) {
+            scheduleDraftSync(conflict.draftId, result.snapshot);
+          }
         });
         mirrorServerDraftsToLocalStorage({
           listKey: DRAFT_LIST_KEY,
           activeKey: DRAFT_ACTIVE_KEY,
           draftKeyPrefix: DRAFT_KEY_PREFIX,
-          drafts: safeServerDrafts.length ? safeServerDrafts : eligibleServerDrafts.filter((d) => conflictIds.has(d.id) ? false : true),
+          drafts: eligibleServerDrafts,
           activeDraftId: nextActiveDraftId,
         });
         // For conflicts keep local snapshot; still show tab meta from server list

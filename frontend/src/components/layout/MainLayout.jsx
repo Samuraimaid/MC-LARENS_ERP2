@@ -724,7 +724,7 @@ export function MainLayout() {
               {!isMobile && isWorkbenchRoute ? (
                 <div className="hidden min-w-0 flex-1 justify-center lg:flex px-2">
                   <Tabs value={activeWorkbenchTab} onValueChange={handleWorkbenchTabChange} className="w-full max-w-[1020px]">
-                    <TabsList className="grid h-11 w-full grid-cols-8 gap-1 rounded-xl border border-border/80 dark:border-slate-800/80 bg-muted/40 dark:bg-slate-950/60 p-1 backdrop-blur-md shadow-inner">
+                    <TabsList className="grid h-11 w-full grid-cols-8 gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/90 p-1 backdrop-blur-md shadow-inner">
                       {WORKBENCH_TAB_ITEMS.map((tab, idx) => {
                         const Icon = tab.icon;
                         const isActive = activeWorkbenchTab === tab.key;
@@ -734,10 +734,10 @@ export function MainLayout() {
                             value={tab.key}
                             title={`${tab.label} (Alt+${idx + 1})`}
                             className={cn(
-                              "group relative inline-flex h-full items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition-all duration-200",
-                              "hover:text-foreground hover:bg-background/50 dark:hover:bg-slate-800/50",
+                              "group relative inline-flex h-full items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold transition-all duration-200",
+                              "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/80",
                               "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/25 data-[state=active]:ring-1 data-[state=active]:ring-primary/40",
-                              "data-[state=active]:font-semibold"
+                              "data-[state=active]:font-bold"
                             )}
                           >
                             <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 group-data-[state=active]:scale-105" />

@@ -104,11 +104,23 @@ export function applyDraftConflictChoice(conflict, choice, { draftKeyPrefix } = 
   return null;
 }
 
+/**
+ * Automatically resolve conflict by always choosing the newest timestamp.
+ * - If server is newer -> applies server snapshot.
+ * - If local is newer -> keeps local snapshot so it gets pushed to server.
+ */
+export function resolveDraftConflictByLatest(conflict, { draftKeyPrefix } = {}) {
+  if (typeof window === "undefined" || !conflict?.draftId) return null;
+  const serverIsNewer = (conflict.serverAt || 0) > (conflict.localAt || 0);
+  const choice = serverIsNewer ? "server" : "local";
+  return applyDraftConflictChoice(conflict, choice, { draftKeyPrefix });
+}
+
 const pendingDraftConflictToasts = [];
 let draftConflictFlushTimer = 0;
 
 /**
- * One toast for a burst of draft conflicts. "Conservar ambos" applies to every draft in the burst.
+ * Optional prompt toast (now bypassed by default in favor of resolveDraftConflictByLatest).
  */
 export function promptDraftConflictToast(conflict, {
   draftKeyPrefix,
@@ -144,3 +156,4 @@ export function promptDraftConflictToast(conflict, {
     });
   }, 0);
 }
+
