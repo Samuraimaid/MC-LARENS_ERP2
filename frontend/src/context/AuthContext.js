@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { API_BASE as API, getStoredSessionToken, setStoredSessionToken, getStoredUser, setStoredUser } from "@/lib/api";
+import { broadcastSessionEvent, subscribeSessionEvents } from "@/lib/sessionBus";
 import { APP_ENV } from "@/lib/env";
 import { toast } from "sonner";
 import { TOPCAR_BRANCH_IDS } from "../lib/branding";
@@ -271,6 +272,82 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [loading, setLoading] = useState(() => !getStoredUser());
   const invalidSessionNotifiedRef = useRef(false);
+  const lastCheckTimeRef = useRef(0);
+
+  // Sincronización multi-ventana en la misma PC (Logout, Sesión Concurrente en otro PC, Timeout)
+  useEffect(() => {
+    const unsubscribe = subscribeSessionEvents((event) => {
+      const { type, payload } = event;
+      if (type === "LOGOUT") {
+        setUser(null);
+        setStoredUser(null);
+        setStoredSessionToken(null);
+        setPermissions(null);
+        invalidSessionNotifiedRef.current = true;
+        toast.info("Sesión cerrada desde otra ventana.", { duration: 4000 });
+      } else if (type === "SESSION_CONFLICT") {
+        setUser(null);
+        setStoredUser(null);
+        setStoredSessionToken(null);
+        setPermissions(null);
+        invalidSessionNotifiedRef.current = true;
+        toast.warning(
+          payload?.message || "Tu sesión se inició en otro dispositivo o terminal. Ingresa tu PIN si deseas continuar en este equipo.",
+          { duration: 8000 }
+        );
+      } else if (type === "SESSION_IDLE_TIMEOUT" || type === "SESSION_EXPIRED") {
+        setUser(null);
+        setStoredUser(null);
+        setStoredSessionToken(null);
+        setPermissions(null);
+        invalidSessionNotifiedRef.current = true;
+        toast.info(payload?.message || "Sesión cerrada por inactividad o expiración.", { duration: 5000 });
+      } else if (type === "LOGIN_SUCCESS") {
+        if (payload?.user) {
+          setUser(payload.user);
+          setStoredUser(payload.user);
+          if (payload.session_token) {
+            setStoredSessionToken(payload.session_token);
+          }
+          invalidSessionNotifiedRef.current = false;
+          checkAuth();
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // Chequeo reactivo al enfocar la ventana o cambiar de pestaña
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      const now = Date.now();
+      // Chequear si pasaron más de 20 segundos desde el último check
+      if (now - lastCheckTimeRef.current > 20000 && (getStoredSessionToken() || getStoredUser())) {
+        lastCheckTimeRef.current = now;
+        checkAuth();
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        handleWindowFocus();
+      }
+    });
+
+    // Heartbeat periódico cada 45 segundos para detectar en segundo plano si se inició sesión en otra PC
+    const heartbeatInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && (getStoredSessionToken() || getStoredUser())) {
+        lastCheckTimeRef.current = Date.now();
+        checkAuth();
+      }
+    }, 45000);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      clearInterval(heartbeatInterval);
+    };
+  }, []);
 
   useEffect(() => {
     checkAuth();
@@ -306,6 +383,25 @@ export function AuthProvider({ children }) {
           setStoredUser(null);
           setStoredSessionToken(null);
           setPermissions(null);
+
+          // Emitir evento a todas las demás ventanas abiertas en la misma PC
+          if (
+            detailCode === "SESSION_CONFLICT" ||
+            (typeof detailMessage === "string" && (detailMessage.includes("otro dispositivo") || detailMessage.includes("otro terminal")))
+          ) {
+            broadcastSessionEvent("SESSION_CONFLICT", {
+              message: "Tu sesión se inició en otro dispositivo o terminal. Ingresa tu PIN si deseas continuar en este equipo.",
+            });
+          } else if (detailCode === "SESSION_IDLE_TIMEOUT") {
+            broadcastSessionEvent("SESSION_IDLE_TIMEOUT", {
+              message: typeof detailMessage === "string" ? detailMessage : "Sesión cerrada por inactividad. Inicia sesión de nuevo.",
+            });
+          } else if (detailCode === "SESSION_EXPIRED") {
+            broadcastSessionEvent("SESSION_EXPIRED", {
+              message: typeof detailMessage === "string" ? detailMessage : "La sesión ha expirado. Vuelve a ingresar tu PIN.",
+            });
+          }
+
           if (!invalidSessionNotifiedRef.current && !isLoginPage && hadPriorSession) {
             let msg = "Por favor ingresa tu PIN para continuar.";
             let isWarning = false;
@@ -431,6 +527,12 @@ export function AuthProvider({ children }) {
       } catch (error) {
         // ignore
       }
+      // Emitir evento de login a otras ventanas de la misma PC
+      broadcastSessionEvent("LOGIN_SUCCESS", {
+        user: sessionUser,
+        session_token: response.data?.session_token,
+      });
+
       return response.data;
     } catch (error) {
       console.error("Session processing failed:", error);
@@ -440,6 +542,9 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Emitir inmediatamente evento de cierre de sesión a todas las ventanas abiertas en este equipo
+      broadcastSessionEvent("LOGOUT", { reason: "user_logout" });
+
       if (hasDrafts()) {
         // Autoguardado silencioso, sin confirmación
         backupDrafts();

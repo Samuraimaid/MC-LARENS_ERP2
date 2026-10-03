@@ -723,3 +723,13 @@ Other open documents:
      - Al filtrar por una bodega específica, todo el catálogo maestro se mantiene visible y localizable (mostrando existencia real o sintética `0`), permitiendo ingresar stock o trasladar fácilmente.
   8. **Despliegue y Validación en Producción:**
      - Cambios compilados y desplegados en Google Cloud Run bajo la revisión `mclarens-erp-00219-kjd` sirviendo el 100% de tráfico en https://mclarens-erp-836176703716.us-central1.run.app.
+   9. **Suite de Productividad Multi-Ventana y Sincronización Inter-Ventanas:**
+      - Creado módulo frontend rontend/src/lib/sessionBus.js con soporte para BroadcastChannel('mclarens_session_bus') y fallback en localStorage event bus.
+      - Helper openIndependentWindow(href, title) que calcula el centrado en pantalla, dimensiones optimizadas (1440x900 o proporcional a pantalla) y abre ventanas tipo *App Window* sin barras de navegación para trabajo en doble monitor.
+      - Integrado en rontend/src/components/layout/Sidebar.jsx el menú contextual al dar **Clic Derecho** en cualquier ítem del menú (Ventana Independiente, Nueva Pestaña, Copiar Enlace) y botón de acceso directo en hover (ExternalLink).
+      - Título dinámico de ventana en rontend/src/components/layout/MainLayout.jsx reflejando el módulo activo (ej. MC-LARENS ERP — [Inventario], [Caja], [Ventas]) para alternar con Alt + Tab de Windows.
+      - Sincronización instantánea de seguridad en rontend/src/context/AuthContext.js:
+        - Si se hace **Cerrar Sesión** en cualquier ventana del PC, todas las demás ventanas del mismo navegador se cierran y bloquean en 1 ms.
+        - Si el usuario inicia sesión en **OTRO PC / terminal**, el backend devuelve 401 SESSION_CONFLICT y la ventana que lo detecte avisa por el bus a todas las ventanas hermanas del PC anterior para expulsarlas con alerta de seguridad.
+        - Detección de foco de ventana (ocus / isibilitychange) y heartbeat periódico en segundo plano.
+      - Suite de pruebas unitarias automatizada en ackend/tests/test_multi_window_and_session_bus.py ejecutada con 100% PASS (concurrencia de sesión en mismo PC, invalidación por logout, revocación por login concurrente en otra IP y contratos del bus de eventos).

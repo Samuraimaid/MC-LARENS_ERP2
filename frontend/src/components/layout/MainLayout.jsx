@@ -244,7 +244,43 @@ export function MainLayout() {
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    document.title = `${branding.brandName} ERP`;
+    const PATH_LABELS = {
+      "/dashboard": "Dashboard",
+      "/workbench": "Centro Unificado",
+      "/sales": "Ventas",
+      "/cashier": "Caja",
+      "/quotations": "Cotizaciones",
+      "/catalog": "Catálogo",
+      "/inventory": "Inventario",
+      "/customers": "Clientes",
+      "/vehicles": "Vehículos",
+      "/dispatch": "Despacho",
+      "/deliveries": "Entregas",
+      "/samples": "Muestras",
+      "/coordinator/polarizados": "Coord. Polarizados",
+      "/coordinator/instalaciones": "Coord. Instalaciones",
+      "/kds/instalaciones": "KDS Instalaciones",
+      "/kds/polarizados": "KDS Polarizados",
+      "/my-completed-jobs": "Mis Trabajos",
+      "/quality-control": "Control Calidad",
+      "/warranties": "Garantías",
+      "/credits": "Créditos",
+      "/returns": "Devoluciones",
+      "/promotions": "Promociones",
+      "/calendar": "Calendario",
+      "/reports": "Reportes",
+      "/human-resources": "Recursos Humanos",
+      "/branches": "Sucursales",
+      "/warehouses": "Bodegas",
+      "/users": "Usuarios",
+      "/settings": "Configuración",
+      "/help/tutorials": "Tutoriales",
+    };
+
+    const currentModule = PATH_LABELS[location.pathname] || "";
+    document.title = currentModule 
+      ? `${branding.brandName} ERP — [${currentModule}]`
+      : `${branding.brandName} ERP`;
 
     let favicon = document.querySelector("link[rel='icon']");
     if (!favicon) {
@@ -256,7 +292,7 @@ export function MainLayout() {
     favicon.setAttribute("sizes", "32x32");
     const faviconSrc = `${branding.favicon}${String(branding.favicon).includes("?") ? "&" : "?"}v=${encodeURIComponent(buildVersion)}`;
     favicon.setAttribute("href", faviconSrc);
-  }, [branding.brandName, branding.favicon, buildVersion]);
+  }, [branding.brandName, branding.favicon, buildVersion, location.pathname]);
 
   useEffect(() => {
     if (!isSellerRole || typeof window === "undefined") return undefined;

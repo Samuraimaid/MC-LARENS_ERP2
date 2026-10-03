@@ -42,10 +42,12 @@ import {
   Briefcase,
   Eye,
   Search,
-  PanelsTopLeft,
   LogOut,
   Smartphone,
   Video,
+  ExternalLink,
+  AppWindow,
+  Copy,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -53,6 +55,16 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+} from "../ui/context-menu";
+import { toast } from "sonner";
+import { openIndependentWindow } from "../../lib/sessionBus";
 import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
 import { APP_ENV } from "../../lib/env";
 import { fetchNodeProfile, getCachedNodeProfile, isRouteEnabledByNodeProfile } from "../../lib/nodeProfile";
@@ -228,31 +240,110 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
             const isActive = location.pathname === item.href;
             
             return (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>
-                  <NavLink
-                    to={item.href}
-                    onClick={() => onNavigate?.()}
-                    data-testid={`nav-${item.href.replace("/", "")}`}
-                    className={cn(
-                        "group haptic-feedback touch-action-manipulation flex rounded-sm py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      isIconOnly ? "justify-center px-2" : "items-center gap-3 px-3",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
+              <ContextMenu key={item.name}>
+                <ContextMenuTrigger asChild>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.href}
+                        onClick={() => onNavigate?.()}
+                        data-testid={`nav-${item.href.replace("/", "")}`}
+                        className={cn(
+                          "group haptic-feedback touch-action-manipulation relative flex rounded-sm py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          isIconOnly ? "justify-center px-2" : "items-center justify-between px-3",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        <div className={cn("flex items-center", isIconOnly ? "relative" : "gap-2.5")}>
+                          <Icon className="icon-spring h-4 w-4 shrink-0" />
+                          {!isIconOnly ? <span className="truncate">{item.name}</span> : null}
+                          {item.href === '/notifications' && unread > 0 && (
+                            <Badge className={cn(isIconOnly ? "absolute -right-1 top-1/2 h-4 min-w-4 -translate-y-1/2 px-1 text-[9px] leading-none" : "ml-2")}>{unread}</Badge>
+                          )}
+                        </div>
+
+                        {!isIconOnly && (
+                          <button
+                            type="button"
+                            title={`Abrir ${item.name} en ventana aparte`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openIndependentWindow(item.href, item.name);
+                              toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
+                            }}
+                            className={cn(
+                              "opacity-0 group-hover:opacity-75 hover:!opacity-100 p-1 rounded transition-opacity shrink-0",
+                              isActive
+                                ? "text-primary-foreground hover:bg-primary-foreground/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            )}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p className="font-medium">Ir a {item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">Clic derecho para abrir en ventana aparte</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </ContextMenuTrigger>
+
+                <ContextMenuContent className="w-64 bg-card/95 backdrop-blur-md border border-border shadow-2xl p-1.5 rounded-lg z-50">
+                  <ContextMenuLabel className="text-xs font-semibold text-foreground px-2 py-1.5 flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" />
+                    <span>{item.name}</span>
+                  </ContextMenuLabel>
+                  <ContextMenuSeparator />
+
+                  <ContextMenuItem
+                    onClick={() => {
+                      openIndependentWindow(item.href, item.name);
+                      toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
+                    }}
+                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
                   >
-                    <div className={cn("flex items-center", isIconOnly ? "relative" : "gap-2")}>
-                        <Icon className="icon-spring h-4 w-4" />
-                      {!isIconOnly ? item.name : null}
-                      {item.href === '/notifications' && unread > 0 && (
-                        <Badge className={cn(isIconOnly ? "absolute -right-1 top-1/2 h-4 min-w-4 -translate-y-1/2 px-1 text-[9px] leading-none" : "ml-2")}>{unread}</Badge>
-                      )}
+                    <AppWindow className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Abrir en ventana independiente</span>
+                      <span className="text-[10px] text-muted-foreground">Ventana limpia para segunda pantalla</span>
                     </div>
-                  </NavLink>
-                </TooltipTrigger>
-                <TooltipContent side="right">Ir a {item.name}</TooltipContent>
-              </Tooltip>
+                  </ContextMenuItem>
+
+                  <ContextMenuItem
+                    onClick={() => {
+                      window.open(item.href, "_blank");
+                    }}
+                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
+                  >
+                    <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Abrir en nueva pestaña</span>
+                      <span className="text-[10px] text-muted-foreground">Pestaña estándar del navegador</span>
+                    </div>
+                  </ContextMenuItem>
+
+                  <ContextMenuSeparator />
+
+                  <ContextMenuItem
+                    onClick={() => {
+                      const fullUrl = `${window.location.origin}${item.href}`;
+                      if (navigator.clipboard?.writeText) {
+                        navigator.clipboard.writeText(fullUrl);
+                        toast.info("Enlace copiado al portapapeles", { duration: 2000 });
+                      }
+                    }}
+                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
+                  >
+                    <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span>Copiar enlace directo</span>
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             );
           })}
         </nav>
