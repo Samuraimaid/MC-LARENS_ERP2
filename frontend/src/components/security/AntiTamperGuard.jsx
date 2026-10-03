@@ -295,10 +295,23 @@ export function AntiTamperGuard({ children }) {
 
     // 2. Interceptar Clic Derecho para desplegar MENÚ ESTILO GOOGLE SHEETS
     const handleContextMenu = (e) => {
+      const target = e.target;
+      if (target && typeof target.closest === "function") {
+        const isExplicitContextElement =
+          target.closest("[data-radix-context-menu-trigger]") ||
+          target.closest("[data-context-menu]") ||
+          target.closest(".erp-shell-sidebar") ||
+          target.closest('[data-testid^="nav-"]');
+
+        if (isExplicitContextElement) {
+          // Permitir que el menú contextual propio del componente o sidebar se despliegue
+          return;
+        }
+      }
+
       e.preventDefault();
       e.stopPropagation();
 
-      const target = e.target;
       const isInput =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
