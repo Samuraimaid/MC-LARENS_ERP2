@@ -1045,15 +1045,35 @@ export function InventoryPage() {
         }
       });
     } else {
-      // A specific warehouse was chosen
-      rows = (inventory || []).filter(item => String(item.warehouse_id) === String(selectedWarehouse));
+      // A specific warehouse was chosen: map all products, using existing stock if present or 0-stock synthetic row
+      (products || []).forEach(product => {
+        const invRows = invByProduct.get(String(product.product_id || "")) || [];
+        const matchingInv = invRows.find(item => String(item.warehouse_id) === String(selectedWarehouse));
+        if (matchingInv) {
+          rows.push({
+            ...matchingInv,
+            product: matchingInv.product || product,
+          });
+        } else {
+          rows.push({
+            inventory_id: `synth_${selectedWarehouse}_${product.product_id}`,
+            product_id: product.product_id,
+            warehouse_id: selectedWarehouse,
+            quantity: 0,
+            min_stock: product.min_stock || product.low_stock_threshold || 5,
+            product,
+            is_zero_stock: true,
+          });
+        }
+      });
     }
 
-    // Filter by search term (name, sku, category, brand)
-    if (searchLower) {
+    // Filter by search term (name, sku, category, brand, multi-word, fuzzy & unhyphenated SKUs)
+    if (search.trim()) {
       rows = rows.filter(item => {
-        const p = item.product || {};
+        const p = item.product || products.find((prod) => prod.product_id === item.product_id) || {};
         return (
+          productMatchesSearch(p, search) ||
           (p.name || "").toLowerCase().includes(searchLower) ||
           (p.sku || "").toLowerCase().includes(searchLower) ||
           (p.category || "").toLowerCase().includes(searchLower) ||
