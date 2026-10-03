@@ -697,3 +697,29 @@ Other open documents:
        - frontend/src/pages/CashierPage.jsx: Inyección de cabecera HTTP 'Idempotency-Key' en el cobro de factura en caja POST /caja/facturas/{sale_id}/cobrar.
        - Protección integral de extremo a extremo: si el usuario o cajero realiza un doble tap o experimenta reconexión de red, la clave de idempotencia enviada en los headers HTTP garantiza que el servidor procese la operación exactamente una vez.
        - Actualizada tabla de cierre en docs/ANTIGRAVITY_PLAN_PR42_API_SECURITY_12_20260922.md marcando Idea #9 (Idempotency Key) con soporte completo frontend (F1) y backend (S1).
+---
+
+### Sesión 2026-10-02 / 2026-10-03 (Mejoras en Creación de Productos, Stock Inicial por Tienda, Ampliación de Modal y Buscador Universal de Inventario)
+- **Acciones y Mejoras Implementadas:**
+  1. **Scroll con Rueda del Ratón en SearchableSelect (`frontend/src/components/ui/searchable-select.jsx`):**
+     - Restaurado el desplazamiento vertical nativo y fluido con la rueda del ratón (`wheel`) en todos los selectores autocompletables, eliminando bloqueos y secuestro de eventos.
+  2. **Catálogo de Marcas y Creación Dinámica (`frontend/src/components/inventory/ProductCreateDialog.jsx`):**
+     - Autocompletado integrado con todas las marcas existentes del catálogo maestro.
+     - Opción de creación dinámica `+ Usar nueva marca: "..."` cuando se escribe una marca no existente.
+  3. **Garantía por Defecto en 0 Meses:**
+     - Establecido `0` meses como valor por defecto en la creación de productos, formularios de edición y normalización backend (`POST /products` & `normalize_product_price_tiers`).
+  4. **Auto-Activación de Productos en Traslados (`backend/routes/inventory.py`):**
+     - Al realizar o recibir traslados entre bodegas/sucursales (`transfer_inventory` y `receive_transfer_request`), el producto se auto-activa automáticamente en la ubicación destino (`$addToSet`) para evitar conflictos de productos inactivos.
+  5. **Ampliación de Ventana Emergente y Eliminación de Apiñamientos (`ProductCreateDialog.jsx`):**
+     - Modal ampliado a `w-[96vw] max-w-5xl xl:max-w-6xl` con altura de scroll `h-[76vh]`.
+     - Eliminado el truncamiento de texto (`truncate`) para que nombres extensos (*"Bodega TopCar El Calvario"*, *"Bodega TopCar La Virgen"*, etc.) se visualicen completos y con espacio suficiente.
+  6. **Stock Inicial por Tienda Autorizada (`Tiendas Autorizadas` & `POST /products`):**
+     - Añadido campo individual de stock `Stock: [ 0 ]` a cada fila de **Tiendas Autorizadas**.
+     - Sincronización bidireccional automática en tiempo real con su bodega vinculada.
+     - Extracción en backend de `store_stocks` y aprovisionamiento automático en `db.inventory` con registro de auditoría en Kardex.
+  7. **Buscador Universal de Inventario y Tolerancia a SKUs / Acentos (`InventoryPage.jsx`):**
+     - Conectado el algoritmo inteligente `productMatchesSearch` en el filtro de la tabla de inventario.
+     - Soporta búsquedas sin guiones (`SW01` = `SW-01`), con espacios (`SW 01`), tildes (`timón` = `timon`) y multitérminos (`control pioneer`).
+     - Al filtrar por una bodega específica, todo el catálogo maestro se mantiene visible y localizable (mostrando existencia real o sintética `0`), permitiendo ingresar stock o trasladar fácilmente.
+  8. **Despliegue y Validación en Producción:**
+     - Cambios compilados y desplegados en Google Cloud Run bajo la revisión `mclarens-erp-00219-kjd` sirviendo el 100% de tráfico en https://mclarens-erp-836176703716.us-central1.run.app.
