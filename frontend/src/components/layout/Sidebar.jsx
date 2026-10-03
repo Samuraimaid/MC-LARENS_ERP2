@@ -42,6 +42,7 @@ import {
   Briefcase,
   Eye,
   Search,
+  PanelsTopLeft,
   LogOut,
   Smartphone,
   Video,
@@ -55,14 +56,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-} from "../ui/context-menu";
+import { RowContextMenu } from "@/components/lists/RowContextMenu";
 import { toast } from "sonner";
 import { openIndependentWindow } from "../../lib/sessionBus";
 import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
@@ -239,11 +233,44 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
             
+            const contextMenuItems = [
+              {
+                id: "independent-window",
+                label: "Abrir en ventana independiente",
+                icon: AppWindow,
+                onClick: () => {
+                  openIndependentWindow(item.href, item.name);
+                  toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
+                },
+              },
+              {
+                id: "new-tab",
+                label: "Abrir en nueva pestaña",
+                icon: ExternalLink,
+                onClick: () => {
+                  window.open(item.href, "_blank");
+                },
+              },
+              {
+                id: "copy-link",
+                label: "Copiar enlace directo",
+                icon: Copy,
+                separatorBefore: true,
+                onClick: () => {
+                  const fullUrl = `${window.location.origin}${item.href}`;
+                  if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(fullUrl);
+                    toast.info("Enlace copiado al portapapeles", { duration: 2000 });
+                  }
+                },
+              },
+            ];
+
             return (
-              <ContextMenu key={item.name}>
-                <ContextMenuTrigger asChild>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+              <Tooltip key={item.name}>
+                <TooltipTrigger asChild>
+                  <div>
+                    <RowContextMenu items={contextMenuItems}>
                       <NavLink
                         to={item.href}
                         onClick={() => onNavigate?.()}
@@ -285,65 +312,14 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
                           </button>
                         )}
                       </NavLink>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p className="font-medium">Ir a {item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">Clic derecho para abrir en ventana aparte</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </ContextMenuTrigger>
-
-                <ContextMenuContent className="w-64 bg-card/95 backdrop-blur-md border border-border shadow-2xl p-1.5 rounded-lg z-50">
-                  <ContextMenuLabel className="text-xs font-semibold text-foreground px-2 py-1.5 flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-primary" />
-                    <span>{item.name}</span>
-                  </ContextMenuLabel>
-                  <ContextMenuSeparator />
-
-                  <ContextMenuItem
-                    onClick={() => {
-                      openIndependentWindow(item.href, item.name);
-                      toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
-                    }}
-                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
-                  >
-                    <AppWindow className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Abrir en ventana independiente</span>
-                      <span className="text-[10px] text-muted-foreground">Ventana limpia para segunda pantalla</span>
-                    </div>
-                  </ContextMenuItem>
-
-                  <ContextMenuItem
-                    onClick={() => {
-                      window.open(item.href, "_blank");
-                    }}
-                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
-                  >
-                    <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Abrir en nueva pestaña</span>
-                      <span className="text-[10px] text-muted-foreground">Pestaña estándar del navegador</span>
-                    </div>
-                  </ContextMenuItem>
-
-                  <ContextMenuSeparator />
-
-                  <ContextMenuItem
-                    onClick={() => {
-                      const fullUrl = `${window.location.origin}${item.href}`;
-                      if (navigator.clipboard?.writeText) {
-                        navigator.clipboard.writeText(fullUrl);
-                        toast.info("Enlace copiado al portapapeles", { duration: 2000 });
-                      }
-                    }}
-                    className="gap-2.5 text-xs py-2 px-2 cursor-pointer focus:bg-primary/10 focus:text-primary rounded-md"
-                  >
-                    <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span>Copiar enlace directo</span>
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
+                    </RowContextMenu>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="font-medium">Ir a {item.name}</p>
+                  <p className="text-[10px] text-muted-foreground">Clic derecho para abrir en ventana aparte</p>
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
