@@ -56,7 +56,6 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { RowContextMenu } from "@/components/lists/RowContextMenu";
 import { toast } from "sonner";
 import { openIndependentWindow } from "../../lib/sessionBus";
 import { getBrandingForBranch, formatUserBranchLabel } from "../../lib/branding";
@@ -186,8 +185,34 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
   });
 
   const [unread, setUnread] = React.useState(0);
+  const [contextMenu, setContextMenu] = React.useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    item: null,
+  });
 
+  // Cerrar menú contextual flotante al hacer clic afuera, scroll, resize o Escape
+  React.useEffect(() => {
+    if (!contextMenu.visible) return;
 
+    const handleClose = () => setContextMenu((prev) => ({ ...prev, visible: false }));
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+
+    window.addEventListener("click", handleClose);
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("click", handleClose);
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [contextMenu.visible]);
 
   const handleLogout = async () => {
     await logout();
@@ -232,88 +257,65 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
           {filteredNav.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
-            
-            const contextMenuItems = [
-              {
-                id: "independent-window",
-                label: "Abrir en ventana independiente",
-                icon: AppWindow,
-                onClick: () => {
-                  openIndependentWindow(item.href, item.name);
-                  toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
-                },
-              },
-              {
-                id: "new-tab",
-                label: "Abrir en nueva pestaña",
-                icon: ExternalLink,
-                onClick: () => {
-                  window.open(item.href, "_blank");
-                },
-              },
-              {
-                id: "copy-link",
-                label: "Copiar enlace directo",
-                icon: Copy,
-                separatorBefore: true,
-                onClick: () => {
-                  const fullUrl = `${window.location.origin}${item.href}`;
-                  if (navigator.clipboard?.writeText) {
-                    navigator.clipboard.writeText(fullUrl);
-                    toast.info("Enlace copiado al portapapeles", { duration: 2000 });
-                  }
-                },
-              },
-            ];
 
             return (
               <Tooltip key={item.name}>
                 <TooltipTrigger asChild>
-                  <div>
-                    <RowContextMenu items={contextMenuItems}>
-                      <NavLink
-                        to={item.href}
-                        onClick={() => onNavigate?.()}
-                        data-testid={`nav-${item.href.replace("/", "")}`}
+                  <NavLink
+                    to={item.href}
+                    onClick={() => onNavigate?.()}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const menuWidth = 240;
+                      const menuHeight = 175;
+                      const x = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
+                      const y = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
+                      setContextMenu({
+                        visible: true,
+                        x: Math.max(12, x),
+                        y: Math.max(12, y),
+                        item,
+                      });
+                    }}
+                    data-testid={`nav-${item.href.replace("/", "")}`}
+                    className={cn(
+                      "group haptic-feedback touch-action-manipulation relative flex rounded-sm py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      isIconOnly ? "justify-center px-2" : "items-center justify-between px-3",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    <div className={cn("flex items-center", isIconOnly ? "relative" : "gap-2.5")}>
+                      <Icon className="icon-spring h-4 w-4 shrink-0" />
+                      {!isIconOnly ? <span className="truncate">{item.name}</span> : null}
+                      {item.href === '/notifications' && unread > 0 && (
+                        <Badge className={cn(isIconOnly ? "absolute -right-1 top-1/2 h-4 min-w-4 -translate-y-1/2 px-1 text-[9px] leading-none" : "ml-2")}>{unread}</Badge>
+                      )}
+                    </div>
+
+                    {!isIconOnly && (
+                      <button
+                        type="button"
+                        title={`Abrir ${item.name} en ventana aparte`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openIndependentWindow(item.href, item.name);
+                          toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
+                        }}
                         className={cn(
-                          "group haptic-feedback touch-action-manipulation relative flex rounded-sm py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                          isIconOnly ? "justify-center px-2" : "items-center justify-between px-3",
+                          "opacity-0 group-hover:opacity-75 hover:!opacity-100 p-1 rounded transition-opacity shrink-0",
                           isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            ? "text-primary-foreground hover:bg-primary-foreground/20"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
                       >
-                        <div className={cn("flex items-center", isIconOnly ? "relative" : "gap-2.5")}>
-                          <Icon className="icon-spring h-4 w-4 shrink-0" />
-                          {!isIconOnly ? <span className="truncate">{item.name}</span> : null}
-                          {item.href === '/notifications' && unread > 0 && (
-                            <Badge className={cn(isIconOnly ? "absolute -right-1 top-1/2 h-4 min-w-4 -translate-y-1/2 px-1 text-[9px] leading-none" : "ml-2")}>{unread}</Badge>
-                          )}
-                        </div>
-
-                        {!isIconOnly && (
-                          <button
-                            type="button"
-                            title={`Abrir ${item.name} en ventana aparte`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              openIndependentWindow(item.href, item.name);
-                              toast.success(`Abriendo ${item.name} en ventana independiente`, { duration: 2500 });
-                            }}
-                            className={cn(
-                              "opacity-0 group-hover:opacity-75 hover:!opacity-100 p-1 rounded transition-opacity shrink-0",
-                              isActive
-                                ? "text-primary-foreground hover:bg-primary-foreground/20"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            )}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </NavLink>
-                    </RowContextMenu>
-                  </div>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </NavLink>
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   <p className="font-medium">Ir a {item.name}</p>
@@ -325,11 +327,74 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
         </nav>
       </ScrollArea>
 
+      {/* Menú Contextual Flotante de Clic Derecho */}
+      {contextMenu.visible && contextMenu.item && (
+        <div
+          className="fixed z-[9999] w-64 rounded-xl border border-border/80 bg-popover/95 backdrop-blur-xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-100 text-popover-foreground"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold border-b border-border/50 text-foreground">
+            {React.createElement(contextMenu.item.icon, { className: "h-4 w-4 text-primary shrink-0" })}
+            <span className="truncate">{contextMenu.item.name}</span>
+          </div>
+
+          <div className="py-1 space-y-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                openIndependentWindow(contextMenu.item.href, contextMenu.item.name);
+                toast.success(`Abriendo ${contextMenu.item.name} en ventana independiente`, { duration: 2500 });
+                setContextMenu((prev) => ({ ...prev, visible: false }));
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
+            >
+              <AppWindow className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex flex-col">
+                <span className="font-medium">Abrir en ventana independiente</span>
+                <span className="text-[10px] text-muted-foreground">Ventana limpia para segunda pantalla</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.open(contextMenu.item.href, "_blank");
+                setContextMenu((prev) => ({ ...prev, visible: false }));
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
+            >
+              <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex flex-col">
+                <span className="font-medium">Abrir en nueva pestaña</span>
+                <span className="text-[10px] text-muted-foreground">Pestaña estándar del navegador</span>
+              </div>
+            </button>
+
+            <div className="my-1 h-px bg-border/50" />
+
+            <button
+              type="button"
+              onClick={() => {
+                const fullUrl = `${window.location.origin}${contextMenu.item.href}`;
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(fullUrl);
+                  toast.info("Enlace copiado al portapapeles", { duration: 2000 });
+                }
+                setContextMenu((prev) => ({ ...prev, visible: false }));
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
+            >
+              <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span>Copiar enlace directo</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <Separator />
 
       {!isIconOnly ? <div className="border-t border-border px-3 py-1" /> : null}
-
-      {/* User section eliminada, ahora en el header superior */}
     </div>
     </TooltipProvider>
   );
