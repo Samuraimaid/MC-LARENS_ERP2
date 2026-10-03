@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -267,14 +268,25 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
                     onContextMenu={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      const menuWidth = 240;
-                      const menuHeight = 175;
-                      const x = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
-                      const y = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
+                      const menuWidth = 280;
+                      const menuHeight = 220;
+                      
+                      // Ajuste horizontal (evitar salirse por la derecha)
+                      let x = e.clientX + 6;
+                      if (x + menuWidth > window.innerWidth - 16) {
+                        x = Math.max(16, e.clientX - menuWidth - 6);
+                      }
+
+                      // Ajuste vertical (si está cerca del borde inferior, desplegar hacia arriba)
+                      let y = e.clientY + 4;
+                      if (y + menuHeight > window.innerHeight - 16) {
+                        y = Math.max(16, e.clientY - menuHeight);
+                      }
+
                       setContextMenu({
                         visible: true,
-                        x: Math.max(12, x),
-                        y: Math.max(12, y),
+                        x,
+                        y,
                         item,
                       });
                     }}
@@ -327,16 +339,16 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
         </nav>
       </ScrollArea>
 
-      {/* Menú Contextual Flotante de Clic Derecho */}
-      {contextMenu.visible && contextMenu.item && (
+      {/* Menú Contextual Flotante de Clic Derecho (Renderizado en Portal a nivel body para evitar recortes de overflow) */}
+      {contextMenu.visible && contextMenu.item && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed z-[9999] w-64 rounded-xl border border-border/80 bg-popover/95 backdrop-blur-xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-100 text-popover-foreground"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[99999] w-72 min-w-[280px] rounded-xl border border-border/80 bg-popover/95 backdrop-blur-xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-100 text-popover-foreground pointer-events-auto"
+          style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold border-b border-border/50 text-foreground">
+          <div className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold border-b border-border/50 text-foreground bg-muted/40 rounded-t-lg">
             {React.createElement(contextMenu.item.icon, { className: "h-4 w-4 text-primary shrink-0" })}
-            <span className="truncate">{contextMenu.item.name}</span>
+            <span className="truncate font-semibold">{contextMenu.item.name}</span>
           </div>
 
           <div className="py-1 space-y-0.5">
@@ -350,9 +362,9 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
               className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
             >
               <AppWindow className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-medium">Abrir en ventana independiente</span>
-                <span className="text-[10px] text-muted-foreground">Ventana limpia para segunda pantalla</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-foreground">Abrir en ventana independiente</span>
+                <span className="text-[10px] text-muted-foreground truncate">Ventana limpia para segunda pantalla</span>
               </div>
             </button>
 
@@ -365,9 +377,9 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
               className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
             >
               <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-medium">Abrir en nueva pestaña</span>
-                <span className="text-[10px] text-muted-foreground">Pestaña estándar del navegador</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-foreground">Abrir en nueva pestaña</span>
+                <span className="text-[10px] text-muted-foreground truncate">Pestaña estándar del navegador</span>
               </div>
             </button>
 
@@ -386,10 +398,11 @@ export function Sidebar({ onToggleCalculator, mode = "full", onNavigate, onToggl
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors text-left"
             >
               <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span>Copiar enlace directo</span>
+              <span className="font-medium">Copiar enlace directo</span>
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <Separator />
