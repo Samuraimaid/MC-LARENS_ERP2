@@ -733,3 +733,6 @@ Other open documents:
         - Si el usuario inicia sesión en **OTRO PC / terminal**, el backend devuelve 401 SESSION_CONFLICT y la ventana que lo detecte avisa por el bus a todas las ventanas hermanas del PC anterior para expulsarlas con alerta de seguridad.
         - Detección de foco de ventana (ocus / isibilitychange) y heartbeat periódico en segundo plano.
       - Suite de pruebas unitarias automatizada en ackend/tests/test_multi_window_and_session_bus.py ejecutada con 100% PASS (concurrencia de sesión en mismo PC, invalidación por logout, revocación por login concurrente en otra IP y contratos del bus de eventos).
+   10. **Corrección de Renderizado de Menú Contextual (Portal a Nivel Body & Auto-Posicionamiento):**
+       - Solucionado el recorte de menú causado por el contenedor del Sidebar (overflow/containment) migrando el renderizado del menú contextual a un Portal React (createPortal(..., document.body)).
+       - Algoritmo inteligente de límites de ventana (viewport collision avoidance): si el clic se efectúa cerca del borde inferior o derecho, el menú se reubica hacia arriba o izquierda automáticamente para nunca salir de pantalla ni recortarse.
